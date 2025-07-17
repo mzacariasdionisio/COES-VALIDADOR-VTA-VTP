@@ -1,0 +1,319 @@
+﻿@model COES.MVC.Intranet.Areas.Siosein.Models.SioseinModel
+@{
+    ViewBag.Title = "Remisión de Tablas PRIE";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var styleOculto = Model.TienePermisoAdmin ? "" : "; display: none; ";
+}
+
+<link href="~/Areas/Siosein/Content/Css/css.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Areas/Siosein/Content/Scripts/reporteportal/generales.js"></script>      <!--SIOSEIN-PRIE-2021-->
+
+<div class="form-title" style="width:auto;">
+    <div class="content-titulo">
+        <a href="#" id="btnCancelar"><img src="~/Areas/Siosein/Content/Images/atras.png" title="Regresar" /></a>
+        @Model.TituloWeb
+    </div>
+</div>
+
+<input type="hidden" id="txtPeriodo" value="@Model.PeriodoSelect" />
+
+<div class="content-hijo">
+    <table style="width:100%">
+        <tr>
+            <td style="@styleOculto width: 181px;">
+                <div class="search-content" id="divAcciones" style=" margin-bottom: 0px;">
+                    <a href="#" id="btnRemitir">
+                        <div class="content-item-action">
+                            <img src="~/Areas/Siosein/Content/Images/enviar.png">
+                            <span>Remitir seleccionados</span>
+                        </div>
+                    </a>
+                </div>
+            </td>
+            <td>
+                <input type="button" value="Leyenda" id="btnLeyenda" class="form-action" />
+            </td>
+        </tr>
+    </table>
+    <br />
+    <div class="listado">
+        <div class="content-tabla">
+            <div class="table-list" id="listado">
+                <table class="pretty tabla-icono" id="tabla">
+                    <thead>
+                        <tr>
+                            <th style="@styleOculto" rowspan="2">
+                                <input type="checkbox" onchange="checkAll(this)" />
+                            </th>
+                            <th colspan="4" rowspan="2">Acciones</th>
+                            <th rowspan="2">Tabla PRIE</th>
+                            <th style="background-color: #00C118" colspan="2">Verificación</th>
+                            <th style="background-color:#00519D" colspan="4">Remisión a Osinergmin</th>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #00C118">Fecha y Hora</th>
+                            <th style="background-color: #00C118">Usuario</th>
+
+                            <th style="background-color:#00519D">Fecha y Hora</th>
+                            <th style="background-color:#00519D">Usuario</th>
+                            <th style="background-color:#00519D">Estado</th>
+                            <th style="background-color:#00519D"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbSeleccionados">
+                        @foreach (var item in Model.ListaTablaPrie)
+                        {
+                            <tr class="menu-contextual">
+                                @if (item.CantidadVersion > 0)
+                                {<!--SIOSEIN-PRIE-2021-->
+                                    <td style="@styleOculto"><input type="checkbox" id="@item.Tprieabrev" /></td>
+                                }
+                                else
+                                { <!--SIOSEIN-PRIE-2021-->
+                                    <td style="@styleOculto"></td>
+                                }
+
+                                @switch (item.Tpriecodi)
+                                {
+                                    case 9:
+                                        if (Model.CountCarga09 > 0)
+                                        {
+                                            <td>
+                                                <a href="JavaScript:cargarTabla('@item.Tpriecodi');" title="Volver Cargar Informacion"><img src="~/Content/Images/Import2.png" alt="" /></a>
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td>
+                                                <a href="JavaScript:cargarTabla('@item.Tpriecodi');" title="Cargar Informacion"><img src="~/Content/Images/Import.png" alt="" /></a>
+                                            </td>
+                                        }
+                                        break;
+                                    default:
+                                        <td></td>
+                                        break;
+                                }
+
+                                @if (item.CantidadVersion > 0)
+                                {
+                                    if (item.Cabpritieneregistros > 0)
+                                    {
+                                        <td><a href="JavaScript:verificarTabla('@item.Tpriecodi');" title="Verificación exitosa"><img src="~/Areas/siosein/Content/images/visto2.png" alt="" /></a></td>
+                                    }
+                                    else
+                                    {
+                                        <td><a href="JavaScript:verificarTabla('@item.Tpriecodi');" title="No tiene registros"><img src="~/Areas/siosein/Content/images/visto3.png" alt="" /></a></td>
+                                    }
+                                }
+                                else
+                                {
+                                    <td><a href="JavaScript:verificarTabla('@item.Tpriecodi');" title="Por verificar"><img src="~/Areas/Siosein/Content/images/verificar2.png" alt="" /></a></td>
+                                }
+
+                                @if (item.CantidadVersion > 0)
+                                {
+                                    <td><a href="JavaScript:difusionTabla('@item.Tpriecodi');" title="Ir a Difusion" style="@styleOculto"><img src="~/Areas/siosein/Content/images/vizualizar2.png" alt="" /></a></td>
+                                }
+                                else
+                                {
+                                    <td></td>
+                                }
+
+                                @if (item.CantidadVersion > 0)
+                                {<!--SIOSEIN-PRIE-2021-->
+                                    <td><a href="JavaScript:abrirVentanaProcesoRemision('@item.Tprieabrev','@item.Tpriecodi','@item.Tpriedscripcion');" title="Procesar remisión" style="@styleOculto"><img src="~/Areas/siosein/Content/images/osinergmin.png" alt="" /></a></td>
+                                }
+                                else
+                                {
+                                    <td></td>
+                                }
+
+                                <td style="text-align:left">
+                                    @item.TituloTabla
+                                </td>
+
+                                <td>@item.FechaUltimaVerificacionDesc</td>
+                                <td>@item.UsuarioUltimaVerificacionDesc</td>
+                                
+                                <!--SIOSEIN-PRIE-2021-->
+                                <td>@item.FechaUltimaRemisionDesc</td>
+                                <td>@item.UsuarioUltimaRemisionDesc</td>
+
+                                @if (item.EstadoUltimaRemisionDesc == "1")
+                                {
+                                    <td title="Remisión exitosa"><img src="~/Areas/Siosein/Content/Images/flag_green.png" /></td>
+                                }
+                                else if (item.EstadoUltimaRemisionDesc == "0")
+                                {
+                                    <td title="Remisión fallida">
+                                        <a href="JavaScript:remisionFallida('@item.Tpriecodi', @item.RccaCodi);"><img src="~/Areas/Siosein/Content/Images/flag_red.png" /></a>
+                                    </td>
+                                }
+                                else if (item.EstadoUltimaRemisionDesc == "2")
+                                {
+                                    <td title="No se encontraron registros"><img src="~/Areas/Siosein/Content/Images/flag_yellow.png" /></td>
+                                }
+                                else
+                                {
+                                    <td></td>
+                                }
+
+                                @if (item.EstadoUltimaRemisionDesc != "")
+                                {
+                                    <td><a href="JavaScript:abrirVentanaHistorialRemision('@item.TituloTabla', @item.PseinCodi , '@item.Tprieabrev','@item.Tpriecodi');" title="Historial"><img src="~/Content/images/envios.png" alt="" /></a></td>
+                                }
+                                else
+                                {
+                                    <td></td>
+                                }
+                                <!-- -->
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="popupTabla" style="width: 500px;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popupLeyenda">
+        <div class="popup-title"><span>Leyenda</span></div>
+        <div class="popup-text">
+            <table class="pretty tabla-icono">
+                <thead>
+                    <tr>
+                        <th colspan="2">Leyenda</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><img src="~/Content/Images/Import.png" style="width: 18px" alt="" /></td>
+                        <td>Cargar Informacion</td>
+                    </tr>
+                    <tr>
+                        <td><img src="~/Content/Images/Import2.png" style="width: 18px" alt="" /></td>
+                        <td>Volver Cargar Informacion</td>
+                    </tr>
+                    <tr>
+                        <td><img src="~/Areas/siosein/Content/images/verificar2.png" style="width: 18px" alt="" /></td>
+                        <td>Tabla por verificar</td>
+                    </tr>
+                    <tr>
+                        <td><img src="~/Areas/siosein/Content/images/visto2.png" style="width: 18px" alt="" /></td>
+                        <td>Informacion sin errores - OK</td>
+                    </tr>
+                    <tr>
+                        <td><img src="~/Areas/siosein/Content/images/visto3.png" style="width: 18px" alt="" /></td>
+                        <td>No tiene registros</td>
+                    </tr>
+                    <tr>
+                        <td><img src="~/Areas/siosein/Content/images/vizualizar2.png" style="width: 18px" alt="" /></td>
+                        <td>Difusion de Tabla</td>
+                    </tr>
+                    <tr>
+                        <td><img src="~/Areas/siosein/Content/images/osinergmin.png" style="width: 18px" alt="" /></td>
+                        <td>Enviar información de tabla a OSINERGMIN</td>
+                    </tr>
+
+                    <!--SIOSEIN-PRIE-2021-->
+                    <tr>
+                        <td><img src="~/Areas/Siosein/Content/Images/flag_green.png" style="width: 18px" alt="" /></td>
+                        <td>Indica que el archivo remitido no presenta errores.</td>
+                    </tr>
+                    <tr>
+                        <td><img src="~/Areas/Siosein/Content/Images/flag_red.png" style="width: 18px" alt="" /></td>
+                        <td>Indica que el archivo remitido presenta errores.</td>
+                    </tr>
+                    <tr>
+                        <td><img src="~/Areas/Siosein/Content/Images/flag_yellow.png" style="width: 18px" alt="" /></td>
+                        <td>Indica que no se han encontrado registros en la tabla.</td>
+                    </tr>
+                    <!-- -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!--SIOSEIN-PRIE-2021-->
+    <div class="popupRemision" style="display: none">
+        <div class="popup-title"><span>Remisión exitosa</span></div>
+        <div class="popup-text">
+            <table class="pretty tabla-icono">
+                <thead>
+                    <tr>
+                        <th colspan="2">Remitir a Osinergmin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="text-align: left;" width="90px">Usuario:</td>
+                        <td id="RemisionUsuario"></td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;" width="90px">Fecha y hora:</td>
+                        <td id="RemisionFecha"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="background-color: #a9d08e;">Envío Exitoso</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="popupSeleccionarOpcion" style="display: none">
+        <input type="hidden" id="tprieabrev" value="" />
+        <input type="hidden" id="tpriecodi" value="" />
+        <div class="popup-title">
+            <span id="nombreTabla"></span>
+        </div>
+        <div class="popup-text">
+            <table class="pretty tabla-icono">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Acción</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="radio" name="opcionEjecutar" value="rbValidacion" checked="checked" /></td>
+                        <td style="text-align: left; width: 120px; height: 40px;"><b>Solo validar</b></td>
+                        <td style="text-align: left; height: 40px;">Valida internamente que la información a remitir de la tabla PRIE se encuentre correctamente estructurada</td>
+                    </tr>
+                    <tr>
+                        <td><input type="radio" name="opcionEjecutar" value="rbRemision" /></td>
+                        <td style="text-align: left; width: 120px; height: 40px;"><b>Remitir</b></td>
+                        <td style="text-align: left; height: 40px;">Envia la información de la tabla PRIE a Osinergming, el cual se encargará de validarla y procesarla</td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+        <div style="height: 40px">
+            <div style="float: left;">
+                <input type="button" id="btnCerrar" value="Cancelar" onclick="cancelar()">
+            </div>
+            <div style="float: right;">
+                <input type="button" id="btnAceptar" value="Aceptar">
+            </div>
+        </div>
+        <div id='resultadoValidacion' style="margin-bottom: 5px; margin-top: 0; "></div>
+    </div>
+    <!-- -->
+</div>
+
+<div id="popupHistorial" class="general-popup" style="width: 570px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span></span></div>
+
+    <div class="table-list" id="div_historial">
+    </div>
+</div>
+
+<script src="~/Areas/Siosein/Content/Scripts/remisiones/RemisionesOsinergminEdit.js?v=2.5.4"></script>

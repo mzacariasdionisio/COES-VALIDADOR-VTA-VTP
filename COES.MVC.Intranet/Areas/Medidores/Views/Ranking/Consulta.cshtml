@@ -1,0 +1,155 @@
+﻿@model COES.MVC.Intranet.Areas.Medidores.Models.RankingModel
+@{
+    System.Globalization.NumberFormatInfo nfi = new System.Globalization.CultureInfo("en-US", false).NumberFormat;
+    nfi.NumberGroupSeparator = " ";
+    nfi.NumberDecimalSeparator = ",";
+    nfi.NumberDecimalDigits = 3;
+}
+
+
+<div class="reporte-resumen">
+    <table cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="reporte-resumen-label">Máxima Demanda Mensual</td>
+            <td>@Model.MaximaDemanda.ToString("N", nfi)</td>
+        </tr>
+        <tr>
+            <td class="reporte-resumen-label">Fecha</td>
+            <td>@Model.FechaMD</td>
+        </tr>
+        <tr>
+            <td class="reporte-resumen-label">Hora:</td>
+            <td>@Model.HoraMD</td>
+        </tr>
+    </table>
+</div>
+
+<div class="content-tabla">
+    <div class="tabla-header">
+        <div class="table-paginado" id="paginado"></div>
+    </div>
+    <div class="table-list" id="listado">
+        <table style="width:auto">
+            <tr>
+                <td style="margin-top:auto">
+                    
+                    <table class="tabla-formulario tabla-adicional" id="tabla" role="grid" border="1" style="width:900px">
+                        <thead>
+                            <tr>
+                                <th rowspan="3">Fecha</th>
+                                <th colspan="5">HFP</th>
+                                <th colspan="5" class="celda-azul">HP</th>
+                            </tr>
+                            <tr>
+                                <th>HORA</th>
+                                <th>TOTAL</th>
+                                <th>IMPORTACIÓN</th>
+                                <th>EXPORTACIÓN</th>
+                                <th>DEMANDA SEIN</th>
+    
+                                <th class="celda-azul">HORA</th>
+                                <th class="celda-azul">TOTAL</th>
+                                <th class="celda-azul">IMPORTACIÓN</th>
+                                <th class="celda-azul">EXPORTACIÓN</th>
+                                <th class="celda-azul">DEMANDA SEIN</th>
+                            </tr>
+                            <tr>
+                                <th>HH:MM</th>
+                                <th>MW</th>
+                                <th>MW</th>
+                                <th>MW</th>
+                                <th>MW</th>
+        
+                                <th class="celda-azul">HH:MM</th>
+                                <th class="celda-azul">MW</th>
+                                <th class="celda-azul">MW</th>
+                                <th class="celda-azul">MW</th>
+                                <th class="celda-azul">MW</th>
+                            </tr>   
+                        </thead>
+                        <tbody>
+                            @{
+                                var i = 0;
+                                var styleHFP = "text-align: center;";
+                                var styleHP = "text-align: center;";
+                                decimal valorImportacionHFP = 0;
+                                decimal valorExportacionHFP = 0;
+                                decimal demandaHFP = 0;
+                                decimal valorImportacionHP = 0;
+                                decimal valorExportacionHP = 0;
+                                decimal demandaHP = 0;
+
+                                decimal negativo = -1;
+                                
+                                foreach (var reg in Model.ListaDemandaDia)
+                                {
+                                    valorImportacionHFP = 0;
+                                    valorExportacionHFP = 0;
+                                    valorImportacionHP = 0;
+                                    valorExportacionHP = 0;
+                                    styleHFP = "text-align: center;";
+                                    styleHP = "text-align: center;";
+                                    if (@reg.ValorHFPInter < 0)
+                                    {
+                                        valorImportacionHFP = @reg.ValorHFPInter * negativo * 4;
+                                    }
+                                    else
+                                    {
+                                        valorExportacionHFP = @reg.ValorHFPInter * 4;
+                                    }
+                                    demandaHFP = reg.ValorHFP + valorExportacionHFP - valorImportacionHFP;
+
+                                    if (@reg.ValorHPInter < 0)
+                                    {
+                                        valorImportacionHP = @reg.ValorHPInter * negativo * 4;
+                                    }
+                                    else
+                                    {
+                                        valorExportacionHP = @reg.ValorHPInter * 4;
+                                    }
+                                    demandaHP = reg.ValorHP + valorExportacionHP - valorImportacionHP;
+                                    
+                                    if (Model.IndexHFP == i)
+                                    {
+                                        styleHFP = "background-color:#C4E8FF;text-align: center;";
+                                    }
+
+                                    if (Model.IndexHP == i)
+                                    {
+                                        styleHP = "background-color:#C4E8FF;text-align: center;";
+                                    }
+
+                                    <tr>
+                                        <td style="text-align: center;">@reg.Medifecha.ToString("dd/MM/yyyy")</td>
+                                        <td style="@styleHFP">@reg.MedifechaHFP</td>
+                                        <td style="@styleHFP">@demandaHFP.ToString("N", nfi)</td>
+                                        <td style="@styleHFP">@valorImportacionHFP.ToString("N", nfi)</td>
+                                        <td style="@styleHFP">@valorExportacionHFP.ToString("N", nfi)</td>
+                                        <td style="@styleHFP">@reg.ValorHFP.ToString("N", nfi)</td>
+        
+                                        <td style="@styleHP">@reg.MedifechaHP</td>
+                                        <td style="@styleHP">@demandaHP.ToString("N", nfi)</td>  
+                                        <td style="@styleHP">@valorImportacionHP.ToString("N", nfi)</td>
+                                        <td style="@styleHP">@valorExportacionHP.ToString("N", nfi)</td>
+                                        <td style="@styleHP">@reg.ValorHP.ToString("N", nfi)</td>
+                                    </tr>
+                                    i++;
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </td>
+                <td style="width:50px"></td>
+                <td valign="top">
+                    
+                </td>
+            </tr>
+        </table>
+
+    </div>
+</div>
+
+<div style="width:460px; height:20px; margin-top:15px;">
+    <div style="width:40px; height:20px; background-color:#97DDFF; float:left"></div>
+    <div style="width:400px; height:20px; float:left; padding-left:10px; line-height:20px">Máxima demanda mensual correspondiente a los periodos HFP y HP</div>
+</div>

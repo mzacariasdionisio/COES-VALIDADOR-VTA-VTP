@@ -1,0 +1,320 @@
+﻿@model COES.MVC.Intranet.Areas.Combustibles.Models.CombustibleModel
+@{
+    ViewBag.Title = "Envío PR31";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+<link href="~/Areas/Combustibles/Content/Css/formularioweb.css?v=1.9.4.7" rel="stylesheet" />
+
+<script src="~/Areas/Combustibles/Content/Scripts/formularioGlobal.js?v=1.9.5.1"></script>
+<script src="~/Areas/Combustibles/Content/Scripts/formularioCombustible.js?v=1.9.5.2"></script>
+<script src="~/Areas/Combustibles/Content/Scripts/formularioArchivos.js?v=1.9.4.7"></script>
+
+<script src="~/Areas/Combustibles/Content/Scripts/enviocombustible.js?v=1.9.4.9"></script>
+
+<div class="form-title" id="container">
+    @if (Model.IdEnvio > 0)
+    {
+        <div class="content-titulo" style="width: auto;">
+            Envío de Costo de Combustibles - Solicitud N° @Model.IdEnvio
+        </div>
+    }
+    else
+    {
+
+        <div class="content-titulo" style="width: auto;">
+            Envío de Costo de Combustibles
+        </div>
+    }
+    <div class="content-botonera">
+        <input type="button" id="btnInicio" value="Regresar a listado" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout" style="overflow:auto; background-color:#fff">
+
+    <div id="cv_envio" style="display: none;margin-bottom: 20px;"></div>
+
+    <div id="log_envio" style="display: none;margin-bottom: 20px;border-bottom: 2px solid #D9E8F3; padding-bottom: 22px;"></div>
+
+    <div id="div_dia_habil" style="display: none;margin-bottom: 15px;"></div>
+    <div id="idobservacion" style="display:none;margin-bottom: 15px;"></div>
+
+    <!--  <div class="action-message" id="mensajeEvento" style="margin: 10px 0px 10px; display: none; padding-left: 36px; text-indent: 0px;"></div>-->
+
+    <div class="search-content3">
+
+        <div style="display:table">
+            <div style="display:table-row">
+                <div style="display:table-cell;">
+                    <div style="display:table">
+                        <div style="display:table-row">
+                            <div class="celda-item" style="display:table-cell;width:50px;">
+                                Empresa:
+                            </div>
+                            <div class="filtro-contenido" style="display: table-cell; width: 170px; padding-right: 5px;">
+                                <select id="cbEmpresa" style="width:170px;" disabled>
+                                    <option value="">@Model.Emprnomb</option>
+                                </select>
+                            </div>
+
+                            <div class="celda-item" style="display:table-cell;width:50px;">
+                                Central:
+                            </div>
+                            <div class="filtro-contenido" style="display: table-cell; width: 170px; padding-right: 5px;">
+                                <select id="cbCentral" style="width:170px;" disabled>
+                                    <option value="">@Model.Equinomb</option>
+                                </select>
+                            </div>
+
+                            <div class="celda-item" style="display:table-cell;width:200px;">
+                                Combustible:
+                            </div>
+                            <div class="filtro-contenido" style="display: table-cell; width: 150px; padding-right: 5px;">
+                                <select id="cbFenerg" style="width:150px;" disabled>
+                                    <option value="">@Model.Fenergnomb</option>
+                                </select>
+                            </div>
+                            <div class="filtro-contenido" style="display: table-cell;">
+                                <input type="button" id="btnGrupomop" value="Ir a Parámetros Grupos/Mop" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: table-cell;width:100%">
+                </div>
+                <div style="display: table-cell; text-align: right;">
+                    <div style="display:table;" id="barra">
+                        <div style="display:table-row">
+
+                            <div class="content-action" style="display: none;">
+                                <input type="button" id="btnPopupDesaprobar" value="Desaprobar Envío" class="btn_desaprobar" />
+                            </div>
+
+                            <div class="content-action" style="display: none;">
+                                <input type="button" id="btnObservaciones" value="Observación" class="btn_observar" />
+                            </div>
+
+                            <div class="content-action" style="display: none;">
+                                <input type="button" id="btnAprobar" value="Aprobar Envío" class="btn_aprobar" />
+                            </div>
+
+                            <div class="content-action" style="display: table-cell;">
+                                <a href="#" id="btnDescargarFormato">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/downloadExcel.png" /><br />
+                                        <span>Descargar</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="leyenda_alerta" style="margin-bottom: 15px; display: none">
+        <table style="width: 250px;">
+            <tbody>
+                <tr>
+                    <td style="font-weight: bold;" colspan="6">Leyenda: </td>
+                </tr>
+                <tr>
+                    <td style="width: 25px" class="td_item_valor_error">
+                    </td>
+                    <td style="vertical-align: middle;width: 233px;" class="">Celda incompleta o valor inválido.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <input type="hidden" id="hfIdEnvio" value="@Model.IdEnvio" />
+    <input type="hidden" id="IdEmpresa" value="@Model.IdEmpresa" />
+    <input type="hidden" id="hdIdEquipo" value="@Model.IdEquipo" />
+    <input type="hidden" id="hdIdGrupo" value="@Model.IdGrupo" />
+    <input type="hidden" id="hdIdCombustible" value="@Model.IdTipoCombustible" />
+    <input type="hidden" id="hdIdFenerg" value="@Model.IdFenerg" />
+    <input type="hidden" id="hdIdEstado" value="@Model.IdEstado" />
+    <input type="hidden" id="hdIdAgrup" value="@Model.IdAgrup" />
+    <input type="hidden" id="hdFechaConsulta" value="@Model.FechaConsulta" />
+
+    <div id="tab-container" class='tab-container' style="display: block;padding-top: 15px;">
+        <ul class='etabs'>
+            <li class='tab'><a href="#paso1">Información Formulario</a></li>
+            <li class='tab'><a href="#paso2">Documentos</a></li>
+        </ul>
+
+        <div id="paso1" style="background-color:white">
+
+            <div id="html_formulario">
+
+            </div>
+        </div>
+
+        <div id="paso2" style="background-color:white">
+            <h3>SOPORTES DE LA INFORMACIÓN</h3>
+
+            <div id="html_archivos">
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- desaprobacion -->
+<div id="popupDesaprobar" class="popup-class-1 general-popup" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Desaprobación de Envío</span></div>
+    <div id="edicionObserv">
+
+        <div class="">
+            <table class="table-form-vertical">
+                <tr>
+                    <td class="tbform-label" style="width: 170px;">Mensaje al generador:</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <textarea id="txtMsjDesaprobar" rows="10" maxlength="1000" style="width:750px;"> </textarea>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            <table style="margin-top: 30px;" role="presentation">
+                <tr>
+                    <td class="tbform-label" style="text-align: right;">Para:</td>
+                    <td colspan="5">
+                        @Model.To
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label">CC agentes:</td>
+                    <td colspan="5">
+                        <input type="text" id="ccAgenteDesaprobar" value="@Model.CCcorreosAgente" style="width: 500px" />
+                    </td>
+                </tr>
+
+            </table>
+
+            <b>Nota: </b> <i>Los correos deben estar separados por punto y coma (;)</i>
+        </div>
+
+        <div style="margin-top: 25px; text-align: center">
+            <input type="button" id="btnDesaprobarOk" value="Enviar" />
+            <input type="button" id="btnDesaprobarCancel" value="Cancelar" />
+        </div>
+
+    </div>
+</div>
+
+<!-- observacion -->
+<div id="popupUnidad" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ingresar Observación</span></div>
+    <div id="edicionObserv">
+        <table class="table-form-vertical">
+            <tr>
+                <td class="tbform-label" style="text-align: center;width: 170px;">Fecha máxima de respuesta:</td>
+                <td style="width: 170px;">
+                    <input type="text" id="fechaObsRespuesta" value="@(Model.FechaObs)" style="width: 100px" /> 23:59:59
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <textarea id="txtObserv" name=" IdtxtObserv" rows="10" style="width:750px;"> </textarea>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="clear:both; height:20px"></div>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align:right" colspan="2">
+                    <input type="button" id="btnAceptarObs" value="Enviar" />
+                    <input type="button" id="btnCerrarObs" value="Cancelar" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- aprobacion-->
+<div id="popupFechaVigencia" class="popup-class-1 general-popup" style="width: 600px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Aprobación de Envío</span></div>
+    <div id="agregarFecVigencia">
+
+        <div class="">
+            <div style="margin-top: 10px;"></div>
+
+            <table style="margin-top: 10px;" role="presentation">
+
+
+                <tr>
+                    <td class="tbform-label">Costo Vigente desde:</td>
+                    <td colspan="5">
+                        <span id="fechaHoraPantalla"></span>
+                        <input type="hidden" id="FechaVigenciaDesde" value="" style="width: 100px" readonly />
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+
+        <div id="listaCVariable" style="padding-top: 10px;">
+            @Html.Raw(Model.HtmlListado)
+        </div>
+
+        <div>
+            <table style="margin-top: 30px;" role="presentation">
+                <tr>
+                    <td class="tbform-label" style="text-align: right;">Para:</td>
+                    <td colspan="5">
+                        @Model.To
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label">CC agentes:</td>
+                    <td colspan="5">
+                        <input type="text" id="ccAgenteAprobar" value="@Model.CCcorreosAgente" style="width: 500px" />
+                    </td>
+                </tr>
+
+            </table>
+
+            <b>Nota: </b> <i>Los correos deben estar separados por punto y coma (;)</i>
+        </div>
+
+        <div style="margin-top: 25px; text-align: center">
+            <input type="button" id="btnAprobarEnvio" value="Aprobar" />
+            <input type="button" id="btnCancelarEnvio" value="Cancelar" />
+        </div>
+    </div>
+</div>
+
+<div id="divformSeccion" class="general-popup" style="z-index:9999999999;">
+
+</div>
+
+<div id="validaciones" class="general-popup" style="z-index:9999999999; ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+    </div>
+</div>

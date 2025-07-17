@@ -1,0 +1,651 @@
+﻿@model COES.MVC.Extranet.Areas.Transferencias.Models.SolicitudCodigoModel
+
+<style>
+    /*    input[type="checkbox"].AGRVTA:checked {
+        box-shadow: 0 0 0 3px #edb7f7;
+    }*/
+    tr[ data-tipo="1"] input[type="checkbox"].AGRVTA {
+        box-shadow: 0 0 0 2px #edb7f7;
+    }
+    /* Elementos Option, cuando se seleccionan */
+    option:checked {
+        box-shadow: 0 0 0 3px lime;
+        color: red;
+    }
+
+    body {
+        margin: 0;
+        padding: 2rem;
+    }
+
+    table.pretty tbody td {
+        text-align: left;
+    }
+</style>
+
+@Html.AntiForgeryToken()
+
+<span id="mensajeError" style="display:none">@Model.sError</span>
+<table border="0" class="pretty tabla-icono thead-fixed" id="tabla">
+
+    <thead>
+        <tr>
+            <th rowspan="2" colspan="1">Acción</th>
+            <th rowspan="2" style="width:200px !important;">Cliente</th>
+            <th rowspan="2">Contrato</th>
+            <th rowspan="2">Usuario</th>
+            <th rowspan="2"> Inicio</th>
+            <th rowspan="2"> Fin</th>
+            <th rowspan="2">Estado</th>
+            <th colspan="3"> LVTEA</th>
+            <th colspan="3"> LVTP</th>
+            <!--<th colspan="3" class="background-potencias">Potencia Contratada Fijo (MW)</th>
+            <th colspan="3" class="background-potencias">Potencia Contratada Variable (MW)</th>
+            <th rowspan="2" class="background-potencias" style="text-align:left">Descripción</th>-->
+        </tr>
+        <tr>
+            <th></th>
+            <th>Barra</th>
+            <th>Código</th>
+            <th></th>
+            <th>Barra</th>
+            <th>Código</th>
+            <!--<th style="width:30px;" class="background-potencias">Total (MW)</th>
+            <th style="width:30px;" class="background-potencias">H.P (MW)</th>
+            <th style="width:30px;" class="background-potencias">H.P.F (MW)</th>
+            <th style="width:30px;" class="background-potencias">Total (MW)</th>
+            <th style="width:30px;" class="background-potencias">H.P (MW)</th>
+            <th style="width:30px;" class="background-potencias">H.P.F (MW)</th>-->
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.ListaCodigoRetiro)
+        {
+            int indiceDetalle = -1;
+            string colorBaja = "";
+            if (item.SoliCodiRetiEstado.Equals("ACT"))
+            {
+                @:
+                int index = 0;
+                indiceDetalle++;
+                foreach (var det in item.ListaCodigoRetiroDetalle)
+                {
+                    indiceDetalle++;
+                    if (det.coregeestado.Equals("BAJ"))
+                    {
+                        colorBaja = "style=background-color:#FFDDDD";
+                    }
+                    else
+                    {
+                        colorBaja = "";
+                    }
+
+                    int count = item.ListaCodigoRetiroDetalle.Count;
+                    if (count == 1)
+                    {
+                        <tr id="fila_@item.SoliCodiRetiCodi" data-excel="@det.PotenciaContratadaDTO.PotenciaEsExcel" data-tipo="@item.TrnpcTipoPotencia" data-row-id="@item.SoliCodiRetiCodiVTAParent" data-id-generado="@det.Coregecodigo">
+                            <td>
+                                <a href="@Url.Action("View", "SolicitudCodigo", new { peridcCodi=Model.Entidad.PeridcCodi ,  peridcNombre=Model.Entidad.PeridcNombre,id = item.SoliCodiRetiCodi })"
+                                   id="view_@item.SoliCodiRetiCodi" class="view">
+                                    <img src="@Url.Content("~/Content/Images/btn-edit.png")" title="Ver informacion del registro" alt="Ver informacion del registro" />
+                                </a>
+                            </td>
+
+                            <td class="text_left">@item.CliNombre</td>
+                            <td class="text_left">@item.TipoContNombre</td>
+                            <td class="text_left">@item.TipoUsuaNombre</td>
+                            <td>@item.SoliCodiRetiFechaInicio.GetValueOrDefault().ToString("dd/MM/yyyy")</td>
+                            <td>@item.SoliCodiRetiFechaFin.GetValueOrDefault().ToString("dd/MM/yyyy")</td>
+                            <td class="text_center estadoVTA">@item.EstadoDescripcionVTEA</td>
+                            @if (item.OmitirFilaVTA == 0)
+                            {
+                                int cantidadTotal = det.PotenciaContratadaDTO.TipoAgrupacion == "AGRVTP" ? count : (det.PotenciaContratadaDTO.RowSpan ?? count);
+                                <td @colorBaja rowspan="@cantidadTotal" class="text_center">
+                                    @if ((item.EstadoDescripcionVTEA == "Pendiente de aprobación"
+                                        || item.EstadoDescripcionVTEA == "Activo"
+                                        || item.EstadoDescripcionVTEA == "Baja")
+                                        && det.Codigovtp != null)
+                                    {
+                                        <input type="checkbox" class="AGRVTA" />
+                                    }
+                                </td>
+                            }
+                            <td class="text_left">@item.BarrNombBarrTran</td>
+                            <td class="text_left">@item.SoliCodiRetiCodigo</td>
+
+                            @if (item.OmitirFilaVTA == 0 && det.OmitirFila == 0)
+                            {
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" ) class="text_center">
+
+                                    @if (det.PotenciaContratadaDTO.TipoAgrupacion == "AGRVTP")
+                                    {
+                                        if (det.OmitirFila == 0)
+                                        {
+                                            if (det.coregeestado.Equals("ACT") || det.coregeestado.Equals("PAP") || det.coregeestado.Equals("PVT"))
+                                            {
+                                                <input type="checkbox" class="AGRVTP" />
+                                            }
+                                        }
+                                    }
+                                </td>
+                            }
+
+                            @if (det.coregeestado.Equals("BAJ"))
+                            {
+
+                                <td class="text_left" style="background-color: #FFDDDD">@det.Barranomsum</td>
+                            }
+                            else
+                            {
+                                <td class="text_left">@det.Barranomsum</td>
+                            }
+
+                            @if (det.coregeestado.Equals("PAP") || det.coregeestado.Equals("PVT") || det.coregeestado.Equals("SBJ"))
+                            {
+                                <td class="text_left" style="color:red;">@det.Codigovtp</td>
+                            }
+                            else if (det.coregeestado.Equals("BAJ"))
+                            {
+                                <td class="text_left" style="background-color: #FFDDDD">@det.Codigovtp</td>
+                            }
+                            else
+                            {
+                                <td class="text_left">@det.Codigovtp</td>
+                            }
+
+
+                            @if (item.OmitirFilaVTA == 0)
+                            {
+                                <!--<td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrTotalFija</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrHPFija</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrHFPFija</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrTotalVar</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrHPVar</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrHFPVar</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrObservacion</td>-->
+                            }
+                        </tr>
+                    }
+                    else
+                    {
+
+                        if (index == 0)
+                        {
+
+                            <tr id="fila_@item.SoliCodiRetiCodi" data-excel="@det.PotenciaContratadaDTO.PotenciaEsExcel" data-tipo="@item.TrnpcTipoPotencia" data-row-id="@item.SoliCodiRetiCodiVTAParent" data-id-generado="@det.Coregecodigo">
+                                <td rowspan="@count">
+                                    <a id="view_@item.SoliCodiRetiCodi" href="@Url.Action("View", "SolicitudCodigo", new { peridcCodi=Model.Entidad.PeridcCodi ,  peridcNombre=Model.Entidad.PeridcNombre, id =item.SoliCodiRetiCodi })" class="view">
+                                        <img src="@Url.Content("~/Content/Images/btn-edit.png")" title="Ver informacion del registro" alt="Ver informacion del registro" />
+                                    </a>
+                                </td>
+
+                                <td rowspan="@count" class="text_left">@item.CliNombre</td>
+                                <td rowspan="@count" class="text_left">@item.TipoContNombre</td>
+                                <td rowspan="@count" class="text_left">@item.TipoUsuaNombre</td>
+                                <td rowspan="@count">@item.SoliCodiRetiFechaInicio.GetValueOrDefault().ToString("dd/MM/yyyy")</td>
+                                <td rowspan="@count">@item.SoliCodiRetiFechaFin.GetValueOrDefault().ToString("dd/MM/yyyy")</td>
+                                <td rowspan="@count" class="text_center estadoVTA">@item.EstadoDescripcionVTEA</td>
+                                @if (item.OmitirFilaVTA == 0)
+                                {
+                                    int cantidadTotal = det.PotenciaContratadaDTO.TipoAgrupacion == "AGRVTP" ? count : (det.PotenciaContratadaDTO.RowSpan ?? count);
+                                    <td @colorBaja rowspan="@cantidadTotal" class="text_center">
+                                        @if ((item.EstadoDescripcionVTEA == "Pendiente de aprobación"
+                                      || item.EstadoDescripcionVTEA == "Activo"
+                                      || item.EstadoDescripcionVTEA == "Baja")
+                                      && det.Codigovtp != null)
+                                        {
+                                            <input type="checkbox" class="AGRVTA" />
+                                        }
+                                    </td>
+                                }
+                                <td rowspan="@count" class="text_left">@item.BarrNombBarrTran</td>
+                                <td rowspan="@count" class="text_left">@item.SoliCodiRetiCodigo</td>
+
+                                @if (item.OmitirFilaVTA == 0)
+                                {
+                                    <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" ) class="text_center">
+
+                                        @if (det.PotenciaContratadaDTO.TipoAgrupacion == "AGRVTP"
+                                || det.PotenciaContratadaDTO.TipoAgrupacion == null)
+                                        {
+                                            if (det.OmitirFila == 0)
+                                            {
+                                                if (det.coregeestado.Equals("ACT") || det.coregeestado.Equals("PAP") || det.coregeestado.Equals("PVT"))
+                                                {
+                                                    <input type="checkbox" class="AGRVTP" />
+                                                }
+                                            }
+                                        }
+                                    </td>
+                                }
+
+
+                                @if (det.coregeestado.Equals("BAJ"))
+                                {
+                                    <td class="text_left" style="background-color: #FFDDDD">@det.Barranomsum</td>
+                                }
+                                else
+                                {
+                                    <td class="text_left">@det.Barranomsum</td>
+                                }
+                                @if (det.coregeestado.Equals("PAP") || det.coregeestado.Equals("PVT") || det.coregeestado.Equals("SBJ"))
+                                {
+                                    <td class="text_left" style="color:red;" data-id-generado="@det.Coregecodigo">@det.Codigovtp</td>
+                                }
+                                else if (det.coregeestado.Equals("BAJ"))
+                                {
+                                    <td class="text_left" style="background-color: #FFDDDD">@det.Codigovtp</td>
+                                }
+                                else
+                                {
+                                    <td class="text_left">@det.Codigovtp</td>
+                                }
+
+
+
+                                @if (item.OmitirFilaVTA == 0)
+                                {
+                                    <!--<td class="0" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrTotalFija
+                                    </td>
+                                    <td class="0" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrHPFija
+                                    </td>
+                                    <td class="0" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrHFPFija
+                                    </td>
+                                    <td class="0" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrTotalVar
+                                    </td>
+                                    <td class="0" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrHPVar
+                                    </td>
+                                    <td class="0" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrHFPVar
+                                    </td>
+                                    <td class="0" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrObservacion
+                                    </td>-->
+                                }
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr id="fila_@item.SoliCodiRetiCodi" data-excel="@det.PotenciaContratadaDTO.PotenciaEsExcel" data-row-for-id="@item.SoliCodiRetiCodiVTAParent" data-row-index="@indiceDetalle"
+                                class="child" data-id-generado="@det.Coregecodigo">
+                                <!--obs.-->
+                                @if (det.OmitirFila == 0 && item.OmitirFilaVTA == 0)
+                                {
+                                    <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" ) class="text_center">
+                                        @if (det.coregeestado.Equals("ACT")
+                                            || det.coregeestado.Equals("PAP") || det.coregeestado.Equals("PVT")
+                                           )
+                                        {<input type="checkbox"
+                                                class="AGRVTP" />
+                                        }
+                                    </td>
+                                }
+
+
+
+                                @if (det.coregeestado.Equals("BAJ"))
+                                {
+                                    <td class="text_left" style="background-color: #FFDDDD">@det.Barranomsum</td>
+                                }
+                                else
+                                {
+                                    <td class="text_left">@det.Barranomsum</td>
+                                }
+                                @if (det.coregeestado.Equals("PAP") || det.coregeestado.Equals("PVT") || det.coregeestado.Equals("SBJ"))
+                                {
+                                    <td class="text_left" style="color:red;">@det.Codigovtp</td>
+                                }
+                                else if (det.coregeestado.Equals("BAJ"))
+                                {
+                                    <td class="text_left" style="background-color: #FFDDDD">@det.Codigovtp</td>
+                                }
+                                else
+                                {
+                                    <td class="text_left">@det.Codigovtp</td>
+                                }
+
+                                @if (det.OmitirFila == 0)
+                                {
+                                    <!--<td class="1" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrTotalFija
+                                    </td>
+                                    <td class="1" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrHPFija
+                                    </td>
+                                    <td class="1" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrHFPFija
+                                    </td>
+                                    <td class="1" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrTotalVar
+                                    </td>
+                                    <td class="1" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrHPVar
+                                    </td>
+                                    <td class="1" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrHFPVar
+                                    </td>
+                                    <td class="1" @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>
+                                        @det.PotenciaContratadaDTO.PotenciaContrObservacion
+                                    </td>-->
+                                }
+
+                            </tr>
+                        }
+
+                    }
+                    index++;
+                }
+            }
+
+
+            else
+            {
+                @:
+                int index = 0;
+                indiceDetalle++;
+                foreach (var det in item.ListaCodigoRetiroDetalle)
+                {
+                    int count = item.ListaCodigoRetiroDetalle.Count;
+                    if (count == 1)
+                    {
+                        <tr id="fila_@item.SoliCodiRetiCodi" data-excel="@det.PotenciaContratadaDTO.PotenciaEsExcel" data-tipo="@item.TrnpcTipoPotencia" data-row-id="@item.SoliCodiRetiCodiVTAParent" data-id-generado="@det.Coregecodigo">
+
+                            <td>
+                                <a href="@Url.Action("View", "SolicitudCodigo", new {peridcCodi=Model.Entidad.PeridcCodi ,  peridcNombre=Model.Entidad.PeridcNombre, id = item.SoliCodiRetiCodi, tipo = 0 })"
+                                   id="view_@item.SoliCodiRetiCodi" class="view"><img src="@Url.Content("~/Content/Images/btn-edit.png")" title="Ver informacion del registro" alt="Ver informacion del registro" /></a>
+                            </td>
+
+
+                            <td class="text_left" style="width:220px !important;"> @item.CliNombre </td>
+
+                            <td class="text_left"> @item.TipoContNombre </td>
+
+                            <td class="text_left"> @item.TipoUsuaNombre </td>
+
+                            <td class="text_left"> @item.SoliCodiRetiFechaInicio.GetValueOrDefault().ToString("dd/MM/yyyy") </td>
+
+                            <td class="text_left"> @item.SoliCodiRetiFechaFin.GetValueOrDefault().ToString("dd/MM/yyyy") </td>
+
+                            <td class="text_center estadoVTA" style="color:red;"> @item.EstadoDescripcionVTEA </td>
+                            @if (item.OmitirFilaVTA == 0)
+                            {
+                                int cantidadTotal = det.PotenciaContratadaDTO.TipoAgrupacion == "AGRVTP" ? count : (det.PotenciaContratadaDTO.RowSpan ?? count);
+                                <td rowspan="@cantidadTotal" class="text_center">
+                                    @if ((item.EstadoDescripcionVTEA == "Pendiente de aprobación"
+                                      || item.EstadoDescripcionVTEA == "Activo"
+                                      || item.EstadoDescripcionVTEA == "Baja")
+                                      && det.Codigovtp != null)
+                                    {
+                                        <input type="checkbox" class="AGRVTA" />}
+                                </td>
+                            }
+                            <td class="text_left"> @item.BarrNombBarrTran </td>
+
+                            @if (item.SoliCodiRetiEstado.Equals("PAP") || item.SoliCodiRetiEstado.Equals("SBJ"))
+                            {
+                                <td class="text_left" style="color:red;"> @item.SoliCodiRetiCodigo </td>
+                            }
+                            else
+                            {
+                                <td class="text_left"> @item.SoliCodiRetiCodigo </td>
+                            }
+
+
+                            @if (item.OmitirFilaVTA == 0 && det.OmitirFila == 0)
+                            {
+                                <td @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "") class="text_center">
+                                    @if (string.IsNullOrEmpty(det.PotenciaContratadaDTO.TipoAgrupacion)
+                                         || det.PotenciaContratadaDTO.TipoAgrupacion == "AGRVTP")
+                                    {
+                                        if (det.coregeestado.Equals("ACT") || det.coregeestado.Equals("PAP") || det.coregeestado.Equals("PVT"))
+                                        {
+                                            <input type="checkbox" class="AGRVTP" />
+                                        }
+                                    }
+                                </td>
+                            }
+
+
+
+
+
+
+
+                            @if (det.coregeestado.Equals("BAJ"))
+                            {
+                                <td class="text_left" style="background-color: #FFDDDD"> @det.Barranomsum </td>
+                            }
+                            else
+                            {
+                                <td class="text_left"> @det.Barranomsum </td>
+                            }
+
+                            @if (det.coregeestado.Equals("ACT"))
+                            {
+                                <td class="text_left"> @det.Codigovtp </td>
+                            }
+                            else if (det.coregeestado.Equals("BAJ"))
+                            {
+                                <td class="text_left" style="background-color: #FFDDDD"> @det.Codigovtp </td>
+                            }
+                            else
+                            {
+                                <td class="text_left" style="color:red;"> @det.Codigovtp </td>
+                            }
+
+
+
+                            @if (item.OmitirFilaVTA == 0)
+                            {
+                                <!--<td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrTotalFija</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrHPFija</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrHFPFija</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrTotalVar</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrHPVar</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrHFPVar</td>
+                                <td @colorBaja @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "" )>@det.PotenciaContratadaDTO.PotenciaContrObservacion</td>-->
+
+                            }
+                        </tr>
+                    }
+                    else
+                    {
+
+                        if (index == 0)
+                        {
+
+                            <tr id="fila_@item.SoliCodiRetiCodi" data-excel="@det.PotenciaContratadaDTO.PotenciaEsExcel" data-tipo="@item.TrnpcTipoPotencia" data-row-id="@item.SoliCodiRetiCodiVTAParent" data-id-generado="@det.Coregecodigo">
+
+                                <td rowspan="@count">
+                                    <a href="@Url.Action("View", "SolicitudCodigo", new { peridcCodi=Model.Entidad.PeridcCodi ,  peridcNombre=Model.Entidad.PeridcNombre,id = item.SoliCodiRetiCodi })"
+                                       id="view_@item.SoliCodiRetiCodi" class="view">
+                                        <img src="@Url.Content("~/Content/Images/btn-edit.png")" title="Ver informacion del registro" alt="Ver informacion del registro" />
+                                    </a>
+                                </td>
+
+
+                                <td rowspan="@count" class="text_left"> @item.CliNombre </td>
+                                <td rowspan="@count" class="text_left"> @item.TipoContNombre </td>
+                                <td rowspan="@count" class="text_left"> @item.TipoUsuaNombre </td>
+                                <td rowspan="@count" class="text_left"> @item.SoliCodiRetiFechaInicio.GetValueOrDefault().ToString("dd/MM/yyyy") </td>
+                                <td rowspan="@count" class="text_left"> @item.SoliCodiRetiFechaFin.GetValueOrDefault().ToString("dd/MM/yyyy") </td>
+                                <td rowspan="@count" class="text_center estadoVTA" style="color:red;">  @item.EstadoDescripcionVTEA</td>
+
+                                @if (item.OmitirFilaVTA == 0)
+                                {
+                                    int cantidadTotal = det.PotenciaContratadaDTO.TipoAgrupacion == "AGRVTP" ? count : (det.PotenciaContratadaDTO.RowSpan ?? count);
+                                    <td @colorBaja rowspan="@cantidadTotal" class="text_center">
+                                        @if ((item.EstadoDescripcionVTEA == "Pendiente de aprobación"
+                                            || item.EstadoDescripcionVTEA == "Activo"
+                                            || item.EstadoDescripcionVTEA == "Baja")
+                                            && det.Codigovtp != null)
+                                        {
+                                            <input type="checkbox" class="AGRVTA" />
+                                        }
+                                    </td>
+                                }
+
+                                <td rowspan="@count" class="text_left"> @item.BarrNombBarrTran </td>
+                                @if (item.SoliCodiRetiEstado.Equals("PAP") || item.SoliCodiRetiEstado.Equals("SBJ"))
+                                {
+                                    <td rowspan="@count" class="text_left" style="color:red;"> @item.SoliCodiRetiCodigo </td>
+                                }
+                                else
+                                {
+                                    <td rowspan="@count" class="text_left"> @item.SoliCodiRetiCodigo </td>
+                                }
+
+
+                                <!--AQUI-->
+
+                                @if (item.OmitirFilaVTA == 0)
+                                {
+                                    <td @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "") class="text_center">
+                                        @if (string.IsNullOrEmpty(det.PotenciaContratadaDTO.TipoAgrupacion)
+                                             || det.PotenciaContratadaDTO.TipoAgrupacion == "AGRVTP")
+                                        {
+                                            if (det.coregeestado.Equals("ACT") || det.coregeestado.Equals("PAP") || det.coregeestado.Equals("PVT"))
+                                            {
+                                                <input type="checkbox" class="AGRVTP" />
+                                            }
+                                        }
+
+
+                                    </td>
+
+                                }
+
+
+                                @if (det.coregeestado.Equals("BAJ"))
+                                {
+                                    <td class="text_left" style="background-color: #FFDDDD"> @det.Barranomsum </td>
+                                }
+                                else
+                                {
+                                    <td class="text_left"> @det.Barranomsum </td>
+                                }
+
+
+                                @if (det.coregeestado.Equals("ACT"))
+                                {
+                                    <td class="text_left"> @det.Codigovtp </td>
+                                }
+                                else if (det.coregeestado.Equals("BAJ"))
+                                {
+                                    <td class="text_left" style="background-color: #FFDDDD"> @det.Codigovtp </td>
+                                }
+                                else
+                                {
+                                    <td class="text_left" style="color:red;"> @det.Codigovtp </td>
+                                }
+
+
+
+                                @if (item.OmitirFilaVTA == 0)
+                                {
+                                    <!--<td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")>
+                                        @det.PotenciaContratadaDTO.PotenciaContrTotalFija
+
+                                    </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrHPFija </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrHFPFija </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrTotalVar </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrHPVar </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrHFPVar </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")>
+                                        @det.PotenciaContratadaDTO.PotenciaContrObservacion
+                                    </td>-->
+                                }
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr id="fila_@item.SoliCodiRetiCodi" data-excel="@det.PotenciaContratadaDTO.PotenciaEsExcel" data-row-for-id="@item.SoliCodiRetiCodiVTAParent" data-row-index="@indiceDetalle" class="child" data-id-generado="@det.Coregecodigo">
+                                <!--AQUI-->
+                                @if (det.OmitirFila == 0 && item.OmitirFilaVTA == 0)
+                                {
+                                    <td @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "") class="text_center">
+                                        @if (string.IsNullOrEmpty(det.PotenciaContratadaDTO.TipoAgrupacion)
+                                        || det.PotenciaContratadaDTO.TipoAgrupacion == "AGRVTP")
+                                        {
+                                            if (det.coregeestado.Equals("ACT") || det.coregeestado.Equals("PAP") || det.coregeestado.Equals("PVT"))
+                                            {
+                                                <input type="checkbox" class="AGRVTP" />
+                                            }
+                                        }
+                                    </td>
+                                }
+
+                                @if (det.coregeestado.Equals("BAJ"))
+                                {
+                                    <td class="text_left" style="background-color: #FFDDDD"> @det.Barranomsum </td>
+                                }
+                                else
+                                {
+                                    <td class="text_left"> @det.Barranomsum </td>
+                                }
+                                @if (det.coregeestado.Equals("ACT"))
+                                {
+                                    <td class="text_left"> @det.Codigovtp </td>
+                                }
+                                else if (det.coregeestado.Equals("BAJ"))
+                                {
+                                    <td class="text_left" style="background-color: #FFDDDD"> @det.Codigovtp </td>
+                                }
+                                else
+                                {
+                                    <td class="text_left" style="color:red;"> @det.Codigovtp </td>
+                                }
+
+
+
+                                @if (det.OmitirFila == 0)
+                                {
+                                    <!--<td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")>
+                                        @det.PotenciaContratadaDTO.PotenciaContrTotalFija
+
+                                    </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrHPFija </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrHFPFija </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrTotalVar </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrHPVar </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")> @det.PotenciaContratadaDTO.PotenciaContrHFPVar </td>
+
+                                    <td class="1" @(det.PotenciaContratadaDTO.RowSpan == null ? "" : "rowspan=" + det.PotenciaContratadaDTO.RowSpan + "")>
+                                        @det.PotenciaContratadaDTO.PotenciaContrObservacion
+                                    </td>-->
+                                }
+                            </tr>
+                        }
+
+                    }
+                    index++;
+                }
+            }
+
+        }
+    </tbody>
+</table>
+<div id="popup">
+</div>
+<br />
+<div style="text-align:center">
+
+    <input type="button" value="Limpiar" onclick="location.href='@Url.Action("Index","solicitudcodigo")'" alt="Limpiar" title="Limpiar" />
+</div>

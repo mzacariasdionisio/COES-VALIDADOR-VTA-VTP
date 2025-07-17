@@ -1,0 +1,89 @@
+﻿@model COES.MVC.Publico.Areas.DirectorioImpugnaciones.Models.ImpugnacionesModel
+<style>
+    .datatables_filter {
+        clear: none !important;
+    }
+</style>
+
+<table border="0" class="tabla-icono table table-hover" cellspacing="0" width="100%" id="tablaImpugnaciones">
+    <thead>
+        <tr>
+            <td style="width: 25px; font-weight: bold;"></td>
+            <td style="font-weight: bold;">N° en el mes</td>
+            <td style="font-weight: bold;"  title="Registro en el Sistema de Gestión Documentaría del COES" >Registro SGD</tdstyle="font-weight:>
+            <td style="font-weight: bold;">Impugnante</td>
+            <td style="font-weight: bold;">Decisión Impugnada</td>
+            <td style="font-weight: bold;">Petitorio</td>
+            <td style="font-weight: bold;">Fecha Recepción</td>
+            <td style="font-weight: bold;">Fecha Publicación en Portal</td>
+            <td style="font-weight: bold;">Plazo Incorporación</td>
+            <td style="font-weight: bold;">Incorporaciones Presentadas</td>
+            <td style="font-weight: bold;">@Model.TipoImpugnacion.Timpgnombdecision</td>
+            <td style="font-weight: bold;">@Model.TipoImpugnacion.Timpgnombrefecha</td>
+            <td style="font-weight: bold;">Días Totales Atención</td>
+        </tr>
+    </thead>
+    <tbody>
+        @{int maximo = (Model.ListaImpugnaciones.Count > 0) ? Model.ListaImpugnaciones.First().Impgdiastotaten.Value : 0;}
+        @{int minimo = (Model.ListaImpugnaciones.Count > 0 && Model.ListaImpugnaciones.First().Impgdiastotaten > 0) ? Model.ListaImpugnaciones.First().Impgdiastotaten.Value : 0;}
+        @{int promedio = 0;}
+        @{int contador = 0;}
+
+        @foreach (var impugnacion in Model.ListaImpugnaciones)
+        {
+            if (impugnacion.Impgdiastotaten > 0)
+            {
+                contador++;
+                minimo = impugnacion.Impgdiastotaten.Value;
+                minimo = impugnacion.Impgdiastotaten.Value;
+            }
+            <tr>
+                <td style="width:25px">
+                    @if (impugnacion.Impgextension.ToLower() == "pdf")
+                    {
+                        <a href="JavaScript:downloadBlob(@impugnacion.Impgcodi)"><img src="~/Content/Images/pdficon.png" /></a>
+                    }
+                    else if (impugnacion.Impgextension.ToLower() == "rar" || impugnacion.Impgextension.ToLower() == "zip")
+                    {
+                        <a href="JavaScript:downloadBlob(@impugnacion.Impgcodi)"><img src="~/Content/Images/zipicon.gif" /></a>
+                    }
+                    else
+                    {
+                        <a href="JavaScript:downloadBlob(@impugnacion.Impgcodi)"><img src="~/Content/Images/defaulticon.png" /></a>
+                    }
+                </td>
+                <td>@impugnacion.Impgnumeromes</td>
+                <td>@impugnacion.Impgregsgdoc</td>
+                <td>@impugnacion.Impginpugnante</td>
+                <td class="celda">@Html.Raw(impugnacion.Impgdescinpugnad)</td>
+                <td class="celda">@Html.Raw(impugnacion.Impgpetitorio)</td>
+                <td>@if (impugnacion.Impgfechrecep != null)
+                { @impugnacion.Impgfechrecep.Value.ToString("dd/MMM/yyyy", new System.Globalization.CultureInfo("es-Es"));
+                }</td>
+                <td>@if (impugnacion.Impgfechpubli != null)
+                { @impugnacion.Impgfechpubli.Value.ToString("dd/MMM/yyyy", new System.Globalization.CultureInfo("es-Es"));
+                }</td>
+                <td>@if (impugnacion.Impgplazincorp != null)
+                { @impugnacion.Impgplazincorp.Value.ToString("dd/MMM/yyyy", new System.Globalization.CultureInfo("es-Es"));
+                }</td>
+                <td>@impugnacion.Impgincorpresent</td>
+                <td class="celda">@Html.Raw(impugnacion.Impgdescdirecc)</td>
+                <td>@if (impugnacion.Impgfechdesc != null)
+                { @impugnacion.Impgfechdesc.Value.ToString("dd/MMM/yyyy", new System.Globalization.CultureInfo("es-Es"));
+                }</td>
+                <td>@impugnacion.Impgdiastotaten</td>
+            </tr>
+        }
+        @foreach (var impugnacion in Model.ListaImpugnaciones)
+        {
+            promedio += (impugnacion.Impgdiastotaten != null) ? impugnacion.Impgdiastotaten.Value : 0;
+            if (impugnacion.Impgdiastotaten > maximo) { maximo = impugnacion.Impgdiastotaten.Value; }
+            if (impugnacion.Impgdiastotaten < minimo && impugnacion.Impgdiastotaten > 0) { minimo = impugnacion.Impgdiastotaten.Value; }
+        }
+        @{promedio /= (contador != 0) ? contador : 1;}
+    </tbody>
+</table>
+<input id="maximo" type="hidden" value="@maximo" />
+<input id="minimo" type="hidden" value="@minimo" />
+<input id="promedio" type="hidden" value="@promedio" />
+<br />

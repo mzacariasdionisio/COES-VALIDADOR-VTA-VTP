@@ -1,0 +1,120 @@
+﻿@model COES.MVC.Intranet.Areas.ReportesFrecuencia.Models.CargaVirtualModel
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Carga Virtual";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var sMensajeExito = TempData["sMensajeExito"];
+
+    var lista_equipos = (IEnumerable<SelectListItem>)TempData["ListaEquipos"];
+}
+
+<script src="~/Areas/ReportesFrecuencia/Content/Scripts/CargaVirtual.js"></script>
+<script type="text/javascript">
+    var reporteCargaVirtual = "CargaVirtual/";
+    var controler = siteRoot + "ReportesFrecuencia/" + reporteCargaVirtual;
+
+    $(document).ready(function () {
+        $("#btnBuscar").click(function () {
+            var model = {
+                FechaIni: $("#FechaInicial").val(),
+                FechaFin: $("#FechaFinal").val(),
+                CodEquipo: $("#cboEquipo").val(),
+            };
+            $(".listado").load(controler + "Lista", { FechaIni: model.FechaIni, FechaFin: model.FechaFin, CodEquipo: model.CodEquipo });
+
+
+        });
+
+        $("#btnBuscar").click();
+
+    });
+
+    function cancelarOpcion() {
+        $("#cboEquipo").val('');
+        var _val_fecha_inicio = $("#hdfFechaInicio").val();
+        var _val_fecha_fin = $("#hdfFechaFinal").val();
+        $("#FechaInicial").val(_val_fecha_inicio);
+        $("#FechaFinal").val(_val_fecha_fin);
+    }
+
+</script>
+<div class="ast">
+    @if (@sMensajeExito != null)
+    {
+    <div class="exito mensajes">&nbsp;&nbsp;&nbsp;&nbsp;<b>@sMensajeExito</b></div>
+    }
+    <div class="form-title">
+        <div class="content-titulo">Reporte</div>
+        <div class="content-botonera">
+            @if (Model.bNuevo)
+            {
+                <input type="button" value="Cargar - Reporte PR 21" onclick="location.href='@Url.Action("New","CargaVirtual")'" alt="Insertar un nuevo registro" title="Insertar un nuevo registro" />
+
+                <input type="button" value="Cargar - Archivo Externo" onclick="location.href='@Url.Action("Externo","CargaVirtual")'" alt="Cargar - Archivo Externo" title="Cargar - Archivo Externo" />
+            }
+            <input type="button" value="Refrescar" onclick="location.href='@Url.Action("Index","CargaVirtual")'" alt="Refrescar" title="Refrescar" />
+        </div>
+    </div>
+    <div class="content-hijo" style="padding-top:8px">
+        <div class='panel-container'>
+            <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                <table border="1" cellpadding="5" cellspacing="2" style="width:100%">
+                    <tr class="THCabecera">
+                        <td colspan="10"><span class="editor-label" style="color:#FFFFFF;"><b>Filtros de búsqueda</b></span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="editor-label">Equipo GPS</div></td>
+                        <td>
+                            <div class="editor-label input-data">
+                                @Html.DropDownList("cboEquipo", @lista_equipos, "--Seleccione--", new { @style = "width:120px !important", @class = "bg-white" })
+                            </div>
+                        </td>
+
+                        <td><div class="editor-label">Fecha Inicio</div></td>
+                        <td>
+                            <div class="editor-label input-data">
+                                @Html.TextBoxFor(m => m.FechaInicial, new { @class = "txtFecha", @Value = Model.FechaInicial.ToString("dd/MM/yyyy") })
+                            </div>
+                        </td>
+
+                        <td><div class="editor-label">Fecha Final</div></td>
+                        <td>
+                            <div class="editor-label input-data">
+                                @Html.TextBoxFor(m => m.FechaFinal, new { @class = "txtFecha", @Value = Model.FechaFinal.ToString("dd/MM/yyyy") })
+                            </div>
+                        </td>
+
+                        <td><div class="editor-label"><span class="editor-label"><input type="button" id="btnBuscar" value="Consultar"></span></div></td>
+
+                        <td>
+                            <div class="editor-label">
+                                <span class="editor-label">
+                                    <input type="hidden" value="@Model.FechaInicial.ToString("dd/MM/yyyy")" name="hdfFechaInicio" id="hdfFechaInicio" />
+                                    <input type="hidden" value="@Model.FechaFinal.ToString("dd/MM/yyyy")" name="hdfFechaFinal" id="hdfFechaFinal" />
+                                    <input type="button" value="Cancelar" onclick="javascript: cancelarOpcion();" alt="Cancelar" title="Cancelar" />
+                                </span>
+                            </div>
+                        </td>
+
+
+                    </tr>
+                </table>
+
+                <div class="content-hijo" style="padding-top:8px">
+                    <div class="listado" id="listado">
+                        @Html.Partial("Lista", Model)
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+    </div>
+
+</div>
+<script>
+    $('.txtFecha').Zebra_DatePicker({
+    });
+
+</script>

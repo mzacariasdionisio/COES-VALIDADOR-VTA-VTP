@@ -1,0 +1,149 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.MapaEquipoModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";    
+}
+
+<link href="~/Areas/Equipamiento/Content/Css/css.css" rel="stylesheet" />
+<script src="https://maps.googleapis.com/maps/api/js?libraries=places&callback=initAutocomplete" async defer></script>
+<script type="text/javascript">
+
+    var markers = [];
+    var map;
+
+    function initAutocomplete() {
+
+        var punto = new google.maps.LatLng(-8.798225459016345, -75.498046875);
+        var myOptions = {
+            zoom: 5,
+            center: punto,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        map = new google.maps.Map($("#map")[0], myOptions);
+
+        /*
+        map.setOptions({ draggableCursor: "url(../../../content/images/ubicador.gif) 25 25, default" });
+
+        if ($('#txtCoordenadaX').val() != "" && $('#txtCoordenadaY').val() != "") {
+            var latEquipo = { lat: parseFloat($('#txtCoordenadaX').val()), lng: parseFloat($('#txtCoordenadaY').val()) };
+            addMarker(latEquipo);
+        }
+
+        map.addListener('mousemove', function (e) {
+            $("#latitud").text(e.latLng.lat());
+            $("#longitud").text(e.latLng.lng());
+        });
+
+        map.addListener('click', function (e) {
+            $("#txtCoordenadaX").val(e.latLng.lat());
+            $("#txtCoordenadaY").val(e.latLng.lng());
+            deleteMarkers();
+            addMarker(e.latLng);
+        });*/
+
+        var input = document.getElementById('pac-input');
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+        map.addListener('bounds_changed', function () {
+            searchBox.setBounds(map.getBounds());
+        });
+
+        searchBox.addListener('places_changed', function () {
+            var places = searchBox.getPlaces();
+
+            if (places.length == 0) {
+                return;
+            }
+
+            var bounds = new google.maps.LatLngBounds();
+            places.forEach(function (place) {
+                if (place.geometry.viewport) {
+                    bounds.union(place.geometry.viewport);
+                } else {
+                    bounds.extend(place.geometry.location);
+                }
+            });
+            map.fitBounds(bounds);
+        });
+    }
+    
+    function addMarker(location) {
+        var marker = new google.maps.Marker({
+            position: location,
+            map: map
+        });
+        markers.push(marker);
+    }
+
+    function setMapOnAll(map) {
+        for (var i = 0; i < markers.length; i++) {
+            markers[i].setMap(map);
+        }
+    }
+
+    function clearMarkers() {
+        setMapOnAll(null);
+    }
+
+    function showMarkers() {
+        setMapOnAll(map);
+    }
+
+    function deleteMarkers() {
+        clearMarkers();
+        markers = [];
+    }
+
+</script>
+
+<div class="form-title">
+    <div class="content-titulo">Mapa</div>
+    <div class="content-botonera">        
+    </div>
+</div>
+
+<div class="content-hijo">
+    <div id="mensaje"></div>
+    
+    <table style="width:100%">
+        <tr>
+            <td style="width:20%" valign="top">
+                Empresa:
+                
+                <select id="cbEmpresa">
+                    <option value="">-TODOS-</option>
+                    @foreach(var item in Model.ListaEmpresas)
+                    {
+                        <option value="@item.Emprcodi">@item.Emprnomb</option>
+                    }
+                </select>
+
+                Tipo de familia:
+                <input type="checkbox" id="cbAll" /> TODOS
+                @foreach (var item in Model.ListaTipoEquipo)
+                { 
+                    <div>
+                        <input type="checkbox" value="@item.Famcodi" /><span>@item.Famnomb</span>
+                    </div>
+                }
+            </td>
+            <td style="width:80%" valign="top">
+                 <div class="contenedor-mapa">
+                    <input id="pac-input" type="text">
+                    <div id="map" style="width:100%; min-height:750px"></div>
+                 </div>
+            </td>
+        </tr>
+    </table>
+   
+</div>
+
+<div id="popupEdicion" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Datos del Equipo</span></div>
+    <div class="popup-text" id="contenidoEdicion">
+
+    </div>
+</div>

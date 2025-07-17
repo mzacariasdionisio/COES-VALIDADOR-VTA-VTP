@@ -1,0 +1,288 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.ElementoModel
+
+<script type="text/javascript">
+
+    $(function () {
+        $('#txtHora').inputmask({
+            mask: "1/2/y h:s",
+            placeholder: "dd/mm/yyyy hh:mm",
+            alias: "datetime",
+            hourFormat: "24"
+        });
+
+        $('#txtHora').Zebra_DatePicker({
+            readonly_element: false,
+            onSelect: function (date) {
+                $('#txtHora').val(date + " 00:00");
+            }
+        });
+
+        $('#txtHoraInicial').inputmask({
+            mask: "1/2/y h:s:s",
+            placeholder: "dd/mm/yyyy hh:mm:ss",
+            alias: "datetime",
+            hourFormat: "24"
+        });
+
+        $('#txtHoraInicial').Zebra_DatePicker({
+            readonly_element: false,
+            onSelect: function (date) {
+                $('#txtHoraInicial').val(date + " 00:00:00");
+            }
+        });
+        
+        $('#txtHoraFinal').inputmask({
+            mask: "1/2/y h:s:s",
+            placeholder: "dd/mm/yyyy hh:mm:ss",
+            alias: "datetime",
+            hourFormat: "24"
+        });
+
+        $('#txtHoraFinal').Zebra_DatePicker({
+            readonly_element: false,
+            onSelect: function (date) {
+                $('#txtHoraFinal').val(date + " 00:00:00");
+            }
+        });
+
+
+        $('#btnGrabarElemento').click(function () {
+            grabarElemento();
+        });
+
+        $('#btnCancelarElemento').click(function () {
+            cancelarElemento();
+        });
+
+        $('#cbItemInforme').change(function () {
+            cargarPrevio();
+            $('#mensajeElemento').removeClass();
+            $('#mensajeElemento').addClass("action-message");
+            $('#mensajeElemento').html("Complete los datos");
+        });
+
+        cargarFormulario(0);
+
+        $('#cbEquipo').val($('#hfEquipo').val());
+        $('#cbInterruptor').val($('#hfInterruptor').val());
+        $('#cbAC').val($('#hfAC').val());
+
+        $('#cbItemInforme').val($('#hfIndicadorElemento').val());
+
+        $('#cbEquipo').selectToAutocomplete();
+
+        $('#cbInterruptor').selectToAutocomplete();
+    });
+
+</script>
+
+<table>
+    <tr>
+        <td>Item del reporte:</td>
+        <td>
+            <select id="cbItemInforme" style="width:470px">
+                <option value="5-1">5. Condiciones operativas previas - a. Generación</option>
+                <option value="5-2">5. Condiciones operativas previas - a. Flujo de potencias en las líneas</option>
+                <option value="5-3">5. Condiciones operativas previas - c. Flujo de potencias en los transformadores</option>
+                <option value="6">6. Secuencia Cronológica</option>
+                <option value="7">7. Actuación de las protecciones</option>
+                <option value="8">8. Contador de Interruptores y Pararrayos</option>
+                <option value="10">10. Suministros Interrumpidos</option>
+                <option value="11">11. Conclusiones</option>
+                <option value="12">12. Acciones ejecutadas</option>
+                <option value="13">13. Observaciones y Recomendaciones</option>
+            </select>
+        </td>
+    </tr>
+</table>
+<div id="mensajeElemento" class="action-message">Complete los datos</div>
+
+<form id="formElemento" name="formElemento">
+
+    <table>
+        <!--Agregar empresa donde solo sea necesario-->
+        <tr id="trUnidad" class="tr-elemento">
+            <td><span id="spanUnidad">Unidad</span>:</td>
+            <td>
+                <select id="cbEquipo" name="Equicodi" autofocus='autofocus' autocorrect='off' autocomplete='off'>
+                    <option value="">Escriba...</option>
+                    @foreach (var item in Model.ListaGeneradores)
+                    {
+                        <option value="@item.Equicodi">@item.TAREAABREV.Trim()  @item.AREANOMB.Trim() - @item.Equiabrev.Trim()</option>
+                    }
+                </select>
+                <input type="hidden" id="hfEquipo" value="@Model.Equicodi" />
+            </td>
+        </tr>
+        <tr id="trSubestacionDe" class="tr-elemento">
+            <td>Subestación de:</td>
+            <td>
+                <input type="text" id="txtSubestacionDe" name="Subestacionde" value="@Model.Subestacionde" maxlength="40" />
+            </td>
+        </tr>
+        <tr id="trSubestacionhasta" class="tr-elemento">
+            <td>Subestación hasta:</td>
+            <td>
+                <input type="text" id="txtSubestacionHasta" name="Subestacionhasta" value="@Model.Subestacionhasta" maxlength="40" />
+            </td>
+        </tr>
+        <tr id="trPotenciaActiva" class="tr-elemento">
+            <td>Potencia activa(MW):</td>
+            <td>
+                <input type="text" id="txtPotActiva" name="Potactiva" value="@Model.Potactiva" onkeypress="return validarNumero(this,event)" />               
+            </td>
+        </tr>
+        <tr id="trPotenciaReactiva" class="tr-elemento">
+            <td>Potencia reactiva(MVAR):</td>
+            <td>
+                <input type="text" id="txtPotReactiva" name="Potreactiva" value="@Model.Potreactiva" onkeypress="return validarNumero(this,event)" />
+            </td>
+        </tr>
+        <tr id="trNivelTension" class="tr-elemento">
+            <td>Nivel tensión:</td>
+            <td>
+                <input type="text" id="txtNivelTension" onkeypress="return validarNumero(this,event)" name="Niveltension" value="@Model.Niveltension" />
+            </td>
+        </tr>
+        <tr id="trHora" class="tr-elemento">
+            <td>Hora:</td>
+            <td>
+                <input type="text" id="txtHora" name="Itemhora" value="@Model.Itemhora" />
+            </td>
+        </tr>
+        <tr id="trObservacion" class="tr-elemento">
+            <td><span id="spanObservacion">Observación</span>:</td>
+            <td>
+                <textarea id="txtObservacion" name="Desobservacion" maxlength="400">@Model.Desobservacion</textarea>
+            </td>
+        </tr>
+        <tr id="trSenalizacion" class="tr-elemento">
+            <td>Señalización</td>
+            <td>
+                <input type="text" id="txtSenializacion" name="Senializacion" value="@Model.Senializacion" maxlength="30" />
+            </td>
+        </tr>
+        <tr id="trInterruptor" class="tr-elemento">
+            <td>Interruptor:</td>
+            <td>
+                <select id="cbInterruptor" name="Interrcodi" autofocus='autofocus' autocorrect='off' autocomplete='off'>
+                    <option value="">Escriba...</option>
+                    @foreach (var item in Model.ListaInterruptores)
+                    {
+                        <option value="@item.Equicodi">@item.TAREAABREV.Trim()  @item.AREANOMB.Trim()  -  @item.Equiabrev.Trim()</option>
+                    }
+                </select>
+                <input type="hidden" id="hfInterruptor" value="@Model.Interrcodi" />
+            </td>
+        </tr>
+        <tr id="trAC" class="tr-elemento">
+            <td>A/C</td>
+            <td>
+                <select id="cbAC" name="Ac">
+                    <option value="">-SELECCIONE-</option>
+                    <option value="A">A</option>
+                    <option value="C">C</option>
+                </select>
+                <input type="hidden" id="hfAC" value="@Model.Ac" />
+            </td>
+        </tr>
+        <tr id="trContadorAntes" class="tr-elemento">
+            <td>Contador antes:</td>
+            <td>
+                <table class="table-contador" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td>R</td>
+                        <td>S</td>
+                        <td>T</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" style="width:40px" id="txtRA" name="Ra" onkeypress="return validarEntero(this,event)" value="@Model.Ra" />
+                        </td>
+                        <td>
+                            <input type="text" style="width:40px" id="txtSA" name="Sa" onkeypress="return validarEntero(this, event)" value="@Model.Sa" />
+                        </td>
+                        <td>
+                            <input type="text" style="width:40px" id="txtTA" name="Ta" onkeypress="return validarEntero(this, event)" value="@Model.Ta" />
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr id="trContadorDespues" class="tr-elemento">
+            <td>Contador después:</td>
+            <td>
+                <table class="table-contador" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td>R</td>
+                        <td>S</td>
+                        <td>T</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" style="width:40px" id="txtRD" name="Rd" onkeypress="return validarEntero(this,event)" value="@Model.Rd" />
+                        </td>
+                        <td>
+                            <input type="text" style="width:40px" id="txtSD" name="Sd" onkeypress="return validarEntero(this,event)" value="@Model.Sd" />
+                        </td>
+                        <td>
+                            <input type="text" style="width:40px" id="txtTD" name="Td" onkeypress="return validarEntero(this,event)" value="@Model.Td" />
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr id="trSuministro" class="tr-elemento">
+            <td>Suministro:</td>
+            <td>
+                <input type="text" id="txtSuministro" name="Sumininistro" value="@Model.Sumininistro" maxlength="40" />
+            </td>
+        </tr>
+        <tr id="trPotenciaMW" class="tr-elemento">
+            <td>Potencia (MW)</td>
+            <td>
+                <input type="text" id="txtPotenciaMW" name="Potenciamw" onkeypress="return validarNumero(this,event)" value="@Model.Potenciamw" />
+            </td>
+        </tr>
+        <tr id="trHoraInicial" class="tr-elemento">
+            <td>Inicio:</td>
+            <td>
+                <input type="text" id="txtHoraInicial" name="Intinicio" value="@Model.Intinicio" />
+            </td>
+        </tr>
+        <tr id="trHoraFinal" class="tr-elemento">
+            <td>Final:</td>
+            <td>
+                <input type="text" id="txtHoraFinal" name="Intfin" value="@Model.Intfin" />
+            </td>
+        </tr>
+        <tr id="trProteccion" class="tr-elemento">
+            <td>Protección</td>
+            <td>
+                <input type="text" id="txtProteccion" name="Proteccion" value="@Model.Proteccion" maxlength="50" />
+            </td>
+        </tr>
+    </table>
+
+    <div style="width:160px; margin:auto; margin-top:15px; text-align:center">
+        <input type="button" id="btnGrabarElemento" value="Grabar" />
+        <input type="button" id="btnCancelarElemento" value="Cancelar" />
+    </div>
+
+    <input type="hidden" id="hfTipoInforme" name="TipoInforme" value="@Model.TipoInforme" />
+    <input type="hidden" id="hfItemInforme" name="ItemInforme" value="@Model.ItemInforme" />
+    <input type="hidden" id="hfSubItemInforme" name="SubItemInforme" value="@Model.SubItemInforme" />
+    <input type="hidden" id="hfIdItemInforme" name="IdItemInforme" value="@Model.IdItemInforme" />
+    <input type="hidden" id="hfIdInforme" name="IdInforme" value="@Model.IdInforme" />
+
+    @if (Model.SubItemInforme != 0)
+    {
+        string id = Model.ItemInforme + "-" + Model.SubItemInforme;
+        <input type="hidden" id="hfIndicadorElemento" value="@id" />
+    }
+    else
+    {
+        <input type="hidden" id="hfIndicadorElemento" value="@Model.ItemInforme" />
+    }
+
+</form>

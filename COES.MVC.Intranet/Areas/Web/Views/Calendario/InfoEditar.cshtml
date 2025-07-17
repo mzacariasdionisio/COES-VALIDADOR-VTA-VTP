@@ -1,0 +1,187 @@
+﻿@model COES.MVC.Intranet.Areas.Web.Models.MesCalendarioModel
+
+
+
+<div class="content-registro">
+
+    <form id="frmRegistro">
+        <div id="mensajeEdicion" class="action-message">Por favor complete los datos</div>
+
+        <table>
+            <tr>
+                <td style="width:48%">
+                    <table style="width:100%">
+
+                        <tr>
+                            <td class="registro-label">Título:</td>
+                            <td class="registro-control">
+                                <input type="text" id="txtTitulo" name="Titulo" maxlength="100" style="width:300px" value="@Model.Entidad.Mescaltitulo" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Año:</td>
+                            <td class="registro-control">
+                                <select id="cbAnio" name="Anio" style="width:300px">
+                                    @foreach (var item in Model.ListaAnios)
+                                    {
+                                        <option value="@item">@item</option>
+                                    }
+                                </select>
+                                <input type="hidden" id="hfAnio" value="@Model.Entidad.Mescalanio" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Mes:</td>
+                            <td class="registro-control">
+                                <select id="cbMes" name="Mes" style="width:300px">
+                                    @foreach (var item in Model.ListMeses)
+                                    {
+                                        <option value="@item.Valor">@item.Texto</option>
+                                    }
+                                </select>
+                                <input type="hidden" id="hfMes" value="@Model.Entidad.Mescalmes" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Color del Mes:</td>
+                            <td class="registro-control">                               
+                                <input type="text" id="txtColorMes" name="ColorMes" value="@Model.Entidad.Mescalcolor" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Color Sábado:</td>
+                            <td class="registro-control">                                
+                                <input type="text" id="txtColorSabado" name="ColorSabado" value="@Model.Entidad.Mescalcolorsat" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Color Domingo:</td>
+                            <td class="registro-control">                                
+                                <input type="text" id="txtColorDomingo" name="ColorDomingo" value="@Model.Entidad.Mescalcolorsun" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Color Título:</td>
+                            <td class="registro-control">                                
+                                <input type="text" id="txtColorTitulo" name="ColorTitulo" value="@Model.Entidad.Mescalcolortit" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Color días del mes:</td>
+                            <td class="registro-control">
+                                <input type="text" id="txtColorDia" name="ColorDia" value="@Model.Entidad.Mesdiacolor" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Color Subtítulo:</td>
+                            <td class="registro-control">                                
+                                <input type="text" id="txtColorSubtitulo" name="ColorSubtitulo" value="@Model.Entidad.Mescalcolorsubtit" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Estado:</td>
+                            <td class="registro-control">
+                                <select id="cbEstado" name="Estado" style="width:300px">
+                                    <option value="">-Seleccione-</option>
+                                    <option value="A">Activo</option>
+                                    <option value="I">Inactivo</option>
+                                </select>
+                                <input type="hidden" id="hfEstado" value="@Model.Entidad.Mescalestado" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Descripción:</td>
+                            <td class="registro-control">
+                                <textarea id="txtDescripcion" name="Descripcion" maxlength="200" style="width:300px">@Model.Entidad.Mescaldescripcion</textarea>
+                            </td>
+                        </tr>
+                       
+
+                    </table>
+                </td>
+                <td style="width:4%"></td>
+                <td style="width:48%" valign="top">
+                    <div class="popup-title"><span>Infografia</span></div>
+                    <div style="clear:both; height:10px"></div>
+                    <table style=" width:100%"><tr>
+                            <td class="registro-label">Archivo:</td>
+                            <td class="registro-control">
+                                <input type="button" id="btnReemplazarBanner" value="Seleccionar" />
+                                <span style="color:red">*(Tamaño 1200 x 230 px, Peso máximo 600KB)</span>
+                                <div id="fileResult"></div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="banner-prev" id="containerBanner" style="margin:auto; width:300px">
+
+                        @if (!string.IsNullOrEmpty(Model.Entidad.Mescalinfo))
+                        {
+                             <img id="imgBanner" src="@("http://www.coes.org.pe/portal/content/infografia/" + Model.Entidad.Mescalinfo + "?v=" + DateTime.Now.ToString())" style="max-width:300px" />
+                        }
+                        else
+                        {
+                            <img id="imgBanner" style="max-width:300px" />
+                        }         
+
+                        @if (Model.Entidad.Mescalcodi > 0 && !string.IsNullOrEmpty(Model.Entidad.Mescalinfo)) { 
+                            <a href="JavaScript:quitarImagen(@Model.Entidad.Mescalcodi, '@Model.Entidad.Mescalinfo')" id="linkQuitarImagen">Eliminar imagen</a>
+                        }
+                    </div>
+
+                    
+                    <div style="width:1px; height:1px; display:none" id="divContenedor"></div>
+
+                    <script type="text/javascript">
+
+                        var uploader = new plupload.Uploader({
+                            runtimes: 'html5,flash,silverlight,html4',
+                            browse_button: 'btnReemplazarBanner',
+                            container: document.getElementById('divContenedor'),
+                            url: siteRoot + 'web/calendario/upload',
+                            flash_swf_url: 'Scripts/Moxie.swf',
+                            silverlight_xap_url: 'Scripts/Moxie.xap',
+                            drop_element: 'containerBanner',
+                            chunk_size: '1mb',
+                            multi_selection: false,
+                            filters: {
+                                max_file_size: '1mb',
+                                mime_types: [
+                                    { title: "Image files", extensions: "jpg,jpeg,gif,png" }
+                                ]
+                            },
+                            init: {
+                                FilesAdded: function (up, files) {
+                                    plupload.each(files, function (file) {
+                                        $('#fileResult').html(('<div class="file-name" id="' + file.id + '">' + file.name + ' (' + plupload.formatSize(file.size) + ')</div>'));
+                                    });
+                                    uploader.start();
+                                },
+                                FileUploaded: function (up, file, res) {
+                                    var url = $('#hfUrlPortalWeb').val() + "uploads/" + file.name + "?v=" + new Date();
+                                    $('#imgBanner').attr("src", url);
+                                },
+                                Error: function (up, err) {
+                                    $('#fileResult').html('<div class="action-alert">' + err.message + '</div>');
+                                }
+                            }
+                        });
+                        uploader.init();
+
+                    </script>
+
+                </td>
+            </tr>
+        </table>                      
+        
+
+        <div style="width:200px; margin:auto; text-align:center; margin-top:10px; margin-bottom:10px">
+            <input type="button" id="btnGrabar" value="Grabar" />
+            <input type="button" id="btnCancelarEdicion" value="Cancelar" />
+        </div>       
+
+        <input type="hidden" id="hfCodigo" name="Codigo" value="@Model.Entidad.Mescalcodi" />
+        <input type="hidden" id="hfUrlPortalWeb" value="@Model.UrlPortal" />
+
+    </form>
+</div>

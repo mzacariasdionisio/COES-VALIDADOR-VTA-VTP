@@ -1,0 +1,274 @@
+﻿@model COES.MVC.Intranet.Areas.IND.Models.IndisponibilidadesModel
+@{
+    ViewBag.Title = "";
+}
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@if (Model.UsarLayoutModulo)
+{
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+else
+{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+
+<link href="~/Areas/IND/Content/Css/css.css?v=2.3.1" rel="stylesheet" />
+<script src="~/Areas/IND/Content/Scripts/reporte_index.js?v=2.3.3"></script>
+
+<div class="form-title">
+    <div class="content-titulo">@Model.Cuadro.Icuanombre</div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <input type="hidden" id="hfCuadro" value="@Model.IdCuadro" />
+
+    <div id="mensaje" style="margin-bottom:5px; margin-top:0px"></div>
+
+    <div class="search-content" style="margin-bottom:10px">
+        <table class="content-tabla-search" style="width:auto" role="presentation">
+            <tr>
+                <td class="tbform-label" style="padding-right: 0px;">Periodo:</td>
+                <td>
+                    <select id="cbAnio" style="width: 57px;">
+                        @foreach (var item in Model.ListaAnio)
+                        {
+                            var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                            <option value="@item.Entero1" @(selected)>@item.String1</option>
+                        }
+                    </select>
+                    <select id="cbPeriodo" style="width: 120px;">
+                        @foreach (var item in Model.ListaPeriodo)
+                        {
+                            var selected = Model.IdPeriodo == item.Ipericodi ? "selected" : "";
+                            <option value="@item.Ipericodi" @(selected)>@item.Iperinombre</option>
+                        }
+                    </select>
+                </td>
+                <td class="tbform-label" style="padding-right: 0px;">Recálculo:</td>
+                <td>
+                    <select id="cbRecalculo" style="width: 150px;">
+                        @if (Model.ListaRecalculo.Count > 0)
+                        {
+                            foreach (var rec in Model.ListaRecalculo)
+                            {
+                                var selected = Model.IdRecalculo == rec.Irecacodi ? "selected" : "";
+                                <option value="@rec.Irecacodi" @selected> @(rec.Irecanombre) </option>
+                            }
+                        }
+                        else
+                        {
+                            <option value="0">--</option>
+                        }
+
+                    </select>
+                </td>
+
+                <td id="td_estado_recalculo"></td>
+
+                <td class="td_filtro_fecha tbform-label" style="padding-right: 0px;">Fecha Inicio:</td>
+                <td class="td_filtro_fecha">
+                    <input type="text" id="desc_fecha_ini" value="" disabled />
+                </td>
+                <td class="td_filtro_fecha tbform-label" style="padding-right: 0px;">Fecha Fin:</td>
+                <td class="td_filtro_fecha">
+                    <input type="text" id="desc_fecha_fin" value="" disabled />
+                </td>
+
+            </tr>
+        </table>
+    </div>
+
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#vistaVersion">Versiones</a></li>
+            <li class='tab'><a href="#vistaProcesarCuadro">Procesar Cuadro</a></li>
+        </ul>
+        <div class='panel-container'>
+            <div id="vistaVersion">
+                <div class="content-tabla">
+
+                    <div style="padding-bottom: 4px;">
+                        <strong>Nota</strong>: Para la generación de cuadros solo se considerá la versión con estado <span style="background-color: #2ECC71; color: white; font-weight: bold;padding: 5px;">Validado</span>.
+                    </div>
+
+                    <div style="clear:both; height:5px"></div>
+
+                    <div class="content-tabla">
+                        <div class="table-list" id="listado"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="vistaProcesarCuadro">
+                <div id="msjProcesar" style="display: none">El Recálculo se encuentra <span style="font-weight: bold;color: RED">Cerrado</span>. No se permite procesar el Cuadro. </div>
+
+                <div id="formulario_aplicativo" class="content-tabla" style="display: none">
+                    <div style="clear:both; height:5px"></div>
+
+                    <div>
+                        <h3>1. Parámetros</h3>
+                        <div class="content-registro">
+                            <table style="margin-top: 10px;width: auto" role="presentation">
+                                <tr>
+                                    <td class="tbform-label">Periodo:</td>
+                                    <td class="tbform-control">
+                                        <span id="desc_periodo" style=" font-weight: bold; font-size: 16px;"></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="tbform-label">Recálculo:</td>
+                                    <td class="tbform-control">
+                                        <span id="desc_recalculo" style="  font-weight: bold;font-size: 16px;COLOR: #9370DB;"></span>
+                                    </td>
+                                </tr>
+
+                                @if (Model.IdCuadro == 1)
+                                {
+                                    <tr>
+                                        <td class="tbform-label">Tipo de generación:</td>
+                                        <td class="tbform-control">
+                                            <span class="" id="">Grupo térmoelectrico</span>
+                                            <input type="hidden" id="famcodi_cuadro" value="5" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="tbform-label">Tiempo</td>
+                                        <td class="tbform-control">
+                                            <input type="radio" name="form_tiempo" value="HP" checked="checked">Hora Punta
+                                            <input type="radio" name="form_tiempo" value="TD">Todo el día
+                                        </td>
+                                    </tr>
+                                }
+
+                                @if (Model.IdCuadro == 2)
+                                {
+                                    <tr>
+                                        <td class="tbform-label">Tipo de generación:</td>
+                                        <td class="tbform-control">
+                                            <span class="" id="">Grupo térmoelectrico</span>
+                                            <input type="hidden" id="famcodi_cuadro" value="5" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="tbform-label">Tiempo</td>
+                                        <td class="tbform-control">
+                                            <input type="radio" name="form_tiempo" value="HP" checked="checked">Hora Punta
+                                            <input type="radio" name="form_tiempo" value="TD">Todo el día
+                                        </td>
+                                    </tr>
+                                }
+
+                                @if (Model.IdCuadro == 3)
+                                {
+                                    <tr>
+                                        <td class="tbform-label">Días:</td>
+                                        <td class="tbform-control">
+                                            <span id="numero_dias"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="tbform-label">Tipo de generación:</td>
+                                        <td class="tbform-control">
+                                            <span class="" id="">Grupo térmoelectrico</span>
+                                            <input type="hidden" id="famcodi_cuadro" value="5" />
+                                        </td>
+                                    </tr>
+                                }
+
+                                @if (Model.IdCuadro == 4)
+                                {
+                                    <tr>
+                                        <td class="tbform-label">Tipo de generación:</td>
+                                        <td class="tbform-control">
+                                            <span class="" id="">Centrales hidroeléctricas</span>
+                                            <input type="hidden" id="famcodi_cuadro" value="4" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="tbform-label">Tiempo</td>
+                                        <td class="tbform-control">
+                                            <input type="radio" name="form_tiempo" value="HP" checked="checked">Hora Punta
+                                            <input type="radio" name="form_tiempo" value="TD">Todo el día
+                                        </td>
+                                    </tr>
+                                }
+
+                                @if (Model.IdCuadro == 5)
+                                {
+                                    <tr>
+                                        <td class="tbform-label">Tipo de generación:</td>
+                                        <td class="tbform-control">
+                                            <span class="" id="">Centrales hidroeléctricas</span>
+                                            <input type="hidden" id="famcodi_cuadro" value="4" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="tbform-label">Origen</td>
+                                        <td class="tbform-control">
+                                            <span id="span_msg_cuadro5"></span>
+                                        </td>
+                                    </tr>
+                                }
+
+                                @if (Model.IdCuadro == 6)
+                                {
+                                    <tr>
+                                        <td class="tbform-label">Tipo de generación:</td>
+                                        <td class="tbform-control">
+                                            <span class="" id="">Grupo térmoelectrico</span>
+                                            <input type="hidden" id="famcodi_cuadro" value="5" />
+                                        </td>
+                                    </tr>
+                                }
+
+                                @if (Model.IdCuadro == 7)
+                                {
+                                    <tr>
+                                        <td class="tbform-label">Tipo de generación:</td>
+                                        <td class="tbform-control">
+                                            <span class="" id="">Generadores térmoelectricos e hidroeléctricos</span>
+                                            <input type="hidden" id="famcodi_cuadro" value="-1" />
+                                        </td>
+                                    </tr>
+                                }
+                            </table>
+                        </div>
+
+                        <div id="" style="margin-top: 15px;">
+                            <input type="button" id="btnVerificarData" value="Continuar (1/2)" />
+                        </div>
+
+
+                        <h3 class="div_verificacion_2">2. Verificación inicial</h3>
+                        <div class="div_verificacion_2" id="div_verificacion_proceso">
+                        </div>
+
+                        <div class="div_verificacion_2" id="" style="margin-top: 15px;">
+                            <input type="button" id="btnProcesarCuadro" value="Procesar Cuadro (2/2)" />
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>

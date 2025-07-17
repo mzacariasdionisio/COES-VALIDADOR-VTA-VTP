@@ -1,0 +1,222 @@
+﻿@model COES.MVC.Intranet.Areas.YupanaContinuo.Models.CondicionTermicaModel
+@{
+    ViewBag.Title = "Condiciones Térmicas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/contextmenu.js"></script>
+<script src="~/Content/Scripts/jquery.plugin.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/jquery.timeentry.js"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/contextmenu.css" rel="stylesheet" />
+<script src="~/Content/Scripts/fixedcolumn.js?v=1.2"></script>
+
+<link href="~/Areas/YupanaContinuo/Content/Css/css.css?v=2.0.0" rel="stylesheet" />
+<link href="~/Areas/YupanaContinuo/Content/Css/formulario.css?v=2.0.0" rel="stylesheet" />
+<script src="~/Areas/YupanaContinuo/Content/Scripts/condicionTermica.js?v=2.0.1"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Condiciones Térmicas</div>
+
+    <div class="content-botonera" id="container">
+    </div>
+</div>
+
+<style type="text/css">
+    .btnAcciones {
+        width: 160px !important;
+        margin: 0 auto !important;
+    }
+
+    .tabla_filtro_ho tr td {
+        padding-right: 5px;
+    }
+</style>
+
+<div class="content-hijo" id="mainLayout">
+    <input type="hidden" id="cbCentral" value="@Model.IdCentralSelect" />
+    <input type="hidden" id="cbTipoCentral" value="@Model.IdTipoCentral" />
+    <input type="hidden" id="hfEquipoDefault" value="@Model.IdEquipo" />
+
+    <div class="search-content">
+        <table>
+            <tr>
+                <td style="vertical-align: middle;">
+                    <table class="content-tabla-search tabla_filtro_ho" style="width:auto">
+                        <tr>
+                            <td class="tbform-label">Fecha:</td>
+                            <td>
+                                <input type="text" id="txtFecha" name="Fecha" value="@Model.Fecha" style="width: 94px;" />
+                            </td>
+                            <td class="tbform-label" style="padding-left: 15px;">Hora simulación:</td>
+                            <td>
+                                <select id="cbHoras" style="width:61px;">
+                                    @foreach (var item in Model.ListaHora)
+                                    {
+                                        <option value="@item.Entero1" selected="@item.Selected1">@item.String1</option>
+                                    }
+                                </select>
+
+                                <input type="button" id="btnConsultar" value="Consultar" />
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+
+                <td style="text-align: right;">
+                    @if (Model.TienePermisoAdmin)
+                    {
+                        <input type="button" id="btnActualizar" value="Actualización Automática" />
+                    }
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="mensajeFijo" class="action-alert" style="display: none; margin: 0; margin-bottom: 10px; margin-top: -10px;"></div>
+    <div id="mensajeFijo2" class="action-alert" style="display: none; margin: 0; margin-bottom: 10px; margin-top: -10px;"></div>
+    <div id="mensajePrincipal" class="action-message" style="display: none; margin: 0; margin-bottom: 10px; padding-left: 36px;">Por favor seleccione empresa y la fecha.</div>
+
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#vistaGrafico">Reporte</a></li>
+            <li class='tab'><a href="#vistaDetalle">Detalle</a></li>
+        </ul>
+        <div class='panel-container'>
+
+            <!--Vista gráfico-->
+            <div id="vistaGrafico">
+
+                <div id="barraHerramientaYC" class="search-content" style="padding-top: 3px;padding-bottom: 8px; display: none;background-color: white;">
+                    <table class="table-search" style="width:100%;" role="presentation">
+                        <tbody>
+                            <tr>
+                                <td></td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action item_postoperativa" style="width: 57px;">
+                                        <a href="#" id="btnAgregarCondicionTermica">
+                                            <div class="content-item-action" style="width:55px;">
+                                                <img src="~/Areas/IEOD/Content/Images/btn-add.png" title="Agregar nueva Hora de Operación" /><br />
+                                                <span>Agregar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action item_postoperativa" style="width: 57px;">
+                                    <a href="#" id="btnVerEnvios">
+                                        <div class="content-item-action" style="width:55px;">
+                                            <img src="~/Content/Images/historial.png" alt="logo"><br>
+                                            <span>Historial</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="content-tabla">
+                    <div style="clear:both; height:5px"></div>
+                    <table id="tblInfoEnvio" style="display:none;width:auto">
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: bold;" colspan="2">Información de Envio</td>
+                            </tr>
+                            <tr>
+                                <td>Código: </td>
+                                <td><label id="txtCodigoEnvio" style="font-weight:bold;"></label></td>
+                            </tr>
+                            <tr>
+                                <td>Fecha: </td>
+                                <td><label id="txtFechaEnvio" style="font-weight:bold;"></label></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table id="tblInfo" style="display:none;width:auto">
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: bold;" colspan="2">Información de Envio</td>
+                            </tr>
+                            <tr>
+                                <td>No se ha generado el cálculo de Condiciones Térmicas para esta fecha</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="table-list" id="grafico" style="">
+                        <div class='freeze_table' id='resultado' style='height: auto;'>
+                        </div>
+                    </div>
+
+                    <div style="clear:both; height:5px"></div>
+
+                    <div>
+                        <b>Las opciones de NUEVO, MODIFICAR, ELIMINAR:</b> <br />
+                        <ul>
+                            <li>Clic derecho en el bloque</li>
+                            <li>Solo están disponibles para las plantas térmicas disponibles en el escenario YUPANA.</li>
+                        </ul>
+                    </div>
+
+                    <div class="leyenda_alerta" style="margin-bottom: 15px;">
+                        <table style="width: auto; border-collapse: initial; margin-top: 7px;">
+                            <tbody>
+                                <tr>
+                                    <td style="font-weight: bold;" colspan="5">Leyenda:</td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 82px; color: blue; border: 1px solid #848484; ">Planta Térmica</td>
+                                    <td style="width: 210px; padding-right: 25px; ">Unidad forzada en Escenario Yupana</td>
+
+                                    <td style="width: 82px; color: #335873; border: 1px solid #848484; ">Planta Térmica</td>
+                                    <td style="width: 280px; padding-right: 25px; ">Unidad forzada que no está en Escenario Yupana</td>
+                                </tr>
+
+                                <tr>
+                                    <td></td>
+                                </tr>
+
+                                <tr>
+                                    <td style="width: 50px; background-color: #33B55C !important; color: white; border: 1px solid #848484; "></td>
+                                    <td style="width: 164px; padding-right: 25px; ">HORAS DE OPERACIÓN</td>
+
+                                    <td style="width: 50px; background-color: #4fc3f7 !important; color: white; border: 1px solid #848484; "></td>
+                                    <td style="width: 164px; padding-right: 25px; ">UNIDADES FORZADAS</td>
+
+                                    <td style="width: 50px; border: 1px solid #848484; background-color: #FFA500 !important; color: white;"></td>
+                                    <td style="padding-right: 25px; ">MODIFICADO POR USUARIO</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+            <div id="vistaDetalle">
+                <div class="content-tabla">
+                    <div class="vistaDetalle popup-title" style="width: 790px;"><span id="tituloDetalle"></span></div>
+                    <div class="vistaDetalle" style=" clear:both; height:5px"></div>
+                    <div class="vistaDetalle table-list" id="detalle" style="width: 790px; display: inline-block;"></div>
+                    <div class="vistaDetalle unidades" style="width: 500px; display: inline-block; vertical-align: top; margin-left: 50px; ">
+                        <table id="listado_grupos_modo_view" class="pretty tabla-icono" style="display: none; border: 1px solid #dddddd !important;"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="enviosanteriores" style="z-index:9999999998;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envíos</span></div>
+    <div id="idEnviosAnteriores">
+    </div>
+</div>
+

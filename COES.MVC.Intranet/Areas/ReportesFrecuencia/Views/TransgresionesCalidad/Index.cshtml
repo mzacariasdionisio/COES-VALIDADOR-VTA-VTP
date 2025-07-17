@@ -1,0 +1,216 @@
+﻿@model COES.MVC.Intranet.Areas.ReportesFrecuencia.Models.ReporteFrecuenciaAuditModel
+
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Colocar Valores Nulos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    //var sMensajeExito = "";
+}
+<style>
+    .no-data {
+        text-align: center;
+        color: red;
+        font-weight: bold;
+    }
+</style>
+
+<script>
+    function generarReporte() {
+        var fecha = document.getElementById('txtfecha').value;
+        console.log(fecha);
+        if (fecha == "") {
+            alert('Ingrese una fecha valida');
+        } else {
+            var url = '@Url.Action("ReporteOficial", "TransgresionesCalidad")?fecha=' + fecha;
+            setLocationPage(url);
+        }
+    }
+
+    function consultarReporte() {
+           var fecha = document.getElementById('txtfecha').value;
+           if (fecha == "") {
+               alert('Ingrese una fecha valida');
+           } else {
+               var data = '@Url.Action("ObtenerDatos", "TransgresionesCalidad")?fecha=' + fecha;
+               var dataR1 = [];
+               var dataR2 = [];
+               $.ajax({
+                   url: data,
+                   type: 'POST',
+                   dataType: 'json',
+                   success: function (data) {
+                       data.forEach(function (row) {
+                           if (row["R"] == "1") {
+                               dataR1.push(row);
+                           } else if (row["R"] == "2") {
+                               dataR2.push(row);
+                           }
+                       });
+                       // Llenar tabla 1 con dataR1
+                       var tableBody1 = $("#tabla1 tbody");
+                       tableBody1.empty();
+                       if (dataR1.length > 0) {
+                       dataR1.forEach(function (row) {
+                           var tr = $('<tr>');
+                           tr.append($('<td>').text(row["GPSOSINERG"] || ''));
+                           tr.append($('<td>').text(row["GPS"] || ''));
+                           tr.append($('<td>').text(row["O1"] || '0'));
+                           tr.append($('<td>').text(row["O2"] || '0'));
+                           tr.append($('<td>').text(row["U"] || '0'));
+
+                           tableBody1.append(tr);
+                       });
+                       } else {
+                           var noDataTr = $('<tr>').append($('<td>').attr('colspan', 6).addClass('no-data').text('No hay información con esa fecha'));
+                           tableBody1.append(noDataTr);
+                       }
+                       // Llenar tabla 2 con dataR2
+                       var tableBody = $("#tabla2 tbody");
+                       // Limpiar el contenido del cuerpo de la tabla
+                       tableBody.empty();
+                       if (dataR2.length > 0) {
+                       // Crear filas de la tabla
+                           dataR2.forEach(function (row) {
+                               if (row["U"] === null) {
+                                   // Duplicar la fila para valores vacíos de U
+                                   var tr1 = $('<tr>');
+                                   tr1.append($('<td>').text(row["GPSOSINERG"] || ''));
+                                   tr1.append($('<td>').text(row["GPS"] || ''));
+                                   tr1.append($('<td>').text('T(sostenida)'));
+                                   tr1.append($('<td>').text(row["O1"] || ''));
+                                   tr1.append($('<td>').text(row["O2"] || ''));
+                                   tr1.append($('<td>').text(row["A"] || ''));
+                                   tableBody.append(tr1);
+
+                                   var tr2 = $('<tr>');
+                                   tr2.append($('<td>').text(row["GPSOSINERG"] || ''));
+                                   tr2.append($('<td>').text(row["GPS"] || ''));
+                                   tr2.append($('<td>').text('S(súbita)'));
+                                   tr2.append($('<td>').text(row["O1"] || ''));
+                                   tr2.append($('<td>').text(row["O2"] || ''));
+                                   tr2.append($('<td>').text(row["A"] || ''));
+                                   tableBody.append(tr2);
+                               } else {
+                                   var tr = $('<tr>');
+                                   tr.append($('<td>').text(row["GPSOSINERG"] || ''));
+                                   tr.append($('<td>').text(row["GPS"] || ''));
+                                   // Condicional para el valor de U
+                                   var indicador;
+                                   if (row["U"] === "O") {
+                                       indicador = "T(sostenida)";
+                                   } else if (row["U"] === "U") {
+                                       indicador = "S(súbita)";
+                                   } else {
+                                       indicador = row["U"] || '';
+                                   }
+                                   tr.append($('<td>').text(indicador));
+                                   //tr.append($('<td>').text(row["U"] || ''));
+                                   tr.append($('<td>').text(row["O1"] || ''));
+                                   tr.append($('<td>').text(row["O2"] || ''));
+                                   tr.append($('<td>').text(row["A"] || ''));
+                                   tableBody.append(tr);
+                               }
+
+                       });
+                       } else {
+                           var noDataTr = $('<tr>').append($('<td>').attr('colspan', 6).addClass('no-data').text('No hay información con esa fecha'));
+                           tableBody2.append(noDataTr);
+                       }
+                   },
+                   error: function (err) {
+                       console.log(err);
+                   }
+               });
+           }
+    }
+
+    function setLocationPage(vUrl) {
+
+        var form = $("<form id='tmpForm'></form>");
+        $(document.body).append(form);
+        $(form).attr("action", vUrl);
+        $(form).attr("target", "blank");
+        $(form).attr("method", "post");
+        $(form).submit();
+    }
+
+    function limpiarReporte() {
+        document.getElementById('txtfecha').value = '';
+    }
+
+    $(document).ready(function () {
+        var urlManual = '@Url.Action("DescargarManualUsuario", "TransgresionesCalidad")';
+        $("#btnManualUsuario").click(function () {
+            window.location = urlManual;
+        });
+    });
+
+</script>
+
+<div class="ast">
+    @*@if (@sMensajeExito != null)
+        {            <input type="button" value="Regresar" onclick="location.href='@Url.Action("Index","TransgresionesCalidad")'" alt="Regresar" title="Regresar" />
+            <div class="exito mensajes">@sMensajeExito</div>
+        }*@
+    <div class="form-title" style="display:flex; align-items:center; justify-content:space-between;">
+
+        <div class="content-titulo" style="font-size: 16px; font-weight: normal; white-space: nowrap;">
+            Transgresiones de calidad mensual del producto NTCSE
+        </div>
+
+        <div class="content-botonera" style="display:flex; align-items:center; gap:8px;">
+            <input type="month" id="txtfecha" class="formatFechaHora" value="@DateTime.Today.AddMonths(-1).ToString("yyyy-MM")" />
+            <input type="button" value="Ver Reporte" onclick="consultarReporte()" />
+            <input type="button" value="Generar" onclick="generarReporte()" />
+            <input type="button" value="Limpiar" onclick="limpiarReporte()" />
+            <a href="#" id="btnManualUsuario" style="text-decoration: none; margin-left: 5px; display: inline-block; transform: translateY(-2px);">
+                <div style="display: flex; flex-direction: column; align-items: center; font-size: 12px; line-height: 1.2;">
+                    <img src="~/Content/Images/prn-ico-manual.png" style="height: 25px; margin-bottom: 5px; transform: translateX(6px);">
+                    <span style="color: #278CCC;">Manual de Usuario</span>
+                </div>
+            </a>
+        </div>
+    </div>
+    <div class="content-hijo" style="padding-top:8px">
+        @*<div class="listado" id="listado">
+                @Html.Partial("Lista", Model)
+            </div>*@
+        <div class="lis tado" id="listado">
+            <h4> Número de ocurrencias</h4>
+            <table border="0" class="pretty tabla-icono" id="tabla1">
+                <thead>
+                    <tr>
+                        <th>IDENTIFICADOR</th>
+                        <th>Código</th>
+                        <th>V_SOSTENIDA_1</th>
+                        <th>V_SOSTENIDA_2</th>
+                        <th>V_SUBITA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Las filas de datos se llenarán aquí -->
+                </tbody>
+            </table>
+            <br>
+            <br>
+            <h4> Listado de ocurrencias</h4>
+
+            <table border="0" class="pretty tabla-icono" id="tabla2">
+                <thead>
+                    <tr>
+                        <th>Punto medición</th>
+                        <th>Código</th>
+                        <th>Indicador</th>
+                        <th>Fecha</th>
+                        <th>Intervalo</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Las filas de datos se llenarán aquí -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

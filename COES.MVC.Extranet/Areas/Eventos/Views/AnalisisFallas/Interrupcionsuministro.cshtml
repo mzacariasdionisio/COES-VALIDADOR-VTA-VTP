@@ -1,0 +1,325 @@
+﻿@model COES.MVC.Extranet.Areas.Eventos.Models.AnalisisFallasModel
+
+@{
+    ViewBag.Title = "Detalle del Evento";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link href="~/Content/Css/popup.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css?v=1.1" rel="stylesheet" />
+
+<script src="~/Content/Scripts/moment.js"></script>
+<link href="~/Content/Css/css.css" rel="stylesheet" />
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<link href="~/Areas/Eventos/Content/Css/ctaf.css?v=1.1" rel="stylesheet" />
+<!--la referencia de los archivos estan al final del archivo-->
+
+<div class="form-title_intranet">
+    <div class="content-titulo">Detalle del Evento (@(Model.oAnalisisFallaDTO.CodigoEvento)).</div>
+    <div class="content-botonera">
+        <input type="button" id="btnIrListado" value="Ir al Listado">
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div id="tab-container" class="tab-container">
+        <ul class='etabs'>
+            <li class='tab'><a href="#tabs1">Datos del evento</a></li>
+            <li id="tabInterrup" class='tab' style="display: none"><a href="#tabs2">Interrupciones de suministros</a></li>
+        </ul>
+        <div class='panel-container'>
+            <div id="tabs1">
+                <div id="mensaje" class="action-message" hidden style="margin:0; margin-bottom:10px">Complete los datos del evento y presione "Grabar".</div>
+                <input type="hidden" id="txtAfecodi" value="@ViewBag.Afecodi" />
+                <input type="hidden" id="Afecodi" value="@ViewBag.Afecodi" />
+                <input type="hidden" id="txtFechaInterrupcion" value="@Model.oEventoDTO.FechaInterrupcion" />
+                <input type="hidden" id="txtMaxSegFechaIni" value="@Model.oEventoDTO.NumMaxSegundosInicio" />
+                <input type="hidden" id="txtEnPlazo" value="@Model.oEventoDTO.EnPlazo" />
+
+                <div class="content-registro" style="width:auto">
+
+                    <div style="clear:both; height:5px;"></div>
+                    <div style="clear:both; height:5px;"></div>
+
+                    <table cellpadding="8">
+                        <tr>
+                            <td class="registro-label" style="width:150px;">Nro Evento:</td>
+                            <td class="registro-control" colspan="3">@Model.oAnalisisFallaDTO.CodigoEvento</td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Hora Inicio:</td>
+                            <td class="registro-control"><div style="width: 145px">@Model.oEventoDTO.Eveninidesc</div></td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Hora Fin:</td>
+                            <td class="registro-control"><div style="width: 145px">@Model.oEventoDTO.Evenfindesc</div></td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Resumen del Evento:</td>
+                            <td class="registro-control" style="padding-bottom: 18px; padding-top: 18px;"><div style="width: 700px">@Model.oEventoDTO.EVENASUNTO</div></td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Descripción:</td>
+                            <td class="registro-control"><div style="width: auto">@Model.oEventoDTO.EVENDESC</div></td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Equipos Involucrados:</td>
+                            <td class="registro-control" style="padding:18px;">
+                                <table class="tabla-formulario" id="tablaEquipo">
+                                    <thead>
+                                        <tr>
+                                            <th>Empresa</th>
+                                            <th>Ubicación</th>
+                                            <th>Tipo</th>
+                                            <th>Central</th>
+                                            <th>Equipo</th>
+                                            <th>Nivel Tensión</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.ListaEquipo)
+                                        {
+                                            <tr>
+                                                <td style="text-align: center;">@item.EMPRNOMB</td>
+                                                <td style="text-align: center;">@item.TAREAABREV @item.AREANOMB</td>
+                                                <td style="text-align: center;">@item.FAMABREV</td>
+                                                <td style="text-align: center;">@item.DESCENTRAL</td>
+                                                <td style="text-align: center;">@item.Equiabrev</td>
+                                                <td style="text-align: center;">@item.Equitension</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Eventos SCO:</td>
+                            <td class="registro-control" style="padding:18px;">
+                                <table aria-describedby="equipos" class="tabla-formulario" id="tablaEquipo">
+                                    <caption></caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Fecha evento</th>
+                                            <th scope="col">Descripción evento</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.LstEvento)
+                                        {
+                                            <tr>
+                                                <td style="text-align: center;">@item.EVENINI</td>
+                                                <td style="text-align: left;">@item.EVENASUNTO</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div id="tabs2" style="display: none">
+                <div class='action-message' id='mensajeInterrPlazo' style="margin-bottom: 5px; margin-top: 10px; ">Por favor seleccione empresa y tipo información a reportar.</div>
+                <div class='' id='mensajeInterr' style="margin-bottom: 5px; margin-top: 10px; "></div>
+
+                <div class="search-content" style="margin-top:5px; padding:10px">
+                    <table class="table-search">
+                        <tbody>
+                            <tr>
+                                <td>Hora inicio:</td>
+                                <td>
+                                    <select id="cbFechaHoraInicio" name="IdFechaHoraInicio"  style="width:290px">
+                                        @foreach (var item in Model.LstEvento)
+                                        {
+                                            <option value="@item.AFECODI">@item.EVENINI.Value.ToString("dd/MM/yyyy HH:mm:ss")</option>
+                                        }
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Empresa:</td>
+                                <td>
+                                    <select id="cbEmpresa" name="IdEmpresa" style="width:290px">
+                                        @foreach (var item in Model.ListaEmpresa)
+                                        {
+                                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td>Tipo:</td>
+                                <td>
+                                    <select id="CboReportar" name="IdReportar" style="width:247px;">
+                                        @foreach (var item in Model.ListaTipoInformacion)
+                                        {
+                                            <option value="@item.Fdatcodi">@item.Fdatnombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <table cellpadding="0" cellspacing="0" border="0" id="barraHerramientas">
+                                        <tbody>
+                                            <tr>
+                                                <td class="content-action">
+                                                    <div id="celdaEditar" class="" style="">
+                                                        <a href="#" id="btnEditarEnvio">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Content/Images/edit.png" /><br />
+                                                                <span>Editar</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="content-action">
+                                                    <div id="celdaDescargar" style="display: block;">
+                                                        <a href="#" id="btnDescargarFormato">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Content/Images/bajar.png"><br>
+                                                                <span>Descargar</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="content-action">
+                                                    <div id="celdaImportar" style="display: block; position: relative;">
+                                                        <a href="#" id="btnImportar" style="position: relative; z-index: 1;">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Content/Images/subir.png"><br>
+                                                                <span>Importar</span>
+                                                            </div>
+                                                        </a>
+                                                        <div id="html5_1e0e3oe86rmv13b717c727d1cli3_container" class="moxie-shim moxie-shim-html5" style="position: absolute; top: 0px; left: 0px; width: 0px; height: 0px; overflow: hidden; z-index: 0;"><input id="html5_1e0e3oe86rmv13b717c727d1cli3" type="file" style="font-size: 999px; opacity: 0; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"></div>
+                                                    </div>
+                                                </td>
+                                                <td class="content-action">
+                                                    <div>
+                                                        <a href="#" id="btnEnviarDatos">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Content/Images/enviar.png"><br>
+                                                                <span>Enviar</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="content-action">
+                                                    <div>
+                                                        <a href="#" id="btnMostrarErrores">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Content/Images/errores.png"><br>
+                                                                <span>Ver errores</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="content-action">
+                                                    <div>
+                                                        <a href="#" id="btnVerEnvios">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Content/Images/envios.png"><br>
+                                                                <span>Ver envíos</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="content-action">
+                                                    <div>
+                                                        <a href="#" id="btnEliminarEnvios">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Content/Images/eliminar_envios.png"><br>
+                                                                <span>Eliminar envíos</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="content-tabla" id="excelwebSuministro" style="display: none">
+
+                    <div id="contentEracmf">
+                        <div class="form-title" style="color: #278CCC; margin-bottom:0px;margin-top:5px;margin-bottom:10px;font-size:15px;">INTERRUPCIÓN POR ACTIVACIÓN DE ERACMF</div>
+
+                        <div id="tblInterrupcionEracmf" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 440px; overflow: auto; width: 100%;">
+                        </div>
+                        <p class="leyenda_excel" style="display:none"><b>Ingrese los datos solo en los casilleros en blanco.</b></p>
+                    </div>
+
+                    <div id="contentInterrupciones" style="display:none">
+                        <div class="form-title" style="color: #278CCC; margin-bottom:0px;margin-top:5px;margin-bottom:10px;font-size:15px;">INTERRUPCIÓN</div>
+
+                        <div id="tblInterrupciones" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 350px; overflow: auto; width: 100%">
+                        </div>
+
+                        <div class="nota leyenda_excel" style="margin:0;margin-top:10px; margin-bottom:10px;width:300px; display: none"><b>Nota:</b> Declarar por cada circuito de media tensión.</div>
+                        <p class="leyenda_excel" style="display:none"><b>Ingrese los datos solo en los casilleros en blanco.<br />Insertar/Eliminar/Copiar fila: Clic derecho sobre alguna celda del excel web.</b></p>
+                    </div>
+
+                    <div id="contentSuministros" style="display:none">
+                        <div class="form-title" style="color: #278CCC; margin-bottom:0px;margin-top:5px;margin-bottom:10px;font-size:15px;">REDUCCIÓN DE SUMINISTROS</div>
+
+                        <div id="tblSuministros" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 350px; overflow: auto; width: 100%;">
+                        </div>
+
+                        <div class="nota leyenda_excel" style="margin:0;margin-top:10px; margin-bottom:10px;width:300px; display: none"><b>Nota:</b> Declarar por cada circuito de media tensión.</div>
+                        <p class="leyenda_excel" style="display: none"><b>Ingrese los datos solo en los casilleros en blanco.<br />Insertar/Eliminar/Copiar fila: Clic derecho sobre alguna celda del excel web.</b></p>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="enviosInterrupcion" class="general-popup" style="z-index:9999999999;height: 350px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Envíos anteriores</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="listadoEnvio">
+            <table id="tablalenvio" style="width:330px" class="pretty tabla-adicional">
+                <thead>
+                    <tr>
+                        <th>ID envío</th>
+                        <th>Fecha y Hora</th>
+                        <th>Usuario</th>
+                        <th>Plazo</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="erroresDatos" class="general-popup" style="z-index:9999999999;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="listadoErrores">
+            <table id="tblListaerrores" style="width:500px" class="pretty tabla-adicional">
+                <thead>
+                    <tr>
+                        <th>ClassName</th>
+                        <th>Celda</th>
+                        <th>Valor</th>
+                        <th>Tipo de error</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Areas/Eventos/Content/Scripts/AnalisisFallas/Interrupcionsuministro.js?v=2.1"></script>

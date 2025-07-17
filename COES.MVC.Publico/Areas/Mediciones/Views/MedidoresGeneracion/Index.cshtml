@@ -1,0 +1,235 @@
+﻿@model COES.MVC.Publico.Areas.Mediciones.Models.MedidoresGeneracionModel
+
+@{
+    ViewBag.Title = "Medi​dores de Generación";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@*<link href="~/Areas/Mediciones/Content/Css/mediciones.css?v=2.0" rel="stylesheet" />*@
+<script src="~/Areas/Mediciones/Content/Scripts/medidores.js?v=2.2"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<style type="text/css">
+    .dataTables_empty {
+        text-align: left;
+    }
+</style>
+
+<div class="main-banner" style="margin-top: -15px; background-image: url(../Content/Images/Banners/CaracteristicasSEIN.jpg)">
+</div>
+<div style="clear:both"></div>
+<div class="container">
+    <div class="row">
+        <div class="col col-md-3 order-1 order-md-0">
+            <nav class="sidebar">
+                <ul class="sidebar-nav list-unstyled">
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/DespachoProgramadoDiario" class="sidebar-nav--link">Despacho Programado Diario</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/DespachoProgramadoSemanal" class="sidebar-nav--link">Despacho Programado Semanal</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/CostoVariables" class="sidebar-nav--link">Costos Variables</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/DespachoEjecutadoDiario" class="sidebar-nav--link">Despacho Ejecutado Diario</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/eventos/mantenimiento/" class="sidebar-nav--link">Consulta de Mantenimientos</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/PotenciaMediaHorariaIndisponible" class="sidebar-nav--link">Potencia Media Horaria Indisponible de Unidades de Generación, Enlaces de Transmisión y Subestaciones</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/mediciones/medidoresgeneracion" class="sidebar-nav--link sidebar-nav--link-active">Medidores de Generación</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/Transferencias/CostosMarginales" class="sidebar-nav--link">Costos Marginales</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/ConsultaFrecuenciaDiariaNTCSE" class="sidebar-nav--link">Consulta de Frecuencia Diaria (NTCSE)</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="col col-md-9 mb-md-2">
+            <div class="coes-box mb-3" style="overflow: inherit;">
+                <div class="coes-box--header coes-box--header--center-aligned">
+                    <h3 class="coes-box--title">Medi​dores de Generación</h3>
+                </div>
+                <div class="coes-box--content container" id="mainLayout">
+                    <div class="coes-form-item--error coes-form-item coes-box coes-box--content pt-3 pe-3 ps-3 mb-3" id="mensaje" style="display: none;">
+                    </div>
+                    <div class="coes-filters d-flex ">
+                        <form action="" class="w-100">
+                            <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap">
+                                <div class="coes-form-item">
+                                    <label class="d-block">Fecha inicial:</label>
+                                    <input type="date" id="txtFechaInicial" class="coes-form-item--date" value="@Model.FechaInicio" />
+                                </div>
+                                <div class="coes-form-item">
+                                    <label class="d-block">Fecha final:</label>
+                                    <input type="date" id="txtFechaFinal" class="coes-form-item--date" value="@Model.FechaFin" />
+                                </div>
+                                <div class="coes-form-item">
+                                    <label>Tipo empresa:</label>
+                                    <select id="cbTipoEmpresa" multiple="multiple">
+                                        @foreach (var item in Model.ListaTipoEmpresas)
+                                        {
+                                            <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hfTipoEmpresa" />
+                                </div>
+                                <div class="coes-form-item">
+                                    <label>Empresa:</label>
+                                    <div id="empresas"></div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap mt-2">
+                                <div class="coes-form-item">
+                                    <label>Tipo de Generación:</label>
+                                    <select id="cbTipoGeneracion" multiple="multiple">
+                                        @foreach (var item in Model.ListaTipoGeneracion)
+                                        {
+                                            <option value="@item.Tgenercodi">@item.Tgenernomb</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="coes-form-item">
+                                    <label>Parámetro:</label>
+                                    <select id="cbCentral" style="display:none;">
+                                        <option value="0">TODOS</option>
+                                        <option value="1" selected="selected">COES</option>
+                                        <option value="3">GENERACION RER</option>
+                                    </select>
+                                    <select id="cbParametro">
+                                        <option value="1">Potencia Activa (MW)</option>
+                                        <option value="5">Potencia Reactiva (MVAR)</option>
+                                        <option value="3">Servicios Auxiliares</option>
+                                    </select>
+                                </div>
+                                <div class="coes-form-item">
+                                    <input type="button" id="btnBuscar" class="coes-form-item--submit" value="Consultar datos" />
+                                </div>
+                                <div class="coes-form-item">
+                                    <input type="button" id="btnExportar" class="coes-form-item--submit" value="Exportar" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            @*<div class="content-tabla">
+                    <div class="tabla-header" style="height:34px">
+                        <div class="table-paginado" id="paginado"></div>
+                        <div style="clear:both"></div>
+                    </div>
+                    <div style="clear:both"></div>
+                    <div class="table-list" id="listado"></div>
+                    <div style="clear:both"></div>
+                </div>*@
+
+        <div class="table-responsive">
+            <div class="table-responsive" id="listado" style="width: 100%;"></div>
+            <div style="clear:both"></div>
+            <div class="pager-container" style="height:34px">
+                <div class="table-paginado" id="paginado"></div>
+                <div style="clear:both"></div>
+            </div>
+        </div>
+
+
+
+
+
+            <div style="clear:both"></div>
+            <input type="hidden" id="hfEmpresa" />
+            <input type="hidden" id="hfTipoGeneracion" />
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hfFechaActualInicio" value="@Model.FechaActualInicio" />
+<input type="hidden" id="hfFechaActualFin" value="@Model.FechaActualFin" />
+<input type="hidden" id="hfFechaAnteriorInicio" value="@Model.FechaAnteriorInicio" />
+<input type="hidden" id="hfFechaAnteriorFin" value="@Model.FechaAnteriorFin" />
+
+<div class="modal fade" id="divExportar" tabindex="-1" aria-labelledby="popupDisclaimerLabel" aria-hidden="true" style="overflow: inherit;">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <button type="button" class="coes-modal-close--button b-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header text-center">
+                <h5 class="modal-title" id="popupDisclaimerLabel">Exportar Datos</h5>
+            </div>
+            <div class="modal-body">
+                    <div class="coes-box--content container" style="overflow: inherit;">
+                        <div class="coes-filters d-flex ">
+                            <form action="" class="w-100">
+                                <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap">
+                                    <div class="col col-md-3">
+                                        <div class="coes-form-item">
+                                            <label>Desde</label>
+                                            <input type="date" id="txtExportarDesde" class="coes-form-item--date" value="@Model.FechaInicio" />
+                                        </div>
+                                    </div>
+                                    <div class="col col-md-3">
+                                        <div class="coes-form-item">
+                                            <label>Hasta</label>
+                                            <input type="date" id="txtExportarHasta" class="coes-form-item--date" value="@Model.FechaFin" />
+                                        </div>
+                                    </div>
+                                    <div class="col col-md-4">
+                                        <div class="coes-form-item">
+                                            <label>Parámetro</label>
+                                            <select id="cbParametroExportar" multiple="multiple">
+                                                <option value="1">Potencia Activa (MW)</option>
+                                                <option value="5">Potencia Reactiva (MW)</option>
+                                                <option value="3">Servicios Auxiliares</option>												
+												<option value="2">Potencia Reactiva Capacitiva (MVAR)</option>
+												<option value="4">Potencia Reactiva Inductiva (MVAR)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                 </div>
+                                    <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap mt-3">
+                                        <div class="col col-md-8">
+                                            <div class="coes-form-item">
+                                                <div class="coes-form-item coes-radio-group">
+                                                        <input type="radio" id="FormatoHorizontal" name="rbFormato" value="1" checked="checked" />
+                                                        <label for="FormatoHorizontal" class="d-inline cs-3" style=" margin-right: 15px;">Formato Excel Horizontal</label>
+
+                                                        <input type="radio" id="FormatoVertical" name="rbFormato" value="2" />
+                                                        <label for="FormatoVertical" class="d-inline" style=" margin-right: 15px;">Formato Excel Vertical</label>
+
+                                                        <input type="radio" id="FormatoCSV" name="rbFormato" value="3" />
+                                                        <label for="FormatoCSV" class="d-inline" style=" margin-right: 15px;">Formato CSV</label>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col col-md-4">
+                                            <div class="coes-form-item">
+                                                <input type="button" id="btnProcesarFile" class="coes-form-item--submit" value="Aceptar" />
+                                                <input type="hidden" id="hfParametro" />
+                                            </div>
+                                        </div>
+
+                                    </div>
+</form>
+                                        <input type="hidden" id="hfParametro" />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+

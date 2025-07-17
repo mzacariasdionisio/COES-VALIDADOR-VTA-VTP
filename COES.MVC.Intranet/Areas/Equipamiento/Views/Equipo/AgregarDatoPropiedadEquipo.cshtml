@@ -1,0 +1,102 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.ValorPropiedadModel
+
+@using (Html.BeginForm("", "Equipo", FormMethod.Post, new { @class = "form-search", name = "frmValorPropiedad", id = "frmValorPropiedad" }))
+{
+    <input id="hdnEquipo" type="hidden" name="Equicodi" value="@Model.Equicodi" />
+    <input id="hdnPropiedad" type="hidden" name="Propcodi" value="@Model.Propcodi" />
+    <table class="content-tabla-search" style="width:auto">
+        <tr>
+            <td class="tbform-label">Propiedad:</td>
+            <td>
+                @Model.PropNomb
+            </td>
+        </tr>
+        @if (Model.File)
+        {
+            <tr>
+                <td class="tbform-label">Valor:</td>
+                <td>
+                    <div class="formulario-control" style="width:120px">
+                        <input type="button" id="btnSelectFile" value="Seleccionar" />
+                    </div>
+                </td>
+            </tr>
+        }
+        else
+        {
+            <tr>
+                <td class="tbform-label">Valor:</td>
+                <td>
+                    <input id="txtValor" type="text" name="Valor" />
+                </td>
+            </tr>
+        }
+    </table>
+
+}
+<div id="progreso"></div>
+<div id="fileInfo"></div>
+<div id="contenedor"style="clear:both; width:100px; text-align:center; margin:auto; margin-top:20px">
+    <input type="button" value="Guardar" id="btnGuardarValor" />
+</div>
+@if (Model.File)
+{
+    <script type="text/javascript">
+        var controlador = siteRoot + 'Equipamiento/equipo/';
+
+        var uploader = new plupload.Uploader({
+            runtimes: 'html5,flash,silverlight,html4',
+            browse_button: 'btnSelectFile',
+            container: document.getElementById('contenedor'),
+            url: controlador + 'AgregarValorPropiedadArchivo?iEquipo=' + $('#hdnEquipo').val() + '&iPropiedad=' + $('#hdnPropiedad').val(),
+            multipart_params: {
+                "modelo": $('#frmValorPropiedad').serialize()
+            },
+            multi_selection: false,
+            init: {
+                PostInit: function () {
+                    document.getElementById('btnGuardarValor').onclick = function () {
+                        if (uploader.files.length > 0) {
+                            uploader.start();
+                        }
+                        else
+                            loadValidacionFile("Seleccione archivo.");
+                        return false;
+                    };
+                },
+                FilesAdded: function (up, files) {
+                    if (uploader.files.length == 2) {
+                        uploader.removeFile(uploader.files[0]);
+                    }
+                    plupload.each(files, function (file) {
+                        loadInfoFile(file.name, plupload.formatSize(file.size));
+                    });
+                    up.refresh();
+                },
+                UploadProgress: function (up, file) {
+                    mostrarProgreso(file.percent);
+                },
+                UploadComplete: function (up, file) {
+                    mostrarExitoOperacion();
+                    $('#popupValorPropiedad').bPopup().close();
+                    BuscarDatosPropiedades();
+                },
+                Error: function (up, err) {
+                    mostrarError();
+                }
+            }
+        });
+        uploader.init();
+    </script>
+}
+else
+{
+    <script>
+        $(function () {
+            $('#btnGuardarValor').click(function () {
+                guardarValorPropiedad();
+            });
+        });
+    </script>
+}
+

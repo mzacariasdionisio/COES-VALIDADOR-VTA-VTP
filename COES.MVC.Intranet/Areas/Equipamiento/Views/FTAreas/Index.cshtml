@@ -1,0 +1,188 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.FTAreasModel
+@{
+    ViewBag.Title = "Administración de Correos Áreas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/datatable.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<link href="~/Content/Css/email-autocomplete.css?v=1.6" rel="stylesheet" />
+<script src="~/Content/Scripts/email-autocomplete.js?v=1.6"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTAreas/areas.js?v=1.6"></script>
+<link href="~/Areas/Equipamiento/Content/Css/css.css?v=1.6" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Administración de Correos Áreas</div>
+    <div class="content-botonera">
+        <input type="button" id="btnNuevo" value="Nuevo" style="" />
+        <input type="button" id="btnCorreosAdminFT" value="{CORREOS_ADMIN_FT}" style="" />
+        <input type="button" id="btnExportar" value="Exportar" style="" />
+    </div>
+</div>
+
+
+<div class="content-hijo">
+    <input type="hidden" id="hdPermisoAdministracion" value="@Model.TienePermisoAdmin" />
+    <input type="hidden" id="hdExisteCorreoAdmin" value="" />
+    <div id="mensaje"></div>
+
+    <div class="content-tabla">
+        <div class="table-list" id="listado">    </div>
+    </div>
+
+</div>
+
+<div id="popupEdicion" class="general-popup" style="min-width:900px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><div id="tituloPopup"></div></div>
+    <div class="popup-text" id="contenidoEdicion">
+
+        <div class="content-registro">
+
+            <form id="frmRegistroIngreso">
+                <div id="mensaje_popupCorreo" class="action-message">Por favor ingrese los datos exigidos</div>
+                <input type="hidden" id="hdAccion" />
+                <input type="hidden" id="hdIdArea" />
+                <table id="tablaRegistro">
+                    <tr>
+                        <td class="tbform-label">Nombre Área COES:</td>
+                        <td>
+                            <input type="text" id="txtArea" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label">Correos Relacionados(*):</td>
+                        <td class="registro-control">
+                            <select id="txtEmail2" class="contacts" placeholder="Ingrese correos..."></select>
+                            
+                        </td>
+                        @*<td>
+                            <a onclick="verRoles();" title="Ver roles de correos relacionados"><img src="@Url.Content("~/Content/Images/btn-rol.png")" alt="" style="cursor: pointer;"></a>
+                        </td>*@
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="font-size: 11px; font-style:italic;">
+                            (*) Para agregar correos, ingrese un correo con formato válido en la casilla y presione la tecla Enter.
+                        </td>
+                    </tr>
+                </table>
+
+                <div style="padding-top: 10px;">
+                    <fieldset style="padding-bottom: 5px;">
+                        <legend><strong>Nota</strong></legend>
+                        Al guardar la información, el sistema asigna por defecto el rol <b>"Usuario Intranet Areas Ficha Técnica - Permiso Total”</b> a los usuarios del área, si y solo si el usuario no tenga asociado previamente algún rol de área. 
+
+                        <div style="padding-top: 15px;">
+                            <b>Permisos en los roles de áreas</b>
+                            <ul type=”A”>
+                                <li><b>Rol Usuario Intranet Áreas Ficha Técnica - Permiso Total</b>. Los usuarios con este rol tiene permiso de revisar la información del envío y pueden acceder a los archivos confidenciales y no confidenciales.</li>
+                                <li><b>Rol Usuario Intranet Áreas Ficha Técnica - Solo No Confidenciales</b>. Los usuarios con este rol tiene permiso de revisar la información del envío y pueden acceder solo a los archivos no confidenciales.</li>
+                            </ul>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <div id="bloqueBotones">
+                    <div style="width:200px; margin:auto; text-align:center; margin-top:20px">
+                        <input type="button" id="btnGrabarIngreso" value="Guardar" />
+                        <input type="button" id="btnCancelarIngreso" value="Cancelar" onclick="cerrarPopup('popupEdicion')" />
+                    </div>
+                </div>
+            </form>
+
+        </div>
+
+        
+
+    </div>
+</div>
+
+<div id="popupCorreosAdminFT" class="general-popup" style="min-width:900px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Edición de los correos de la administración de la ficha técnica </span></div>
+    <div class="popup-text">
+        <div id="mensaje_popupAdminFT"></div>
+        <div class="content-registro">
+
+            <form id="frmRegistroIngresoFT">
+
+                <table id="tablaRegistroFT" style="margin: 0 auto;">
+                    <tr style="height: 20px;">
+                        <td class="tbform-label">Usuario Creación:</td>
+                        <td>
+                            <div style="" id="usuarioCFT">@Model.Areas.Faremusucreacion</div>
+                        </td>
+                    </tr>
+                    <tr style="height: 20px;">
+                        <td class="tbform-label">Fecha Creación:</td>
+                        <td>
+                            <div style="" id="fechaCFT">@Model.Areas.FechaCreacionDesc</div>
+                        </td>
+                    </tr>
+                    <tr style="height: 20px;">
+                        <td class="tbform-label">Usuario Modificación:</td>
+                        <td>
+                            <div style="" id="usuarioMFT">@Model.Areas.Faremusumodificacion</div>
+                        </td>
+                    </tr>
+                    <tr style="height: 20px;">
+                        <td class="tbform-label">Fecha Modificación:</td>
+                        <td>
+                            <div style="" id="fechaMFT">@Model.Areas.FechaModificacionDesc</div>
+                        </td>
+                    </tr>
+                    <tr style="height: 20px;">
+                        <td class="tbform-label">Variable:</td>
+                        <td>
+                            <div style="" id="">{CORREOS_ADMIN_FT}</div>
+                        </td>
+                    </tr>
+                    <tr style="height: 20px;">
+                        <td class="tbform-label">Correos Relacionados(*):</td>
+                        <td class="registro-control">
+                            @*<input type="text" id="txtEmail" />*@
+                            <select id="txtEmailFT" class="contacts" placeholder="Ingrese correos del área de la administración de Ficha Técnica..."></select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="font-size: 11px; font-style:italic;">
+                            (*) Para agregar correos, ingrese un correo con formato válido en la casilla y presione la tecla Enter.
+                        </td>
+                    </tr>
+                </table>
+
+
+                <div id="bloqueBotonesCFT">
+                    <div style="width:200px; margin:auto; text-align:center; margin-top:20px">
+                        <input type="button" id="btnGuardarCFT" value="Guardar" />
+                        <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupCorreosAdminFT')" />
+                    </div>
+                </div>
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+<div id="popupDescRolesAreas" class="general-popup" style="min-width:800px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Roles Área de los correos relacionados </span></div>
+    <div class="popup-text">
+        <div id="mensaje_popupRoles"></div>
+        <div class="content-registro">
+            <div id="divRolPT">
+                Usuarios del área con rol <b>Usuario Intranet Areas Ficha Técnica - Permiso Total</b>: <div  id="correosPT" style="margin-left: 30px; margin-bottom: 10px; "></div>
+
+            </div>
+            <div id="divRolNSC">
+                Usuarios del área con rol <b>Usuario Intranet Areas Ficha Técnica - Solo No Confidenciales</b>: <div id="correosNSC" style="margin-left: 30px; margin-bottom: 10px; "></div>
+
+            </div>
+        </div>
+
+    </div>
+</div>

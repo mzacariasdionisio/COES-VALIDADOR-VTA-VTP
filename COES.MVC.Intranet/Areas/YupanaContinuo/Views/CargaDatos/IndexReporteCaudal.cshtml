@@ -1,0 +1,238 @@
+﻿@model COES.MVC.Intranet.Areas.YupanaContinuo.Models.ReporteModel
+@{
+    ViewBag.Title = "Caudales";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Areas/YupanaContinuo/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Areas/YupanaContinuo/Content/Scripts/handsontable.full.min.js"></script>
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<link href="~/Areas/YupanaContinuo/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Areas/YupanaContinuo/Content/Scripts/cargadatoRecursoYupana.js?v=1.1"></script>
+<script src="~/Areas/YupanaContinuo/Content/Scripts/configuracionRecursoYupana.js"></script>
+
+<input type="hidden" id="tipoConfiguracion" value="D" />
+<input type="hidden" id="tyupcodi" value="@Model.Tyupcodi" />
+<input type="hidden" id="yupcfgcodi" value="0" />
+<input type="hidden" id="cyupcodi" value="0" />
+
+<div class="form-title">
+    <div class="content-titulo">Reporte de Caudales</div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div class="search-content">
+        <table>
+            <tr>
+                <td style="vertical-align: middle;">
+                    <table class="content-tabla-search tabla_filtro_ho" style="width:auto">
+                        <tr>
+                            <td class="tbform-label">Fecha:</td>
+                            <td>
+                                <input type="text" id="txtFecha" name="Fecha" value="@Model.Fecha" style="width: 94px;" />
+                            </td>
+                            <td class="tbform-label" style="padding-left: 15px;">Hora simulación:</td>
+                            <td>
+                                <select id="cbHora" style="width:61px;">
+                                    @foreach (var item in Model.ListaHora)
+                                    {
+                                        <option value="@item.Entero1" selected="@item.Selected1">@item.String1</option>
+                                    }
+                                </select>
+
+                                <input type="button" id="btnConsultar" value="Consultar" />
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+
+                <td style="text-align: right;">
+                    @if (Model.TienePermisoAdmin)
+                    {
+                        <input type="button" id="btnActualizar" value="Actualización Automática" />
+                    }
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#vistaReporte">Reporte</a></li>
+            <li class='tab'><a href="#vistaDiario">Diario</a></li>
+        </ul>
+        <div class='panel-container'>
+            <div id="vistaReporte">
+
+                <div id="mensaje2" style="margin:0; margin-bottom:10px; display: none"></div>
+
+                <div id="barraHerramientaYC" class="search-content" style="padding-top: 3px;padding-bottom: 8px; display: none;background-color: white;">
+                    <table class="table-search" style="width:100%;" role="presentation">
+                        <tbody>
+                            <tr>
+                                <td></td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action item_postoperativa" style="width: 57px;">
+                                        <a href="#" id="btnImportarExtranet">
+                                            <div class="content-item-action" style="width:146px;">
+                                                <img src="~/Content/Images/database.png" alt="logo"><br>
+                                                <span>Actualizar desde Extranet</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action" style="width: 57px;">
+                                    <a href="#" id="btnDescargarF">
+                                        <div class="content-item-action" style="width:55px;">
+                                            <img src="~/Content/Images/bajar.png" alt="logo"><br>
+                                            <span>Descargar</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action item_postoperativa" style="width: 57px;">
+                                        <a href="#" id="btnGuardar">
+                                            <div class="content-item-action" style="width:55px;">
+                                                <img src="~/Content/Images/enviar.png" alt="logo"><br>
+                                                <span>Enviar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action item_postoperativa" style="width: 57px;">
+                                    <a href="#" id="btnMostrarErrores">
+                                        <div class="content-item-action" style="width:55px;">
+                                            <img src="~/Content/Images/errores.png" alt="logo"><br>
+                                            <span>Errores</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td class="content-action item_postoperativa" style="width: 57px;">
+                                    <a href="#" id="btnVerHistorial">
+                                        <div class="content-item-action" style="width:55px;">
+                                            <img src="~/Content/Images/historial.png" alt="logo"><br>
+                                            <span>Historial</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="content-tabla">
+                    <div style="padding-bottom: 20px;">
+
+                        <div class="bloque" style="">
+                            <div class="cuadro-sh td_fuente_" style="float:left;"> </div>
+                            <div style="float:left;padding-left: 5px; padding-right: 20px;"> <b>Caudal Extranet Hidrología TR</b></div>
+                        </div>
+                        <div class="bloque" style="">
+                            <div class="cuadro-sh td_fuente_3" style="float:left;"> </div>
+                            <div style="float:left;padding-left: 5px; padding-right: 20px;"> <b>Aporte Embalse / Planta Hidraulica Yupana</b></div>
+                        </div>
+                        <div class="bloque" style="">
+                            <div class="cuadro-sh td_fuente_5" style="float:left;"> </div>
+                            <div style="float:left;padding-left: 5px; padding-right: 20px;"> <b>Valores modificados manualmente por el usuario</b></div>
+                        </div>
+
+                    </div>
+
+                    <div id="htTablaWeb" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 440px; overflow: hidden;">
+
+                    </div>
+
+                </div>
+
+
+            </div>
+            <div id="vistaDiario">
+
+                <div id="mensaje" style="margin:0; margin-bottom:10px; display: none"></div>
+
+                <div id="barra_configuracion" class="search-content" style="padding-top: 3px; padding-bottom: 8px; display: none; background-color: white;">
+                    <table>
+                        <tr>
+                            <td style="vertical-align: middle;">
+                                <table class="content-tabla-search tabla_filtro_ho" style="width:auto">
+                                    <tr>
+                                        @if (Model.TienePermisoAdmin)
+                                        {
+                                            <td>
+                                                <input type="button" id="btnNuevo" value="Nuevo">
+                                                <input type="button" id="btnActualizarSoloReporte" value="Actualizar Reporte">
+                                            </td>
+                                        }
+                                        <td></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="div_reporte" class="content-tabla">
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Formulario de creación / edción de configuración-->
+<div id="popup_formulario" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span></span></div>
+
+    <div id="div_formulario">
+    </div>
+</div>
+
+<div id="div_historial" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Historial Versiones</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaVersion">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+
+                <div class="content-tabla">
+                    <div class="table-list" id="listadoHistorial" style="width: 600px"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="erroresDatos" class="general-popup" style="z-index:9999999999;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="listadoErrores">
+            <table id="tblListaerrores" style="width:500px" class="pretty tabla-adicional" role="presentation">
+                <thead>
+                    <tr>
+                        <th scope="col">ClassName</th>
+                        <th scope="col" style="width: 250px; min-width: 250px">Celda</th>
+                        <th scope="col" style="width: 70px; min-width: 70px">Valor</th>
+                        <th scope="col" style="width: 120px; min-width: 120px">Tipo de error</th>
+
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>

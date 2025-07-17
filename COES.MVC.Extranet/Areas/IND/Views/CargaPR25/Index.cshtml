@@ -1,0 +1,197 @@
+﻿@model COES.MVC.Extranet.Areas.IND.Models.BaseModel
+@{
+    ViewBag.Title = "Carga de Información PR25";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string EMPRNOMB = Convert.ToString(TempData["EMPRNOMB"]);
+    int EMPRNRO = Convert.ToInt32(TempData["EMPRNRO"]);
+    string sSelected = "";
+}
+
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<link href="~/Areas/IND/Content/Css/css.css" rel="stylesheet" />
+
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Areas/IND/Content/Scripts/cargaPR25.js?v=3.1"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<style>
+    .divexcel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9998;
+        width: 100%;
+        display: inline-block;
+        vertical-align: top;
+    }
+</style>
+<div class="ast">
+    @if (@EMPRNOMB == "")
+    {
+        if (@EMPRNRO < 0)
+        {<div class="form-title">
+                ESTA CUENTA DE USUARIO NO ESTA RELACIONADO A NINGUNA EMPRESA PARA VER LA INFORMACIÓN DE ESTA PANTALLA
+            </div>
+        }
+        else
+        {
+            <script>seleccionarEmpresa();</script>
+            <div class="form-title">
+                DEBE SELECCIONAR UNA EMPRESA PARA VER LA INFORMACIÓN DE ESTA PANTALLA
+                @if (@EMPRNRO > 1)
+                {<a onclick="seleccionarEmpresa();" class="paginate_active">[Seleccionar una empresa]</a>}
+            </div>
+        }
+    }
+    else
+    {
+        <div class="form-title">
+            INGRESO DE INFORMACIÓN PARA INDISPONIBILIDAD DE @EMPRNOMB [@Model.EntidadEmpresa.EmprCodi] @if (@EMPRNRO > 1)
+            {<a onclick="seleccionarEmpresa();" class="paginate_button">[Cambiar empresa]</a>}
+        </div>
+        <div class="content-hijo" id="mainLayout" style="overflow:auto; background-color:#fff">
+            <div id="message" style="display: none"></div>
+            <div class="nt-header">
+                <div class="nt-header-option active" id="c1">
+                    Cuadro A1
+                </div>
+                <div class="nt-header-option" id="c2">
+                    Cuadro A2
+                </div>
+                <div class="nt-header-last">
+                    <div class="set-float-r set-flex-row set-align-item-center">
+                        <div>
+                            <select id="pericodi" name="pericodi" style="width:140px;">
+                                @foreach (var item in Model.ListaPeriodos)
+                                {
+                                    sSelected = "";
+                                    if (@item.Ipericodi == Model.Pericodi)
+                                    { sSelected = "selected"; }
+                                    <option value="@item.Ipericodi" @sSelected>@item.Iperinombre</option>
+                                }
+                            </select>
+                        </div>
+                        <div style="width:10px;"></div>
+                        <div>
+                            @if (Model.Pericodi > 0)
+                            {
+                                <input type="button" id="btnConsultar" value="Consultar" />
+                            }
+                        </div>
+                        <div style="width:50px;"></div>
+                        <div class="i-btn">
+                            <label title="Ingresar SUGAD">
+                                <img src="~/Content/Images/csv.png" style="height:25px; width:25px;" onclick="btnMostrarSugad(@Model.EntidadEmpresa.EmprCodi)" />
+                                <br />
+                                <label>SUGAD</label>
+                            </label>
+                        </div>
+                        <div class="i-btn">
+                            <label title="Descargar archivo Excel" id="btnDescargarFormato">
+                                <img src="~/Content/Images/bajar.png" />
+                                <br />
+                                <label>Descargar Excel</label>
+                            </label>
+                        </div>
+                        <div class="i-btn">
+                            <label title="Importar archivo Excel" id="btnSelecionarExcel">
+                                <img src="~/Content/Images/subir.png" />
+                                <br />
+                                <label>Importar Excel</label>
+                            </label>
+                            <input id="fileId" type='file' hidden />
+                        </div>
+                        <div class="i-btn">
+                            <label title="Enviar datos" id="btnEnviarDatos">
+                                <img src="~/Content/Images/enviar.png" />
+                                <br />
+                                <label>Enviar datos</label>
+                            </label>
+                        </div>
+                        <div class="i-btn">
+                            <label title="Expandir vista">
+                                <img src="~/Content/Images/expandir.png" id="imgExpandirContraer" onclick="btnExpandirRestaurar()" />
+                                <br />
+                                <label id="spanExpandirContraer" onclick="btnExpandirRestaurar()">Expandir</label>
+                            </label>
+                            <input type="hidden" id="hfExpandirContraer" value="E" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nt-body">
+                <div id="a2" style="height: 100px; position:absolute;">
+                    <div id="htA2" style="margin-right: 5px; width: 100%; overflow: auto;"></div>
+                </div>
+                <div id="cdu" style="height: 300px;">
+                    <div id="htCDU" style="margin-right: 5px; width: 100%; overflow: auto;"></div>
+                    <input id="cduInicio" type='text' hidden />
+                    <input id="cduFin" type='text' hidden />
+                </div>
+                <div id="crd" style="height: 350px;">
+                    <div id="htCRD" style="margin-right: 5px; width: 100%; overflow: auto;"></div>
+                </div>
+                <div id="ccd" style="height: 300px;">
+                    <div id="htCCD" style="margin-right: 5px; width: 100%; overflow: auto;"></div>
+                    <input id="ccdInicio" type='text' hidden />
+                    <input id="ccdFin" type='text' hidden />
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<div id="popup">   </div>
+<div id="popupsugad" style="background-color: #EDEDED;">    </div>
+<div id="popupValidaciones" class="general-popup" style="min-width: 720px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Validaciones en los cuadros A1 y A2</span>
+        <div style="float: right;">
+            <input id="btn-pop-regresar" type="button" value="Regresar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div>
+            <div>
+                <table id="dtValidaciones" class="pretty tabla-icono"></table>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div id="popupPlazo" class="general-popup" style="min-width: 720px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Notificaciones de centrales que reportaron en Plazo</span>
+    </div>
+    <div>
+        <div id="aPlazo" style="height: 200px;">
+            <div id="htPlazo" style="margin-right: 5px; width: 100%; overflow: auto;"></div>
+        </div>
+    </div>
+</div>
+@*<div id="popupEmpresas" class="general-popup">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title">
+            <span>Por favor seleccionar la empresa con la que desea trabajar</span>
+        </div>
+        <div class="popup-text">
+            <div id="pop-mensaje" style="display: none"></div>
+            <div>
+                <div style="width: 100%; margin-bottom: 10px;">
+                    <div>
+                        <label>Empresa (*)</label>
+                        <select id="selEmpresa" style="width: 340px;"></select>
+                    </div>
+                </div>
+                <div style="width: 100%;">
+                    <input id="btnValidarEmpresa" class="set-float-r" type="button" value="Validar" />
+                </div>
+            </div>
+        </div>
+    </div>*@

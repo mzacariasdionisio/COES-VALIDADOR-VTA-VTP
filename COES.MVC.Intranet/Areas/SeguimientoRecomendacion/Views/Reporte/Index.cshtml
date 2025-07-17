@@ -1,0 +1,231 @@
+﻿@model COES.MVC.Intranet.Areas.SeguimientoRecomendacion.Models.BusquedaReporteModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    <script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+        <link href="~/Content/Css/tabs.css" rel="stylesheet" />
+    <script src="~/Content/Scripts/highcharts.js"></script>
+}
+<script src="~/Areas/SeguimientoRecomendacion/Content/Scripts/reporte.js?v=3"></script>
+<link href="~/Areas/Eventos/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+
+<div class="form-title">
+    <div class="content-titulo">
+    @{
+        var titulo="";
+        if (Model.AccionConsultar)
+    {
+            titulo="Reporte";
+    }
+    else{
+        titulo="Resumen Ejecutivo";
+    }
+    @titulo
+    }
+    </div>
+    <div class="content-botonera">
+          
+          <input type="button" id="btnExportar" value="Exportar" /> 
+       
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+@using (Html.BeginForm("Listar", "Evento", FormMethod.Post, new { @class = "form-search", name = "frmBusqueda", id = "frmBusqueda" }))
+{
+    <div class="search-content" style="margin-bottom:10px">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td id="txtEstado">Estado recomendaci&oacute;n:</td>
+                <td id="CmbEstado">
+                    <select id="cbEstado" name="IdEstado" style="width:160px">
+                        <option value="0">(TODOS)</option>
+                        @foreach (var item in Model.ListaEstado)
+                        {
+                            <option value="@item.Srmstdcodi">@item.Srmstddescrip</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEstado" value="@Model.IdEstado" />
+                    @{
+                        var consultar = 0;
+                        if (Model.AccionConsultar)
+                        {
+                            consultar = 1;
+                        }
+                        <input type="hidden" id="hfConsultar" value="@consultar" />
+
+                    }
+                </td>
+                <td id="txtCriticidad">Criticidad:</td>
+                <td id="CmbCriticidad">
+                    <select id="cbCriticidad" name="IdCriticidad" style="width:160px">
+                        <option value="0">(TODOS)</option>
+                        @foreach (var item in Model.ListaCriticidad)
+                        {
+                            <option value="@item.Srmcrtcodi">@item.Srmcrtdescrip</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfCriticidad" value="@Model.IdCriticidad" />
+                </td>
+
+                <td>Tipo de Empresa</td>
+                <td>
+                    <select id="cbTipoEmpresa" name="IdTipoEmpresa" style="width:160px">
+                        <option value="0">(TODOS)</option>
+                        @foreach (var item in Model.ListaTipoEmpresas)
+                        {
+                            <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfTipoEmpresa" value="@Model.IdTipoEmpresa" />
+                </td>
+                <td>Empresa:</td>
+                <td>
+                    <select id="cbEmpresa" name="IdEmpresa" style="width:300px">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.EMPRCODI">@item.EMPRNOMB</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEmpresa" value="@Model.IdEmpresa" />
+                </td>
+
+
+                <td>
+                    <input type="button" id="btnBuscar" value="Buscar" style="margin-left:0" />
+                </td>
+            </tr>
+            <tr></tr>
+            <tr>
+            </tr>
+        </table>
+        <table class="content-tabla-search" style="width:auto"></table>
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td>
+                                Desde:
+                                <input type="text" id="FechaDesde" name="FechaInicio" value="@Model.FechaInicio" style="width:120px" />
+                                Hasta:
+                                <input type="text" id="FechaHasta" name="FechaFin" value="@Model.FechaFin" style="width:120px" />                        
+                    </td>
+
+                    <td>Tipo de Equipo:</td>
+                    <td>
+                        <select id="cbFamilia" name="IdFamilia" style="width:160px">
+                            @foreach (var item in Model.ListaFamilias)
+                            {
+                                <option value="@item.FAMCODI">@item.FAMNOMB</option>
+                            }
+                        </select>
+                        <input type="hidden" id="hfFamilia" value="@Model.IdFamilia" />
+                    </td>
+                    <td>Equipo:</td>
+                    <td>
+                        <input type="text" id="txtEquipo" name="EquiAbrev" value="@Model.EquiAbrev" style="width:160px" />
+                    </td>
+                    <td>Recomendaci&oacute;n:</td>
+                    <td>
+                        <input type="text" id="txtRecomendacion" name="Recomendacion" value="@Model.Recomendacion" style="width:160px" />
+                    </td>
+                    <td>Responsable:</td>
+                    <td>
+                        <select id="cbResponsable" name="IdResponsable" style="width:160px">
+                            <option value="0">(TODOS)</option>
+                            @foreach (var item in Model.ListaFwUser)
+                            {
+                                <option value="@item.USERCODE">@item.USERNAME</option>
+                            }
+                        </select>
+                        <input type="hidden" id="hfResposable" value="@Model.IdResponsable" />
+                    </td>
+                </tr>
+            </table>
+</div>
+
+    <input type="hidden" id="hfNroPagina" name="NroPagina" value="1" />   
+    <input type="hidden" id="hfCampo" name="CampoOrden" />
+    <input type="hidden" id="hfOrden" name="TipoOrden" />
+    <input type="hidden" id="hfIndicador" name="Indicador" />
+}
+    
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab' id="tab1"><a href="#Listado">Listado</a></li>
+            <li class='tab' id="tab2"><a href="#Empresa">Por Empresa</a></li>
+            @if (Model.AccionConsultar)
+            {
+            <li class='tab' id="tab2"><a href="#TipoEquipo">Por Tipo de Equipo</a></li>
+            <li class='tab' id="tab2"><a href="#Estado">Por Estado</a></li>
+            <li class='tab' id="tab2"><a href="#Criticidad">Por Criticidad</a></li>
+            }
+
+        </ul>
+        <div class='panel-container'>
+            
+            <div id="Listado">
+                <div class="tabla-header">
+                    <div class="content-tabla">
+                        <div class="tabla-header">
+                            <div class="table-paginado" id="paginado"></div>
+                        </div>
+                        <div class="table-list" id="listado"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="Empresa">
+                <table>
+                    <tr>
+                        <td id="GrafEmpresa" style="width: 50%;"></td>
+                        
+                        <td id="GrafEmpresaEstado" style="width: 50%;"></td>
+                    </tr>
+                </table>
+            </div>
+            @if (Model.AccionConsultar)
+            {
+            <div id="TipoEquipo">
+                <table>
+                    <tr>
+                        <td id="GrafTipoEquipo" style="width: 50%;"></td>
+
+                        <td id="GrafTipoEquipoEstado" style="width: 50%;"></td>
+                    </tr>
+                </table>
+            </div>
+            <div id="Estado">
+                <table>
+                    <tr>
+                        <td id="GrafEstado" style="width: 50%;"></td>
+
+                        <td id="GrafEstadoCriticidad" style="width: 50%;"></td>
+                    </tr>
+                </table>
+            </div>
+            <div id="Criticidad">
+                <table>
+                    <tr>
+                        <td id="GrafCriticidad" style="width: 50%;"></td>
+
+                        <td style="width: 50%;"></td>
+                    </tr>
+                </table>
+            </div>
+        }
+        </div>
+    </div>
+
+</div>
+
+
+<div id="popupInforme" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div id="contenedorInforme">
+
+    </div>
+</div>
+
+
+

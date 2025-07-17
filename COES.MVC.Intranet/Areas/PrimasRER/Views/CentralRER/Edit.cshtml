@@ -1,0 +1,249 @@
+﻿@model COES.MVC.Intranet.Areas.PrimasRER.Models.PrimasRERModel
+@{
+    ViewBag.Title = "Editar la información de Código de Entrega";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+
+<script>
+    $(function () {
+
+        $('#btnGuardarEdit').click(function (event) {
+            event.preventDefault();
+            update();
+        });
+    });
+</script>
+
+<link href="~/Areas/PrimasRER/Content/Css/centralrer.css" rel="stylesheet" />
+<script src="~/Areas/PrimasRER/Content/Scripts/centralrer.js?v=1.1.0"></script>
+<script src="~/Areas/PrimasRER/Content/Scripts/load.js"></script>
+@*ASSETEC - 18.10.2023*@
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+@*ASSETEC - 18.10.2023*@
+
+@*@using (Html.BeginForm("Update", "CentralRER", FormMethod.Post, new { id = "frmFormulario", @class = "cmxform" }))*@
+@using (Html.BeginForm("Update", "CentralRER", FormMethod.Post, new { @class = "form-search", name = "frmEditCentralRER", id = "frmEditCentralRER" }))
+{
+    <input type="hidden" name="CentralRER.Rercencodi" id="Rerpprcodi" value="@Model.CentralRER.Rercencodi" />
+    <input type="hidden" name="CentralRER.Emprcodi" id="empresaSelect" value="@Model.CentralRER.Emprcodi" />
+    <input type="hidden" name="CentralRER.Equicodi" id="centralSelect" value="@Model.CentralRER.Equicodi" />
+    <input type="hidden" name="" id="ptomediCodiSelect" value="@Model.CentralRER.Ptomedicodi" />
+    @Html.AntiForgeryToken()
+    <div class="ast">
+        <div class="form-title">
+            <div class="content-titulo">Editar una Central RER</div>
+            <div class="content-botonera">
+                <input type="submit" value="Guardar" id="btnGuardarEdit" alt="Guardar" title="Guardar" />
+                <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index", "CentralRER")'" alt="Retornar" title="Retornar" />
+            </div>
+        </div>
+        <div style="padding:20px; width:1000px;">
+            <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor, verificar la siguiente información:</div>
+            <br>
+            <fieldset>
+                <legend></legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Empresa generadora (*)</td>
+                        <td class="tbform-label" style="width:300px">@Model.CentralRER.Emprnomb</td>
+                        <td><div class="editor-label">Estado</div></td>
+                        <td>
+                            <div class="editor-field">
+                                <input type="radio" id="Activo" name="CentralRER.Rercenestado" value="A" @(Model.CentralRER.Rercenestado == "A" ? "checked" : "") />Activo
+                                <input type="radio" id="Inactivo" name="CentralRER.Rercenestado" value="I" @(Model.CentralRER.Rercenestado == "I" ? "checked" : "") />Inactivo
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label">Central (*):</td>
+                        <td class="tbform-label">@Model.CentralRER.Equinomb</td>
+                        <td colspan="2"><div class="editor-label">Nota(*): Información obligatoria</div></td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend>Datos de Contrato RER</legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Fecha de inicio (*):</td>
+                        <td class="editor-field">
+                            <input type="text" id="Rercenfechainicio" name="Rercenfechainicio" class="" value="@Model.CentralRER.Rercenfechainicio.ToString("dd/MM/yyyy")" style="width:240px" />
+                        </td>
+                        <td>
+                            <input style="width: 200px;" type="button" id="btnCargarInformacionLVTP" value="Cargar Informacion LVTP" onclick="CargarInformacionLVTP()" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Fecha fin (*):</td>
+                        <td class="editor-field">
+                            <input type="text" id="Rercenfechafin" name="Rercenfechafin" class="" value="@Model.CentralRER.Rercenfechafin.ToString("dd/MM/yyyy")" style="width:240px" />
+                        </td>
+                        <td>
+                            <input style="width: 200px;" type="button" id="btnCargarInformacionPMPO" value="Cargar Informacion PMPO" onclick="CargarInformacionPMPO()" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Energía Adjudicada<br>(MWh/año) (*):</td>
+                        <td class="editor-field">
+                            <input type="number" id="Rercenenergadj" name="CentralRER.Rercenenergadj" value="@Model.CentralRER.Rercenenergadj.ToString("0.####")" style="width:240px" min="0" step="0.001" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Precio Base<br>($/MWh) (*):</td>
+                        <td class="editor-field">
+                            <input type="number" id="Rercenprecbase" name="CentralRER.Rercenprecbase" value="@Model.CentralRER.Rercenprecbase.ToString("0.####")" style="width:240px" min="0" step="0.001" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Inflación Base (*):</td>
+                        <td class="editor-field">
+                            <input type="number" id="Rerceninflabase" name="CentralRER.Rerceninflabase" value="@Model.CentralRER.Rerceninflabase.ToString("0.####")" style="width:240px" min="0" step="0.001" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Descripción:</td>
+                        <td class="editor-field">
+                            <input type="text" id="Rercendesccontrato" name="CentralRER.Rercendesccontrato" value="@Model.CentralRER.Rercendesccontrato" style="width:240px" />
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend>Información LVTEA:</legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label">Código de entrega (*):</td>
+                        <td class="editor-field">
+                            <select id="codEntregaSelect" name="CentralRER.Codentcodi" onchange="cargarBarrTransferencia()">
+                                @foreach (var item in Model.ListaCodigoEntrega)
+                                {
+                                    <option value="@item.CodiEntrCodi" @(item.CodiEntrCodi == Model.CentralRER.Codentcodi ? "selected" : "")>@item.CodiEntrCodigo</option>
+                                }
+                            </select>
+                        </td>
+                        <td class="tbform-label">Barra Transferencia (*):</td>
+                        <td class="editor-field">
+                            <input type="text" id="barrTransferencia" name="barrTransferencia" value="@Model.CentralRER.Barrbarratransferencia" style="width:240px" readonly />
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend>Información LVTP:</legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Central / Unidad:</td>
+                        <td class="editor-field">
+                            <select id="centralUnidadSelect" name="" style="width:240px">
+                            </select>
+                        </td>
+                        <td class="editor-field">
+                            <input type="button" id="btnAgregarCentralUnidad" value="Agregar" onclick="agregarCentralUnidad()" />
+                        </td>
+                        <td class="tbform-label" style="width:170px">Cargo Prima RER:</td>
+                        <td class="editor-field">
+                            <select id="cargoPrimaRERSelect" name="CentralRER.Pingnombre" style="width:240px">
+                                @if (Model.CentralRER.Pingnombre != null)
+                                {
+                                    <option value="@Model.CentralRER.Pingnombre">@Model.CentralRER.Pingnombre</option>
+                                }
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>
+                            <table border="0" class="pretty tabla-icono" id="tablaCentralUnidad" style="width:240px">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th style="display: none;">Value</th>
+                                        <th>Central / Unidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaBodyCentralUnidad">
+                                    @foreach (var item in Model.ListRerCentralLvtp)
+                                    {
+                                        <tr id="fila_@item.Rercencodi">
+                                            <td width="30px"><img src="~/Content/Images/btn-cancel.png" title="Eliminar el registro" alt="Eliminar el registro" onclick="eliminarFila(this)"></td>
+                                            <td class="text_left" style="display: none;">@item.Equicodi</td>
+                                            <td class="text_center">[<span>@item.Equicodi</span>] @item.Equinomb</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend>Información PMPO:</legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Central:</td>
+                        <td class="editor-field">
+                            <select id="centralPMPOSelect" name="" style="width:240px">
+                            </select>
+                        </td>
+                        <td class="tbform-label" style="width:100px">
+                            <input type="button" id="btnAgregarCentralPMPO" value="Agregar" onclick="agregarCentralPMPO()" />
+                        </td>
+                        <td class="tbform-label" style="width:170px">Barra:</td>
+                        <td class="editor-field">
+                            <select id="barraPMPOSelect" name="CentralRER.Ptomedicodi" style="width:240px">
+                                @if (Model.CentralRER.Ptomedicodi == null)
+                                {
+                                    <option value="" selected></option>
+                                }
+                                else
+                                {
+                                    <option value="@Model.CentralRER.Ptomedicodi" selected>[<span>@Model.CentralRER.Ptomedicodi</span>] @Model.CentralRER.Ptomedidesc</option>
+                                }
+                            </select>
+                            <label id="textoBarraEdit"></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>
+                            <table border="0" class="pretty tabla-icono" id="" style="width:240px">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th style="display: none;">Value</th>
+                                        <th>Central</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaBodyCentralPMPO">
+                                    @foreach (var item in Model.ListRerCentralPmpo)
+                                    {
+                                        <tr id="fila_@item.Ptomedicodi">
+                                            <td width="30px"><img src="~/Content/Images/btn-cancel.png" title="Eliminar el registro" alt="Eliminar el registro" onclick="eliminarFila(this)"></td>
+                                            <td class="text_left" style="display: none;">@item.Ptomedicodi</td>
+                                            <td class="text_center">@item.Ptomedidesc</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </div>
+    </div>
+}
+
+<script>
+    function eliminarFila(imagen) {
+        if (confirm('¿Está seguro que desea eliminar la central?')) {
+            var fila = imagen.parentNode.parentNode;
+            fila.parentNode.removeChild(fila);
+        }
+    }
+</script>

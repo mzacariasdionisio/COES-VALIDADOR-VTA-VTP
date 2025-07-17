@@ -1,0 +1,241 @@
+﻿@model COES.MVC.Intranet.Areas.PotenciaFirmeRemunerable.Models.PotenciaFirmeRemunerableModel
+@{
+    ViewBag.Title = "Cálculo de Potencia Firme";
+}
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@if (Model.UsarLayoutModulo)
+{
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+else
+{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+
+<link href="~/Content/Css/popup.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<link href="~/Areas/IND/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Areas/IND/Content/Scripts/handsontable.full.min.js?v=2"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+
+
+<link href="~/Areas/PotenciaFirmeRemunerable/Content/Css/general.css?=1.2" rel="stylesheet" />
+<link href="~/Areas/PotenciaFirmeRemunerable/Content/Css/css.css?v=1.11" rel="stylesheet" />
+
+
+<script src="~/Areas/PotenciaFirmeRemunerable/Content/Scripts/index_potenciafirmeremunerable.js?v=1.91"></script>
+
+<style>
+    .ht_clone_top_left_corner tr:first-child th, .ht_clone_top tr:first-child th {
+        background-color: #16365D;
+        color: white;
+        font-weight: bold;
+    }
+
+
+    .ht_clone_top_left_corner tr:nth-of-type(2) th, .ht_clone_top tr:nth-of-type(2) th {
+        background-color: #16365D;
+        color: white;
+    }
+
+    /*    body .handsontable .htDimmed {
+        background: bisque !important;
+    }*/
+</style>
+
+<div class="form-title">
+    <div class="content-titulo">Cálculo de Potencia Firme Remunerable</div>
+    <div class="content-botonera">
+        @if (Model.TienePermisoNuevo)
+        {
+            @*<input type="button" id="btnNuevo" value="Nuevo" style="display: block">*@
+        }
+    </div>
+</div>
+
+<div class="content-hijo">
+
+    <input type="hidden" id="hfIdReporte" value="@Model.IdReporte" />
+
+    <div id="idpanel" style="overflow:auto; background-color:#fff">
+        <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; display:none"></div>
+
+        <table role="presentation">
+            <tr>
+                <td>
+                    <div class="search-content" style="margin-bottom:0px; padding:10px">
+                        <table class="table-search" style="width:auto" role="presentation">
+                            <tr>
+                                <td class="filtro">
+                                    <div id="">
+                                        Periodo:
+                                        <select id="cbAnio" style="width: 57px;">
+                                            @foreach (var item in Model.ListaAnio)
+                                            {
+                                                var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                                                <option value="@item.Entero1" @(selected)>@item.String1</option>
+                                            }
+
+                                        </select>
+
+                                        <select id="cbPeriodo" style="width: 120px;">
+                                            @foreach (var item in Model.ListaPeriodo)
+                                            {
+                                                var selected = Model.IdPeriodo == item.Pfrpercodi ? "selected" : "";
+                                                <option value="@item.Pfrpercodi" @(selected)>@item.Pfrpernombre</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <td class="filtro">
+                                    <div>
+                                        <div id="revisiones">
+                                            Recálculo:
+                                            <select id="cbRevision" name="iRevision" style="width:150px">
+                                                @if (Model.ListaRecalculo.Count > 0)
+                                                {
+                                                    foreach (var item in Model.ListaRecalculo)
+                                                    {
+                                                        var selected = Model.IdRecalculo == item.Pfrreccodi ? "selected" : "";
+                                                        <option value="@item.Pfrreccodi" @(selected)>@item.Pfrrecnombre</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="0">--</option>
+                                                }
+                                            </select>
+                                        </div>
+
+                                    </div>
+                                </td>
+
+                                <td class="filtro">
+                                    <div>
+                                        <input type="button" id="btnConsultar" value="Consultar" />
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <input type="hidden" id="hperiodo" value="" />
+                                    <input type="hidden" id="hrevision" value="" />
+                                    <input type="hidden" id="hversion" value="" />
+                                </td>
+                                <td class="filtro"> </td>
+                                <td class="filtro"> </td>
+                                <td class="filtro"> </td>
+                                <td class="filtro"> </td>
+                                <td class="filtro"> </td>
+                                <td class="filtro"> </td>
+                                <td class="filtro"> </td>
+                                <td class="filtro"> </td>
+
+                                <td class="content-action">
+                                    <a href="#" id="btnEditarData" style="display: none">
+                                        <div class="content-item-action" style="width:40px;">
+                                            <img src="~/Content/Images/btn-edit.png" alt="logo" /><br />
+                                            <span>Editar</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td class="content-action">
+                                    <a href="#" id="btnGuardarData" style="display: none">
+                                        <div class="content-item-action" style="width:40px;">
+                                            <img src="~/Content/Images/prnsave.png" alt="logo" /><br />
+                                            <span>Guardar</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td class="content-action">
+                                    <a href="#" id="btnVerHistorial" style="display: none">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/errores.png" alt="logo" /><br />
+                                            <span>Historial</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                                <td class="content-action">
+                                    <div>
+                                        <a href="#" id="btnMostrarErrores" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/errores.png" alt="logo"><br>
+                                                <span>Errores</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </td>
+
+                                <td class="content-action">
+                                    <a href="#" id="btnExportExcel">
+                                        <div class="content-item-action" style="display: none">
+                                            <img src="~/Content/Images/exportarExcel.png" alt="logo" /><br />
+                                            <span>Exportar</span>
+                                        </div>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="content-tabla" id="excelwebPF" style="padding-top: 10px; width: 1420px;">
+            <p id="versionInsumo"><strong id="versnumero"> </strong></p>
+            <div id="contenidoPotenciaFirme">
+
+                <div id="tblPotenciaFirme" class="hot handsontable htRowHeaders htColumnHeaders" style="overflow: hidden;"> </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="erroresDatos" class="general-popup" style="z-index:9999999999;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="listadoErrores">
+            <table id="tblListaerrores" style="width:500px" class="pretty tabla-adicional" role="presentation">
+                <thead>
+                    <tr>
+                        <th scope="col">ClassName</th>
+                        <th scope="col">Celda</th>
+                        <th scope="col">Valor</th>
+                        <th scope="col">Tipo de error</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="historialPF" class="general-popup" style="z-index:9999999999;height: 350px;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Historial</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaVersion">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+
+                <div class="content-tabla">
+                    <div class="table-list" id="listadoHPF"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

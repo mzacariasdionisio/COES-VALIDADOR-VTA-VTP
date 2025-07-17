@@ -1,0 +1,84 @@
+﻿@model COES.MVC.Intranet.Areas.TransfPotencia.Models.ConsultaEnviosModel
+@{
+    int iCount = 0;
+    int i = 0;
+}
+<form name="frmBrowse">
+    <table border="0" class="pretty tabla-icono" id="tabla">
+        <thead>
+            <tr>
+                <th style="width:60px;">Ver envío</th>
+                <th>Cod.Envío</th>
+                <th>Empresa</th>
+                <th>Fecha envío</th>
+                <th>Usuario</th>
+                <th>Cumplimiento</th>
+                <th>Considerado en VTP</th>
+                <th>Fecha de selección</th>
+                <th>Usuario COES</th>
+                <th>Pase a Liquidación</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ListaPeajeEgreso)
+            {
+                int sPK = item.Pegrcodi;
+
+                var sCumplimiento = "EN PLAZO";
+                var sColor = "cadetblue";
+                var sConsiderado = "Si";
+                var sFecSelección = "";
+
+                var sClass = "even";
+                if (i % 2 == 0) { sClass = "odd"; }
+
+                if (item.Pegrplazo == "N")
+                {
+                    sCumplimiento = "FUERA DE PLAZO";
+                    sColor = "crimson";
+                }
+                if (item.Pegrestado == "NO")
+                { sConsiderado = "No"; }
+                else
+                {
+                    sClass = "amarillo";
+                }
+                if (item.Pegrfecmodificacion > item.Pegrfeccreacion)
+                {
+                    sFecSelección = item.Pegrfecmodificacion.ToString("dd/MM/yyyy HH:mm:ss");
+                }
+                i++;
+            <tr id="fila_@sPK" class="@sClass">
+                <td style="width:60px;">
+                    <a href="#" id="view_@sPK" class="view"><img src="@Url.Content("~/Content/Images/btn-open.png")" title="Listar el detalle del envío" alt="Listar el detalle del envío" /></a>
+                    <a href="#" id="export_@sPK" class="export"><img src="@Url.Content("~/Areas/TransfPotencia/Content/Images/excel.gif")" style="width:19px; height:19px" title="Listar el detalle del envío" alt="Listar el detalle del envío" /></a>
+                    <a href="#" id="export_validaciones_@sPK" onclick="selectEnterprise('@item.Emprnomb');" class="exportValidaciones"><img src="@Url.Content("~/Areas/TransfPotencia/Content/Images/btn-properties.png")" style="width:19px; height:19px" title="Descargar validaciones del envío" alt="Descargar validaciones del envío" /></a>
+                </td>
+                <td>@sPK</td>
+                <td class="text_left" title="@item.Emprcodi">@item.Emprnomb</td>
+                <td>@item.Pegrfeccreacion.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td>@item.Pegrusucreacion</td>
+                <td style="color: @sColor">@sCumplimiento</td>
+                <td>
+                    @if (item.Pegrestado.Equals("SI"))
+                    {<span style="font-weight:bold">@sConsiderado</span> }
+                else
+                { <span>@sConsiderado</span>}
+                </td>
+                <td>@sFecSelección</td>
+                <td>@item.Pegrusumodificacion</td>
+                <td style="width:30px;">
+                    @if (item.Pegrestado.Equals("NO"))
+                    {
+                        iCount++;
+                        <input name="chkItem" type="checkbox" value="@sPK">
+                    }
+                    else
+                    { <span>&nbsp;</span>}
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+    <input type="hidden" id="Count" name="Count" value="@iCount">
+</form>

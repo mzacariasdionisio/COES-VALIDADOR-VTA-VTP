@@ -1,0 +1,160 @@
+﻿@model COES.MVC.Extranet.Areas.Campanias.Models.CampaniasModel
+@{
+    ViewBag.Title = "Información Plan de Transmisión";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@using Newtonsoft.Json
+<script src="~/Areas/Campanias/Content/Scripts/envio.js"></script>
+<link href="~/Areas/Campanias/Content/Css/css.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/Handson/moment.js"></script>
+
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<link href="~/Areas/Campanias/Content/Css/jquery.modal.min.css" rel="stylesheet" />
+<script src="~/Areas/Campanias/Content/Scripts/jquery.modal.min.js"></script>
+<script src="~/Content/Scripts/highcharts.js"></script>
+
+<script>
+
+    $(document).ready(function () {
+        var codPlanTransmi =   @Html.Raw(JsonConvert.SerializeObject(Model.Plancodi));
+
+         if (codPlanTransmi != null) {
+             $("#txtCodPlanTransmision").val(codPlanTransmi);
+             ObtenerListadoProyectoAbsolver(codPlanTransmi);
+             cargarDatos().then(() => {
+                buscarPlantransmision(codPlanTransmi);
+             });
+         }
+    });
+
+
+</script>
+
+<div class="form-title_intranet">
+    <div class="content-titulo">Información Plan de Transmisión</div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+    <input type="hidden" id="txtCodPlanTransmision" name="txtCodPlanTransmision">
+    <input type="hidden" id="txtversion" name="txtversion">
+    <div class="search-content">
+        <div class="contEnvio">
+            @*<div>
+                    <label>Código:</label>
+                    <input type="text" disabled value="2" />
+                </div>*@
+            <div>
+                <label>Empresa:</label>
+                <select style="width: 185px" id="empresaSelect" style="width:220px">
+                    <option value="">Seleccione una empresa</option>
+                </select>
+            </div>
+            <div>
+                <label>Plan transmisión:</label>
+                <select style="width: 185px" id="periodoSelect" style="width:220px">
+                    <option value="">Seleccione un periodo</option>
+                </select>
+                <input type="hidden" id="hfPeriodo" name="periodo" />
+            </div>
+        </div>
+        <div class="contEnvio">
+        @if(Model.observacionCerrado){
+            <input type="button" class="btnForms" value="Enviar" onclick="popupEnviarRespuestas()"/>
+        } 
+            <input type="button" class="btnForms" value="Regresar" id="btnAtrasP" />
+        </div>
+    </div>
+
+    <div class="content-tabla">
+        <div class="table-list" id="listadoProyectoAbsolver"></div>
+    </div>
+
+    <div style="clear:both; height:30px"></div>
+
+</div>
+
+<div id="popup">   </div>
+
+<div id="modal1" class="modal">
+    <div class="popup-title"><div id="tituloPopup"></div></div>
+    <div id="" style="margin-top: 10px;"></div>
+    <div class="panel-container">
+        <div class="popup-text" id="contenidoProyecto" style="margin-top:0"></div>
+    </div>
+</div>
+
+<div id="popupObservacion" class="general-popup" style="width: 700px !important;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Observación</span></div>
+    <div class="popup-text" id="contenidoObservacion">
+    </div>
+</div>
+
+<div id="popupEnviarRespuesta" class="general-popup" style="width:850px;top:0px">
+    <div>
+        <span class="button b-close">
+            <span>X</span>
+        </span>
+    </div>
+    <div class="popup-text">
+            <p>
+                ¿Está seguro que desea enviar la absolución de la observación?
+            </p>
+            <p>
+                Tenga presente que una vez realizada esta acción ya no podrá modificar el contenido de ninguno de los proyectos y se generará una nueva versión del envío
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center">
+                <input type="button" value="Aceptar" style="margin-top: 15px;" onclick="enviarRespuestas()">
+                <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupEnviarRespuesta')">
+            </div>
+    </div>
+</div>
+
+<div id="popupGrabarRespuestaObs" class="general-popup" style="width:320px;top:0px">
+        <div>
+            <span class="button b-close">
+                <span>X</span>
+            </span>
+        </div>
+        <div class="popup-text">
+            <form>
+                <p>
+                    ¿Está seguro que desea guardar la información?
+                </p>
+                 <p>
+                    Tenga presente que una vez realizada esta acción ya no podrá modificar la respuesta.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center">
+                    <input type="button" id="btnGrabarRespuesta" value="Grabar" style="margin-top: 15px;" onclick="grabarRespuestaObs()">
+                    <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupGrabarRespuestaObs')">
+                </div>
+            </form>
+        </div>
+</div>
+
+<div id="popupEnviarRespuestaObs" class="general-popup" style="width:320px;top:0px">
+        <div>
+            <span class="button b-close">
+                <span>X</span>
+            </span>
+        </div>
+        <div class="popup-text">
+            <form>
+                <p>
+                    ¿Está seguro que desea enviar las respuestas?
+                </p>
+                 <p>
+                    Tenga presente que una vez realizada esta acción la información será notificada para su conformidad.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center">
+                    <input type="button" id="btnEnviarRespuesta" value="Enviar" style="margin-top: 15px;" >
+                    <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupEnviarRespuestaObs')">
+                </div>
+            </form>
+        </div>
+</div>

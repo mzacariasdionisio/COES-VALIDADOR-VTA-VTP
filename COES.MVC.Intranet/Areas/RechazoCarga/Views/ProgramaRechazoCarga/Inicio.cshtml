@@ -1,0 +1,416 @@
+﻿@using COES.MVC.Intranet.Areas.RechazoCarga.Helper
+@model COES.MVC.Intranet.Areas.RechazoCarga.Models.ProgramaRechazoCargaModel
+@{
+    ViewBag.Title = "Programa de Rechazo de Carga";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .text-wrap {
+        white-space: normal;
+    }
+
+    .width-200 {
+        width: 200px;
+    }
+</style>
+<div class="form-title">
+    <div class="content-titulo">Programa de Rechazo de Carga</div>
+</div>
+<div id="mensaje"></div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="idpanel" style="overflow:auto; background-color:#fff">
+
+        <div class="search-content" style="margin-bottom:0px; padding:15px">
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td style="width:5%"></td>
+                    <td style="width:10%"></td>
+                    <td style="width:5%"></td>
+                    <td style="width:10%"></td>
+                    <td style="width:5%"></td>
+                    <td style="width:65%"></td>
+                </tr>
+                <tr id="SeccionSeleccionNuevoExistente">
+                    <td colspan="4">
+                        <input id="ProgramaNuevo" name="EsNuevoPrograma" type="radio" value="1" /> Nuevo
+                        <input id="ProgramaExistente" name="EsNuevoPrograma" type="radio" value="0" /> Existente
+                    </td>
+                    <td colspan="2"></td>
+                </tr>
+                <tr id="SeccionProgramaExistente">
+                    <td>Programa: </td>
+                    <td colspan="4">
+                        @(Html.DropDownList("programa", new SelectList(Model.Programas, "Rcprogcodi", "Rcprognombre", Model.RcaProgramaDTO.Rcprogcodi), new { style = "width: 100%;" }))
+                    </td>
+                    <td colspan="1" style="width:65%">&nbsp;&nbsp;</td>
+                </tr>
+                <tr id="SeccionProgramaNuevo">
+                    <td style="width:5%">Horizonte: </td>
+                    <td style="width:10%">
+                        @(Html.DropDownList("horizonte", new SelectList(Model.Horizontes, "Rchorpcodi", "Rchorpnombre", Model.RcaProgramaDTO.Rchorpcodi), new { style = "width: 100%;" }))
+                    </td>
+                    <td style="width:5%">C&oacute;digo: </td>
+                    <td style="width:10%">
+                        <input type="text" id="codigo" style="width: 100%;" value="@Model.RcaProgramaDTO.Rcprogabrev" />
+                    </td>
+                    <td style="width:5%">Nombre: </td>
+                    <td style="width:65%">
+                        <input type="text" id="nombrePrograma" name="nombrePrograma" style="width: 100%;" value="@Model.RcaProgramaDTO.Rcprognombre" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <br />
+        <div class="search-content" style="margin-bottom:0px; padding:15px">
+            <table class="content-tabla-search" style="width:100%">
+                <tr>
+                    <td style="width:100px;">Potencia a Rechazar: </td>
+                    <td style="width:30px;">
+                        <input type="text" id="energiaRacionar" style="width:100px;" value="@Model.RcaCuadroProgDTO.Rccuadenergiaracionar" onkeypress="return soloNumeros(event)" />
+                    </td>
+                    <td style="width:50px;">
+                        Umbral:
+                        <a href="#" data-toggle="tooltip" title="El valor de 'Umbral' solo aplica para la busqueda de clientes libres, no para el cálculo.">
+                            <img src="~/Areas/RechazoCarga/Content/Images/ico-info.gif" />
+                        </a>
+                    </td>
+                    <td style="width:30px;">
+                        <input type="text" id="demandaMinima" name="demandaMinima" value="@Model.RcaCuadroProgDTO.Rccuadumbral" onkeypress="return soloNumeros(event)" />
+                    </td>
+                    <td style="width: 90px;">
+                        <input type="radio" name="tipoEnergia" value="HFP" @(Model.RcaCuadroProgDTO.Rccuadbloquehor.Equals("FP") ? "checked='checked'" : "") />HFP
+                        <input type="radio" name="tipoEnergia" value="HP" @(Model.RcaCuadroProgDTO.Rccuadbloquehor.Equals("HP") ? "checked='checked'" : "") />HP
+                    </td>
+                    <td style="width:50px;">
+                        Configuraci&oacute;n:
+                        <a href="#" data-toggle="tooltip" title="De las configuraciones establecidas en los numerales 9.4, 9.5 y 9.6 del PR-16, el presente aplicativo únicamente realiza el cálculo del numeral 9.5.
+Para todas las demás, el operador deberá realizar los cálculos de manera exterior y actualizarlo por cada Usuario Libre.">
+                            <img src="~/Areas/RechazoCarga/Content/Images/ico-info.gif" />
+                        </a>
+                    </td>
+                    <td style="width:150px;">
+                        @Html.DropDownList("configuracion", new SelectList(Model.Configuraciones, "Rcconpcodi", "Rcconpnombre", Model.RcaCuadroProgDTO.Rcconpcodi), new { style = "width: 100%;" })
+                    </td>
+                    <td rowspan="5" style="width:200px;">
+                        <input type="button" value="Reprogramar" id="btnReprogramar" name="btnReprogramar" class="form-action"
+                               style="display:@(Model.Perfil.Equals(ConstantesRechazoCarga.PerfilSCO) && Model.RcaCuadroProgDTO.Rcestacodi.Equals(ConstantesRechazoCarga.EstadoCuadroProgramado) ? "inline" : "none")" />
+                        <input type="button" value="Calcular" id="btnCalcular" name="btnCalcular" class="form-action" />
+                        <input type="button" value="Grabar Datos" id="btnGrabar" name="btnGrabar" class="form-action" />
+                        <input type="button" value="Reg. Ejecución" id="btnPopupEjecucion" name="btnPopupEjecucion" class="form-action"
+                               style="display:@((Model.Perfil.Equals(ConstantesRechazoCarga.PerfilSCO)  && Model.RcaCuadroProgDTO.Rcestacodi.Equals(ConstantesRechazoCarga.EstadoCuadroProgramado)) || (!Model.esConsulta && Model.RcaCuadroProgDTO.Rcestacodi.Equals(ConstantesRechazoCarga.EstadoCuadroReprogramado)) ? "inline" : "none")" />
+                        <input type="button" value="Cerrar" id="btnCerrar" name="btnCerrar" class="form-action" />
+                        <input type="button" value="Consultar" id="btnConsultar" name="btnConsultar" class="form-action" style="display:none" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Motivo: </td>
+                    <td colspan="6">
+                        <input type="text" id="motivo" style="width: 100%" value="@Model.RcaCuadroProgDTO.Rccuadmotivo" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Ubicación: </td>
+                    <td colspan="6">
+                        <input type="text" id="ubicacion" style="width: 100%" value="@Model.RcaCuadroProgDTO.Rccuadubicacion" maxlength="30" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Fecha:</td>
+                    <td style="width:30px">
+                        <input type="text" id="fechahoraInicio" style="width: 100px" value="@(Model.RcaCuadroProgDTO.Rccuadfechorinicio != DateTime.MinValue ? Model.RcaCuadroProgDTO.Rccuadfechorinicio.Value.ToString("dd/MM/yyyy") : "")" />
+                    </td>
+                    <td>Hora de inicio:</td>
+                    <td colspan="1">
+                        <input type="text" id="horaInicio" style="width: 50%" value="@(Model.RcaCuadroProgDTO.Rccuadfechorinicio != DateTime.MinValue ? Model.RcaCuadroProgDTO.Rccuadfechorinicio.Value.ToString("HH:mm") : "")" />
+                    </td>
+                    <td>Hora de fin:</td>
+                    <td colspan="1">
+                        <input type="text" id="horaFin" style="width: 50%" value="@(Model.RcaCuadroProgDTO.Rccuadfechorfin != DateTime.MinValue ? Model.RcaCuadroProgDTO.Rccuadfechorfin.Value.ToString("HH:mm") : "")" />
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td colspan="2">
+                        <input type="checkbox" id="incluirCargaEracmf" @(Model.RcaCuadroProgDTO.Rccuadflageracmf == "1" ? "checked='checked'" : "") />
+                        Considerar ERACMF
+                    </td>
+                    <td colspan="2">
+                        <input type="checkbox" id="incluirCargaEracmt" @(Model.RcaCuadroProgDTO.Rccuadflageracmt == "1" ? "checked='checked'" : "") />
+                        Considerar ERACMT
+                    </td>
+                    <td colspan="2">
+                        <input type="checkbox" id="incluirUsuariosRegulados" disabled @(Model.RcaCuadroProgDTO.Rccuadflagregulado == "1" ? "checked='checked'" : "") />
+                        Incluir a usuarios regulados
+                    </td>
+
+                </tr>
+                <tr id="trReportes" style="display:none">
+                    <td>Reportes</td>
+                    <td colspan="2">
+                        <select id="cbReportes" name="cbReportes" style="width:80%">
+                            <option value="1">Total de Datos</option>
+                            <option value="2">Evaluación de cumplimiento de los RMC</option>
+                            <option value="3">Interrupciones de suministro por RMC para el Informe Técnico</option>
+                            <option value="4">Demoras en la ejecución del RMC</option>
+                            <option value="5">Demoras para el Restablecimiento</option>
+                            <option value="6">Interrupciones menores a 3 minutos</option>
+                            <option value="7">Interrupciones de suministro por RMC para la Decisión</option>
+                            <option value="8">Interrupciones por RMC para el resarcimiento</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="button" value="Excel" id="btnReporteExcel" name="btnReporteExcel" class="form-action" />
+                        <input type="button" value="Word" id="btnReporteWord" name="btnReporteWord" class="form-action" />
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+        <input type="hidden" id="hdnCodigoPrograma" name="hdnCodigoPrograma" value="@ViewBag.hdnCodigoPrograma" />
+        <input type="hidden" id="hdnCodigoCuadroPrograma" name="hdnCodigoCuadroPrograma" value="@ViewBag.hdnCodigoCuadroPrograma" />
+        <input type="hidden" id="hdnEsNuevoPrograma" name="hdnEsNuevoPrograma" value="@ViewBag.hdnEsNuevoPrograma" />
+        <input type="hidden" id="hdnConfiguracionRadial" name="hdnConfiguracionRadial" value="@ViewBag.hdnConfiguracionRadial" />
+        <input type="hidden" id="hdnDemandaBuscar" name="hdnDemandaBuscar" value="0" />
+        <input type="hidden" id="hdnFlagConsulta" name="hdnFlagConsulta" value="@ViewBag.hdnFlagConsulta" />
+        <input type="hidden" id="hdnPeriodosAntiguedad" name="hdnPeriodosAntiguedad" value="@ViewBag.hdnPeriodosAntiguedad" />
+        <input type="hidden" id="hdnDistribEliminados" name="hdnDistribEliminados" value="" />
+        <input type="hidden" id="hdnTieneEvento" name="hdnTieneEvento" value="@ViewBag.hdnTieneEvento" />
+        <input type="hidden" id="hdnVerReportes" name="hdnVerReportes" value="@ViewBag.hdnVerReportes" />
+        <input type="hidden" id="hdnSubestacion" value="" />
+        <input type="hidden" id="hdnTodasSubestaciones" value="1" />
+        <input type="hidden" id="hdnTotalSubestaciones" value="@ViewBag.hdnTotalSubestaciones" />
+        <input type="hidden" id="hdnPerfil" name="hdnPerfil" value="@Model.Perfil" />
+        <input type="hidden" id="hdnFlagEditarDemanda" name="hdnFlagEditarDemanda" value="@ViewBag.hdnFlagEditarDemanda" />
+        <input type="hidden" id="hdnClientesEliminados" name="hdnClientesEliminados" value="" />
+        <br />
+
+        <div class="content-hijo">
+            <div id="tab-container" class="tab-container">
+                <ul class='etabs'>
+                    <li class='tab'><a href="#tabClienteLibre">Clientes Libres</a></li>
+                    <li class='tab'><a href="#tabDistribuidor">Distribuidores</a></li>
+                </ul>
+                <div class='panel-container'>
+                    <div id="tabClienteLibre">
+                        <div class="search-content">
+                            <table class="content-tabla-search">
+                                <tr>
+                                    <td></td>
+                                    <td>
+                                        <input type="button" id="btnBuscarEmpresa" name="btnBuscarEmpresa" value="Agregar Clientes" />
+                                    </td>
+                                    <td colspan="2">
+                                        @*<input type="button" value="Eliminar Todos" id="btnEliminar" name="btnEliminar" class="form-action" />*@
+                                        <input type="button" value="Eliminar Seleccionado" id="btnEliminarSeleccionado" name="btnEliminarSeleccionado" class="form-action" />
+                                    </td>
+                                    <td></td>
+                                    <td colspan="2">
+                                        <input type="button" value="Exportar" id="btnDescargarFormato" name="btnDescargarFormato" class="form-action" />
+                                        <input type="button" value="Importar" id="btnSelectExcel" name="btnSelectExcel" class="form-action" />
+                                        <input type="button" value="Ver Errores" id="btnMostrarErrores" name="btnMostrarErrores" class="form-action" />
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="content-tabla" id="" style="">
+
+                            <div id="spl-subasta_1">
+                                <div>
+                                    <div id='detalleFormato'></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="tabDistribuidor" style="">
+                        <div class="content-tabla" id="" style="">
+
+                            <div id="spl-subasta_2">
+                                <div>
+                                    <div id='detalleDistribuidores'></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="popupSeleccionarEmpresas" class="general-popup" style="min-width: 1020px; height: 450px">
+            <span class="button b-close"><span>X</span></span>
+            <div class="popup-title">
+                <span>Seleccionar Empresas</span>
+            </div>
+            <div class="popup-text" id="contenidoEdicion">
+                <table>
+                    <tr>
+                        <td colspan="2">
+                            <input type="radio" name="tipoBusqueda" id="tipoBusquedaPR03" value="1" checked>Primero buscar en PR-03 y luego en PR-16
+                        </td>
+                        <td colspan="2">
+                            <input type="radio" name="tipoBusqueda" id="tipoBusquedaPR16" value="2">Primero buscar en PR-16 y luego en PR-03
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Zona:
+                        </td>
+                        <td>
+                            @Html.DropDownList("zona", new SelectList(Model.Zonas, "AREACODI", "AREANOMB"), new { style = "width: 100%;" })
+                        </td>
+                        <td>
+                            SubEstaci&oacute;n:
+                        </td>
+                        <td>
+                            <!--<div id="subestaciones"></div>-->
+                            <select id="subestacion" name="subestacion" multiple="multiple">
+                                @foreach (var item in Model.SubEstaciones)
+                                {
+                                    <option value="@item.AREACODI">@item.AREANOMB</option>
+                                }
+                            </select>
+                        </td>
+
+                    </tr>
+                    <tr>
+                        <td>
+                            Nombre:
+                        </td>
+                        <td colspan="3">
+                            <input type="text" id="nombreEmpresa" name="nombreEmpresa" style="width:100%" />
+                        </td>
+                        <td colspan="2">
+                            <table align="center">
+                                <tr>
+                                    <td style="text-align:right">
+                                        <input type="button" value="Buscar" id="btnBuscar" name="btnBuscar" class="form-action" />
+                                        <input type="button" value="Agregar" id="btnAgregar" name="btnAgregar" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6">
+                            <div class="table-list" id="listadoEmpresas" style="height:250px">
+
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <input type="hidden" id="empresasSeleccionadas" name="empresasSeleccionadas" value="" />
+            </div>
+        </div>
+        <div id="popupRegistrarEjecucion" class="general-popup" style="width:400px;height:200px">
+            <span class="button b-close"><span>X</span></span>
+            <div class="popup-title">
+                <span>Registro de Ejecuci&oacute;n</span>
+            </div>
+            <div class="popup-text" id="contenidoEdicion">
+                <table>
+                    <tr>
+                        <td>
+                            Fecha Hora Inicio:
+                        </td>
+                        <td style="width:100px">
+                            <input type="text" id="fechaHoraInicioEjecucion" name="fechaHoraInicioEjecucion" value="@(Model.RcaCuadroProgDTO.Rccuadfechorinicio != DateTime.MinValue ? Model.RcaCuadroProgDTO.Rccuadfechorinicio.Value.ToString("dd/MM/yyyy HH:mm") : "")" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Fecha Hora Fin:
+                        </td>
+                        <td style="width:100px">
+                            <input type="text" id="fechaHoraFinEjecucion" name="fechaHoraFinEjecucion" value="@(Model.RcaCuadroProgDTO.Rccuadfechorfin != DateTime.MinValue ? Model.RcaCuadroProgDTO.Rccuadfechorfin.Value.ToString("dd/MM/yyyy HH:mm") : "")" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <table align="center">
+                                <tr>
+                                    <td style="text-align:right">
+                                        <input type="button" value="Grabar" id="btnGrabarEjecucion" name="btnGrabarEjecucion" class="form-action" />
+                                        <input type="button" value="Cerrar" id="btnCerrarEjecucion" name="btnCerrarEjecucion" class="form-action b-close" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div id="popupReprogramar" class="general-popup" style="width:400px;height:200px">
+            <span class="button b-close"><span>X</span></span>
+            <div class="popup-title">
+                <span>Reprogramaci&oacute;n de Cuadro</span>
+            </div>
+            <div class="popup-text" id="contenidoReprogramacion">
+                <table>
+                    <tr>
+                        <td>
+                            C&oacute;digo Reprograma:
+                        </td>
+                        <td style="width:100px">
+                            <input type="text" id="codigoReprograma" name="codigoReprograma" value="" maxlength="20" />
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2">&nbsp;&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <table align="center">
+                                <tr>
+                                    <td style="text-align:right">
+                                        <input type="button" value="Grabar" id="btnGrabarReprograma" name="btnGrabarReprograma" class="form-action" />
+                                        <input type="button" value="Cerrar" id="btnCerrarReprograma" name="btnCerrarReprograma" class="form-action b-close" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div id="validaciones" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+
+    </div>
+</div>
+<!--Hoja de estilos-->
+<link href="~/Areas/RechazoCarga/Content/Css/css.css" rel="stylesheet" />
+<!--Menu contextual-->
+<script src="~/Content/Scripts/contextmenu.js"></script>
+<link href="~/Content/Css/contextmenu.css" rel="stylesheet" />
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Areas/RechazoCarga/Content/Scripts/programaRechazoCarga.js"></script>
+<script src="~/Areas/RechazoCarga/Content/Scripts/util.js"></script>
+<script src="~/Areas/RechazoCarga/Content/Scripts/json2.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<!--Tabs-->
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/Handson/select2.css" rel="stylesheet" />
+<!---->
+<script src="~/Content/Scripts/Handson/select2.js"></script>
+<script src="~/Content/Scripts/Handson/select2handson.js"></script>
+

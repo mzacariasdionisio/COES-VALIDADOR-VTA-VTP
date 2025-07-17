@@ -1,0 +1,235 @@
+﻿@model COES.MVC.Intranet.Areas.RegistroIntegrante.Models.RevisionModel
+@using COES.Servicios.Aplicacion.RegistroIntegrantes;
+<table border="0" class="pretty tabla-adicional" cellspacing="0" width="100%" id="tabla">
+    <thead>
+        <tr>
+            @*<th>Nro Iteracion SGI</th>
+                <th>Nro Iteracion DJR</th>*@
+            <th>Tipo Integrante</th>
+            <th>Razon Social</th>
+            <th>Nombre Comercial</th>
+            <th>Sigla</th>
+            <th>Fecha Solicitud</th>
+            @*<th>Horas SGI</th>
+                <th>Horas DJR</th>*@
+
+            @if (Model.esUsuarioSGI || Model.esUsuarioDE)
+            {
+                <th>Estado SGI</th>
+                <th>Revision SGI</th>
+            }
+
+            @if (Model.esUsuarioSGI || Model.esUsuarioDJR || Model.esUsuarioDE)
+            {
+                <th>Estado DJR</th>
+                <th>Revision DJR</th>
+            }
+
+            @if (Model.esUsuarioSGI || Model.esUsuarioDE)
+            {
+                <th>Fin revisión SGI</th>
+            }
+
+            @if (Model.esUsuarioSGI || Model.esUsuarioDJR || Model.esUsuarioDE)
+            {
+                <th>Fin revisión DJR</th>
+            }
+
+            <th>Revisiones</th>
+            <th>Notificado</th>
+            <th>Pre-Aprobación</th>
+            <th>Pre-Aprobado</th>
+            <th>Aprobación</th>
+            <th>Aprobado</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Lista.Count > 0)
+        {
+            foreach (var item in Model.Lista)
+            {
+                <tr>
+                    @*<td>@item.ReviiteracionSGI</td>
+                        <td>@item.ReviiteracionDRJ</td>*@
+                    <td>@item.Tipoemprdesc</td>
+                    <td>@item.Emprrazsocial</td>
+                    <td>@item.Emprnombrecomercial</td>
+                    <td>@item.Emprsigla</td>
+                    <td>
+                        @if (@item.Emprfechainscripcion != null)
+                        {
+                            @item.Emprfechainscripcion.Value.ToString("dd/MM/yyyy HH:mm")
+                        }
+                    </td>
+                    @*<td>@item.HorasSGI</td>
+                        <td>@item.HorasDJR</td>*@
+
+                    @if (Model.esUsuarioSGI || Model.esUsuarioDE)
+                    {
+                        <td>@item.ReviEstadoSGI</td>
+                        <td>
+                            @if (@item.RevifecrevisionSGI != null)
+                            {
+                                @item.RevifecrevisionSGI.Value.ToString("dd/MM/yyyy")
+                            }
+                        </td>
+                    }
+
+                    @if (Model.esUsuarioSGI || Model.esUsuarioDJR || Model.esUsuarioDE)
+                    {
+                        <td>@item.ReviEstadoDJR</td>
+                        <td>
+                            @if (@item.RevifecrevisionDJR != null)
+                            {
+                                @item.RevifecrevisionDJR.Value.ToString("dd/MM/yyyy")
+                            }
+                        </td>
+                    }
+
+                    @if (Model.esUsuarioSGI || Model.esUsuarioDE)
+                    {
+                        <td>
+                            @if (@item.ReviFinalizadoSGI == ConstantesRegistroIntegrantes.RevisionFinalizadoSi)
+                            {
+                                if (@item.ReviFecFinalizadoSGI != null)
+                                {
+                                    @item.ReviFecFinalizadoSGI.Value.ToString("dd/MM/yyyy")
+                                }
+                            }
+                        </td>
+                    }
+
+                    @if (Model.esUsuarioSGI || Model.esUsuarioDJR || Model.esUsuarioDE)
+                    {
+                        <td>
+                            @if (@item.ReviFinalizadoDJR == ConstantesRegistroIntegrantes.RevisionFinalizadoSi)
+                            {
+                                if (@item.ReviFecFinalizadoDJR != null)
+                                {
+                                    @item.ReviFecFinalizadoDJR.Value.ToString("dd/MM/yyyy")
+                                }
+                            }
+                        </td>
+                    }
+                    <td>
+                        <a href="JavaScript:ExportarConstancia(@item.Emprcodi)" title="Constancia Registro COES">
+                            <img src="~/Content/Images/file.png" />
+                        </a>
+
+                        @if (Model.esUsuarioSGI || (Model.esUsuarioDE && item.ReviTerminadoSGI == ConstantesRegistroIntegrantes.RevisionTerminadoSi))
+                        {
+                            <a href="JavaScript:verDetalleSGI(@item.Emprcodi)" title="Revisar SGI">
+                                <img src="~/Content/Images/btn-open.png" />
+                            </a>
+                        }
+
+                        @if (Model.esUsuarioSGI || Model.esUsuarioDJR || (Model.esUsuarioDE && item.ReviTerminadoDJR == ConstantesRegistroIntegrantes.RevisionTerminadoSi))
+                        {
+                            <a href="JavaScript:verDetalleDJR(@item.Emprcodi)" title="Revisar DJR">
+                                <img src="~/Content/Images/btn-open.png" />
+                            </a>
+                        }
+
+                        @if (Model.esUsuarioSGI)
+                        {
+                            if (item.ReviFinalizadoSGI == ConstantesRegistroIntegrantes.RevisionFinalizadoSi &&
+                            item.ReviFinalizadoDJR == ConstantesRegistroIntegrantes.RevisionFinalizadoSi &&
+                            (item.ReviNotificadoSGI == ConstantesRegistroIntegrantes.RevisionNotificadoNo ||
+                            item.ReviNotificadoDJR == ConstantesRegistroIntegrantes.RevisionNotificadoNo))
+                            {
+                                <a href="JavaScript:darNotificar(@item.Emprcodi)" title="Notificar Resultado">
+                                    <img src="~/Content/Images/btn-ok.png" />
+                                </a>
+                            }
+                        }
+                    </td>
+
+                    <td>
+                        @if (@item.ReviNotificadoSGI == ConstantesRegistroIntegrantes.RevisionNotificadoSi &&
+                        @item.ReviNotificadoDJR == ConstantesRegistroIntegrantes.RevisionNotificadoSi)
+                        {
+                            if (@item.ReviFecNotificadoSGI != null)
+                            {
+                                @item.ReviFecNotificadoSGI.Value.ToString("dd/MM/yyyy")
+                            }
+                        }
+                    </td>
+
+                    <td>
+                        <a href="JavaScript:verFlujo(@item.Emprcodi)">
+                            <img src="~/Content/Images/btn-properties.png" title="Ver referencia SGDOC" />
+                        </a>
+                        @if (Model.esUsuarioSGI)
+                        {
+                            if (item.ReviNotificadoSGI == ConstantesRegistroIntegrantes.RevisionNotificadoSi &&
+                                item.ReviNotificadoDJR == ConstantesRegistroIntegrantes.RevisionNotificadoSi &&
+                                item.ReviTerminadoSGI == ConstantesRegistroIntegrantes.RevisionTerminadoNo &&
+                                item.ReviTerminadoDJR == ConstantesRegistroIntegrantes.RevisionTerminadoNo)
+                            {
+                                <a href="JavaScript:darTerminar(@item.Emprcodi)" title="Pre-Aprobar">
+                                    <img src="~/Content/Images/btn-ok.png" />
+                                </a>
+                            }
+                        }
+                    </td>
+
+                    <td>
+                        @if (@item.ReviFecTerminadoSGI != null)
+                        {
+                            @item.ReviFecTerminadoSGI.Value.ToString("dd/MM/yyyy")
+                        }
+                    </td>
+
+                    <td>
+                        @if (Model.esUsuarioDE)
+                        {
+                            if (item.ReviTerminadoSGI == ConstantesRegistroIntegrantes.RevisionTerminadoSi &&
+                                item.ReviTerminadoDJR == ConstantesRegistroIntegrantes.RevisionTerminadoSi &&
+                                item.ReviEnviadoSGI == ConstantesRegistroIntegrantes.RevisionEnviadoNo &&
+                                item.ReviEnviadoDJR == ConstantesRegistroIntegrantes.RevisionEnviadoNo)
+                            {
+                                <a href="JavaScript:darConformidad(@item.Emprcodi)" title="Aprobar">
+                                    <img src="~/Content/Images/btn-ok.png" />
+                                </a>
+                            }
+                        }
+
+                        @if (Model.esUsuarioSGI || Model.esUsuarioDE)
+                        {
+
+
+
+
+                            if (item.ReviEnviadoSGI == ConstantesRegistroIntegrantes.RevisionEnviadoSi &&
+                            item.ReviEnviadoDJR == ConstantesRegistroIntegrantes.RevisionEnviadoSi)
+                            {
+                                <a href="JavaScript:ReEnviarCredenciales(@item.Emprcodi)" title="Re Enviar Credenciales">
+                                    <img src="~/Content/Images/btn-edit.png" />
+                                </a>
+
+                                <a href="JavaScript:BajarCarta(@item.Emprcodi)" title="Bajar Carta">
+                                    <img src="~/Content/Images/btn-baja.png" />
+                                </a>
+
+                                <a href="JavaScript:ExportarRegistro(@item.Emprcodi)" title="Inscripción Registro COES">
+                                    <img src="~/Content/Images/btn-properties.png" />
+                                </a>
+                            }
+                        }
+                    </td>
+                    <td>
+                        @if (@item.ReviEnviadoSGI == ConstantesRegistroIntegrantes.RevisionEnviadoSi &&
+                            @item.ReviEnviadoDJR == ConstantesRegistroIntegrantes.RevisionEnviadoSi)
+                        {
+                            if (@item.ReviFecEnviadoSGI != null)
+                            {
+                                @item.ReviFecEnviadoSGI.Value.ToString("dd/MM/yyyy")
+                            }
+                        }
+
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

@@ -1,0 +1,439 @@
+# Elaborado por ITSE SAS
+# 13/02/2024
+trigger: none
+      
+pool:
+  #vmImage: 'windows-2019'
+  #name: PreProdPool
+  #name: TestPool
+  name: CompiladorPool
+
+stages:
+- stage: Compilacion
+  displayName: CI
+
+  jobs:
+  - job: AnalizarProyecto
+    timeoutInMinutes: 0
+    workspace:
+      clean: all
+    steps:
+      
+    - task: NuGetToolInstaller@1
+      displayName: Instalar Nuget
+
+    - task: NodeTool@0
+      inputs:
+        versionSource: 'spec'
+        versionSpec: '18.x'
+      displayName: Instala Node
+    
+    - task: NuGetCommand@2
+      inputs:
+        command: 'restore'
+        restoreSolution: '**/*.sln'
+        feedsToUse: 'select'
+        vstsFeed: 'ad6585c8-02ff-4991-8f05-5bd302c53775/a5a703a4-86bc-4f81-aa4c-9464a8194b8c'
+      displayName: Restaurar paquetes Nuget
+      
+
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: SonarQubePrepare@5
+#      inputs:
+#        SonarQube: 'sonarcoes'
+#        scannerMode: 'MSBuild'
+#        projectKey: $(projectKey)
+#        projectName: $(sonarproject)
+#      name: PreparandoSonarQube
+
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: PowerShell@2
+#      inputs:
+#        targetType: 'inline'
+#        script: |
+#          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
+#          $url = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/build/builds/$(Build.BuildId)/timeline?api-version=5.1";
+#          $result = Invoke-RestMethod -Uri $url -Headers @{authorization = "Bearer $(system.accesstoken)"} -ContentType "application/json" -Method get;
+#          $taskResult = $result.records | where {$_.name -eq "PreparandoSonarQube"}; # | select result;
+#          $taskResult.result
+#          $taskState = $taskResult.result
+#          #$taskState = ($taskResult.result -split "=")[1].Trim();
+#          #$taskState = $taskState.TrimEnd($taskState[-1]);
+#          Write-Host "##vso[task.setvariable variable=estado;isOutput=true]$taskState";
+#          echo $taskState;
+#
+#          $messages = $taskResult.issues | ForEach-Object { $_.message }
+#          Write-Host "##vso[task.setvariable variable=error;isOutput=true]$messages";
+#          $messages
+#      condition: always()
+#      name: verEstadoSonar
+
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: PowerShell@2
+#      condition: in(variables['verEstadoSonar.estado'], 'succeededWithIssues', 'failed')
+#      inputs:
+#        targetType: 'inline'
+#        script: |
+#          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#          # Obtener log error del paso anterior
+#          "$(verEstadoSonar.error)"
+#          $errorMessage = "Error de compilación: $(verEstadoSonar.error)"
+#          $jsonBody = @{
+#          correos = "$(lidmto); $(infra); $(arch); $(coor)"
+#          correoscc = "$(itse)"
+#          asunto = "[Azure DevOps] Alerta de calidad: Fallo de SonarQube."
+#          cuerpo = "
+#                <table border='1' cellspacing='0' cellpadding='10'>
+#                    <tr>
+#                      <th>Nombre de proyecto/nro.ticket</th>
+#                      <td>$(EstablecerVariables.proyect)</td>
+#                    </tr>
+#                    <tr>
+#                      <th>Ambiente</th>
+#                      <td>$(ambiente)</td>
+#                    </tr>
+#                    <tr>
+#                      <th>Nombre de la rama</th>
+#                      <td>$(rama)</td>
+#                    </tr>
+#                    <tr>
+#                      <th>Detalle del error</th>
+#                      <td>Falló la comunicación con SonarQube. El detalle del error se puede visualizar desde el <a href='$(debugUrl)'>Azure DevOps COES</a></td>
+#                    </tr>
+#                </table>"
+#          } | ConvertTo-Json
+#          $jsonBody | Out-File -FilePath "temp.json" -Encoding utf8
+#          $url = "$(urlmail)"
+#          $response = Invoke-RestMethod -Uri $url -Method Post -InFile "temp.json" -ContentType "application/json"
+#          $response
+#          Remove-Item "temp.json"
+#          throw "Fallo de conexion sonar"
+#      displayName: Fallo de conexion Sonar
+
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Write your PowerShell commands here.
+          #Write-Host $(establecerProyecto.proyecto)
+
+          Copy-Item -Path "Librerias\Base\bin" -Destination "COES.Base\bin" -Recurse
+          #Copy-Item -Path "Librerias\Base\bin\*" -Destination "COES.Base\bin" -Recurse
+          Copy-Item -Path "Librerias\Extranet\bin" -Destination "COES.MVC.Extranet\bin" -Recurse
+          #Copy-Item -Path "Librerias\Extranet\bin\*" -Destination "COES.MVC.Extranet\bin" -Recurse
+          Copy-Item -Path "Librerias\Datos\bin" -Destination "COES.Infraestructura.Datos\bin" -Recurse
+          #Copy-Item -Path "Librerias\Datos\bin\*" -Destination "COES.Infraestructura.Datos\bin" -Recurse
+          Copy-Item -Path "Librerias\Aplicacion\bin" -Destination "COES.Servicios.Aplicacion\bin" -Recurse
+          #Copy-Item -Path "Librerias\Aplicacion\bin\*" -Destination "COES.Servicios.Aplicacion\bin" -Recurse
+          ##Copy-Item -Path "Librerias\Distribuidos\bin\*" -Destination "COES.Servicios.Distribuidos\bin\" -Recurse
+          Copy-Item -Path "Librerias\DTO\bin" -Destination "COES.Dominio.DTO\bin" -Recurse
+          #Copy-Item -Path "Librerias\DTO\bin\*" -Destination "COES.Dominio.DTO\bin" -Recurse
+          Copy-Item -Path "Librerias\Interface\bin" -Destination "COES.Dominio.Interfaces\bin" -Recurse
+          #Copy-Item -Path "Librerias\Interface\bin\*" -Destination "COES.Dominio.Interfaces\bin" -Recurse
+          Copy-Item -Path "Librerias\Intranet\bin" -Destination "COES.MVC.Intranet\bin" -Recurse
+          #Copy-Item -Path "Librerias\Intranet\bin\*" -Destination "COES.MVC.Intranet\bin" -Recurse
+          Copy-Item -Path "Librerias\Publico\bin" -Destination "COES.MVC.Publico\bin" -Recurse
+          #Copy-Item -Path "Librerias\Publico\bin\*" -Destination "COES.MVC.Publico\bin" -Recurse
+          Copy-Item -Path "Librerias\WScoes\bin\*" -Destination "COES.Old.WScoes\bin" -Recurse
+          Copy-Item -Path "Librerias\wcfSicOperacion\bin" -Destination "wcfSicOperacion\bin" -Recurse
+          Copy-Item -Path "Librerias\DataAccessLayerx\bin" -Destination "DataAccessLayerx\bin" -Recurse
+          
+          Copy-Item -Path "Plantillas.Web.Config\*.config" -Destination "$(Build.ArtifactStagingDirectory)" -Recurse
+      displayName: Copiando .dlls
+    
+    - task: MSBuild@1
+      inputs:
+        #JSB: se comenta porque PRY y tickets no aplicarán Sonar
+        solution: 'COES.MVC.*/*.csproj'
+        #solution: $(establecerProyecto.proyecto)
+        #JSB: cambio x fuente de 64: msbuildArchitecture: 'x86'
+        msbuildArchitecture: 'x64'
+        #JSB: se comenta porque PRY y tickets no aplicarán Sonar
+        #msbuildArguments: '/p:TargetFramework=net461'
+        msbuildArguments: '/p:TargetFramework=net461  /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+        createLogFile: true
+        logFileVerbosity: 'detailed'
+      name: Compilacion
+
+#    - task: MSBuild@1
+#      condition: eq(variables.PtoPublicoYOtro, true)
+#      inputs:
+#        solution: "COES.MVC.Publico/COES.MVC.Publico.csproj"
+#        msbuildArchitecture: 'x86'
+#        msbuildArguments: '/p:TargetFramework=net461  /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+#        createLogFile: true
+#        logFileVerbosity: 'detailed'
+#      name: Compilacion2
+
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          $url = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/build/builds/$(Build.BuildId)/timeline?api-version=5.1";
+          echo $url;
+          $result = Invoke-RestMethod -Uri $url -Headers @{authorization = "Bearer $(system.accesstoken)"} -ContentType "application/json" -Method get;
+          $taskResult = $result.records | where {$_.name -eq "Compilacion"}; # | select result;
+          $taskResult.result
+          $taskState = $taskResult.result
+          #$taskState = ($taskResult.result -split "=")[1].Trim();
+          #$taskState = $taskState.TrimEnd($taskState[-1]);
+          Write-Host "##vso[task.setvariable variable=estado;isOutput=true]$taskState";
+          echo $taskState $taskResult;
+
+          $messages = @()
+          $issues = $taskResult.issues
+          # Recorrer cada issue y extraer el valor de la propiedad "message"
+          foreach ($issue in $issues) {
+              $messages += $issue.message
+          }
+
+          # Mostrar todos los mensajes obtenidos
+          $messages
+          Write-Host "##vso[task.setvariable variable=error;isOutput=true]$messages";
+      condition: always()
+      name: verEstadoCompilacion
+    
+    - task: PowerShell@2
+      condition: in(variables['verEstadoCompilacion.estado'], 'succeededWithIssues', 'failed')
+      inputs:
+        targetType: 'inline'
+        script: |
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          # Obtener log error del paso anterior
+          "$(verEstadoCompilacion.error)"
+          $errorMessage = "Error de compilación: $(verEstadoCompilacion.error)"
+          $jsonBody = @{
+          correos = "$(lidmto); $(infra); $(arch); $(coor)"
+          correoscc = "$(itse)"
+          asunto = "[Azure DevOps] Alerta de compilación: Fallo al compilar la solución."
+          cuerpo = "
+                <table border='1' cellspacing='0' cellpadding='10'>
+                    <tr>
+                      <th>Nombre de proyecto/nro.ticket</th>
+                      <td>$(EstablecerVariables.proyect)</td>
+                    </tr>
+                    <tr>
+                      <th>Ambiente</th>
+                      <td>$(ambiente)</td>
+                    </tr>
+                    <tr>
+                      <th>Nombre de la rama</th>
+                      <td>$(rama)</td>
+                    </tr>
+                    <tr>
+                      <th>Detalle del error</th>
+                      <td>Falló la compilación del proyecto. El detalle del error se puede visualizar desde el <a href='$(debugUrl)'>Azure DevOps COES</a></td>
+                    </tr>
+                </table>"
+          } | ConvertTo-Json
+          $jsonBody | Out-File -FilePath "temp.json" -Encoding utf8
+          $url = "$(urlmail)"
+          $response = Invoke-RestMethod -Uri $url -Method Post -InFile "temp.json" -ContentType "application/json"
+          $response
+          Remove-Item "temp.json"
+          throw "Fallo de compilacion"
+      displayName: Fallo de compilacion
+    
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: SonarQubeAnalyze@5
+#      inputs:
+#        jdkversion: 'JAVA_HOME_17_X64'
+#      displayName: SonarAnalisis
+
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: PowerShell@2
+#      inputs:
+#        targetType: 'inline'
+#        script: |
+#          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
+#          $url = "$(System.TeamFoundationCollectionUri)$(System.TeamProject)/_apis/build/builds/$(Build.BuildId)/timeline?api-version=5.1";
+#          $result = Invoke-RestMethod -Uri $url -Headers @{authorization = "Bearer $(system.accesstoken)"} -ContentType "application/json" -Method get;
+#          $taskResult = $result.records | where {$_.name -eq "SonarAnalisis"}; # | select result;
+#          $taskResult.result
+#          $taskState = $taskResult.result
+#          #$taskState = ($taskResult.result -split "=")[1].Trim();
+#          #$taskState = $taskState.TrimEnd($taskState[-1]);
+#          Write-Host "##vso[task.setvariable variable=estado;isOutput=true]$taskState";
+#          echo $taskState;
+#
+#          $messages = $taskResult.issues | ForEach-Object { $_.message }
+#          Write-Host "##vso[task.setvariable variable=error;isOutput=true]$messages";
+#          $messages
+#      condition: always()
+#      name: verEstadoSonarAnalisis
+
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: PowerShell@2
+#      condition: in(variables['verEstadoSonarAnalisis.estado'], 'succeededWithIssues', 'failed')
+#      inputs:
+#        targetType: 'inline'
+#        script: |
+#          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#          # Obtener log error del paso anterior
+#          "$(verEstadoSonar.error)"
+#          $errorMessage = "Error de compilación: $(verEstadoSonarAnalisis.error)"
+#          $jsonBody = @{
+#          correos = "$(lidmto); $(infra); $(arch); $(coor)"
+#          correoscc = "$(itse)"
+#          asunto = "[Azure DevOps] Alerta de calidad: Fallo de SonarQube."
+#          cuerpo = "
+#                <table border='1' cellspacing='0' cellpadding='10'>
+#                    <tr>
+#                      <th>Nombre de proyecto/nro.ticket</th>
+#                      <td>$(EstablecerVariables.proyect)</td>
+#                    </tr>
+#                    <tr>
+#                      <th>Ambiente</th>
+#                      <td>$(ambiente)</td>
+#                    </tr>
+#                    <tr>
+#                      <th>Nombre de la rama</th>
+#                      <td>$(rama)</td>
+#                    </tr>
+#                    <tr>
+#                      <th>Detalle del error</th>
+#                      <td>Falló la comunicación con SonarQube. El detalle del error se puede visualizar desde el <a href='$(debugUrl)'>Azure DevOps COES</a></td>
+#                    </tr>
+#                </table>"
+#          } | ConvertTo-Json
+#          $jsonBody | Out-File -FilePath "temp.json" -Encoding utf8
+#          $url = "$(urlmail)"
+#          $response = Invoke-RestMethod -Uri $url -Method Post -InFile "temp.json" -ContentType "application/json"
+#          $response
+#          Remove-Item "temp.json"
+#          throw "Fallo de conexion sonar"
+#      displayName: Fallo de conexion SonarPrepare
+
+#    - task: MSBuild@1
+#      condition: eq(variables.PtoPublicoYOtro, true)
+#      inputs:
+#        solution: "COES.MVC.Publico/COES.MVC.Publico.csproj"
+#        msbuildArchitecture: 'x86'
+#        msbuildArguments: '/p:TargetFramework=net461  /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+#        createLogFile: true
+#        logFileVerbosity: 'detailed'
+#      name: Compilacion2
+
+#    - task: DotNetCoreCLI@2
+#      condition: eq(variables.SoloPtoPublico, false)
+#      inputs:
+#        command: 'build'
+#        projects: $(establecerProyecto.test) #'ITSE.UI.Test/ITSE.UI.Test.csproj'
+#      displayName: "Compilar proyecto test UI"
+    
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: SonarQubePublish@5
+#      inputs:
+#        pollingTimeoutSec: '300'
+#      displayName: Publicar resultados Sonar
+#      name: PublicarSonar
+
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: PowerShell@2
+#      inputs:
+#        targetType: 'inline'
+#        script: 'Start-Sleep -Seconds 300'
+
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: PowerShell@2
+#      condition: succeeded()
+#      inputs:
+#        targetType: 'inline'
+#        script: |
+#          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#          $headers = @{ Authorization = "Bearer $(tokensonar)" };
+#          $result = Invoke-RestMethod -Method Get -Uri '$(urlsonar)/api/qualitygates/project_status?projectKey=$(projectKey)' -Headers $headers;
+#          $result | ConvertTo-Json | Write-Host
+#          
+#          if ($result.projectStatus.status -eq "OK") {
+#            Write-Host "Quality Gate Satisfactorio"
+#          }else{
+#            Write-Host "Actualizando datos del Quality Gate"
+#            Start-Sleep -Seconds 12
+#            #$bugsNuevos = Invoke-RestMethod -Method Get -Uri '$(urlsonar)/api/issues/search?types=BUG&severities=BLOCKER,CRITICAL&ps=1&inNewCodePeriod=true&resolved=false&componentKeys=$(projectKey)' -Headers $headers
+#
+#            $bugsNuevos = Invoke-RestMethod -Method Get -Uri '$(urlsonar)/api/issues/search?types=BUG&severities=BLOCKER,CRITICAL&ps=1&inNewCodePeriod=true&componentKeys=$(projectKey)' -Headers $headers
+#
+#            $bugsNuevos | ConvertTo-Json | Write-Host
+#            $numeroBugsNuevos = $bugsNuevos.total
+#            #$bugsTotales = Invoke-RestMethod -Method Get -Uri '$(urlsonar)/api/issues/search?types=BUG&severities=BLOCKER,CRITICAL&ps=1&resolved=false&componentKeys=$(projectKey)' -Headers $headers
+#            $bugsTotales = Invoke-RestMethod -Method Get -Uri '$(urlsonar)/api/issues/search?types=BUG&severities=BLOCKER,CRITICAL&ps=1&componentKeys=$(projectKey)' -Headers $headers
+#            $bugsTotales | ConvertTo-Json | Write-Host
+#            $bugsTotal= $bugsTotales.total
+#            $numeroBugsTotal = $bugsTotales.total-$numeroBugsNuevos
+
+#            $jsonBody = @{
+#            correos = " $(lidpry1); $(lidmto)"
+#            correoscc = " $(infra); $(itse); $(arch)"
+#            asunto = "[Azure DevOps] Alerta de calidad: Incumplimiento del criterio de aceptación"
+#            cuerpo = "
+#                  <table border='1' cellspacing='0' cellpadding='10'>
+#                      <tr>
+#                        <th>Nombre de proyecto/nro.ticket</th>
+#                        <td>$(EstablecerVariables.proyect)</td>
+#                      </tr>
+#                      <tr>
+#                        <th>Ambiente</th>
+#                        <td>$(ambiente)</td>
+#                      </tr>
+#                      <tr>
+#                        <th>Nombre de la rama</th>
+#                        <td>$(rama)</td>
+#                      </tr>
+#                      <tr>
+#                        <th>Línea base establecida</th>
+#                        <td>$numeroBugsTotal</td>
+#                      </tr>
+#                      <tr>
+#                        <th>Número de Bug resultante</th>
+#                        <td>$bugsTotal</td>
+#                        <!--<td>$numeroBugsNuevos</td>-->
+#                      </tr>
+#                  </table>"
+#            } | ConvertTo-Json
+#            $jsonBody | Out-File -FilePath "temp.json" -Encoding utf8
+#            $url = "$(urlmail)"
+#            $response = Invoke-RestMethod -Uri $url -Method Post -InFile "temp.json" -ContentType "application/json"
+#            $response
+#            Remove-Item "temp.json"
+#            throw "Quality gate failed"
+#          }
+#      displayName: SonarQube Quality Gate 
+#      continueOnError: false
+
+#JSB: se comenta porque PRY y tickets no aplicarán Sonar
+#    - task: MSBuild@1
+#      inputs:
+#        solution: $(establecerProyecto.proyecto)
+#        msbuildArchitecture: 'x86'
+#        msbuildArguments: '/p:TargetFramework=net461  /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+#        createLogFile: true
+#        logFileVerbosity: 'detailed'
+#      name: CompilacionProyecto
+    - task: DotNetCoreCLI@2
+      condition: eq(variables.SoloPtoPublico, false)
+      inputs:
+        command: 'build'
+        projects: $(establecerProyecto.test)
+      displayName: "Compilar proyecto test UI"
+
+    - task: DotNetCoreCLI@2
+      condition: eq(variables.SoloPtoPublico, false)
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: $(establecerProyecto.test)
+        arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+        zipAfterPublish: false
+      displayName: "Publicar test UI"
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'netApps'
+        publishLocation: 'Container'
+      displayName: "publicar artefacto"
+
+    
+    

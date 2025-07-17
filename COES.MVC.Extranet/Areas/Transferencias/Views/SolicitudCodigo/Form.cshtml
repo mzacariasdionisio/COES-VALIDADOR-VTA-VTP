@@ -1,0 +1,460 @@
+﻿@model COES.MVC.Extranet.Areas.Transferencias.Models.SolicitudCodigoModel
+@{
+    string sAccion = ViewData["sAccion"].ToString();
+    string sTitulo = ViewData["sTitulo"].ToString();
+    var EMPRNOMB = TempData["EMPRNOMB"];
+    var CLICODI2 = (COES.MVC.Extranet.Areas.Transferencias.Models.EmpresaModel)TempData["CLICODI2"];
+    var BARRCODI2 = (COES.MVC.Extranet.Areas.Transferencias.Models.BarraModel)TempData["BARRCODI2"];
+    var TIPOCONTCODI2 = (IEnumerable<SelectListItem>)TempData["TIPOCONTCODI2"];
+    var TIPOUSUACODI2 = (IEnumerable<SelectListItem>)TempData["TIPOUSUACODI2"];
+    var BARRCODISUM = (COES.MVC.Extranet.Areas.Transferencias.Models.BarraModel)TempData["BARRCODISUM"];
+}
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css?v=@DateTime.Now.Minute" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/Validate.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Areas/Transferencias/Content/Scripts/solicitudCodigoForm.js?v=@DateTime.Now.Minute-002"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+
+@using (Html.BeginForm("Save", "solicitudcodigo", FormMethod.Post, new { id = "frmCodigoRetiro", @class = "cmxform" }))
+{
+    @Html.AntiForgeryToken()
+
+    @Html.HiddenFor(model => model.ListaPotenciasContratadasVTP)
+    @Html.HiddenFor(model => model.Entidad.PeridcCodi)
+    @Html.Hidden("Entidad.EmprNombre", EMPRNOMB)
+    @Html.HiddenFor(model => model.Entidad.SoliCodiRetiCodi)
+    @Html.HiddenFor(model => model.Entidad.SoliCodiRetiObservacion, new { id = "detalle" })
+    <div class="ast" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+        <div class="form-title">@EMPRNOMB: @sTitulo</div>
+        <div class="content-hijo" style="padding-top:8px;">
+            <table cellspacing="2" cellpadding="5">
+                @if (Model.sError != "")
+                {
+                    <tr>
+                        <td colspan="2">
+                            <div class="editor-label" style="color:red;">@Model.sError</div>
+                        </td>
+                    </tr>
+                }
+
+                <tr>
+                    <td colspan="2">
+                        <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                            <table cellspacing="2" cellpadding="5">
+                                <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                    <td colspan="5">
+                                        <div class="editor-label"><b>Datos Comunes</b></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" style="border-bottom:1px solid #CBD3CF">
+                                        <div class="editor-label">
+                                            <label>Periodo de Declaracion:</label>
+                                            <span>
+                                                @Model.Entidad.PeridcNombre
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        <div class="editor-label">
+                                            @Html.LabelFor(model => model.Entidad.CliCodi, "Cliente")
+                                            (*)
+                                        </div>
+
+                                    </td>
+                                    <td>
+                                        <div class="editor-label">
+                                            @Html.LabelFor(model => model.Entidad.TipoContCodi, "Tipo de Contrato")
+                                            (*)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-label">
+                                            @Html.LabelFor(model => model.Entidad.TipoUsuaCodi, "Tipo de Usuario")
+                                            (*)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-label">
+                                            @Html.LabelFor(model => model.Solicodiretifechainicio, "Fecha de Inicio ")
+                                            (*)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-label">
+                                            @Html.LabelFor(model => model.Solicodiretifechafin, "Fecha Fin")
+                                            (*)
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="editor-field">
+                                            <select id="CLICODI2" name="Entidad.CLICODI" multiple="multiple">
+                                                @foreach (var item in @CLICODI2.ListaEmpresas)
+                                                {
+                                                    <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                                }
+                                            </select>
+
+                                        </div>
+                                        <div>
+                                            <a href="javascript:void(0)" id="btnSolicitarCliente">En caso no encuentre el cliente hacer click aqui</a>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field">
+                                            @Html.DropDownList("Entidad.TIPOCONTCODI", @TIPOCONTCODI2, "--Seleccione--")
+                                            @Html.ValidationMessageFor(model => model.Entidad.TipoContCodi)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field">
+                                            @Html.DropDownList("Entidad.TIPOUSUACODI", @TIPOUSUACODI2, "--Seleccione--")
+                                            @Html.ValidationMessageFor(model => model.Entidad.TipoUsuaCodi)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field">
+                                            @Html.HiddenFor(model => model.SolicodiretifechainicioValida)
+                                            @Html.TextBoxFor(model => model.Solicodiretifechainicio, "{0:dd/MM/yyyy}", new { @class = "txtFecha" })
+                                            @Html.ValidationMessageFor(model => model.Solicodiretifechainicio)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field">
+                                            @Html.TextBoxFor(model => model.Solicodiretifechafin, "{0:dd/MM/yyyy}", new { @class = "txtFecha" })
+                                            @Html.ValidationMessageFor(model => model.Solicodiretifechafin)
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="50%">
+                        <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                            <table cellspacing="2" cellpadding="5">
+                                <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                    <td colspan="2">Datos LVTEA</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="editor-label">
+                                            @Html.LabelFor(model => model.Entidad.BarrCodi, "Barra Transferencia")
+                                            (*)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-label">
+                                            <select id="BARRCODI2" name="Entidad.BARRCODI">
+                                                @foreach (var item in @BARRCODI2.ListaBarras)
+                                                {
+                                                    <option value="@item.BarrCodi">@item.BarrNombBarrTran </option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top">
+                                        <div class="editor-label">
+                                            @Html.LabelFor(model => model.Entidad.SoliCodiRetiDescripcion, "Descripción")
+                                            (*)
+                                        </div>
+                                    </td>
+                                    <td style="padding-top:12px">
+                                        <div class="editor-field">
+                                            @Html.TextAreaFor(model => model.Entidad.SoliCodiRetiDescripcion, new { cols = 80, @rows = 2, wrap = "off", style = "background-color: #f2f4f3; border: 1px solid #cbd3cf; border-radius: 5px; color: #4876aa; font: 12px arial,sans-serif; text-indent: 8px; width: 250px; height: 45px;" })
+                                            @Html.ValidationMessageFor(model => model.Entidad.SoliCodiRetiDescripcion)
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top">
+                                        <div class="editor-label disabled">
+                                            @Html.LabelFor(model => model.Entidad.SoliCodiRetiDetalleAmplio, "Mayor Detalle")
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field disabled">
+                                            @Html.TextAreaFor(model => model.Entidad.SoliCodiRetiDetalleAmplio, new { cols = 80, @rows = 2, style = "background-color: #f2f4f3; border: 1px solid #cbd3cf; border-radius: 5px; color: #4876aa; font: 12px arial,sans-serif; text-indent: 8px; width: 250px; height: 65px;" })
+                                            @Html.ValidationMessageFor(model => model.Entidad.SoliCodiRetiDetalleAmplio)
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+
+                    <td width="50%">
+                        <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px; height:100%; ">
+                            <table cellspacing="2" cellpadding="5">
+                                <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                    <td colspan="3">Datos LVTP</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" height="140px">
+                                        <div class="listado" id="listaSuministro"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center;">
+                                        <input type="button" id="btnAgregar" value="Agregar suministro" alt="Agregar barra suministro" title="Agregar barra suministro" />
+                                    </td>
+                                    <td>
+                                        <div class="editor-label">
+                                            <select id="BARRCODISUM" name="Entidad.BARRCODISUM">
+                                                @foreach (var item in @BARRCODISUM.ListaBarras)
+                                                {
+                                                    <option value="@item.BarrCodi">@item.BarrNombre </option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <input type="button" id="btnBorrar" value="Quitar todo" alt="Quitar todo" title="Quitar todo" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                <!--<tr>
+        <td width="100%" colspan="2">
+            <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                <table cellspacing="2" cellpadding="5">
+                    <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                        <td colspan="2">Datos de Potencias Contratadas</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <div class="editor-label  " style="display:inline-block">
+                                <label for="rdbNivelCargaPotenciaTransferencia">
+                                    @Html.RadioButtonFor(m => m.Entidad.TrnpcTipoCasoAgrupado, "AGRVTA", new { @id = "rdbNivelCargaPotenciaTransferencia" })
+                                    <span>Potencia contratada a nivel de barra transferencia</span>
+                                </label>
+                            </div>
+                            <div class="editor-label inline" style="display:inline-block">
+                                <label for="rdbNivelCargaPotenciaSuministro">
+                                    @Html.RadioButtonFor(m => m.Entidad.TrnpcTipoCasoAgrupado, "AGRVTP", new { @id = "rdbNivelCargaPotenciaSuministro" })
+                                    <span>Potencia contratada a nivel de barras de suministros</span>
+                                </label>
+                            </div>
+                        </td>
+
+                    </tr>
+                    <tr>
+                        <td colspan="2" data-for-potencia="AGRVTA" style="display:none">
+                            <table width="100%" class="table-potencia-form" cellpadding="3" cellspacing="0">
+                                <tr>
+                                    <td class="width-potencia-label">
+                                        <div class="editor-label">
+                                            <span>Pot.Contratada Fija H.P</span><span>(*)</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field disabled">
+                                            @Html.TextBoxFor(model => model.Entidad.TrnPctHpmwFija, new { @class = "numeroDecimal", @maxlength = "10" })
+                                            @Html.ValidationMessageFor(model => model.Entidad.TrnPctHpmwFija)
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="width-potencia-label">
+                                        <div class="editor-label">
+                                            <span>Pot.Contratada Fija H.F.P</span><span>(*)</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field disabled">
+                                            @Html.TextBoxFor(model => model.Entidad.TrnPctHfpmwFija, new { @class = "numeroDecimal", @maxlength = "10" })
+                                            @Html.ValidationMessageFor(model => model.Entidad.TrnPctHfpmwFija)
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="width-potencia-label">
+                                        <div class="editor-label">
+                                            <span>Total Fija</span><span>(*)</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field disabled">
+                                            @Html.TextBoxFor(model => model.Entidad.TrnPctTotalmwFija, new { @class = "numeroDecimal", @maxlength = "10" })
+                                            @Html.ValidationMessageFor(model => model.Entidad.TrnPctTotalmwFija)
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td class="width-potencia-label">
+                                        <div class="editor-label">
+                                            <span>Pot.Contratada Var H.P</span><span>(*)</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field disabled">
+                                            @Html.TextBoxFor(model => model.Entidad.TrnPctHpmwFijaVariable, new { @class = "numeroDecimal", @maxlength = "10" })
+                                            @Html.ValidationMessageFor(model => model.Entidad.TrnPctHpmwFijaVariable)
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td class="width-potencia-label">
+                                        <div class="editor-label">
+                                            <span>Pot.Contratada Var H.F.P</span><span>(*)</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field disabled">
+                                            @Html.TextBoxFor(model => model.Entidad.TrnPctHfpmwFijaVariable, new { @class = "numeroDecimal", @maxlength = "10" })
+                                            @Html.ValidationMessageFor(model => model.Entidad.TrnPctHfpmwFijaVariable)
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="width-potencia-label">
+                                        <div class="editor-label">
+                                            <span>Total Var</span><span>(*)</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="editor-field disabled">
+                                            @Html.TextBoxFor(model => model.Entidad.TrnPctTotalmwVariable, new { @class = "numeroDecimal", @maxlength = "10" })
+                                            @Html.ValidationMessageFor(model => model.Entidad.TrnPctTotalmwVariable)
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+
+                        <td colspan="2" data-for-potencia="AGRVTP" id="tblAgrvtp" style="display:none">
+                            <table width="100%" class="pretty tabla-icono thead-fixed">
+                                <thead>
+                                    <tr>
+                                        <th>BARRA SUMINISTRO</th>
+                                        <th>Pot.Contratada Fija H.P(MW)</th>
+                                        <th>Pot.Contratada Fija H.F.P(MW)</th>
+                                        <th>Tot.Fija</th>
+                                        <th>Pot.Contratada Var.H.P(MW)</th>
+                                        <th>Pot.Contratada Var.H.F.P(MW)</th>
+                                        <th>Tot. Variable</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </td>
+    </tr>-->
+                <tr>
+                    <td colspan="2" align="center">
+                        <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index","solicitudcodigo")'" alt="Retornar" title="Retornar" />
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <input type="submit" value="@sAccion" alt="@sAccion" title="@sAccion" id="submit" style="visibility:hidden" />
+                        @if (Model.Entidad.PeridcEstado == "ABI")
+                        {
+                            <button type="button" id="btnGrabar">Grabar</button>
+                        }
+                    </td>
+                </tr>
+                <!--<tr>
+        <td colspan="2">
+            Nota(*):  Debe llenar las potencias contratadas a nivel de barra de transferencia o
+            bien a nivel de barra de suministro, Los valores ingresados los podra
+            editar en la pestaña "Potencia Contratada" de la pestaña de listado de códigos.
+        </td>
+    </tr>-->
+            </table>
+        </div>
+    </div>
+}
+<script src="~/Areas/Transferencias/Content/Scripts/jquery.validate.js"></script>
+<script>
+    
+    function FormatFecha(sFecha) {   //DD/MM/AAAA
+        var sDia = sFecha.substring(0, 2);
+        var sMes = sFecha.substring(3, 5);
+        var sAnio = sFecha.substring(6, 10);
+        return new Date(sAnio, sMes - 1, sDia);
+    }
+    $.validator.setDefaults({
+        ignore: ".ignore"
+    });
+    jQuery.validator.addMethod("MasGrandeQue", function (value, element, params) {
+        //value: (val)fechafinal / params: (tag)fechainicial
+        if (!/Invalid|NaN/.test(FormatFecha(value))) {
+            //Si la fechafinal no es nulo compara
+            return FormatFecha(value) >= FormatFecha($(params).val());
+        }
+        //caso contrario si la fechafinal es vacia, devuelve true
+        return !isNaN(value);
+    }, '<br>Debe ser mayor que la fecha de Inicio de Operación.');
+
+    $("#frmCodigoRetiro").validate({
+
+        //$('#listaSuministro table').each(function () {
+        //    console.log($(this));
+        //    var customerId = $(this).find("td").eq(1).html();
+
+        //});
+
+
+
+        rules: {
+            "Entidad.CLICODI": {
+                required: true,
+            },
+            "Entidad.BARRCODI": {
+                required: true,
+            },
+            Solicodiretifechainicio: {
+                required: true,
+            },
+            SolicodiretifechainicioValida: {
+                required: true,
+            },
+            Solicodiretifechafin: {
+                required: true,
+                MasGrandeQue: "#Solicodiretifechainicio"
+            },
+            "Entidad.TIPOCONTCODI": {
+                required: true,
+            },
+            "Entidad.TIPOUSUACODI": {
+                required: true,
+            },
+            "Entidad.SoliCodiRetiDescripcion": {
+                required: true,
+                maxlength: 500
+            },
+            "Entidad.SoliCodiRetiDetalleAmplio": {
+                maxlength: 500
+            },
+            "Entidad.TrnPctHpmwFija": {
+                required: true,
+            }, "Entidad.TrnPctHfpmwFija": {
+                required: true,
+            }, "Entidad.TrnPctTotalmwFija": {
+                required: true,
+            }, "Entidad.TrnPctHpmwFijaVariable": {
+                required: true,
+            }, "Entidad.TrnPctHfpmwFijaVariable": {
+                required: true,
+            }, "Entidad.TrnPctTotalmwVariable": {
+                required: true,
+            }
+        }
+    });
+
+</script>

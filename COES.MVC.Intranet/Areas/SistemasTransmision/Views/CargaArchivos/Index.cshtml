@@ -1,0 +1,493 @@
+﻿@model COES.MVC.Intranet.Areas.SistemasTransmision.Models.CargaArchivosModel
+@{
+    ViewBag.Title = "Asignacion de Responsabilidades de Pago SST-SCT - Carga de archivos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/SistemasTransmision/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/SistemasTransmision/Content/Scripts/load.js"></script>
+<script src="~/Areas/SistemasTransmision/Content/Scripts/cargaarchivos.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo">Carga de archivos</div>
+    </div>
+    @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+    { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">@Model.EntidadRecalculo.Stpernombre / @Model.EntidadRecalculo.Strecanombre</div> }
+    else
+    { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione un Mes de valorización y una versión de recalculo</div> }
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Distancias eléctricas</a></li>
+                <li class='tab'><a href="#paso2">Energías netas</a></li>
+                <li class='tab'><a href="#paso3">Factor Actualización</a></li>
+                <li class='tab'><a href="#paso4">Centrales Responsabilidad</a></li>
+                <li class='tab'><a href="#paso5">Compensación Mensual</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div id="idpanel" style="overflow:auto; background-color:#fff">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                        <table class="table-search" style="width:auto">
+                                            <tr>
+                                                <td style="width:100px; height:40px;"><div class="editor-label">Periodo:</div></td>
+                                                <td style="width:200px; height:40px;">
+                                                    <div class="editor-field">
+                                                        <select id="stpercodiDE" name="stpercodiDE" onchange="recargarDE();">
+                                                            @foreach (var item in Model.ListaPeriodos)
+                                                            {
+                                                                sSelected = "";
+                                                                if (@item.Stpercodi == Model.Stpercodi)
+                                                                { sSelected = "selected"; }
+                                                                <option value="@item.Stpercodi" @sSelected>@item.Stpernombre</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td style="width:50px; height:40px;">Versión:</td>
+                                                <td style="width:200px; height:40px;">
+                                                    <select id="strecacodiDE" name="strecacodiDE">
+                                                        @foreach (var item in Model.ListaRecalculo)
+                                                        {
+                                                            <option value="@item.Strecacodi">@item.Strecanombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:250px; height:40px;">
+                                                    @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultarDE" value="Consultar" />
+                                                    }
+                                                </td>
+                                                <td style="height:40px;">
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAccionesDE">
+                                                        <tr>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnDescargarExcelDE">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/bajar.png" /><br />
+                                                                        <span>Descargar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnSelecionarExcelDE">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/subir.png" /><br />
+                                                                        <span>Importar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnEliminarDatosDE">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/borrador.png" /><br />
+                                                                        <span>Eliminar datos</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnValidarGrillaExcelDE">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/errores.png" /><br />
+                                                                        <span>Mostrar errores</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnGrabarExcelDE">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/enviar.png" /><br />
+                                                                        <span>Enviar datos</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelDE" style="height:auto"></div>
+                </div>
+                <!----------------------------------------------------------------------------------------------------------------------------------------------->
+                <div id="paso2">
+                    <div id="idpane2" style="overflow:auto; background-color:#fff">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                        <table class="table-search" style="width:auto">
+                                            <tr>
+                                                <td style="width:100px; height:40px;"><div class="editor-label">Periodo:</div></td>
+                                                <td style="width:200px; height:40px;">
+                                                    <div class="editor-field">
+                                                        <select id="stpercodiEN" name="stpercodiEN" onchange="recargarEN();">
+                                                            @foreach (var item in Model.ListaPeriodos)
+                                                            {
+                                                                sSelected = "";
+                                                                if (@item.Stpercodi == Model.Stpercodi)
+                                                                { sSelected = "selected"; }
+                                                                <option value="@item.Stpercodi" @sSelected>@item.Stpernombre</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td style="width:50px; height:40px;">Versión:</td>
+                                                <td style="width:200px; height:40px;">
+                                                    <select id="strecacodiEN" name="strecacodiEN">
+                                                        @foreach (var item in Model.ListaRecalculo)
+                                                        {
+                                                            <option value="@item.Strecacodi">@item.Strecanombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:250px; height:40px;">
+                                                    @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultarEN" value="Consultar" />
+                                                    }
+                                                </td>
+                                                <td style="height:40px;">
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAccionesEN">
+                                                        <tr>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnDescargarExcelEN">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/bajar.png" /><br />
+                                                                        <span>Descargar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnSelecionarExcelEN">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/subir.png" /><br />
+                                                                        <span>Importar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnEliminarDatosEN">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/borrador.png" /><br />
+                                                                        <span>Eliminar datos</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnValidarGrillaExcelEN">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/errores.png" /><br />
+                                                                        <span>Mostrar errores</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnGrabarExcelEN">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/enviar.png" /><br />
+                                                                        <span>Enviar datos</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelEN" style="height:auto"></div>
+                </div>
+                <!----------------------------------------------------------------------------------------------------------------------------------------------->
+                <div id="paso3">
+                    <div id="idpane3" style="overflow:auto; background-color:#fff">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                        <table class="table-search" style="width:auto">
+                                            <tr>
+                                                <td style="width:100px; height:40px;"><div class="editor-label">Periodo:</div></td>
+                                                <td style="width:200px; height:40px;">
+                                                    <div class="editor-field">
+                                                        <select id="stpercodiFA" name="stpercodiFA" onchange="recargarFA();">
+                                                            @foreach (var item in Model.ListaPeriodos)
+                                                            {
+                                                                sSelected = "";
+                                                                if (@item.Stpercodi == Model.Stpercodi)
+                                                                { sSelected = "selected"; }
+                                                                <option value="@item.Stpercodi" @sSelected>@item.Stpernombre</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td style="width:50px; height:40px;">Versión:</td>
+                                                <td style="width:200px; height:40px;">
+                                                    <select id="strecacodiFA" name="strecacodiFA">
+                                                        @foreach (var item in Model.ListaRecalculo)
+                                                        {
+                                                            <option value="@item.Strecacodi">@item.Strecanombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:250px; height:40px;">
+                                                    @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultarFA" value="Consultar" />
+                                                    }
+                                                </td>
+                                                <td style="height:40px;">
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAccionesFA">
+                                                        <tr>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnDescargarExcelFA">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/bajar.png" /><br />
+                                                                        <span>Descargar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnSelecionarExcelFA">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/subir.png" /><br />
+                                                                        <span>Importar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnValidarGrillaExcelFA">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/errores.png" /><br />
+                                                                        <span>Mostrar errores</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnGrabarExcelFA">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/enviar.png" /><br />
+                                                                        <span>Enviar datos</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelFA" style="height:auto"></div>
+                </div>
+                <!----------------------------------------------------------------------------------------------------------------------------------------------->
+                <div id="paso4">
+                    <div id="idpane4" style="overflow:auto; background-color:#fff">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                        <table class="table-search" style="width:auto">
+                                            <tr>
+                                                <td style="width:100px; height:40px;"><div class="editor-label">Periodo:</div></td>
+                                                <td style="width:200px; height:40px;">
+                                                    <div class="editor-field">
+                                                        <select id="stpercodiCR" name="stpercodiCR" onchange="recargarCR();">
+                                                            @foreach (var item in Model.ListaPeriodos)
+                                                            {
+                                                                sSelected = "";
+                                                                if (@item.Stpercodi == Model.Stpercodi)
+                                                                { sSelected = "selected"; }
+                                                                <option value="@item.Stpercodi" @sSelected>@item.Stpernombre</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td style="width:50px; height:40px;">Versión:</td>
+                                                <td style="width:200px; height:40px;">
+                                                    <select id="strecacodiCR" name="strecacodiCR">
+                                                        @foreach (var item in Model.ListaRecalculo)
+                                                        {
+                                                            <option value="@item.Strecacodi">@item.Strecanombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:250px; height:40px;">
+                                                    @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultarCR" value="Consultar" />
+                                                        <input type="button" id="btnEliminarDatosCR" value="Deshacer" />
+                                                    }
+                                                </td>
+                                                <td style="height:40px;">
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAccionesCR">
+                                                        <tr>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnDescargarExcelCR">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/bajar.png" /><br />
+                                                                        <span>Descargar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnSelecionarExcelCR">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/subir.png" /><br />
+                                                                        <span>Importar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnEliminarDatosCR">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/borrador.png" /><br />
+                                                                        <span>Eliminar datos</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnValidarGrillaExcelCR">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/errores.png" /><br />
+                                                                        <span>Mostrar errores</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnGrabarExcelCR">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/enviar.png" /><br />
+                                                                        <span>Enviar datos</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelCR" style="height:auto"></div>
+                </div>
+                <!----------------------------------------------------------------------------------------------------------------------------------------------->
+                <div id="paso5">
+                    <div id="idpane5" style="overflow:auto; background-color:#fff">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                        <table class="table-search" style="width:auto">
+                                            <tr>
+                                                <td style="width:100px; height:40px;"><div class="editor-label">Periodo:</div></td>
+                                                <td style="width:200px; height:40px;">
+                                                    <div class="editor-field">
+                                                        <select id="stpercodiCM" name="stpercodiCM" onchange="recargarCM();">
+                                                            @foreach (var item in Model.ListaPeriodos)
+                                                            {
+                                                                sSelected = "";
+                                                                if (@item.Stpercodi == Model.Stpercodi)
+                                                                { sSelected = "selected"; }
+                                                                <option value="@item.Stpercodi" @sSelected>@item.Stpernombre</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td style="width:50px; height:40px;">Versión:</td>
+                                                <td style="width:200px; height:40px;">
+                                                    <select id="strecacodiCM" name="strecacodiCM">
+                                                        @foreach (var item in Model.ListaRecalculo)
+                                                        {
+                                                            <option value="@item.Strecacodi">@item.Strecanombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:250px; height:40px;">
+                                                    @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultarCM" value="Consultar" />
+                                                        <input type="button" id="btnEliminarDatosCM" value="Deshacer" />
+                                                    }
+                                                </td>
+                                                <td style="height:40px;">
+                                                    <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAccionesCM">
+                                                        <tr>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnDescargarExcelCM">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/bajar.png" /><br />
+                                                                        <span>Descargar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnSelecionarExcelCM">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/subir.png" /><br />
+                                                                        <span>Importar Excel</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnEliminarDatosCM">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/borrador.png" /><br />
+                                                                        <span>Eliminar datos</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnValidarGrillaExcelCM">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/errores.png" /><br />
+                                                                        <span>Mostrar errores</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                            <td style="width:100px; height:50px;" class="content-action">
+                                                                <a href="#" id="btnGrabarExcelCM">
+                                                                    <div class="content-item-action">
+                                                                        <img src="~/Areas/SistemasTransmision/Content/Images/enviar.png" /><br />
+                                                                        <span>Enviar datos</span>
+                                                                    </div>
+                                                                </a>
+                                                            </td>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelCM" style="height:auto"></div>
+                </div>
+                <!----------------------------------------------------------------------------------------------------------------------------------------------->
+            </div>
+        </div>
+        <!----------------------------------------------------------------------------------------------------------------------------------------------->
+    </div>
+    <div id="popup"></div>

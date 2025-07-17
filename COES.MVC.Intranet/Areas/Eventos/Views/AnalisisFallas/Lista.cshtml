@@ -1,0 +1,177 @@
+﻿@model COES.MVC.Intranet.Areas.RegistroIntegrante.Models.RevisionModel
+
+@{
+    ViewBag.Title = "Lista";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+
+    SelectList slEmpresaInvolucrada = new SelectList(ViewBag.EmpresaInvolucrada, "Emprcodi", "Emprnomb");
+    SelectList slEmpresaPropietaria = new SelectList(ViewBag.EmpresaPropietaria, "Emprcodi", "Emprnomb");
+    SelectList slTipoEquipo = new SelectList(ViewBag.TipoEquipo, "FAMCODI", "FAMNOMB");
+}
+
+<style>
+    div.form-title {
+        width: 100%;
+    }
+
+    div.content-botonera {
+        text-align: center;
+        margin-right: 200px;
+    }
+
+    .button {
+        width: 200px;
+        height: 20px;
+    }
+
+    .btn-generar-alerta {
+        color: #FFF;
+        background: #00EB07;
+        border: none;
+        padding: 7px 15px;
+        border-radius: 10px;
+        font-size: 11px;
+        cursor: pointer;
+    }
+
+        .btn-generar-alerta:hover {
+            background: #93EB01;
+        }
+
+    .form-generar-alerta {
+        display: inline-flex;
+    }
+</style>
+
+<link href="~/Content/Css/popup.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+
+
+<div class="form-title">
+    <div class="content-titulo">
+        Análisis de Falla
+    </div>
+    <div class="content-botonera" style="display: flex; align-items: center; gap: 10px; position: relative; left: -350px; top: 13px;">
+        <input type="button" id="btnConfiguracionResponsables" value="Configuración Responsables" style="margin-left: 0;" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div class="form-main" style="margin-top:10px">
+        <div id="mensaje"></div>
+        <div style="clear:both; height:5px;"></div>
+        <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td><label>Empresa Propietaria</label></td>
+                    <td>
+                        @Html.DropDownList("cboEmpresaPropietaria", slEmpresaPropietaria, new { @style = "width:250px" })
+                    </td>
+                    <td><label>Empresa involucrada</label></td>
+                    <td>
+                        @Html.DropDownList("cboEmpresaInvolucrada", slEmpresaInvolucrada, new { @style = "width:250px" })
+                    </td>
+                    <td><label>Tipo de Equipo</label></td>
+                    <td>
+                        @Html.DropDownList("cboTipoEquipo", slTipoEquipo, new { @style = "width:250px" })
+                    </td>
+                </tr>
+                <tr>
+                    <td><label>Estado</label></td>
+                    <td>
+                        <select id="cboEstado" style="width:250px">
+                            <option value="TODOS">TODOS</option>
+                            <option value="CERRADO">CERRADO</option>
+                            <option value="EN PROCESO">EN PROCESO</option>
+                            <option value="FUERZA MAYOR">FUERZA MAYOR</option>
+                            <option value="ANULADO">ANULADO</option>
+                            <option value="ARCHIVADO">ARCHIVADO</option>
+                        </select>
+                    </td>
+                    <td><label>Impugnación</label></td>
+                    <td>
+                        <select id="cboImpugnacion" style="width:250px">
+                            <option value="TODOS">TODOS</option>
+                            <option value="RECONSIDERACIÓN">RECONSIDERACIÓN</option>
+                            <option value="APELACIÓN">APELACIÓN</option>
+                            <option value="ARBITRAJE">ARBITRAJE</option>
+                        </select>
+                    </td>
+                    <td><label>Tipo de Reunión: </label></td>
+                    <td>
+                        <select id="cboTipoReunion" style="width:250px">
+                            <option value="T">TODOS</option>
+                            <option value="P">PRESENCIAL</option>
+                            <option value="N">NO PRESENCIAL</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td><label>Inicio</label></td>
+                    <td>
+                        <input type="text" id="dtInicio" name="FechaInicio" value="@ViewBag.FechaInicio" />
+                    </td>
+                    <td><label>Fin</label></td>
+                    <td>
+                        <input type="text" id="dtFin" name="FechaFin" value="@ViewBag.FechaFin" />
+                    </td>
+                    <td colspan="2">
+                        <input type="checkbox" value="RNC" id="chkRNC" />RMC&nbsp;&nbsp;&nbsp;<input type="checkbox" id="chkERACMF" value="ERACMF" />ERACMF&nbsp;&nbsp;&nbsp;<input type="checkbox" id="chkERACMT" value="ERACMT" />ERACMT&nbsp;&nbsp;&nbsp;<input type="checkbox" id="chkEDAGSF" value="EDAGSF" />EDAGSF&nbsp;&nbsp;&nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="text-align: left; padding-left: 0;">
+                        <input type="button" id="btnConsultar" value="Ejecutar" style="margin-left: 0;" />
+                    </td>
+                </tr>
+            </table>
+            <a href="#" id="btnManualUsuario" style="float: right; margin-top: -100px; margin-right: 520px; text-align: center; font-size: 12px;">
+                <img src="~/Content/Images/prn-ico-manual.png" style="height: 25px;"><br>
+                <span style="color: #278CCC;">Manual de Usuario</span>
+            </a>
+        </div>
+
+        <div style="clear:both"></div>
+        <div class="content-tabla">
+            <div class="tabla-header">
+                <div class="table-paginado" id="paginado"></div>
+            </div>
+            <div style="overflow-x: auto; white-space: nowrap; width: 150em;">
+                <div class="table-list" id="listado">
+                    <table border="0" class="pretty tabla-adicional" cellspacing="0" id="tabla" style="table-layout: fixed;">
+                        <thead>
+                            <tr>
+                                <th style="width:44px;">Edición</th>
+                                <th style="width:70px;">CODIGO</th>
+                                <th style="width:900px;">NOMBRE DE EVENTO</th>
+                                <th style="width:80px;">MW INTERR</th>
+                                <th style="width:120px;">FECHA-HORA EVENTO</th>
+                                <th style="width:110px;">FECHA REUNION</th>
+                                <th style="width:110px;">FECHA INFORME</th>
+                                <th style="width:70px;">REVISADO DJR</th>
+                                <th style="width:70px;">REVISADO DO</th>
+                                <th style="width:70px;">PUBLICADO</th>
+                                <th style="width:80px;">ESTADO</th>
+                                <th style="width:90px;">FUERZA MAYOR</th>
+                                <th style="width:50px;">IMPUG</th>
+                                <th style="width:80px;">RESPONSABLE</th>
+                                <th style="width:85px;">INF TECNICO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyLista"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div style="clear:both; margin-bottom:40px"></div>
+
+        </div>
+    </div>
+</div>
+
+<script src="~/Areas/Eventos/Content/Scripts/analisisfalla.js"></script>
+<script>
+    iniLista();
+</script>

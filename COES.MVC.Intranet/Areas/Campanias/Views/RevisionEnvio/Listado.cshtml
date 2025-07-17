@@ -1,0 +1,71 @@
+@model COES.MVC.Intranet.Areas.Campanias.Models.CampaniasModel
+
+<table border="0" class="pretty tabla-icono" cellspacing="0" cellpadding="0" width="100%" id="tabla" aria-describedby="Evento">
+    <thead>
+        <tr>
+            <th scope="col">Cód. Enví­o</th>
+            <th scope="col">Empresa</th>
+            <th scope="col">Tipo proyecto</th>
+            <th scope="col">SubTipo</th>
+            <th scope="col">Versión</th>
+            <th scope="col">Estado Pry</th>
+            <th scope="col">Nomb. proyecto</th>
+            <th scope="col">Observación</th>
+            <th scope="col">Fec. envio Obs.</th>
+            <th scope="col">
+                <input type="checkbox" id="checkall" />
+                <label for="checkall">Obs.</label>
+            </th>
+            <th scope="col">Acción</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.ListaPlanTransmicion.Count > 0)
+        {
+            foreach (var item in Model.ListaPlanTransmicion)
+            {
+                <tr>
+                    <td style="width:70px;">@item.Plancodi</td>
+                    <td style="text-align:left;">@(item.Codempresa + " - " + item.Nomempresa)</td>
+                    <td style="text-align:left;">@item.Tiponombre</td>
+                    <td style="text-align:left;">@item.Tipofinombre</td>
+                    <td style="@(item.Vigente == "1" ? "color:green;" : "color:red;")">@("V" + item.Planversion)</td>
+                    <td>@item.Proyestado</td>
+                    <td style="text-align:left;">@item.Proynombre</td>
+                    <td>@(item.Proyestado == "Observado" ? "SI" : "")</td>
+                    <td>@(item.FechaenvObs.HasValue ? item.FechaenvObs.Value.ToString("dd/MM/yyyy HH:mm:ss") : "")</td>
+                    <td>
+                        @if ((item.Proyestado == "Observado" && !item.FechaenvObs.HasValue) || item.ObservPendiente > 0)
+                        {<input type="checkbox" id="checkProyecto_@item.Proycodi" name="checkProyecto_@item.Proycodi" value="@item.Proycodi" class="chkbox_class" />}
+                    </td>
+                    <td style="text-align:center;">
+                        <a onclick="consultarProyecto(@item.Proycodi)"><img src="~/Content/Images/btn-properties.png" title="Revisar" /></a>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
+@*jquery*@
+<script>
+    $(function () {
+        // Cuando se hace clic en el checkbox general
+        $('#checkall').on('click', function () {
+            var isChecked = $(this).is(':checked');
+            $('#tabla input.chkbox_class[type="checkbox"]').prop('checked', isChecked);
+        });
+
+        // Cuando se hace clic en un checkbox individual
+        $('#tabla').on('change', 'input.chkbox_class[type="checkbox"]', function () {
+            var total = $('#tabla input.chkbox_class[type="checkbox"]').length;
+            var checked = $('#tabla input.chkbox_class[type="checkbox"]:checked').length;
+            $('#checkall').prop('checked', total === checked);
+        });
+    });
+</script>
+
+
+ 

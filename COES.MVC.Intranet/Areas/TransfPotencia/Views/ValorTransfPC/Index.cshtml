@@ -1,0 +1,285 @@
+﻿@model COES.MVC.Intranet.Areas.TransfPotencia.Models.ValorTransfPCModel
+@{
+    ViewBag.Title = "Transferencia de Potencia y Compensación - Cálculo de Valorización";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/Transfpotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/Transfpotencia/Content/Scripts/load.js"></script>
+<script src="~/Areas/Transfpotencia/Content/Scripts/valortransfpc.js?v=2"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo" style="width:800px;">Cálculo de Valorizaciones de Transferencia de Potencia y Compensación al SPT - SGT</div>
+    </div>
+    @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+    {<div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Cálculo de Valorizaciones de: @Model.EntidadRecalculoPotencia.Perinombre / @Model.EntidadRecalculoPotencia.Recpotnombre</div> }
+else
+{ <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione un Mes de valorización y una versión de recalculo</div>}
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Procesar Valorización</a></li>
+                <li class='tab'><a href="#paso2">Reportes</a></li>
+                <li class='tab'><a href="#paso3">Migrar saldos</a></li>
+                <li class='tab'><a href="#paso4">Verificación de Resultados</a></li>
+            </ul>
+
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="6"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para procesar la Valorización de Transferencia de Potencia y Compensación</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:150px;">Mes de Valorización:</td>
+                                <td style="width:100px;">
+                                    <select id="pericodi" name="pericodi" onchange="Recargar();">
+                                        @foreach (var item in Model.ListaPeriodos)
+                                        {
+                                            sSelected = "";
+                                            if (@item.PeriCodi == Model.Pericodi)
+                                            { sSelected = "selected"; }
+                                            <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:50px;">Versión:</td>
+                                <td style="width:200px; height:40px;">
+                                    <select id="recpotcodi" name="recpotcodi">
+                                        @foreach (var item in Model.ListaRecalculoPotencia)
+                                        {
+                                            <option value="@item.Recpotcodi">@item.Recpotnombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:200px; height:40px;">
+                                    @if (Model.bGrabar && Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                                    {
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td><input type="button" value="Procesar" id="btnProcesarValorizacion" alt="Procesar valorización" title="Procesar valorización" /></td>
+                                                <td><input type="button" value="Borrar Val" id="btnBorrarValorizacion" alt="Eliminar proceso" title="Eliminar proceso de Valorización" /></td>
+                                            </tr>
+                                        </table>
+                                    }
+                                </td>
+                                <td style="width:20px; height:40px;">&nbsp;</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="paso2">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para exportar la información deseada</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:150px;">Mes de Valorización:</td>
+                                <td style="width:100px;">
+                                    <select id="pericodiReporte" name="pericodiReporte" onchange="RecargarReporte();">
+                                        @foreach (var item in Model.ListaPeriodos)
+                                        {
+                                            sSelected = "";
+                                            if (@item.PeriCodi == Model.Pericodi)
+                                            { sSelected = "selected"; }
+                                            <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:50px;">Versión:</td>
+                                <td style="width:200px; height:40px;">
+                                    <select id="recpotcodiReporte" name="recpotcodiReporte" onchange="RecargarReporte();">
+                                        @foreach (var item in Model.ListaRecalculoPotencia)
+                                        {
+                                            @*sSelected = "";
+                                    if (@item.Recpotcodi == Model.Recpotcodi)
+                                    { sSelected = "selected"; }
+                                    <option value="@item.Recpotcodi" @sSelected>@item.Recpotnombre</option>*@
+                                            <option value="@item.Recpotcodi">@item.Recpotnombre</option>
+                                        }
+                                    </select>
+                                </td>
+                            </tr>
+                            @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                            {
+                                <tr class="THCabecera">
+                                    <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Lista de descargas disponibles</b></div></td>
+                                    <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Excel</b></div></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Información ingresada para VTP y peajes:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarPeajeEgresoExcel" title="Descargar la Información ingresada para VTP y peajes en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Retiros de potencia no declarado:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarRSCExcel" title="Descargar los Retiros de potencia sin contrato en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Compensación a transmisoras por peaje de conexión y transmisión:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarPeajePagarseExcel" title="Descargar los Compensación a transmisoras por peaje de conexión y transmisión en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Compensación a transmisoras por ingreso tarifario:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarIngresoTarifarioExcel" title="Descargar la Compensación a transmisoras por ingreso tarifario en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Compensaciones incluidas en el peaje por conexión:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarPeajeRecaudadoExcel" title="Descargar las Compensaciones incluidas en el peaje por conexión en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Resumen de información VTP:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarPotenciaValorExcel" title="Descargar el Resumen de información VTP en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Egresos por compra de potencia:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarEgresoExcel" title="Descargar Egresos por compra de potencia en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Ingresos por potencia:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarIngresoPotenciaExcel" title="Descargar Ingresos por potencia en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Saldos VTP:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarValorTransfPotenciaExcel" title="Descargar los Saldos VTP en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                if (Model.Recpotcodi == 1)
+                                {
+                                    <tr>
+                                        <td colspan="2">Matriz de pagos VTP:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarMatrizExcel" title="Descargar la Matriz de pagos VTP en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td colspan="2">Descargar todo:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarTodoExcel" title="Descargar todos los reportes"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Descargar Libro Unificado:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarUnificado" title="Descargar libro unificado"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+
+                            }
+                        </table>
+                    </div>
+                </div>
+
+                <div id="paso3">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para procesar la migración de informión del calculo VTP</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:150px;">Mes de Valorización:</td>
+                                <td style="width:100px;">
+                                    <select id="pericodiSaldo" name="pericodiSaldo" onchange="RecargarSaldo();">
+                                        @foreach (var item in Model.ListaPeriodos)
+                                        {
+                                            sSelected = "";
+                                            if (@item.PeriCodi == Model.Pericodi)
+                                            { sSelected = "selected"; }
+                                            <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:50px;">Versión:</td>
+                                <td style="width:200px; height:40px;">
+                                    <select id="recpotcodiSaldo" name="recpotcodiSaldo">
+                                        @foreach (var item in Model.ListaRecalculoPotencia)
+                                        {
+                                            <option value="@item.Recpotcodi">@item.Recpotnombre</option>
+                                        }
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:50px;">Migración:</td>
+                                <td colspan="2" style="height:40px;">
+                                    <select id="migracodi" name="migracodi" style="width:500px;">
+                                        @foreach (var item in Model.ListaTrnMigracion)
+                                        {
+                                            <option value="@item.Migracodi">@item.Trnmigsql</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:200px; height:40px;">
+                                    @if (Model.bGrabar && Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                                    {
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td><input type="button" value="Migrar Saldos" id="btnMigrarSaldo" alt="Procesar migración de saldos" title="Procesar migración de saldos" /></td>
+                                                <td><input type="button" value="Migrar Información VTP" id="btnMigrarVTP" alt="Procesar migración de informción de valorización" title="Procesar migración de informción de valorización" /></td>
+                                            </tr>
+                                        </table>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="editor-field" style="color: #ff0000;">
+                                        La información que se va a procesar, sólo corresponde al periodo, revisión y proceso de migración seleccionado.<br />
+                                        <b>Migrar saldos:</b> permite que los saldos del periodo/revisión de la [empresa origen] => (se asigne ahora a la) [empresa destino].  Luego debe volver a ejecutar el cálculo de VTP, estos saldos serán tomados en cuenta en el proceso.
+                                        <b>Migrar información VTP:</b> permite que la información que sirve de base para el cálculo de VTP en el periodo/revisión, se cambien de pertenencia, de la [empresa origen] => (se asigne ahora a la) [empresa destino]. Luego debe volver a ejecutar el cálculo de VTP, la información reportada pertenecerá a la empresa destino.
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            
+                <div id="paso4">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="6"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para procesar la Verifiación de Resultados</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:150px;">Mes de Valorización:</td>
+                                <td style="width:100px;">
+                                    <select id="pericodiVerificacion" name="pericodiVerificacion" onchange="RecargarVerificacion();">
+                                        @foreach (var item in Model.ListaPeriodos)
+                                        {
+                                            sSelected = "";
+                                            if (@item.PeriCodi == Model.Pericodi)
+                                            { sSelected = "selected"; }
+                                            <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:50px;">Versión:</td>
+                                <td style="width:200px; height:40px;">
+                                    <select id="recpotcodiVerificacion" name="recpotcodiVerificacion">
+                                        @foreach (var item in Model.ListaRecalculoPotencia)
+                                        {
+                                            <option value="@item.Recpotcodi">@item.Recpotnombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:200px; height:40px;">
+                                    @if (Model.bGrabar && Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                                    {
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td><input type="button" value="Generar Reporte" id="btnVerificacionResultado" alt="Generar Reporte" title="Generar Reporte" /></td>
+                                           
+                                            </tr>
+                                        </table>
+                                    }
+                                </td>
+                                <td style="width:20px; height:40px;">&nbsp;</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

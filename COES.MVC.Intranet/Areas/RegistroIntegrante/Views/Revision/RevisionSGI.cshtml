@@ -1,0 +1,720 @@
+﻿@model COES.MVC.Intranet.Areas.RegistroIntegrante.Models.RevisionSGIModel
+@using COES.MVC.Intranet.Helper
+@using COES.Servicios.Aplicacion.RegistroIntegrantes;
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .Conforme {
+        background-color: #A9D0F5;
+    }
+
+    .Habilitado {
+        background-color: white;
+    }
+
+    .Deshabilitado {
+        background-color: #F2F4F3;        
+    }    
+    
+    #tblRevision td {
+        padding-bottom: 15px;
+    }
+</style>
+<script src="~/Areas/RegistroIntegrante/Content/Scripts/RevisionSGI.js?v=1.11"></script>
+<div class="form-title" style="color: #278CCC; margin-bottom:0px;">REVISIÓN SGI</div>
+<div class="content-hijo" id="mainLayout">
+    <div class="form-main" style="margin-top:10px">
+        <div id="mensaje" class="action-message" style="display: none; width: 95%"></div>
+        <div style="clear:both; height:5px;"></div>
+        <input type="hidden" value="" id="hdfIdRevision" />
+        <div class="search-content" style="margin-bottom:0px; padding:10px">
+            <table class="table-form-show">
+                <tr>
+                    <td style="width:220px;">2.1 Número de RUC:</td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprRUC</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2.2 Nombre Comercial:</td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprNombreComercial</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2.3 Denominación o Razón Social:</td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprRazSocial</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2.3 Domicilio Legal:</td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprDomLegal</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>3.1 Tipo Agente: </td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprTipoAgente</label>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="clear:both; height:5px;"></div>
+
+        <div class="search-content" style="margin-bottom:0px; padding:10px">
+            <table id="tblRevision">
+                <tr>
+                    <td>Campo</td>
+                    <td>Valor</td>
+                    <td></td>
+                </tr>
+                @if (Model.EmprTipoAgenteCodigo == ConstantesRegistroIntegrantes.TipoComportamientoGeneradorCodigo)
+                {
+                    var clase = "";
+                    var disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipodocsustentatorioComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+
+                    <tr class='@clase'>
+                        <td>Documento Sustentatorio:</td>
+                        <td>
+                            @Html.TextBoxFor(x => x.TipoComportamiento.Tipodocsustentatorio, new { @id = "txtTipodocsustentatorio", style = "width:220px;", @readonly = "readonly", @data_file = "", @data_file_name = "", @data_name = "DocumentoSustentatorio" })
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipodocsustentatorioComentario, new { @id = "txtTipodocsustentatorioComentario", @rows = "5", @cols = "35", @disabled = disabled })
+                        </td>
+                    </tr>
+
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipoarcdigitalizadoComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+
+                    <tr class='@clase'>
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Archivo Digitalizado:</td>
+                        <td>
+                            <table style="width:280px">
+                                <tr>
+                                    <td>
+                                        @Html.TextBoxFor(x => x.TipoComportamiento.Tipoarcdigitalizado, new { @id = "txtTipoarcdigitalizado", style = "width:220px;", @readonly = "readonly", @data_file = Model.TipoComportamiento.Tipoarcdigitalizado, @data_file_name = Model.TipoComportamiento.Tipoarcdigitalizadofilename, @data_name = "ArchivoDigitalizado" })
+                                    </td>
+                                    <td>
+                                        <a href="JavaScript:ver()" title="Ver">
+                                            <img src="~/Content/Images/btn-open.png" />
+                                        </a>
+                                        <a href="JavaScript:descargar()" title="Descargar">
+                                            <img src="~/Content/Images/btn-download.png" />
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipoarcdigitalizadoComentario, new { @id = "txtTipoarcdigitalizadoComentario", @rows = "5", @cols = "35", @disabled = disabled })
+                            <input type="hidden" id="hdfAdjunto_AD" data-file="@Model.TipoComportamiento.Tipoarcdigitalizado" data-file-name="@Model.TipoComportamiento.Tipoarcdigitalizadofilename" value="@string.Format("{0}*{1}",@Model.TipoComportamiento.Tipoarcdigitalizado,@Model.TipoComportamiento.Tipoarcdigitalizadofilename)" />
+                        </td>
+
+                    </tr>
+
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipopotenciainstaladaComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+
+                    <tr class='@clase'>
+                        <td>Potencia Instalada (MW):</td>
+                        <td>
+                            @Html.TextBoxFor(x => x.TipoComportamiento.Tipopotenciainstalada, new { @id = "txtTipopotenciainstalada", style = "width:220px;", @readonly = "readonly", @data_file = "", @data_file_name = "", @data_name = "PotenciaInstalada" })
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipopotenciainstaladaComentario, new { @id = "txtTipopotenciainstaladaComentario", @rows = "5", @cols = "35", @disabled = disabled })
+                        </td>
+
+                    </tr>
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TiponrocentralesComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+                    <tr class='@clase'>
+                        <td>Numero Centrales:</td>
+                        <td>
+                            @Html.TextBoxFor(x => x.TipoComportamiento.Tiponrocentrales, new { @id = "txtTiponrocentrales", style = "width:220px;", @readonly = "readonly", @data_file = "", @data_file_name = "", @data_name = "NumeroCentrales" })
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TiponrocentralesComentario, new { @id = "txtTiponrocentralesComentario", @rows = "5", @cols = "35", @disabled = disabled })
+                        </td>
+
+                    </tr>
+
+                }
+                else if (Model.EmprTipoAgenteCodigo == ConstantesRegistroIntegrantes.TipoComportamientoTrasmisorCodigo)
+                {
+                    var clase = "";
+                    var disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipodocsustentatorioComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+
+                    <tr class='@clase'>
+                        <td>Documento Sustentatorio:</td>
+                        <td>
+                            @Html.TextBoxFor(x => x.TipoComportamiento.Tipodocsustentatorio, new { @id = "txtTipodocsustentatorio", style = "width:220px;", @readonly = "readonly", @data_file = "", @data_file_name = "", @data_name = "DocumentoSustentatorio" })
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipodocsustentatorioComentario, new { @id = "txtTipodocsustentatorioComentario", @rows = "5", @cols = "35", @disabled = disabled })
+                        </td>
+                    </tr>
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipoarcdigitalizadoComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+
+                    <tr class='@clase'>
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Archivo Digitalizado:</td>
+                        <td>
+                           
+                      
+                            <table style="width:280px">
+                                <tr>
+                                    <td>
+                                        @Html.TextBoxFor(x => x.TipoComportamiento.Tipoarcdigitalizado, new { @id = "txtTipoarcdigitalizado", style = "width:220px;", @readonly = "readonly", @data_file = Model.TipoComportamiento.Tipoarcdigitalizado, @data_file_name = Model.TipoComportamiento.Tipoarcdigitalizadofilename, @data_name = "ArchivoDigitalizado" })
+                                    </td>
+                                    <td>
+                                        <a href="JavaScript:ver()" title="Ver">
+                                            <img src="~/Content/Images/btn-open.png" />
+                                        </a>
+                                        <a href="JavaScript:descargar()" title="Descargar">
+                                            <img src="~/Content/Images/btn-download.png" />
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipoarcdigitalizadoComentario, new { @id = "txtTipoarcdigitalizadoComentario", @rows = "5", @cols = "35", @disabled = disabled })
+                            <input type="hidden" id="hdfAdjunto_AD" data-file="@Model.TipoComportamiento.Tipoarcdigitalizado" data-file-name="@Model.TipoComportamiento.Tipoarcdigitalizadofilename" value="@string.Format("{0}*{1}",@Model.TipoComportamiento.Tipoarcdigitalizado,@Model.TipoComportamiento.Tipoarcdigitalizadofilename)" />
+                        </td>
+
+                    </tr>
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipototallineastransmisionComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+                    <tr class='@clase'>
+                        <td>Línea de Transmisión:</td>
+                        <td>
+                            <input value="@Model.TipoComportamiento.Tipototallineastransmision" data-file="" data-file-name="" data-name="TotalLineaTransmision" style="display:none;" />
+                            <table cellpadding="7">
+                                <tr class="TransmisorRow">
+                                    <td>500 kV</td>
+                                    <td><input type="text" id="val500" class="SumTrans" value="@Model.TipoComportamiento.Tipolineatrans500km" readonly /></td>
+                                    <td>km</td>
+                                </tr>
+                                <tr class="TransmisorRow">
+                                    <td>200 kV</td>
+                                    <td><input type="text" id="val200" class="SumTrans" value="@Model.TipoComportamiento.Tipolineatrans220km" readonly /></td>
+                                    <td>km</td>
+                                </tr>
+                                <tr class="TransmisorRow">
+                                    <td>138 kV</td>
+                                    <td><input type="text" id="val138" class="SumTrans" value="@Model.TipoComportamiento.Tipolineatrans138km" readonly /></td>
+                                    <td>km</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Líneas de transmisión:</td>
+                                    <td><input type="text" id="txtTotalTransmision" value="@Model.TipoComportamiento.Tipototallineastransmision" readonly /></td>
+                                    <td><b>km</b><span style="padding-left:15px;" id="spnIntegranteTransmisor"></span></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipototallineastransmisionComentario, new { @id = "txtTipototallineastransmisionComentario", @rows = "5", @cols = "35", @disabled = disabled })
+
+                        </td>
+
+                    </tr>
+                }
+                else if (Model.EmprTipoAgenteCodigo == ConstantesRegistroIntegrantes.TipoComportamientoDistribuidorCodigo)
+                {
+                    var clase = "";
+                    var disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipodocsustentatorioComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+                    <tr class='@clase'>
+                        <td>Documento Sustentatorio:</td>
+                        <td>
+                            @Html.TextBoxFor(x => x.TipoComportamiento.Tipodocsustentatorio, new { @id = "txtTipodocsustentatorio", style = "width:220px;", @readonly = "readonly", @data_file = "", @data_file_name = "", @data_name = "DocumentoSustentatorio" })
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipodocsustentatorioComentario, new { @id = "txtTipodocsustentatorioComentario", @rows = "5", @cols = "35", @disabled = disabled })
+
+
+                        </td>
+                    </tr>
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipoarcdigitalizadoComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+                    <tr class='@clase'>
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Archivo Digitalizado:</td>
+                        <td>
+                                                       
+                            <table style="width:280px">
+                                <tr>
+                                    <td>
+                                        @Html.TextBoxFor(x => x.TipoComportamiento.Tipoarcdigitalizado, new { @id = "txtTipoarcdigitalizado", style = "width:220px;", @readonly = "readonly", @data_file = Model.TipoComportamiento.Tipoarcdigitalizado, @data_file_name = Model.TipoComportamiento.Tipoarcdigitalizadofilename, @data_name = "ArchivoDigitalizado" })
+                                    </td>
+                                    <td>
+                                        <a href="JavaScript:ver()" title="Ver">
+                                            <img src="~/Content/Images/btn-open.png" />
+                                        </a>
+                                        <a href="JavaScript:descargar()" title="Descargar">
+                                            <img src="~/Content/Images/btn-download.png" />
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipoarcdigitalizadoComentario, new { @id = "txtTipoarcdigitalizadoComentario", @rows = "5", @cols = "35", @disabled = disabled })
+
+                            <input type="hidden" id="hdfAdjunto_AD" data-file="@Model.TipoComportamiento.Tipoarcdigitalizado" data-file-name="@Model.TipoComportamiento.Tipoarcdigitalizadofilename" value="@string.Format("{0}*{1}",@Model.TipoComportamiento.Tipoarcdigitalizado,@Model.TipoComportamiento.Tipoarcdigitalizadofilename)" />
+                        </td>
+
+                    </tr>
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipomaxdemandacoincidenteComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+                    <tr class='@clase'>
+                        <td>Máxima demanda coincidente anual :</td>
+                        <td>
+                            @Html.TextBoxFor(x => x.TipoComportamiento.Tipomaxdemandacoincidente, new { @id = "txtTipomaxdemandacoincidente", style = "width:220px;", @readonly = "readonly", @data_file = "", @data_file_name = "", @data_name = "MaximaDemandaCoincidente" })
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipomaxdemandacoincidenteComentario, new { @id = "txtTipomaxdemandacoincidenteComentario", @rows = "5", @cols = "35", @disabled = disabled })
+
+                        </td>
+
+                    </tr>
+                }
+                else if (Model.EmprTipoAgenteCodigo == ConstantesRegistroIntegrantes.TipoComportamientoUsuarioLibreCodigo)
+                {
+                    var clase = "";
+                    var disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipodocsustentatorioComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+                    <tr class='@clase'>
+                        <td>Documento Sustentatorio:</td>
+                        <td>
+                            @Html.TextBoxFor(x => x.TipoComportamiento.Tipodocsustentatorio, new { @id = "txtTipodocsustentatorio", style = "width:220px;", @readonly = "readonly", @data_file = "", @data_file_name = "", @data_name = "DocumentoSustentatorio" })
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipodocsustentatorioComentario, new { @id = "txtTipodocsustentatorioComentario", @rows = "5", @cols = "35", @disabled = disabled })
+
+
+                        </td>
+                    </tr>
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipoarcdigitalizadoComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+                    <tr class='@clase'>
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Archivo Digitalizado:</td>
+                        <td>
+                            
+                            <table style="width:280px">
+                                <tr>
+                                    <td>
+                                        @Html.TextBoxFor(x => x.TipoComportamiento.Tipoarcdigitalizado, new { @id = "txtTipoarcdigitalizado", style = "width:220px;", @readonly = "readonly", @data_file = Model.TipoComportamiento.Tipoarcdigitalizado, @data_file_name = Model.TipoComportamiento.Tipoarcdigitalizadofilename, @data_name = "ArchivoDigitalizado" })
+                                    </td>
+                                    <td>
+                                        <a href="JavaScript:ver()" title="Ver">
+                                            <img src="~/Content/Images/btn-open.png" />
+                                        </a>
+                                        <a href="JavaScript:descargar()" title="Descargar">
+                                            <img src="~/Content/Images/btn-download.png" />
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+
+                            <input type="hidden" id="hdfAdjunto_AD" data-file="@Model.TipoComportamiento.Tipoarcdigitalizado" data-file-name="@Model.TipoComportamiento.Tipoarcdigitalizadofilename" value="@string.Format("{0}*{1}",@Model.TipoComportamiento.Tipoarcdigitalizado,@Model.TipoComportamiento.Tipoarcdigitalizadofilename)" />
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipoarcdigitalizadoComentario, new { @id = "txtTipoarcdigitalizadoComentario", @rows = "5", @cols = "35", @disabled = disabled })
+
+                        </td>
+
+                    </tr>
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TipomaxdemandacontratadaComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+                    <tr class='@clase'>
+                        <td>Máxima demanda contratada (MW) :</td>
+                        <td>
+                            @Html.TextBoxFor(x => x.TipoComportamiento.Tipomaxdemandacontratada, new { @id = "txtTipomaxdemandacontratada", style = "width:220px;", @readonly = "readonly", @data_file = "", @data_file_name = "", @data_name = "MaximaDemandaContratada" })
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TipomaxdemandacontratadaComentario, new { @id = "txtTipomaxdemandacontratadaComentario", @rows = "5", @cols = "35", @disabled = disabled })
+                        </td>
+
+                    </tr>
+                    clase = "";
+                    disabled = "disabled='disabled'";
+
+                    if (Model.TieneRevisionDetalle)
+                    {
+                        if (string.IsNullOrEmpty(Model.TipoComportamiento.TiponumsuministradorComentario))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+                    <tr class='@clase'>
+                        <td> Número de Suministrador :</td>
+                        <td>
+                            @Html.TextBoxFor(x => x.TipoComportamiento.Tiponumsuministrador, new { @id = "txtTiponumsuministrador", style = "width:220px;", @readonly = "readonly", @data_file = "", @data_file_name = "", @data_name = "NumeroSuministrador" })
+                        </td>
+                        <td>
+                            <a onclick="JavaScript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="JavaScript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="JavaScript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            @Html.TextAreaFor(x => x.TipoComportamiento.TiponumsuministradorComentario, new { @id = "txtTiponumsuministradorComentario", @rows = "5", @cols = "35", @disabled = disabled })
+
+                        </td>
+
+                    </tr>
+                }
+
+            </table>
+        </div>
+
+
+        <div style="clear:both; height:5px;"></div>
+        <div class="search-content" style="margin-bottom:0px; padding:10px">
+            @if (Model.Revifinalizado == ConstantesRegistroIntegrantes.RevisionFinalizadoSi &&
+            Model.Revinotificado == ConstantesRegistroIntegrantes.RevisionNotificadoNo)
+            {
+                <input type="button" id="btnRevAsistente" value="Revisar Asistente" />
+            }
+            @if (Model.Revinotificado == ConstantesRegistroIntegrantes.RevisionNotificadoNo)
+            {
+                <input type="button" id="btnGrabar" value="Grabar" />
+                <input type="button" id="btnFinalizar" value="Finalizar" />
+            }
+        </div>
+
+        <input type="hidden" id="hfEmprcodi" value="@Model.EmprCodi" />
+        <input type="hidden" id="hfRevicodi" value="@Model.Revicodi" />
+        <input type="hidden" id="hfRevinotificado" value="@Model.Revinotificado" />
+        <input type="hidden" id="hfReviterminado" value="@Model.Reviterminado" />
+        <input type="hidden" id="hfRevienviado" value="@Model.Revienviado" />
+    </div>
+
+</div>

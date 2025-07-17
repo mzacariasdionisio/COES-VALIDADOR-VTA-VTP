@@ -1,0 +1,620 @@
+﻿@model COES.MVC.Extranet.Areas.Transferencias.Models.EnvioInformacionModel
+@{
+    ViewBag.Title = "Transferencias - Ingreso de Información: Entregas y Retiros";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var PERIANIOMES2 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES2"];
+    var PERIANIOMES1 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES1"];
+    var PERIANIOMES3 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES3"];
+    var PERIANIOMES4 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES4"];
+    var EMPRNOMB = TempData["EMPRNOMB"];
+    int EMPRNRO = Convert.ToInt32(TempData["EMPRNRO"]);
+    var EMPRCODI3 = (COES.MVC.Extranet.Areas.Transferencias.Models.EmpresaModel)TempData["EMPRCODI3"];
+    var EMPRCODI4 = (COES.MVC.Extranet.Areas.Transferencias.Models.EmpresaModel)TempData["EMPRCODI4"];
+    var BARRCODI3 = (IEnumerable<SelectListItem>)TempData["BARRCODI3"];
+    string sSelected = "";
+}
+<link href="~/Areas/Transferencias/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css?v=12" rel="stylesheet" />
+<script src="~/Areas/Transferencias/Content/Scripts/envioInformacion.js?v=5.44"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/jqplot.saveAsImage.min.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<link href="~/Content/Scripts/Charts/jquery.jqplot.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/Charts/jquery.jqplot.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.barRenderer.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.highlighter.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.cursor.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.pointLabels.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.dateAxisRenderer.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.logAxisRenderer.min.js"></script>
+@*ASSETEC 202001*@
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script>
+    procesarArchivo = function (sFile, iPericodi) {
+        $.ajax({
+            type: 'POST',
+            url: siteRoot + 'transferencias/envioinformacion/procesararchivo',
+            data: { sNombreArchivo: sFile, iPericodi: iPericodi },
+            dataType: 'json',
+            cache: false,
+            success: function (resultado) {
+                if (resultado == "1") {
+                    mostrarMensaje("Archivo procesado");
+                }
+                else if (resultado == "-1") {
+                    mostrarMensaje("Lo sentimos, se ha producido un error al cargar la información");
+                }
+                else {
+                    abrirpopupresult(resultado);
+                }
+            },
+            error: function () {
+                //mostrarError();
+            }
+        });
+    }
+
+    procesarArchivoBase = function (sFile, iPericodi) {
+        $.ajax({
+            type: 'POST',
+            url: siteRoot + 'transferencias/envioinformacion/procesararchivobase',
+            data: { sNombreArchivo: sFile, iPericodi: iPericodi },
+            dataType: 'json',
+            cache: false,
+            success: function (resultado) {
+                if (resultado == "1") {
+                    mostrarMensaje("Archivo procesado");
+                }
+                else if (resultado == "-1") {
+                    mostrarMensaje("Lo sentimos, se ha producido un error al cargar la información");
+                }
+                else {
+                    abrirpopupresult(resultado);
+                }
+            },
+            error: function () {
+                //mostrarError();
+            }
+        });
+    }
+</script>
+<div class="ast">
+    <div id="popup"></div>
+    @if (@EMPRNOMB == "")
+    {
+        if (@EMPRNRO < 0)
+        {<div class="form-title">
+                ESTA CUENTA DE USUARIO NO ESTA RELACIONADO A NINGUNA EMPRESA PARA VER LA INFORMACIÓN DE ESTA PANTALLA
+            </div>
+        }
+        else
+        {
+            <script>seleccionarEmpresa();</script>
+            <div class="form-title">
+                DEBE SELECCIONAR UNA EMPRESA PARA VER LA INFORMACIÓN DE ESTA PANTALLA
+                @if (@EMPRNRO > 1)
+                {<a onclick="seleccionarEmpresa();" class="paginate_active">[Seleccionar una empresa]</a>}
+            </div>
+
+        }
+    }
+    else
+    { <div class="form-title">
+            INGRESO DE INFORMACIÓN: ENTREGAS Y RETIROS DE @EMPRNOMB @*[@EMPRNRO]*@
+            @if (@EMPRNRO > 1)
+            {<a onclick="seleccionarEmpresa();" class="paginate_button">[Cambiar empresa]</a>}
+        </div>
+        <input type="hidden" name="Recpotpreciopoteppm" id="Recpotpreciopoteppm" value="" /> @*@Model.EntidadRecalculoPotencia.Recpotpreciopoteppm*@
+        <input type="hidden" name="emprcodi" id="emprcodi" value="@Model.Emprcodi" />
+        <input type="hidden" name="trnenvcodi" id="trnenvcodi" value="@Model.Trnenvcodi" />
+        <input type="hidden" name="trnenvcodi" id="iNroGrupos" value="@Model.iNroGrupos" />
+        <input type="hidden" name="testado" id="testado" value="" />
+        <input type="hidden" name="trnenvfecins" id="trnenvfecins" value="" />
+        <input type="hidden" name="numregistros" id="numregistros" value="0" />
+        <div class="content-hijo" style="padding-top:8px">
+            <div id="tab-container" class='tab-container'>
+                <ul class='etabs'>
+                    <li class='tab'><a href="#paso0">Envío de datos</a></li>
+                    @*<li class='tab'><a href="#paso1">Descargar de Formato</a></li>
+                        <li class='tab'><a href="#paso2">Subir Archivo</a></li>*@
+                    <li class='tab'><a href="#paso3">Gráfico de Entregas y Retiros</a></li>
+                    <li class='tab'><a href="#paso4">Gráfico de Información Base</a></li>
+                    <li class='tab'><a href="#paso5">Resumen Energía Mensual</a></li>
+                </ul>
+                <div class='panel-container'>
+                    <div id="paso0">
+                        <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">
+                            @if (Model.Pericodi > 0 && Model.Recacodi > 0)
+                            {<span>Puede consultar el Periodo de Valorización: @Model.EntidadRecalculo.PeriNombre / @Model.EntidadRecalculo.RecaNombre</span> }
+                        else
+                        { <span>Por favor seleccione un Mes de valorización y una versión de recalculo</span>}
+                        </div>
+                        <div class="search-content" style="margin-bottom:0px; padding:15px; padding-top:3px; padding-bottom:9px; display:block; height: 90px;" id="divAcciones">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td id="botones" colspan="7">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td class="content-action" style="height: 40px; width: 70px; text-align: center;">
+                                                    <div id="celdaDescargar">
+                                                        <a href="#" id="btnDescargarExcel">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/TransfPotencia/Content/Images/bajar.png" /><br />
+                                                                <span>Descargar</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="content-action" style="height: 40px; width: 70px; text-align: center;">
+                                                    <div id="celdaImportar">
+                                                        <a href="#" id="btnSelecionarExcel">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/TransfPotencia/Content/Images/subir.png" /><br />
+                                                                <span>Importar</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td class="content-action" style="height: 40px; width: 70px; text-align: center;">
+                                                    <a href="#" id="btnGrabarExcel">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/enviar.png" /><br />
+                                                            <span>Enviar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td class="content-action" style="height: 40px; width: 70px; text-align: center;">
+                                                    <a href="#" id="btnValidarGrillaExcel">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/errores.png" /><br />
+                                                            <span>Ver errores</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td class="content-action" style="height: 40px; width: 70px; text-align: center;">
+                                                    <a href="#" id="btnVerEnvios">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/envios.png" /><br />
+                                                            <span>Ver envíos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr><td colspan="7">&nbsp;</td></tr>
+                                <tr>
+                                    <td style="width:60px; height:40px;">Periodo:</td>
+                                    <td style="width:180px; height:40px;">
+                                        <select id="pericodi" name="pericodi" onchange="recargar();" style="width:140px;">
+                                            @foreach (var item in Model.ListaPeriodos)
+                                            {
+                                                sSelected = "";
+                                                if (@item.PeriCodi == Model.Pericodi)
+                                                { sSelected = "selected"; }
+                                                <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:60px; height:40px;">Versión:</td>
+                                    <td style="width:120px; height:40px;">
+                                        <select id="recacodi" name="recacodi" onchange="recargarrecalculo();" style="width:100px;">
+                                            @foreach (var item in Model.ListaRecalculo)
+                                            {
+                                                sSelected = "";
+                                                if (@item.RecaCodi == Model.Recacodi)
+                                                { sSelected = "selected"; }
+                                                <option value="@item.RecaCodi" @sSelected>@item.RecaNombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:140px; height:40px;">Tipo de Información:</td>
+                                    <td style="width:160px; height:40px;">
+                                        <select id="tipoinfocodi" name="tipoinfocodi" onchange="recargarrecalculo();" style="width:150px;">
+                                            @foreach (var item in Model.ListaTipoInfo)
+                                            {
+                                                sSelected = "";
+                                                if (@item.TipoInfoCodi == Model.Tipoinfocodi)
+                                                { sSelected = "selected"; }
+                                                <option value="@item.TipoInfoCodi" @sSelected>@item.TipoInfoNombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    @if (Model.Tipoinfocodi == 2)
+                                    {
+                                        <td style="width:160px; height:40px;">
+                                            <select id="trnmodcodi" name="trnmodcodi" onchange="recargarmodelo();" style="width:150px;">
+                                                @foreach (var item in Model.ListaModelo)
+                                                {
+                                                    sSelected = "";
+                                                    if (@item.TrnModCodi == Model.Trnmodcodi)
+                                                    { sSelected = "selected"; }
+                                                    <option value="@item.TrnModCodi" @sSelected>@item.TrnModNombre</option>
+                                                }
+                                            </select>
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td style="width:160px; height:40px;"><input type="hidden" name="trnmodcodi" id="trnmodcodi" value="0" /></td>
+                                    }
+                                    <td style="width:90px; height:40px;">
+                                        @if (Model.Pericodi > 0 && Model.Recacodi > 0)
+                                        {
+                                            <input type="button" id="btnConsultar" value="Consultar" />
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div style="clear:both; height:20px"></div>
+                        <div id="grillaExcel" class="handsontable"></div>
+                        @*<input type="hidden"  id="hfHtData" />*@
+                    </div>
+                    <div id="paso1" style="display:none">
+                        <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                            <table cellspacing="2" cellpadding="4" style="width:1025px;">
+                                <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                    <td colspan="4"><div class="editor-label"><b>Descargar Formato Excel: </b></div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="editor-label">Periodo</div></td>
+                                    <td>
+                                        <div class="editor-field">
+                                            @Html.DropDownList("PERIANIOMES", @PERIANIOMES2, "--Seleccione--")
+                                        </div>
+                                    </td>
+                                    <td><div><input type="button" id="btnGenerarExcel" value="Exportar formatos de Entrega y Retiro" /></div></td>
+                                    <td><div><input type="button" id="btnGenerarExcelBase" value="Exportar formatos de Informacion Base" /></div></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="paso2" style="display:none">
+                        <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                            <table cellspacing="2" cellpadding="5" style="width:1025px;">
+                                <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                    <td colspan="4"><div class="editor-label"><b>Subir archivo Excel: </b></div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="editor-label">Periodo</div></td>
+                                    <td>
+                                        <div class="editor-field">
+                                            @Html.DropDownList("PERICODI", @PERIANIOMES1, "--Seleccione--")
+                                        </div>
+                                    </td>
+                                    <td><div class="editor-label">Archivo</div></td>
+                                    <td>
+                                        <div class="editor-field">
+                                            <input type="radio" id="ER" name="rbArchivo" value="ER" checked="checked" />Entrega y Retiro
+                                            <input type="radio" id="IB" name="rbArchivo" value="IB" />Información Base
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="formulario-item" style="width:900px; height: 70px;" id="divOpcionCarga">
+                                            <table cellpadding="0" cellspacing="0" border="0">
+                                                <tr>
+                                                    <td><div class="formulario-label" style="width:500px">Seleccionar archivo de Entrega/Retiro o Información Base (Extensión: .XLSX):</div></td>
+                                                    <td style="width:200px"><div class="formulario-control" style="width:120px"><input type="button" id="btnSelectFile" value="Seleccionar archivo" /></div></td>
+                                                    <td style="width:200px"><div class="formulario-control" style="width:120px" id="container"><input type="button" id="btnProcesarFile" value="Procesar archivo" /></div></td>
+                                                </tr>
+                                                @*<tr><td colspan="3"><div class="formulario-label" style="width:500px"><font color="red">PROCESAR UN MÁXIMO DE 50 CÓDIGOS POR VEZ</font></div></td></tr>*@
+                                            </table>
+                                        </div>
+                                        <div class="formulario-item" style="width:900px" id="divOpcionMensaje">
+                                            <br /><div class="editor-label">&nbsp;&nbsp;&nbsp;&nbsp;La fecha límite de remisión de información ha vencido</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="listado" id="listado"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="progreso"></div>
+                        <div id="fileInfo"></div>
+                        <script type="text/javascript">
+                            var fullDate = new Date();
+                            var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                            var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                            var uploader = new plupload.Uploader({
+                                runtimes: 'html5,flash,silverlight,html4',
+                                browse_button: 'btnSelectFile',
+                                container: document.getElementById('container'),
+                                url: siteRoot + 'transferencias/envioinformacion/upload?sFecha=' + sFecha,
+                                flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                                silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                                multi_selection: false,
+                                filters: {
+                                    max_file_size: '100mb',
+                                    mime_types: [
+                                        { title: "Archivos Excel .xlsx", extensions: "xlsx" }
+                                    ]
+                                },
+                                init: {
+                                    PostInit: function () {
+                                        document.getElementById('btnProcesarFile').onclick = function () {
+                                            if ($("#PERICODI").val() == "") {
+                                                mostrarMensaje("Por favor, seleccione un periodo");
+                                            }
+                                            else {
+                                                if (uploader.files.length > 0) {
+                                                    uploader.start();
+                                                }
+                                                else
+                                                    loadValidacionFile("Seleccione archivo.");
+                                            }
+                                            return false;
+                                        };
+                                    },
+                                    FilesAdded: function (up, files) {
+                                        if (uploader.files.length == 2) {
+                                            uploader.removeFile(uploader.files[0]);
+                                        }
+                                        plupload.each(files, function (file) {
+                                            loadInfoFile(file.name, plupload.formatSize(file.size));
+                                        });
+                                        up.refresh();
+                                    },
+                                    UploadProgress: function (up, file) {
+                                        mostrarProgreso(file.percent);
+                                    },
+                                    UploadComplete: function (up, file) {
+                                        if (document.getElementById('ER').checked) {
+                                            procesarArchivo(sFecha + "_" + file[0].name, $("#PERICODI").val());
+                                            buscarEnvios($("#PERICODI").val());
+                                        }
+                                        else if (document.getElementById('IB').checked) { procesarArchivoBase(sFecha + "_" + file[0].name, $("#PERICODI").val()); }
+                                    },
+                                    Error: function (up, err) {
+                                        loadValidacionFile(err.code + "-" + err.message);
+                                    }
+                                }
+                            });
+                            uploader.init();
+                        </script>
+                    </div>
+                    <div id="paso3">
+                        <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                            <table cellspacing="2" cellpadding="5" style="width:1025px;">
+                                <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                    <td colspan="6"><div class="editor-label"><b>Gráfico de Entregas y Retiros: </b></div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="editor-label">Periodo</div></td>
+                                    <td><div class="editor-field">@Html.DropDownList("PERICODI3", @PERIANIOMES3, "--Seleccione--", new { style = "width:150px" })</div></td>
+                                    <td><div class="editor-label">Versión </div></td>
+                                    <td><div class="editor-field"><select id="Version" style="width:100px;"></select></div></td>
+                                    <td colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td><div class="editor-label">Barra de transferencia</div></td>
+                                    <td>
+                                        <div class="editor-field">
+                                            @Html.DropDownList("BARRCODI3", @BARRCODI3, "(TODOS)")
+                                        </div>
+                                    </td>
+                                    <td><div class="editor-label">Empresa</div></td>
+                                    <td>
+                                        <select id="EMPRCODI3" multiple="multiple">
+                                            @foreach (var item in @EMPRCODI3.ListaEmpresas)
+                                            {
+                                                <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                            }
+                                        </select>
+                                        <input type="hidden" id="hcbEMPRCODI3" />
+                                    </td>
+                                    <td><div><input type="button" id="btnVer" value="Ver Códigos" /></div></td>
+                                    <td><input type="button" id="btnDescargarEntregaRetiro" value="Descargar Entregas / Retiros" /></td>
+                                </tr>
+                            </table>
+                            <br /><br />
+                            <div style="width:100%; display: none;" id="divResultado">
+                                <table border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td valign="top">
+                                            <div style="max-height:800px;overflow-y:scroll; width:300px;">
+                                                <table border="0" class="pretty" id="tabla">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>&nbsp;</th>
+                                                            <th>Código</th>
+                                                            <th>Empresa</th>
+                                                            <th>Central/Cliente</th>
+                                                            <th>Barra Transferencia</th>
+                                                            <th>Información</th>
+                                                            <th>Total</th>
+                                                            <th>&nbsp;</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </td>
+                                        <td valign="top">
+                                            <div style="width:720px;">
+                                                <div id="grafico" style="height:400px; width:720px; "></div>
+                                                <div id="grafico2" style="height:400px; width:720px; "></div>
+                                                <div id="btnBotones" style="text-align:center">
+                                                    <input type="button" id="btnImagen1" value="Imprimir Imagen 1" />
+                                                    <input type="button" id="btnImagen2" value="Imprimir Imagen 2" />
+                                                    <input type="button" id="reset" value="Reducir" />
+                                                    <input type="button" id="Clean" value="Limpiar" />
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr><td colspan="2">&nbsp;</td></tr>
+                                </table>
+                                <div style="clear:both">
+                                    <a style="text-align:right"></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="paso4">
+                        <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                            <table cellspacing="2" cellpadding="5" style="width:1025px;">
+                                <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                    <td colspan="8"><div class="editor-label"><b>Gráfico de Información Base: </b></div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="editor-label">Periodo</div></td>
+                                    <td><div class="editor-field">@Html.DropDownList("PERICODI4", @PERIANIOMES3, "--Seleccione--", new { style = "width:150px" })</div></td>
+                                    <td><div class="editor-label">Versión </div></td>
+                                    <td><div class="editor-field"><select id="Version4" style="width:100px;"></select></div></td>
+                                    <td><div class="editor-label">Empresa</div></td>
+                                    <td>
+                                        <select id="EMPRCODI4" multiple="multiple">
+                                            @foreach (var item in @EMPRCODI4.ListaEmpresas)
+                                            {
+                                                <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                            }
+                                        </select>
+                                        <input type="hidden" id="hcbEMPRCODI4" />
+                                    </td>
+                                    <td><div><input type="button" id="btnVer4" value="Ver Códigos" /></div></td>
+                                    <td><input type="button" id="btnDescargarInfoBase" value="Descargar Info. Base" /></td>
+                                </tr>
+                            </table>
+                            <br /><br />
+                            <div style="width:100%; display: none;" id="divResultado4">
+                                <table border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td valign="top">
+                                            <div style="max-height:800px;overflow-y:scroll; width:300px;">
+                                                <table border="0" class="pretty" id="tabla4">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>&nbsp;</th>
+                                                            <th>Código</th>
+                                                            <th>Empresa</th>
+                                                            <th>Central/Cliente</th>
+                                                            <th>Barra de Transferencia</th>
+                                                            <th>Información</th>
+                                                            <th>Total</th>
+                                                            <th>&nbsp;</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </td>
+                                        <td valign="top">
+                                            <div style="width:720px;">
+                                                <div id="grafico4" style="height:400px; width:720px; "></div>
+                                                <div id="grafico24" style="height:400px; width:720px; "></div>
+                                                <br />
+                                                <div id="btnBotonesIB" style="text-align:center">
+                                                    <input type="button" id="btnImagen1IB" value="Imprimir Imagen 1" />
+                                                    <input type="button" id="btnImagen2IB" value="Imprimir Imagen 2" />
+                                                    <input type="button" id="reset4" value="Reducir" />
+                                                    <input type="button" id="Clean4" value="Limpiar" />
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr><td colspan="2">&nbsp;</td></tr>
+                                </table>
+                                <div style="clear:both">
+                                    <a style="text-align:right"></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="paso5">
+                        <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                            <table cellspacing="2" cellpadding="5" style="width:1025px;">
+                                <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                    <td colspan="5"><div class="editor-label" style="color:#FFFFFF;"><b>Descarga de Resumen Energía Mensual</b></div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="editor-label"> Periodo:  </div></td>
+                                    <td><div class="editor-field">@Html.DropDownList("PericodiC", @PERIANIOMES4, "--Seleccione--")</div></td>
+                                    <td><div class="editor-label">Versión </div></td>
+                                    <td><div class="editor-field"><select id="VersionC" style="width:100px;"></select></div></td>
+                                    <td><div><input type="button" id="btnDescargarEnergiaMensual" value="Descargar Energía Mensual" /></div></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<div id="popup2"></div>
+<div id="popupEnvios" style="padding: 20px; border-radius: 10px; background-color:#FFFFFF"></div>
+<div id="popupErrores" style="padding: 20px; border-radius: 10px; background-color:#FFFFFF"></div>
+
+<script>
+    document.getElementById('btnBotones').style.display = "none";
+    document.getElementById('btnBotonesIB').style.display = "none";
+    function ASSETEC_ChartToPNG(c, p) {
+        var nw = window.open('', '', "toolbar=no,location=no,scrollbars=yes,width=750,height=550");
+        nw.document.write("<img src='" + jqplotToImg($("#" + c)) + "' />");
+        nw.focus();
+        if (p) nw.print();
+    }
+
+    $("#btnImagen1").click(function () {
+        ASSETEC_ChartToPNG("grafico", true);
+    });
+
+    $("#btnImagen2").click(function () {
+        ASSETEC_ChartToPNG("grafico2", true);
+    });
+
+    $("#btnImagen1IB").click(function () {
+        ASSETEC_ChartToPNG("grafico4", true);
+    });
+
+    $("#btnImagen2IB").click(function () {
+        ASSETEC_ChartToPNG("grafico24", true);
+    });
+
+    $("#btnImagen1PNG").click(function () {
+        var imgData = $("#grafico").jqplotToImageStr({});
+        if (imgData) {
+            window.location.href = imgData.replace("image/png", "image/octet-stream");
+        }
+    });
+</script>
+
+<!-- Botón flotante de WhatsApp -->
+<a href="https://wa.me/51905469444" class="wsp" target="_blank" title="¿Necesitas ayuda? Escríbenos por WhatsApp">
+    <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp">
+</a>
+
+<style>
+    .wsp {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        cursor: pointer;
+        border-radius: 50%;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+    }
+
+        .wsp:hover {
+            transform: scale(1.1);
+        }
+
+        .wsp img {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+        }
+</style>

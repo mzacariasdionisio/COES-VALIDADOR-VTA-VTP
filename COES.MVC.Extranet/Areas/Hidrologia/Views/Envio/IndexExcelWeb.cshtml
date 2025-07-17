@@ -1,0 +1,304 @@
+﻿@model COES.Servicios.Aplicacion.FormatoMedicion.FormatoModel
+@{
+    ViewBag.Title = "Hidrología";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/Handson/moment.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/select2handson.js"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/htmaxlength.js"></script>
+
+<link href="~/Areas/Hidrologia/Content/Css/select2.css" rel="stylesheet" />
+<script src="~/Areas/Hidrologia/Content/Scripts/select2.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+
+<link href="~/Areas/Hidrologia/Content/Css/css.css?id=15.1.0" rel="stylesheet" />
+<link href="~/Areas/Hidrologia/Content/Css/main.css?id=15.1.0" rel="stylesheet" />
+
+<script src="~/Areas/Hidrologia/Content/Scripts/mensajes.js?id=15.1.0"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/globales.js?id=15.1.0"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/util.js?id=15.1.0"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/handsontable.js?id=15.1.0"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/excelweb.js?id=15.1.0"></script>
+
+<input type="hidden" id="hfIdEnvio" value="@Model.IdEnvio" />
+<input type="hidden" id="hfIdEmpresa" value="@Model.IdEmpresa" />
+<input type="hidden" id="hfIdLectura" value="@Model.IdLectura" />
+<input type="hidden" id="hfIdArea" value="@Model.IdArea" />
+<input type="hidden" id="hfIdFormato" value="@Model.IdFormato" />
+<input type="hidden" id="hfFecha" value="@Model.Dia" />
+<input type="hidden" id="hfFechaDia" value="@Model.Fecha" />
+<input type="hidden" id="hfFechaHoy" value="@Model.FechaHoy" />
+<input type="hidden" id="hfSemana" value="@Model.NroSemana" />
+<input type="hidden" id="hfMes" value="@Model.Mes" />
+<input type="hidden" id="hfDataExcel" value="" />
+<input type="hidden" id="hfFormatCodi" value="@Model.StrFormatCodi" />
+<input type="hidden" id="hfFormatPeriodo" value="@Model.StrFormatPeriodo" />
+<input type="hidden" id="hfFormatDescrip" value="@Model.StrFormatDescrip" />
+<input type="hidden" id="hfIdModulo" value="@Model.IdModulo" />
+<input type="hidden" id="hfEditable" value="@Model.Editable" />
+
+<div class="form-title" style="color: #278CCC; margin-bottom:0px;margin-top:5px;font-size:15px;">ENVÍO DE DATOS DE HIDROLOGÍA</div>
+<div id="idpanel" style="overflow:auto; background-color:#fff">
+    <div class='action-message' id='mensaje' style="margin-bottom:5px">Por favor seleccione empresa, area COES, tipo de lectura, formato y periodo</div>
+    <div class='action-message' id='mensajePlazo' style='display:none'></div>
+    <div class='action-message' id='mensajeEvento' style='display:none'></div>
+
+    <div class="search-content" style="margin-bottom:0px; padding:10px">
+        <table class="table-search">
+            <tr>
+                <td>Empresa</td>
+                <td>
+                    <select id="cbEmpresa" name="IdEmpresa" style="width:250px;">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEmpresa" name="empresa" value="@Model.IdEmpresa" />
+                </td>
+                <td>Formatos COES</td>
+                <td>
+                    <select id="cbArea" name="IdArea" style="width:250px;">
+                        @foreach (var item in Model.ListaAreas)
+                        {
+                            var descripcion = "";
+                            switch (item.Areacode)
+                            {
+                                case 17:
+                                    descripcion = "Gestión de Información";
+                                    break;
+                                case 7:
+                                    descripcion = "Programación";
+                                    break;
+                                case 3:
+                                    descripcion = "Coordinación";
+                                    break;
+                            }
+                            <option value="@item.Areacode">@descripcion</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfArea" name="area" value="@Model.IdArea" />
+                </td>
+                <td colspan="2">
+
+                    <div id="cntFecha">
+                        Fecha:
+                        <input type="text" name="Fecha" id="txtFecha" value="@Model.Dia" />
+                    </div>
+                    <div id="cntSemana" style="display:none">
+                        Año:
+                        <input type="text" id="Anho" name="Año" style="width:70px;" value="@Model.Anho" onchange=CargarSemanaAnho2() />
+                        <input type="hidden" id="hfAnho" value="@Model.Anho" />
+                        Semana:
+                        <div id="divSemana" style="display:inline-block"> </div>
+                    </div>
+                    <div id="cntMes" style="display:none">
+                        Mes-Año: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="Mes" id="txtMes" value="@Model.Mes" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Tipo de Lectura</td>
+                <td>
+                    <select id="cbLectura" style="width:250px;">
+                        <option value="0">[Seleccionar Tipo de Lectura]</option>
+                        @foreach (var item in Model.ListaLectura)
+                        {
+                            <option value="@item.Lectcodi">@item.Lectnomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfLectura" name="area" value="@Model.IdLectura" />
+                </td>
+
+                <td>Formato </td>
+                <td>
+                    <select id="cbFormato" name="IdFormato" style="width:250px;">
+                        <option value="0">[Seleccionar Formato]</option>
+                        @foreach (var item in Model.ListaFormato)
+                        {
+                            <option value="@item.Formatcodi">@item.Formatnombre</option>
+                        }
+                    </select>
+                </td>
+                <td></td>
+                <td style="text-align:center;">
+                    <input type="button" value="Seleccionar" onclick="nuevoFormato(true);">
+                </td>
+            </tr>
+        </table>
+        <div id="barraHidro" style="display:none;">
+            <table style="width:100%">
+
+                <tr id="tr_horario" style="display: none">
+                    <td style="width:45%"></td>
+                    <td>
+                        <fieldset class="search-content-1">
+                            <legend><strong>Horario</strong></legend>
+                            <div class="input-group">
+                                <input type="radio" name="form_tiempo" id="myradio_3" value="3">03:00
+                                <input type="radio" name="form_tiempo" id="myradio_6" value="6">06:00
+                                <input type="radio" name="form_tiempo" id="myradio_9" value="9">09:00
+                                <input type="radio" name="form_tiempo" id="myradio_12" value="12">12:00
+                                <input type="radio" name="form_tiempo" id="myradio_15" value="15">15:00
+                                <input type="radio" name="form_tiempo" id="myradio_18" value="18">18:00
+                                <input type="radio" name="form_tiempo" id="myradio_21" value="21">21:00
+                                <input type="radio" name="form_tiempo" id="myradio_24" value="24">24:00
+                            </div>
+                        </fieldset>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="width:45%">
+                        <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:block" id="divAcciones">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td class="content-action" style="display: none">
+                                        <a href="#" id="btnEditarEnvio">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/edit.png" /><br />
+                                                <span>Editar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="content-action">
+                                        <div id="celdaDescargar" style="display:none">
+                                            <a href="#" id="btnDescargarFormato">
+                                                <div class="content-item-action">
+                                                    <img src="~/Content/Images/bajar.png" /><br />
+                                                    <span>Descargar</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td class="content-action">
+                                        <div id="celdaImportar" style="display:none">
+                                            <a href="#" id="btnSelectExcel">
+                                                <div class="content-item-action">
+                                                    <img src="~/Content/Images/subir.png" /><br />
+                                                    <span>Importar</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td class="content-action">
+                                        <a href="#" id="btnEnviarDatos">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/enviar.png" /><br />
+                                                <span>Enviar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="content-action">
+                                        <a href="#" id="btnMostrarErrores">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/errores.png" /><br />
+                                                <span>Ver errores</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="content-action">
+                                        <a href="#" id="btnVerEnvios">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/envios.png" /><br />
+                                                <span>Ver envíos</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="content-action">
+                                        <a href="#" id="btnExpandirRestaurar">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/expandir.png" id="imgExpandirContraer" />
+                                                <br />
+                                                <span id="spanExpandirContraer">Expandir</span>
+                                            </div>
+                                        </a>
+                                        <input type="hidden" id="hfExpandirContraer" value="E" />
+                                    </td>
+                                    <td class="content-action">
+                                        <div id="celdaAgregar" style="display:none">
+                                            <a href="#" id="btnAgregarFila">
+                                                <div class="content-item-action">
+                                                    <img src="~/Content/Images/Write.png" />
+                                                    <br />
+                                                    <span id="spanExpandirContraer">Agregar</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                    <td style="width:55%">
+                        <div id="selecFormato">
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="bodyexcel" id='detalleFormato'></div>
+    @*</div>*@
+</div>
+
+<div id="validaciones" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+
+    </div>
+</div>
+
+<div id="nuevoformato" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Seleccionar Formato</span></div>
+    <div id="idFiltroNuevo">
+        <div style='clear:both; height:5px'></div>
+        <table>
+            <tr>
+                <td align="center"></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="popupEmbalses" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Seleccionar embalses</span></div>
+    <div id="embalses">
+        <div style='clear:both; height:5px'></div>
+        <table>
+            <tr>
+                <td align="center"></td>
+            </tr>
+        </table>
+    </div>
+
+    <br /><br />
+
+    <table>
+        <tr>
+            <td>
+                <input type="button" id="btnAceptarEmbalse" value="Aceptar" />
+            </td>
+            <td>
+                <input type="button" id="btnCerrarEmbalse" value="Cerrar" />
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="enviosanteriores" style="z-index:9999999998;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envios Anteriores</span></div>
+    <div id="idEnviosAnteriores">
+
+    </div>
+</div>
+

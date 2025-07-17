@@ -1,0 +1,336 @@
+﻿using COES.Dominio.DTO.Sic;
+using COES.Servicios.Aplicacion.Helper;
+using Novacode;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace COES.Servicios.Aplicacion.Intervenciones.Helper
+{
+    public class UtilWordIntervenciones
+    {
+        public static FontFamily FontDoc = new FontFamily("Calibri");
+        public static Color ColorTituloDoc = ColorTranslator.FromHtml("#000080");
+        public static Color ColorTituloSeccion = ColorTranslator.FromHtml("#FF0000");
+        public static Color ColorNegro = ColorTranslator.FromHtml("#000000");
+        public static Color ColorEnlace = ColorTranslator.FromHtml("#0563C1");
+        public static Color ColorCeldaEquipo = ColorTranslator.FromHtml("#2980B9");
+
+        public static void TablaWordIntervencionImportanteIPSI(DocX document, List<InIntervencionDTO> listaData)
+        {
+            bool tieneDatos = listaData.Any();
+
+            List<WordCelda> listaColumna = new List<WordCelda>
+                    {
+                        new WordCelda("EMPRESA", 90, 8,8, Alignment.left),
+                        new WordCelda("UBICACIÓN", 90, 8,8, Alignment.center),
+                        new WordCelda("EQUIPO", 60, 8,8, Alignment.center),
+                        new WordCelda("INICIO",70 , 8,8, Alignment.center),
+                        new WordCelda("FINAL", 70, 8,8, Alignment.center),
+                        new WordCelda("DESCRIPCIÓN", 220, 8,8, Alignment.left),
+                    };
+
+            int nroRowData = tieneDatos ? listaData.Count : 1;
+            int nroColumn = listaColumna.Count;
+
+            Table tabla = document.InsertTable(nroRowData + 1, nroColumn);
+            tabla.AutoFit = AutoFit.ColumnWidth;
+            tabla.Design = TableDesign.TableGrid;
+            tabla.Alignment = Alignment.center;
+
+            //llenar datos
+            int index = 1;
+            if (tieneDatos)
+            {
+                foreach (var entity in listaData)
+                {
+                    tabla.Rows[index].Cells[0].Paragraphs[0].Append(entity.EmprNomb);
+                    tabla.Rows[index].Cells[1].Paragraphs[0].Append(entity.AreaNomb);
+                    tabla.Rows[index].Cells[2].Paragraphs[0].Append(entity.Equiabrev);
+                    tabla.Rows[index].Cells[3].Paragraphs[0].Append(entity.Interfechaini.ToString("dd/MM/yyyy HH:mm"));
+                    tabla.Rows[index].Cells[4].Paragraphs[0].Append(entity.Interfechafin.ToString("dd/MM/yyyy HH:mm"));
+                    tabla.Rows[index].Cells[5].Paragraphs[0].Append(entity.Interdescrip);
+                    index++;
+                }
+
+                //formatear cuerpo default
+                UtilWord.BodyTablaWordVerticalCentrado(ref tabla, 0, 0, nroRowData, nroColumn - 1, listaColumna, FontDoc);
+
+                //formato especifico
+                index = 1;
+                foreach (var entity in listaData)
+                {
+                    tabla.Rows[index].Cells[2].Paragraphs[0].Color(ColorCeldaEquipo).Bold();
+
+                    if (entity.Interindispo == ConstantesIntervencionesAppServicio.sES)//celdas de color plomo
+                    {
+                        for (int k = 0; k < listaColumna.Count; k++)
+                        {
+                            tabla.Rows[index].Cells[k].FillColor = System.Drawing.ColorTranslator.FromHtml("#eeeeee");
+                        }
+                    }
+
+                    index++;
+                }
+            }
+            else
+            {
+                tabla.Rows[1].Cells[0].Paragraphs[0].Append("No se presenta");
+
+                //formatear cuerpo default
+                UtilWord.BodyTablaWordVerticalCentrado(ref tabla, 0, 0, nroRowData, nroColumn - 1, listaColumna, FontDoc);
+
+                //formato especifico
+                tabla.Rows[1].Cells[0].MarginTop = 4;
+                tabla.Rows[1].Cells[0].MarginBottom = 4;
+            }
+
+            //formatear cabecera
+            UtilWord.FormatearFilaTablaWord(ref tabla, 0, listaColumna, FontDoc); //tabla maximo 600px
+        }
+
+        public static void TablaWordConexionesProvisionalesIPSI(DocX document, List<InIntervencionDTO> listaData)
+        {
+            bool tieneDatos = listaData.Any();
+
+            List<WordCelda> listaColumna = new List<WordCelda>
+                    {
+                        new WordCelda("EMPRESA", 90, 8,8, Alignment.left),
+                        new WordCelda("EQUIPO", 60, 8,8, Alignment.center),
+                        new WordCelda("INICIO",70 , 8,8, Alignment.center),
+                        new WordCelda("FINAL", 70, 8,8, Alignment.center),
+                        new WordCelda("DESCRIPCIÓN", 310, 8,8, Alignment.left),
+                    };
+
+            int nroRowData = tieneDatos ? listaData.Count : 1;
+            int nroColumn = listaColumna.Count;
+
+            Table tabla = document.InsertTable(nroRowData + 1, nroColumn);
+            tabla.AutoFit = AutoFit.ColumnWidth;
+            tabla.Design = TableDesign.TableGrid;
+            tabla.Alignment = Alignment.center;
+
+            //llenar datos
+            int index = 1;
+            if (tieneDatos)
+            {
+                foreach (var entity in listaData)
+                {
+                    tabla.Rows[index].Cells[0].Paragraphs[0].Append(entity.EmprNomb);
+                    tabla.Rows[index].Cells[1].Paragraphs[0].Append(entity.Equiabrev);
+                    tabla.Rows[index].Cells[2].Paragraphs[0].Append(entity.Interfechaini.ToString("dd/MM/yyyy HH:mm"));
+                    tabla.Rows[index].Cells[3].Paragraphs[0].Append(entity.Interfechafin.ToString("dd/MM/yyyy HH:mm"));
+                    tabla.Rows[index].Cells[4].Paragraphs[0].Append(entity.Interdescrip);
+                    index++;
+                }
+
+                //formatear cuerpo default
+                UtilWord.BodyTablaWordVerticalCentrado(ref tabla, 0, 0, nroRowData, nroColumn - 1, listaColumna, FontDoc);
+
+                //formato especifico
+                index = 1;
+                foreach (var entity in listaData)
+                {
+                    tabla.Rows[index].Cells[1].Paragraphs[0].Color(ColorCeldaEquipo).Bold();
+
+                    index++;
+                }
+            }
+            else
+            {
+                tabla.Rows[1].Cells[0].Paragraphs[0].Append("No se presenta");
+
+                //formatear cuerpo default
+                UtilWord.BodyTablaWordVerticalCentrado(ref tabla, 0, 0, nroRowData, nroColumn - 1, listaColumna, FontDoc);
+
+                //formato especifico
+                tabla.Rows[1].Cells[0].MarginTop = 4;
+                tabla.Rows[1].Cells[0].MarginBottom = 4;
+            }
+
+            //formatear cabecera
+            UtilWord.FormatearFilaTablaWord(ref tabla, 0, listaColumna, FontDoc); //tabla maximo 600px
+        }
+
+        public static Table CreaTablaWord(DocX document, List<string> cabeceras, int rowsCount, bool esDiarioDPO = false)
+        {
+            int columnsCount = cabeceras.Count();
+            int columnWidth = 60;
+            int fonSizeCellBody = 7;
+            string color = "#DDDDDD";
+            string colorNegro = "000000";
+            Table tabla1 = null;
+            if (esDiarioDPO)
+            {
+                tabla1 = CrearTablaWordDocx45(document, rowsCount, columnsCount, columnWidth);
+            }
+            else
+            {
+                tabla1 = CrearTablaWordDocx(document, rowsCount, columnsCount, columnWidth);
+            }
+            for (int i = 0; i < columnsCount; i++)
+            {
+                tabla1.Rows[0].Cells[i].Paragraphs[0].Append(cabeceras[i]);
+            }
+            tabla1.Rows[0].Cells[0].MarginTop = 5;
+            tabla1.Rows[0].Cells[0].MarginBottom = 5;
+
+            // --------------------------------------------------------------------------------------------
+            // Formatea la tabla
+            // --------------------------------------------------------------------------------------------
+            // Establece los formatos generales de la tabla
+            for (int row = 1; row < rowsCount; row++)
+            {
+                for (int col = 0; col < columnsCount; col++)
+                {
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].Alignment = (col != 0 && col != columnsCount - 1) ? Alignment.center : Alignment.left;
+                    tabla1.Rows[row].Cells[col].VerticalAlignment = VerticalAlignment.Center;
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].FontSize(fonSizeCellBody);
+                }
+            }
+
+            // Colorea las cabeceras
+            for (int row = 0; row < 1; row++)
+            {
+                for (int col = 0; col < columnsCount; col++)
+                {
+                    tabla1.Rows[row].Cells[col].FillColor = System.Drawing.ColorTranslator.FromHtml(color);
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].Alignment = Alignment.center;
+                    tabla1.Rows[row].Cells[col].VerticalAlignment = VerticalAlignment.Center;
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].Bold();
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].FontSize(fonSizeCellBody + 1);
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].Color(Color.Black);
+                }
+            }
+            return tabla1;
+
+        }
+
+        public static Table CreaTablaWord2(DocX document, List<string> cabeceras, List<int> columnswidth, int rowsCount)
+        {
+            int columnsCount = cabeceras.Count();
+            int fonSizeCellBody = 7;
+            string color = "#DDDDDD";
+            string colorNegro = "000000";
+            Table tabla1 = CrearTablaWordDocx2(document, rowsCount, columnswidth);
+            for (int i = 0; i < columnsCount; i++)
+            {
+                tabla1.Rows[0].Cells[i].Paragraphs[0].Append(cabeceras[i]);
+            }
+            tabla1.Rows[0].Cells[0].MarginTop = 5;
+            tabla1.Rows[0].Cells[0].MarginBottom = 5;
+
+            // --------------------------------------------------------------------------------------------
+            // Formatea la tabla
+            // --------------------------------------------------------------------------------------------
+            // Establece los formatos generales de la tabla
+            for (int row = 1; row < rowsCount; row++)
+            {
+                for (int col = 0; col < columnsCount; col++)
+                {
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].Alignment = (col != 0 && col != columnsCount - 1) ? Alignment.center : Alignment.left;
+                    tabla1.Rows[row].Cells[col].VerticalAlignment = VerticalAlignment.Center;
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].FontSize(fonSizeCellBody);
+                }
+            }
+
+            // Colorea las cabeceras
+            for (int row = 0; row < 1; row++)
+            {
+                for (int col = 0; col < columnsCount; col++)
+                {
+                    tabla1.Rows[row].Cells[col].FillColor = System.Drawing.ColorTranslator.FromHtml(color);
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].Alignment = Alignment.center;
+                    tabla1.Rows[row].Cells[col].VerticalAlignment = VerticalAlignment.Center;
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].Bold();
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].FontSize(fonSizeCellBody + 1);
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].Color(Color.Black);
+                }
+            }
+            return tabla1;
+
+        }
+
+        public static Table CrearTablaWordDocx(DocX document, int rowsCount, int columnsCount, int columnWidth)
+        {
+            Table table = document.AddTable(rowsCount, 1);
+            table.Alignment = Alignment.center;
+            table.AutoFit = AutoFit.Window;
+            table.Design = TableDesign.TableGrid;
+
+            foreach (Row row in table.Rows)
+            {
+                row.Cells[0].Width = columnWidth;
+            }
+
+            for (int colIndex = 1; colIndex < columnsCount; colIndex++)
+            {
+                table.InsertColumn(colIndex);
+                foreach (Row row in table.Rows)
+                {
+                    row.Cells[colIndex].Width = columnWidth;
+                }
+            }
+
+            Paragraph par = document.InsertParagraph();
+            par.InsertTableBeforeSelf(table);
+
+            return table;
+        }
+
+        public static Table CrearTablaWordDocx45(DocX document, int rowsCount, int columnsCount, int columnWidth)
+        {
+            Table table = document.AddTable(rowsCount, 1);
+            table.Alignment = Alignment.center;
+            //table.AutoFit = AutoFit.Window;
+            table.Design = TableDesign.TableGrid;
+            foreach (Row row in table.Rows)
+            {
+                row.Cells[0].Width = columnWidth;
+            }
+            for (int colIndex = 1; colIndex < columnsCount; colIndex++)
+            {
+                table.InsertColumn(colIndex);
+                foreach (Row row in table.Rows)
+                {
+                    row.Cells[colIndex].Width = columnWidth;
+                }
+            }
+            Paragraph par = document.InsertParagraph();
+            par.InsertTableBeforeSelf(table);
+            return table;
+        }
+
+        public static Table CrearTablaWordDocx2(DocX document, int rowsCount, List<int> columnsWidth)
+        {
+            Table table = document.AddTable(rowsCount, 1);
+            table.Alignment = Alignment.center;
+            // table.AutoFit = AutoFit.Window;
+            table.Design = TableDesign.TableGrid;
+            int columnsCount = columnsWidth.Count;
+            int columnWidth = columnsWidth[0];
+            foreach (Row row in table.Rows)
+            {
+                row.Cells[0].Width = columnWidth;
+            }
+
+            for (int colIndex = 1; colIndex < columnsCount; colIndex++)
+            {
+                table.InsertColumn(colIndex);
+                foreach (Row row in table.Rows)
+                {
+                    row.Cells[colIndex].Width = columnsWidth[colIndex - 1];
+                }
+            }
+
+            Paragraph par = document.InsertParagraph();
+            par.InsertTableBeforeSelf(table);
+
+            return table;
+        }
+
+    }
+}

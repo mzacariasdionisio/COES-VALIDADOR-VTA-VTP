@@ -1,0 +1,739 @@
+﻿@model COES.MVC.Extranet.Areas.Eventos.Models.InformeModel
+
+<script type="text/javascript">
+
+    $(function () {  
+        $('#btnExportar').click(function(){
+            openExportar();
+        });
+
+        $('#btnCopiar').click(function () {
+            openCopia();
+        });
+
+        $('#btnFinalizar').click(function(){
+            finalizar();
+        });
+
+        @{
+            var indicador = "block";
+            if (Model.IndicadorEdicion == "N") {
+                indicador = "none";           
+            }
+        }
+
+        $('.action-informe').css("display", "@indicador");
+    });
+
+</script>
+
+@if (Model.Indicador == "S") { 
+    
+<div class="formato-clear" style="height:20px"></div>
+
+    <table style="width:100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td style="width:580px; padding-right:20px" valign="top">
+                <div class="formato-item"><div class="formato-label">1. Evento: @Model.AsuntoEvento</div></div>
+                <div class="formato-clear"></div>
+                <div class="formato-item"><div class="formato-label">2. Fecha: @Model.FechaEvento</div></div>
+                <div class="formato-clear"></div>
+                <div class="formato-item" style="margin-bottom:0"><div class="formato-label">3. Hora: @Model.HoraEvento</div></div>
+                <div class="formato-clear"></div>
+            </td>
+            <td style="width:20px" class="formato-tb-separer"></td>
+            <td valign="top">
+
+                @if ((Model.TipoInforme == "P" || Model.TipoInforme == "F") && (Model.IndicaShowPlazo == "S"))  { 
+                    <div class="formato-plazo">
+                        Plazo: <strong>@Model.PlazoMaximo </strong><span>¡ @Model.IndicadorPlazo !</span>
+                    </div>       
+                }
+                         
+                <div class="formato-cntboton">
+                    <input type="button" id="btnExportar" value="Exportar" />
+                    <input type="button" id="btnFinalizar" value="Finalizar" class="action-informe" />
+                    
+                    @if (Model.TipoInforme == "F" || Model.TipoInforme == "C") { 
+                        <input type="button" id="btnCopiar" value="Copiar desde" class="action-informe" />
+                    }
+
+                    
+                </div>    
+            </td>
+        </tr>
+    </table>
+
+<div class="formato-item" style="margin-top:15px">
+    <div class="formato-label">4. Descripción del Evento</div>
+    <div class="formato-add">
+        <a href="JavaScript:grabarTexto('txtDescripcionEvento', @Model.IdItemDescripcion);" class="action-informe"><img src="~/Content/Images/Save.png" title="Grabar descripción del evento" /></a>
+    </div>
+</div>
+<div class="formato-content">
+    
+    <textarea id="txtDescripcionEvento" maxlength="4000">@Model.DesItemDescripcion</textarea>
+</div>
+<div class="formato-clear"></div>
+
+<div class="formato-item"><div class="formato-label">5. Condiciones operativas previas</div></div>
+<div class="formato-content">
+
+    <div class="formato-subitem">
+        <div class="formato-sublabel">a. Generación</div>
+        <div class="formato-add">
+            <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 5, 1, 0);" title="Agregar nuevo elemento" alt="Nuevo elemento" alt="Nuevo evento"/>
+        </div>
+    </div>
+    @{
+        var idGeneracion = Model.IdInforme + "_5_1";
+    }
+    <table class="tabla-formato" id="@idGeneracion" cellpadding="0" cellspacing="0">
+        <thead>
+            <tr>
+                <th scope="col">N°</th>
+                <th scope="col">Subestación</th>
+                <th scope="col">Unidad</th>
+                <th scope="col">Potencia Activa(MW)</th>
+                <th scope="col">Potencia Reactiva(MVAR)</th>
+                <th scope="col">Observaciones</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList = Model.ListaItems.Where(x => x.Itemnumber == 5 && x.Subitemnumber == 1).ToList();
+                int indice = 1;
+                foreach (var item in subList)
+                {
+                    var idGeneracion1 = idGeneracion + "_" + item.Infitemcodi;
+                    <tr id="@idGeneracion1">
+                        <td>@indice</td>
+                        <td>@item.Areanomb</td>
+                        <td>@item.Equinomb</td>
+                        <td>@item.Potactiva</td>
+                        <td>@item.Potreactiva</td>
+                        <td>@item.Desobservacion</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 5,1, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" alt="Editar"/></a>
+                            <a href="JavaScript:deleteElemento('@idGeneracion1', @item.Infitemcodi);" id="@item.Infitemcodi" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" alt="Eliminar"/></a>
+                        </td>
+                    </tr>
+                    indice++;
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="formato-clear-heigth"></div>
+
+    <div class="formato-subitem">
+        <div class="formato-sublabel">b. Flujo de potencias en las líneas</div>
+        <div class="formato-add">
+            <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 5, 2, 0);" title="Agregar nuevo elemento" alt="Nuevo elemento"/>
+        </div>
+    </div>
+    @{
+        var idLineas = Model.IdInforme + "_5_2";
+    }
+    <table class="tabla-formato" id="@idLineas" cellpadding="0" cellspacing="0" aria-describedby="datos">
+        <thead>
+            <tr>
+                <th scope="col" rowspan="2">N°</th>
+                <th scope="col" rowspan="2">Código L.T.</th>
+                <th scope="col" colspan="2">Subestaciones</th>
+                <th scope="col" rowspan="2">Potencia Activa (MW)</th>
+                <th scope="col" rowspan="2">Potencia Reactiva (MVAR)</th>
+                <th scope="col" rowspan="2">Observaciones</th>
+                <th scope="col" rowspan="2"></th>
+            </tr>
+            <tr>
+                <th scope="col" class="th-alter-formato">De</th>
+                <th scope="col" class="th-alter-formato">A</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList1 = Model.ListaItems.Where(x => x.Itemnumber == 5 && x.Subitemnumber == 2).ToList();
+                int indice1 = 1;
+                foreach (var item in subList1)
+                {
+                    var idLineas1 = idLineas + "_" + item.Infitemcodi;
+                    <tr id="@idLineas">
+                        <td>@indice1</td>
+                        <td>@item.Equinomb - @item.Equicodi</td>
+                        <td>@item.Subestacionde</td>
+                        <td>@item.Subestacionhasta</td>
+                        <td>@item.Potactiva</td>
+                        <td>@item.Potreactiva</td>
+                        <td>@item.Desobservacion</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 5,2, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" /></a>
+                            <a href="JavaScript:deleteElemento('@idLineas1', @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" /></a>
+                        </td>
+                    </tr>
+                    indice1++;
+                }
+            }
+        </tbody>
+    </table>
+    <div class="formato-clear-heigth"></div>
+    <div class="formato-subitem">
+        <div class="formato-sublabel">c. Flujo de potencias en los transformadores</div>
+        <div class="formato-add">
+            <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 5, 3, 0);" title="Agregar nuevo elemento" alt="Nuevo elemento" />
+        </div>
+    </div>
+    @{
+        var idTransformador = Model.IdInforme + "_5_3";
+    }
+    <table class="tabla-formato" id="@idTransformador" cellpadding="0" cellspacing="0" aria-describedby="Transformador">
+        <thead>
+            <tr>
+                <th scope="col">N°</th>
+                <th scope="col">Subestación</th>
+                <th scope="col">Código</th>
+                <th scope="col">Potencia Activa (MW)</th>
+                <th scope="col">Potencia Reactiva (MVAR)</th>
+                <th scope="col">Nivel de Tensión</th>
+                <th scope="col">Observaciones</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList2 = Model.ListaItems.Where(x => x.Itemnumber == 5 && x.Subitemnumber == 3).ToList();
+                int indice2 = 1;
+                foreach (var item in subList2)
+                {
+                    var idTransformador1 = idTransformador + "_" + item.Infitemcodi;
+                    <tr id="@idTransformador1">
+                        <td>@indice2</td>
+                        <td>@item.Areanomb</td>
+                        <td>@item.Equinomb  @item.Equicodi</td>
+                        <td>@item.Potactiva</td>
+                        <td>@item.Potreactiva</td>
+                        <td>@item.Niveltension</td>
+                        <td>@item.Desobservacion</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 5,3, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" /></a>
+                            <a href="JavaScript:deleteElemento('@idTransformador1', @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" /></a>
+                        </td>
+                    </tr>
+                    indice2++;
+                }
+            }
+        </tbody>
+    </table>
+    <div class="formato-clear-heigth"></div>
+</div>
+<div class="formato-clear"></div>
+
+<div class="formato-item">
+    <div class="formato-label">6. Secuencia Cronológica</div>
+    <div class="formato-add">
+        <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 6, 0, 0);" title="Agregar nuevo elemento" alt="Nuevo elemento"/>
+    </div>
+</div>
+<div class="formato-content">
+    @{
+        var idSecuencia = Model.IdInforme + "_6_0";
+    }
+    <table class="tabla-formato" id="@idSecuencia" cellpadding="0" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Hora</th>
+                <th>Descripción del evento</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList3 = Model.ListaItems.Where(x => x.Itemnumber == 6).ToList();
+                foreach (var item in subList3)
+                {
+                    var idSecuencia1 = idSecuencia + "_" + item.Infitemcodi;
+                    <tr id="@idSecuencia1">
+                        <td>@item.Itemhora</td>
+                        <td>@item.Desobservacion</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 6,0, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" /></a>
+                            <a href="JavaScript:deleteElemento('@idSecuencia1', @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" /></a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+<div class="formato-clear"></div>
+
+<div class="formato-item">
+    <div class="formato-label">7. Actuación de las protecciones</div>
+    <div class="formato-add">
+        <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 7, 0, 0);" title="Agregar nuevo elemento" alt="Nuevo elemento"/>
+    </div>
+</div>
+<div class="formato-content">
+    @{
+        var idActuacion = Model.IdInforme + "_7_0";
+    }
+    <table class="tabla-formato" id="@idActuacion" cellpadding="0" cellspacing="0" aria-describedby="Actuación">
+        <thead>
+            <tr>
+                <th scope="col">Subestación</th>
+                <th scope="col">Equipo</th>
+                <th scope="col">Señalización</th>
+                <th scope="col">INT</th>
+                <th scope="col">A/C</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList4 = Model.ListaItems.Where(x => x.Itemnumber == 7).ToList();
+                foreach (var item in subList4)
+                {
+                    var idActuacion1 = idActuacion + "_" + item.Infitemcodi;
+                    <tr id="@idActuacion1">
+                        <td>@item.Areanomb</td>
+                        <td>@item.Equinomb</td>
+                        <td>@item.Senializacion</td>
+                        <td>@item.Internomb</td>
+                        <td>@item.Ac</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 7,0, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" /></a>
+                            <a href="JavaScript:deleteElemento('@idActuacion1', @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" /></a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+</div>
+<div class="formato-clear"></div>
+
+<div class="formato-item">
+    <div class="formato-label">8. Contador de Interruptores y Pararrayos</div>
+    <div class="formato-add">
+        <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 8, 0, 0);" title="Agregar nuevo elemento" alt="Nuevo elemento" />
+    </div>
+</div>
+<div class="formato-content">
+    @{
+        var idContador = Model.IdInforme + "_8_0";
+    }
+    <table class="tabla-formato" id="@idContador" cellpadding="0" cellspacing="0" aria-describedby="Contador">
+        <thead>
+            <tr>
+                <th scope="col" rowspan="2">Subestación</th>
+                <th scope="col" rowspan="2">Celda</th>
+                <th scope="col" rowspan="2">Código Interruptor</th>
+                <th scope="col" colspan="3">Antes</th>
+                <th scope="col" colspan="3">Después</th>
+                <th scope="col"></th>
+            </tr>
+            <tr>
+                <th class="th-alter-formato">R</th>
+                <th class="th-alter-formato">S</th>
+                <th class="th-alter-formato">T</th>
+                <th class="th-alter-formato">R</th>
+                <th class="th-alter-formato">S</th>
+                <th class="th-alter-formato">T</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList5 = Model.ListaItems.Where(x => x.Itemnumber == 8).ToList();
+                foreach (var item in subList5)
+                {
+                    var idContador1 = idContador + "_" + item.Infitemcodi;
+                    <tr id="@idContador1">
+                        <td>@item.Areanomb</td>
+                        <td>@item.Equinomb</td>
+                        <td>@item.Internomb</td>
+                        <td>@item.Ra</td>
+                        <td>@item.Sa</td>
+                        <td>@item.Ta</td>
+                        <td>@item.Rd</td>
+                        <td>@item.Sd</td>
+                        <td>@item.Td</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 8,0, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" /></a>
+                            <a href="JavaScript:deleteElemento('@idContador1', @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" /></a>
+                        </td>
+                    </tr>
+                }
+            }
+
+        </tbody>
+    </table>
+
+</div>
+<div class="formato-clear"></div>
+   
+<div class="formato-item">
+    <div class="formato-label">9. Análisis del Evento</div>
+    <div class="formato-add">
+        <a href="JavaScript:grabarTexto('txtAnalisisEvento', @Model.IdItemAnalisis);" class="action-informe"><img src="~/Content/Images/Save.png" title="Grabar análisis del evento" alt="Nuevo elemento"/></a>
+    </div>
+</div>
+<div class="formato-content">   
+    <textarea id="txtAnalisisEvento" maxlength="4000">@Model.DesItemAnalisis</textarea>
+</div>
+<div class="formato-clear"></div>
+
+<div class="formato-item">
+    <div class="formato-label">10. Suministros Interrumpidos</div>
+    <div class="formato-add">
+        <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 10, 0, 0);" title="Agregar nuevo elemento" />
+    </div>
+    <div class="formato-add">
+        <img src="~/Content/Images/Import.png" class="action-informe" onclick="openInterrupcion(@Model.IdInforme);" title="Importar desde excel" />        
+    </div>    
+</div>
+
+<div class="div-interrupcion" id="divInterrupcion">
+    <div class="div-interrupcion-close" onclick="closeInterrupcion();">X</div>
+    <div class="div-interrupcion-content" >
+        <div class="popup-title"><span>Importar Interrupciones</span></div>
+        <div style="clear:both; height:15px"></div>
+         Por favor descargue la plantilla de carga de datos haciendo <a href="~/Areas/Eventos/Reporte/FormatoInterrupcion.xlsx">clic aquí</a>
+        <div style="clear:both; height:15px"></div>
+        <div class="form-interrupcion-content">
+            <div class="form-interrupcion-item">Seleccionar archivo(xlsx):</div>
+            <div class="form-interrupcion-item">
+                <input type="button" id="btnSelectInterrupcionFile" value="Seleccionar" />
+            </div>
+            <div style="clear:both"></div>
+        </div>
+        <div style="clear:both; height:10px"></div>
+        <div id="fileInfoInterrupcion"></div>
+        <div style="clear:both; height:10px"></div>
+        <div class="div-interrupcion-boton" id="containerInterrupcion">
+            <input type="button" id="btnAceptarInterrupcion" value="Aceptar"  />
+            <input type="button" id="btnCerrarInterrupcion" value="Cerrar" onclick="closeInterrupcion();" />
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+        var uploaderInterrupcion = new plupload.Uploader({
+            runtimes: 'html5,flash,silverlight,html4',
+            browse_button: 'btnSelectInterrupcionFile',
+            container: document.getElementById('containerInterrupcion'),
+            url: siteRoot + 'eventos/informe/uploadinterrupcion',
+            flash_swf_url: '~/Content/Scripts/Moxie.swf',
+            silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+            multi_selection: false,
+            filters: {
+                max_file_size: '2mb',
+                mime_types: [
+                    { title: "Archivos Excel .xlsx", extensions: "xlsx" }
+                ]
+            },
+            init: {
+                PostInit: function () {
+                    document.getElementById('btnAceptarInterrupcion').onclick = function () {
+                        if (uploaderInterrupcion.files.length > 0) {
+                            uploaderInterrupcion.start();
+                        }
+                        else{
+                            $('#fileInfoInterrupcion').html('<div class="action-alert">Seleccione archivo</div>');
+                        }
+                        return false;
+                    };
+                },
+                FilesAdded: function (up, files) {
+                    if (uploaderInterrupcion.files.length == 2) {
+                        uploaderInterrupcion.removeFile(uploader.files[0]);
+                    }
+                    plupload.each(files, function (file) {                        
+                        $('#fileInfoInterrupcion').html('<div class="action-exito">' + file.name + ' (' + plupload.formatSize(file.size) + ')</div>');
+                    });
+                    up.refresh();
+                },
+                UploadProgress: function (up, file) {                   
+                    $('#fileInfoInterrupcion').html('<div class="action-exito">Cargando...' + file.percent + '%</div>');
+                },
+                UploadComplete: function (up, file) {
+                    $('#fileInfoInterrupcion').html('');
+                    procesarInterrupcion();
+                },
+                Error: function (up, err) {                  
+                    $('#fileInfoInterrupcion').html('<div class="action-error">Cargando...' + err.code + "-" + err.message + '%</div>');
+                }
+            }
+        });
+
+        uploaderInterrupcion.init();
+
+    </script>
+
+</div>  
+
+    
+<div class="formato-content">
+    @{
+        var idSuministro = Model.IdInforme + "_10_0";
+    }
+    <table class="tabla-formato" id="@idSuministro" cellpadding="0" cellspacing="0" aria-describedby="Suministro">
+        <thead>
+            <tr>
+                <th scope="col" rowspan="2">N°</th>
+                <th scope="col" rowspan="2">Suministro</th>
+                <th scope="col" rowspan="2">Potencia MW</th>
+                <th scope="col" colspan="3">Tiempo de desconexión (min)</th>
+                <th scope="col" rowspan="2">Protección</th>
+                <th scope="col" rowspan="2"></th>
+            </tr>
+            <tr>
+                <th class="th-alter-formato">Inicio</th>
+                <th class="th-alter-formato">Final</th>
+                <th class="th-alter-formato">Duración</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList6 = Model.ListaItems.Where(x => x.Itemnumber == 10).ToList();
+                var indice6 = 1;
+                foreach (var item in subList6)
+                {
+                    var idSuministro1 = idSuministro + "_" + item.Infitemcodi;
+                    <tr id="@idSuministro1">
+                        <td>@indice6</td>
+                        <td>@item.Sumininistro</td>
+                        <td>@item.Potenciamw</td>
+                        <td>@(((DateTime)item.Intinicio).ToString("dd/MM/yyyy HH:mm:ss"))</td>
+                        <td>@(((DateTime)item.Intfin).ToString("dd/MM/yyyy HH:mm:ss"))</td>
+                        <td>@item.Duracion</td>
+                        <td>@item.Proteccion</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 10,0, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" /></a>
+                            <a href="JavaScript:deleteElemento('@idSuministro1', @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" /></a>
+                        </td>
+                    </tr>
+                    indice6++;
+                }
+            }
+        </tbody>
+    </table>
+</div>
+<div class="formato-clear"></div>
+
+<div class="formato-item">
+    <div class="formato-label">11. Conclusiones</div>
+    <div class="formato-add">
+        <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 11, 0, 0);" title="Agregar nuevo elemento" alt="Nuevo"/>
+    </div>
+</div>
+<div class="formato-content">
+    @{
+        var idConclusion = Model.IdInforme + "_11_0";
+    }
+    <table class="tabla-formato" id="@idConclusion" cellpadding="0" cellspacing="0">
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Conclusión</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList7 = Model.ListaItems.Where(x => x.Itemnumber == 11).ToList();
+                int indice7 = 1;
+                foreach (var item in subList7)
+                {
+                    var idConclusion1 = idConclusion + "_" + item.Infitemcodi;
+                    <tr id="@idConclusion1">
+                        <td>@indice7</td>
+                        <td>@item.Desobservacion</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 11,0, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" /></a>
+                            <a href="JavaScript:deleteElemento('@idConclusion1', @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" /></a>
+                        </td>
+                    </tr>
+                    indice7++;
+                }
+            }
+
+        </tbody>
+    </table>
+</div>
+<div class="formato-clear"></div>
+
+<div class="formato-item">
+    <div class="formato-label">12. Acciones ejecutadas</div>
+    <div class="formato-add">
+        <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 12, 0, 0);" title="Agregar nuevo elemento" alt="Nuevo" />
+    </div>
+</div>
+<div class="formato-content">
+    @{
+        var idAccion = Model.IdInforme + "_12_0";
+    }
+    <table class="tabla-formato" id="@idAccion" cellpadding="0" cellspacing="0">
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Acción ejecutada</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList8 = Model.ListaItems.Where(x => x.Itemnumber == 12).ToList();
+                int indice8 = 1;
+                foreach (var item in subList8)
+                {
+                    var idAccion1 = idAccion + "_" + item.Infitemcodi;
+                    <tr id="@idAccion1">
+                        <td>@indice8</td>
+                        <td>@item.Desobservacion</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 12,0, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" /></a>
+                            <a href="JavaScript:deleteElemento('@idAccion1', @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" /></a>
+                        </td>
+                    </tr>
+                    indice8++;
+                }
+            }
+        </tbody>
+    </table>
+</div>
+<div class="formato-clear"></div>
+
+<div class="formato-item">
+    <div class="formato-label">13. Observaciones y Recomendaciones</div>
+    <div class="formato-add">
+        <img src="~/Content/Images/Plus.png" class="action-informe" onclick="openElemento(@Model.IdInforme, 13, 0, 0);" title="Agregar nuevo elemento" alt="Nuevo" />
+    </div>
+</div>
+<div class="formato-content">
+    @{
+        var idObservacion = Model.IdInforme + "_13_0";
+    }
+    <table class="tabla-formato" id="@idObservacion" cellpadding="0" cellspacing="0">
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Observación / Recomendación</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var subList9 = Model.ListaItems.Where(x => x.Itemnumber == 13).ToList();
+                int indice9 = 1;
+                foreach (var item in subList9)
+                {
+                    var idObservacion1 = idObservacion + "_" + item.Infitemcodi;
+                    <tr id="@idObservacion1">
+                        <td>@indice9</td>
+                        <td>@item.Desobservacion</td>
+                        <td>
+                            <a href="JavaScript:openElemento(@Model.IdInforme, 13,0, @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Pen.png" title="Editar" /></a>
+                            <a href="JavaScript:deleteElemento('@idObservacion1', @item.Infitemcodi);" class="action-informe"><img src="~/Content/Images/Trash.png" title="Eliminar" /></a>
+                        </td>
+                    </tr>
+                    indice9++;
+                }
+            }
+        </tbody>
+    </table>
+</div>
+<div class="formato-clear"></div>
+
+<div class="formato-item">
+    <div class="formato-label">14.Anexos</div>
+</div>
+
+}
+
+<div class="formato-content">
+
+    @if (Model.Indicador == "N")
+    {
+        <div class="formato-item" style="margin-top:20px">
+            <div class="formato-label">Documentos</div>
+        </div>
+    }
+
+    <table class="formato-tb-anexo">
+        <tr>
+            <td valign="top" style="width:350px">
+                Por favor seleccione los archivos que serán sustento de los datos declarados anteriormente.
+                <br />
+                <div id="filelist">Your browser doesn't have Flash, Silverlight or HTML5 support.</div>
+                <br />
+                <div id="container" style="width:300px; text-align:center; height:25px; margin:auto" class="action-informe">
+                    <a id="pickfiles" href="javascript:;"><img src="~/Content/Images/btnAddFiles.png" title="Seleccionar archivos a subir" /></a>
+                    <a id="uploadfiles" href="javascript:;"><img src="~/Content/Images/btnSubir.png" title="Subir archivos" /></a>
+                </div>
+                
+                <script type="text/javascript">
+                    var uploader = new plupload.Uploader({
+                        runtimes: 'html5,flash,silverlight,html4',
+                        browse_button: 'pickfiles',
+                        container: document.getElementById('container'),
+                        url: siteRoot + 'eventos/informe/upload?idInforme=' + @Model.IdInforme,
+                        flash_swf_url: 'Scripts/Moxie.swf',
+                        silverlight_xap_url: 'Scripts/Moxie.xap',
+                        filters: {
+                            max_file_size: '10mb',
+                            mime_types: [
+                                {title : "Image files", extensions : "jpg,jpeg,gif,png"},
+                                {title : "Document files", extensions : "pdf,doc,docx,xls,xlsx,ppt,pptx,csv"}
+                            ]
+                        },
+                        init: {
+                            PostInit: function () {
+                                document.getElementById('filelist').innerHTML = '';
+                                document.getElementById('uploadfiles').onclick = function () {
+                                    uploader.start();
+                                    return false;
+                                };
+                            },
+                            FilesAdded: function (up, files) {
+                                document.getElementById('filelist').innerHTML = '';
+                                plupload.each(files, function (file) {
+                                    document.getElementById('filelist').innerHTML += '<div class="file-name" id="' + file.id + '">' + file.name + ' (' + plupload.formatSize(file.size) + ') <a class="remove-item" href="JavaScript:eliminarFile(\'' + file.id + '\');">X</a> <b></b></div>';
+                                });
+                            },
+                            UploadProgress: function (up, file) {
+                                document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
+                            },
+                            UploadComplete: function (up, file) {
+                                cargarDocumentos(@Model.IdInforme, $('#hfIndicadorEdicion').val());
+                                document.getElementById('filelist').innerHTML = '';
+                            },
+                            Error: function (up, err) {
+                                document.getElementById('filelist').innerHTML = '<div class="action-alert">' + err.message +'</div>';
+                            }
+                        }
+                    });
+                    uploader.init();
+
+                    function eliminarFile(id) {
+                        uploader.removeFile(id)
+                        $('#' + id).remove();
+                    }
+                </script>
+            </td>
+            <td class="formato-tb-separer"></td>
+            <td valign="top" style="width:800px">
+                <div class="formato-file-content" id="contenedorFile">
+                    
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="formato-clear"></div>
+
+<input type="hidden" id="hfIndicadorEdicion" value="@Model.IndicadorEdicion" />
+<input type="hidden" id="hfCodigoInforme" value="@Model.IdInforme" />
+<input type="hidden" id="hfTipoInforme" value="@Model.TipoInforme" />

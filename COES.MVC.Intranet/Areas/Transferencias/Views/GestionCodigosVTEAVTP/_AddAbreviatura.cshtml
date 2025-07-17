@@ -1,0 +1,135 @@
+﻿@model COES.MVC.Intranet.Areas.Transferencias.Models.AbreviaturaAgregarModel
+
+<style>
+    .inline-block > div {
+        display: inline-block
+    }
+
+    .width-mediun {
+        width: 110px
+    }
+
+    .text-right {
+        text-align: right
+    }
+
+    .editor-label {
+        height: 38px;
+        vertical-align: bottom;
+    }
+
+    .editor-field {
+        height: 38px;
+    }
+
+        .editor-field input + label {
+            height: 14px !important;
+        }
+
+
+    .error-custom {
+        color: red;
+    }
+</style>
+
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/Validate.css" rel="stylesheet" />
+
+@using (Html.BeginForm("_AddAbreviatura", "GestionCodigosVTEAVTP", FormMethod.Post, new { id = "frmAbreviatura", @class = "cmxform" }))
+{
+    @Html.AntiForgeryToken()
+
+
+    @Html.HiddenFor(m => m.Emprcodi)
+    <h3>Asignar abreviatura</h3>
+
+    <div>
+        <label class="error-custom" id="mensajeError"></label>
+    </div>
+    <br />
+    <div class="inline-block">
+        <div class="editor-label width-mediun">
+            @Html.LabelFor(model => model.Emprnomb, "Nombre de empresa:")
+        </div>
+
+        <div class="editor-field">
+            @Html.TextBoxFor(model => model.Emprnomb, new { @disabled = "true" })
+            @Html.ValidationMessageFor(model => model.Emprnomb)
+        </div>
+
+    </div>
+    <br />
+
+    <div class="inline-block">
+        <div class="editor-label width-mediun">
+            @Html.LabelFor(model => model.EmprAbrevCodi, "Abreviatura:")
+        </div>
+
+        <div class="editor-field">
+            @Html.TextBoxFor(model => model.EmprAbrevCodi, new { @maxLength = 3 })
+            @Html.ValidationMessageFor(model => model.EmprAbrevCodi)
+     
+        </div>
+    </div>
+    <br />
+    <div class="text-right">
+        <input type="button" value="Enviar" class="btn-aprobar" id="btnEnviarAbreviatura" />
+    </div>
+
+}
+
+<script>
+    $(document).ready(function () {
+
+        // $("#frmAbreviatura").validate();
+        $("#frmAbreviatura").validate({
+            rules: {
+                "EmprAbrevCodi": {
+                    required: true
+                }
+            }
+        });
+        $('#btnEnviarAbreviatura').click(function (event) {
+
+
+            event.preventDefault();
+
+            var controler = siteRoot + "transferencias/GestionCodigosVTEAVTP/";
+
+            if ($("#frmAbreviatura").valid()) {
+
+                $.ajax({
+                    url: controler + '/_AddAbreviatura',
+                    data: $('#frmAbreviatura').serialize(),
+                    type: 'POST',
+                    dataType: 'JSON',
+                    success: function (data) {
+                        var esCorrecto = parseInt(data.EsCorrecto);
+                        if (esCorrecto < 0) {
+                            $('#mensajeError').html(data.Mensaje)
+
+
+                        } else {
+                            $('.b-close').trigger('click');
+
+                            $('#popupMensajeZ #btnAceptarMsj').hide();
+                            $('#popupMensajeZ #cmensaje').html('<div class="exito mensajes">Se registro correctamente</div>');
+                            setTimeout(function () {
+                                $('#popupMensajeZ').bPopup({
+                                    easing: 'easeOutBack',
+                                    speed: 450,
+                                    transition: 'slideDown',
+                                });
+                            }, 50);
+                        }
+                    }
+
+                })
+            }
+
+            return false;
+        })
+
+    })
+
+</script>

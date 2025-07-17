@@ -1,0 +1,404 @@
+﻿@model COES.MVC.Intranet.Areas.Mediciones.Models.ReporteMedidoresModel
+
+@{
+    System.Globalization.NumberFormatInfo nfi = new System.Globalization.CultureInfo("en-US", false).NumberFormat;
+    nfi.NumberGroupSeparator = " ";
+    nfi.NumberDecimalSeparator = ",";
+    nfi.NumberDecimalDigits = 3;
+}
+
+<script type="text/javascript">
+
+    $(function () {
+        $('#tab-container').easytabs({
+            animate: false
+        });
+
+        $('#cbReporteGeneracion').change(function () {
+            cargarReporteEmpresa();
+        });
+        cargarReporteResumen();
+        cargarReporteEmpresa();
+        cargarReporteTipoGeneracion();
+    });
+
+    formatearTabla()
+
+</script>
+
+<div id="tab-container" class='tab-container'>
+    <ul class='etabs'>
+        <li class='tab'><a href="#paso1">Resumen</a></li>
+        <li class='tab'><a href="#paso2">Por Recurso Energético</a></li>
+        <li class='tab'><a href="#paso3">Por Tipo de Generación</a></li>
+        <li class="tab"><a href="#paso4">Gráficos</a></li>
+        @if (Model.TieneAlertaValidacion)
+        {
+            <li class="tab"><a href="#paso5">Validación con Horas de Operación</a></li>
+        }
+    </ul>
+    <div class='panel-container'>
+        <div id="paso1">
+            <h2>Reporte Resumen</h2>
+            Fecha de Consulta: @Model.FechaConsulta
+
+            <div class="leyenda-reporte">
+                Periodo de Consulta: <strong>@Model.FechaInicio</strong> al <strong>@Model.FechaFin</strong>
+            </div>
+
+            <table class="tabla-formulario" style="width:500px">
+                <thead>
+                    <tr>
+                        <th colspan="5">Fecha del día de máxima demanda: @Model.DatosReporte.FechaMaximaDemanda.ToString("dd/MM/yyyy")</th>
+                    </tr>
+                    <tr>
+                        <th>Bloque horario</th>
+                        <th>Hora</th>
+                        <th>Exportación</th>
+                        <th>Importación</th>
+                        <th>MW</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Máxima</td>
+                        <td>@Model.DatosReporte.HoraBloqueMaxima.ToString("HH:mm")</td>
+                        <td style="text-align:right">@(Model.DatosReporte.BloqueMaximaInterconexion > 0 ? Model.DatosReporte.BloqueMaximaInterconexion.ToString("N", nfi) : 0.ToString("N", nfi))</td>
+                        <td style="text-align:right">@(Model.DatosReporte.BloqueMaximaInterconexion > 0 ? 0.ToString("N", nfi) : (-1 * Model.DatosReporte.BloqueMaximaInterconexion).ToString("N", nfi))</td>
+                        <td style="text-align:right">@Model.DatosReporte.BloqueMaximaDemanda.ToString("N", nfi)</td>
+                    </tr>
+                    <tr>
+                        <td>Media</td>
+                        <td>@Model.DatosReporte.HoraBloqueMedia.ToString("HH:mm")</td>
+                        <td style="text-align:right">@(Model.DatosReporte.BloqueMediaInterconexion > 0 ? Model.DatosReporte.BloqueMediaInterconexion.ToString("N", nfi) : 0.ToString("N", nfi))</td>
+                        <td style="text-align:right">@(Model.DatosReporte.BloqueMediaInterconexion > 0 ? 0.ToString("N", nfi) : (-1 * Model.DatosReporte.BloqueMediaInterconexion).ToString("N", nfi))</td>
+                        <td style="text-align:right">@Model.DatosReporte.BloqueMediaDemanda.ToString("N", nfi)</td>
+                    </tr>
+                    <tr>
+                        <td>Mínima</td>
+                        <td>@Model.DatosReporte.HoraBloqueMinima.ToString("HH:mm")</td>
+                        <td style="text-align:right">@(Model.DatosReporte.BloqueMinimaInterconexion > 0 ? Model.DatosReporte.BloqueMinimaInterconexion.ToString("N", nfi) : 0.ToString("N", nfi))</td>
+                        <td style="text-align:right">@(Model.DatosReporte.BloqueMinimaInterconexion > 0 ? 0.ToString("N", nfi) : (-1 * Model.DatosReporte.BloqueMinimaInterconexion).ToString("N", nfi))</td>
+                        <td style="text-align:right">@Model.DatosReporte.BloqueMinimaDemanda.ToString("N", nfi)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="clear:both; height:20px"></div>
+            <table class="tabla-formulario" style=" width:500px">
+                <thead>
+                    <tr>
+                        <th rowspan="3">Tipo Recurso Energético</th>
+                        <th rowspan="3">Energía (MWh)</th>
+                        <th>Máxima demanda (MW)</th>
+                    </tr>
+                    <tr>
+                        <th class="table-subtotal-header">Día: @Model.DatosReporte.FechaMaximaDemanda.ToString("dd/MM/yyyy")</th>
+                    </tr>
+                    <tr>
+                        <th>Hora: @Model.DatosReporte.MaximaDemandaHora.ToString("HH:mm")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.ReporteFuenteEnergia)
+                    {
+                        if (!item.IndicadorTotal)
+                        {
+                            <tr>
+                                <td>@item.Fenergnomb</td>
+                                <td style="text-align:right">@item.EnergiaFuenteEnergia.ToString("N", nfi)</td>
+                                <td style="text-align:right">@item.MDFuenteEnergia.ToString("N", nfi)</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr class="table-total">
+                                <td>Total</td>
+                                <td style="text-align:right">@item.EnergiaFuenteEnergia.ToString("N", nfi)</td>
+                                <td style="text-align:right">@item.MDFuenteEnergia.ToString("N", nfi)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+            <div class="leyenda-mediciones">
+                Leyenda
+                <br />
+                (*) Incluye a las centrales eléctricas RER No Adjudicadas (C.T. Maple Etanol y C.H. Pías I).
+            </div>
+
+        </div>
+        <div id="paso2">
+            <h2>Reporte por Recurso Energético</h2>
+            <div class="leyenda-reporte" style="float:right">
+                <strong>Máxima Demanda:</strong> el @Model.DatosReporte.FechaMaximaDemanda.ToString("dd/MM/yyyy") a las @Model.DatosReporte.MaximaDemandaHora.ToString("HH:mm")
+                <br />
+                <strong>Mínima Demanda:&nbsp;</strong> el @Model.DatosReporte.FechaMinimaDemanda.ToString("dd/MM/yyyy") a las @Model.DatosReporte.MinimaDemandaHora.ToString("HH:mm")
+
+            </div>
+            <div style="clear:both"></div>
+            <div class="table-list" id="listadoRecurso">
+                <table class="tabla-formulario tabla-adicional" id="tbRecurso" cellspacing="0" width="100%" border="0">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Empresa</th>
+                            <th>Central</th>
+                            <th>Unidad</th>
+                            <th>Tipo Recurso Energético</th>
+                            <th>Energía (MWh)</th>
+                            <th>Máxima Demanda (MW)</th>
+                            <th>Mínima Demanda (MW)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ListaCuadrosFE)
+                        {
+                            if (!item.IndicadorTotal && !item.IndicadorTotalGeneral)
+                            {
+                                <tr>
+                                    <td>@item.NroItem</td>
+                                    <td>@item.Emprnomb</td>
+                                    <td>@item.Central</td>
+                                    <td>@item.Unidad</td>
+                                    <td>@item.Fenergnomb</td>
+                                    <td style="text-align:right">@item.Total.ToString("N", nfi)</td>
+                                    <td style="text-align:right">@item.MaximaDemanda.ToString("N", nfi)</td>
+                                    <td style="text-align:right">@item.MinimaDemanda.ToString("N", nfi)</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                if (item.IndicadorTotal)
+                                {
+                                    <tr class="table-subtotal">
+                                        <td colspan="5" style="text-align:right">TOTAL @item.Emprnomb</td>
+                                        <td style="text-align:right" title="Energía (MWh)">@item.Total.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Máxima Demanda (MW)">@item.MaximaDemanda.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Mínima Demanda (MW)">@item.MinimaDemanda.ToString("N", nfi)</td>
+                                    </tr>
+                                }
+                                if (item.IndicadorTotalGeneral)
+                                {
+
+                                    <tr class="table-total">
+                                        <td colspan="5" style="text-align:right">TOTAL GENERAL</td>
+                                        <td style="text-align:right" title="Energía (MWh)">@item.Total.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Máxima Demanda (MW)">@item.MaximaDemanda.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Mínima Demanda (MW)">@item.MinimaDemanda.ToString("N", nfi)</td>
+                                    </tr>
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="leyenda-mediciones">
+                Leyenda
+                <br />
+                (*) Incluye a las centrales eléctricas RER No Adjudicadas (C.T. Maple Etanol y C.H. Pías I).
+            </div>
+
+        </div>
+        <div id="paso3">
+            <h2>Reporte por Tipo de Generación</h2>
+
+            <div class="leyenda-reporte" style="float:right">
+                <strong>Máxima Demanda:</strong> el @Model.DatosReporte.FechaMaximaDemanda.ToString("dd/MM/yyyy") a las @Model.DatosReporte.MaximaDemandaHora.ToString("HH:mm")
+                <br />
+                <strong>Mínima Demanda:&nbsp;</strong> el @Model.DatosReporte.FechaMinimaDemanda.ToString("dd/MM/yyyy") a las @Model.DatosReporte.MinimaDemandaHora.ToString("HH:mm")
+
+            </div>
+            <div style="clear:both"></div>
+            <div class="table-list" id="listadoTipo">
+                <table class="tabla-formulario tabla-adicional" id="tbTipoEnergetica" cellspacing="0" width="100%" border="0">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Empresa</th>
+                            <th>Central</th>
+                            <th>Unidad</th>
+                            <th>Energía Hidroeléctrica (MWh)</th>
+                            <th>Energía Termoeléctrica (MWh)</th>
+                            <th>Energía Solar (MWh)</th>
+                            <th>Energía Eólica (MWh)</th>
+                            <th>Total Empresa</th>
+                            <th>Máxima Demanda (MW)</th>
+                            <th>Mínima Demanda (MW)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        @foreach (var item in Model.ListaCuadrosTG)
+                        {
+                            if (!item.IndicadorTotal && !item.IndicadorTotalGeneral)
+                            {
+                                <tr>
+                                    <td>@item.NroItem</td>
+                                    <td>@item.Emprnomb</td>
+                                    <td>@item.Central</td>
+                                    <td>@item.Unidad</td>
+                                    <td style="text-align:right">@item.Hidraulico.ToString("N", nfi)</td>
+                                    <td style="text-align:right">@item.Termico.ToString("N", nfi)</td>
+                                    <td style="text-align:right">@item.Solar.ToString("N", nfi)</td>
+                                    <td style="text-align:right">@item.Eolico.ToString("N", nfi)</td>
+                                    <td style="text-align:right">@item.Total.ToString("N", nfi)</td>
+                                    <td style="text-align:right">@item.MaximaDemanda.ToString("N", nfi)</td>
+                                    <td style="text-align:right">@item.MinimaDemanda.ToString("N", nfi)</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                if (item.IndicadorTotal)
+                                {
+                                    <tr class="table-subtotal">
+                                        <td colspan="4" style="text-align:right">TOTAL @item.Emprnomb</td>
+                                        <td style="text-align:right" title="Energía Hidroeléctrica (MWh)">@item.Hidraulico.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Energía Termoeléctrica (MWh)">@item.Termico.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Energía Solar (MWh)">@item.Solar.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Energía Eólica (MWh)">@item.Eolico.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Total Empresa">@item.Total.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Máxima Demanda (MW)">@item.MaximaDemanda.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Mínima Demanda (MW)">@item.MinimaDemanda.ToString("N", nfi)</td>
+                                    </tr>
+                                }
+                                if (item.IndicadorTotalGeneral)
+                                {
+                                    <tr class="table-total">
+                                        <td colspan="4" style="text-align:right">TOTAL GENERAL</td>
+                                        <td style="text-align:right" title="Energía Hidroeléctrica (MWh)">@item.Hidraulico.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Energía Termoeléctrica (MWh)">@item.Termico.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Energía Solar (MWh)">@item.Solar.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Energía Eólica (MWh)">@item.Eolico.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Total Empresa">@item.Total.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Máxima Demanda (MW)">@item.MaximaDemanda.ToString("N", nfi)</td>
+                                        <td style="text-align:right" title="Mínima Demanda (MW)">@item.MinimaDemanda.ToString("N", nfi)</td>
+                                    </tr>
+                                }
+                            }
+                        }
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="leyenda-mediciones">
+                Leyenda
+                <br />
+                (*) Incluye a las centrales eléctricas RER No Adjudicadas (C.T. Maple Etanol y C.H. Pías I).
+            </div>
+
+        </div>
+        <div id="paso4">
+
+            <div style="padding:15px">
+                <table border="1">
+                    <tr>
+                        <td colspan="2" class="titulo-reporte-medicion">PRODUCCIÓN DE ENERGÍA ELÉCTRICA POR EMPRESAS Y TIPO DE GENERACIÓN</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="separacion-reporte-medicion"><div>&nbsp;</div></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            Filtrar empresas por tipo de generación:
+                            <select id="cbReporteGeneracion">
+                                <option value="0">-TODOS-</option>
+                                @foreach (var item in Model.ListaTipoGeneracion)
+                                {
+                                    <option value="@item.Tgenercodi">@item.Tgenernomb</option>
+                                }
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendEmpresa"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficoEmpresa" style="width: 700px; height: 500px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2" class="titulo-reporte-medicion">PRODUCCIÓN DE ENERGÍA ELÉCTRICA POR TIPO DE RECURSO ENERGÉTICO</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="separacion-reporte-medicion"><div>&nbsp;</div></td>
+                    </tr>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendEnergia"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficoEnergia" style="width: 600px; height: 400px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="titulo-reporte-medicion">MÁXIMA DEMANDA DE POTENCIA POR TIPO DE RECURSO ENERGÉTICO</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="separacion-reporte-medicion"><div>&nbsp;</div></td>
+                    </tr>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendMaxima"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficoMaxima" style="width: 600px; height: 400px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="titulo-reporte-medicion">COBERTURA DE LA MÁXIMA DEMANDA DE POTENCIA POR TIPO DE GENERACIÓN</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="separacion-reporte-medicion"><div>&nbsp;</div></td>
+                    </tr>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendGeneracion"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficaGeneracion" style="width: 600px; height: 400px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+                </table>
+                <div style="clear:both"></div>
+            </div>
+
+        </div>
+        @if (Model.TieneAlertaValidacion)
+        {
+            <div id="paso5">
+
+                <table class="tabla-formulario" style=" width:auto">
+                    <thead>
+                        <tr>
+                            <th>Fecha y hora</th>
+                            <th>Código Punto</th>
+                            <th>Empresa</th>
+                            <th>Central</th>
+                            <th>Equipo</th>
+                            <th>Valor</th>
+                            <th>Mensaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ListaValidacion)
+                        {
+                            <tr>
+                                <td>@item.FechaH</td>
+                                <td style="text-align: center">@item.Ptomedicodi</td>
+                                <td>@item.Empresa</td>
+                                <td>@item.Central</td>
+                                <td>@item.Equipo</td>
+                                <td>@item.PotenciaH</td>
+                                <td>@item.DescripcionError</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

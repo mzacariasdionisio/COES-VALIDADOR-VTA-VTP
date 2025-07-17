@@ -1,0 +1,368 @@
+﻿@model COES.MVC.Intranet.Areas.PMPO.Models.CentralSDDPModel
+@{
+    ViewBag.Title = "Configuración Base";
+}
+@if (Model.UsarLayoutModulo)
+{
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+else
+{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+<script src="~/Content/Scripts/highcharts.js"></script>
+
+@*funciona formato 0.000*@
+<script src="~/Areas/PMPO/Content/Scripts/handsontable.full.min.js?v=2"></script>
+<link href="~/Areas/PMPO/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+
+<script src="~/Areas/PMPO/Content/Scripts/jquery.dataTables.rowReordering.js"></script>
+<script src="~/Areas/PMPO/Content/Scripts/jqueryui.js"></script>
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+
+
+<script src="~/Areas/PMPO/Content/Scripts/pmpo-central-sddp.js?v=1.0.8"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/PMPO/Content/Css/central-SDDP.css?v=1.0.0" rel="stylesheet" />
+
+<div class="form-title">
+    
+    <div class="content-titulo" id="container-titulo">@Model.Titulo</div>
+    <input type="hidden" id="hfTituloEscenario" value="@Model.Titulo" />
+    <div class="content-botonera" id="container">
+
+        @if (Model.TienePermisoNuevo)
+        {
+            <input type="button" id="btnAgregarRelacion" value="Agregar" />
+        }
+        <input type="button" id="btnExportar" value="Exportar" />
+        <input type="button" id="btnVerCodigosSddp" value="Códigos SDDP" />
+
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <input type="hidden" id="ipTopologiaMostrada" value="@Model.TopologiaMostrada" />
+    <input type="hidden" id="accionEsc" value="@Model.AccionEsc" />
+    <div class="content-tabla" id="excelwebPF" style="padding-top: 10px;">
+        <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; display:none"></div>
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#vistaListado">Listado</a></li>
+                <li class='tab'><a href="#vistaDetalle">Detalle</a></li>
+            </ul>
+
+            <div class='panel-container' style="min-height: 540px;">
+                <div id="vistaListado">
+                    <div style="font-weight: bold; margin:10px;">
+                        <input type="checkbox" value="" id="chkReordenarCentrales" />Permitir reordenar lista
+                    </div>
+                    <div class="content-tabla">
+                        <!--Listado de estaciones-->
+                        <div class="table-list" id="listado">
+
+
+                            <div id="cuadroCentralesSddp" style=" display: inline-block; float: left; width:1350px;"> </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="vistaDetalle">
+
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- Centrales hidroelectricas -->
+<div id="agregarCentralHidro" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Agregar Central Hidroeléctrica</span></div>
+
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaAddCentralH">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+                <div class='action-message' id='mensajeAddCentralHidro' style="margin-bottom:5px; margin-top:0; display:none; "></div>
+                <div class="content-tabla">
+                    <table style="width:auto" role="presentation">
+                        <tr>
+                            <td class="tbform-label" style="">Central :</td>
+                            <td>
+                                <select id="cmbPopupAddCHCentral" name="" style="width:190px">
+                                    <option value="0" selected> -- Seleccione Central --</option>
+
+                                    @foreach (var item in Model.ListaTotalCentralesHidro)
+                                    {
+                                        <option value="@item.Equicodi*@item.Central">@item.Central</option>
+                                    }
+                                </select>
+                                <a href="#" id="btnActualizarListadoCHAdd">
+                                    <img src="~/Content/Images/Copiado.png" />
+                                </a>
+                                <input type="hidden" id="hfLstCH" value="@Model.StrListaCentralesHidro" />
+                            </td>
+                            <td class="tbform-label" style=""></td>                            
+                            <td colspan="">
+                                <input type="button" id="btnIrListadoCentralHidroAdd" value="Ir a Creación de Centrales">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="tbform-label" style="">Factor:</td>
+                            <td>
+                                <input type="number" id="txtPopupAddCHFactor" style="width: 75px;" min="-1" max="1" step="0.000000001" value="" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="2" style="text-align: center; padding-top: 25px;">
+                                <input type="button" id="btnAgregarCentralHidro" value="Agregar" />
+                                <input type="button" id="btnCancelarAddCentralHidro" value="Cancelar" />
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editarCentralHidro" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Actualizar Central Hidroeléctrica</span></div>
+
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaEdicionCentralH">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+                <div class='action-message' id='mensajeEditCentralHidro' style="margin-bottom:5px; margin-top:0; display:none"></div>
+                <div class="content-tabla">
+                    <table style="width:auto" role="presentation">
+                        <tr>
+                            <td class="tbform-label" style="">Central :</td>
+                            <td>
+                                <select id="cmbPopupEditCHCentral" name="" style="width:190px" disabled>
+                                    <option value="0" selected> -- Seleccione Central --</option>
+
+                                    @foreach (var item in Model.ListaTotalCentralesHidro)
+                                    {
+                                        <option value="@item.Equicodi*@item.Central">@item.Central</option>
+                                    }
+                                </select>                                
+                            </td>
+                            <td class="tbform-label" style=""></td>
+                            <td colspan="">
+                                <input type="button" id="btnIrListadoCentralHidroEdit" value="Ir a Creación de Centrales">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="tbform-label" style="">Factor:</td>
+                            <td>
+                                <input type="number" id="txtPopupEditCHFactor" style="width: 75px;" min="-1" max="1" step="0.000000001" value="" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="2" style="text-align: center; padding-top: 25px;">
+                                <input type="button" id="btnActualizarCentralHidro" value="Actualizar" />
+                                <input type="button" id="btnCancelarEditCentralHidro" value="Cancelar" />
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Embalses -->
+<div id="agregarEmbalse" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Agregar Embalse</span></div>
+
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaAddEmbalse">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+                <div class='action-message' id='mensajeAddEmbalse' style="margin-bottom:5px; margin-top:0; display:none; "></div>
+                <div class="content-tabla">
+                    <table style="width:auto" role="presentation">
+                        <tr>
+                            <td class="tbform-label" style="">Embalse :</td>
+                            <td>
+                                <select id="cmbPopupAddEmbalse" name="" style="width:300px">
+                                    <option value="0" selected> -- Seleccione Embalse --</option>
+
+                                    @foreach (var item in Model.ListaTotalEmbalses)
+                                    {
+                                    <option value="@item.Equicodi*@item.Equinomb">@item.Equinomb</option>
+                                    }
+                                </select>
+                                <input type="hidden" id="hfLstEmb" value="@Model.StrListaEmbalses" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="tbform-label" style="">Factor:</td>
+                            <td>
+                                <input type="number" id="txtPopupAddEFactor" style="width: 75px;" min="0" max="1" step="0.000000001" value="" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tbform-label" style="">Aplica a:</td>
+                            <td>
+                                <select id="cmbPopupAddAplica" name="" style="width:190px">
+                                    <option value="0" selected> -- Seleccione Tipo --</option>
+                                    <option value="74">Volumen Total</option>
+                                    <option value="7">Volumen Útil</option>
+                                </select>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td class="tbform-label" style="padding-top: 5px;">Pto. Medición Semanal:</td>
+                            <td>
+                                <select id="cmbAddPtosSemanal" name="" style="width:750px">
+                                    <option value="0" selected>-- Seleccione Punto de Medicion --</option>
+                                    
+                                    @foreach (var item in Model.ListaFormatoPtosSemanal)
+                                    {
+                                        <option value="@item.Codigo">@item.Nombre</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td class="tbform-label" style="padding-top: 5px;">Pto. Medición Mensual:</td>
+                            <td>
+                                <select id="cmbAddPtosMensual" name="" style="width:750px">
+                                    <option value="0" selected>-- Seleccione Punto de Medicion --</option>
+                                    
+                                    @foreach (var item in Model.ListaFormatoPtosMensual)
+                                    {
+                                        <option value="@item.Codigo">@item.Nombre</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align: center; padding-top: 25px;">
+                                <input type="button" id="btnAgregarEmbalse" value="Agregar" />
+                                <input type="button" id="btnCancelarAddEmbalse" value="Cancelar" />
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editarEmbalse" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Actualizar Embalse</span></div>
+
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaEditEmbalse">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+                <div class='action-message' id='mensajeEditEmbalse' style="margin-bottom:5px; margin-top:0; display:none; "></div>
+                <div class="content-tabla">
+                    <table style="width:auto" role="presentation">
+                        <tr>
+                            <td class="tbform-label" style="">Central :</td>
+                            <td>
+                                <select id="cmbPopupEditEmbalse" name="" style="width:300px" disabled>
+                                    <option value="0" selected> -- Seleccione Embalse --</option>
+
+                                    @foreach (var item in Model.ListaTotalEmbalses)
+                                    {
+                                    <option value="@item.Equicodi*@item.Equinomb">@item.Equinomb</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="tbform-label" style="">Factor:</td>
+                            <td>
+                                <input type="number" id="txtPopupEditEFactor" style="width: 75px;" min="0" max="1" step="0.000000001" value="" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tbform-label" style="">Aplica a:</td>
+                            <td>
+                                <select id="cmbPopupEditAplica" name="" style="width:190px">
+                                    <option value="0" selected> -- Seleccione Tipo --</option>
+                                    <option value="74">Volumen Total</option>
+                                    <option value="7">Volumen Útil</option>
+                                </select>
+                            </td>
+                        </tr>
+                       
+                        <tr>
+                            <td class="tbform-label" style="padding-top: 5px; float:right;">Pto. Medición Semanal:</td>
+                            <td>
+                                <select id="cmbEditPtosSemanal" name="" style="width:750px">
+                                    <option value="0" selected>-- Seleccione Punto de Medicion --</option>
+
+                                    @foreach (var item in Model.ListaFormatoPtosSemanal)
+                                    {
+                                        <option value="@item.Codigo">@item.Nombre</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td class="tbform-label" style="padding-top: 5px; float:right;">Pto. Medición Mensual:</td>
+                            <td>
+                                <select id="cmbEditPtosMensual" name="" style="width:750px">
+                                    <option value="0" selected>-- Seleccione Punto de Medicion --</option>
+
+                                    @foreach (var item in Model.ListaFormatoPtosMensual)
+                                    {
+                                        <option value="@item.Codigo">@item.Nombre</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align: center; padding-top: 25px;">
+                                <input type="button" id="btnActualizarEmbalse" value="Actualizar" />
+                                <input type="button" id="btnCancelarEditEmbalse" value="Cancelar" />
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+

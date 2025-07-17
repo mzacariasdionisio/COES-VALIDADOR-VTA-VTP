@@ -1,0 +1,164 @@
+﻿@model COES.MVC.Extranet.Areas.TransfPotencia.Models.ValorTransfPCModel
+@{
+    ViewBag.Title = "Transferencia de Potencia y Compensación - Reportes de la Valorización de Potencia y Compensación";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<link href="~/Areas/TransfPotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/Transfpotencia/Content/Scripts/load.js"></script>
+<script src="~/Areas/Transfpotencia/Content/Scripts/valortransfpc.js"></script>
+<div>
+    <div class="form-title">REPORTES DE LA VALORIZACIÓN DE TRANSFERENCIAS DE POTENCIA Y COMPENSACIONES</div>
+    <div class="content-hijo">
+        <div id="idpanel" style="padding-top: inherit; background-color:#fff">
+            @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+            {
+                if (Model.EntidadRecalculoPotencia.Recpotestado != "Publicar")
+                {
+                    <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Cálculo de Valorizaciones de: @Model.EntidadRecalculoPotencia.Perinombre / @Model.EntidadRecalculoPotencia.Recpotnombre</div>
+                }
+                else
+                {
+                    <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Cálculo de Valorizaciones de: @Model.EntidadRecalculoPotencia.Perinombre / @Model.EntidadRecalculoPotencia.Recpotnombre &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  <strong style="text-indent:20px">PRELIMINAR</strong></div>
+                }
+            }
+            else
+            { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione un Mes de valorización y una versión de recalculo</div>}
+
+            <table border="0" cellpadding="0" cellspacing="0" style="width:700px;">
+                <tr>
+                    <td>
+                        <div class="search-content" style="margin-bottom:0px; padding:10px">
+                            <table border="0" cellpadding="5" cellspacing="2" style="width:1018px;">
+                                <tr class="THCabecera">
+                                    <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para exportar la información deseada</b></div></td>
+                                </tr>
+                                <tr>
+                                    <td style="width:150px;">Mes de Valorización:</td>
+                                    <td style="width:100px;">
+                                        <select id="pericodiReporte" name="pericodiReporte" onchange="RecargarReporte();">
+                                            @foreach (var item in Model.ListaPeriodos)
+                                            {
+                                                sSelected = "";
+                                                if (@item.PeriCodi == Model.Pericodi)
+                                                { sSelected = "selected"; }
+                                                <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:50px;">Versión:</td>
+                                    <td style="width:200px; height:40px;">
+                                        <select id="recpotcodiReporte" name="recpotcodiReporte" onchange="RecargarReporte();">
+                                            @foreach (var item in Model.ListaRecalculoPotencia)
+                                            {
+                                                sSelected = "";
+                                                if (@item.Recpotcodi == Model.Recpotcodi)
+                                                { sSelected = "selected"; }
+                                                <option value="@item.Recpotcodi" @sSelected>@item.Recpotnombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                                @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                                {
+                                    <tr class="THCabecera">
+                                        <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Lista de descargas disponibles</b></div></td>
+                                        <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Excel</b></div></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">Información ingresada para VTP y peajes:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarPeajeEgresoExcel" title="Descargar la Información ingresada para VTP y peajes en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">Retiro No Declarado</td>
+                                        @*Retiros de potencia sin contrato:*@
+                                        <td colspan="2"><a href="#" id="btnDescargarRSCExcel" title="Descargar los Retiro No Declarado en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">Compensación a transmisoras por peaje de conexión y transmisión:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarPeajePagarseExcel" title="Descargar los Compensación a transmisoras por peaje de conexión y transmisión en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">Compensación a transmisoras por ingreso tarifario:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarIngresoTarifarioExcel" title="Descargar la Compensación a transmisoras por ingreso tarifario en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">Compensaciones incluidas en el peaje por conexión:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarPeajeRecaudadoExcel" title="Descargar las Compensaciones incluidas en el peaje por conexión en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">Resumen de información VTP:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarPotenciaValorExcel" title="Descargar el Resumen de información VTP en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">Egresos por compra de potencia:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarEgresoExcel" title="Descargar Egresos por compra de potencia en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">Ingresos por potencia:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarIngresoPotenciaExcel" title="Descargar Ingresos por potencia en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">Saldos VTP:</td>
+                                        <td colspan="2">
+
+                                            @if (Model.Pericodi >= 106)
+                                            {
+                                                <a href="#" id="btnDescargarValorTransfPotenciaExcel" title="Descargar los Saldos VTP en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a>
+                                            }
+                                            else
+                                            {
+                                                <b style="color: red">En mantenimiento</b>
+                                            }
+                                        </td>
+                                    </tr>
+                                    if (Model.Recpotcodi == 1)
+                                    {
+                                        <tr>
+                                            <td colspan="2">Matriz de pagos VTP:</td>
+                                            <td colspan="2"><a href="#" id="btnDescargarMatrizExcel" title="Descargar la Matriz de pagos VTP en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                        </tr>
+                                    }
+                                }
+                            </table>
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
+            </table>
+
+        </div>
+        <div id="grillaExcelConsulta" style="height:auto; position:relative; left:-150px;" class="handsontable"></div>
+    </div>
+</div>
+<div id="popup">   </div>
+
+<!-- Botón flotante de WhatsApp -->
+<a href="https://wa.me/51905469444" class="wsp" target="_blank" title="¿Necesitas ayuda? Escríbenos por WhatsApp">
+    <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp">
+</a>
+
+<style>
+    .wsp {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        cursor: pointer;
+        border-radius: 50%;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+    }
+
+        .wsp:hover {
+            transform: scale(1.1);
+        }
+
+        .wsp img {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+        }
+</style>

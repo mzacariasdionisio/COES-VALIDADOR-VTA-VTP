@@ -1,0 +1,211 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.FichaTecnicaModel
+@{
+    ViewBag.Title = "Reportes por Parámetro";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/datetime-moment.js"></script>
+
+<link href="~/Areas/Equipamiento/Content/Css/css.css" rel="stylesheet" />
+<link href="~/Areas/Equipamiento/Content/Css/fichatecnica.css?v=1.1.1" rel="stylesheet" />
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTReporteHistorico/reportehistoricoParametro.js?v=2.0.0"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Generador de Reportes Históricos por Parámetro </div>
+    <div class="content-botonera">
+        <input type="button" id="btnConsultar" value="Consultar" />
+        <input type="button" id="btnExportar" value="Exportar" />
+    </div>
+</div>
+
+<style>
+    .estiloSustentoProp {
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        text-align: left !important;
+        background-image: url('../../../../Content/Images/DownFile.png') !important;
+        height: 22px;
+    }
+</style>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="textoMensaje" class="action-message" style="margin:0; margin-bottom:10px">Seleccione opciones y presiona Consultar.</div>
+
+    <!--filtros-->
+    <div class="search-content reporte_hist_ft" style="padding: 10px;">
+        <div style="display: inline-table; ">
+            <div class="celda_label">
+                Etapa:
+            </div>
+            <div class="celda_input">
+                <select id="cbEtapa" style="background-color: white; width: 170px;">
+                    @foreach (var item in Model.ListaEtapas)
+                    {
+                        var esSelected = item.EtapaDefault ? " selected " : "";
+                        <option value="@item.Ftetcodi" @esSelected >@item.Ftetnombre</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div style="display: inline-table; ">
+            <div class="celda_label">
+                Agrupación:
+            </div>
+            <div class="celda_input">
+                <select id="cbAgrupacion" style="background-color: white; width: 170px;">
+                    <option value="-1">--TODOS--</option>
+                    @foreach (var item in Model.ListaAgrupacion)
+                    {
+                        <option value="@item.Agrupcodi">@item.Agrupnombre</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div style="display: inline-table; ">
+            <div class="celda_label">
+                Tipo de empresa:
+            </div>
+            <div class="celda_input">
+                <select id="cboTipoEmpresa" style="background-color: white; width: 170px;">
+                    <option value="10">Generación</option>
+                    <option value="11">Transmisión (Subestación)</option>
+                    <option value="12">Transmisión (Líneas)</option>
+                    <option value="13">Transmisión (Equipos de compensación)</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: inline-table; " id="tr_familia">
+            <div class="celda_label">
+                Tipo de equipo:
+            </div>
+            <div class="celda_input">
+                <select id="cboFamilia" style="background-color: white; width: 170px;" multiple="multiple">
+                    @foreach (var item in Model.ListaFamilia)
+                    {
+                        <option value="@item.Famcodi">@item.Famnomb</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div style="display: inline-table; " id="tr_categoria">
+            <div class="celda_label">
+                Categoría:
+            </div>
+            <div class="celda_input">
+                <select id="cbCategoria" style="background-color: white; width: 170px;" multiple="multiple">
+                    @foreach (var item in Model.ListaCategoria)
+                    {
+                        <option value="@item.Catecodi">@item.Catenomb</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div style="display: inline-table; ">
+            <div class="celda_label">
+                Tipo de dato:
+            </div>
+            <div class="celda_input">
+                <select id="cbTipoDato" style="background-color: white; width: 170px;">
+                    <option value="1">Fecha de vigencia</option>
+                    <option value="2" selected>Valor </option>
+                    <option value="3" selected>Valor cero (0) correcto</option>
+                    <option value="4">Comentario</option>
+                    <option value="5">Sustento</option>
+                    <option value="6">Usuario modificación</option>
+                    <option value="7">Fecha Modificación</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: none;" id="tr_fecha_consulta">
+            <div class="celda_label">
+                Histórico <input type="checkbox" id="chkHistorico" name="chkHistorico" value="">
+            </div>
+            <div class="celda_input">
+                Fórmula en Valor <input type="checkbox" id="chkFormulaEnValor" name="chkFormulaEnValor" value="">
+            </div>
+
+            <div class="celda_input td_fechaconsulta" style="margin-right: 20px; width: 276px;">
+                Consulta:
+                <input type="text" id="FechaConsulta" style="width: 88px;" name="FechaConsulta" value="@Model.FechaFin" />
+            </div>
+
+            <div class="celda_label td_historico" style="display: inline; margin-right: 91px; ">
+                Desde:
+                <input type="text" id="FechaDesde" style="width: 88px;" name="FechaInicio" value="@Model.FechaInicio" />
+                <span style="padding-left: 115px;">Hasta:</span>
+                <input type="text" id="FechaHasta" style="width: 88px;" name="FechaFin" value="@Model.FechaFin" />
+            </div>
+        </div>
+
+        <div style="display: inline-table; " id="tr_emp">
+            <div class="celda_label">
+                Empresa:
+            </div>
+            <div class="celda_input">
+                <select id="cbEmpresa" style="background-color: white; width: 170px;" multiple="multiple">
+                </select>
+            </div>
+        </div>
+
+        <div style="display: inline-table; " id="tr_param_prop">
+            <div class="celda_label">
+                Parámetro propiedad:
+            </div>
+            <div class="celda_input">
+                <select id="cbParametroProp" style="background-color: white; width: 170px;" multiple="multiple">
+                </select>
+            </div>
+        </div>
+
+        <div style="display: inline-table; " id="tr_param_cnp">
+            <div class="celda_label">
+                Parámetro Concepto:
+            </div>
+            <div class="celda_input">
+                <select id="cbParametroConcep" style="background-color: white; width: 170px;" multiple="multiple">
+                </select>
+            </div>
+        </div>
+
+        <div style="display: inline-table; ">
+            <div class="celda_label">
+                Estado:
+            </div>
+            <div class="celda_input">
+                <select id="cbEstado" style="background-color: white; width: 170px;">
+                    <option value="-1">--TODOS--</option>
+                    <option value="A">Activo</option>
+                    <option value="P">En Proyecto</option>
+                    <option value="F">Fuera de COES</option>
+                    <option value="B">Baja</option>
+                </select>
+            </div>
+        </div>
+
+    </div>
+
+    <!--listado de elementos-->
+    <div class="content-tabla">
+        <div class="table-list" id="listado" style=""></div>
+    </div>
+
+    <div id="leyenda_mucho_data">
+        <br />
+        <b>Nota:</b>
+        <span>
+            Solo se permite visualizar un máximo de 1000 registros en el listado web. Utilice los filtros para reducir la cantidad de registros.
+            Si lo cantidad excede el límite entonces solo se puede visualizar en el reporte Excel.
+        </span>
+    </div>
+
+    <div style="clear:both; height:30px"></div>
+
+</div>

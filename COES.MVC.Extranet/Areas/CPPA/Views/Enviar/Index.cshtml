@@ -1,0 +1,238 @@
+@model COES.MVC.Extranet.Areas.CPPA.Models.CargaArchivosIntegrantesModel
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Información Operativa";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string EMPRNOMB = Convert.ToString(ViewBag.Emprnomb);
+    int EMPRNRO = Convert.ToInt32(ViewBag.Emprnro);
+    var EMPRCODI = ViewBag.Emprcodi;
+}
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Areas/CortoPlazo/Content/Css/cssfile.css" rel="stylesheet" />
+<link href="~/Areas/CPPA/Content/Css/cppa.css" rel="stylesheet" />
+<link href="~/Areas/CPPA/Content/Css/css1.css" rel="stylesheet" />
+<link href="~/Areas/CPPA/Content/Css/css.css" rel="stylesheet" />
+
+<link href="~/Content/Css/calendar.css" rel="stylesheet" />
+<script src="~/Content/Scripts/datepicker.js"></script>
+
+<script type="text/javascript">
+    var listRevision = @Html.Raw(ViewBag.ListRevision);
+</script>
+
+<div class="form-title_intranet">
+    <div class="content-titulo">
+        Listado de Envíos de archivos presupuesto anual
+    </div>
+</div>
+
+
+@if (Model.Resultado != -1)
+{
+    <script src="~/Areas/CPPA/Content/Scripts/cargaArchivosIntegrantes.js?v=4.2"></script>
+
+    <div class="content-hijo" id="mainLayout">
+
+        @if (@EMPRNOMB == "")
+        {
+            if (@EMPRNRO < 0)
+            {
+                <div id="message">
+                    Esta usuario no tiene empresas asignadas...
+                </div>
+            }
+            else
+            {
+                <script>seleccionarEmpresa();</script>
+                <div class="form-title">
+                    DEBE SELECCIONAR UNA EMPRESA PARA VER LA INFORMACIÓN DE ESTA PANTALLA
+                    @if (@EMPRNRO > 1)
+                    {<a onclick="seleccionarEmpresa();" class="paginate_active"></a>}
+                </div>
+            }
+        }
+
+        <div class="search-content" style="margin-bottom:10px">
+            <div id="message" style="display: none">
+                Este usuario nmo tiene empresas asignadas...
+            </div>
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td style="text-align: left">
+                        Empresa:
+                    </td>
+                    <td style="padding-left: 10px; width: 300px; white-space: nowrap;">
+                        @EMPRNOMB
+                    </td>
+
+                    <td style="width: 100%;"></td>
+
+                    <td style="padding-left: 15px; text-align: right;">
+                        <input type="button" id="btnCambiarEmpresa" value="Cambiar Empresa" onclick="seleccionarEmpresa();" />
+                    </td>
+                    <td style="padding-left: 15px; text-align: right;">
+                        <input type="button" id="btnNuevo" value="Nuevo Envío" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="search-content">
+            <div class="h-panel">
+                <div class="flex-row" style="margin-right: 35px;">
+                    <div style="display: flex; margin-right: 10px; width: 100px; white-space: nowrap;">Año presupuesto :</div>
+                    <select id="cbAnio" class="filtro-select" style="width: 110px;">
+                        <option value="" selected>Seleccione</option>
+                        @foreach (var item in Model.ListaAnio)
+                        {
+                            <option value="@item.Entero1">@item.String1</option>
+                        }
+                    </select>
+
+                    <div style="display: flex; width: 80px; margin-left: 20px; white-space: nowrap; ">Ajuste :</div>
+                    <select id="cbAjuste" class="filtro-select" style="width: 110px; margin-right: 20px;">
+                        <option value="" selected>Seleccione</option>
+                    </select>
+
+                    <div style="display: flex; width: 60px; white-space: nowrap; ">Revisión :</div>
+                    <select id="cbRevision" class="filtro-select" style="width: 110px; margin-right:20px;">
+                        <option value="" selected>Seleccione</option>
+                    </select>
+
+                    <input type="button" id="btnConsultar" value="Consultar" style="margin-left: 140px;">
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 20px;">
+            <table id="dtEnviosPresupuesto" class="pretty tabla-icono" style="width: 340px;">
+            </table>
+        </div>
+        <div style="display: none">
+            <input id="Anio"
+                   type="text"
+                   value="@ViewBag.Anio"
+                   disabled
+                   style="width: 100px; display: none;" />
+            <input id="Ajuste"
+                   type="text"
+                   value="@ViewBag.Ajuste"
+                   disabled
+                   style="width: 100px; display: none;" />
+            <input id="Revision"
+                   type="text"
+                   value="@ViewBag.Revision"
+                   disabled
+                   style="width: 100px; display: none;" />
+            <input id="Emprcodi"
+                   type="text"
+                   value="@ViewBag.Emprcodi"
+                   disabled
+                   style="width: 100px; display: none;" />
+            <input id="Emprnomb"
+                   type="text"
+                   value="@ViewBag.Emprnomb"
+                   disabled
+                   style="width: 100px; display: none;" />
+        </div>
+    </div>
+
+    <div id="popCambiarEmpresa" class="general-popup" style="min-width: 500px;">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title">
+            <span>Cambiar Empresa</span>
+        </div>
+        <div class="popup-text">
+            <div id="message-popup" style="display: none"></div>
+            <div class="h-panel" style="margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <div style="margin-right: 20px; white-space: nowrap;">Empresa :</div>
+                    <select id="cboListaEmpresas" class="f-select" style="width: 450px">
+                    </select>
+                </div>
+                <div style="text-align: center;">
+                    <input id="btnCambiar" type="button" value="Cambiar" style="margin-right: 10px;" />
+                    <input id="btnCancelar" type="button" value="Cancelar" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="popDetalle" class="general-popup" style="min-width: 500px;">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title" style="display: flex; flex-direction: column;">
+            <span id="popTitleDetalle">Archivos presupuesto anual de Envío 2554 (2024 A1 Revisión 1)</span>
+            <span id="popSubTitleDetalle">Empresa : RED DE ENERGIA DEL PERU S.A.</span>
+        </div>
+        <div class="popup-text">
+            <div id="mpop-detalle" style="display: none"></div>
+            <div style="margin-top: 20px;">
+                <table id="dtDetalle" class="pretty tabla-icono" style="width:100%;">
+                </table>
+            </div>
+            <div style="margin-top: 30px; text-align: center;">
+                <input type="button" id="btnRetornar" value="Retornar" style="margin-right: 10px;">
+            </div>
+        </div>
+    </div>
+
+    <div id="popNuevo" class="general-popup" style="min-width: 500px;">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title" style="display: flex; flex-direction: column;">
+            <span>Envío archivos presupuesto anual</span>
+            <span id="popTitleNuevo">Empresa : @ViewBag.Emprnomb</span>
+        </div>
+        <div class="popup-text">
+            <div id="mpop_nuevo" style="display: none"></div>
+            <div class="h-panel" style="margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <div style="margin-right: 15px; white-space: nowrap;">Año :</div>
+                    <select id="cbPopAnio" class="f-select" style="width: 100px; margin-right: 50px;">
+                        <option value="" selected>Seleccione</option>
+                        @foreach (var item in Model.ListaAnio)
+                        {
+                            <option value="@item.Entero1">@item.String1</option>
+                        }
+                    </select>
+
+                    <div style="margin-right: 15px; white-space: nowrap;">Ajuste :</div>
+                    <select id="cbPopAjuste" class="f-select" style="width: 100px; margin-right: 50px;">
+                        <option value="" selected>Seleccione</option>
+                    </select>
+
+                    <div style="margin-right: 15px; white-space: nowrap;">Revisión :</div>
+                    <select id="cbPopRevision" class="f-select" style="width: 100px">
+                        <option value="" selected>Seleccione</option>
+                    </select>
+                </div>
+                <div style="margin-top: 10px;">
+                    <input id="btnSeleccionar" type="button" value="Seleccionar archivos" style="width: 140px;" />
+                    <input id="file" type="file" style="width: 450px;" hidden multiple />
+                </div>
+                <div style="margin-top: 20px;">
+                    <table id="dtNuevo" class="pretty tabla-icono" style="width:100%;">
+                    </table>
+                </div>
+                <div style="display: flex; flex-direction: column; margin-top: 10px;">
+                    <span> - Se pueden seleccionar hasta 5 archivos por envío. El tamaño máximo de cada archivo no puede superar los 15 MB</span>
+                    <span> - El nombre del archivo no debe exceder los 40 caracteres</span>
+                </div>
+                <div style="text-align: center; margin-top: 10px;">
+                    <input id="btnPopEnviar" type="button" value="Enviar" style="margin-right: 10px;" />
+                    <input id="btnPopCancelar" type="button" value="Cancelar" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="popup">   </div>
+}
+else
+{
+    <script>
+        alert("El usuario no tiene permisos para esta opción ya que ha ocurrido en un error con el API de Seguridad");
+    </script>
+}
+
+
+

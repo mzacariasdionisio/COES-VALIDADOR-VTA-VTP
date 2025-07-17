@@ -1,0 +1,153 @@
+﻿@model  COES.Servicios.Aplicacion.FormatoMedicion.FormatoModel
+@{
+    ViewBag.Title = "Grafico Series - Hidrologicas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string strTipoDesc = string.Empty;
+    <script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+
+    <link href="~/Content/Css/tabs.css" rel="stylesheet" />
+    <script src="~/Content/Scripts/highcharts.js"></script>
+    <script src="~/Content/Scripts/highcharts-exporting.js"></script>
+
+}
+<script src="~/Areas/Hidrologia/Content/Scripts/GraficosSeries.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<link href="~/Areas/Hidrologia/Content/Css/css.css?v=1.1" rel="stylesheet" />
+<style>
+    input[type="button"]:disabled {
+        background-color: #d3d3d3; /* Color de fondo para botón deshabilitado */
+        color: #6c757d; /* Color de texto para botón deshabilitado */
+        border: 1px solid #ced4da; /* Color del borde para botón deshabilitado */
+        cursor: not-allowed; /* Cursor para botón deshabilitado */
+    }
+
+    /*select[multiple] {
+        height: auto;*/ /* Ajusta la altura automáticamente */
+    /*width: 200px;*/ /* Ajusta el ancho según tus necesidades */
+    /*}*/
+</style>
+<div class="form-title">
+    <div class="content-titulo"> Graficos Series</div>
+</div>
+<div class="content-hijo">
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab' id="tab1Paso1"><a href="#paso1">Anual</a></li>
+            <li class='tab' id="tab2Paso2"><a href="#paso2">Mensual</a></li>
+            <li class='tab' id="tab3Paso3"><a href="#paso3">Comparativa de Volumen</a></li>
+            <li class='tab' id="tab4Paso4"><a href="#paso4">Comparativa de Caudal Natural y Evaporado</a></li>
+            <li class='tab' id="tab5Paso5"><a href="#paso5">Comparativa y línea de tendencia</a></li>
+            <li class='tab' id="tab6Paso6"><a href="#paso6">Estadistica Anuales</a></li>
+            <input type="hidden" name="paso" id="paso" value="1" />
+        </ul>
+        <div class='panel-container'>
+            <div id="paso1">
+                <table style="width:100%">
+                    <tr>
+                        <td>
+                            <div class="search-content" style="margin-bottom:0px; padding:10px">
+                                <table class="table-search">
+                                    <tr>
+
+                                        <td>Tipo de Serie</td>
+                                        <td>
+                                            <select id="cbTipoSerie" name="TipoSerie">
+                                                @foreach (var item in Model.ListaTipoSerie)
+                                                {
+                                                    <option value="@item.Tiposeriecodi">@item.Tiposerienomb</option>
+                                                }
+                                            </select>
+                                            <input type="hidden" id="hfTipoSerie" value="@Model.TipoSerie" />
+                                        </td>
+                                        <td style="vertical-align: middle">Tipo de año:</td>
+                                        <td>
+                                            <select id="cbAnio" name="cbAnio" onchange="habilitarTipoPuntoMedicion(this);">
+                                                <option value="">--SELECCIONE--</option>
+                                                <option value="1">Año Hidrológico</option>
+                                                <option value="2">Año Calendario</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tipo de Punto de Medición</td>
+                                        <td>
+                                            <select id="cbTipoPuntoMedicion" name="cbTipoPuntoMedicion" disabled="disabled" onchange="habilitarRangeFecha(this);">
+                                                <option value="">--SELECCIONE--</option>
+                                                @foreach (var item in Model.ListaTipoPuntoMedicion)
+                                                {
+                                                    strTipoDesc= strTipoDesc + item.TipoPtoMediCodi + ":" + item.TipoInfoDesc + "|";
+                                                    <option value="@item.TipoPtoMediCodi">@item.TipoPtoMediNomb</option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td style="vertical-align: middle">Desde:</td>
+                                        <td><input type="text" id="txtFechaDesde" name="FechaInicio" value="@Model.FechaIni" style="width:143px" disabled="disabled" /></td>
+                                        <td style="vertical-align: middle">Hasta:</td>
+                                        <td><input type="text" id="txtFechaHasta" name="FechaFin" value="@Model.FechaFin" style="width:140px" disabled="disabled" /></td>
+
+                                    </tr>
+                                    <tr>
+
+                                        <td>Cuenca:</td>
+                                        <td>
+                                            <select id="cbCuenca" name="cbCuenca" disabled="disabled" onchange="habilitarPtoMedicion(this);">
+                                                <option value="">--SELECCIONE--</option>
+                                            </select>
+                                        </td>
+                                        <td>Punto de Medición:</td>
+                                        <td>
+                                            <select id="cbPuntoMedicion" name="cbPuntoMedicion" disabled="disabled" onchange="habilitarBtnConsultar(this);">
+                                                <option value="">--SELECCIONE--</option>
+                                            </select>
+
+                                        </td>
+                                    </tr>
+                                    <tr>
+
+                                        <td colspan=2" style="text-align: right">
+                                            <input type="hidden" name="hdfTipoPtoMedDesc" id="hdfTipoPtoMedDesc" value="@strTipoDesc" />
+                                            <input type="button" id="btnConsultar" value="Consultar" onclick="habilitarBtnDescargar();" disabled="disabled" style="margin-top: 10px" />
+                                        </td>
+                                        <td style="text-align: center">
+                                            <input type="button" id="btnExportar" value="Exportar Excel" disabled="disabled" style="margin-top: 10px" />
+                                        </td>
+                                        <td>
+                                            <input type="button" id="btnDescargar" value="Descargar Gráfico" disabled="disabled" style="margin-top: 10px" />
+                                        </td>
+
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <div class="table-grafica" id="graficoAnual"></div>
+            </div>
+            <div id="paso2">
+                <div class="table-list" id="listado"></div>
+
+            </div>
+            <div id="paso3">
+                <div class="table-list" id="listadotab3"></div>
+
+            </div>
+            <div id="paso4">
+                <div class="table-list" id="listadotab4"></div>
+
+            </div>
+            <div id="paso5">
+                <div class="table-list" id="listadotab5"></div>
+
+            </div>
+            <div id="paso6">
+                <div class="table-list" id="listadotab6"></div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+

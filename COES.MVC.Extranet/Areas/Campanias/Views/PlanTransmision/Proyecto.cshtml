@@ -1,0 +1,152 @@
+﻿@model COES.MVC.Extranet.Areas.Campanias.Models.CampaniasModel
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<script src="~/Areas/Campanias/Content/Scripts/xlsx.bundle.js"></script>
+<script src="~/Areas/Campanias/Content/Scripts/FileSaver.min.js"></script>
+<link href="~/Areas/Campanias/Content/Css/css.css" rel="stylesheet"   />
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Areas/Campanias/Content/Scripts/validaciones.js"></script>
+<script>
+    var proyectoModel = @Html.Raw(Json.Encode(Model.TransmisionProyecto));
+    var modoModel =  @Html.Raw(Json.Encode(Model.Modo));
+    var codEmpresa =  @Html.Raw(Json.Encode(Model.Codempresa));
+    var codPeriodo =  @Html.Raw(Json.Encode(Model.Pericodi));
+    var hojasRegistrar = [];
+    if (modoModel != null & modoModel == 'editar') {
+        hojasRegistrar = @Html.Raw(Json.Encode(Model.ListaHojas));
+        console.log("Hojas registradas");
+        console.log(hojasRegistrar);
+    }
+    if (modoModel != null & modoModel == 'consultar' ) {
+        hojasRegistrar = @Html.Raw(Json.Encode(Model.ListaHojas));
+        console.log("Hojas registradas");
+        console.log(hojasRegistrar);
+    }
+
+</script>
+<script src="~/Areas/Campanias/Content/Scripts/proyecto.js?v=25.0"></script>
+<link href="~/Content/Css/Formato/Hoja/hoja.css?v=2.6" rel="stylesheet">
+
+<div class="search-content">
+    <input type="hidden" id="txtPoyCodi" name="txtPoyCodi">
+    <input type="hidden" id="txtPoyAnio" name="txtPoyAnio">
+    <div id="mensajeProyecto" class="action-message">Complete la Información</div>
+    <table class="table-search" style="width:100%">
+        <tr>
+            <td>
+                Empresa:
+            </td>
+            <td>
+                <select style="width: 185px" id="empresaProyectoSelect" style="width:220px">
+                    <option value="">Seleccione una empresa</option>
+                </select>
+            </td>
+            <td>
+                Plan transmisión:
+            </td>
+            <td>
+                <select style="width: 185px" id="periodoProyectoSelect" name="periodoProyectoSelect" onchange="obtenerAnioPeriodo(this)" style="width:220px">
+                    <option value="">Seleccione un periodo</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Tipo Proyecto:
+            </td>
+            <td>
+                <select id="proyectoSelect" name="proyectoSelect" style="width:200px" onchange="cargarTipoFichaProyecto(this)">
+                    <option value="">Seleccione un proyecto</option>
+                </select>
+            </td>
+            <td>
+                <div id="subtipoTitulos">
+                    Sub Tipo Proyecto:
+                </div>
+                <div id="areaDemandaTitulos">
+                    Area de demanda:
+                </div>
+            </td>
+            <td>
+                <select id="subtipoProyectoSelect" name="subtipoProyectoSelect" style="width:200px"">
+                    <option value="">Seleccione un proyecto</option>
+                </select>
+                <input type="number" id="txtAreaDemanda" name="txtAreaDemanda" step="1" style="width:200px" />
+            </td>
+            <td>
+                <label style="display:block; width:220px">
+                    <input type="checkbox" id="checkConfidencial" name="checkConfidencial" />
+                    Es proyecto confidencial
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Nombre Proy:
+            </td>
+            <td colspan="3">
+                <input type="text" id="txtNombreProyecto" name="txtNombreProyecto" style="width:100%" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Detalle Proy:
+            </td>
+            <td colspan="3">
+                <textarea style="width:100%" id="txtdetalleProyecto" name="txtdetalleProyecto"></textarea>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <input class="btnForms" type="button" id="btnGrabar" value="Continuar" />
+                <a class="cancel-button" href="javascript:void(0);" onclick="cerrarModalValidarReg()">Cerrar</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="content-tabla" id="contenido-fichas">
+    <div id="mensajeFicha"></div>
+
+    <div class="tab-container" id="tab-container-1">
+        <ul class="tab" id="etabsTipoProyecto">
+        </ul>
+        <div class='panel-container content-proy'>
+            <div id="containerFicha" class='content-proy'></div>
+        </div>
+    </div>
+</div>
+
+<div id="popupGuardarFicha" class="general-popup" style="width:320px;top:0px">
+    <div>
+        <span class="button b-close">
+            <span>X</span>
+        </span>
+    </div>
+    <div class="popup-text">
+        <form>
+            <p>
+                Para continuar deberá guardar la información ingresada.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center">
+                <input type="button" value="Grabar" style="margin-top: 15px;" onclick="grabarFicha(formularioSeleccionado)">
+                <input type="button"  value="Cancelar" style="margin-top: 15px;" onclick="popupCloseGuardado('popupGuardarFicha')">
+            </div>
+        </form>
+    </div>
+</div>
+<div id="popupGuardarFicha2" class="general-popup" style="width:320px;top:0px">
+    <div>
+        <span class="button b-close"><span>X</span></span>
+    </div>
+    <div class="popup-text">
+        <form>
+            <p>¿Está seguro que desea cancelar?</p>
+            <div style="display: flex; gap: 10px; justify-content: center">
+                <input type="button" value="No" class="btnNo" style="margin-top: 15px;">
+                <input type="button" value="Sí" class="btnSi" style="margin-top: 15px;">
+            </div>
+        </form>
+    </div>
+</div>
+<div id="spinner-container"></div>

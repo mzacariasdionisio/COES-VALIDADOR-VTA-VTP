@@ -1,0 +1,521 @@
+﻿@model COES.MVC.Intranet.Areas.Combustibles.Models.CombustibleGasModel
+@{
+    ViewBag.Title = "Reporte Mensual de Costos Variables";
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+<script src="~/Areas/Combustibles/Content/Scripts/Gas/index_costosvariables.js?v=1.0.4"></script>
+<link href="~/Areas/Combustibles/Content/Css/Gas/css.css?v=1.0.3" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Reporte Mensual de Costos Variables</div>
+    <div class="content-botonera">
+        @if (Model.TienePermisoAdmin)
+        {
+            <input type="button" id="btnMostrarCarga" value="Cargar a BD" />
+            <input type="button" id="btnDescargarF3IS" value="Descargar Formato 3 e Informes" />
+        }
+        <input type="button" id="btnExportarReportes" value="Exportar" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+
+    <input type="hidden" id="hfEmpresa" />
+    <input type="hidden" id="hdPestania" value="" />
+    <input type="hidden" id="hdStrMesVigencia" value="@Model.MesAnio" />
+
+    <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+        <table class="content-tabla-search" style="width:auto" role="presentation">
+            <tr>
+                <td>Mes de Vigencia:</td>
+                <td>
+                    <input type="text" id="mesVigencia" style="width: 80px;" value="@Model.FechaActual" />
+                </td>
+
+                <td>
+                    <input type="button" id="btnConsultar" value="Consultar" />
+                </td>
+            </tr>
+        </table>
+
+    </div>
+    <div id="mensaje"></div>
+    @*<div class="content-tabla" id="listado" style="">
+            <div class="" id="listadoEnvios">
+
+            </div>
+        </div>*@
+    <div id="tab-container" class='tab-container' style="padding-top: 20px;">
+        <ul class='etabs'>
+            <li class='tab'><a href="#tabC1">Cuadro 1</a></li>
+            <li class='tab'><a href="#tabC2">Cuadro 2</a></li>
+            <li class='tab'><a href="#tabC3">Cuadro 3</a></li>
+            <li class='tab'><a href="#tabCvc">CVC</a></li>
+        </ul>
+        <div class='panel-container'>
+
+            <div id="tabC1">
+                <div id="mensaje_C1"></div>
+                <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+                    <div style="text-align: -webkit-right;">
+                        <table class="table-search" style="width:auto" role="presentation">
+                            <tr>
+                                <td>
+                                    <input type="hidden" id="hdreportecodiC1" value="" />
+                                    <input type="hidden" id="hddataNotaC1" value="" />
+                                </td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnProcesarC1" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/btn-procesar.png" alt="logo" height="25px" /><br />
+                                                <span>Cargar de BD</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action" style="padding: 0px;">
+                                    <a href="#" id="btnNotasC1" style="display: none">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/prn-ico-manual.png" alt="logo" height="25px" /><br />
+                                            <span>Notas</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnEditarC1" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/btn-edit.png" alt="logo" style="padding-bottom: 1px" /><br />
+                                                <span>Editar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnGuardarC1" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/prnsave.png" alt="logo" /><br />
+                                                <span>Guardar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action" style="padding: 0px;">
+                                    <a href="#" id="btnVerHistorialC1" style="display: none">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/historial.png" alt="logo" height="25px" /><br />
+                                            <span>Historial</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                                <td class="content-action" style="padding: 0px;">
+                                    <div>
+                                        <a href="#" id="btnMostrarErroresC1" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/errores.png" alt="logo"><br>
+                                                <span>Errores</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div id="nombReporteC1" style="padding: 20px 10px 2px 30px; display: none;">
+                    <div class="tbform-label" style="width: 70px; float: left; padding-top: 5px;">
+                        Reporte:
+                    </div>
+                    <div style="width: 1000px;">
+                        <input type="text" id="txtNombreReporteC1" style="width:625px;" value="" />
+                    </div>
+                </div>
+                <div id="vistaListadoC1" style="padding:20px;">
+                    <div id="div_listado_C1" class="content-tabla">
+
+                    </div>
+                </div>
+                <div style="padding:20px; " class="content-notas">
+                    <div id="Notas_C1" style="display: none;">
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabC2">
+                <div id="mensaje_C2"></div>
+                <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+                    <div style="text-align: -webkit-right;">
+                        <table class="table-search" style="width:auto" role="presentation">
+                            <tr>
+                                <td>
+                                    <input type="hidden" id="hdreportecodiC2" value="" />
+                                    <input type="hidden" id="hddataNotaC2" value="" />
+                                </td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnProcesarC2" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/btn-procesar.png" alt="logo" height="25px" /><br />
+                                                <span>Cargar de BD</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action" style="padding: 0px;">
+                                    <a href="#" id="btnNotasC2" style="display: none">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/prn-ico-manual.png" alt="logo" height="25px" /><br />
+                                            <span>Notas</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnEditarC2" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/btn-edit.png" alt="logo" style="padding-bottom: 1px" /><br />
+                                                <span>Editar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnGuardarC2" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/prnsave.png" alt="logo" /><br />
+                                                <span>Guardar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action" style="padding: 0px;">
+                                    <a href="#" id="btnVerHistorialC2" style="display: none">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/historial.png" alt="logo" height="25px" /><br />
+                                            <span>Historial</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                                <td class="content-action" style="padding: 0px;">
+                                    <div>
+                                        <a href="#" id="btnMostrarErroresC2" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/errores.png" alt="logo"><br>
+                                                <span>Errores</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div id="nombReporteC2" style="padding: 20px 10px 2px 30px; display: none;">
+                    <div class="tbform-label" style="width: 70px; float: left; padding-top: 5px;">
+                        Reporte:
+                    </div>
+                    <div style="width: 1000px;">
+                        <input type="text" id="txtNombreReporteC2" style="width:625px;" value="" />
+                    </div>
+                </div>
+                <div id="vistaListadoC2" style="padding:20px;">
+                    <div id="div_listado_C2" class="content-tabla">
+
+                    </div>
+                </div>
+                <div style="padding:20px; " class="content-notas">
+                    <div id="Notas_C2" style="display: none;">
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabC3">
+                <div id="mensaje_C3"></div>
+                <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+                    <div style="text-align: -webkit-right;">
+                        <table class="table-search" style="width:auto" role="presentation">
+                            <tr>
+                                <td>
+                                    <input type="hidden" id="hdreportecodiC3" value="" />
+                                    <input type="hidden" id="hddataNotaC3" value="" />
+                                    <input type="hidden" id="hdlistaColoreados" value="" />
+                                </td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnProcesarC3" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/btn-procesar.png" alt="logo" height="25px" /><br />
+                                                <span>Cargar de BD</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action" style="padding: 0px;">
+                                    <a href="#" id="btnNotasC3" style="display: none">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/prn-ico-manual.png" alt="logo" height="25px" /><br />
+                                            <span>Notas</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnEditarC3" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/btn-edit.png" alt="logo" style="padding-bottom: 1px" /><br />
+                                                <span>Editar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnGuardarC3" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/prnsave.png" alt="logo" /><br />
+                                                <span>Guardar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action" style="padding: 0px;">
+                                    <a href="#" id="btnVerHistorialC3" style="display: none">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/historial.png" alt="logo" height="25px" /><br />
+                                            <span>Historial</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                                <td class="content-action" style="padding: 0px;">
+                                    <div>
+                                        <a href="#" id="btnMostrarErroresC3" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/errores.png" alt="logo"><br>
+                                                <span>Errores</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div id="nombReporteC3" style="padding: 20px 10px 2px 30px; display: none;">
+                    <div class="tbform-label" style="width: 70px; float: left; padding-top: 5px;">
+                        Reporte:
+                    </div>
+                    <div style="width: 1000px;">
+                        <input type="text" id="txtNombreReporteC3" style="width:625px;" value="" />
+                    </div>
+                </div>
+                <div id="vistaListadoC3" style="padding:20px;">
+                    <div id="div_listado_C3" class="content-tabla">
+
+                    </div>
+                </div>
+                <div style="padding:20px; " class="content-notas">
+                    <div id="Notas_C3" style="display: none;">
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabCvc">
+                <div id="mensaje_C4"></div>
+                <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+                    <div style="text-align: -webkit-right;">
+                        <table class="table-search" style="width:auto" role="presentation">
+                            <tr>
+                                <td>
+                                    <input type="hidden" id="hdreportecodiC4" value="" />
+                                    <input type="hidden" id="hddataNotaC4" value="" />
+                                </td>
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnEditarC4" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/btn-edit.png" alt="logo" style="padding-bottom: 1px" /><br />
+                                                <span>Editar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td class="content-action" style="padding: 0px;">
+                                        <a href="#" id="btnGuardarC4" style="display: none">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/prnsave.png" alt="logo" /><br />
+                                                <span>Guardar</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                }
+                                <td class="content-action" style="padding: 0px;">
+                                    <a href="#" id="btnVerHistorialC4" style="display: none">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/historial.png" alt="logo" height="25px" /><br />
+                                            <span>Historial</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div id="nombReporteC4" style="padding: 20px 10px 2px 30px; display: none;">
+                    <div class="tbform-label" style="width: 70px; float: left; padding-top: 5px;">
+                        Reporte:
+                    </div>
+                    <div style="width: 1000px;">
+                        <input type="text" id="txtNombreReporteC4" style="width:625px;" value="" />
+                    </div>
+                </div>
+                <div id="vistaListadoC4" style="padding:20px;">
+                    <div id="div_listado_C4" class="content-tabla">
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div id="popupNota" class="general-popup" style="width: 600px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Editar Nota</span></div>
+    <div id="mensaje_popupNota"></div>
+    <div class="table-list" style="margin: 20px">
+        <div id="seccionClick"></div>
+        <div id="div_nota" class="content-tabla">
+
+        </div>
+        <div style="text-align: center; padding-top: 30px;">
+            <input type="button" id="btnAceptarNota" value="Aceptar" />
+        </div>
+    </div>
+</div>
+
+<div id="popupError" class="general-popup" style="width: 660px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Errores Encontrados</span></div>
+    <div id="mensaje_popupErrores"></div>
+    <div class="table-list" style="margin: 20px">
+        <div id="div_errores" class="content-tabla">
+
+        </div>
+
+    </div>
+</div>
+
+<div id="popupHistorial" class="general-popup" style="width: 600px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Historial</span></div>
+    <div id="mensaje_popupHistorial"></div>
+    <div class="table-list" style="margin: 20px">
+        <div id="div_historial" class="content-tabla">
+
+        </div>
+
+    </div>
+</div>
+
+<div id="popupCargarBD" class="general-popup" style="width: 600px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Cargar a Base de Datos</span></div>
+    <div id="mensaje_popupCargarBD"></div>
+    <div class="table-list" style="margin: 20px">
+        <div id="div_CargarBD" class="content-tabla">
+
+        </div>
+        <div class="tbform-label" style="float: left; padding-top: 15px; padding-bottom: 5px;">
+            Costo Vigente Desde:
+        </div>
+        <div id="div_CVBD" class="content-tabla">
+
+        </div>
+        <div style="padding-top: 25px; text-align: center;">
+            <input type="button" id="btnCargarBD" value="Cargar" />
+            <input type="button" id="btnCancelarCBD" value="Cancelar" onclick="cerrarPopup('popupCargarBD')" />
+        </div>
+    </div>
+</div>
+
+<!--popup F3 e inf sustentatorios por empresas -->
+<div id="popupDescargarF3InfSust" class="general-popup" style="width: 400px">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Descargar F3 e inf. sustentatorios</span></div>
+    <input type="hidden" id="hfEmpresaF3IS" />
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaDesagrupar">
+            <div class="content-tabla">
+
+                <div style="width:250px; padding-left: 50px;">
+                    <div style="width:250px; padding-top:30px;">
+                        <div style="width:80px; float:left;">
+                            Empresa:
+                        </div>
+                        <div style="width:150px; float:left;">
+                            <select id="cbEmpresa" name="IdEmpresa" multiple="multiple">
+                                @foreach (var item in Model.ListaEmpresas)
+                                {
+                                    <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <div style="width:80px; float:left;">
+                                Fecha Desde:
+                            </div>
+                            <div style="width:150px; float:left;">
+                                <input type="text" id="FechaDesde" style="width: 90px;" name="FechaInicio" value="@Model.FechaFin" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="width:80px; float:left;">
+                                Fecha Hasta:
+                            </div>
+                            <div style="width:150px; float:left;">
+                                <input type="text" id="FechaHasta" style="width: 90px;" name="FechaFin" value="@Model.FechaFin" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="width:250px; text-align:center; padding:30px; padding-top:60px;">
+
+                    <div style="width:250px;">
+                        <input type="button" id="btnDescargarF3InfSust" value="Descargar" />
+                        <input type="button" id="btnCancelarDescarga" value="Cancelar" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

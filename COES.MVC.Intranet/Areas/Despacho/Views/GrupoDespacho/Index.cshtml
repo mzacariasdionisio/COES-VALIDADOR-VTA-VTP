@@ -1,0 +1,332 @@
+﻿@model COES.MVC.Intranet.Areas.Despacho.Models.GrupoDespachoModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!--Sección de llamadas a archivos js-->
+<script src="~/Areas/Despacho/Content/Scripts/grupodespacho.js?v=2.3"></script>
+<script src="~/Content/Scripts/jqueryui.js"></script>
+<script src="~/Content/Scripts/jquerytree.js"></script>
+<script src="~/Content/Scripts/contextmenu.js"></script>
+<script src="~/Content/Scripts/jquerytreemenu.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/highcharts.js"></script>
+
+<!--Sección de llamadas a archivos css-->
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<link href="~/Content/Css/uitree.css" rel="stylesheet" />
+<link href="~/Areas/Despacho/Content/Css/Despacho.css?v=2.1" rel="stylesheet" />
+<link href="~/Content/Css/contextmenu.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Grupos de Despacho</div>
+    <div class="content-botonera">
+        
+        @if (Model.IndicadorConfigCMgN)
+        {
+            <input type="button" id="btnCurvaCM" value="Configuración CMnG" />
+        }
+        
+
+        @if (Model.Editar) { 
+            <input type="button" id="btnConfigurar" value="Configuración" />
+        }
+        
+        <input type="button" id="btnCancelar" value="Cancelar" />
+    </div>
+</div>
+
+<div class="content-hijo">
+    <div class="search-content" style="margin-bottom:15px">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Empresa:</td>
+                <td>
+                    <select id="cbEmpresas" multiple="multiple">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+                <td>Tipo Central:</td>
+                <td>
+                    <select id="cbTipoCentral">
+                        <option value="T">Térmico</option>
+                        <option value="H">Hidráulico</option>
+                    </select>
+                    <input type="hidden" id="hfEmpresa" />
+                </td>
+                <td>Central:</td>
+                <td>
+                    <div id="central"></div>
+                </td>
+                <td>
+                    <input type="button" id="btnCargar" value="Aceptar" />
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table style="width:100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td style="min-width:270px; width:270px">
+                <div id="tree" class="tree-grupo"></div>
+            </td>
+            <td>
+                <div id="cntCurvaConsumo">
+                    <div class="popup-title" style="line-height:20px"><span>Curvas de Consumo de Combustible</span></div>
+                    <br />
+                    Seleccione fecha de datos:
+                    <input type="text" id="txtFechaDato" value="@Model.Fecha" />
+                    <br />
+                    <br />
+                    <div id="contenidoGrafico" class="content-curva"></div>
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="popupIdentificadorNCP" class="general-popup" style="min-width:400px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-text" id="contenidoIdentificadorNCP">
+        <div class="popup-title"><span>Editar identificador NCP</span></div>
+        <div class="popup-text">
+            <div class="content-registro">
+                <table style="width:100%">
+                    <tr>
+                        <td class="registro-label" style="padding-right:20pxx">
+                            Modo de Operación
+                        </td>
+                        <td class="registro-control">
+                            <span id="lblModoOperacion"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="registro-label">
+                            Identificador NCP
+                        </td>
+                        <td class="registro-control">
+                            <input type="text" id="txtCodigoNCP" style="width:120px" />
+                            <input type="hidden" id="hfIdentificadorNCP" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div style="width:200px; margin:auto; margin-top:20px">
+                <input type="button" id="btnGrabarIdentificadorNCP" value="Grabar" />
+                <input type="button" id="btnCancelarIdentificadorNCP" value="Cancelar" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="popupEditarCurva" class="general-popup" style="min-width:700px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-text" id="contenidoAgregar">
+        <div class="popup-title"><span id="idTitulo"> </span></div>
+        <div class="popup-text" id="contenidoAgregar">
+  
+            <form id="defaultForm" accept-charset="UTF-8" action="registraConcurso" method="post">
+                <table style="width:100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td>
+                            <div id="contenidoChart" class="content-curva"></div>
+                        </td>
+                        <td>
+                            <table>
+                                <tr>
+                                    <td colspan="2">Editar Tramos <input type="checkbox" id="chkCustomizado" /></td>
+                                    <td>
+                                        <label id="lblTextTramo">Nro Tramos</label>
+                                        <select id="cboTramoCustomizado" name="cboSeleccionTramo" style="width:50px">
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="button" id="btnGeneraTramosCustomizados" style="margin: 5px 0 5px 0;" value="Generar tramos" />
+                                    </td>
+                                </tr>
+
+                            </table>
+
+                            <div>
+                                <table id="tablaPuntos" style="width:100%" cellpadding="0" cellspacing="0" class="pretty tabla-icono">
+                                    <thead>
+                                        <tr>
+                                            <th>Punto</th>
+                                            <th>Potencia</th>
+                                            <th>Consumo</th>
+                                            <th>Inclusión</th>
+                                            <th>Tramo</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <div>
+                                <table style="width:100%" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td>
+                                            <label>Tramos</label>
+                                            <select id="cboTramo" name="tramo" style="width:100px">
+                                                <option value="-1">[Seleccione]</option>
+                                                <option value="1">1</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="button" id="btnGeneraTramos" style="margin: 5px 0 5px 0;" value="Generar tramos" />
+
+                                        </td>
+                                        <td>
+                                            <input type="button" id="btnSugiereOptimo" style="margin: 5px 0 5px 0;" value="Sugerir Curva óptima" />
+                                        </td>
+                                        <td>
+                                            <table>
+                                                <tr style="display:none">
+                                                    <td>
+                                                        Identificador NCP
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" id="txtNCP" style="width:120px" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        Fecha de Vigencia
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" id="txtFechaVigencia" value="@Model.Fecha" style="width:120px" />
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5">
+                                            <div id="mensajeAgregar" class="action-alert" style="display: none; width: 95%"></div>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <br>
+                                <table style="width:100%" cellpadding="0" cellspacing="0" class="pretty tabla-icono">
+                                    <thead>
+                                        <tr>
+                                            <th>Punto</th>
+                                            <th>Potencia</th>
+                                            <th>Consumo</th>
+                                            <th>R</th>
+                                            <th>Ecuación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>P0</td>
+                                            <td id="p0_x"></td>
+                                            <td id="p0_y"></td>
+                                            <td id="e0"></td>
+                                            <td id="r0"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>P1</td>
+                                            <td id="p1_x"></td>
+                                            <td id="p1_y"></td>
+                                            <td id="e1"></td>
+                                            <td id="r1"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>P2</td>
+                                            <td id="p2_x"></td>
+                                            <td id="p2_y"></td>
+                                            <td id="e2"></td>
+                                            <td id="r2"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>P3</td>
+                                            <td id="p3_x"></td>
+                                            <td id="p3_y"></td>
+                                            <td id="e3"></td>
+                                            <td id="r3"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <div style="height:10px; clear:both"></div>
+                                <div style="width:200px; margin:auto">
+                                    <input id="btnCancelarNuevo" type="button" value="Cancelar" style="margin: 5px 0 5px 0;" />
+                                    <input id="btnGrabarNuevo" type="button" value="Grabar" style="margin: 5px 0 5px 0;" />
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="popupHistoricoCurva" class="general-popup" style="min-width:700px">
+    <div><span class="button b-close"><span>X</span></span></div>
+
+    <div class="popup-text">
+        <div class="popup-title"><span id="idTituloHistorico"></span></div>
+
+        <div class="popup-text" id="contenidoAgregar">
+            <div id="mensajeAgregarHistorico" class="action-message" style="display: none; width: 95%"></div>
+
+            <table style="width:100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td colspan="2">
+                        <div class="popup-text">
+                            <div class="popup-title"><span>Historial de Cambio</span></div>
+                            <table id="tablaHistorial" class="pretty tabla-icono" style="width:100%" cellpadding="0" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Fec. Vigencia</th>
+                                        <th>Usuario</th>
+                                        <th>Fec. Actual</th>
+                                        <th>Ver Curva</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="50%">
+                        <div id="divCurvaHisrtorico" class="popup-text">
+                            <div class="popup-title"><span>Curva</span></div>
+                            <div id="contenidoHistoricoChart" class="content-curva"></div>
+                        </div>
+                    </td>
+                    <td width="50%">
+                        <div class="popup-text">
+                            <div class="popup-title"><span>Coordenadas</span></div>
+
+                            <table id="tablaCoordenadas" class="pretty tabla-icono" style="width:90%;text-align:center" cellpadding="0" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Potencia</th>
+                                        <th>Consumo</th>
+                                    </tr>
+                                </thead>
+                            </table>
+
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+

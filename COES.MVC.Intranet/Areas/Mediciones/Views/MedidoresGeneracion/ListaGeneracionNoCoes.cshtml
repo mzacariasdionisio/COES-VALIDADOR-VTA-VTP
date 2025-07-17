@@ -1,0 +1,113 @@
+﻿@model COES.MVC.Intranet.Areas.Mediciones.Models.MedidoresGeneracionModel
+@{
+    System.Globalization.NumberFormatInfo nfi = new System.Globalization.CultureInfo("en-US", false).NumberFormat;
+    nfi.NumberGroupSeparator = " ";
+    nfi.NumberDecimalSeparator = ",";
+    nfi.NumberDecimalDigits = 3;
+}
+
+<table border="0" class="pretty tabla-adicional" cellspacing="0" width="100%" id="tabla">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Empresa</th>
+            <th>Grupo</th>
+            <th>Punto de medición</th>
+
+            @{ DateTime now = DateTime.ParseExact(DateTime.Now.ToString("dd/MM/yyyy"), "dd/MM/yyyy",
+                       System.Globalization.CultureInfo.InvariantCulture);
+
+                for (int i = 1; i <= 48; i++)
+                {
+                    DateTime hora = now.AddMinutes(i * 30);
+                    <th>@hora.ToString("HH:mm")</th>
+                }
+            }
+
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.ListaDatosGeneracionNoCoes.Count > 0)
+        {
+            foreach (var item in Model.ListaDatosGeneracionNoCoes)
+            {
+                <tr>
+                    <td>
+                        @(((DateTime)item.Medifecha).ToString("dd/MM/yyyy"))
+                    </td>
+                    <td>@item.Emprnomb</td>
+                    <td>@item.Gruponomb</td>
+
+                    <td>@item.Ptomedicodi</td>
+
+                    @for (int i = 1; i <= 48; i++)
+                    {
+                        var valor = item.GetType().GetProperty("H" + i.ToString()).GetValue(item, null);
+                        string texto = "";
+                        decimal valorReal = 0;
+                        string style = "text-align:right";
+                        if (valor != null)
+                        {
+                            valorReal = Convert.ToDecimal(valor);
+                            texto = valorReal.ToString("N", nfi);
+
+                            if (valorReal < 0 && Model.IndicadorPublico == "N")
+                            {
+                                style = "background-color:red; text-align:right";
+                            }
+                        }
+                        <td style="@style">@texto</td>
+                    }
+
+                </tr>
+            }
+        }
+    </tbody>
+    <tfoot>
+
+        @foreach (var item in Model.EntidadTotalGeneracionNoCoes)
+        {
+            <tr>
+                <td colspan="5">@item.Gruponomb</td>
+                @{
+                    var totalSum = item.Meditotal;
+                    string txtSum = string.Empty;
+                    string style = "text-align:right";
+                    decimal valortot = 0;
+                    if (totalSum != null)
+                    {
+                        valortot = Convert.ToDecimal(totalSum);
+                        txtSum = valortot.ToString("N", nfi);
+
+                        if (valortot < 0 && Model.IndicadorPublico == "N")
+                        {
+                            style = "background-color:red; text-align:right";
+                        }
+                    }
+                    <td style="@style">@txtSum</td>
+
+                    for (int i = 1; i <= 48; i++)
+                    {
+                        var valor = item.GetType().GetProperty("H" + i.ToString()).GetValue(item, null);
+                        string texto = "";
+                        style = "text-align:right";
+                        valortot = 0;
+                        if (valor != null)
+                        {
+                            valortot = Convert.ToDecimal(valor);
+                            texto = valortot.ToString("N", nfi);
+                            if (valortot < 0 && Model.IndicadorPublico == "N")
+                            {
+                                style = "background-color:red; text-align:right";
+                            }
+                        }
+                        <td style="@style">@texto</td>
+                    }
+                }
+            </tr>
+        }
+
+
+    </tfoot>
+</table>
+<div style="clear:both"></div>

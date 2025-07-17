@@ -1,0 +1,75 @@
+﻿@model COES.MVC.Extranet.Areas.IEOD.Models.GestionAdministradorModel
+@{
+    DateTime fecha = new DateTime();
+    fecha = DateTime.MinValue;
+    DateTime fechaPiv = new DateTime();
+    System.Globalization.NumberFormatInfo nfi = new System.Globalization.CultureInfo("en-US", false).NumberFormat;
+    nfi.NumberGroupSeparator = " ";
+    nfi.NumberDecimalSeparator = ",";
+    nfi.NumberDecimalDigits = 3;
+}
+<div style="clear:both; height:15px"></div>
+<table border="0" class="pretty tabla-adicional" cellspacing="0" width="100%" id="tabla">
+    <thead>
+        <tr>
+            <th>ID Envío</th>
+            <th>Empresa</th>
+            <th>Pto Medicion</th>
+            <th>Unidad</th>
+            <th>Fecha Periodo</th>
+            <th>Fecha</th>
+            @for (int i = 1; i < @Model.Columnas + 1; i++)
+            {
+                fechaPiv = fecha.AddMinutes(i * Model.Resolucion);
+                <th>@fechaPiv.ToString("HH:mm") </th>
+            }
+
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.ListaCambioEnvio)
+        {
+            List<string> cambio = new List<string>();
+            List<string> valores = new List<string>();
+            if (item.Cambenvdatos != null)
+            {
+                valores = item.Cambenvdatos.Split(',').ToList();
+            }
+            if (item.Cambenvcolvar != null)
+            {
+                cambio = item.Cambenvcolvar.Split(',').ToList();
+            }
+            <tr>
+                <td>@item.Enviocodi</td>
+                <td>@item.Emprabrev</td>
+                <td>@item.Ptomedibarranomb</td>
+                <th>@item.Tipoinfoabrev</th>
+                <td>@item.Enviofechaperiodo.ToString("yyyy-MM-dd")</td>
+                <td>@item.Cambenvfecha.ToString("yyyy-MM-dd")</td>
+                @for (int i = 1; i < @Model.Columnas + 1; i++)
+                {
+                    string colorEstado = "SeaGreen";
+                    for (var j = 0; j < cambio.Count; j++)
+                    {
+                        if (cambio[j] == i.ToString())
+                        {
+                            colorEstado = "red";
+                        }
+                    }
+                    if (valores.Count > 0 && !string.IsNullOrEmpty(valores[i - 1]))
+                    {                        
+                            decimal valor = decimal.Parse(valores[i - 1]);
+                            <td style="text-align:right;color:@colorEstado">@valor.ToString("N", nfi)</td>
+                  
+                    }
+                    else
+                    {
+                        <td></td>
+                    }
+
+                }
+            </tr>
+        }
+    </tbody>
+</table>

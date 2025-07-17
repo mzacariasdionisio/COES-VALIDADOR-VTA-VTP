@@ -1,0 +1,149 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.RsfModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/contextmenu.js"></script>
+<link href="~/Content/Css/contextmenu.css" rel="stylesheet" />
+<link href="~/Areas/Eventos/Content/Css/rsf.css" rel="stylesheet" />
+
+<script src="~/Areas/Eventos/Content/Scripts/rsf.js?v=7.5"></script>
+<link href="~/Areas/Eventos/Content/Css/css.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Unidades de Regulación Secundaria</div>
+    <div class="content-botonera">
+        <label style="font-size: 13px"><input type="checkbox" checked id="checkboxActualizacionAutomaticaDerecha" /> Actualización automática a la derecha</label>
+        <input type="button" id="btnPrueba" value="btnPrueba" style="display: none" />
+        <input type="button" id="btnGrabar" value="Grabar" />
+        <input type="button" id="btnConfiguracion" value="Configuración" />
+        <input type="button" id="btnCargarXML" value='Importar' />
+        <input type="button" id="btnExportarXML" value="Generar XML" />
+        <input type="button" id="btnExportar" value='Exportar' />
+        <input type="button" id="btnGrafico" value="Grafico RSF" />
+        @*<input type="button" id="btnExportar30" value='Exportar 30 minutos' />
+        <input type="button" id="btnExportarRA" value='Exportar Reserva Asignada URS' />*@
+    </div>
+</div>
+
+<div class="div-importar" id="divImportar">
+    <div class="div-importar-close" onclick="closeImportar();">X</div>
+    
+    <div class="div-importar-content">
+        <div class="popup-title"><span>Importar desde YUPANA</span></div>
+        <div class="action-message" id="mensajeImportacion">
+            Por favor complete los datos solicitados.
+        </div>
+        <div class="content-registro">
+
+            <table>              
+                <tr>
+                    <td class="registro-label">Operación</td>
+                    <td class="registro-control">
+                        <input type="radio" name="Operacion" value="1" checked="checked" />1. Completar desde el último bloque<br />
+                        <input type="radio" name="Operacion" value="3" />2. Reemplazar solo las horas del reprograma<br />
+                        <input type="radio" name="Operacion" value="2" />3. Reemplazar toda la data<br />
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div id="container" style="width:1px; height:1px">
+        </div>
+        <div class="div-importar-boton">
+            <input type="button" id="btnImportarYupana" value="Procesar" />
+        </div>
+    </div>
+</div>
+
+
+<div class="modalitem" style="display:none" id="popupExportacion">
+    <div style=" float:right">
+        <a href="JavaScript:closePopupExportacion()" style="font-size:20px; font-weight:bold; text-decoration:none; color:#3987b4">X</a>
+    </div>
+    <div style="clear:both"></div>
+    Fecha Inicio:
+    <input type="text" id="txtFechaInicio" style="width:120px" value="@Model.Fecha" />
+    Fecha Fin:
+    <input type="text" id="txtFechaFin" style="width:120px" value="@Model.Fecha" />
+    <div style=" width:100px; margin:auto; margin-top:20px ">
+        <input type="button" id="btnAceptarExportacion" value="Aceptar" />
+    </div>
+</div>
+
+<div class="content-hijo" style="padding-bottom:5px">
+
+    <div id="mensaje" class="action-message" style="margin-bottom:5px; margin-top:0px">Complete los datos</div>
+    <div class="search-content" style="margin-bottom:10px; padding:10px">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Fecha:</td>
+                <td>
+                    <input type="text" id="txtFecha" value="@Model.Fecha" />
+                </td>
+                <td></td>
+                <td style="width:100px"></td>
+                <td>RSF UP (MW):</td>
+                <td><strong style="color:#ff6a00; font-size:18px"><span id="spanRaUp">@Model.RaUp</span></strong></td>
+                <td>RSF DOWS (MW):</td>
+                <td><strong style="color:#ff6a00; font-size:18px"><span id="spanRaDown">@Model.RaDown</span></strong></td>
+                <td>
+                    <a href="JavaScript:modificarRA()">Modificar</a>
+                </td>
+                <td>
+                    <a href="JavaScript:modificarHoras()">Modificar horas</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <input type="hidden" id="hfRaUp" value="@Model.RaUp" />
+    <input type="hidden" id="hfRaDown" value="@Model.RaDown" />
+    <div id="contenedor" style="height:auto"></div>
+</div>
+
+<div id="popupEdicion" class="general-popup" style="width:400px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Modificar valor RA</span></div>
+    <div class="popup-text" id="contenidoEdicion" style="margin-top:0">
+        <div class="action-message" id="mensajePopup">Ingrese el nuevo valor</div>
+        <table>
+            <tr>
+                <td>Valor RA UP:</td>
+                <td>
+                    <input type="text" id="txtValorUp" /> <strong>(MW)</strong>
+                </td>
+            </tr>
+           <tr>
+                <td>Valor RA DOWS:</td>
+                <td>
+                    <input type="text" id="txtValorDown" /> <strong>(MW)</strong>
+                </td>
+            </tr>
+        </table>
+        <div style="width:100px; margin:auto">
+            <input type="button" id="btnGrabarRA" value="Grabar" />
+        </div>
+    </div>
+</div>
+
+<div id="popupHoras" class="general-popup" style="width:400px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Modificar Horas</span></div>
+
+    <div class="action-message" id="mensajeHora">Configure las horas</div>
+    <div class="popup-text" id="contenidoHoras" style="margin-top:0">
+
+
+    </div>
+
+    <div>
+        <!--<input type="button" id="btnGrabarHora" value="Aceptar" />
+        <input type="button" id="btnCancelarHora" value="Cancelar" />-->
+        <input type="button" id="btnCerrarHora" value="Cerrar" />
+    </div>
+</div>
+
+

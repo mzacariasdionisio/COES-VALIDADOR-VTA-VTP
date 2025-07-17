@@ -1,0 +1,208 @@
+﻿@{
+    ViewBag.Title = "Transferencias - Cálculo de Valorización";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var BARRCODI2 = (IEnumerable<SelectListItem>)TempData["BARRCODI2"];
+    var EMPRCODI2 = (COES.MVC.Extranet.Areas.Transferencias.Models.EmpresaModel)TempData["EMPRCODI2"];
+    var PERIANIOMES1 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES1"];
+    var PERIANIOMES2 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES2"];
+    var TIPOEMPRCODIGO = (IEnumerable<SelectListItem>)TempData["Tipoemprcodigo"];
+}
+<script src="~/Areas/Transferencias/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Areas/Transferencias/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/Transferencias/Content/Scripts/load.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/valortransferencia.js?@(new Random().Next(1000))"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<div class="ast">
+    <div class="form-title">CÁLCULO POR MES DE LA VALORIZACIÓN</div>
+
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Entregas y Retiros de Energía Valorizados</a></li>
+                <li class='tab'><a href="#paso2">Determinación de saldos de transferencias</a></li>
+                <li class='tab'><a href="#paso3">Pagos por transferencias de energía activa</a></li>
+                <li class='tab'><a href="#paso4">Reporte Mensual</a></li>
+            </ul>
+
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table cellspacing="2" cellpadding="4" style="width:1025px;">
+                            <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Filtros de búsqueda</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td><div class="editor-field">@Html.DropDownList("PERICODI", @PERIANIOMES1, "--Seleccione--")</div></td>
+                                <td><div class="editor-label">Versión </div></td>
+                                <td><div class="editor-field"><select id="VersionC" style="width:100px;"></select></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Tipo Empresa</div></td>
+                                <td><div class="editor-field">@Html.DropDownList("TIPOEMPRCODI", @TIPOEMPRCODIGO, "--Seleccione--")</div></td>
+                                <td><div class="editor-label">Empresa</div></td>
+                                <td>
+                                    <select id="EMPRCODI">
+                                    </select>
+                                    <input type="hidden" id="hcbEMPRCODI" />
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Barra de transferencia</div></td>
+                                <td><div class="editor-field">@Html.DropDownList("BARRCODI", @BARRCODI2, "--Seleccione--")</div></td>
+                                <td>
+                                    <div class="editor-label">Entrega / Retiro </div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.RadioButton("FLAG", "T", true) Todos
+                                        @Html.RadioButton("FLAG", "E", false) Entrega
+                                        @Html.RadioButton("FLAG", "R", false) Retiro
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align:center;">
+                                    <div class="busqueda-item">
+                                        <input type="button" value="Refrescar" onclick="location.href='@Url.Action("Index", "valortransferencia")'" alt="Refrescar" title="Refrescar" />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input type="button" id="btnBuscar" value="Consultar" />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input type="button" id="btnExportarEntregasRetirosEnergiaValorizados" value="Exportar información" />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input type="button" id="btnExportarEntregasRetirosEnergiaValorizados15min" value="Exportar información  15min" />
+
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="listado" id="listado">
+                    </div>
+                </div>
+
+                <div id="paso2">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table cellspacing="2" cellpadding="4" style="width:1025px;">
+                            <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                <td colspan="5"><div class="editor-label" style="color:#FFFFFF;"><b>Filtros de búsqueda</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PERICODI2", @PERIANIOMES1, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td><div class="editor-label">Versión </div></td>
+                                <td>
+                                    <div class="editor-field"><select id="VersionA" style="width:100px;"></select></div>
+                                </td>
+                                <td colspan="2">
+                                    <div>
+                                        <input type="button" id="btnBuscar2" value="Listar" />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input type="button" id="btnExportarDeterminacionSaldosTransferencias" value="Exportar información" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="listado" id="listado2">
+                    </div>
+                </div>
+
+                <div id="paso3">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table cellspacing="2" cellpadding="4" style="width:1025px;">
+                            <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                <td colspan="5"><div class="editor-label" style="color:#FFFFFF;"><b>Información requerida para la descarga</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PERICODI4", @PERIANIOMES1, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td><div class="editor-label">Versión </div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="VersionB" style="width:100px;">
+                                            <option value="1">Mensual</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div><input type="button" id="btnExportarPagosTransferenciasEnergíaActiva" value="Exportar información" /></div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="paso4">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table cellspacing="2" cellpadding="4" style="width:1025px;">
+                            <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                <td colspan="5"><div class="editor-label" style="color:#FFFFFF;"><b>Información requerida para la descarga</b></div></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="editor-label">Periodo</div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("Pericodi5", @PERIANIOMES2, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="editor-label">Versión </div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="VersionD" style="width:100px;"></select>
+                                    </div>
+                                </td>
+                                <td colspan="2"><div><input type="button" id="btnExportarEntregasRetirosEnergia" value="Exportar información" /></div></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botón flotante de WhatsApp -->
+<a href="https://wa.me/51905469444" class="wsp" target="_blank" title="¿Necesitas ayuda? Escríbenos por WhatsApp">
+    <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp">
+</a>
+
+<style>
+    .wsp {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        cursor: pointer;
+        border-radius: 50%;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+    }
+
+        .wsp:hover {
+            transform: scale(1.1);
+        }
+
+        .wsp img {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+        }
+</style>

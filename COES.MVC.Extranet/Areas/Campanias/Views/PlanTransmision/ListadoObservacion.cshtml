@@ -1,0 +1,54 @@
+﻿@model COES.MVC.Extranet.Areas.Campanias.Models.CampaniasModel
+@using Newtonsoft.Json
+@{
+    var observacionesValidas = Model.ListaObservacion
+    .Where(item => item.Estado != "Pendiente")
+    .ToList();
+
+    bool allItemsHaveFechaRespuesta = observacionesValidas.All(item => item.FechaRespuesta.HasValue);
+    bool hasEstadoEnviada = Model.ListaObservacion.Any(item => item.Estado == "Enviada");
+}
+
+@if (Model.ListaObservacion.Count > 0 && allItemsHaveFechaRespuesta && hasEstadoEnviada)
+{
+    <input style="margin-bottom: 1em;" type="button" value="Enviar Respuesta" onclick="EnviarRespuesta()" />
+}
+<table border="0" class="pretty tabla-icono" cellspacing="0" cellpadding="0" width="100%" id="tabla" aria-describedby="Evento">
+    <thead>
+        <tr>
+            <th scope="col">Fecha Obs.</th>
+            <th scope="col">Observación</th>
+            <th scope="col">Fecha Rpta.</th>
+            <th scope="col">Acción</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.ListaObservacion.Count > 0)
+        {
+            foreach (var item in Model.ListaObservacion)
+            {
+                if (item.Estado != "Pendiente")
+                {
+                    <tr>
+                        <td style="width:20%;"> @(item.FechaObservacion.HasValue ? item.FechaObservacion.Value.ToString("dd/MM/yyyy HH:mm:ss") : "")</td>
+                        <td style="text-align:left;">@item.Descripcion</td>
+                        <td style="width:20%;">@(item.FechaRespuesta.HasValue ? item.FechaRespuesta.Value.ToString("dd/MM/yyyy HH:mm:ss") : "")</td>
+                        <td style="text-align:center;">
+                            <a style="@(item.FechaRespuesta.HasValue ? "" : "display: none;")" href="javascript:void(0);" data-obs='@JsonConvert.SerializeObject(item).Replace("'", "&apos;")' onclick="consultarObservacion(this)"><img src="~/Content/Images/btn-open.png" /> </a>
+                            <a style="@(item.FechaRespuesta.HasValue ? "display: none;" : "")" href="javascript:void(0);"
+                               data-obs='@JsonConvert.SerializeObject(item).Replace("'", "&apos;")'
+                               onclick="editarObservacion(this)">
+                                <img src="~/Content/Images/btn-edit.png">
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+        }
+        else
+        {
+            <tr><td colspan="4" style='text-align:center'>No existen registros.</td></tr>
+        }
+    </tbody>
+</table>

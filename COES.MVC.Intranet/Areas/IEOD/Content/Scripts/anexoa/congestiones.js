@@ -1,0 +1,45 @@
+﻿$(function () {
+    cargarLista();
+});
+
+function mostrarReporteByFiltros() {
+    cargarLista();
+}
+
+function cargarLista() {
+    $('#listado').html('');
+    var alturaDisponible = getHeightTablaListado();
+
+    var fechaInicio = getFechaInicio();
+    var fechaFin = getFechaFin();
+
+    $.ajax({
+        type: 'POST',
+        url: controlador + 'CargarListaRegistroCongestionesST',
+        data: { fechaInicio: fechaInicio, fechaFin: fechaFin },
+        success: function (aData) {
+            $('.filtro_fecha_desc').html(aData.FiltroFechaDesc);
+
+            var ancho = $("#mainLayout").width() - 20;
+
+            $('#listado').html(aData.Resultado);
+
+            var anchoReporte = $('#reporte').width();
+            var alturaReporte = $('#reporte').outerHeight(true);
+            alturaDisponible = alturaDisponible - 55; //$(".dataTables_scrollHeadInner").outerHeight(true);
+            $("#resultado").css("width", (ancho) + "px");
+            $('#reporte').dataTable({
+                "autoWidth": false,
+                "scrollX": true,
+                "scrollY": alturaReporte > alturaDisponible ? alturaDisponible + "px" : "100%",
+                "scrollCollapse": true,
+                "sDom": 't',
+                "ordering": false,
+                paging: false
+            });
+        },
+        error: function (err) {
+            alert("Ha ocurrido un error");
+        }
+    });
+}

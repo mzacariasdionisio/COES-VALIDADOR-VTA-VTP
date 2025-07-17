@@ -1,0 +1,451 @@
+﻿@model COES.MVC.Intranet.Areas.Intervenciones.Models.Intervencion
+@{
+    ViewBag.Title = "Consultas Cruzadas";
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<script src="~/Content/Scripts/fixedcolumn.js?v=1.2"></script>
+
+<!--js/css de formulario-->
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/validacion.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+
+<link href="~/Areas/Intervenciones/Content/Css/Intervenciones.css?v=9.0.2" rel="stylesheet" />
+
+<script src="~/Content/Scripts/datepickerMultiFecha.js?v=9.0.2"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesArchivo.js?v=9.0.2"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesFormulario.js?v=9.0.2"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesSustento.js?v=9.0.2"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesCruzadasHandsonTable.js?v=9.0.3"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesHistoria.js?v=9.0.2"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesCruzadas.js?v=9.0.2"></script>
+<script src="~/Content/Scripts/highstock.js?v=1.1.7"></script>
+<script src="~/Content/Scripts/highcharts-more.js?v=1.1.7"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Intervenciones Cruzadas</div>
+</div>
+
+<div class="ast">
+    <div class="content-hijo" style="">
+        <div class="row">
+
+            <table class="content-tabla-search" border="0" cellpadding="5" cellspacing="2" style="width:100%; overflow:auto; background-color:#e5efff">
+
+                <thead>
+                    <tr class="THCabecera">
+                        <td colspan="10">
+                            <div class="editor-label" style="color:#FFFFFF;">
+                                <b>Filtros de búsqueda</b>
+                                <input type="button" value="🡅" class="btn-contraer_intv" style="" id="btnContraer">
+                                <input type="button" value="🡇" class="btn-contraer_intv" style="display:none" id="btnDescontraer">
+                            </div>
+                        </td>
+                    </tr>
+                </thead>
+                <tbody id="Contenido">
+                    <tr class="">
+                        <td colspan="9" style="text-align:center">
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnConsultar">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/Visualizar.png" class="set_size" /><br />
+                                        <span>Consultar</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnNuevo">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/nuevo.png" class="set_size" /><br />
+                                        <span>Nuevo registro</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnExportarExcel">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/exportarExcel.png" class="set_size" /><br />
+                                        <span>Reporte</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnExportarExcelIndisp">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/exportarExcel.png" class="set_size" /><br />
+                                        <span>Potencia Indisponible</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnReporteActividades" hidden>
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/exportarExcel.png" class="set_size" /><br />
+                                        <span>Reporte Actividades</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="td_inline" id="tacometroF1" style="width: 110px;height: 60px;" hidden></div>
+                            <div class="td_inline" id="tacometroF2" style="width: 110px;height: 60px;" hidden></div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="8">
+                            <div class="td_inline" style="width: 227px;">
+                                <div>Tipo de Programación:</div>
+                                <div>
+                                    <select style="background-color:white; width: 236px" id="TipoProgramacion" onchange="programaciones();">
+                                        <option value="0">--Seleccionar--</option>
+                                        @foreach (var item in Model.ListaTiposProgramacion)
+                                        {
+                                            <option value=@item.Evenclasecodi>@item.Evenclasedesc</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="td_inline">
+                                <div>Programación:</div>
+                                <div class="editor-label">
+                                    <select style="background-color:white; width: 352px" id="Programacion" onchange="obtenerFechaOperacion();">
+                                        <option value="0">--Todos--</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="td_inline" style="margin-right: 2px;">
+                                <div>Tipo Evento: </div>
+                                <div class="editor-label">
+                                    <select style="background-color:white;width: 167px;" id="cboTipoEventoFiltro" multiple="multiple" onchange="causasFiltro();">
+                                        @*<option value="0">--Todos--</option>*@
+                                        @foreach (var item in Model.ListaCboIntervencion)
+                                        {
+                                            <option value="@item.Tipoevencodi">@item.Tipoevendesc</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="td_inline" style="margin-right: 2px;">
+                                <div>Estado: </div>
+                                <div class="editor-label">
+                                    <select style="background-color:white; width: 173px" id="estadocodi" multiple="multiple">
+                                        @foreach (var item in Model.ListacboEstado)
+                                        {
+                                            <option value="@item.Estadocodi">@item.Estadonomb</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="td_inline" style="margin-right: 7px;">
+                                <div>Causa: </div>
+                                <div class="editor-label">
+                                    <select style="background-color:white;width:120px" id="cboCausaFiltro" multiple="multiple">
+                                        @*<option value="0">--Todos--</option>*@
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="td_inline" style="margin-right: 7px;">
+                                <div>Disponibilidad: </div>
+                                <div class="editor-label">
+                                    <select style="background-color:white;width:80px" id="cboDisponibilidad" multiple="multiple">
+                                        @*<option value="0">--Todos--</option>*@
+                                        <option value="F">F/S (Fuera de Servicio)</option>
+                                        <option value="E">E/S (En Servicio)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="td_inline" style="margin-right: 0px;">
+                                <div>Clase Programación: </div>
+                                <div class="editor-label">
+                                    <select style="background-color:white; width: 116px" id="cboClaseProgramacionFiltro" multiple="multiple">
+                                        @*<option value="0">--Todos--</option>*@
+                                        @foreach (var item in Model.ListaClaseProgramacion)
+                                        {
+                                            <option value="@item.Claprocodi">@item.Clapronombre</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="td_inline" style="margin-right: 0px;margin-top: 23px;">
+                                <input type="checkbox" id="check_mostrarAdjuntos" class="check_mostrarAdjuntos" name="check_mostrarAdjuntos" style="width:15px; margin-left: 20px;">
+                                Con Archivos
+                                <span style="background:white;padding: 2px;color: #ff000c;" title="Consecutivo por horas">*</span>
+                            </div>
+                            <div class="td_inline" style="margin-right: 0px;margin-top: 23px;">
+                                <input type="checkbox" id="check_mostrarNotas" class="check_mostrarNotas" name="check_mostrarNotas" style="width:15px; margin-left: 20px;">
+                                Con Notas
+                                <span style="background:white;padding: 2px;color: #ff000c;" title="Con notas">!</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="6">
+                            <div class="td_inline" style="width: 111px;padding-top: 21px;">
+                                <input class="td_inline" type="button" value="Seleccionar fechas" id="btnSelectFecha" />
+                            </div>
+                            <div class="td_inline" style="width:95px">
+                                <div>Fecha Inicio: </div>
+                                <div class="editor-label">
+                                    <input type="text" id="Entidad_Interfechaini" value="@Model.Progrfechaini" style="width: 95px" class="txtFecha" />
+                                </div>
+                            </div>
+                            <div class="td_inline" style="width:95px">
+                                <div>Fecha Fin: </div>
+                                <div class="editor-label">
+                                    <input type="text" id="Entidad_Interfechafin" value="@Model.Progrfechafin" style="width: 95px" class="txtFecha" />
+                                </div>
+                            </div>
+
+                            <div class="td_inline" style="">
+                                <div>Empresa:</div>
+                                <div>
+                                    <select style="background-color:white; width:247px" id="cboEmpresaFiltro" multiple="multiple">
+                                        @foreach (var item in Model.ListaCboEmpresa)
+                                        {
+                                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="td_inline" style="margin-right: 2px;">
+                                <div>Conjunto de equipo:</div>
+                                <div class="editor-label">
+                                    <select style="background-color:white;width:100px" id="cboFamilias">
+                                        <option value="0">TODOS</option>
+                                        <option value="1">Generación</option>
+                                        <option value="2">Líneas</option>
+                                        <option value="3">SSEE</option>
+                                        <option value="4">SSEE/Líneas</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="td_inline">
+                                <div>Indisp Hora Max: </div>
+                                <div class="editor-label">
+                                    <select style="background-color:white;width:60px" id="cboHrasIndispp">
+                                        @foreach (var item in Model.ListadoHrasIndisponiblidad)
+                                        {
+                                            <option value=@item.id>@item.value</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="td_inline" style="margin-left: 55px; margin-right: 2px;">
+                                <div>Maniobras: </div>
+                                <div class="editor-label">
+                                    <select style="background-color:white;width:80px" id="cboManiobras" multiple="multiple">
+                                        @*<option value="0">-- Todos --</option>*@
+                                        <option value="S">SI</option>
+                                        <option value="N">NO</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="td_inline" style="padding-top: 21px;">
+                                <input class="td_inline" type="button" value="Procedimientos de Maniobras" id="btnProcedimientosManiobras" />
+                                <input class="td_inline" type="button" value="Reporte para NTIITR" id="btnReporteNTIITR" />
+                                <input class="td_inline" type="button" id="btnIrEquivalencia" value="Ir a Equivalencia" />
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="display: block; height: 30px;">
+                <div class="td_inline" style="float:left; padding-top: 6px;font-weight: bold;">
+                    <span>Leyenda: </span>
+                </div>
+                <div class="td_inline" style="float:left; padding-top: 6px;font-weight: bold;">
+                    <span style="background:red;padding: 2px;color: white;" title="Importantes">Importante</span>
+                </div>
+                <div class="td_inline" style="float:left; padding-top: 6px;font-weight: bold;">
+                    <span style="background:orange;padding: 2px;color: white;" title="En servicio">En servicio</span>
+                </div>
+                <div class="td_inline" style="float:left; padding-top: 6px;font-weight: bold;">
+                    <span style="background:blue;padding: 2px;color: white;" title="Ejecutado">Ejecutado</span>
+                </div>
+
+                <div class="td_inline" style="float:left; padding-top: 6px;">
+                    <span style="background:white;padding: 2px;color: #000000;">Actividad de 1 día</span>
+                </div>
+                <div class="td_inline" style="float:left; padding-top: 6px;font-weight: bold;">
+                    <span style="background:white;padding: 2px;color: #0000ff;">Continúa por varios días</span>
+                </div>
+                <div class="td_inline" style="float:left; padding-top: 6px;font-weight: bold;">
+                    <span style="background:white;padding: 2px;color: #3a933e;">Consecutivo por rango de horas</span>
+                </div>
+
+                <div id="alerta" class="td_inline">    </div>
+
+            </div>
+
+
+        </div>
+
+        <div class="action-exito mensajes" style="display: none;"></div>
+
+        <table border="0" id="TabalaSearch" hidden>
+            <tbody>
+                <tr>
+                    <td style="float:right"><div>BUSCAR: <input id="searchgrid" type="search"> </div></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div id="grillaExcel" style="overflow-x: auto; overflow-y: hidden"></div>
+
+    </div>
+
+</div>
+
+<!--Ventana flotante de Formulacion de Intervención-->
+<div id="popupFormIntervencion" class="general-popup popup_formulario" style="width: 1070px; min-height: 600px; max-width: 1070px">
+
+</div>
+
+<!--popup Seleccionar fecha -->
+<div id="popupSeleccionarFecha" class="general-popup">
+</div>
+
+<!--popup Seleccionar intervenciones -->
+<div id="popupVistaPreviaOpcionCruzada" class="general-popup" style="width: 1050px; min-height: 600px; max-width: 1050px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span></span></div>
+
+    <div id="idDivVistaPreviaOpcionCruzada" style="height:370px;padding-top: 10px;">
+    </div>
+</div>
+
+<!--popup Detalle medias horas -->
+<div id="popupDetalleMediaHora" class="general-popup" style="width: 1100px; min-height: 600px; max-width: 1500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span></span></div>
+
+    <div id="idDivDetalleMediaHora">
+    </div>
+</div>
+
+<!--popup cambiar estado -->
+<div id="popupFormCambiarEstado" class="general-popup popup_formulario" style="width: 1070px; min-height: 600px; max-width: 1500px">
+
+</div>
+
+<!--popup para equipos-->
+<div id="busquedaEquipo" class="general-popup popup_equipo" style="display: none; width: 950px; height:550px"></div>
+
+<!--popup para sustento-->
+<div id="popupFormSustento" class="general-popup popup_equipo" style="display: none; width: 950px; height:610px;"></div>
+
+<!--popup para vista previa-->
+<div id="popupVerInforme" class="general-popup popup_equipo" style="display: none; width: 950px; height:610px;"></div>
+
+<!--comunicaciones-->
+<input type="hidden" id="hfIntercodiMsj" value="0" />
+
+<div id="popupMensajes" class="general-popup" style="z-index: 9999999999; width: 1100px !important; height: 720px; max-width: 1100px; top: 100px !important">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Comunicaciones</span>
+
+        <input type="button" value="Nueva comunicación" id="btnEnviarRptaComunicacion" style="float: right;" />
+
+        <a href="#" id="btnDescargaPdfComunicacion" style="float: right; font-size: 12px; text-decoration: none; color: #278CCC;">
+            <div class="content-item-action" style=" text-align: right;">
+                <img src="~/Content/Images/pdf.png" class="set_size" />
+                <span>Reporte</span>
+            </div>
+        </a>
+
+        <a href="#" id="btnDescargaZipComunicacion" style="float: right; font-size: 12px; text-decoration: none; color: #278CCC;">
+            <div class="content-item-action" style=" text-align: right;">
+                <img src="~/Content/Images/Document/raricon.png" class="set_size" />
+                <span>Descargar</span>
+            </div>
+        </a>
+    </div>
+
+    <div id="idTablaMensajes" style="min-height: 370px; margin-top: 15px; width: 1100px; overflow-y: auto; max-height: 680px; ">
+
+        <!--nueva comunicación-->
+        <div class="bandeja-nuevo" id="nuevoMensajePopup" style="display: block;">
+            <iframe id="frmRegistroMensajePopup" frameborder="0" style="width: 1070px; height: 825px" src=""></iframe>
+
+        </div>
+
+        <!--listado de mensajes-->
+
+        <div id="div-comments" style="display: none">
+            <div id="div-message-mensaje" class="oculto"></div>
+            <div class="search-content">
+                <div class="field-control-group">
+                    <input type="hidden" id="hfEmpresaMsj" value="" />
+                    <input type="hidden" id="hfFormatoMsj" value="" />
+
+                    <div class="field-group">
+                        <span class="field-label">
+                            Remitente:
+                        </span>
+                        <div class="field-control">
+                            <select id="ddl-sender" onchange="volverAListadoMensaje()">
+                                <option value="-1" selected="selected">[ TODOS ]</option>
+                                <option value="COES">COES</option>
+                                <option value="AGENTE">AGENTE</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">
+                                Estado:
+                            </span>
+                            <div class="field-control">
+                                <select id="ddl-state" onchange="volverAListadoMensaje()">
+                                    <option value="-1">[ TODOS ]</option>
+                                    <option value="L">Leído</option>
+                                    <option value="N">No Leído</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="div-wrap" class="chat-wrap">
+                <div class="chat-inner">
+                    <div id="lst-comments" style="margin-top:10px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="div-msg-contenido" style="display: none">
+            <div id="div-detalle-msg-contenido">
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!--popup para vista modificaciones-->
+<div id="popupModificaciones" class="general-popup popup_equipo" style="display: none; width: 950px; height:610px;"></div>
+
+<!--Historia equipo-->
+<div id="popupFormHistoria" class="general-popup" style="z-index: 9999999999; width: 1100px !important; max-width: 1100px; top: 100px !important">
+</div>
+
+<div id="container"></div>
+
+<input type="hidden" id="Opcion" value="0" />

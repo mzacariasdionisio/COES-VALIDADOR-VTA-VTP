@@ -1,0 +1,600 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.AnalisisFallasModel
+@{
+    ViewBag.Title = "Reporte Extranet CTAF";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+
+<link href="~/Areas/Eventos/Content/Css/ctaf.css?v=2.1.1" rel="stylesheet" />
+<script src="~/Areas/Eventos/Content/Scripts/InterrupcionSuministros/reporteExtranetCTAF.js?v=2.1.6"></script>
+
+<div class="form-title">
+    <div class="content-titulo">
+        Reporte de Interrupciones de Suministros (@Model.oEventoDTO.CODIGO)
+    </div>
+    <div class="content-botonera">
+        <input type="button" id="btnRegresar" value="Regresar" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div class="content-registro" style="width:auto">
+
+        <table border="0" class="pretty tabla-adicional" cellspacing="0" width="100%" id="tabla" aria-describedby="report">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Empresa</th>
+                    <th scope="col">Ubicación</th>
+                    <th scope="col">Familia</th>
+                    <th scope="col">Equipo</th>
+                    <th scope="col">Inicio</th>
+                    <th scope="col">CIER</th>
+                    <th scope="col">Causa</th>
+                    <th scope="col">Interrup.</th>
+                    <th scope="col">R</th>
+                    <th scope="col">Descripción</th>
+                    <th scope="col">Final</th>
+                    <th scope="col">Usuario</th>
+                    <th scope="col">Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.ListaEventosSco != null)
+                {
+                    foreach (var item in Model.ListaEventosSco)
+                    {
+                        var id = "cb" + item.AFECODI;
+                        <tr>
+                            <td>
+                                @if (Model.oEventoDTO.AFECODI == item.AFECODI)
+                                {
+                                    <input type="checkbox" id="@id" class="chCtaf" onchange="Check(this)" value="@item.AFECODI" checked="checked" />
+                                    <input type="hidden" id="hfAfecodiSco" value="@item.AFECODI" />
+                                }
+                                else
+                                {
+                                    <input type="checkbox" id="@id" class="chCtaf" onchange="Check(this)" value="@item.AFECODI" />
+                                }
+
+                            </td>
+                            <td>@item.TIPOEVENABREV</td>
+                            <td>@item.EMPRNOMB</td>
+                            <td>@item.AREADESC</td>
+                            <td>@item.FAMABREV</td>
+                            <td>@item.EQUIABREV</td>
+                            <td>
+                                @if (item.EVENINI != null)
+                                {
+                                    <span>@(((DateTime)item.EVENINI).ToString("dd/MM/yyyy HH:mm:ss"))</span>
+                                }
+                            </td>
+                            <td>@item.CAUSAEVENABREV</td>
+                            <td>@item.SUBCAUSAABREV</td>
+                            <td>@item.EVENINTERRUP</td>
+                            <td>@item.EVENRELEVANTE</td>
+                            <td>@item.EVENASUNTO</td>
+                            <td>
+                                @if (item.EVENFIN != null)
+                                {
+                                    <span>@(((DateTime)item.EVENFIN).ToString("dd/MM/yyyy HH:mm:ss"))</span>
+                                }
+                            </td>
+                            <td>@item.LASTUSER</td>
+                            <td>
+                                @if (item.LASTDATE != null)
+                                {
+                                    <span>@(((DateTime)item.LASTDATE).ToString("dd/MM/yyyy HH:mm"))</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+
+            </tbody>
+        </table>
+        <div style="clear:both; height:15px;"></div>
+        <!--Cabecera evento-->
+        <table cellpadding="8" style="">
+            <tr>
+                <td class="registro-label" style="width:100px;">Nro Evento:</td>
+                <td class="registro-control">
+                    @Model.oEventoDTO.CODIGO
+                    <input type="hidden" id="hCodiEvento" value="@Model.oEventoDTO.EVENCODI" />
+                    <input type="hidden" id="hfAfecodi" value="@Model.oEventoDTO.AFECODI" />
+                    <input type="hidden" id="hfFechaInterrupcion" value="@Model.oEventoDTO.FechaInterrupcion" />
+                    <input type="hidden" id="hfTieneCheckEracmf" value="@Model.oEventoDTO.ERACMF" />
+                    <input type="hidden" id="hAfeanio" value="@Model.oEventoDTO.Afeanio" />
+                    <input type="hidden" id="hAfecorr" value="@Model.oEventoDTO.Afecorr" />
+                </td>
+
+                <td class="registro-label">Hora Evento:</td>
+                <td class="registro-control">
+                    @Model.oEventoDTO.Eveninidesc
+                </td>
+
+                <td class="registro-label">Hora Interrupción:</td>
+                <td class="registro-control" style="font-weight: bold;">
+                    @Model.oEventoDTO.FechaInterrupcion
+                </td>
+
+                <td class="registro-label">Hora Fin Evento:</td>
+                <td class="registro-control">
+                    @Model.oEventoDTO.Evenfindesc
+                </td>
+            </tr>
+            <tr>
+                <td class="registro-label">Resumen:</td>
+                <td class="registro-control" colspan="7">
+                    @Model.oEventoDTO.EVENASUNTO
+                    <input type="hidden" id="hCodiEvento" value="@Model.oEventoDTO.EVENCODI" />
+                    <input type="hidden" id="hfAfecodi" value="@Model.oEventoDTO.AFECODI" />
+                </td>
+            </tr>
+            <tr>
+                <td class="registro-label">Descripción:</td>
+                <td class="registro-control" colspan="7">
+                    <div style="width: 100%">@Model.oEventoDTO.EVENDESC</div>
+                </td>
+            </tr>
+        </table>
+
+        <!--Filtros de busqueda-->
+        <div style="clear:both; height:5px;"></div>
+        <div class="search-content" style="margin-top: 5px;">
+            <table>
+                <tr>
+                    <td style="vertical-align: middle;">
+                        <table class="content-tabla-search" style="width:auto">
+                            <tr>
+                                <!--Tipo de Despacho desde SICOES-->
+                                <td>
+                                    <table>
+                                        <tr>
+                                            <td>Empresa:</td>
+                                            <td>
+                                                <select id="cbEmpresa" name="cbEmpresa" style="width:250px;">
+                                                    <option value="-1">--TODOS--</option>
+                                                    @foreach (var item in Model.ListaEmpresa)
+                                                    {
+                                                        <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>Tipo de Información:</td>
+                                            <td>
+                                                <select id="cbTipoInfo" name="cbTipoInfo" style="width:250px;">
+                                                    @foreach (var reg in Model.ListaTipoInformacion)
+                                                    {
+                                                        <option value="@reg.Fdatcodi">@reg.Fdatnombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td class="trReporte" style="display:none">Reporte:</td>
+                                            <td class="trReporte" style="display:none">
+                                                <select id="cbTipoReporte" name="cbTipoReporte" style="width:430px;">
+                                                    <option value="0">01. Total de Datos</option>
+                                                    <option value="1">02. Reporte Resumen</option>
+                                                    <option value="2">03. Reporte Malas Actuaciones</option>
+                                                    <option value="3">04. Interrupciones menores a 3 minutos</option>
+                                                    <option value="6">05. Agentes que reportaron 0</option>
+                                                    <option value="4">06. Agentes que no reportaron interrupciones por activación del ERACMF</option>
+                                                    <option value="8">07. Agentes con demoras</option>
+                                                    <option value="5">08. Interrupciones de suministros para la Decisión</option>
+                                                    <option value="7">09. Interrupciones para el Resarcimiento</option>
+
+                                                </select>
+                                            </td>
+
+                                            <td>
+                                                <input type="button" id="btnConsultar" value="Consultar" />
+                                                <input type="button" id="btnExportar" value="Exportar a Excel" />
+                                                <input type="button" id="btnExportarWord" value="Exportar a Word" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!--Tabs Interrupción por Activación del ERACMF-->
+        <div class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li class='tab active'><a href="#vistaTipo1TotalDatos" class="active">01. Total de Datos</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Total de Datos-->
+                <div id="vistaTipo1TotalDatos">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado1Tipo1_pos0"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                        <!--Excel web-->
+                        <br />
+                        <div id="tituloListadoCoordinacion" style="margin-bottom: 5px; display: none">
+                            Horas de coordinación de normalización
+                        </div>
+                        <div class="table-list" id="listadoCoordinacion"></div>
+                        <br />
+
+
+                        <div id="contentHorasCoordinacion" style="display:flex;align-items:flex-end">
+                            <div>
+                                <div id="tblHorasCoordinacion" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 200px; overflow: auto; width: 400px">
+                                </div>
+                                <div>
+                                    <p>
+                                        <i>Ingrese los horarios y presione Grabar</i> <br />
+                                        <i>(*) La fecha y hora de coordinación debe ser mayor a la fecha de Interrupción</i>
+                                    </p>
+                                    <div>
+                                        <input type="button" id="btnGrabarCoordinacion" value="Grabar" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-left:100px">
+                                <table cellpadding="0" cellspacing="0" border="0" id="barraHerramientas" style="width:130px">
+                                    <tbody>
+                                        <tr>
+                                            <td class="content-action">
+                                                <div id="celdaDescargar" style="display: block;">
+                                                    <a href="#" id="btnDescargarFormato">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Content/Images/bajar.png"><br>
+                                                            <span>Descargar</span>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                            <td class="content-action">
+                                                <div id="celdaImportar" style="display: block; position: relative;">
+                                                    <a href="#" id="btnImportar" style="position: relative; z-index: 1;">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Content/Images/subir.png"><br>
+                                                            <span>Importar</span>
+                                                        </div>
+                                                    </a>
+                                                    <div id="html5_1e0e3oe86rmv13b717c727d1cli3_container" class="moxie-shim moxie-shim-html5" style="position: absolute; top: 0px; left: 0px; width: 0px; height: 0px; overflow: hidden; z-index: 0;"><input id="html5_1e0e3oe86rmv13b717c727d1cli3" type="file" style="font-size: 999px; opacity: 0; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div id="tblHorasCoordinacionSuministradora" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 200px; overflow: auto; width: 600px" ">
+                                </div>
+                                <div style="margin-left:100px">
+                                    <p>
+                                        <i>Ingrese los horarios y presione Copiar</i> <br />
+                                        <i>(*) La fecha y hora de coordinación suministradora reemplazará a la fecha y hora de empresa</i>
+                                    </p>
+                                    <div>
+                                        <input type="button" id="btnCopiarCoordinacion" value="Copiar" />
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li class='tab active'><a href="#vistaTipo1ReporteResumen" class="active">02. Reporte Resumen</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Reporte Resumen-->
+                <div id="vistaTipo1ReporteResumen">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado1Tipo1_pos1"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li class='tab active'><a href="#vistaTipo1MalasActuaciones" class="active">03. Reporte Malas Actuaciones</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Reporte Malas Actuaciones-->
+                <div id="vistaTipo1MalasActuaciones">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado1Tipo1_pos2"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                        <!--Excel web-->
+                        <br />
+                        <div id="tituloListadoFunciones" style="margin-bottom: 5px; display: none">
+                            Funciones y Etapas Activadas
+                        </div>
+                        <div class="table-list" id="listadoFunciones"></div>
+                        <br />
+
+                        <div id="contentHorasCoordinacion">
+
+                            <div id="tblFuncionesEtapasActivas" class="hot handsontable htRowHeaders htColumnHeaders" style="height: auto; overflow: auto; width: 400px">
+                            </div>
+                            <p><i>Ingrese las funciones y etapas y presione Grabar</i></p>
+                            <div>
+                                <input type="button" id="btnGrabarFuncionesEstapas" value="Grabar" />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li class='tab active'><a href="#vistaTipo1Menores3Min" class="active">04. Interrupciones menores a 3 minutos</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Interrupciones menores a 3 minutos-->
+                <div id="vistaTipo1Menores3Min">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado1Tipo1_pos3"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li class='tab active'><a href="#vistaTipo1NoReportados" class="active">06. Agentes que no reportaron interrupciones por activación del ERACMF</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Agentes que no reportaron interrupciones por activación del ERACMF-->
+                <div id="vistaTipo1NoReportados">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado1Tipo1_pos4"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li class='tab active'><a href="#vistaTipo1Decision" class="active">08. Interrupciones de suministros para la Decisión</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Interrupciones de suministros para la Decisión-->
+                <div id="vistaTipo1Decision">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado1Tipo1_pos5"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li class='tab active'><a href="#vistaTipo1Reportaron0" class="active">05. Agentes que reportaron 0</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Agentes que reoportaron 0-->
+                <div id="vistaTipo1Reportaron0">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado1Tipo1_pos6"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li class='tab active'><a href="#vistaTipo1Resarcimiento" class="active">09. Interrupciones para el Resarcimiento</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Interrupciones para el Resarcimiento-->
+                <div id="vistaTipo1Resarcimiento">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado1Tipo1_pos7"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li class='tab active'><a href="#vistaTipo1AgenteDemoras" class="active">07. Agente con Demoras</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Agente con Demoras-->
+                <div id="vistaTipo1AgenteDemoras">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+                        <div class="table-list" id="listado1Tipo1_pos8"></div>
+                        <div style='clear: both; height: 30px'></div>
+                        <!--Excel web-->
+
+                        <div id="contentHorasCoordinacion" style="width: 97%">
+
+                            <div id="tblAgenteDemoras" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 400px; overflow: auto; width: 100%">
+                            </div>
+                            <p><i>Ingrese los motivos y presione Grabar</i></p>
+                            <div>
+                                <input type="button" id="btnGrabarAgenteDemoras" value="Grabar" />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Tabs Interrupción-->
+        <div id="tab-containerTipo2" class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li id="tablistado7Tipo2_pos0" class='tab'><a href="#vistaTipo2TotalDatos">Total de Datos</a></li>
+                <li id="tablistado6Tipo2_pos3" class='tab'><a href="#vistaTipo2Restablecimiento">Demoras en el Restablecimiento</a></li>
+                <li id="tablistado8Tipo2_pos1" class='tab'><a href="#vistaTipo2Menores3Min">Interrupciones menores a 3 minutos</a></li>
+                <li id="tablistado9Tipo2_pos2" class='tab'><a href="#vistaTipo2Decision">Interrupciones de suministros para la Decisión</a></li>
+                <li id="tablistado10Tipo2_pos4" class='tab'><a href="#vistaTipo2Resarcimiento">Interrupciones para el Resarcimiento</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Total de Datos-->
+                <div id="vistaTipo2TotalDatos">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado7Tipo2_pos0"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                        <!--Excel web-->
+                        <br />
+                        <div id="tituloListadoCoordinacion" style="margin-bottom: 5px; display: none">
+                            Horas de coordinación de normalización
+                        </div>
+                        <div class="table-list" id="listadoCoordinacion"></div>
+                        <br />
+
+                        <div id="contentHorasCoordinacion">
+
+                            <div id="tblHorasCoordinacion2" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 400px; overflow: auto; width: 820px">
+                            </div>
+                            <p>
+                                <i>Ingrese los horarios y presione Grabar</i> <br />
+                                <i>(*) La fecha y hora de coordinación debe ser mayor a la fecha de Interrupción</i>
+                            </p>
+                            <div>
+                                <input type="button" id="btnGrabarCoordinacion2" value="Grabar" />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!--Interrupciones Demoras en el Restablecimiento-->
+                <div id="vistaTipo2Restablecimiento">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado6Tipo2_pos3"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+
+                <!--Interrupciones menores a 3 minutos-->
+                <div id="vistaTipo2Menores3Min">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado8Tipo2_pos1"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+
+                <!--Interrupciones de suministros para la Decisión-->
+                <div id="vistaTipo2Decision">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado9Tipo2_pos2"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+                <!--Interrupciones de suministro para el resarcimiento-->
+                <div id="vistaTipo2Resarcimiento">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado10Tipo2_pos4"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Reducción de Suministros-->
+        <div id="tab-containerTipo3" class='tab-container' style="display:none">
+            <ul class='etabs'>
+                <li id="tablistado0Tipo3_pos0" class='tab'><a href="#vistaTipo3Reduccion">Reporte de Reducciones de Suministros</a></li>
+            </ul>
+            <div class='panel-container'>
+                <!--Reporte de Reducciones de Suministros-->
+                <div id="vistaTipo3Reduccion">
+                    <div class="content-tabla">
+                        <div style="clear:both; height:20px"></div>
+
+                        <div class="table-list" id="listado0Tipo3_pos0"></div>
+
+                        <div style='clear: both; height: 30px'></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>

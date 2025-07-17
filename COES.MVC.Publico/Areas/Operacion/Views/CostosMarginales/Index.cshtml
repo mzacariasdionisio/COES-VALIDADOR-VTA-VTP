@@ -1,0 +1,133 @@
+﻿@model COES.MVC.Publico.Areas.Operacion.Models.CostoMarginalModel
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link href="~/Areas/Operacion/Content/Css/css.css?v=1.9" rel="stylesheet" />
+<script src="~/Areas/Operacion/Content/Scripts/costomarginal.js?v=1.10"></script>
+
+<div class="page-banner">
+    <div class="page-banner-title">
+        <h1>Costos Marginales en Tiempo Real</h1>
+        <span>
+            Mercado Mayorista de Electricidad
+        </span>
+    </div>
+    <img src="~/Content/Images/Banners/ProgramaDeMantenimiento.jpg" alt="Costos Marginales Nodales" />
+</div>
+<div style="clear:both"></div>
+<div class="page-content">
+
+    <div id="mensaje"></div>  
+
+    <div class="search-content" style="margin-bottom:10px;">
+        <table style="width:100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>
+                    <table class="content-tabla-search-pad" style="width:auto" id="filtroBusqueda">
+                        <tr>
+                            <td>Fecha:</td>
+                            <td><input type="text" id="txtFecha" style="width:110px" value="@Model.FechaConsulta" /></td>
+                            <td style="padding-left:20px">Hora</td>
+                            <td>
+                                <select id="cbHoras" style="width:80px"></select>
+                            </td>
+                            <td>Filtro:</td>
+                            <td>
+                                <select id="cbDefecto">
+                                    <option value="S">Barras mayores a 138 KV</option>
+                                    <option value="">Todas las barras</option>
+                                </select>
+                            </td>                            
+                            <td>
+                                <input type="button" id="btnConsultar" value="Consultar" />
+                                <input type="button" id="btnExportar" value="Exportar" />
+                                <input type="button" id="btnExportarMasivo" value="Exportar Masivo" />
+                                <div class="div-exportar" id="divExportar">
+                                    <div class="div-exportar-close" onclick="closeExportar();">X</div>
+                                    <div class="div-exportar-content">
+                                        <div class="popup-title"><span>Exportar Datos</span></div>
+                                        <div class="action-exito" id="mensajeExportar">
+                                            Seleccione el rango de fechas a exportar:
+                                        </div>
+                                        Fecha desde:
+                                        <input type="text" id="txtExportarDesde" style="width:140px" value="@Model.FechaInicio" />
+
+                                        Hasta:
+                                        <input type="text" id="txtExportarHasta" style="width:140px" value="@Model.FechaFin" />
+
+                                        <div class="div-exportar-boton" id="container" style=" margin-top:30px">
+                                            <input type="button" id="btnOkExportarMasivo" value="Aceptar" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td>
+                    <div class="change-dashboard" style="width:310px">
+                        <div class="change-dashboard-item-l active item-change-dashboard" id="item-inicial" data-fuente="mapa">Mapa</div>
+                        <div class="change-dashboard-item-c item-change-dashboard" data-fuente="datos">Datos</div>
+                        <div class="change-dashboard-item-r item-change-dashboard" data-fuente="archivo">Archivos</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="valoresPreliminares" class="leyenda-preliminar" style="display:none">
+
+        Los datos mostrados son resultados preliminares.
+    </div>
+    
+    <div id="leyenda" class="leyenda-mapa" style="display:none">
+        <table border="0" class="pretty tabla-icono" cellspacing="0" id="tablaColores">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="cbSelectAll" /></th>
+                    <th>Rangos (S/. / MWh)</th>
+                    <th>Color</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ListaColores)
+                {
+                    <tr>
+                        <td><input type="checkbox" checked="checked" id="cbSelect" value="@item.Cmparcodi" /></td>
+                        <td>@item.Cmparnombre</td>
+                        <td><div style="margin:auto; width:16px; height:16px; border-radius:16px; background-color:@item.Cmparvalor"></div></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div style="clear:both; height:10px"></div>
+        <div style="width:80px; margin:auto; margin-top:10px">
+            <input type="button" id="btnActualizar" value="Actualizar" />
+        </div>
+    </div>
+    <div id="resultado">
+         <div id="contenedorMapa"></div>               
+    </div>
+    <div id="folder" style="display:none">
+        @Html.Action("Index", "Visor", new { area = "operacion", url = @"Empty", pathAlternativo = Model.PathPrincipal })
+        <br />
+        <div class="action-message">
+            Para poder verificar los resultados, debe utilizar el archivo de entrada .DAT y ejecutar el modelo.
+            Dicho modelo lo puede descargar desde la <a href="https://www.coes.org.pe/Extranet/home/info" target="_blank">Extranet del COES</a> ingresando su usuario y clave.
+        </div>
+    </div>       
+    
+    <div id="popupMensaje" class="general-popup" style="width:300px; height:150px; z-index:99999999">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title"><span>Aviso</span></div>
+        <div id="divComunicado" style="margin-top:10px;">
+            Los costos marginales mostrados son referenciales. Los valores finales serán determinados de acuerdo con lo establecido en los numerales 5, 7.2 y 7.4 del PR-07.  
+        </div>
+        <div style="width:90px; margin:auto">
+            <input type="button" id="btnAceptarComunicado" value="Aceptar" />
+        </div>
+    </div>    
+    
+</div>

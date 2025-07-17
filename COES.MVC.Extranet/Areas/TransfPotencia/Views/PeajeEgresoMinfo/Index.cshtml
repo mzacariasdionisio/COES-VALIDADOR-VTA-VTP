@@ -1,0 +1,182 @@
+﻿@model COES.MVC.Extranet.Areas.TransfPotencia.Models.PeajeEgresoMinfoModel
+@{
+    ViewBag.Title = "Transferencia de Potencia y Compensación - Consulta de Egresos y Peajes reportados";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<link href="~/Areas/TransfPotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/Transfpotencia/Content/Scripts/load.js"></script>
+<script src="~/Areas/TransfPotencia/Content/Scripts/peajeegresominfo.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<div>
+    <div class="form-title">INFORMACIÓN INGRESADA PARA VTP Y PEAJES</div>
+    <div class="content-hijo">
+        <div id="idpanel" style="padding-top: inherit; background-color:#fff">
+            @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+            {<div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">@Model.EntidadRecalculoPotencia.Perinombre / @Model.EntidadRecalculoPotencia.Recpotnombre</div> }
+        else
+        { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione un Mes de valorización y una versión de recalculo</div>}
+
+            <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td>
+                        <div class="search-content" style="margin-bottom:0px; padding:10px">
+                            <table class="table-search" style="width:auto;" border="0">
+                                <tr>
+                                    <td style="width:120px;"><div class="editor-label">Mes de Valorización:</div></td>
+                                    <td>
+                                        <select id="pericodiConsulta" name="pericodiConsulta" onchange="RecargarConsulta();">
+                                            @foreach (var item in Model.ListaPeriodos)
+                                            {
+                                                sSelected = "";
+                                                if (@item.PeriCodi == Model.Pericodi)
+                                                { sSelected = "selected"; }
+                                                <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:20px;">&nbsp;</td>
+                                    <td style="width:60px;"><div class="editor-label">Versión:</div></td>
+                                    <td>
+                                        <select id="recpotcodiConsulta" name="recpotcodiConsulta">
+                                            @foreach (var item in Model.ListaRecalculoPotencia)
+                                            {
+                                                <option value="@item.Recpotcodi">@item.Recpotnombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:20px;">&nbsp;</td>
+                                    <td style="width:120px;"><div class="editor-label">Tipo usuario:</div></td>
+                                    <td>
+                                        <select id="pegrmitipousuario" name="pegrmitipousuario">
+                                            <option value=""></option>
+                                            @foreach (var item in Model.ListaTipoUsuario)
+                                            {
+                                                <option value="@item.ToString()">@item.ToString()</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr><td colspan="8" style="height:8px;">&nbsp;</td></tr>
+                                <tr>
+                                    <td style="width:90px;"><div class="editor-label">Empresa:</div></td>
+                                    <td>
+                                        <select id="emprcodi" multiple="multiple">
+                                            @foreach (var item in Model.ListaEmpresas)
+                                            {
+                                                <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:20px;">&nbsp;</td>
+                                    <td style="width:110px;"><div class="editor-label">Cliente:</div></td>
+                                    <td>
+                                        <select id="cliemprcodi" multiple="multiple">
+                                            @foreach (var item in Model.ListaEmpresas)
+                                            {
+                                                <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:20px;">&nbsp;</td>
+                                    <td style="width:60px;"><div class="editor-label">Licitacion:</div></td>
+                                    <td>
+                                        <select id="pegrmilicitacion" name="pegrmilicitacion">
+                                            <option value=""></option>
+                                            @foreach (var item in Model.ListaLicitacion)
+                                            {
+                                                <option value="@item.ToString()">@item.ToString()</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr><td colspan="8" style="height:8px;">&nbsp;</td></tr>
+                                <tr>
+                                    <td style="width:90px;"><div class="editor-label">Barra:</div></td>
+                                    <td>
+                                        <select id="barrcodi" multiple="multiple">
+                                            @foreach (var item in Model.ListaBarras)
+                                            {
+                                                <option value="@item.BarrCodi">@item.BarrNombre </option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:20px;">&nbsp;</td>
+                                    <td style="width:110px;"><div class="editor-label">Barra flujo óptimo:</div></td>
+                                    <td>
+                                        <select id="barrcodifco" multiple="multiple">
+                                            @foreach (var item in Model.ListaBarras)
+                                            {
+                                                <option value="@item.BarrCodi">@item.BarrNombre </option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:20px;">&nbsp;</td>
+                                    <td style="width:120px;"><div class="editor-label">Calidad:</div></td>
+                                    <td>
+                                        <select id="pegrmicalidad" name="pegrmicalidad">
+                                            <option value=""></option>
+                                            @foreach (var item in Model.ListaCalidad)
+                                            {
+                                                <option value="@item.ToString()" @sSelected>@item.ToString()</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr><td colspan="8" style="height:8px;">&nbsp;</td></tr>
+                                <tr>
+                                    <td colspan="8" style="text-align:right">
+                                        @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                                        {<div style="text-align:center">
+                                                <input type="button" id="btnConsultarVista" value="Consultar" />&nbsp; &nbsp; &nbsp; &nbsp;
+                                                <input type="button" id="btnDescargarExcelConsulta" value="Descargar Excel" />&nbsp; &nbsp; &nbsp; &nbsp;
+                                                <input type="button" id="btnDescargarPdfConsulta" value="Descargar Pdf" />
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
+            </table>
+
+        </div>
+        <div id="grillaExcelConsulta" style="height:auto; position:relative; left:-150px;" class="handsontable"></div>
+    </div>
+</div>
+<div id="popup">   </div>
+
+<!-- Botón flotante de WhatsApp -->
+<a href="https://wa.me/51905469444" class="wsp" target="_blank" title="¿Necesitas ayuda? Escríbenos por WhatsApp">
+    <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp">
+</a>
+
+<style>
+    .wsp {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        cursor: pointer;
+        border-radius: 50%;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+    }
+
+        .wsp:hover {
+            transform: scale(1.1);
+        }
+
+        .wsp img {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+        }
+</style>

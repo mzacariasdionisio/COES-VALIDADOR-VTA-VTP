@@ -1,0 +1,245 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.FTAdministradorModel
+@{
+    ViewBag.Title = "Reporte de Cumplimiento";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTReporte/reporteCumplimiento.js?v=1.1.4"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTReporte/index_ampliacion.js?v=1.1.4"></script>
+<link href="~/Areas/Equipamiento/Content/Css/principal.css?v=1.1.4" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Reporte de Cumplimiento </div>   
+</div>
+
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+
+    <input type="hidden" id="hfEmpresaAdmin" />
+    <input type="hidden" id="hfEmpresaAreas" />
+    <input type="hidden" id="hfEmpresaAmpliaciones" />
+
+    <div id="tab-container" class='tab-container' style=" padding-top: 15px;">
+        <ul class='etabs'>
+            <li class='tab'><a href="#tabAdminFT">Cumplimiento de Plazos de envíos de Ficha Técnica</a></li>
+            <li class='tab'><a href="#tabAreas">Seguimiento a respuestas de áreas</a></li>
+            <li class='tab'><a href="#tabAmpliacion">Ampliaciones de plazo</a></li>
+        </ul>
+        <div class='panel-container'>
+
+            <div id="tabAdminFT">
+
+                <div style="padding-bottom: 20px">
+                    <input style="float: right;" type="button" id="btnExpotarAdmin" value="Exportar" />
+                    <input style="float: right;" type="button" id="btnBuscarAdmin" value="Buscar" />
+
+                </div>
+                <div class="search-content" style="margin-top: 15px;">
+                    <table class="content-tabla-search" style="">
+                        <tr>
+                            <td class="celda-item" style="width: 55px;">Empresa:</td>
+                            <td id="CajaPrincipal" style="width: 180px;">
+                                <select id="cbEmpresaAdmin" name="IdEmpresa" multiple="multiple" title="Escoja las empresas de los envíos que serán tomados en cuenta en el reporte">
+                                    @foreach (var item in Model.ListaEmpresas)
+                                    {
+                                        <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                    }
+                                </select>
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Etapa:</td>
+                            <td style="width: 150px;">
+                                <select id="cbEtapaAdmin" style="width: 150px;" name="IdEtapa" title="Escoja las etapas de los envíos que serán tomados en cuenta en el reporte">
+                                    <option value="-1"> -- TODOS -- </option>
+                                    @foreach (var item in Model.ListaEtapas)
+                                    {
+                                        <option value="@item.Ftetcodi">@item.Ftetnombre</option>
+                                    }
+                                </select>
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 95px;">Nombre Proyecto:</td>
+                            <td style="width: 150px;">
+                                <select id="cbProyectoAdmin" style="width: 200px;" name="IdProyecto" title="Escoja los proyectos de los envíos que serán tomados en cuenta en el reporte">
+                                    <option value="-1"> -- TODOS -- </option>
+                                    @foreach (var item in Model.ListaProyectos)
+                                    {
+                                        <option value="@item.Ftprycodi">@item.Ftprynombre</option>
+                                    }
+                                </select>
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Desde:</td>
+                            <td style="width: 120px;">
+                                <input type="text" id="FechaDesdeAdmin" style="width: 88px;" name="FechaInicio" value="@Model.FechaInicio" title="Escoja el rango inicial de la fecha solicitud de los envíos que serán tomados en cuenta en el  reporte" />
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Hasta:</td>
+                            <td style="width: 120px;">
+                                <input type="text" id="FechaHastaAdmin" style="width: 88px;" name="FechaFin" value="@Model.FechaFin" title="Escoja el rango final de la fecha solicitud de los envíos que serán tomados en cuenta en el reporte" />
+
+                            </td>
+
+
+                        </tr>
+                    </table>
+
+                </div>
+
+
+                <div class="content-tabla">
+
+                    <!--Listado de envios por carpetas-->
+                    <div id="listadoGeneralEnvios">
+
+                        <div id="reporte" style="  ">
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="tabAreas">
+                <div style="padding-bottom: 20px">
+                    <input style="float: right;" type="button" id="btnExpotarAreas" value="Exportar" />
+                    <input style="float: right;" type="button" id="btnBuscarAreas" value="Buscar" />
+
+                </div>
+                <div class="search-content" style="margin-top: 15px;">
+                    <table class="content-tabla-search" style="">
+                        <tr>
+                            <td class="celda-item" style="width: 55px;">Empresa:</td>
+                            <td id="CajaPrincipalAreas" style="width: 150px;">
+                                <select id="cbEmpresaAreas" style="width: 270px;" name="IdEmpresaAreas" multiple="multiple" title="Escoja las empresas de los envíos que serán tomados en cuenta en el reporte">
+                                    @foreach (var item in Model.ListaEmpresas)
+                                    {
+                                        <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                    }
+                                </select>
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Etapa:</td>
+                            <td style="width: 150px;">
+                                <select id="cbEtapaAreas" style="width: 150px;" name="" title="Escoja las etapas de los envíos que serán tomados en cuenta en el reporte">
+                                    <option value="-1"> -- TODOS -- </option>
+                                    @foreach (var item in Model.ListaEtapas)
+                                    {
+                                        <option value="@item.Ftetcodi">@item.Ftetnombre</option>
+                                    }
+                                </select>
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 165px;">Nombre Proyecto:</td>
+                            <td style="width: 150px;">
+                                <select id="cbProyectoAreas" style="width: 160px;" name="" title="Escoja los proyectos de los envíos que serán tomados en cuenta en el reporte">
+                                    <option value="-1"> -- TODOS -- </option>
+                                    @foreach (var item in Model.ListaProyectos)
+                                    {
+                                        <option value="@item.Ftprycodi">@item.Ftprynombre</option>
+                                    }
+                                </select>
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Área:</td>
+                            <td style="width: 100px;">
+                                <select id="cbAreaAreas" style="width: 100px;" name="" title="Escoja las áreas presentes en los envíos que serán tomados en cuenta en el reporte">
+                                    <option value="-1"> -- TODOS -- </option>
+                                    @foreach (var item in Model.ListaAreas)
+                                    {
+                                        <option value="@item.Faremcodi">@item.Faremnombre</option>
+                                    }
+                                </select>
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Desde:</td>
+                            <td style="width: 120px;">
+                                <input type="text" id="FechaDesdeAreas" style="width: 88px;" name="" value="@Model.FechaInicio" title="Escoja el rango inicial de la fecha solicitud de los envíos que serán tomados en cuenta en el  reporte" />
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Hasta:</td>
+                            <td style="width: 120px;">
+                                <input type="text" id="FechaHastaAreas" style="width: 88px;" name="" value="@Model.FechaFin" title="Escoja el rango final de la fecha solicitud de los envíos que serán tomados en cuenta en el reporte" />
+                            </td>
+
+                        </tr>
+                    </table>
+
+                </div>
+
+
+                <div class="content-tabla">
+
+                    <!--Listado de envios por carpetas-->
+                    <div id="listadoGeneralEnviosAreas">
+
+                        <div id="reporteAreas" style="  ">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabAmpliacion">
+                <div style="padding-bottom: 20px">
+                    <input style="float: right;" type="button" id="btnExpotarAmpliaciones" value="Exportar" />
+                    <input style="float: right;" type="button" id="btnBuscarAmpliaciones" value="Buscar" />
+
+                </div>
+                <div class="search-content" style="margin-top: 15px;">
+                    <table class="content-tabla-search" style="">
+                        <tr>
+                            <td class="celda-item" style="width: 55px;">Empresa:</td>
+                            <td id="CajaPrincipalAmpliaciones" style="width: 150px;">
+                                <select id="cbEmpresaAmpliaciones" style="width: 270px;" name="IdEmpresaAmpliaciones" multiple="multiple" title="Escoja las empresas de los envíos que serán tomados en cuenta en el reporte">
+                                    @foreach (var item in Model.ListaEmpresas)
+                                    {
+                                        <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                    }
+                                </select>
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Etapa:</td>
+                            <td style="width: 150px;">
+                                <select id="cbEtapaAmpliaciones" style="width: 150px;" name="" title="Escoja las etapas de los envíos que serán tomados en cuenta en el reporte">
+                                    <option value="-1"> -- TODOS -- </option>
+                                    @foreach (var item in Model.ListaEtapas)
+                                    {
+                                        <option value="@item.Ftetcodi">@item.Ftetnombre</option>
+                                    }
+                                </select>
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Desde:</td>
+                            <td style="width: 120px;">
+                                <input type="text" id="FechaDesdeAmpliaciones" style="width: 88px;" name="" value="@Model.FechaInicio" title="Escoja el rango inicial de la fecha solicitud de los envíos que serán tomados en cuenta en el  reporte" />
+                            </td>
+                            <td class="celda-item" style="padding-left: 15px; width: 35px;">Hasta:</td>
+                            <td style="width: 120px;">
+                                <input type="text" id="FechaHastaAmpliaciones" style="width: 88px;" name="" value="@Model.FechaFin" title="Escoja el rango final de la fecha solicitud de los envíos que serán tomados en cuenta en el reporte" />
+                            </td>
+
+                        </tr>
+                    </table>
+
+                </div>
+
+
+                <div class="content-tabla">
+
+                    <!--Listado de envios por carpetas-->
+                    <div id="listadoGeneralAmpliaciones">
+
+                        <div id="listadoEnvios" style="  ">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+</div>
+
+
+

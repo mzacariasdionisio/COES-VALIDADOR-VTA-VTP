@@ -1,0 +1,1575 @@
+﻿@model COES.MVC.Intranet.Areas.Transferencias.Models.CodigoRetiroModel
+@using COES.MVC.Intranet.Areas.Transferencias.Helper
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css?v=4" rel="stylesheet" />
+<script src="~/Areas/Transferencias/Content/Scripts/jquery.validate.js"></script>
+
+@Html.AntiForgeryToken()
+
+@{
+    ViewBag.Title = "Transferencias - Lista de solicitud de retiros";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var disabled = new { disabled = "disabled", @readonly = "readonly" };
+
+
+}
+
+<style>
+    .error-hide {
+        display: none
+    }
+
+    .error-show {
+        display: block
+    }
+</style>
+@using (Html.BeginForm("Edit", "GestionCodigosVTEAVTP", FormMethod.Post, new { id = "frmCodigoRetiro", @class = "cmxform" }))
+{
+    <span style="display:none" id="lblTotalPotencias">@Model.Entidad.ListaPotenciaContratadas.Count</span>
+
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.Entidad.SoliCodiRetiCodi)
+    @Html.HiddenFor(m => m.Entidad.EstAbrev)
+    @Html.HiddenFor(m => m.Entidad.EstApr)
+    @Html.HiddenFor(m => m.Entidad.EmprCodi)
+    @Html.HiddenFor(m => m.Entidad.CliCodi)
+    @Html.HiddenFor(m => m.Entidad.BarrCodi)
+    @Html.HiddenFor(m => m.Entidad.TrnpcTipoPotencia)
+    @Html.HiddenFor(m => m.Entidad.PeridcCodi)
+    @Html.HiddenFor(m => m.Entidad.esPrimerRegistro)
+    @Html.Hidden("hdnSoliCodiRetiCodigo", Model.Entidad.SoliCodiRetiCodigo, new { @id = "hdnSoliCodiRetiCodigo" })
+    @Html.Hidden("NroPagina")
+
+    <div class="ast">
+        <div class="form-title">
+            <div class="content-titulo">Relación de barras</div>
+            <div class="content-botonera">
+            </div>
+        </div>
+
+        <div class="erroneo mensajes" id="frmCodigoRetiro_error"></div>
+        <div class="exito mensajes" id="frmCodigoRetiro_info"></div>
+
+        <div class="content-hijo form">
+            <div class="content-busqueda ">
+                <div class="popup-title">
+                    <span>
+                        Datos Comunes
+                        @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                        {
+                            <span>- Solicitud de Cambio de Potencias Contratadas.</span>
+                        }
+
+                    </span>
+                </div>
+                <table class="form-header-secondary" border="0" cellpadding="5" cellspacing="2" style="width: 100%;">
+
+                    <tr class="form-table-body">
+                        <td><div class="editor-label titulo">Empresa</div></td>
+                        <td><div class="editor-label titulo">Cliente</div></td>
+                        <td><div class="editor-label titulo">RUC Cliente</div></td>
+                        <td style="width:90px"><div class="editor-label titulo">Tipo Contrato</div></td>
+                        <td><div class="editor-label titulo">Usuario</div></td>
+                        <td><div class="editor-label titulo">Fecha Inicio</div></td>
+                        <td><div class="editor-label titulo">Fecha Fin</div></td>
+                    </tr>
+                    <tr>
+                        <td><div class="editor-field input-data">@Html.TextBoxFor(m => m.Entidad.EmprNombre, new { @readonly = "readonly" }) </div></td>
+                        <td><div class="editor-field input-data">  @Html.TextBoxFor(m => m.Entidad.CliNombre, new { @readonly = "readonly" }) </div></td>
+                        <td style="width:100px"><div class="editor-field input-data">  @Html.TextBoxFor(m => m.Entidad.CliRuc, new { @readonly = "readonly" }) </div></td>
+                        <td style="width:140px">
+                            <div class="editor-field ">
+                                @Html.TextBoxFor(m => m.Entidad.TipoContNombre, new { @readonly = "readonly" })
+                            </div>
+                        </td>
+                        <td style="width:140px"><div class="editor-field input-data">@Html.TextBoxFor(m => m.Entidad.TipoUsuaNombre, new { @readonly = "readonly" })</div></td>
+                        <td style="width:110px"><div class="editor-field input-data">@Html.TextBoxFor(m => m.Solicodiretifechainicio, new { @readonly = "readonly", @Value = Model.Entidad.SoliCodiRetiFechaInicio.Value.ToString("dd/MM/yyyy") }) </div></td>
+                        <td style="width:110px">
+                            <div class="editor-field input-data">
+                                @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                {
+                                    @Html.TextBoxFor(m => m.Solicodiretifechafin, new { @readonly = "readonly", @Value = Model.Entidad.SoliCodiRetiFechaFin.Value.ToString("dd/MM/yyyy") })
+                                }
+                                else
+                                {
+                                    @Html.TextBoxFor(m => m.Solicodiretifechafin, new { 
+                                            @class = "txtFecha",
+                                            @style = "width:110px;",
+                                            @Value = Model.Entidad.SoliCodiRetiFechaFin.Value.ToString("dd/MM/yyyy") })
+                               }
+
+                            </div>
+                        </td>
+
+                    </tr>
+
+
+                </table>
+
+                <table style="width:100%">
+                    <tr>
+                        <td style="width:47%" valign="top">
+                            <div class="popup-title"><span>Datos LVTEA</span></div>
+                            <div style="clear:both; height:20px"></div>
+
+                            <div class="content-registro">
+                                <table>
+                                    <tr>
+                                        <td style="padding-right:30px" class="registro-label">
+                                            Barra de transferencia:
+                                        </td>
+
+                                        <td class="registro-control">
+                                            @Html.TextBoxFor(m => m.Entidad.BarrNombBarrTran, new { @readonly = "readonly" })
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-right:30px" class="registro-label">
+                                            Código:
+                                        </td>
+
+                                        <td class="registro-control">
+                                            @if (ConstantesGestionCodigosVTEAVTP.PendienteAprobacionVTP == Model.Entidad.EstAbrev)
+                                        {
+                                            @Html.TextBoxFor(m => m.Entidad.SoliCodiRetiCodigo, new { @class = "bg-color-secondary", @readonly = "readonly" })
+
+                                            }
+                                            else
+                                            {
+
+                                                if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                {
+                                                    @Html.TextBoxFor(m => m.Entidad.SoliCodiRetiCodigo, new { @class = "bg-color-secondary", @readonly = "readonly" })
+                                                }
+                                                else
+                                    {
+                                        @Html.TextBoxFor(m => m.Entidad.SoliCodiRetiCodigo, new { @class = "bg-color-secondary" })
+                                                }
+                                            }
+                                            <span class="error-field">
+                                                @Html.ValidationMessageFor(model => model.Entidad.SoliCodiRetiCodigo)
+                                            </span>
+
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="registro-label">Descripción:</td>
+
+                                        <td class="registro-control">
+                                            @Html.TextAreaFor(m => m.Entidad.SoliCodiRetiDescripcion, new
+                                            {
+                                                @readonly = "readonly",
+                                                @style = "width:270px; height:40px"
+                                            })
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="registro-label">Mayor detalle:</td>
+
+                                        <td class="registro-control">
+                                            @Html.TextAreaFor(m => m.Entidad.SoliCodiRetiDetalleAmplio, new
+                                            {
+                                                @readonly = "readonly",
+                                                @style = "width:270px; height:40px"
+                                            })
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </div>
+
+
+                        </td>
+                        <td style="width:6%"></td>
+                        <td style="width:47%" valign="top">
+                            @*<table cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td>
+                                            <input type="radio" />Contrato por Potencia y Energía
+
+                                        </td>
+                                        <td style="width:20px"></td>
+                                        <td>
+                                            <input type="radio" />Contrato solo de Energía
+                                        </td>
+                                    </tr>
+                                </table>*@
+                            <div style="clear:both;height:10px"></div>
+
+                            <div class="popup-title"><span>Datos LVTP</span></div>
+                            <div style="clear:both; height:20px"></div>
+                            <table class=" tabla-adicional tabla-icono pretty" id="tableVTP">
+                                <thead>
+                                    <tr>
+                                        <th>BARRA DE SUMINISTRO</th>
+                                        <th>CÖDIGO</th>
+                                        @if (Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.Activo
+                                                      || Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.Baja
+                                                      || Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.SolicitudBaja)
+                                        {
+                                            <th>Estado</th>
+                                            if (Model.Entidad.EstAbrev != ConstantesGestionCodigosVTEAVTP.Baja
+                                                 && Model.Entidad.EstAbrev != ConstantesGestionCodigosVTEAVTP.SolicitudBaja)
+                                            {
+                                                <th>Quitar</th>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <th>NRO REGISTROS</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.Pendiente
+                                        || Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.PendienteAprobacionVTP
+                                          || Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.Rechazado)
+                                    {
+                                        if (Model.Entidad.ListarBarraDetalle != null && Model.Entidad.ListarBarraDetalle.Count > 0)
+                                        {
+                                            foreach (var itemBarrTra in Model.Entidad.ListarBarraDetalle)
+                                            {
+                                                <tr>
+                                                    <td>@itemBarrTra.BarrNombreSuministro</td>
+                                                    <td>@Html.TextBox(string.Format("{0}_{1}", itemBarrTra.CoresdcCodi, itemBarrTra.BarrCodiSum), "", new { @class = "bg-color-secondary", @style = "width:100%", @readonly = "readonly" })</td>
+                                                    <td>@itemBarrTra.coresdRegistros</td>
+                                                </tr>
+                                            }
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        if (Model.Entidad.ListarBarraSuministro != null)
+                                        {
+
+
+                                            foreach (var itemBarrTra in Model.Entidad.ListarBarraSuministro)
+                                            {
+                                                string classNuevo = itemBarrTra.EstdAbrev == ConstantesGestionCodigosVTEAVTP.Pendiente ? "enviar" : "";
+
+                                                <tr data-row-id="@itemBarrTra.CoregeCodi" data-row-idsum="@itemBarrTra.BarrCodiSum">
+                                                    <td>@itemBarrTra.BarrNombre</td>
+                                                    <td>@Html.TextBox(string.Format("{0}_{1}", itemBarrTra.CoregeCodi, itemBarrTra.BarrCodiSum), "", new { @Value = itemBarrTra.CoregeCodVTP, @class = "bg-color-secondary", @style = "width:100%", @readonly = "readonly" })</td>
+                                                    <td data-row-name="EstdDescripcion">@itemBarrTra.EstdDescripcion</td>
+
+                                                    @if (Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.Activo
+                                                        || Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.SolicitudBaja
+                                                        || Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.Baja
+                                                      )
+                                                    {
+                                                        if (Model.Entidad.EstAbrev != ConstantesGestionCodigosVTEAVTP.Baja
+                                                           && Model.Entidad.EstAbrev != ConstantesGestionCodigosVTEAVTP.SolicitudBaja)
+                                                        {
+
+                                                            <td data-row-estado="@itemBarrTra.EstdAbrev" class="@classNuevo">
+                                                                @if (!string.IsNullOrEmpty(itemBarrTra.CoregeCodVTP)
+                                                                    && (itemBarrTra.EstdAbrev == ConstantesGestionCodigosVTEAVTP.Activo
+                                                                    || itemBarrTra.EstdAbrev == ConstantesGestionCodigosVTEAVTP.SolicitudBaja))
+                                                                {
+                                                                    if (Model.Entidad.EstAbrev != ConstanteEstados.SolicitudBaja)
+                                                                    {
+                                                                        if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                                        {
+
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <a href="javascript:void(0)" class="baja"><img src="@Url.Content("~/Content/Images/btn-baja.png")" title="Dar de Baja" alt="Dar de Baja" /></a>
+                                                                        }
+
+                                                                    }
+
+
+                                                                    if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                                    {
+
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <a href="javascript:void(0)" class="rehacer" style="display:none" data-row-estadoDescripcion="@itemBarrTra.EstdDescripcion" data-row-estado="@itemBarrTra.EstdAbrev"><img src="@Url.Content("~/Content/Images/Clean.png")" title="Rehacer" alt="Rehacer" /></a>
+                                                                    }
+
+
+                                                                }
+                                                            </td>
+                                                        }
+
+                                                    }
+
+                                                </tr>
+                                            }
+                                        }
+
+                                    }
+                                </tbody>
+                                <tfoot>
+
+                                    @if (Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.Activo)
+                                    {
+                                        <tr style="padding-top:20px">
+                                            <td>
+                                                @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                {
+
+                                                }
+                                                else
+                                                {
+                                                    @Html.DropDownList("BARRSUMI2", "--Seleccione--")
+                                                }
+                                            </td>
+                                            <td colspan="3">
+                                                @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                {
+
+                                                }
+                                                else
+                                                {
+                                                    <input type="button" value="Agregar suministro" id="btnAgregarSuministro" />
+                                                }
+                                            </td>
+                                        </tr>
+
+                                    }
+                                </tfoot>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="search-content" style="margin-bottom:0px; padding:10px;margin-top:10px">
+                    <table class="content-tabla-search" style="width:100%">
+                        <tr>
+
+                            <td>
+                                Estado:
+                            </td>
+                            <td>
+                                @Html.TextBoxFor(m => m.Entidad.EstDescripcion, new { @style = "width:100%", @readonly = "readonly" })
+
+                            </td>
+                            <td>
+                                Usuario Registro:
+                            </td>
+                            <td>
+                                @Html.TextBoxFor(m => m.Entidad.Seinusername, new { @readonly = "readonly" })
+                            </td>
+                            <td>
+                                Fecha Registro:
+                            </td>
+                            <td>
+                                @Html.TextBoxFor(m => m.Entidad.SoliCodiRetiFechaRegistro, new { @Value = Model.Entidad.SoliCodiRetiFechaRegistro.ToString("dd/MM/yyyy"), @readonly = "readonly" })
+                            </td>
+                            @if (Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.Activo)
+                            {
+                                <td style="display:none">
+                                    %Variación:
+                                </td>
+                                <td>
+                                    @Html.TextBoxFor(m => m.Entidad.Variacion, new { @class = "numeroDecimal", @pattern = @"^\d*(\.\d{0,2})?$", @placeholder = "Ingresar Variación", @style = "display:none" })
+                                    <span class="error-field">
+                                        @Html.ValidationMessageFor(model => model.Entidad.Variacion)
+                                    </span>
+                                </td>
+                            }
+                        </tr>
+                    </table>
+                </div>
+                <div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                                    <!--<table cellspacing="2" cellpadding="5">
+                                        <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                            <td colspan="2">Datos de Potencias Contratadas</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">
+                                                <div class="editor-label  " style="display:inline-block">
+                                                    <label for="rdbNivelCargaPotenciaTransferencia">
+                                                        @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                        {
+                                                            @Html.RadioButtonFor(m => m.Entidad.TrnpcTipoCasoAgrupado, "AGRVTA", new { @id = "rdbNivelCargaPotenciaTransferencia", @disabled = "true" })
+                                                        }
+                                                        else
+                                                        {
+                                                            @Html.RadioButtonFor(m => m.Entidad.TrnpcTipoCasoAgrupado, "AGRVTA", new { @id = "rdbNivelCargaPotenciaTransferencia", @disabled = "" })
+                                                        }
+
+                                                        <span>Potencia contratada a nivel de barra transferencia</span>
+                                                    </label>
+                                                </div>
+                                                <div class="editor-label inline" style="display:inline-block">
+                                                    <label for="rdbNivelCargaPotenciaSuministro">
+                                                        @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                        {
+                                                            @Html.RadioButtonFor(m => m.Entidad.TrnpcTipoCasoAgrupado, "AGRVTP", new { @id = "rdbNivelCargaPotenciaSuministro", @disabled = "disabled" })
+                                                        }
+                                                        else
+                                                        {
+                                                            @Html.RadioButtonFor(m => m.Entidad.TrnpcTipoCasoAgrupado, "AGRVTP", new { @id = "rdbNivelCargaPotenciaSuministro" })
+                                                        }
+
+                                                        <span>Potencia contratada a nivel de barras de suministros</span>
+                                                    </label>
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2" data-for-potencia="AGRVTA" style="display:none">
+                                                <table width="100%" class="table-potencia-form" cellpadding="3" cellspacing="0" id="tblAgrvVTA">
+                                                    <tr>
+                                                        <td class="width-potencia-label">
+                                                            <div class="editor-label">
+                                                                <span>Pot.Contratada Fija H.P</span><span>(*)</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="editor-field disabled">
+                                                                @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctHpmwFija, new { @class = "numeroDecimal", @maxlength = "10", @readonly = "readonly" })
+                                                                }
+                                                                else
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctHpmwFija, new { @class = "numeroDecimal", @maxlength = "10" })
+                                                                }
+
+                                                                @Html.ValidationMessageFor(model => model.Entidad.TrnPctHpmwFija)
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="width-potencia-label">
+                                                            <div class="editor-label">
+                                                                <span>Pot.Contratada Fija H.F.P</span><span>(*)</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="editor-field disabled">
+                                                                @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctHfpmwFija, new { @class = "numeroDecimal", @maxlength = "10", @readonly = "readonly" })
+                                                                }
+                                                                else
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctHfpmwFija, new { @class = "numeroDecimal", @maxlength = "10" })
+                                                                }
+                                                                @Html.ValidationMessageFor(model => model.Entidad.TrnPctHfpmwFija)
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="width-potencia-label">
+                                                            <div class="editor-label">
+                                                                <span>Total Fija</span><span>(*)</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="editor-field disabled">
+                                                                @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctTotalmwFija, new { @class = "numeroDecimal", @maxlength = "10", @readonly = "readonly" })
+                                                                }
+                                                                else
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctTotalmwFija, new { @class = "numeroDecimal", @maxlength = "10" })
+                                                                }
+                                                                @Html.ValidationMessageFor(model => model.Entidad.TrnPctTotalmwFija)
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td class="width-potencia-label">
+                                                            <div class="editor-label">
+                                                                <span>Pot.Contratada Var H.P</span><span>(*)</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="editor-field disabled">
+                                                                @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctHpmwFijaVariable, new { @class = "numeroDecimal", @maxlength = "10", @readonly = "readonly" })
+                                                                }
+                                                                else
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctHpmwFijaVariable, new { @class = "numeroDecimal", @maxlength = "10" })
+                                                                }
+                                                                @Html.ValidationMessageFor(model => model.Entidad.TrnPctHpmwFijaVariable)
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td class="width-potencia-label">
+                                                            <div class="editor-label">
+                                                                <span>Pot.Contratada Var H.F.P</span><span>(*)</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="editor-field disabled">
+                                                                @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctHfpmwFijaVariable, new { @class = "numeroDecimal", @maxlength = "10", @readonly = "readonly" })
+                                                                }
+                                                                else
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctHfpmwFijaVariable, new { @class = "numeroDecimal", @maxlength = "10" })
+                                                                }
+                                                                @Html.ValidationMessageFor(model => model.Entidad.TrnPctHfpmwFijaVariable)
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="width-potencia-label">
+                                                            <div class="editor-label">
+                                                                <span>Total Var</span><span>(*)</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="editor-field disabled">
+                                                                @if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctTotalmwVariable, new { @class = "numeroDecimal", @maxlength = "10", @readonly = "readonly" })
+                                                                }
+                                                                else
+                                                                {
+                                                                    @Html.TextBoxFor(model => model.Entidad.TrnPctTotalmwVariable, new { @class = "numeroDecimal", @maxlength = "10" })
+                                                                }
+                                                                @Html.ValidationMessageFor(model => model.Entidad.TrnPctTotalmwVariable)
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+
+                                            <td colspan="2" data-for-potencia="AGRVTP" style="display:none">
+                                                <table width="100%" class="pretty tabla-icono thead-fixed" id="tblAgrvtp">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>BARRA SUMINISTRO</th>
+                                                            <th>Pot.Contr. Fija H.P(MW)</th>
+                                                            <th>Pot.Contr. Fija H.F.P(MW)</th>
+                                                            <th>Tot.Fija</th>
+                                                            <th>Pot.Contr. Var.H.P(MW)</th>
+                                                            <th>Pot.Contr. Var.H.F.P(MW)</th>
+                                                            <th>Tot.Variable</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @{
+
+
+                                                            if (Model.Entidad.TrnpcTipoCasoAgrupado == "AGRVTP")
+                                                            {
+
+                                                                foreach (var item in Model.Entidad.ListaPotenciaContratadas)
+                                                                {
+                                                                    <tr data-id-generado="@item.CoregeCodi">
+                                                                        <td>
+                                                                            @item.BarrSuministro
+                                                                        </td>
+                                                                        <td>
+                                                                            <div class="editor-field disabled">
+                                                                                <input type="text" class="numeroDecimal"
+                                                                                       maxlength="10" style='width:85px;margin:2px'
+                                                                                       value="@item.TrnPctHpMwFija" />
+                                                                                <span class="error error-hide">*</span>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td>
+                                                                            <div class="editor-field disabled">
+                                                                                <input type="text" class="numeroDecimal"
+                                                                                       maxlength="10" style='width:85px;margin:2px'
+                                                                                       value="@item.TrnPctHfpMwFija" />
+                                                                                <span class="error error-hide">*</span>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td>
+                                                                            <div class="editor-field disabled">
+                                                                                <input type="text" class="numeroDecimal"
+                                                                                       maxlength="10" style='width:85px;margin:2px'
+                                                                                       value="@item.TrnPctTotalMwFija" />
+                                                                                <span class="error error-hide">*</span>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td>
+                                                                            <div class="editor-field disabled">
+                                                                                <input type="text" class="numeroDecimal"
+                                                                                       maxlength="10" style='width:85px;margin:2px'
+                                                                                       value="@item.TrnPctHpMwFijaVariable" />
+                                                                                <span class="error error-hide">*</span>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td>
+                                                                            <div class="editor-field disabled">
+                                                                                <input type="text" class="numeroDecimal"
+                                                                                       maxlength="10" style='width:85px;margin:2px'
+                                                                                       value="@item.TrnPctHfpMwFijaVariable" />
+                                                                                <span class="error error-hide">*</span>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td>
+                                                                            <div class="editor-field disabled">
+                                                                                <input type="text" class="numeroDecimal"
+                                                                                       maxlength="10" style='width:85px;margin:2px'
+                                                                                       value="@item.TrnPctTotalMwVariable" />
+                                                                                <span class="error error-hide">*</span>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                        }
+                                                    </tbody>
+
+                                                </table>
+                                            </td>
+                                        </tr>
+
+                                    </table>-->
+                                </div>
+                            </td>
+                        </tr>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" style=" padding-top: 10px; padding-bottom: 10px; background: white; color: #989494;">
+                                    <b>Nota:</b>
+                                    <span class="mensaje-pie">
+                                        Ingresar los datos de potencias contratadas una vez seleccionado si será a Nivel de Barra de Transferencia o a Nivel de Barra de Suministro.
+                                    </span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div style="width:450px; margin:10px auto">
+                    <table>
+                        <tr>
+                            <td>
+                                @if (Model.Entidad.EstAbrev != ConstantesGestionCodigosVTEAVTP.Baja
+                                    && Model.Entidad.EstAbrev != ConstantesGestionCodigosVTEAVTP.Rechazado
+                                    && Model.Entidad.EstAbrev != ConstantesGestionCodigosVTEAVTP.SolicitudBaja
+                                    && Model.Entidad.PeridcEstado == "ABI"
+                                    )
+                                {
+                                    if (Model.Entidad.EstAbrev == ConstantesGestionCodigosVTEAVTP.Activo)
+                                    {
+                                        if (Model.Entidad.EstApr == ConstantesEstadoSolicitudCambio.Pendiente)
+                                        {
+                                            <input type="button" value="Aprobar Solicitud de Cambio" id="btnAprobarSolicitudCambio" />
+                                            <input type="button" value="Rechazar Solicitud de Cambio" id="btnRechazarSolicitudCambio" />
+                                        }
+                                        else
+                                        {
+                                            <input type="button" value="Grabar" id="btnGrabarCambios" />
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        <input type="submit" value="Aprobar solicitud" id="btnAprobarSolicitud" />
+                                        <input type="button" value="Rechazar solicitud" id="btnRechazado" />
+                                    }
+
+                                }
+
+                                <input type="button" value="Cancelar" id="btnCancelar" />
+
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div id="popup" style="min-height:40px"></div>
+}
+
+<script>
+    var objTablaDetalle = new tablaDetalle();
+    var arrayNuevos = [];
+    var estadoActual = $('#Entidad_EstAbrev').val();
+    var estadoAprobacion = $('#Entidad_EstApr').val();
+    var estados = {
+        "ACT": "ACTIVO",
+        "BAJ": "BAJA"
+    }
+    $('.txtFecha').Zebra_DatePicker({
+    });
+
+
+
+    $('#frmCodigoRetiro_error').hide();
+    $('#frmCodigoRetiro_info').hide();
+    $.validator.setDefaults({
+        ignore: ".ignore"
+    });
+    var controler = siteRoot + "transferencias/GestionCodigosVTEAVTP/";
+
+    $("#frmCodigoRetiro").validate({
+        rules: {
+            "Entidad.SoliCodiRetiCodigo": {
+                required: true
+            },
+            "Entidad.TrnPctHpmwFija": {
+                required: true,
+            }, "Entidad.TrnPctHfpmwFija": {
+                required: true,
+            }, "Entidad.TrnPctTotalmwFija": {
+                required: true,
+            }, "Entidad.TrnPctHpmwFijaVariable": {
+                required: true,
+            }, "Entidad.TrnPctHfpmwFijaVariable": {
+                required: true,
+            }, "Entidad.TrnPctTotalmwVariable": {
+                required: true,
+            }
+            //"Entidad.Variacion": {
+            //    required: $('#Entidad_EstAbrev').val() == 'ACT' ? true : false
+            //}
+        }
+    });
+
+    //if ($('#tblAgrvtp tbody tr').length == 0 && $('#rdbNivelCargaPotenciaSuministro').is(':checked')) {
+    //    objTablaDetalle.agregarFilasOfBarraExistente();
+    //}
+    //Selecciona los codigos
+    $('#tableVTP tbody > tr > td a.baja').click((event) => {
+        var target = event.currentTarget;
+        var estado = $(target).attr('data-row-estado');
+        $(target).next().show();
+        $(target).hide();
+        $(target).parent().addClass('enviar')
+        $(target).parent().attr('data-row-estado', 'BAJ')
+        $(target).parent().parent().find('td[data-row-name="EstdDescripcion" ]').html('Baja')
+    })
+
+    //Selecciona los codigos
+    $('#tableVTP tbody > tr > td a.rehacer').click((event) => {
+        var target = event.currentTarget;
+        var estado = $(target).attr('data-row-estado');
+        var descripcion = $(target).attr('data-row-estadoDescripcion');
+        $(target).hide();
+        $(target).prev().show();
+        $(target).prev().parent().removeClass('enviar')
+        $(target).prev().parent().attr('data-row-estado', estado)
+        $(target).parent().parent().find('td[data-row-name="EstdDescripcion" ]').html(descripcion)
+    })
+
+
+    //Envia servidor
+    $('#frmCodigoRetiro').submit(function (event) {
+
+
+
+
+        event.preventDefault();
+
+        var error = 0;
+
+        if ($('#rdbNivelCargaPotenciaSuministro').prop('checked')) {
+
+            $('#tblAgrvtp tbody tr input').each((index, target) => {
+                let elementHTML = $(target);
+
+                if (elementHTML.val() == '') {
+                    error++;
+                    elementHTML.next().addClass('error-show');
+                } else {
+                    elementHTML.next().removeClass('error-show');
+                }
+
+            })
+        }
+
+        if ($("#frmCodigoRetiro").valid() && error == 0) {
+            $('#frmCodigoRetiro_error').hide();
+            var serialize = $("#frmCodigoRetiro").serialize();
+            $.ajax({
+                type: 'POST',
+                url: controler + "Edit",
+                data: serialize,
+                dataType: 'JSON',
+                success: function (evt) {
+                    if (evt.EsCorrecto < 1) {
+
+                        switch (parseInt(evt.Data)) {
+                            case -2:
+                                $('#popupZ2').removeAttr('style')
+                                $('#popupZ2').attr('style', 'width:350px;height:220px')
+                                $.ajax({
+                                    type: 'GET',
+                                    data: {
+                                        IdEmpresa: $('#Entidad_EmprCodi').val(),
+                                        nombreEmpresa: $('#Entidad_EmprNombre').val()
+                                    },
+                                    url: controler + "_AddAbreviatura",
+                                    dataType: 'HTML',
+                                    success: function (html) {
+                                        $('#popupZ2').show();
+                                        $('#popupZ2 #contenidoPopup').html(html);
+                                        setTimeout(function () {
+                                            $('#popupZ2').bPopup({
+                                                easing: 'easeOutBack',
+                                                speed: 450,
+                                                transition: 'slideDown'
+                                            });
+                                        }, 50);
+                                    }
+                                })
+
+                                break;
+                            default:
+                                $('#frmCodigoRetiro_error').show();
+                                $('#frmCodigoRetiro_error').html(evt.Mensaje)
+                                break;
+                        }
+                    }
+                    else {
+                        $('#frmCodigoRetiro_info').show();
+                        $('#frmCodigoRetiro_info').html(evt.Mensaje);
+                        //window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=" + $('#NroPagina').val();
+                        window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=1";
+                    }
+                },
+                error: function () {
+                    alert("Lo sentimos, ha ocurrido un error inesperado");
+                }
+            });
+        }
+    })
+
+    $('#btnRechazado').click(function (event) {
+
+        mostrarConfirmacion("¿Estas seguro en rechazar la solicitud?",
+            function () {
+                var serialize = $("#frmCodigoRetiro").serialize();
+                $.ajax({
+                    type: 'POST',
+                    url: controler + "Rechazar",
+                    data: serialize,
+                    dataType: 'JSON',
+                    success: function (evt) {
+                        if (evt.EsCorrecto < 1) {
+                            $('#frmCodigoRetiro_error').show();
+                            $('#frmCodigoRetiro_error').html(evt.Mensaje)
+                        }
+                        else {
+                            $('#frmCodigoRetiro_info').show();
+                            $('#frmCodigoRetiro_info').html(evt.Mensaje);
+                            //window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=" + $('#NroPagina').val();
+                            window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=1";
+                        }
+                    },
+                    error: function () {
+                        alert("Lo sentimos, ha ocurrido un error inesperado");
+                    }
+                });
+            }, "");
+    })
+
+    $('#btnGrabarCambios').click(function (event) {
+        event.preventDefault();
+        var error = 0;
+
+        if ($('#rdbNivelCargaPotenciaSuministro').prop('checked')) {
+
+            $('#tblAgrvtp tbody tr input').each((index, target) => {
+                let elementHTML = $(target);
+
+                if (elementHTML.val() == '') {
+                    error++;
+                    elementHTML.next().addClass('error-show');
+                } else {
+                    elementHTML.next().removeClass('error-show');
+                }
+
+            })
+        }
+
+        if ($("#frmCodigoRetiro").valid() && error == 0) {
+            $('#frmCodigoRetiro_error').hide();
+
+            var serialize = {
+                Solicodiretifechainicio: $('#Solicodiretifechainicio').val(),
+                Solicodiretifechafin: $('#Solicodiretifechafin').val(),
+                entidad: {
+                    EmprCodi: $('#Entidad_EmprCodi').val(),
+                    CliCodi: $('#Entidad_CliCodi').val(),
+                    BarrCodi: $('#Entidad_BarrCodi').val(),
+                    PeridcCodi: $('#Entidad_PeridcCodi').val(),
+                    SoliCodiRetiCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                    Variacion: $('#Entidad_Variacion').val(),
+                    SoliCodiRetiCodigo: $('#Entidad_SoliCodiRetiCodigo').val(),
+                    esPrimerRegistro: $('#Entidad_esPrimerRegistro').val(),
+                    ListarBarraSuministro: []
+                },
+                CodigoAnterior: $('#hdnSoliCodiRetiCodigo').val()
+            }
+
+
+            //$('#tableVTP tbody tr[data-row-id]:not(.nuevo)').each(function (index, element) {
+            $('#tableVTP tbody tr[data-row-id]').each(function (index, element) {
+                //$('#tableVTP tbody tr[data-row-id]:not(.nuevo)').each(function (index, element) {
+                if (!$(element).hasClass('nuevo')) {
+                    let td = $(element).find('td[data-row-estado]');
+                    if (td.hasClass('enviar')) {
+                        var estado = td.attr('data-row-estado');
+                        var id = $(element).attr('data-row-id');
+                        var idSum = $(element).attr('data-row-idsum');
+                        serialize.entidad.ListarBarraSuministro.push({
+                            indexBarra: index,
+                            CoregeCodi: id,
+                            EstdAbrev: estado,
+                            GenemprCodi: $('#Entidad_EmprCodi').val(),
+                            CliemprCodi: $('#Entidad_CliCodi').val(),
+                            BarrCodiTra: $('#Entidad_BarrCodi').val(),
+                            BarrCodiSum: idSum,
+                            CoresoCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                        })
+                    }
+                }
+            })
+
+            let totalRegistroBarra = $('#tableVTP tbody tr[data-row-id]:not(.nuevo)').length;
+
+            arrayNuevos.map((item) => {
+                item.data.indexBarra = totalRegistroBarra;
+                serialize.entidad.ListarBarraSuministro.push(item.data)
+                totalRegistroBarra++;
+            })
+            serialize.entidad.PeridcCodi = $('#Entidad_PeridcCodi').val();
+            serialize.entidad.tipoPotencia = $('[name="Entidad.TrnpcTipoCasoAgrupado"]:checked').val();
+            serialize.entidad.ListaPotenciaSum = objTablaDetalle._enviarTablaServidor();
+            serialize.entidad.ListaPotenciaTran = {
+                CoresoCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                PeriCodi: $('#Entidad_PeridcCodi').val(),
+                TrnPctHpmwFija: $('#Entidad_TrnPctHpmwFija').val(),
+                TrnPctHfpmwFija: $('#Entidad_TrnPctHfpmwFija').val(),
+                TrnPctTotalmwFija: $('#Entidad_TrnPctTotalmwFija').val(),
+                TrnPctHpmwFijaVariable: $('#Entidad_TrnPctHpmwFijaVariable').val(),
+                TrnPctHfpmwFijaVariable: $('#Entidad_TrnPctHfpmwFijaVariable').val(),
+                TrnPctTotalmwVariable: $('#Entidad_TrnPctTotalmwVariable').val()
+            };
+
+
+            $.ajax({
+                type: 'POST',
+                url: controler + "SaveSuministrosAsignados",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(serialize),
+                dataType: 'JSON',
+                success: function (evt) {
+                    if (evt.EsCorrecto < 1) {
+                        $('#frmCodigoRetiro_error').show();
+                        $('#frmCodigoRetiro_error').html(evt.Mensaje)
+                    }
+                    else {
+                        $('#frmCodigoRetiro_info').show();
+                        $('#frmCodigoRetiro_info').html(evt.Mensaje);
+                        //window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=" + $('#NroPagina').val();
+                        window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=1";
+                    }
+                },
+                error: function () {
+                    alert("Lo sentimos, ha ocurrido un error inesperado");
+                }
+            });
+        }
+
+
+    })
+
+
+    $('#btnAprobarSolicitudCambio').click(function (event) {
+        event.preventDefault();
+        var error = 0;
+
+        if ($('#rdbNivelCargaPotenciaSuministro').prop('checked')) {
+
+            $('#tblAgrvtp tbody tr input').each((index, target) => {
+                let elementHTML = $(target);
+
+                if (elementHTML.val() == '') {
+                    error++;
+                    elementHTML.next().addClass('error-show');
+                } else {
+                    elementHTML.next().removeClass('error-show');
+                }
+
+            })
+        }
+
+        if ($("#frmCodigoRetiro").valid() && error == 0) {
+            $('#frmCodigoRetiro_error').hide();
+
+            var serialize = {
+                Solicodiretifechainicio: $('#Solicodiretifechainicio').val(),
+                Solicodiretifechafin: $('#Solicodiretifechafin').val(),
+                entidad: {
+                    EmprCodi: $('#Entidad_EmprCodi').val(),
+                    CliCodi: $('#Entidad_CliCodi').val(),
+                    BarrCodi: $('#Entidad_BarrCodi').val(),
+                    PeridcCodi: $('#Entidad_PeridcCodi').val(),
+                    SoliCodiRetiCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                    Variacion: $('#Entidad_Variacion').val(),
+                    SoliCodiRetiCodigo: $('#Entidad_SoliCodiRetiCodigo').val(),
+                    esPrimerRegistro: $('#Entidad_esPrimerRegistro').val(),
+                    ListarBarraSuministro: []
+                },
+                CodigoAnterior: $('#hdnSoliCodiRetiCodigo').val()
+            }
+
+
+            //$('#tableVTP tbody tr[data-row-id]:not(.nuevo)').each(function (index, element) {
+            $('#tableVTP tbody tr[data-row-id]').each(function (index, element) {
+                //$('#tableVTP tbody tr[data-row-id]:not(.nuevo)').each(function (index, element) {
+                if (!$(element).hasClass('nuevo')) {
+                    let td = $(element).find('td[data-row-estado]');
+                    if (td.hasClass('enviar')) {
+                        var estado = td.attr('data-row-estado');
+                        var id = $(element).attr('data-row-id');
+                        var idSum = $(element).attr('data-row-idsum');
+                        serialize.entidad.ListarBarraSuministro.push({
+                            indexBarra: index,
+                            CoregeCodi: id,
+                            EstdAbrev: estado,
+                            GenemprCodi: $('#Entidad_EmprCodi').val(),
+                            CliemprCodi: $('#Entidad_CliCodi').val(),
+                            BarrCodiTra: $('#Entidad_BarrCodi').val(),
+                            BarrCodiSum: idSum,
+                            CoresoCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                        })
+                    }
+                }
+            })
+
+            let totalRegistroBarra = $('#tableVTP tbody tr[data-row-id]:not(.nuevo)').length;
+
+            arrayNuevos.map((item) => {
+                item.data.indexBarra = totalRegistroBarra;
+                serialize.entidad.ListarBarraSuministro.push(item.data)
+                totalRegistroBarra++;
+            })
+            serialize.entidad.PeridcCodi = $('#Entidad_PeridcCodi').val();
+            serialize.entidad.tipoPotencia = $('[name="Entidad.TrnpcTipoCasoAgrupado"]:checked').val();
+            serialize.entidad.ListaPotenciaSum = objTablaDetalle._enviarTablaServidor();
+            serialize.entidad.ListaPotenciaTran = {
+                CoresoCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                PeriCodi: $('#Entidad_PeridcCodi').val(),
+                TrnPctHpmwFija: $('#Entidad_TrnPctHpmwFija').val(),
+                TrnPctHfpmwFija: $('#Entidad_TrnPctHfpmwFija').val(),
+                TrnPctTotalmwFija: $('#Entidad_TrnPctTotalmwFija').val(),
+                TrnPctHpmwFijaVariable: $('#Entidad_TrnPctHpmwFijaVariable').val(),
+                TrnPctHfpmwFijaVariable: $('#Entidad_TrnPctHfpmwFijaVariable').val(),
+                TrnPctTotalmwVariable: $('#Entidad_TrnPctTotalmwVariable').val()
+            };
+
+
+            $.ajax({
+                type: 'POST',
+                url: controler + "AprobarSuministrosAsignados",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(serialize),
+                dataType: 'JSON',
+                success: function (evt) {
+                    if (evt.EsCorrecto < 1) {
+                        $('#frmCodigoRetiro_error').show();
+                        $('#frmCodigoRetiro_error').html(evt.Mensaje)
+                    }
+                    else {
+                        $('#frmCodigoRetiro_info').show();
+                        $('#frmCodigoRetiro_info').html(evt.Mensaje);
+                        //window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=" + $('#NroPagina').val();
+                        window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=1";
+                    }
+                },
+                error: function () {
+                    alert("Lo sentimos, ha ocurrido un error inesperado");
+                }
+            });
+        }
+
+
+    });
+
+    $('#btnRechazarSolicitudCambio').click(function (event) {
+        event.preventDefault();
+        var error = 0;
+
+        if ($('#rdbNivelCargaPotenciaSuministro').prop('checked')) {
+
+            $('#tblAgrvtp tbody tr input').each((index, target) => {
+                let elementHTML = $(target);
+
+                if (elementHTML.val() == '') {
+                    error++;
+                    elementHTML.next().addClass('error-show');
+                } else {
+                    elementHTML.next().removeClass('error-show');
+                }
+
+            })
+        }
+
+        if ($("#frmCodigoRetiro").valid() && error == 0) {
+            $('#frmCodigoRetiro_error').hide();
+
+            var serialize = {
+                Solicodiretifechainicio: $('#Solicodiretifechainicio').val(),
+                Solicodiretifechafin: $('#Solicodiretifechafin').val(),
+                entidad: {
+                    EmprCodi: $('#Entidad_EmprCodi').val(),
+                    CliCodi: $('#Entidad_CliCodi').val(),
+                    BarrCodi: $('#Entidad_BarrCodi').val(),
+                    PeridcCodi: $('#Entidad_PeridcCodi').val(),
+                    SoliCodiRetiCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                    Variacion: $('#Entidad_Variacion').val(),
+                    SoliCodiRetiCodigo: $('#Entidad_SoliCodiRetiCodigo').val(),
+                    esPrimerRegistro: $('#Entidad_esPrimerRegistro').val(),
+                    ListarBarraSuministro: []
+                },
+                CodigoAnterior: $('#hdnSoliCodiRetiCodigo').val()
+            }
+
+
+            //$('#tableVTP tbody tr[data-row-id]:not(.nuevo)').each(function (index, element) {
+            $('#tableVTP tbody tr[data-row-id]').each(function (index, element) {
+                //$('#tableVTP tbody tr[data-row-id]:not(.nuevo)').each(function (index, element) {
+                if (!$(element).hasClass('nuevo')) {
+                    let td = $(element).find('td[data-row-estado]');
+                    if (td.hasClass('enviar')) {
+                        var estado = td.attr('data-row-estado');
+                        var id = $(element).attr('data-row-id');
+                        var idSum = $(element).attr('data-row-idsum');
+                        serialize.entidad.ListarBarraSuministro.push({
+                            indexBarra: index,
+                            CoregeCodi: id,
+                            EstdAbrev: estado,
+                            GenemprCodi: $('#Entidad_EmprCodi').val(),
+                            CliemprCodi: $('#Entidad_CliCodi').val(),
+                            BarrCodiTra: $('#Entidad_BarrCodi').val(),
+                            BarrCodiSum: idSum,
+                            CoresoCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                        })
+                    }
+                }
+            })
+
+            let totalRegistroBarra = $('#tableVTP tbody tr[data-row-id]:not(.nuevo)').length;
+
+            arrayNuevos.map((item) => {
+                item.data.indexBarra = totalRegistroBarra;
+                serialize.entidad.ListarBarraSuministro.push(item.data)
+                totalRegistroBarra++;
+            })
+            serialize.entidad.PeridcCodi = $('#Entidad_PeridcCodi').val();
+            serialize.entidad.tipoPotencia = $('[name="Entidad.TrnpcTipoCasoAgrupado"]:checked').val();
+            serialize.entidad.ListaPotenciaSum = objTablaDetalle._enviarTablaServidor();
+            serialize.entidad.ListaPotenciaTran = {
+                CoresoCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                PeriCodi: $('#Entidad_PeridcCodi').val(),
+                TrnPctHpmwFija: $('#Entidad_TrnPctHpmwFija').val(),
+                TrnPctHfpmwFija: $('#Entidad_TrnPctHfpmwFija').val(),
+                TrnPctTotalmwFija: $('#Entidad_TrnPctTotalmwFija').val(),
+                TrnPctHpmwFijaVariable: $('#Entidad_TrnPctHpmwFijaVariable').val(),
+                TrnPctHfpmwFijaVariable: $('#Entidad_TrnPctHfpmwFijaVariable').val(),
+                TrnPctTotalmwVariable: $('#Entidad_TrnPctTotalmwVariable').val()
+            };
+
+
+            $.ajax({
+                type: 'POST',
+                url: controler + "RechazarSuministrosAsignados",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(serialize),
+                dataType: 'JSON',
+                success: function (evt) {
+                    if (evt.EsCorrecto < 1) {
+                        $('#frmCodigoRetiro_error').show();
+                        $('#frmCodigoRetiro_error').html(evt.Mensaje)
+                    }
+                    else {
+                        $('#frmCodigoRetiro_info').show();
+                        $('#frmCodigoRetiro_info').html(evt.Mensaje);
+                        //window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=" + $('#NroPagina').val();
+                        window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=1";
+                    }
+                },
+                error: function () {
+                    alert("Lo sentimos, ha ocurrido un error inesperado");
+                }
+            });
+        }
+
+
+    });
+
+
+    $('#btnAgregarSuministro').click(function () {
+
+
+        if ($('#BARRSUMI2').val() == '') {
+            $('#popup').html('<div class="erroneo mensajes">No ha seleccionado una barra de suministro</div>');
+            setTimeout(function () {
+                $('#popup').bPopup({
+                    easing: 'easeOutBack',
+                    speed: 450,
+                    transition: 'slideDown'
+                });
+            }, 50);
+        } else {
+            var d = new Date();
+            let guid = d.getSeconds().toString() + d.getMilliseconds().toString();
+            guid += d.getTime();
+
+            let tbody = $('#tableVTP tbody');
+            let barraSuministro = $('#BARRSUMI2');
+            let data = {
+                CoregeCodi: 0,
+                EstdAbrev: 'PAP',
+                GenemprCodi: $('#Entidad_EmprCodi').val(),
+                CliemprCodi: $('#Entidad_CliCodi').val(),
+                BarrCodiTra: $('#Entidad_BarrCodi').val(),
+                BarrCodiSum: barraSuministro.val(),
+                coresocodi: $('#Entidad_SoliCodiRetiCodi').val()
+
+            };
+
+            let html = $(`<tr data-row-id="${guid}" class="nuevo" data-row-idsum="${barraSuministro.val()}">
+            <td>${barraSuministro.find('option:selected').text()}</td>
+            <td><input class="bg-color-secondary" style="width:100%" readonly="readonly"/></td>
+            <td data-row-name="EstdDescripcion">Pendiente</td>
+            <td data-row-estado="PAP">
+             <a href="javascript:void(0)" class="quitar"><img src="/Content/Images/Trash.png" title="Quitar" alt="Quitar" /></a>
+            </td></tr>`);
+            html.find('.quitar').click(function (event) {
+                let tr = $(event.currentTarget).parent().parent();
+                let guid = $(event.currentTarget).parent().parent().attr('data-row-id');
+                arrayNuevos.splice(arrayNuevos.findIndex(x => x.guid == guid), 1);
+
+                objTablaDetalle.removeFila(guid, tr.hasClass('nuevo') ? 0 : guid);
+                tr.remove();
+            })
+
+            tbody.append(html);
+            arrayNuevos.push({
+                guid: guid,
+                data: data
+            });
+
+            let idGenerado = guid;
+            $('#tableVTP tbody > tr:last-child').attr('data-id-row', idGenerado)
+            let targetRaddio = $('[name="Entidad.TrnpcTipoCasoAgrupado"]:checked');
+
+            if (targetRaddio.val() == 'AGRVTP') {
+                //AQUI
+                objTablaDetalle.rowAdd({
+                    idRow: idGenerado,
+                    idsum: barraSuministro.val(),
+                    nomsum: $('#BARRSUMI2').find('option:selected').text(),
+                    CoregeCodiPotcn: 0,
+
+                });
+            }
+        }
+
+    })
+
+    $('#btnCancelar').click(function () {
+
+        //window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=" + $('#NroPagina').val();
+        window.location.href = siteRoot + "transferencias/GestionCodigosVTEAVTP/?pagina=1";
+    })
+
+    $('[name="Entidad.TrnpcTipoCasoAgrupado"]').prop('disabled', true)
+
+    var _totalPotenciasNivelVTP = $('#lblTotalPotencias').html();
+
+    if (estadoActual == "ACT") {
+        if (estadoAprobacion == 'PEN') {
+            $('[name="Entidad.TrnpcTipoCasoAgrupado"]').prop('disabled', true);
+        } else {
+            $('[name="Entidad.TrnpcTipoCasoAgrupado"]').prop('disabled', false);
+        }
+
+
+        if (_totalPotenciasNivelVTP == 0) {
+            $('[name="Entidad.TrnpcTipoCasoAgrupado"][value="AGRVTA"]').prop('checked', true)
+        }
+
+        //Inicializando Metodos
+        $('[name="Entidad.TrnpcTipoCasoAgrupado"]').click((event) => {
+            let txtesPrimerRegistro = $('#Entidad_esPrimerRegistro').val();
+            if (parseInt(txtesPrimerRegistro) === 0) {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+
+
+            if (confirm("¿Al cambiar el tipo de potencia los datos almacenados de perderán?")) {
+                let target = $(event.currentTarget);
+
+                if (target.prop('checked')) {
+
+                    $('[data-for-potencia]').hide();
+                    $('[data-for-potencia="' + target.val() + '"]').show()
+
+                    if (target.val() == 'AGRVTP') {
+                        $('[data-for-potencia="AGRVTA"] input[type="text"]').addClass('ignore');
+
+                        objTablaDetalle._obtenerPotenciaVTPRegistradas().then((data) => {
+
+                            data.map((item) => {
+                                let codigoGenerado = item.CoregeCodi;
+                                let param = item;
+                                param.idsum = item.BarrCodi;
+                                param.nomsum = item.BarrSuministro;
+                                param.CoregeCodiPotcn = codigoGenerado;
+
+                                let existeEnListaBarras = 0;
+
+                                $('#tableVTP tbody > tr[data-row-id]').each((index, element) => {
+                                    if (codigoGenerado == $(element).attr('data-row-id')) {
+                                        existeEnListaBarras++;
+                                    }
+                                })
+                                if (existeEnListaBarras > 0) {
+                                    objTablaDetalle.rowAdd(param);
+                                }
+
+                            })
+
+                            objTablaDetalle.agregarFilasOfBarraExistente();
+                        }).catch(() => {
+
+                        })
+
+
+
+                    } else {
+                        objTablaDetalle.limpiarTabla();
+                        $('[data-for-potencia="AGRVTA"] input[type="text"]').removeClass('ignore');
+                    }
+
+                }
+            } else {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+        })
+
+    } else {
+
+        $('.content-busqueda input.numeroDecimal').prop('disabled', true)
+    }
+
+    loadCheckbox();
+
+
+    function tablaDetalle() {
+        let input = $(`<div class="editor-field disabled">
+                        <input  type="text" class="numeroDecimal" maxlength ="10" style='width:85px;margin:2px'/>
+                        <span class="error error-hide">*</span>
+                       </div>`)
+        let tbody = $('#tblAgrvtp tbody')
+
+        this.limpiarTabla = () => {
+            tbody.html('')
+        }
+        this.rowAdd = function (data) {
+
+            let trRowAdd = $('<tr></tr>')
+            trRowAdd.attr('data-id-generado', data.CoregeCodiPotcn);
+            trRowAdd.attr('data-id-row', data.idRow)
+            trRowAdd.attr('data-idsum', data.idsum)
+
+            console.log(data.idsum)
+            var td = $('<td></td>');
+            td.html(data.nomsum)
+            trRowAdd.append(td);
+            //
+            td = $('<td></td>');
+            if (data.TrnPctHpMwFija != null) {
+                let valorInput = input.clone();
+                valorInput.find('input').val(data.TrnPctHpMwFija);
+                td.append(valorInput)
+            } else {
+                td.append(input.clone())
+            }
+            trRowAdd.append(td);
+
+            td = $('<td></td>');
+            if (data.TrnPctHfpMwFija != null) {
+                let valorInput = input.clone();
+                valorInput.find('input').val(data.TrnPctHfpMwFija);
+                td.append(valorInput)
+            } else {
+                td.append(input.clone())
+            }
+            trRowAdd.append(td);
+            td = $('<td></td>');
+            if (data.TrnPctTotalMwFija != null) {
+                let valorInput = input.clone();
+                valorInput.find('input').val(data.TrnPctTotalMwFija);
+                td.append(valorInput)
+            } else {
+                td.append(input.clone())
+            }
+            trRowAdd.append(td);
+
+            td = $('<td></td>');
+            if (data.TrnPctHpMwFijaVariable != null) {
+                let valorInput = input.clone();
+                valorInput.find('input').val(data.TrnPctHpMwFijaVariable);
+                td.append(valorInput)
+            } else {
+                td.append(input.clone())
+            }
+            trRowAdd.append(td);
+
+            td = $('<td></td>');
+            if (data.TrnPctHfpMwFijaVariable != null) {
+                let valorInput = input.clone();
+                valorInput.find('input').val(data.TrnPctHfpMwFijaVariable);
+                td.append(valorInput)
+            } else {
+                td.append(input.clone())
+            }
+            trRowAdd.append(td);
+
+            td = $('<td></td>');
+            if (data.TrnPctTotalMwVariable != null) {
+                let valorInput = input.clone();
+                valorInput.find('input').val(data.TrnPctTotalMwVariable);
+                td.append(valorInput)
+            } else {
+                td.append(input.clone())
+            }
+            trRowAdd.append(td);
+            tbody.append(trRowAdd);
+
+        }
+
+        this.agregarFilasOfBarraExistente = function () {
+            let totalFilas = $('#tblAgrvtp tbody tr').length;
+
+            $('#tableVTP tbody > tr').each((index, element) => {
+                let trTarget = $(element);
+
+                let idsum = trTarget.attr('data-row-idsum');
+                let idcod = trTarget.attr('data-row-id');
+                let nomsum = trTarget.find('td:first-child').html();
+
+                if (idcod == 0 || totalFilas == 0) {
+
+                    this.rowAdd({
+                        idsum: idsum,
+                        nomsum: nomsum,
+                        CoregeCodiPotcn: idcod
+                    });
+                }
+
+            })
+        }
+
+        this.removeFila = function (idRow, idcod) {
+
+            if (idcod == 0) {
+                $('#tblAgrvtp [data-id-row="' + idRow + '"]').remove();
+            } else {
+                $('#tblAgrvtp [data-id-generado="' + idcod + '"]').remove();
+            }
+
+        }
+        this._enviarTablaServidor = function () {
+            var arrayPotencia = [];
+            $('#tblAgrvtp tbody > tr').each((index, element) => {
+                let idGenerado = $(element).attr('data-id-generado');
+                let tdCell = $(element)
+
+                let barrCodi = tdCell.attr('data-idsum');
+
+                let potenciaAuxi = {
+                    PeriCodi: $('#Entidad_PeridcCodi').val(),
+                    BarrCodi: barrCodi,
+                    CoresoCodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                    CoregeCodi: idGenerado,
+                    TrnpcNumOrd: null,
+                    TrnpcTipoCasoAgrupado: 'AGRVTP',
+                    TrnPctHpMwFija: tdCell.children('td:nth-child(0n+2)').find('input').val(),
+                    TrnPctHfpMwFija: tdCell.children('td:nth-child(0n+3)').find('input').val(),
+                    TrnPctTotalMwFija: tdCell.children('td:nth-child(0n+4)').find('input').val(),
+                    TrnPctHpMwFijaVariable: tdCell.children('td:nth-child(0n+5)').find('input').val(),
+                    TrnPctHfpMwFijaVariable: tdCell.children('td:nth-child(0n+6)').find('input').val(),
+                    TrnPctTotalMwVariable: tdCell.children('td:nth-child(0n+7)').find('input').val(),
+                    TrnPctComeObs: null
+                };
+                arrayPotencia.push(potenciaAuxi);
+            })
+
+            return arrayPotencia;
+        }
+
+        this._obtenerPotenciaVTPRegistradas = () => {
+
+            var promise = new Promise((resolve, reason) => {
+
+                $.ajax({
+                    type: 'POST',
+                    url: controler + "ListarPotenciasContratadas",
+                    data: {
+                        coresocodi: $('#Entidad_SoliCodiRetiCodi').val(),
+                        periCodi: $('#Entidad_PeridcCodi').val(),
+                    },
+                    success: function (evt) {
+                        resolve(evt)
+                    },
+                    error: function () {
+
+                        mostrarError();
+                        reason();
+                    }
+                });
+
+            });
+
+            return promise;
+
+        }
+    }
+
+
+
+    function loadCheckbox() {
+        let txtesPrimerRegistro = $('#Entidad_esPrimerRegistro').val();
+        let targetRaddio = $('[name="Entidad.TrnpcTipoCasoAgrupado"]:checked');
+        if (targetRaddio.val() == 'AGRVTP') {
+            let contenedorPotenciaTrans = $('[data-for-potencia="AGRVTA"] input[type="text"]').addClass('ignore');
+
+            $('[data-for-potencia="' + targetRaddio.val() + '"]').show()
+
+        } else {
+            let contenedorPotenciaTrans = $('[data-for-potencia="AGRVTA"] input[type="text"]').removeClass('ignore');
+            $('[data-for-potencia="' + targetRaddio.val() + '"]').show()
+
+            if (parseInt(txtesPrimerRegistro) === 0) {
+
+                $('td[data-for-potencia="AGRVTA"] input').prop('disabled', true);
+                $('td[data-for-potencia="AGRVTA"] input').val('');
+                $('.mensaje-pie').html('Para cambiar la potencia contratada ir al primer registro del agrupado.')
+            }
+
+        }
+    }
+</script>

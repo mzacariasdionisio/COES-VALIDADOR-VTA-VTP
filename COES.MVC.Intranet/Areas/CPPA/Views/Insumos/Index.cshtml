@@ -1,0 +1,193 @@
+﻿@model COES.MVC.Intranet.Areas.CPPA.Models.CPPAModel
+
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Importar insumos de Cálculo de porcentaje de presupuesto";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script type="text/javascript">
+    // Datos JSON inyectados directamente en el script
+    var revisionData = @Html.Raw(ViewBag.RevisionData);
+</script>
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/datatable.js"></script>
+
+@*Paso 1: Se anexa la libreria que permite el adjunto de un archivo*@
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<div class="ast">
+
+    <div class="form-title">
+        <div class="content-titulo">Importar insumos de Cálculo de porcentaje de presupuesto</div>
+        <div class="content-botonera"></div>
+    </div>
+
+    <div class="content-hijo" style="padding-top:8px">
+        <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor, verificar la siguiente información:</div>
+        <input type="hidden" id="tipoInsumo" value="">
+        <input type="hidden" id="estadoRevision" value="">
+        <input type="hidden" id="exiteCentrales" value="">
+        <input type="hidden" id="seProcesoCalculo" value="">
+
+        <div class="search-content" style="margin-bottom:10px">
+
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td><div class="editor-label">Año</div></td>
+                    <td>
+                        <div class="editor-label">
+                            <select id="anioDropdown" name="Year">
+                                <option value="">--Seleccione--</option>
+                                @foreach (var year in Model.ListRevision.Select(x => x.Cpaapanio).Distinct().OrderByDescending(x => x))
+                                {
+                                    <option value="@year">@year</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+
+                    <td><div class="editor-label">Ajuste</div></td>
+                    <td>
+                        <div class="editor-label">
+                            <select id="ajusteDropdown" name="ajuste" disabled>
+                                <option value="">--Seleccione--</option>
+                            </select>
+                        </div>
+                    </td>
+
+                    <td><div class="editor-label">Revisión</div></td>
+                    <td>
+                        <div class="editor-label">
+                            <select id="revisionDropdown" name="revision" disabled>
+                                <option value="">--Seleccione--</option>
+                            </select>
+                        </div>
+                    </td>
+
+                </tr>
+
+            </table>
+
+        </div>
+
+        <div style="height: 12px">
+
+        </div>
+
+        <div id="tab-container" class='tab-container'>
+
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">SDDP (PMPO)</a></li>
+                <li class='tab'><a href="#paso2">SGOCOES</a></li>
+            </ul>
+
+            <div class='panel-container'>
+
+                <div id="paso1">
+
+                    <div><b>Procesamiento de los Archivo de la Salida del SDDP</b></div>
+
+                    <div>
+                        <div>
+                            <input id="txtDireccion" type="text" value="@Model.sRutaArchivosSddp" style="width: 450px;" />
+                            <input id="fileDireccion" type="file" style="width: 450px;" hidden />
+                            <input id="btnProcesar" type="button" value="Procesar" style="display: none;" />
+                            <input id="btnDescargar" type="button" value="Exportar" style="display: none;" />
+                        </div>
+                        <div>
+
+                        </div>
+                    </div>
+
+                    <div><b>Log del proceso:</b></div>
+                    <div id="logContainer">
+                        <textarea id="miTextArea" cols="90" rows="7" readonly></textarea>
+                    </div>
+
+                </div>
+
+                <div id="paso2">
+
+                    <table id="dtInsumos" class="pretty tabla-icono" style="width:100%"></table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="pop-log" class="general-popup" style="min-width: 800px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Log</span>
+    </div>
+    <div class="popup-text">
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div class="nt-body">
+                    <table id="dtLogs" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+        <div style="float: right;">
+            <input id="pop-cancelar-l" type="button" value="Cancelar" />
+        </div>
+    </div>
+</div>
+
+<div id="pop-carga-manual" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Carga Manual</span>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div class="nt-body">
+                    <table id="dtCargaManual" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+        <div>
+            <small>
+                *Sólo se considerará la carga de información de las Centrales de <br>
+                Generación que tengan en su cabecera la letra "S" en mayúscula.<br>El resto se obviará.
+            </small>
+        </div>
+        <div style="float: right;">
+            <input id="pop-aceptar-cm" type="button" value="Importar" onclick="procesarArchivosInsumo()" />
+            <input id="pop-cancelar-cm" type="button" value="Cancelar" />
+        </div>
+    </div>
+</div>
+
+<div id="pop-exportar" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Exportar</span>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div class="nt-body">
+                    <table id="dtExportar" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+        <div style="float: right;">
+            <input id="pop-aceptar-e" type="button" value="Descargar" />
+            <input id="pop-cancelar-e" type="button" value="Cancelar" />
+        </div>
+    </div>
+</div>
+
+<script src="~/Areas/CPPA/Content/Scripts/insumos.js?v=1.1.0"></script>

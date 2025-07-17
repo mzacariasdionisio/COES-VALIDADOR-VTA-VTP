@@ -1,0 +1,425 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.PerturbacionModel
+
+@{
+    ViewBag.Title = "Perturbacion";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script type="text/javascript">
+    var varUrl = '@Url.Action("SomeAction", "SomeController")';
+</script>
+<script src="~/Areas/Eventos/Content/scripts/perturbacion.js"></script>
+<link href="~/Areas/Eventos/Content/Css/css.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Reporte de Perturbación</div>
+    <div class="content-botonera">
+         <input type="button" id="btnGrabar" value="Grabar TODO" />
+         <input type="button" id="btnCancelar" value="Cancelar" />
+
+         @if (Model.IndicadorExistencia == "S")
+         { 
+             <input type="button" id="btnEliminar" value="Eliminar" />
+             <input type="button" id="btnExportar" value="Exportar" />
+         }         
+    </div>
+</div>
+
+<div style="clear:both"></div>
+
+<div class="content-hijo">
+<div id="mensaje"></div>
+<div style="clear:both"></div>
+<div class="perturbacion-content">    
+    
+    <div class="perlnk">
+         <div class="perlnk-item"><a title="#section01">1.Fecha</a></div>
+         <div class="perlnk-item"><a title="#section02">2.Hora de inicio</a></div>
+         <div class="perlnk-item"><a title="#section03">3.Equipo</a></div>
+         <div class="perlnk-item"><a title="#section04">4.Propietario</a></div>
+         <div class="perlnk-item"><a title="#section05">5.Causa Perturbación</a></div>
+         <div class="perlnk-item"><a title="#section06">6.Descripción</a></div>
+         <div class="perlnk-item"><a title="#section07">7.Secuencia de eventos</a></div>
+         <div class="perlnk-item"><a title="#section08">8.Actuación de las protecciones</a></div>
+         <div class="perlnk-item"><a title="#section09">9.Análisis del evento</a></div>
+         <div class="perlnk-item"><a title="#section10">10.Conclusiones</a></div>
+         <div class="perlnk-item"><a title="#section11">11.Recomendaciones</a></div>
+         <div class="perlnk-item"><a title="#section12">12.Oportunidades de mejora</a></div>
+         <div class="perlnk-item"><a title="#section13">13.Acuerdos</a></div>
+         <div class="perlnk-item"><a title="#section14">14.Plazos de atención</a></div>
+         <div class="perlnk-item"><a title="all">Ver Todo</a></div>
+    </div>
+    <div class="peritems">      
+        
+        <div id="section01" class="peritem" style="margin-bottom:15px">
+            <div class="peritem-titlle-label">1.Fecha:</div> <div class="peritem-title-value">@Model.FechaEvento</div>           
+        </div>
+        <div id="section02" class="peritem" style="margin-bottom:15px">
+            <div class="peritem-titlle-label">2.Hora de inicio:</div><div class="peritem-title-value"> @Model.HoraEvento</div>
+        </div>
+        <div id="section03" class="peritem" style="margin-bottom:15px">
+            <div class="peritem-titlle-label">3.Equipo:</div><div class="peritem-title-value"> @Model.EquipoEvento</div>
+        </div>
+        <div id="section04" class="peritem" style="margin-bottom:15px">
+            <div class="peritem-titlle-label">4.Propietario:</div><div class="peritem-title-value"> @Model.EmpresaEvento</div>
+        </div>
+        <div id="section05" class="peritem" style="margin-bottom:15px"  >
+            <div class="peritem-titlle-label">5.Causa Perturbación</div>
+            <div class="peritem-title-value">
+                <select id="cbCausaEvento" name="cbCausaEvento">
+                     <option value="">--SELECCIONE--</option>
+                     @foreach (var item in Model.ListaCausaEvento)
+                     {   
+                          <option value="@item.SUBCAUSACODI">@item.SUBCAUSADESC</option>
+                     }
+                 </select>          
+                
+                @if (Model.IndicadorExistencia == "S")
+                {
+                    var item = Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemCausa).FirstOrDefault();
+                    if (item != null)
+                    { 
+                         <input type="hidden" id="hfCausaEvento" value="@item.SUBCAUSACODI" />
+                    }
+                }
+            </div>
+           
+        </div>
+        <div id="section06" class="peritem">
+            <div class="peritem-title">6.Descripción</div>
+            <div style="margin-bottom:10px">@Model.AsuntoEvento</div>           
+
+            @if (Model.IndicadorExistencia == "S")
+            {
+                var item = Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemDescripcion).FirstOrDefault();
+                if (item != null)
+                { 
+                     <textarea id="eventoAsunto" maxlength="4000">@item.ITEMDESCRIPCION</textarea>
+                }
+            }
+            else
+            { 
+                 <textarea id="eventoAsunto" maxlength="4000">@Model.AsuntoEvento</textarea>
+            }
+        </div>
+        <div id="section07" class="peritem">
+            <div class="peritem-title">7.Secuencia de eventos
+                <div id="btnRP_SECUENCIA" class="btn-add"  onclick="addRow('RP_SECUENCIA');" ></div> 
+            </div>
+            <table id="RP_SECUENCIA" class="tb-perturbacion">
+                <thead>
+                    <tr>
+                        <th>Hora(hh:mm:ss)</th>
+                        <th>Descripción</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                     @foreach (var item in Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemSecuencia))
+                     {   
+                         <tr>
+                             <td>
+                                 <span id="@("txttimeRP_SECUENCIA" + item.ITEMORDEN)">@item.ITEMTIME</span>
+                                 <input type="text" id="@("areatimeRP_SECUENCIA" + item.ITEMORDEN)" style="display:none" />
+                             </td>
+                             <td>
+                                 <span id="@("txtdescRP_SECUENCIA" + item.ITEMORDEN)">@item.ITEMDESCRIPCION</span>
+                                 <textarea id="@("areadescRP_SECUENCIA" + item.ITEMORDEN)" style="display:none">@item.ITEMDESCRIPCION</textarea>
+                             </td>
+                             <td>
+                                 <div id="@("accionRP_SECUENCIA" + item.ITEMORDEN)" >
+                                    <div class="btn-edit" onclick="allowEditItem(@item.ITEMORDEN, 'RP_SECUENCIA');" ></div>
+                                    <div class="btn-delete" onclick="deleteItem(@item.ITEMORDEN, 'RP_SECUENCIA');"  ></div>
+                                 </div>
+                                 <div id="@("confirmRP_SECUENCIA" + item.ITEMORDEN)" style="display:none">
+                                    <div class="btn-ok" onclick="confirmEdit(@item.ITEMORDEN, 'RP_SECUENCIA');" ></div>
+                                    <div class="btn-cancel" onclick="cancelEdit(@item.ITEMORDEN, 'RP_SECUENCIA');" ></div>
+                                 </div>
+                             </td>
+                         </tr>
+                     }
+                </tbody>
+            </table>  
+                     
+        </div>
+        <div id="section08" class="peritem">
+            <div class="peritem-title">8.Actuación de las protecciones
+                <div id="btnRP_ACTUACION" class="btn-add" onclick="addRow('RP_ACTUACION');" ></div>
+            </div>
+            <table id="RP_ACTUACION" class="tb-perturbacion">
+                <thead>
+                    <tr>
+                        <th>Subestación</th>
+                        <th>Equipo</th>
+                        <th>Señalización</th>
+                        <th>Interruptor</th>
+                        <th>A/C</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemActuacion))
+                    {   
+                         <tr>
+                             <td><span id="@("txtSubEstacionRP_ACTUACION" + item.ITEMORDEN)">@item.SUBESTACION</span></td>
+                             <td>
+                                 <span id="@("txtEquipoRP_ACTUACION" + item.ITEMORDEN)">@item.EQUINOMB</span>
+                                 <input type="hidden" id="@("hfCodEquipoRP_ACTUACION" + item.ITEMORDEN)" value="@item.EQUICODI" />
+                                 <div style="display:none"  class="btn-open" id="@("btnEquipoRP_ACTUACION" + item.ITEMORDEN)" onclick="openPopup(@item.ITEMORDEN, 'RP_ACTUACION', 'Equipo');" ></div>
+                             </td>
+                             <td>
+                                 <span id="@("txtSenalRP_ACTUACION" + item.ITEMORDEN)">@item.ITEMSENALIZACION</span>
+                                 <input type="text" id="@("areaSenalRP_ACTUACION" + item.ITEMORDEN)" style="display:none" />
+                             </td>
+                             <td>
+                                 <span id="@("txtInterruptorRP_ACTUACION" + item.ITEMORDEN)">@item.INTERRUPTORNOMB</span>
+                                 <input type="hidden" id="@("hfCodInterruptorRP_ACTUACION" + item.ITEMORDEN)"/>
+                                 <div style="display:none"  class="btn-open" id="@("btnInterruptorRP_ACTUACION" + item.ITEMORDEN)" onclick="openPopup(@item.ITEMORDEN, 'RP_ACTUACION', 'Interruptor');" ></div>
+                             </td>
+                             <td>
+                                 <span id="@("txtAcRP_ACTUACION" + item.ITEMORDEN)">@item.ITEMAC</span>
+                                 <input type="text" id="@("areaAcRP_ACTUACION" + item.ITEMORDEN)" style="display:none" />
+                             </td>
+                             <td>
+                                 <div id="@("accionRP_ACTUACION" + item.ITEMORDEN)" >
+                                    <div  class="btn-edit"  onclick="allowEditItem(@item.ITEMORDEN, 'RP_ACTUACION');" ></div>
+                                    <div class="btn-delete"  onclick="deleteItem(@item.ITEMORDEN, 'RP_ACTUACION');"  ></div>
+                                 </div>
+                                 <div id="@("confirmRP_ACTUACION" + item.ITEMORDEN)"  style="display:none">
+                                    <div class="btn-ok"  onclick="confirmEdit(@item.ITEMORDEN, 'RP_ACTUACION');" ></div>
+                                    <div class="btn-cancel"  onclick="cancelEdit(@item.ITEMORDEN, 'RP_ACTUACION');" ></div>
+                                 </div>
+                             </td>
+                         </tr>
+                    }
+                </tbody>
+            </table>    
+            <input type="hidden" id="hfIndicadorPopup" />
+            <input type="hidden" id="hfOrdenEquipo" />
+                      
+        </div>
+        <div id="section09" class="peritem">
+            <div class="peritem-title">9.Análisis del evento</div>
+           
+            @if (Model.IndicadorExistencia == "S")
+            {
+                var item = Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemAnalisis).FirstOrDefault();
+                if (item != null)
+                { 
+                     <textarea id="eventoAnalisis" maxlength="4000">@item.ITEMDESCRIPCION</textarea>
+                }
+            }
+            else
+            { 
+                <textarea id="eventoAnalisis" maxlength="4000"></textarea>
+            }
+
+        </div>
+        <div id="section10" class="peritem">
+            <div class="peritem-title">10.Conclusiones
+                 <div id="btnRP_CONCLUSION" class="btn-add"  onclick="addRow('RP_CONCLUSION');" ></div>
+            </div>            
+            <table id="RP_CONCLUSION" class="tb-perturbacion">
+                <thead>
+                    <tr>
+                        <th>NRO</th>
+                        <th>Conclusión</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>   
+                     @foreach (var item in Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemConclusion))
+                     {   
+                         <tr>
+                             <td>@item.ITEMORDEN</td>
+                             <td>
+                                 <span id="@("txtRP_CONCLUSION" + item.ITEMORDEN)">@item.ITEMDESCRIPCION</span>
+                                 <textarea id="@("areaRP_CONCLUSION" + item.ITEMORDEN)" style="display:none">@item.ITEMDESCRIPCION</textarea>
+                             </td>
+                             <td>
+                                 <div id="@("accionRP_CONCLUSION" + item.ITEMORDEN)" >
+                                    <div class="btn-edit"  onclick="allowEditItem(@item.ITEMORDEN, 'RP_CONCLUSION');" ></div>
+                                    <div class="btn-delete"  onclick="deleteItem(@item.ITEMORDEN, 'RP_CONCLUSION');"  ></div>
+                                 </div>
+                                 <div id="@("confirmRP_CONCLUSION" + item.ITEMORDEN)"  style="display:none">
+                                    <div class="btn-ok"  onclick="confirmEdit(@item.ITEMORDEN, 'RP_CONCLUSION');" ></div>
+                                    <div class="btn-cancel"  onclick="cancelEdit(@item.ITEMORDEN, 'RP_CONCLUSION');" ></div>
+                                 </div>
+                             </td>
+                         </tr>  
+                     }               
+                </tbody>
+            </table>     
+                     
+        </div>
+        <div id="section11" class="peritem">
+            <div class="peritem-title">11.Recomendaciones
+                <div id="btnRP_RECOMENDACION" class="btn-add"  onclick="addRow('RP_RECOMENDACION');" ></div>
+            </div>            
+            <table id="RP_RECOMENDACION" class="tb-perturbacion">
+                <thead>
+                    <tr>
+                        <th>NRO</th>
+                        <th>Recomendación</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                     @foreach (var item in Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemRecomendacion))
+                     {   
+                         <tr>
+                             <td>@item.ITEMORDEN</td>
+                             <td>
+                                 <span id="@("txtRP_RECOMENDACION" + item.ITEMORDEN)">@item.ITEMDESCRIPCION</span>
+                                 <textarea id="@("areaRP_RECOMENDACION" + item.ITEMORDEN)" style="display:none">@item.ITEMDESCRIPCION</textarea>
+                             </td>
+                             <td>
+                                 <div id="@("accionRP_RECOMENDACION" + item.ITEMORDEN)" >
+                                    <div class="btn-edit" onclick="allowEditItem(@item.ITEMORDEN, 'RP_RECOMENDACION');"></div>
+                                    <div class="btn-delete" onclick="deleteItem(@item.ITEMORDEN, 'RP_RECOMENDACION');"  ></div>
+                                 </div>
+                                 <div id="@("confirmRP_RECOMENDACION" + item.ITEMORDEN)"  style="display:none">
+                                    <div class="btn-ok" onclick="confirmEdit(@item.ITEMORDEN, 'RP_RECOMENDACION');" ></div>
+                                    <div class="btn-cancel" onclick="cancelEdit(@item.ITEMORDEN, 'RP_RECOMENDACION');" ></div>
+                                 </div>
+                             </td>
+                         </tr>  
+                     }               
+                </tbody>
+            </table>            
+             
+        </div>
+        <div id="section12" class="peritem">
+            <div class="peritem-title">12.Oportunidades de mejora
+                <div id="btnRP_OPORTUNIDAD" class="btn-add"  onclick="addRow('RP_OPORTUNIDAD');" ></div> 
+            </div>
+            <table id="RP_OPORTUNIDAD" class="tb-perturbacion">
+                <thead>
+                    <tr>
+                        <th>NRO</th>
+                        <th>Oportunidad de Mejora</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                     @foreach (var item in Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemOportunidad))
+                     {  
+                         <tr>
+                             <td>@item.ITEMORDEN</td>
+                             <td>
+                                 <span id="@("txtRP_OPORTUNIDAD" + item.ITEMORDEN)">@item.ITEMDESCRIPCION</span>
+                                 <textarea id="@("areaRP_OPORTUNIDAD" + item.ITEMORDEN)" style="display:none">@item.ITEMDESCRIPCION</textarea>
+                             </td>
+                             <td>
+                                 <div id="@("accionRP_OPORTUNIDAD" + item.ITEMORDEN)" >
+                                    <div class="btn-edit" onclick="allowEditItem(@item.ITEMORDEN, 'RP_OPORTUNIDAD');" ></div>
+                                    <div class="btn-delete" onclick="deleteItem(@item.ITEMORDEN, 'RP_OPORTUNIDAD');"  ></div>
+                                 </div>
+                                 <div id="@("confirmRP_OPORTUNIDAD" + item.ITEMORDEN)"  style="display:none">
+                                    <div class="btn-ok"  onclick="confirmEdit(@item.ITEMORDEN, 'RP_OPORTUNIDAD');" ></div>
+                                    <div class="btn-cancel"  onclick="cancelEdit(@item.ITEMORDEN, 'RP_OPORTUNIDAD');" ></div>
+                                 </div>
+                             </td>
+                         </tr>  
+                     }               
+                </tbody>
+            </table>        
+                
+        </div>
+        <div id="section13" class="peritem">
+            <div class="peritem-title">13.Acuerdos
+                <div id="btnRP_ACUERDO" class="btn-add"  onclick="addRow('RP_ACUERDO');" ></div>      
+            </div>
+            <table id="RP_ACUERDO" class="tb-perturbacion">
+                <thead>
+                    <tr>
+                        <th>NRO</th>
+                        <th>Acuerdos</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                     @foreach (var item in Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemAcuerdo))
+                     {   
+                          <tr>
+                             <td>@item.ITEMORDEN</td>
+                             <td>
+                                 <span id="@("txtRP_ACUERDO" + item.ITEMORDEN)">@item.ITEMDESCRIPCION</span>
+                                 <textarea id="@("areaRP_ACUERDO" + item.ITEMORDEN)" style="display:none">@item.ITEMDESCRIPCION</textarea>
+                             </td>
+                             <td>
+                                 <div id="@("accionRP_ACUERDO" + item.ITEMORDEN)" >
+                                    <div class="btn-edit" onclick="allowEditItem(@item.ITEMORDEN, 'RP_ACUERDO');" ></div>
+                                    <div class="btn-delete" onclick="deleteItem(@item.ITEMORDEN, 'RP_ACUERDO');"  ></div>
+                                 </div>
+                                 <div id="@("confirmRP_ACUERDO" + item.ITEMORDEN)"  style="display:none">
+                                    <div class="btn-ok" onclick="confirmEdit(@item.ITEMORDEN, 'RP_ACUERDO');" ></div>
+                                    <div class="btn-cancel" onclick="cancelEdit(@item.ITEMORDEN, 'RP_ACUERDO');" ></div>
+                                 </div>
+                             </td>
+                         </tr>  
+                     }               
+                </tbody>
+            </table>     
+            
+
+        </div>
+        <div id="section14" class="peritem">
+            <div class="peritem-title">14.Plazos de atención
+                <div id="btnRP_PLAZO" class="btn-add"  onclick="addRow('RP_PLAZO');" ></div> 
+            </div>
+            <table id="RP_PLAZO" class="tb-perturbacion">
+                <thead>
+                    <tr>
+                        <th>NRO</th>
+                        <th>Plazos de atención</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                     @foreach (var item in Model.ListaInforme.Where(x => x.ITEMTIPO == COES.MVC.Intranet.Helper.TipoItemPerturbacion.ItemPlazo))
+                     {   
+                         <tr>
+                             <td>@item.ITEMORDEN</td>
+                             <td>
+                                 <span id="@("txtRP_PLAZO" + item.ITEMORDEN)">@item.ITEMDESCRIPCION</span>
+                                 <textarea id="@("areaRP_PLAZO" + item.ITEMORDEN)" style="display:none">@item.ITEMDESCRIPCION</textarea>
+                             </td>
+                             <td>
+                                 <div id="@("accionRP_PLAZO" + item.ITEMORDEN)" >
+                                    <div class="btn-edit" onclick="allowEditItem(@item.ITEMORDEN, 'RP_PLAZO');" ></div>
+                                    <div class="btn-delete" onclick="deleteItem(@item.ITEMORDEN, 'RP_PLAZO');"  ></div>
+                                 </div>
+                                 <div id="@("confirmRP_PLAZO" + item.ITEMORDEN)"  style="display:none">
+                                    <div class="btn-ok" onclick="confirmEdit(@item.ITEMORDEN, 'RP_PLAZO');" ></div>
+                                    <div class="btn-cancel" onclick="cancelEdit(@item.ITEMORDEN, 'RP_PLAZO');" ></div>
+                                 </div>
+                             </td>
+                         </tr>  
+                     }               
+                </tbody>
+            </table>          
+            
+        </div>
+    </div>
+
+    <div class="clear"></div>
+
+</div>
+</div>
+
+
+<div id="busquedaEquipo" style="display:none">
+</div>
+
+<input type="hidden" id="hfIdEvento" value="@Model.CodigoEvento" />
+<input type="hidden" id="hfIndicador" value="@Model.IndicadorGrabado" />
+
+
+<div id="cntExportar">
+    
+    Seleccione Formato:
+    <input type="button" id="btnExportarPDF" value="PDF" />
+    <input type="button" id="btnExportarWORD" value="WORD" />  
+
+</div>

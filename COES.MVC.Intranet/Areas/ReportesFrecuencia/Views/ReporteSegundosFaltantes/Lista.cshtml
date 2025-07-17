@@ -1,0 +1,113 @@
+﻿@model COES.MVC.Intranet.Areas.ReportesFrecuencia.Models.ReporteSegundosFaltantesModel
+@{
+    var sMensajeExito = TempData["sMensajeExito"];
+}
+@if (@sMensajeExito != null)
+{
+    <div class="exito mensajes"><font color="red">@sMensajeExito</font></div>
+}
+<table border="0" class="pretty tabla-icono thead-fixed" id="tablaSegundosFaltantes">
+    <thead>
+        <tr>
+            <th style="width:200px">Equipo</th>
+            @foreach (var item in Model.ListaFechas)
+            {
+                <th>@item</th>
+            }
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.ListaEquipos)
+        {
+            <tr id="fila_">
+                <td style="text-align: center;">@item.NombreEquipo</td>
+                @foreach (var itemFecha in Model.ListaFechas)
+                {
+            <td>
+                @{
+
+                    var aux = Model.ListaReporte.Where(x => x.GPSCodi == item.GPSCodi && x.FechaHora == @itemFecha).ToList();
+                    if (aux.Count > 0)
+                    {
+                        var elemento = aux.First();
+                        var difSeg = 86400 - elemento.Num;
+                        @difSeg;
+                    }
+                    else
+                    {
+                        var difSeg = 86400;
+                        @difSeg;
+                    }
+                }
+
+            </td>
+                }
+                <td>
+                    <b>
+                        @{
+                            var auxEquipo = Model.ListaReporte.Where(x => x.GPSCodi == @item.GPSCodi).ToList();
+                            int intNumDias = Model.ListaFechas.Count;
+                            int totalEquipo = 86400 * intNumDias;
+                            if (auxEquipo.Count > 0)
+                            {
+                                foreach (var itemAux in auxEquipo)
+                                {
+                                    totalEquipo = totalEquipo -itemAux.Num;
+                                }
+                            }
+                            @totalEquipo
+                        }
+                    </b>
+
+                </td>
+            </tr>
+
+        }
+        <tr>
+            <td><b>Total General</b></td>
+            @foreach (var itemFecha in Model.ListaFechas)
+            {
+                <td>
+                    <b>
+                        @{
+
+                            var aux = Model.ListaReporte.Where(x => x.FechaHora == @itemFecha).ToList();
+                            int intNumEquipos = Model.ListaEquipos.Count;
+                            int totalFecha = 86400 * intNumEquipos;
+                            if (aux.Count > 0)
+                            {
+                                foreach (var itemAux in aux)
+                                {
+                                    totalFecha = totalFecha - itemAux.Num;
+                                }
+                            }
+                            @totalFecha
+                        }
+                    </b>
+                </td>
+            }
+
+            <td>
+                <b>
+                    @{
+                        var auxTotal = Model.ListaReporte.ToList();
+                        int intTotalNumEquipos = Model.ListaEquipos.Count;
+                        int intTotalNumDias = Model.ListaFechas.Count;
+
+                        int totalGeneral = 86400* intTotalNumEquipos* intTotalNumDias;
+                        if (auxTotal.Count > 0)
+                        {
+                            foreach (var itemAux in auxTotal)
+                            {
+                                totalGeneral = totalGeneral -itemAux.Num;
+                            }
+                        }
+                        @totalGeneral
+                    }
+                </b>
+            </td>
+
+        </tr>
+    </tbody>
+</table>

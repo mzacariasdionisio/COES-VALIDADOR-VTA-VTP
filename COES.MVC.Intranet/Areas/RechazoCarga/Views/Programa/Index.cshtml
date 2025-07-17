@@ -1,0 +1,198 @@
+﻿@model COES.MVC.Intranet.Areas.RechazoCarga.Models.ProgramaModel
+@{
+    ViewBag.Title = "Programa";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="form-title">
+    <div class="content-titulo">Registro de Programa</div>
+</div>
+<div id="mensaje"></div>
+<div class="content-hijo" id="mainLayout" style="height: 720px;">
+
+    <div class="search-content" style="margin-bottom:10px;">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Horizonte: </td>
+                <td>
+                    @(Html.DropDownList("horizonte", new SelectList(Model.Horizontes, "Rchorpcodi", "Rchorpnombre"), new { style = "width: 100%;" }))
+                </td>
+                <td>Código: </td>
+                <td>
+                    <input style="width:150px;" type="text" id="codigoPrograma" name="codigoPrograma" />
+                </td>
+                <td>
+                    Estado:
+                </td>
+                <td>
+                    <select id="estado" name="estado" style="width:100%;">
+                        <option value="">-- TODOS --</option>
+                        <option value="0">No Vigente</option>
+                        <option value="1">Vigente</option>
+                    </select>
+                </td>
+                <td></td>
+                <td></td>
+                <td>
+                    <input type="button" value="Buscar" id="btnConsultar" name="btnConsultar" class="form-action" />
+                </td>
+                <td><input type="button" value="Agregar" id="btnAgregar" name="btnAgregar" class="form-action" /></td>
+                <td><input type="button" value="Exportar Excel" id="btnExportar" name="btnExportar" class="form-action" /></td>
+            </tr>
+
+            <tr>
+                <td><br /></td>
+            </tr>
+
+        </table>
+    </div>
+    <div class="content-tabla">
+        <div class="table-list" id="listado" style="min-width:99%;"></div>
+    </div>
+    <div style="clear:both; height:30px"></div>
+</div>
+<div id="popupEdicion" class="general-popup" style="width:400px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Editar Programa</span>
+    </div>
+    <div class="popup-text" id="contenidoEdicion">
+        <table>
+            <tr>
+                <td>
+                    Horizonte:
+                </td>
+                <td>
+                    @(Html.DropDownList("horizonteEdit", new SelectList(Model.Horizontes, "Rchorpcodi", "Rchorpnombre"), new { style = "width: 100%;" }))
+                </td>
+
+            </tr>
+            <tr>
+                <td>
+                    Código:
+                </td>
+                <td>
+                    <input style="width:280px;" type="text" id="codigoProgramaEdit" name="codigoProgramaEdit" maxlength="20" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Nombre:
+                </td>
+                <td>
+                    <input style="width:280px;" type="text" id="nombreProgramaEdit" name="nombreProgramaEdit" maxlength="100" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Estado:
+                </td>
+                <td>
+                    <select id="estadoEdit" name="estadoEdit" style="width:100%">
+                        <option value="">-- SELECCIONE --</option>
+                        <option value="0">No Vigente</option>
+                        <option value="1">Vigente</option>
+                    </select>
+                </td>
+            </tr>
+            <tr id="trCodigoProgramaRef" style="visibility:hidden;">
+                <td>
+                    Código Prog. Ref.:
+                </td>
+                <td>
+                    <input style="width:280px;" type="text" id="codigoProgramaRef" name="codigoProgramaRef" maxlength="20" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    &nbsp;
+
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <table align="left">
+                        <tr>
+                            <td>
+                                <input type="button" value="Guardar" id="btnGuadarEdicion" name="btnGuadarEdicion" class="form-action" />
+                                <input type="button" value="Cancelar" id="btnCancelarEdicion" name="btnCancelarEdicion" />
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+        <input type="hidden" id="esNuevo" name="esNuevo" />
+        <input type="hidden" id="hdnCodigoPrograma" name="hdnCodigoPrograma" value="0" />
+        <input type="hidden" id="hdnVerReprograma" name="hdnVerReprograma" value="@(Model.VerReprograma ? 0 : 1)" />
+        <input type="hidden" id="hdnHorizonteReprograma" name="hdnHorizonteReprograma" value="@(COES.MVC.Intranet.Areas.RechazoCarga.Helper.ConstantesRechazoCarga.HorizonteReprograma)" />
+    </div>
+</div>
+<div id="popupDuplicarPrograma" class="general-popup" style="width:400px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Duplicar programa</span>
+    </div>
+    <div class="popup-text" id="contenidoEdicion">
+        <table>
+
+            <tr id="trNuevoPrograma">
+
+                <td>
+                    Horizonte:
+                </td>
+                <td>
+                    <select id="horizonteDuplicar" name="horizonteDuplicar" style="width:100%">
+                        <option value="0">-- SELECCIONE --</option>
+                        @foreach (var item in Model.Horizontes.Where(p => p.Rchorpcodi != 0))
+                        {
+                            <option value="@item.Rchorpcodi">@item.Rchorpnombre </option>
+                        }
+                    </select>
+                </td>
+                <td id="tdMensual" style="display:none;">
+                    <input style="width:140px;" type="text" id="fechaMensual" name="fechaMensual" />
+                </td>
+                <td id="tdSemanal" style="display:none;width:100px">
+                    <select id="cbSemanaAnio" name="cbSemanaAnio">
+                        <option value="0">-- SELECCIONE --</option>
+                        @for (int i = Model.SemanaActual; i <= 53; i++)
+                        {
+                            <option value="@i.ToString()">@("Semana N° " + i.ToString())</option>
+                        }
+                    </select>
+                </td>
+                <td id="tdDiaria" style="display:none;">
+                    <input style="width:140px;" type="text" id="fechaDiaria" name="fechaDiaria" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="5">&nbsp;</td>
+            </tr>
+        </table>
+        <table align="center">
+            <tr>
+                <td style="text-align:right">
+                    <input type="button" value="Generar Copia" id="btnGenerarCopia" name="btnGenerarCopia" class="form-action" />
+                    <input type="button" value="Cerrar" id="btnCerrarCopia" name="btnCerrarCopia" />
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" id="hdnHorizonteDiario" name="hdnHorizonteDiario" value="@(COES.MVC.Intranet.Areas.RechazoCarga.Helper.ConstantesRechazoCarga.HorizonteDiario)" />
+        <input type="hidden" id="hdnHorizonteMensual" name="hdnHorizonteMensual" value="@(COES.MVC.Intranet.Areas.RechazoCarga.Helper.ConstantesRechazoCarga.HorizonteMensual)" />
+        <input type="hidden" id="hdnHorizonteSemanal" name="hdnHorizonteSemanal" value="@(COES.MVC.Intranet.Areas.RechazoCarga.Helper.ConstantesRechazoCarga.HorizonteSemanal)" />
+        <input type="hidden" id="hdnCodigoProgramaDuplicar" name="hdnCodigoProgramaDuplicar" value="0" />
+    </div>
+</div>
+<!--Hoja de estilos-->
+<link href="~/Areas/RechazoCarga/Content/Css/css.css" rel="stylesheet" />
+<!--Menu contextual-->
+<script src="~/Content/Scripts/contextmenu.js"></script>
+<link href="~/Content/Css/contextmenu.css" rel="stylesheet" />
+<script src="~/Areas/RechazoCarga/Content/Scripts/programa.js"></script>
+<script src="~/Areas/RechazoCarga/Content/Scripts/util.js"></script>
+<script src="~/Areas/RechazoCarga/Content/Scripts/json2.js"></script>
+
+

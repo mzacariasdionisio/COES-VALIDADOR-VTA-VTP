@@ -1,0 +1,165 @@
+﻿@model COES.MVC.Intranet.Areas.IND.Models.IndisponibilidadesModel
+@{
+    ViewBag.Title = "";
+}
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@if (Model.UsarLayoutModulo)
+{
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+else
+{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<link href="~/Areas/IND/Content/Css/css.css?v=1.3.4" rel="stylesheet" />
+<script src="~/Areas/IND/Content/Scripts/hist_carga_excel.js?v=1.6.7"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Cargar archivo excel histórico</div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div id="mensaje" style="margin-bottom:5px; margin-top:0px"></div>
+
+    <div class="search-content" style="margin-bottom:10px">
+        <table class="content-tabla-search" style="width:auto" role="presentation">
+            <tr>
+                <td class="tbform-label" style="padding-right: 0px;">Periodo:</td>
+                <td>
+                    <select id="cbAnio" style="width: 57px;">
+                        @foreach (var item in Model.ListaAnio)
+                        {
+                            var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                            <option value="@item.Entero1" @(selected)>@item.String1</option>
+                        }
+                    </select>
+                    <select id="cbPeriodo" style="width: 120px;">
+                        @foreach (var item in Model.ListaPeriodo)
+                        {
+                            var selected = Model.IdPeriodo == item.Ipericodi ? "selected" : "";
+                            <option value="@item.Ipericodi" @(selected)>@item.Iperinombre</option>
+                        }
+                    </select>
+                </td>
+                <td class="tbform-label" style="padding-right: 0px;">Recálculo:</td>
+                <td>
+                    <select id="cbRecalculo" style="width: 150px;">
+                        @if (Model.ListaRecalculo.Count > 0)
+                        {
+                            foreach (var rec in Model.ListaRecalculo)
+                            {
+                                var selected = Model.IdRecalculo == rec.Irecacodi ? "selected" : "";
+                                <option value="@rec.Irecacodi" @selected> @(rec.Irecanombre) </option>
+                            }
+                        }
+                        else
+                        {
+                            <option value="0">--</option>
+                        }
+
+                    </select>
+                </td>
+
+                <td class="td_filtro_fecha tbform-label" style="padding-right: 0px;">Fecha Inicio:</td>
+                <td class="td_filtro_fecha">
+                    <input type="text" id="desc_fecha_ini" value="" disabled />
+                </td>
+                <td class="td_filtro_fecha tbform-label" style="padding-right: 0px;">Fecha Fin:</td>
+                <td class="td_filtro_fecha">
+                    <input type="text" id="desc_fecha_fin" value="" disabled />
+                </td>
+
+            </tr>
+        </table>
+    </div>
+
+    <!--versiones-->
+    <div style="margin-bottom: 15px">
+
+        <div id="listado">
+
+        </div>
+    </div>
+
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#tabMsj">Cargar Histórico</a></li>
+            <li class='tab'><a href="#tabRpt1">REPORTE 1</a></li>
+            <li class='tab'><a href="#tabRpt3">REPORTE 3</a></li>
+        </ul>
+        <div class='panel-container'>
+
+            <div id="tabMsj">
+
+                <div id="formulario_excel_historico" class="content-tabla">
+                    <table style="width: auto">
+                        <tr>
+                            <td style="width: 170px; vertical-align: middle;">Seleccionar archivo excel(*): </td>
+                            <td>
+                                <input type="button" value="Cargar archivo" id="btnUpload" />
+                            </td>
+                            <td style="width: 170px; vertical-align: middle;">
+                                <span id="txtNombreArchivo" style="font-weight: bold"></span>
+                            </td>
+                        </tr>
+                        <tr style="font-style: italic;">
+                            <td colspan="3">(*) Los archivos deben tener extensión <strong style="color: red">.xlsx</strong>, si el archivo excel tiene extensión distinta debe convertirlo a .xlsx</td>
+                        </tr>
+
+                        <tr class="div_guardar_bd">
+                            <td colspan="3" style=" padding-top: 30px;">
+                                <span style="color: blue">Verificar que el sistema reconoció las indisponibilidades del archivo.</span><br />
+                                La pestaña REPORTE 1 corresponde a las Indisponibilidades del CUADRO N°1.<br />
+                                La pestaña REPORTE 3 corresponde a las Indisponibilidades del CUADRO N°4.<br />
+                            </td>
+                        </tr>
+                        <tr class="div_guardar_bd">
+                            <td></td>
+                            <td style="padding-top: 5px;">
+                                <input type="button" value="Guardar" id="btnGuardarBD" />
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="clear:both; height:5px"></div>
+
+                </div>
+
+                <div class="content-tabla" style="margin-top: 40px;">
+                    <div class="table-list" id="listadoVal"></div>
+                </div>
+
+            </div>
+            <div id="tabRpt1">
+                <div class="content-tabla">
+                    <div class="table-list" id="listado1"></div>
+                </div>
+            </div>
+            <div id="tabRpt3">
+                <div class="content-tabla">
+                    <div class="table-list" id="listado3"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>

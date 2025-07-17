@@ -1,0 +1,106 @@
+﻿@model COES.MVC.Intranet.Areas.AporteIntegrantes.Models.CostoMarginalVsBarrasModel
+@{
+    string sAccion = ViewData["sAccion"].ToString();
+    string sTitulo = ViewData["sTitulo"].ToString();
+    var sSelected = "";
+}
+
+<link href="~/Areas/AporteIntegrantes/Content/Css/transferencia.css" rel="stylesheet" />
+<script src="~/Areas/AporteIntegrantes/Content/Scripts/CostoMarginalVsBarras.js"></script>
+<input type="hidden" value="" id="index" />
+@using (Html.BeginForm("Save", "CostoMarginalVsBarras", FormMethod.Post, new { id = "frmCostoMarginalVsBarras", @class = "cmxform" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="ast">
+        <div class="form-title">
+            <div class="content-titulo">@sTitulo</div>
+            <div class="content-botonera">
+                @if (Model.bGrabar)
+                {
+                    <input type="submit" value="@sAccion" alt="@sAccion" title="@sAccion" />
+                }
+                <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index", "CostoMarginalVsBarras")'" alt="Retornar" title="Retornar" />
+            </div>
+        </div>
+        <div style="padding:20px;width:500px;">
+            @Html.HiddenFor(model => model.Entidad.Casddbcodi)
+            <table cellspacing="2" cellpadding="5">
+                @if (Model.sError != "")
+                {
+                    <tr>
+                        <td colspan="2">
+                            <div class="editor-label" style="color:red;">
+                                @Model.sError
+                            </div>
+                        </td>
+                    </tr>
+                }
+                <tr>
+                    <td>
+                        <div class="editor-label">
+                            @Html.LabelFor(model => model.Entidad.Barrcodi, "Barra VEA")
+                            (*)
+                        </div>
+                    </td>
+                    <td>
+                        <div class="editor-field">
+                            <select name="Entidad.Barrcodi">
+                                <option value="">--Seleccione--</option>
+                                @foreach (var item in Model.ListaBarras)
+                                {
+                                    sSelected = "";
+                                    if (item.BarrCodi == Model.Entidad.Barrcodi) { sSelected = "selected"; }
+                                    <option value="@item.BarrCodi" @sSelected>@item.BarrNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="editor-label">
+                            @Html.LabelFor(model => model.Entidad.Casddbbarra, "Barra SDDP")
+                            (*)
+                        </div>
+                    </td>
+                    <td>
+                        <div class="editor-field">
+                            @Html.EditorFor(model => model.Entidad.Casddbbarra)
+                            @Html.ValidationMessageFor(model => model.Entidad.Casddbbarra)
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="editor-label">
+                            @Html.LabelFor(model => model.Entidad.Casddbfecvigencia, "Fecha")
+                            (*)
+                        </div>
+                    </td>
+                    <td>
+                        <div class="editor-field">
+                            @Html.TextBoxFor(model => model.Casddbfecvigencia, "{0:dd/MM/yyyy}", new { @class = "txtFecha" })
+                            @Html.ValidationMessageFor(model => model.Casddbfecvigencia)
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+}
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+<script>
+    $("#frmCostoMarginalVsBarras").validate({
+        rules: {
+            "Entidad.Barrcodi": {
+                required: true
+            },
+            "Entidad.Casddbbarra": {
+                required: true,
+            },
+            "Casddbfecvigencia": {
+                required: true
+            }
+        }
+    });
+</script>

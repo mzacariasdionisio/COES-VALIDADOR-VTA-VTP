@@ -1,0 +1,224 @@
+﻿@model COES.MVC.Extranet.Areas.Transferencias.Models.ModeloEnvioModel
+
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<link href="~/Areas/DemandaBarras/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Areas/Transferencias/Content/Scripts/modeloenvio.js?v=12"></script>
+<link href="~/Areas/Transferencias/Content/Css/carga.css" rel="stylesheet" />
+
+<div class="form-title" style="color: #278CCC; margin-bottom:0px;">Envío de Modelos</div>
+<div class="form-main" style="margin-top:5px">
+
+    <div class='action-message' id='mensaje' style="margin-bottom:5px">Por favor seleccione empresa y periodo</div>
+    <table>
+        <tr>
+            <td>
+                <div class="search-content" style="margin-bottom:0px; padding:10px">
+                    <table class="table-search">
+                        <tr>
+                            <td>Empresa:</td>
+                            <td>
+                                <select id="cbEmpresa" name="IdEmpresa">
+                                    @foreach (var item in Model.ListaEmpresas)
+                                    {
+                                        <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>Periodo:</td>
+                            <td>
+                                <select id="cbPeriodo" name="IdPeriodo">
+                                    @foreach (var item in Model.ListaPeriodos)
+                                    {
+                                        <option value="@item.PeriCodi">@item.PeriNombre</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                Version:
+                            </td>
+                            <td>
+                                <select id="cbVersion"></select>
+                            </td>
+                            <td>
+                                <input type="button" id="btnConsultar" value="Aceptar" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+            <td>
+                <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:5px; padding-bottom:11px; display:block" id="divAcciones">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td class="content-action"></td>
+                            <td class="content-action">
+                                <a href="#" id="btn-addfile">
+                                    <div class="content-item-action">
+                                        <img src="~/Areas/DemandaBarras/Content/Images/subir.png" /><br />
+                                        <span>Cargar formato de modelo</span>
+                                    </div>
+                                </a>
+                            </td>
+
+                        </tr>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div style="clear:both; height:10px">
+
+    </div>
+    <div class="popup-title"><span>Listado de Envíos</span></div>
+    <div style="clear:both; height:20px">
+
+    </div>
+    <div id='listado'></div>
+
+
+</div>
+
+
+<div id="container" class="file-carga1">
+    <div class="file-carga-titulo">Archivos seleccionados</div>
+    <div id="loadingcarga" class="estado-carga">
+        <div class="estado-image"><img src="~/Content/Images/loadingtree.gif" /></div>
+        <div class="estado-text">Cargando...</div>
+    </div>
+
+    Seleccione un modelo: <select id="cbModelo"></select>
+
+    <div id="filelist">No soportado por el navegador.</div>
+    <div id="mensajeCarga"></div>
+    <div style="width:200px; text-align:center; margin:auto; margin-top:20px">
+        <input type="button" value="Confirmar carga" id="btnCargarArchivo" />
+        <input type="button" value="Cancelar" id="btnCancelarCarga" onclick="cancelarCarga();" />
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var uploader = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btn-addfile',
+        container: document.getElementById('container'),
+        url: siteRoot + 'transferencias/modeloenvio/upload',
+        flash_swf_url: 'Scripts/Moxie.swf',
+        silverlight_xap_url: 'Scripts/Moxie.xap',
+        drop_element: 'contenedorUpload',
+        chunk_size: '5mb',
+        multi_selection: false,
+        filters: {
+            max_file_size: '100mb',
+            mime_types: [
+
+                { title: "Zip files", extensions: "zip,rar" },
+                { title: "Document files", extensions: "xls,xlsx" }
+            ]
+        },
+        init: {
+            PostInit: function () {
+                document.getElementById('filelist').innerHTML = '';
+                $('#container').css('display', 'none');
+
+                document.getElementById('btnCargarArchivo').onclick = function () {
+
+                    uploader.settings.multipart_params = {
+                        "empresa": $('#cbEmpresa').val(),
+                        "periodo": $('#cbPeriodo').val(),
+                        "version": $('#cbVersion').val(),
+                        "modelo": $('#cbModelo').val(),
+                    }
+
+
+                    if ($('#cbModelo').val() != "") {
+
+                        if (uploader.files.length == 1) {
+                            $('#loadingcarga').css('display', 'block');
+                            uploader.start();
+                            return false;
+                            $('#mensajeCarga').hide();
+                        }
+                        else {
+                            mostrarMensaje('mensajeCarga', 'alert', 'Solo puede subir un archivo.')
+                            $('#mensajeCarga').show();
+                        }
+                    }
+                    else {
+                        mostrarMensaje('mensajeCarga', 'alert', 'Debe seleccionar un modelo.')
+                        $('#mensajeCarga').show();
+                    }
+                };
+            },
+            FilesAdded: function (up, files) {
+                document.getElementById('filelist').innerHTML = '';
+                $('#container').show();
+                if (uploader.files.length == 2) {
+                    uploader.removeFile(uploader.files[0]);
+                }
+                for (i = 0; i < uploader.files.length; i++) {
+                    var file = uploader.files[i];
+                    document.getElementById('filelist').innerHTML += '<div class="file-name" id="' + file.id + '">' + file.name + ' (' + plupload.formatSize(file.size) + ') <a class="remove-item" href="JavaScript:eliminarFile(\'' + file.id + '\');">X</a> <b></b></div>';
+                }
+            },
+            UploadProgress: function (up, file) {
+
+                document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
+                $('#' + file.id).css('background-color', '#FFFFB7');
+            },
+            UploadComplete: function (up, file) {
+                $('#container').hide()
+                document.getElementById('filelist').innerHTML = '';
+                $('#loadingcarga').css('display', 'none');
+                cargarListado(1);
+            },
+            Error: function (up, err) {
+                $('#container').hide()
+                document.getElementById('filelist').innerHTML = '<div class="action-alert">' + err.message + '</div>';
+            }
+        }
+    });
+    uploader.init();
+
+    function eliminarFile(id) {
+        uploader.removeFile(id)
+        $('#' + id).remove();
+    }
+
+</script>
+
+<!-- Botón flotante de WhatsApp -->
+<a href="https://wa.me/51905469444" class="wsp" target="_blank" title="¿Necesitas ayuda? Escríbenos por WhatsApp">
+    <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp">
+</a>
+
+<style>
+    .wsp {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        cursor: pointer;
+        border-radius: 50%;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+    }
+
+        .wsp:hover {
+            transform: scale(1.1);
+        }
+
+        .wsp img {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+        }
+</style>

@@ -1,0 +1,95 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.HistoricoPropiedadModel
+<script>
+    $(function () {
+
+        $('#tablaHistorico').dataTable({
+            "iDisplayLength": -1,
+            "searching": false,
+            "paging": false,
+            "ordering": false,
+            "info": false,
+            "columnDefs": [
+                { "width": "50%", "targets": 2 }
+            ]
+        });
+
+    });
+</script>
+<table class="content-tabla-search" style="width:auto">
+    <tr>
+        <td class="tbform-label">Código:</td>
+        <td>
+            @Model.Equicodi
+        </td>
+    </tr>
+    <tr>
+        <td class="tbform-label">Equipo:</td>
+        <td>
+            @Model.Equinomb
+        </td>
+    </tr>
+    <tr>
+        <td class="tbform-label">Propiedad:</td>
+        <td>
+            @Model.PropNomb
+        </td>
+    </tr>
+</table>
+<div style="clear:both; height:15px"></div>
+
+<table border="0" class="pretty tabla-icono" cellspacing="0" width="100%" id="tablaHistorico">
+    <thead>
+        <tr>
+            <th>Fecha de Vigencia</th>
+            <th>Valor</th>
+            @if (Model.MostrarColAdicional)
+            {
+                <th style="background: #d9f7dd;" title="Valor (0) correcto">
+                    <img src="~/Content/Images/ico-info.gif" alt="" width="16" height="16">
+                </th>
+                <th>Comentario</th>
+                <th></th>
+                <th>Sustento</th>
+            }
+            <th>Usuario modificación</th>
+            <th>Fecha modificación</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.ListaValoresHistoricos)
+        {
+            var claseEstado = item.Propequideleted == 0 ? "" : "fila_historico";
+            var descEstado = item.Propequideleted == 0 ? "Activo" : "No considerado";
+            var claseDescarga = (item.Propequisustento != null && item.Propequisustento != "") ? (item.EsSustentoConfidencial ? "estiloSustentoPropConfidencial" : "estiloSustentoProp") : "";
+            var titleDescarga = (item.Propequisustento != null && item.Propequisustento != "") ? (item.EsSustentoConfidencial ? "Descargar archivo de sustento (CONFIDENCIAL)" : "Descargar archivo de sustento") : "";
+
+
+            <tr class="@claseEstado">
+                <td>@(item.FechapropequiDesc)</td>
+                <td>@Html.Raw(item.Valor)</td>
+
+                @if (Model.MostrarColAdicional)
+                {
+                    <td style="width: 30px;">
+                        @if (@item.Propequicheckcero == 1)
+                        {
+                            <input type="checkbox" disabled="disabled" checked value="@item.Propequicheckcero" />
+                        }
+                        else
+                        {
+                            <input type="checkbox" disabled="disabled" value="@item.Propequicheckcero" />
+                        }
+                    </td>
+
+                    <td>@item.Propequicomentario</td>
+                    <td style="width: 30px;" class="@claseDescarga" onclick="descargarArchivoSustento('@item.Propequisustento')" title="@titleDescarga"></td>
+                    <td style="word-break: break-word;width: 150px;">@item.Propequisustento</td>
+                }
+                <td>@item.UltimaModificacionUsuarioDesc</td>
+                <td>@item.UltimaModificacionFechaDesc</td>
+                <td>@descEstado</td>
+            </tr>
+        }
+    </tbody>
+</table>

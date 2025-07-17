@@ -1,0 +1,276 @@
+﻿@model COES.MVC.Intranet.Areas.PronosticoDemanda.Models.ReduccionRedModel
+
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "PRODEM - Reduccion de Red";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var sMensajeExito = TempData["sMensajeExito"];
+    string sSelected = "";
+}
+
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<link href="~/Areas/PronosticoDemanda/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/datepicker.js"></script>
+<script src="~/Content/Scripts/datatable.js"></script>
+<script src="~/Content/Scripts/jqueryui.js"></script>
+<script src="~/Areas/PronosticoDemanda/Content/Scripts/reduccionred.js?v=3.5"></script>
+<link href="~/Areas/PronosticoDemanda/Content/Css/fixer.css" rel="stylesheet" />
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo">Definición de Barras CP</div>
+        <div class="content-botonera"></div>
+    </div>
+    <div class="content-hijo">
+        <div id="main" class="h-panel-main" data-msg="@Model.Mensaje" data-tpo="@Model.TipoMensaje">
+            <div class="menu">
+                <table class="content-tabla-search">
+                    <tr>
+                        <td>Version</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50px;">
+                            <select id="cboVersion" class="f-select">
+                                @foreach (var item in Model.ListVersion)
+                                {
+                                    <option value="@item.Prnvercodi">@item.Prnvernomb</option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <input type="button" id="btnNuevaVersion" value="Crear Nueva Version" />
+                            <input type="button" id="btnActualizarVersion" value="Actualiza version" style="visibility:hidden" />
+                            <input type="button" id="btnExportar" value="Exportar" style="visibility: hidden" />
+                        </td>
+
+                    </tr>
+                </table>
+            </div>
+
+            <div class="v-panel">
+                <div class="h-panel">
+                    <div style="margin-bottom: 5px;">
+                        <input type="button" id="btnNuevo" value="Crear Nueva Relacion CP a PM" style="visibility: hidden" />
+                    </div>
+                    <div style="margin-bottom: 5px;">
+                        <input type="button" id="btnCpToPm" value="CP to PM" style="visibility: hidden" />
+                    </div>
+                    <div class="h-panel" style="visibility: hidden" id="redTipo">
+                        <div id="lblTipo" style="margin-left: 10px; margin-right: 10px;">Tipo</div>
+                        <select id="cboTipo" class="ftp-select" multiple>
+                            <option value="R">Reduccion</option>
+                            <option value="D">Defecto</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <table id="dtDetalle" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="popupNuevo" class="general-popup" style="min-width: 720px;">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title">
+            <span>Nueva relacion CP - PM</span>
+            <div style="float: right;">
+                <input id="btn-pop-guardar" type="button" value="Grabar" />
+            </div>
+        </div>
+        <div class="popup-text">
+            <div id="message-popup" style="display: none"></div>
+            <div class="h-panel" style="margin-bottom: 10px;">
+                <div style="margin-right: 20px">
+                    <div>Barra CP</div>
+                    <select id="cboBarrascp" class="fcp-select" multiple>
+                        @foreach (var item in Model.ListBarraPopCP)
+                        {
+                            <option value="@item.Grupocodi">@item.Gruponomb</option>
+                        }
+                    </select>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <div>Barra PM</div>
+                    <select id="cboBarraspm" class="fpm-select" multiple>
+                        @foreach (var item in Model.ListBarraPopPM)
+                        {
+                            <option value="@item.Grupocodi">@item.Gruponomb</option>
+                        }
+                    </select>
+                </div>
+                <div style="margin-left: 20px">
+                    <div style="visibility: hidden;">Validacion</div>
+                    <div class="chk-single">
+                        <label>
+                            SUM 1
+                            <input id="chkValUno" type="checkbox" checked />
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="filters" style="margin-bottom: 30px;">
+                <div>Nombre</div>
+                <input id="txtNombreSave" type="text" />
+            </div>
+            <div style="margin-bottom: 30px;">
+                <div id="lblgauss" style="font-size: 15px; font-weight: bold; color: #3D90CB; visibility:hidden;">
+                    Ingresar valores Gaussianos (#):
+                </div>
+                <div>
+                    <div id="httable" style="height: 200px; width:100%; overflow: auto"></div>
+                </div>
+            </div>
+            <div>
+                <div id="lblperdida" style="font-size: 15px; font-weight: bold; color: #3D90CB; visibility:hidden">
+                    Ingresar valores de Perdidas (%):
+                </div>
+                <div>
+                    <div id="httableperdidas" style="height: 200px; width:100%; overflow: auto"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="popupEditar" class="general-popup" style="min-width: 720px;">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title">
+            <span>Editar Relacion</span>
+            <div style="float: right;">
+                <input id="btn-pop-editar" type="button" value="Editar" />
+            </div>
+        </div>
+        <div class="popup-text">
+            <div id="message-popup" style="display: none"></div>
+            <div class="h-panel" style="margin-bottom: 10px;">
+                <div>
+                    <div>Barra CP</div>
+                    <select id="cboBarracpedit" class="fcp-select-edit" multiple>
+                        @foreach (var item in Model.ListBarraPopCP)
+                        {
+                            <option value="@item.Grupocodi">@item.Gruponomb</option>
+                        }
+                    </select>
+                </div>
+                <div style="margin-left: 20px">
+                    <div style="visibility: hidden;">Validacion</div>
+                    <div class="chk-single">
+                        <label>
+                            SUM 1
+                            <input id="chkValUnoEdit" type="checkbox" checked />
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="filters">
+                <div>Nombre</div>
+                <input id="txtNombreEdit" type="text" />
+            </div>
+            <div style="margin-top: 30px;">
+                <div id="lblnombbarrapm" style="font-size: 15px; font-weight: bold; color: #3D90CB;">
+
+                </div>
+                <div id="lblidbarrapm" style="font-size: 15px; font-weight: bold; color: #3D90CB; visibility:hidden">
+
+                </div>
+                <div>
+                    <div id="httableedit" style="height: 300px; width:100%; overflow: auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="popupNuevaVersion" class="general-popup" style="min-width: 300px;">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title">
+            <span>Nueva Version</span>
+            <div style="float: right;">
+                <input id="btnGrabarVersion" type="button" value="Grabar" />
+            </div>
+        </div>
+        <div class="popup-text">
+            <div id="message-popup" style="display: none"></div>
+            <div class="h-panel" style="margin-bottom: 10px;">
+                <div style="margin-right: 20px">
+                    <div>Version</div>
+                    <input type="text" id="txtNombreVersion" />
+                </div>
+                <div class="filters">
+                    <div>Estado</div>
+                    <select id="cboEstadoVersion">
+                        <option value="A" selected>ACTIVO</option>
+                        <option value="I">INACTIVO</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="popupEditVersion" class="general-popup" style="min-width: 300px;">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title">
+            <span>Actualizar Version</span>
+            <div style="float: right;">
+                <input id="btnEditVersion" type="button" value="Actualizar" />
+            </div>
+        </div>
+        <div class="popup-text">
+            <div id="message-popup" style="display: none"></div>
+            <div class="h-panel" style="margin-bottom: 10px;">
+                <div style="margin-right: 20px">
+                    <div>Version</div>
+                    <input type="text" id="txtActualizarNombre" />
+                </div>
+                <div class="filters">
+                    <div>Estado</div>
+                    <select id="cboActualizarEstado">
+                        <option value="A">ACTIVO</option>
+                        <option value="I">INACTIVO</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="popupDefecto" class="general-popup" style="min-width: 220px;">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title">
+            <span>Barra PM a CP</span>
+            <div style="float: right;">
+                <input id="btn-pop-Defecto" type="button" value="Grabar" />
+            </div>
+        </div>
+        <div class="popup-text">
+            <div id="message-popup" style="display: none"></div>
+            <div class="v-panel" style="margin-bottom: 10px;">
+                <div style="margin-bottom: 10px;">
+                    <div>Nombre</div>
+                    <input id="txtNombreDefecto" type="text" />
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <div>Barra PM</div>
+                    <select id="cboBarraDefecto" class="f-select">
+                        @foreach (var item in Model.ListBarraDefecto)
+                        {
+                            <option value="@item.Grupocodi">@item.Gruponomb</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="filters" style="margin-bottom: 10px;">
+                <div>Perdida</div>
+                <input id="txtperdidaDefecto" type="number" style="text-align:center"/>
+            </div>
+            <div class="filters" style="margin-bottom: 10px;">
+                <div>Gaussiano</div>
+                <input id="txtgaussDefecto" type="number" style="text-align:center"/>
+            </div>
+        </div>
+    </div>
+</div>

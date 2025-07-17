@@ -1,0 +1,952 @@
+﻿@model COES.MVC.Intranet.Areas.Intervenciones.Models.Intervencion
+@{
+    ViewBag.Title = "Consulta de Intervenciones";
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+
+<!--js/css de formulario-->
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/validacion.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/datetime-moment.js"></script>
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+
+<link href="~/Areas/Intervenciones/Content/Css/Intervenciones.css?v=9.0.4" rel="stylesheet" />
+
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesArchivo.js?v=9.0.4"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesFormulario.js?v=9.0.4"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesSustento.js?v=9.0.4"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesHistoria.js?v=9.0.4"></script>
+<script src="~/Areas/Intervenciones/Content/Scripts/Registro/IntervencionesRegistro.js?v=9.0.4"></script>
+<script src="~/Content/Scripts/highstock.js?v=1.1.7"></script>
+<script src="~/Content/Scripts/highcharts-more.js?v=1.1.7"></script>
+
+<div class="form-title" id="container">
+    <div id="tituloIndex" class="content-titulo">@(Model.NombreProgramacion) </div>
+    <div id="contador" style="float:left;" class=""> </div>
+    <div class="content-botonera">
+        <div class="botonera-item">
+            @if (Model.PermiteReversion)
+            {
+                <input type="button" value="Habilitar Reversión" id="btnHabilitarReversion" />
+            }
+            @if (Model.IdTipoProgramacion == 1)
+            {
+                <input type="button" value="Guardar" id="btnGuardarEdicionFechas" />
+            }
+            <input type="button" value="Regresar" id="btnRegresar2" />
+        </div>
+    </div>
+</div>
+
+<div class="ast" id="Reemplazable">
+
+    <input type="hidden" id="Progrcodi" value="@Model.IdProgramacion" />
+    <input type="hidden" id="estadoProg" value="@Model.EstadoProgramacion" />
+    <input type="hidden" id="estadoProgDesc" value="@Model.EstadoProgramacionDesc" />
+    <input type="hidden" id="idEmprcodi" value="" />
+
+    <input type="hidden" id="idTipoProgramacion" value="@Model.IdTipoProgramacion" />
+    <input type="hidden" id="Emprcodi" value="@Model.sIdsEmpresas" />
+    <input type="hidden" id="sEmprcodi" value="@Model.sIdsEmpresas" />
+
+    <input type="hidden" id="Detalle" value="@Model.Detalle" />
+    <input type="hidden" id="EsCerrado" value="@Model.EsCerrado" />
+    <input type="hidden" id="EsRevertido" value="@Model.EsRevertido" />
+    <input type="hidden" id="fecPlazo" value="@Model.FechaPlazo" />
+    <input type="hidden" id="Opcion" value="1" />
+
+    <div class="content-hijo" id="mainLayout">
+
+        <div id="alertaEmpresas" class="action-alert" hidden></div>
+
+        <div class="row">
+            <table class="content-tabla-search" border="0" cellpadding="5" cellspacing="2" style="width: 100%; overflow: auto; background-color: #e5efff">
+
+                <thead>
+                    <tr class="THCabecera">
+                        <td colspan="10">
+                            <div class="editor-label" style="color:#FFFFFF;">
+                                <b>Filtros de búsqueda</b>
+                                <input type="button" value="🡅" class="btn-contraer_intv" style="" id="btnContraer">
+                                <input type="button" value="🡇" class="btn-contraer_intv" style="display:none" id="btnDescontraer">
+                            </div>
+                        </td>
+                    </tr>
+                </thead>
+
+                <tbody id="Contenido">
+                    <tr>
+                        <td colspan="8" style="text-align:center">
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnConsultar">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/Visualizar.png" class="set_size" /><br />
+                                        <span>Consultar</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            @if (!Model.EsCerrado || Model.EsRevertido)
+                            {
+                                <div class="td_inline content-action">
+
+                                    <a href="#" id="IntervencionesNuevo">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/nuevo.png" class="set_size" /><br />
+                                            <span>Nuevo registro</span>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+
+                            <div class="td_inline content-action">
+                                <a href="#" id="ReporteIntervenciones">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/exportarExcel.png" class="set_size" /><br />
+                                        <span>Reporte</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="td_inline content-action">
+                                <a href="#" id="ReporteTablaGen">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/exportarExcel.png" class="set_size" /><br />
+                                        <span>Reporte Tabla Gen.</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="td_inline content-action">
+                                <a href="#" id="ReporteTablaTrans">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/exportarExcel.png" class="set_size" /><br />
+                                        <span>Reporte Tabla Trans.</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnManttoConsulta">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/ExportExcel.png" class="set_size" /><br />
+                                        <span>Reporte en plantilla</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            @if (!Model.EsCerrado)
+                            {
+                                <div class="td_inline content-action">
+                                    <a href="#" id="IntervencionesCopiar">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/copiar.png" class="set_size" /><br />
+                                            <span>Transferir</span>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+
+                            @if (!Model.EsCerrado)
+                            {
+                                <div class="td_inline content-action">
+                                    <a href="#" id="IntervencionesImportar">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/importExcel.jpg" class="set_size" /><br />
+                                            <span>Importar</span>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnExportarExcel">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/ExportExcel.png" class="set_size" /><br />
+                                        <span>Mantto Transf.</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnManttoPlantilla">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/DownFile.png" class="set_size" /><br />
+                                        <span>Plantilla</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnPotenciaIndisp">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/exportarExcel.png" class="set_size" /><br />
+                                        <span>Potencia Indisp.</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="td_inline content-action">
+                                <a href="#" id="ConsultaAgentes">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/Agentes.png" class="set_size" /><br />
+                                        <span>Reporte Agente</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="td_inline content-action">
+                                <a href="#" id="btnReporteActividades">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/exportarExcel.png" class="set_size" /><br />
+                                        <span>Reporte Actividades</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                        </td>
+                        <td colspan="3" rowspan="2">
+                            @if (Model.IdTipoProgramacion == 1 || Model.IdTipoProgramacion == 2 || Model.IdTipoProgramacion == 3)
+                            {
+                                <div class="td_inline" id="tacometroF1" style="width: 110px; height: 80px; margin-right: 0px;"></div>
+                                <div class="td_inline" id="tacometroF2" style="width: 110px; height: 80px; margin-right: 0px;"></div>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="130">Tipo de Programación: </td>
+                        <td width="100">
+                            <select style="background-color:white; width: 160px" id="TipoProgramacion">
+                                @foreach (var item in Model.ListaTiposProgramacion)
+                                {
+                                    var selectedTipo = item.Evenclasecodi == Model.IdTipoProgramacion ? " selected " : "";
+                                    <option value=@item.Evenclasecodi @selectedTipo>@item.Evenclasedesc</option>
+                                }
+                            </select>
+                        </td>
+
+                        <td width="100">Programación: </td>
+                        <td width="250">
+                            <select style="background-color:white; width: 355px" id="Programacion">
+                                @foreach (var item in Model.ListaProgramaciones)
+                                {
+                                    var selectedTipo = item.Progrcodi == Model.IdProgramacion ? " selected " : "";
+                                    <option value=@item.Progrcodi @selectedTipo>@item.ProgrnombYPlazo</option>
+                                }
+                            </select>
+                        </td>
+
+                        <td width="115">Tipo de Intervención: </td>
+                        <td width="100">
+                            <select style="background-color:white; width:210px" id="cboTipoIntervencion" multiple="multiple">
+                                @foreach (var item in Model.ListaCboIntervencion)
+                                {
+                                    <option value="@item.Tipoevencodi">@item.Tipoevendesc</option>
+                                }
+                            </select>
+
+                        </td>
+                        <td width="55">Estado: </td>
+                        <td width="100">
+                            <select style="background-color:white; width: 173px" id="estadocodi" multiple="multiple">
+                                @foreach (var item in Model.ListacboEstado)
+                                {
+                                    <option value="@item.Estadocodi">@item.Estadonomb</option>
+                                }
+                            </select>
+                        </td>
+
+                    </tr>
+                    <tr>
+                        <td width="130">Ubicación: </td>
+                        <td>
+                            <div>
+                                <select style="background-color:white; width:165px;" id="cboUbicacion" multiple="multiple">
+                                    @foreach (var item in Model.ListaCboUbicacion)
+                                    {
+                                        <option value="@item.Areacodi">@item.Areanomb</option>
+                                    }
+                                </select>
+                            </div>
+                        </td>
+                        <td width="115">Tipo de equipo: </td>
+                        <td>
+                            <select style="background-color:white; width:210px" id="cboFamilia" multiple="multiple">
+                                @foreach (var item in Model.ListaFamilias)
+                                {
+                                    <option value="@item.Famcodi">@item.Famnomb</option>
+                                }
+                            </select>
+                        </td>
+                        <td width="55">Equipo: </td>
+                        <td>
+                            <select style="background-color:white; width: 173px" id="cboEquipo" multiple="multiple">
+                            </select>
+                        </td>
+
+                        <td width="80"> Empresa:</td>
+                        <td>
+                            <select style="background-color:white" id="Empresa" multiple="multiple">
+                                @foreach (var item in Model.ListaCboEmpresa)
+                                {
+                                    <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                }
+                            </select>
+                        </td>
+
+                        <td colspan="2">
+                            <input type="checkbox" id="check_eliminado" class="check_eliminado" name="check_eliminado" style="width:15px; margin-top: 5px;">
+                            Ocultar Eliminados
+
+                            <input type="checkbox" id="check_mostrarAdjuntos" class="check_mostrarAdjuntos" name="check_mostrarAdjuntos" style="width:15px; margin-top: 5px;">
+                            Con Archivos
+
+                        </td>
+
+                    </tr>
+                    <tr>
+                        <td width="130">Disponibilidad: </td>
+                        <td>
+                            <select style="width:165px; background-color:white;" id="InterDispo" multiple="multiple">
+                                <option value="F">FS (Fuera de Servicio)</option>
+                                <option value="E">ES (En Servicio)</option>
+                            </select>
+                        </td>
+
+                        <td colspan="2">
+                            Fecha Inicio:
+                            <div style="width:110px;display: inline;margin-right: 21px;" class="editor-label">
+                                <input type="text" id="InterfechainiD" value="@Model.Progrfechaini" style="width: 100px" class="txtFecha" />
+                            </div>
+
+                            Final:
+                            <div style="width:110px;display: inline;" class="editor-label">
+                                <input type="text" id="InterfechafinD" value="@Model.Progrfechafin" style="width: 100px" class="txtFecha" />
+                            </div>
+                        </td>
+
+                        <td width="110">Conjunto de equipo:</td>
+                        <td>
+                            <div class="editor-label">
+                                <select style="background-color:white;width:173px" id="cboConjuntoEq">
+                                    <option value="0">TODOS</option>
+                                    <option value="1">Generación</option>
+                                    <option value="2">Líneas</option>
+                                    <option value="3">SSEE</option>
+                                    <option value="4">SSEE/Líneas</option>
+                                </select>
+                            </div>
+                        </td>
+
+                        <td width="80">Descripción:</td>
+                        <td>
+                            <input type="text" id="txtNombreFiltro" style="    background-color: white;" />
+                        </td>
+                        <td colspan="2">
+
+                            <input type="checkbox" id="check_mostrarMensajes" class="check_mostrarMensajes" name="check_mostrarMensajes" style="width:15px; margin-top: 5px;">
+                            Con Mensajes
+
+                            <input type="checkbox" id="check_mostrarNotas" class="check_mostrarNotas" name="check_mostrarNotas" style="width: 15px; margin-top: 5px; margin-left: 30px;">
+                            Con Notas
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            @if (Model.TienePermisoEjecManual)
+            {
+                <div>
+
+                    <fieldset style="margin-top: 10px; padding-bottom: 5px; color: red; display: inline; ">
+                         Solo disponible para el ambiente de Pruebas / Preproducción.
+                    </fieldset>
+
+                    @if (Model.IdTipoProgramacion != 1)
+                    {
+                        <fieldset style="margin-top: 10px; padding-bottom: 5px; color: red; display: inline; ">
+                            Simular recordatorio de Sustento Inclusión / Exclusión.
+                            <input type="button" value="Ejecutar Notificación" id="btnEjecutarSustentoInclExcl" />
+                        </fieldset>
+                    }
+
+                    @if (Model.EstadoProgramacion != 3 && Model.IdTipoProgramacion != 1)
+                    {
+                        <fieldset style="margin-top: 10px; padding-bottom: 5px; color: red; display: inline; ">
+                            Simular Aprobación automática.
+                            <input type="button" value="Ejecutar Aprobación" id="btnEjecutarAprobacion" />
+                        </fieldset>
+                    }
+
+                    @if (Model.IdTipoProgramacion == 1 || Model.IdTipoProgramacion == 2 || Model.IdTipoProgramacion == 3)
+                    {
+                        <fieldset style="margin-top: 10px; padding-bottom: 5px; color: red; display: inline; ">
+                            Simular crear versiones F1 F2.
+                            <input type="button" value="Crear Versión" id="btnCrearVersion" />
+                        </fieldset>
+                    }
+                </div>
+            }
+
+            <!--Leyenda de alertas de programado -->
+            @if (Model.IdTipoProgramacion == 2)
+            {
+                <div class="leyenda_alerta" style="HEIGHT: 38px;margin-top: 10px;">
+                    <div>
+                        <div class="td_inline" style="padding-top: 6px;">
+                            <b>Validación</b>
+                        </div>
+                    </div>
+
+                    <div class="content-action">
+                        <div class="td_inline">
+
+                            <table>
+                                <tr>
+                                    <!--alerta-->
+                                    <td style="width: 25px" class="fila_alerta_interv">
+                                        <div style="width: 4px;">
+                                            <img style="width: 20px;" src="~/Content/Images/alerta_intervencion.png?v=2.2" />
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;padding-right: 10px;" class="fila_alerta_interv">Programado no registrado como Ejecutado</td>
+                                    <td style="width: 5px">
+                                        &nbsp;
+                                    </td>
+                                    <!--alerta-->
+                                    <td style="width: 25px" class="fila_alerta_hop">
+                                        <div style="width: 4px;">
+                                            <img style="width: 20px;" src="~/Content/Images/alerta_hora_operacion.png?v=2.2" />
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;padding-right: 10px;" class="fila_alerta_hop">Programado en Estado Pendiente</td>
+                                    <td style="width: 5px">
+                                        &nbsp;
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+            <!--Leyenda de alertas de ejecutados -->
+            @if (Model.IdTipoProgramacion == 1)
+            {
+                <div class="leyenda_alerta" style="HEIGHT: 38px;margin-top: 10px;">
+                    <div>
+                        <div class="td_inline content-item-action" id="btnActivarValidaciones">
+                            <input type="checkbox" id="btnActivarValidaciones" style="margin-top: 5px;">
+                            <b>Activar validaciones</b>
+                        </div>
+                    </div>
+
+                    <div class="content-action">
+                        <div class="td_inline">
+
+                            <table>
+                                <tr>
+                                    <!--alerta-->
+                                    <td style="width: 25px" class="fila_alerta_hop">
+                                        <div style="width: 4px;">
+                                            <img style="width: 20px;" src="~/Content/Images/alerta_hora_operacion.png?v=2.2" />
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;padding-right: 10px;" class="fila_alerta_hop">Horas de Operación</td>
+                                    <td style="width: 5px">
+                                        &nbsp;
+                                    </td>
+
+                                    <!--alerta-->
+                                    <td style="width: 25px" class="fila_alerta_medidores">
+                                        <div style="width: 4px;">
+                                            <img style="width: 20px;" src="~/Content/Images/alerta_Medidores.png?v=2.2" />
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;padding-right: 10px;" class="fila_alerta_medidores">Medidores de Generación</td>
+                                    <td style="width: 5px">
+                                        &nbsp;
+                                    </td>
+
+                                    <!--alerta-->
+                                    <td style="width: 25px" class="fila_alerta_pr21">
+                                        <div style="width: 4px;">
+                                            <img style="width: 20px;" src="~/Content/Images/alerta_PR21.png?v=2.2" />
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;padding-right: 10px;" class="fila_alerta_pr21">Datos PR21</td>
+                                    <td style="width: 5px">
+                                        &nbsp;
+                                    </td>
+
+                                    <!--alerta-->
+                                    <td style="width: 25px" class="fila_alerta_idcc">
+                                        <div style="width: 4px;">
+                                            <img style="width: 20px;" src="~/Content/Images/alerta_IDCC.png?v=2.2" />
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;padding-right: 10px;" class="fila_alerta_idcc">Datos IDCC</td>
+                                    <td style="width: 5px">
+                                        &nbsp;
+                                    </td>
+
+                                    <!--alerta-->
+                                    <td style="width: 25px" class="fila_alerta_ems">
+                                        <div style="width: 4px;">
+                                            <img style="width: 20px;" src="~/Content/Images/alerta_ems.png?v=2.2" />
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;padding-right: 10px;" class="fila_alerta_ems">Señales EMS</td>
+                                    <td style="width: 5px">
+                                        &nbsp;
+                                    </td>
+
+                                    <!--alerta-->
+                                    <td style="width: 25px" class="fila_alerta_scada">
+                                        <div style="width: 4px;">
+                                            <img style="width: 20px;" src="~/Content/Images/alerta_scada.png?v=2.2" />
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;padding-right: 10px;" class="fila_alerta_scada">Señales Scada</td>
+                                    <td style="">
+                                        &nbsp;
+                                    </td>
+
+                                </tr>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            }
+
+            @if (Model.IdTipoProgramacion > 2)
+            {
+                <!--Leyenda para anual, mensual, semanal-->
+                <div style="display: block; height: 30px;">
+                    <div class="td_inline" style="padding-top: 6px;font-weight: bold;">
+                        <span>Leyenda: </span>
+                    </div>
+
+                    <div class="td_inline" style="padding-top: 6px;">
+                        <span style="background:white;padding: 2px;color: #000000;">Actividad de 1 día</span>
+                    </div>
+                    <div class="td_inline" style="padding-top: 6px;font-weight: bold;">
+                        <span style="background:white;padding: 2px;color: #0000ff;">Continua por varios días</span>
+                    </div>
+                    <div class="td_inline" style="padding-top: 6px;font-weight: bold;">
+                        <span style="background:white;padding: 2px;color: #3a933e;">Consecutivo por rango de horas</span>
+                    </div>
+                </div>
+            }
+
+            <!--Herramientas sobre filas seleccionadas-->
+            <div style="align-content:space-between;">
+                <div style="float: left; height: 25px; margin-right: 5px;">
+                    <label>
+                        <input type="checkbox" id="chkSeleccionar" />Sel. Todos
+                    </label>
+
+                </div>
+                @if ((!Model.EsCerrado && Model.IdTipoProgramacion > 2) || Model.EsRevertido)
+                {
+                    <div class="td_inline_2 content-action">
+                        <a href="#" id="IntervencionesDesagrupar">
+                            <div class="content-item-action">
+                                <img src="~/Content/Images/Desagrupar.png" class="set_size" title="Desagrupar" alt="Desagrupar" />
+                                <span style="vertical-align: super;">Desagrupar</span>
+                            </div>
+                        </a>
+                    </div>
+                }
+                @if ((!Model.EsCerrado && Model.IdTipoProgramacion > 2) || Model.EsRevertido)
+                {
+                    <div class="td_inline_2 content-action">
+                        <a href="#" id="IntervencionesAgrupar">
+                            <div class="content-item-action">
+                                <img src="~/Content/Images/Agrupar.png" class="set_size" title="Desagrupar" alt="Agrupar" />
+                                <span style="vertical-align: super;">Agrupar</span>
+                            </div>
+                        </a>
+                    </div>
+                }
+                @if (!Model.EsCerrado || Model.EsRevertido)
+                {
+                    <div class="td_inline_2 content-action">
+                        <a href="#" id="IntervencionesRecuperar">
+                            <div class="content-item-action">
+                                <img src="~/Content/Images/recuperar.png" class="set_size" title="Recuperar" alt="Recuperar" />
+                                <span style="vertical-align: super;">Recuperar</span>
+                            </div>
+                        </a>
+                    </div>
+                }
+
+                @if (!Model.EsCerrado || Model.EsRevertido)
+                {
+                    <div class="td_inline_2 content-action">
+                        <a href="#" id="IntervencionesEliminar">
+                            <div class="content-item-action">
+                                <img src="~/Content/Images/eliminar.png" class="set_size" title="Eliminar" alt="Eliminar" />
+                                <span style="vertical-align: super;">Eliminar</span>
+                            </div>
+                        </a>
+                    </div>
+                }
+                <div class="td_inline_2 content-action">
+                    <a href="#" id="IntervencionesEnviarMensaje">
+                        <div class="content-item-action">
+                            <img src="~/Content/Images/message.png" class="set_size" title="Mensajes" alt="Mensajes" />
+                            <span style="vertical-align: super;">Mensajes</span>
+                        </div>
+                    </a>
+                </div>
+                @if (!Model.EsCerrado || Model.EsRevertido)
+                {
+                    <div class="td_inline_2 content-action">
+                        <a href="#" id="CambiarEstado">
+                            <div class="content-item-action">
+                                <img src="~/Content/Images/eslabon.png" class="set_size" title="Estado" alt="Estado" />
+                                <span style="vertical-align: super;">Cambiar estado</span>
+                            </div>
+                        </a>
+                    </div>
+                }
+                <div class="td_inline_2 content-action">
+                    <a href="#" id="IntervencionesRptComunicaciones">
+                        <div class="content-item-action">
+                            <img src="~/Content/Images/exportarExcel.png" class="set_size" title="Mensajes" alt="Mensajes" />
+                            <span style="vertical-align: super;">Comunicaciones</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="td_inline_2 content-action">
+                    <a href="#" id="DescargarArchivos">
+                        <div class="content-item-action">
+                            <img src="~/Content/Images/Document/raricon.png" class="set_size" title="Descargar Adjuntos" alt="Descargar Adjuntos" />
+                            <span style="vertical-align: super;">Descargar Adjuntos</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="td_inline_2 content-action">
+                    <a href="#" id="DescargarMsjMasivos">
+                        <div class="content-item-action">
+                            <img src="~/Content/Images/Document/raricon.png" class="set_size" title="Descargar mensajes masivos" alt="Descargar mensajes masivos" />
+                            <span style="vertical-align: super;">Descargar mensajes masivos</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!--Leyenda color -->
+                <div style="float: left; height: 25px;    margin-left: 50px;">
+                    <label>
+                        <input type="text" disabled style="background-color: #FF2C2C; height: 13px; width: 15px; margin: 3px; " /> Rechazados
+                    </label>
+                </div>
+                <div style="float: left; height: 25px;">
+                    <label>
+                        <input type="text" disabled style="background-color: #E0DADA; height: 13px; width: 15px; margin: 3px;" /> Eliminados
+                    </label>
+                </div>
+                @if (Model.EsRevertido)
+                {
+
+                    <div style="float: left; height: 25px;">
+                        <label>
+                            <input type="text" disabled style="background-color: #FF9746; height: 13px; width: 15px; margin: 3px;" /> En Reversión
+                        </label>
+                    </div>
+                }
+                <div style="float: left; height: 25px; display: none;" id="leyenda_modificado_agente">
+                    <label>
+                        <input type="text" disabled style="background-color: #ffe5ff; height: 13px; width: 15px; margin: 3px;" /> <b>Actualizado por Agente</b>
+                    </label>
+                </div>
+
+                <div id="alerta" style="margin-left: 10px;" class="td_inline">    </div>
+            </div>
+
+
+            <div class="s">
+                <div id="listado">
+
+                </div>
+            </div>
+        </div>
+
+        <div class="tabla-header">
+            <div class="table-paginado" id="paginado">
+
+                @if (Model.IdTipoProgramacion == 5)
+                {
+                    <br />
+                    <br />
+                    <b>Nota:</b><span> El programado anual contiene muchos registros lo cual provoca que demore muchos segundos en presentar el listado web. Utilice los filtros para reducir el tiempo de respuesta. </span>
+                    <br />
+                    <br />
+                    <span> El filtro de Equipo depende de la seleccion de ubicación y tipo de equipo. </span>
+                }
+                else
+                {
+                    <br />
+                    <b>Nota:</b><span> El filtro de Equipo depende de la seleccion de ubicación y tipo de equipo. </span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="popup" class="popup" style="width: 1100px; min-height: 600px">
+
+</div>
+
+<!--Ventana flotante de Formulacion de Intervención-->
+<div id="popupFormIntervencion" class="general-popup popup_formulario" style="width: 1070px; min-height: 600px; max-width: 1070px">
+
+</div>
+
+<div id="popupFormCambiarEstado" class="general-popup popup_formulario" style="width: 1070px; min-height: 600px; max-width: 1500px">
+
+</div>
+
+<!--popup desagregar por horas -->
+<div id="popupDesagrupar" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Desagrupar Intervenciones</span></div>
+
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaDesagrupar">
+            <div class="content-tabla">
+
+                <div style="width:250px; padding-left: 50px;">
+                    <div style="width:250px; padding-top:30px;">
+                        <div style="width:80px; float:left;">
+                            Tipo:
+                        </div>
+                        <div style="width:150px; float:left;">
+                            <select id="tipoDesagrupar" name="" style="width:138px">
+                                <option value="0" selected> -- Seleccione Tipo --</option>
+                                <option value="1">Completo</option>
+                                <option value="2">Por Horas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="selecionHoras" style="width:250px; padding-top:30px; display: none;">
+                        <div>
+                            <div style="width:80px; float:left;">
+                                Hora inicio:
+                            </div>
+                            <div style="width:150px; float:left;">
+                                <input type="time" class="without_ampm" id="desagregarHoraIni" name="desagregarHoraIni" data-mask="00:00" data-mask-selectonfocus="true" />
+                                @*<input id="desagregarHoraIni" type="text" value="00:00" style="width: 50px;">*@
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="width:80px; float:left;">
+                                Hora fin:
+                            </div>
+                            <div style="width:150px; float:left;">
+                                <input type="time" class="without_ampm" id="desagregarHoraFin" name="desagregarHoraIni" data-mask="00:00" data-mask-selectonfocus="true" />
+                                @*<input id="desagregarHoraFin" type="text" value="10:15" style="width: 50px;">*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="width:250px; text-align:center; padding:30px; padding-top:60px;">
+
+                    <div style="width:250px;">
+                        <input type="button" id="btnDesagrupar" value="Desagrupar" />
+                        <input type="button" id="btnCancelarDesagrupar" value="Cancelar" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--popup Intervenciones del Agente -->
+<div id="popupIntervencionesAgente" class="general-popup" style="width: 1100px; min-height: 600px; max-width: 1500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span style="text-align:center">Intervenciones realizadas por el Agente</span>
+        <a href="#" id="btnReporteAgente" style="float: right;">
+            <div class="content-item-action" style=" text-align: right;">
+                <img src="~/Content/Images/ExportExcel.png" class="set_size" />
+            </div>
+        </a>
+    </div>
+    <div class="panel-container">
+        <div class="content-tabla">
+            <div class="table-list" id="listadoIntervencionesAgente"></div>
+        </div>
+    </div>
+</div>
+
+
+
+<!--Alertas-->
+<div id="popupAlertaIntervNoEjecutada" class="general-popup" style="z-index:9999999999; width: 450px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span style="text-align:center">Alerta de Intervención Programada</span></div>
+    <div id="formAlertaIntervNoEjecutada" style="MARGIN-TOP: 17px">
+
+    </div>
+</div>
+
+<div id="popupAlertaEstadoPendiente" class="general-popup" style="z-index:9999999999; width: 450px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span style="text-align:center">Alerta de Estado Pendiente</span></div>
+    <div id="formAlertaEstadoPendiente" style="MARGIN-TOP: 17px">
+
+    </div>
+</div>
+
+<div id="popupAlertaHo" class="general-popup" style="z-index:9999999999; width: 750px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span style="text-align:center"></span></div>
+    <div id="formAlertaHo">
+
+    </div>
+</div>
+
+<div id="popupAlertaScada" class="general-popup" style="z-index:9999999999; width: 750px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span style="text-align:center"></span></div>
+    <div id="formAlertaScada">
+
+    </div>
+</div>
+
+<div id="popupAlertaEms" class="general-popup" style="z-index:9999999999; width: 750px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span style="text-align:center"></span></div>
+    <div id="formAlertaEms">
+
+    </div>
+</div>
+
+<div id="popupAlertaIDCC" class="general-popup" style="z-index:9999999999; width: 750px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span style="text-align:center"></span></div>
+    <div id="formAlertaIDCC">
+
+    </div>
+</div>
+
+<div id="popupAlertaPR21" class="general-popup" style="z-index:9999999999; width: 750px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span style="text-align:center"></span></div>
+    <div id="formAlertaPR21">
+
+    </div>
+</div>
+
+<div id="popupAlertaMedidores" class="general-popup" style="z-index:9999999999; width: 750px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span style="text-align:center"></span></div>
+    <div id="formAlertaMedidores">
+
+    </div>
+</div>
+
+<!--comunicaciones-->
+<input type="hidden" id="hfIntercodiMsj" value="0" />
+
+<div id="popupMensajes" class="general-popup" style="z-index: 9999999999; width: 1100px !important; height: 720px; max-width: 1100px; top: 100px !important">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Comunicaciones</span>
+
+        <input type="button" value="Nueva comunicación" id="btnEnviarRptaComunicacion" style="float: right;" />
+
+        <a href="#" id="btnDescargaPdfComunicacion" style="float: right; font-size: 12px; text-decoration: none; color: #278CCC;">
+            <div class="content-item-action" style=" text-align: right;">
+                <img src="~/Content/Images/pdf.png" class="set_size" />
+                <span>Reporte</span>
+            </div>
+        </a>
+
+        <a href="#" id="btnDescargaZipComunicacion" style="float: right; font-size: 12px; text-decoration: none; color: #278CCC;">
+            <div class="content-item-action" style=" text-align: right;">
+                <img src="~/Content/Images/Document/raricon.png" class="set_size" />
+                <span>Descargar</span>
+            </div>
+        </a>
+    </div>
+
+    <div id="idTablaMensajes" style="min-height: 370px; margin-top: 15px; width: 1100px; overflow-y: auto; max-height: 680px; ">
+
+        <!--nueva comunicación-->
+        <div class="bandeja-nuevo" id="nuevoMensajePopup" style="display: block;">
+            <iframe id="frmRegistroMensajePopup" frameborder="0" style="width: 1070px; height: 825px" src=""></iframe>
+
+        </div>
+
+        <!--listado de mensajes-->
+
+        <div id="div-comments" style="display: none">
+            <div id="div-message-mensaje" class="oculto"></div>
+            <div class="search-content">
+                <div class="field-control-group">
+                    <input type="hidden" id="hfEmpresaMsj" value="" />
+                    <input type="hidden" id="hfFormatoMsj" value="" />
+
+                    <div class="field-group">
+                        <span class="field-label">
+                            Remitente:
+                        </span>
+                        <div class="field-control">
+                            <select id="ddl-sender" onchange="volverAListadoMensaje()">
+                                <option value="-1" selected="selected">[ TODOS ]</option>
+                                <option value="COES">COES</option>
+                                <option value="AGENTE">AGENTE</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">
+                                Estado:
+                            </span>
+                            <div class="field-control">
+                                <select id="ddl-state" onchange="volverAListadoMensaje()">
+                                    <option value="-1">[ TODOS ]</option>
+                                    <option value="L">Leído</option>
+                                    <option value="N">No Leído</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="div-wrap" class="chat-wrap">
+                <div class="chat-inner">
+                    <div id="lst-comments" style="margin-top:10px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="div-msg-contenido" style="display: none">
+            <div id="div-detalle-msg-contenido">
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!--popup para equipos-->
+<div id="busquedaEquipo" class="general-popup popup_equipo" style="display: none; width: 950px; height:550px"></div>
+
+<!--popup para sustento-->
+<div id="popupFormSustento" class="general-popup popup_equipo" style="display: none; width: 950px; height:610px;"></div>
+
+<!--Historia equipo-->
+<div id="popupFormHistoria" class="general-popup" style="z-index: 10000; width: 1100px !important; max-width: 1100px; top: 100px !important">
+</div>

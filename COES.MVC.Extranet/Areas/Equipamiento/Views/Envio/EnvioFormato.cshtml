@@ -1,0 +1,438 @@
+﻿@model COES.MVC.Extranet.Areas.Equipamiento.Models.EnvioFormatoModel
+@{
+    ViewBag.Title = "Envío";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+
+<script src="~/Content/Scripts/tinymce/tinymce.min.js"></script>
+
+<link href="~/Areas/Equipamiento/Content/Css/envio/envioFormularioWeb.css?v=2.0.5" rel="stylesheet" />
+<link href="~/Areas/Equipamiento/Content/Css/fichatecnica.css?v=2.0.5" rel="stylesheet" />
+
+<script src="~/Areas/Equipamiento/Content/Scripts/Envio/global.js?v=2.0.5"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/Envio/formularioArchivosDato.js?v=2.0.5"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/Envio/formularioFTdetalleVista.js?v=2.0.5"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/Envio/formularioExcelWeb.js?v=2.0.5"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/Envio/envioFormato.js?v=2.0.5"></script>
+
+<div class="form-title_intranet" id="container">
+    @if (Model.IdEnvio > 0)
+    {
+        <div class="content-titulo" style="">
+            Envío de Ficha Técnica - Solicitud N° @Model.IdEnvio <span id="version_desc"></span>
+        </div>
+    }
+    else
+    {
+        <div class="content-titulo">
+            Envío de Ficha Técnica
+        </div>
+    }
+    <div class="content-botonera">
+        <input type="button" id="btnInicio" value="Salir del envío" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout" style="overflow:auto; background-color:#fff">
+
+    <input type="hidden" id="hfEmprcodi" value="@Model.Emprcodi" />
+    <input type="hidden" id="hfFtetcodi" value="@Model.Ftetcodi" />
+    <input type="hidden" id="hfFtprycodi" value="@Model.Ftprycodi" />
+    <input type="hidden" id="hfCodigoEquipos" value="@Model.CodigoEquipos" />
+    <input type="hidden" id="hfIdEquipoEnvio" value="@Model.Fteeqcodi" />
+
+    <input type="hidden" id="hfIdEnvio" value="@Model.IdEnvio" />
+    <input type="hidden" id="hfIdVersion" value="@Model.IdVersion" />
+    <input type="hidden" id="hfIdEnvioTemporal" value="@Model.IdEnvioTemporal" />
+    <input type="hidden" id="hfIdVersionTemporal" value="@Model.IdVersionTemporal" />
+    <input type="hidden" id="hfFteeqcodisLimpiar" value="" />
+    <input type="hidden" id="hfFlagEquipoAutoguardado" value="@Model.FlagEquipoAutoguardado" />
+
+    <input type="hidden" id="hfIdEstado" value="@Model.IdEstado" />
+    <input type="hidden" id="hfTipoOpcion" value="@Model.TipoOpcion" />
+
+    <input type="hidden" id="hdHistorialParteDesc" value="" />
+    <input type="hidden" id="hdCondicionEnvioPrevioTemporal" value="" />
+    <input type="hidden" id="hdIdEnvioPadre" value="@Model.IdEnvio" />
+    <input type="hidden" id="hdIdEnvioData" value="@Model.IdEnvio" />
+
+    <input type="hidden" id="hdHabilitarAutoguardado" value="@Model.HabilitarAutoguardado" />
+    <input type="hidden" id="hdIMinutosAutoguardado" value="@Model.MinutosAutoguardado" />
+    <input type="hidden" id="hdClaveCookie" value="@Model.ClaveCookie" />
+
+    <input type="hidden" id="hdAccion" value="@Model.AccionVentana" />
+    <input type="hidden" id="hfNumVersionSeleccionadaPopup" value="0" />
+    <input type="hidden" id="hfVersionSeleccionadaPopup" value="0" />
+    <input type="hidden" id="hfVersionAnteriorPopup" value="0" />
+
+    <input type="hidden" id="hdNotaFecMaxRpta" value="@Model.MsgFecMaxRespuesta" />
+    <input type="hidden" id="hdNotaCancelacion" value="@Model.MsgCancelacion" />
+    <input type="hidden" id="hdFTEditadaUsuario" value="@Model.EsFTModificada" />  @*si la FT eliminimo o agrego parametros*@
+
+    @if (Model.HabilitarAddEquipo)
+    {
+        <input type="hidden" id="hdHabEditEq" value=1 />
+    }
+
+    <input type="hidden" id="hfFteeqcodis" />
+    <input type="hidden" id="hfFteeqcodinomb" />
+
+    <div class="action-message" id="mensajeFecMR" style="margin: 10px 0px 10px; display: none; padding-left: 36px; text-indent: 0px;"></div>
+
+    <div id="idFecMaxRpta" style="display:none;margin-bottom: 15px;"></div>
+    <div id="idMsgCancelacion" style="display:none;margin-bottom: 15px;"></div>
+    <div id="div_dia_habil" style="display: none;margin-bottom: 15px;"></div>
+
+    <div class="action-message" id="mensajeEvento" style="margin: 10px 0px 10px; display: none; padding-left: 36px; text-indent: 0px;"></div>
+
+    <div class="search-content3" style="">
+        <div style="display:table">
+            <div style="display:table-row">
+                <div style="padding-top: 8px; padding-bottom: 8px;">
+                    <div style="display:table">
+                        <div style="display:table-row">
+
+                            <table style="width: 800px;" class="filtro_envio">
+                                <tr>
+                                    <td>
+                                        <span> <b>Empresa:</b> </span>
+                                        <span class="desc_filtro">@Model.Emprnomb</span>
+
+                                        <span> <b>Etapa:</b> </span>
+                                        <span class="desc_filtro">@Model.Ftetnombre</span>
+
+                                        @if (Model.Ftprycodi > 0)
+                                        {
+                                            <span> <b>Proyecto:</b> </span>
+                                            <span class="desc_filtro">@Model.Ftprynombre</span>
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: table-cell;width:100%">
+                </div>
+
+                <div style="display: table-cell; text-align: right;">
+
+                    <div class="barra_herramienta_envio" style="display:none;">
+
+                        <div style="display:table-row">
+
+                            <div class="content-action" style="display: none;">
+                                <a href="#" id="btnEnviarDatos">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/enviar.png" /><br />
+                                        <span>Enviar</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="content-action" style="display: none;">
+                                <a href="#" id="btnMostrarErrores">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/errores.png" /><br />
+                                        <span>Errores</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="content-action" style="display: none;">
+                                <a href="#" id="btnVerEnvio">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/envios.png" /><br />
+                                        <span>Envíos</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            @if (Model.HabilitarAddEquipo)
+                            {
+                                <div class="content-action" style="display: none;">
+                                    <a href="#" id="btnHabilitarAddEquipo">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/btn-add.png" /><br />
+                                            <span>Agregar equipos</span>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="idpanel" style="overflow:auto; background-color:#fff">
+
+        <div id="mensaje_GuardadoTemporal" style="display: none"></div>
+        <div id="tab-container" class='tab-container' style=" padding-top: 5px;">
+            <ul class='etabs'>
+                <li class='tab'><a href="#tabLista">Listado</a></li>
+                <li class='tab'><a href="#tabDetalle" onclick="_irAFooterPantalla()">Detalle</a></li>
+            </ul>
+            <div class='panel-container'>
+
+                <div id="tabLista">
+
+                    <div id="vistaListado">
+
+                        <div class="search-content3 barra_herramienta_envio" style="background-color: white; display: none;">
+                            <div style="display:table">
+                                <div style="display:table-row">
+                                    <div style="display: none;padding-top: 8px; padding-bottom: 8px;" class="div_herr_filtro">
+                                        <div style="display:table">
+                                            <div style="display:table-row">
+
+                                                <div class="content-action" style="display: none">
+                                                    <a href="#" id="btnHistorialAutoguardado">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Content/Images/historial.png" /><br />
+                                                            <span>Historial de autoguardado</span>
+                                                        </div>
+                                                    </a>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: table-cell;width:100%">
+                                    </div>
+
+                                    <div style="display: table-cell; text-align: right;">
+
+                                        <div>
+
+                                            <div style="display:table-row">
+
+                                                <div class="content-action" style="">
+                                                    <a href="#" id="btnDescargar">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Content/Images/bajar.png" /><br />
+                                                            <span>Descargar Fichas</span>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="content-action" style="display: none;">
+                                                    <a href="#" id="btnImportar">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Content/Images/subir.png" /><br />
+                                                            <span>Importar Fichas</span>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="leyenda_alerta" style="display: none">
+                            <table style="">
+                                <tbody>
+                                    <tr>
+                                        <td style="font-weight: bold;" colspan="6">Leyenda: </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 25px" class="">
+                                            <div style="width: 4px;">
+                                                <img style="width: 20px;" src="~/Content/images/btn-properties.png">
+                                            </div>
+                                        </td>
+                                        <td style="vertical-align: middle;width: 290px;" class="">Ingresar datos del equipo o modo de operación.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="nota_" style="font-size: 11px; color: #0331AC; padding: 25px 0px 5px 0px; width: 950px; float: left; display: none; ">
+                            <b>Nota: </b> La columna <b>Sel. Todos</b> solo es usado para la descarga de fichas, es decir, que el sistema solo descargará fichas de aquellos equipos que tengan marcado la casilla en dicha columna.
+                        </div>
+
+                        <div id="div_listado" class="content-tabla">
+                            <div id="listadoDetalleEquipo">
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="tabDetalle">
+
+                    <div id="div_detalle" class="content-tabla">
+
+                        <div class="search-content3 barra_herramienta_envio_2" style="background-color: white; display: block;">
+                            <div style="display:table">
+                                <div style="display:table-row">
+                                    <div style="display: none;padding-top: 5px; padding-bottom: 0px;" class="div_herr_filtro">
+                                        <div style="display:table">
+                                            <div style="display:table-row">
+
+                                                @if (Model.HabilitarAutoguardado == 1)
+                                                {
+                                                    <div class="content-action" style="display: none;">
+                                                        <a href="#" id="btnAutoguardar">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Content/Images/grabar.png" /><br />
+                                                                <span>Guardar</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+
+
+                                                    <div class="content-action" style="display: none;">
+                                                        <a href="#" id="btnLimpiar">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Content/Images/prn-ico-limpiar.png" /><br />
+                                                                <span>Limpiar</span>
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                }
+
+                                                <div class="content-action" style="display: none;">
+                                                    <a href="#" id="btnExpandirRestaurar">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Content/Images/expandir.png" id="imgExpandirContraer" /><br />
+                                                            <span id="spanExpandirContraer">Expandir</span>
+                                                        </div>
+                                                    </a>
+                                                    <input type="hidden" id="hfExpandirContraer" value="E" />
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: table-cell;width:100%">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="detalle_ficha_tecnica" style="margin-top: 10px; overflow: auto; height: 250px;">
+
+                        </div>
+
+                        <div class="div_leyenda_inflex" style="width: 100%; margin-top: 10px;">
+                            <table border="0" style="">
+                                <tbody>
+                                    <tr>
+                                        <td style="width: 50px; border: 1px solid black; background-color: #CBFBE6 !important; color: white;"></td>
+                                        <td style="padding-right: 20px;">
+                                            El color verde corresponde a inflexibilidades operativas.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!--popups-->
+<div id="popupFormularioObservacion" class="general-popup" style="z-index: 9999999999; width: 800px ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ingreso de Comentario</span></div>
+    <div id="mensajePopupCelda"></div>
+    <div id="idFormularioObservacion" style="text-align: center;">
+
+    </div>
+</div>
+
+<!--popups-->
+<div id="validaciones" class="general-popup" style="z-index: 9999999999; width: 800px ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+    </div>
+</div>
+
+<div id="enviosanteriores" class="general-popup" style="z-index: 9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envios Anteriores</span></div>
+    <div class="action-message" id="mensajeEnviosAnteriores" style="margin: 10px 0px 10px; display: none; padding-left: 36px; text-indent: 0px;"></div>
+    <div id="idEnviosAnteriores">
+
+    </div>
+</div>
+<div id="historialAutoguardados" class="general-popup" style="z-index: 9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Historial de Autoguardados</span></div>
+    <div id="idHistoryAutoguardados">
+
+    </div>
+</div>
+
+<div id="popupFormularioSeccion" class="general-popup" style="z-index:9999999999;">
+
+</div>
+
+<div id="popupArchivoVistaPrevia" class="general-popup" style="z-index: 9999999999; width: 800px ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Vista previa de archivos</span></div>
+    <iframe id="vistaprevia" style="width: 100%; height:500px;" frameborder="0" hidden></iframe>
+</div>
+
+<div id="popupAnotacion" class="general-popup" style="z-index: 9999999999; width: 600px ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle del Parámetro</span></div>
+    <input type="hidden" id="hfRegFtitcodi" value="" />
+    <input type="hidden" id="hfRegFtitcodiDependiente" value="" />
+    <div style="padding: 20px;">
+        <input id="campo_anotacion_editar" type="text" style="width:560px">
+    </div>
+
+    <div id="bloqueBotones">
+        <div style="width: 150px; margin: 0 auto; text-align: center; margin-top:15px; ">
+            <input type="submit" id="btnGuardarAnotacion" value="Guardar">
+            <input type="button" id="btnCancelarAnotacion" value="Cancelar" onclick="_extranet_cerrarPopup('popupAnotacion')">
+        </div>
+    </div>
+</div>
+
+<div id="popupInstructivo" class="general-popup" style="z-index: 9999999999; width: 600px ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Intructivo de llenado</span></div>
+    <div id="bloqueDato">
+        <div id="mensaje_instructivo" style="padding: 10px; text-align: center;">
+
+        </div>
+
+    </div>
+</div>
+
+<div id="popupEquiposM" class="general-popup" style="width: 850px; height: 430px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Seleccionar Equipos</span></div>
+    <div id="mensaje_popupEquiposM"></div>
+    <div class="table-list">
+
+        <div id="listadoEquiposM">
+        </div>
+
+        <div id="bloqueBotones">
+            <div style="width: 150px; margin: 0 auto; text-align: center; margin-top:15px; ">
+                <input type="submit" id="btnAceptarM" value="Aceptar">
+                <input type="button" id="btnCancelarM" value="Cancelar" onclick="cerrarPopup('popupEquiposM')">
+            </div>
+        </div>
+
+    </div>
+</div>

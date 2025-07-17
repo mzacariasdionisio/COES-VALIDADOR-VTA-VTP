@@ -1,0 +1,162 @@
+﻿@model COES.MVC.Intranet.Areas.CalculoResarcimiento.Models.MedicionModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<link href="~/Content/Css/Handson/select2.css" rel="stylesheet" />
+<link href="~/Areas/CalculoResarcimiento/Content/Css/interrupcion.css?v=1" rel="stylesheet" />
+<script src="~/Content/Scripts/Handson/select2.js"></script>
+<script src="~/Content/Scripts/Handson/select2handson.js"></script>
+<script src="~/Content/Scripts/Handson/htmaxlength.js"></script>
+<script src="~/Content/Scripts/Handson/moment.js"></script>
+<script src="~/Areas/CalculoResarcimiento/Content/Scripts/mediciones.js?v=2"></script>
+
+<div class="form-title">
+    <div class="content-titulo">
+        Registro de mediciones y cálculo de resarcimientos
+    </div>
+    <div class="content-botonera">
+        <input type="button" id="btnRegresar" value='Regresar' />
+    </div>
+</div>
+<div class="content-hijo">
+
+    <div class="action-header1">
+        <div class="action-content" style="padding-top:20px">
+            <table id="tablaBusqueda">
+                <tr>
+                    <td>Mes / Año :</td>
+                    <td class="item-dato">@Model.AnioMes</td>
+                    <td>Punto entrega:</td>
+                    <td class="item-dato">@Model.Entidad.Reevprptoentrega</td>
+                    <td>Tensión:</td>
+                    <td class="item-dato">@Model.Entidad.Reevprtension</td>
+                </tr>
+                <tr>
+                    <td>Fecha inicio</td>
+                    <td class="item-dato">@Model.FechaInicial</td>
+                    <td>Fecha fin</td>
+                    <td class="item-dato">@Model.FechaFinal</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </table>
+            <input type="hidden" id="hfIdEvento" value="@Model.Entidad.Reevprcodi" />
+            <input type="hidden" id="hfFactorCompensacionUnitaria" />
+            <input type="hidden" id="hfTensionEvento" />
+        </div>
+
+    </div>
+    <div id="mensaje"></div>
+    <div class="action-header">
+        <div class="action-content">
+            <table id="tablaBusqueda">
+                <tr>
+                    <td>Suministrador:</td>
+                    <td>
+                        <select id="cbEmpresa" style="width:200px">
+                            <option value="">-SELECCIONE-</option>
+                            @foreach (var item in Model.ListaEmpresa)
+                            {
+                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <input type="button" id="btnConsultar" value="Consultar" />
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
+        <div id="divAcciones" class="action-content">
+            <a href="#" id="btnDescargarFormato">
+                <div>
+                    <img src="~/Areas/DemandaBarras/Content/Images/bajar.png" />
+                </div>
+                <span>Descargar formato</span>
+
+            </a>
+            @if (Model.Grabar)
+            {
+                <a href="#" id="btnSubirFormato">
+                    <div>
+                        <img src="~/Areas/DemandaBarras/Content/Images/subir.png" />
+                    </div>
+                    <span>Importar formato</span>
+
+                </a>
+                <a href="#" id="btnEnviarDatos">
+                    <div>
+                        <img src="~/Areas/DemandaBarras/Content/Images/enviar.png" />
+                    </div>
+                    <span>Enviar datos</span>
+
+                </a>
+                <a href="#" id="btnMostrarErrores">
+                    <div>
+                        <img src="~/Areas/DemandaBarras/Content/Images/errores.png" />
+                    </div>
+                    <span>Mostrar errores</span>
+
+                </a>
+            }
+            <a href="#" id="btnVerEnvios">
+                <div>
+                    <img src="~/Areas/DemandaBarras/Content/Images/envios.png" />
+                </div>
+                <span>Ver envíos</span>
+            </a>
+        </div>
+    </div>
+
+    <div id="detalleFormato"></div>
+</div>
+
+<div id="popupErrores" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Errores en el ingreso de datos</span></div>
+    <div class="popup-text" id="contenidoError">
+        <table class="pretty tabla-adicional">
+            <thead>
+                <tr>
+                    <th>Fila</th>
+                    <th>Columna</th>
+                    <th>Error</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="popupEnvios" class="general-popup" style="min-width:600px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Envío de mediciones</span></div>
+    <div class="popup-text" id="contenidoEnvios">
+
+    </div>
+</div>
+
+
+<div id="popupEnvio" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Ingrese motivo de carga de datos</span></div>
+    <div class="popup-text" id="contenidoEnvio">
+        <div id="mensajeComentario"></div>
+        <div class="form-element ">
+            <div>Ingrese comentario:</div>
+            <div>
+                <textarea id="txtComentario" maxlength="200"></textarea>
+            </div>
+        </div>
+        <div class="popup-button">
+            <input type="button" id="btnEnviarComentario" value="Aceptar" />
+        </div>
+    </div>
+</div>

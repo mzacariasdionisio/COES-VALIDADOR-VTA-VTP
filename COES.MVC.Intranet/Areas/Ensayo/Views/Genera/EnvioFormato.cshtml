@@ -1,0 +1,885 @@
+﻿@model COES.MVC.Intranet.Areas.Ensayo.Models.EnsayoModel
+@{
+    ViewBag.Title = "EnsayoFormato";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link href="~/Areas/Ensayo/Content/Css/popup.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/Ensayo/Content/Scripts/envioformato.js?v=1.1"></script>
+<script src="~/Areas/Ensayo/Content/Scripts/helper.js"></script>
+
+<script type="text/javascript">
+    var ensayoCodi;
+    $(function () {
+        ensayoCodi = $('#hcodensayo').val();
+        mostrarListado(ensayoCodi, 0);
+        $('#btnAceptarOK').click(function () {
+            cerrarpopupFormatoEnviadoOk();
+        });
+    })
+
+    function updatePos() {
+        var ev = arguments[0] ? arguments[0] : event;
+        var x = ev.clientX;
+        var y = ev.clientY;
+        diffX = 24;
+        diffY = 0;
+        document.getElementById('toolTipBox').style.top = y - 2 + diffY + document.body.scrollTop + "px";
+        document.getElementById('toolTipBox').style.left = x - 2 + diffX + document.body.scrollLeft + "px";
+        if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+            document.getElementById('toolTipBox').style.top = y - 2 + diffY + document.documentElement.scrollTop + "px";
+        }
+        theObj.onmouseout = hideMe;
+    }
+
+    function eliminarRow(archorden, Enviocodi, concepcodi) {
+        $("#row" + archorden).remove();
+        borrarArchivo(archorden, Enviocodi, concepcodi);
+    }
+
+</script>
+<div class="form-title_intranet">
+    <div class="content-titulo">Envio de formatos para el ensayo de potencia</div>
+    <div class="content-botonera" id="container">
+        <input type="button" id="btnCancelar" value="Regresar" />
+    </div>
+</div>
+<div style="margin:15px;height:800px;">
+    <div style="float:initial">
+        <div>
+            <div class="form-label">Empresa: @Model.Emprnomb </div>
+            <div></div>
+            <div style="clear:both; height:10px"></div>
+            <div class="form-label">Central: @Model.Equinomb </div>
+            <div></div>
+            <div style="clear:both; height:10px"></div>
+        </div>
+        <div>1. Pliego técnico de las unidades </div>
+    </div>
+    <div style="float:left">
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 1.1 <input type="text" id="archivo1" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP1" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP11" value="Enviar" />
+                </div>
+            </div>
+
+            <input type="hidden" id="hCodiEnsayo01" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP1 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP1',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 1,
+                        "iEnsayoCodi": $('#hCodiEnsayo01').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP11').onclick = function () {
+                                if (uploaderP1.files.length > 0) {
+                                    uploaderP1.start();
+                                    mostrarListado(ensayoCodi, 1);
+                                    mensajeExito();
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP1.files.length == 2) {
+                                uploaderP1.removeFile(uploaderP1.files[0]);
+                            }
+                            plupload.each(files, function (file) {
+                                $('#archivo1').val(file.name);
+
+
+                            });
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo1").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP1.init();
+            </script>
+        </div>
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 1.2 <input type="text" id="archivo2" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP2" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP21" value="Enviar" />
+                </div>
+            </div>
+
+            <input type="hidden" id="hCodiEnsayo02" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP2 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP2',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 2,
+                        "iEnsayoCodi": $('#hCodiEnsayo02').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP21').onclick = function () {
+                                if (uploaderP2.files.length > 0) {
+                                    uploaderP2.start();
+                                    mostrarListado(ensayoCodi, 2);
+                                    mensajeExito();
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP2.files.length == 2) {
+                                uploaderP2.removeFile(uploaderP2.files[0]);
+                            }
+                            plupload.each(files, function (file) {
+                                $('#archivo2').val(file.name);
+                            });
+
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo2").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP2.init();
+            </script>
+        </div>
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 1.3 <input type="text" id="archivo3" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP3" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP31" value="Enviar" />
+                </div>
+            </div>
+            <div class="content-tabla"></div>
+            <input type="hidden" id="hCodiEnsayo03" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP3 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP3',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 3,
+                        "iEnsayoCodi": $('#hCodiEnsayo03').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP31').onclick = function () {
+                                if (uploaderP3.files.length > 0) {
+                                    uploaderP3.start();
+                                    mostrarListado(ensayoCodi, 3)
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP3.files.length == 2) {
+                                uploaderP3.removeFile(uploaderP3.files[0]);
+                            }
+                            plupload.each(files, function (file) {
+                                $('#archivo3').val(file.name);
+                            });
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo3").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP3.init();
+            </script>
+
+        </div>
+        <div>2. Esquemas de principios de las instalaciones y de sus servicios auxiliares</div>
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 2.1 <input type="text" id="archivo4" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP4" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP41" value="Enviar" />
+                </div>
+            </div>
+            <input type="hidden" id="hCodiEnsayo04" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP4 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP4',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 4,
+                        "iEnsayoCodi": $('#hCodiEnsayo04').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP41').onclick = function () {
+                                if (uploaderP4.files.length > 0) {
+                                    uploaderP4.start();
+                                    mostrarListado(ensayoCodi, 4)
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP4.files.length == 2) {
+                                uploaderP4.removeFile(uploaderP4.files[0]);
+                            }
+
+
+                            plupload.each(files, function (file) {
+                                $('#archivo4').val(file.name);
+
+                            });
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+                            mostrarProgreso(file.percent);
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo4").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP4.init();
+            </script>
+        </div>
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 2.2 <input type="text" id="archivo5" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP5" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP51" value="Enviar" />
+                </div>
+            </div>
+            <input type="hidden" id="hCodiEnsayo05" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP5 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP5',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 5,
+                        "iEnsayoCodi": $('#hCodiEnsayo05').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP51').onclick = function () {
+                                if (uploaderP5.files.length > 0) {
+                                    uploaderP5.start();
+                                    mostrarListado(ensayoCodi, 5)
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP5.files.length == 2) {
+                                uploaderP5.removeFile(uploaderP5.files[0]);
+                            }
+                            plupload.each(files, function (file) {
+                                $('#archivo5').val(file.name);
+                            });
+
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo5").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP5.init();
+            </script>
+
+        </div>
+        <div>3. Esquemas de disposición de plantas</div>
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 3 <input type="text" id="archivo6" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP6" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP61" value="Enviar" />
+                </div>
+            </div>
+
+            <input type="hidden" id="hCodiEnsayo06" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP6 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP6',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 6,
+                        "iEnsayoCodi": $('#hCodiEnsayo06').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP61').onclick = function () {
+                                if (uploaderP6.files.length > 0) {
+                                    uploaderP6.start();
+                                    mostrarListado(ensayoCodi, 6)
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP6.files.length == 2) {
+                                uploaderP6.removeFile(uploaderP6.files[0]);
+                            }
+
+
+                            plupload.each(files, function (file) {
+                                $('#archivo6').val(file.name);
+
+                            });
+
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+                            mostrarProgreso(file.percent);
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo6").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP6.init();
+            </script>
+        </div>
+        <div>4. Diagrama unifiliar eléctrico de la central y unidades</div>
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 4 <input type="text" id="archivo7" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP7" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP71" value="Enviar" />
+                </div>
+            </div>
+            <input type="hidden" id="hCodiEnsayo07" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP7 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP7',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 7,
+                        "iEnsayoCodi": $('#hCodiEnsayo07').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP71').onclick = function () {
+                                if (uploaderP7.files.length > 0) {
+                                    uploaderP7.start();
+                                    mostrarListado(ensayoCodi, 7)
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP7.files.length == 2) {
+                                uploaderP7.removeFile(uploaderP7.files[0]);
+                            }
+
+                            plupload.each(files, function (file) {
+                                $('#archivo7').val(file.name);
+
+                            })
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+                            mostrarProgreso(file.percent);
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo7").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP7.init();
+            </script>
+        </div>
+        <div>5. Diagrama P-Q (curva de capabilidad)</div>
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 5 <input type="text" id="archivo8" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP8" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP81" value="Enviar" />
+                </div>
+            </div>
+            <input type="hidden" id="hCodiEnsayo08" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP8 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP8',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 8,
+                        "iEnsayoCodi": $('#hCodiEnsayo08').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP81').onclick = function () {
+                                if (uploaderP8.files.length > 0) {
+                                    uploaderP8.start();
+                                    mostrarListado(ensayoCodi, 8)
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP8.files.length == 2) {
+                                uploaderP8.removeFile(uploaderP8.files[0]);
+                            }
+
+                            plupload.each(files, function (file) {
+                                $('#archivo8').val(file.name);
+
+                            });
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+                            mostrarProgreso(file.percent);
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo8").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP8.init();
+            </script>
+        </div>
+        <div>6. Curvas de comportamiento de la potencia y rendimiento</div>
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 6 <input type="text" id="archivo9" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP9" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP91" value="Enviar" />
+                </div>
+            </div>
+            <input type="hidden" id="hCodiEnsayo09" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP9 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP9',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 9,
+                        "iEnsayoCodi": $('#hCodiEnsayo09').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP91').onclick = function () {
+                                if (uploaderP9.files.length > 0) {
+                                    uploaderP9.start();
+                                    mostrarListado(ensayoCodi, 9)
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP9.files.length == 2) {
+                                uploaderP9.removeFile(uploaderP9.files[0]);
+                            }
+
+                            plupload.each(files, function (file) {
+
+                                $('#archivo9').val(file.name);
+
+                            });
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo9").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP9.init();
+            </script>
+        </div>
+        <div>7. Registros diarios de potencia y consumo de combustibles</div>
+        <div>
+            <div class="formulario-item" style="width:550px">
+                <div class="formulario-label" style="width:350px">
+                    Formato 7 <input type="text" id="archivo10" value="" style="width:250px" readonly="readonly" />
+                </div>
+                <div class="formulario-control" style="width:180px">
+                    <input type="button" id="btnSelectFileP10" value="Adjuntar" />
+                    <input type="button" id="btnSelectFileP101" value="Enviar" />
+                </div>
+            </div>
+            <input type="hidden" id="hCodiEnsayo10" value="@Model.Ensayocodi" />
+            <script type="text/javascript">
+                var fullDate = new Date();
+                var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                var uploaderP10 = new plupload.Uploader({
+                    runtimes: 'html5,flash,silverlight,html4',
+                    browse_button: 'btnSelectFileP10',
+                    container: document.getElementById('container'),
+                    multipart_params: {
+                        "nroFormato": 10,
+                        "iEnsayoCodi": $('#hCodiEnsayo10').val(),
+                    },
+                    url: siteRoot + 'ensayo/genera/upload',
+                    flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                    silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                    multi_selection: false,
+                    filters: {
+                        max_file_size: '30mb',
+                        mime_types: [
+                            { title: "Archivos Zip .zip", extensions: "zip" },
+                            { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                            { title: "Archivos Rar .rar", extensions: "rar" },
+                            { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                            { title: "Archivos Excel .xls", extensions: "xls" },
+                            { title: "Archivos Word .docx", extensions: "docx" },
+                            { title: "Archivos Word .doc", extensions: "doc" },
+                            { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                            { title: "Archivos Imagen .gif", extensions: "gif" }
+                        ]
+                    },
+
+                    init: {
+                        PostInit: function () {
+                            document.getElementById('btnSelectFileP101').onclick = function () {
+                                if (uploaderP10.files.length > 0) {
+                                    uploaderP10.start();
+                                    mostrarListado(ensayoCodi, 10)
+                                }
+                                else
+                                    loadValidacionFile("Seleccione archivo.");
+                                return false;
+                            };
+                        },
+                        FilesAdded: function (up, files) {
+                            if (uploaderP10.files.length == 2) {
+                                uploaderP10.removeFile(uploaderP10.files[0]);
+                            }
+
+                            plupload.each(files, function (file) {
+                                $('#archivo10').val(file.name);
+
+                            });
+                            up.refresh();
+                        },
+                        UploadProgress: function (up, file) {
+                            mostrarProgreso(file.percent);
+                        },
+
+                        UploadComplete: function (up, file) {
+                            $("#archivo10").val("");
+                        },
+                        Error: function (up, err) {
+                            loadValidacionFile(err.code + "-" + err.message);
+                        }
+                    }
+                });
+                uploaderP10.init();
+            </script>
+        </div>
+    </div>
+    <div class="table-list" id="listado" style="display:inline-block;width:400px; height:300px;  float:right;margin-right:20px"></div>
+</div>
+<input type="hidden" id="hcodensayo" name="Ensayocodi" value="@Model.Ensayocodi" />
+<div id="popupFormatoEnviadoOk" style="min-height:100px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Formato enviado exitosamente!</span></div>
+    <div style="text-align:center; margin:auto;">
+        <div style="clear:both; height:10px"></div>
+        <div>
+            <input type="button" id="btnAceptarOK" value="Aceptar" />
+        </div>
+    </div>
+</div>

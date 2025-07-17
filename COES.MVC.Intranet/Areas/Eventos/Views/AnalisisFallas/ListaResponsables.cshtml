@@ -1,0 +1,160 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.PantallaResponsables
+@{
+    ViewBag.Title = "Lista de Responsables";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    SelectList slListaDirectorio = new SelectList(@Model.ListaDirectorio, "DirectorioCodigo", "DirectorioNombre");
+}
+
+<style>
+    div.form-title {
+        width: 100%;
+    }
+
+    div.content-botonera {
+        text-align: center;
+        margin-right: 200px;
+    }
+
+    #btnAgregarResponsables {
+        width: 180px;
+        height: 25px;
+    }
+    td {
+        float: none !important;
+    }
+</style>
+
+<link href="~/Content/Css/popup.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<div class="form-title">
+    <div class="content-titulo">
+        Listado de Responsables
+    </div>
+    <div class="content-botonera">
+        <input type="button" id="btnAgregarResponsables" value='Nuevo' />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div class="form-main" style="margin-top:10px">
+        <div id="mensaje"></div>
+        <div style="clear:both; height:5px;"></div>
+        <div class="search-content">
+            <label style="width: 6%;">Estado:</label>
+            <input id="rbActivo" name="rbValor" type="radio" value="A" style="width: 1%; margin-left: 10px;" checked />Activo
+            <input id="rbInactivo" name="rbValor" type="radio" value="I" style="width: 1%; margin-left: 10px;" />Inactivo
+            <input id="rbTodos" name="rbValor" type="radio" value="T" style="width: 1%; margin-left: 10px;" />Todos
+            <label style="width: 10%;">Buscar:</label>
+            <input type="text" id="txtBuscarResponsable" style="width: 20%;" value="" />
+            <input type="button" id="btnConsultarResponsables" style="width: 10%;margin-left: 20px; margin-right: 20px;" value='Consultar' />
+        </div>
+
+        <div style="clear:both"></div>
+        <div class="content-tabla">
+            <div class="tabla-header">
+                <div class="table-paginado" id="paginado"></div>
+            </div>
+            <div style="overflow-x: auto; white-space: nowrap; width: 100%;">
+                <div class="table-list" id="listado">
+                    <table border="0" class="pretty tabla-adicional" cellspacing="0" id="tabla" style="table-layout: fixed;">
+                        <thead>
+                            <tr>
+                                <th style="width:50%;">Responsable</th>
+                                <th style="width:30%;">Archivo Firma</th>
+                                <th style="width:14%;">Estado</th>
+                                <th style="width:6%;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyListaResponsables"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div style="clear:both; margin-bottom:40px"></div>
+
+        </div>
+    </div>
+</div>
+
+<div id="divAgregarResponsable" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Agregar Responsable: </span></div>
+    <div class="popup-text" id="AgregarResponsable">
+        <ul id="ulMensajeAgregar"></ul>
+        <form id="frmAgregarResponsable">
+            <table class="content-tabla-search" style="width: auto; border-collapse: separate; border-spacing: 0 1em; ">
+                <tr>
+                    <td><label>Responsable: </label></td>
+                    <td>
+                        @Html.DropDownList("cboResponsables", slListaDirectorio, new { @style = "width:300px" })
+                        <input type="hidden" id="hfCodigoResponsable" value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <td><label>Archivo Firma:</label></td>
+                    <td>
+                        <input type="file" id="fileFirma" accept="image/png, image/jpeg" />
+                    </td>
+                </tr>
+                <tr>
+                    <td><label>Estado</label></td>
+                    <td>
+                        <select id="cboEstado" style="width:300px">
+                            <option value="">-SELECCIONE-</option>
+                            <option value="A">ACTIVO</option>
+                            <option value="I">INACTIVO</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+            <input type="button" id="btnGrabarNuevoResponsable" style="width: 45%; margin-left: 10px; margin-top: 20px;" value="Grabar" />
+            <input type="button" id="btnCancelar" class="b-close" style="width: 45%; margin-left: 10px; margin-top: 20px;" value="Cancelar" />
+        </form>
+    </div>
+</div>
+
+<div id="divEditarResponsable" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Editar Responsable: </span></div>
+    <div class="popup-text" id="EditarResponsable">
+        <ul id="ulMensajeEditar"></ul>
+        <form id="frmEditarResponsable">
+            <table class="content-tabla-search" style="width: auto; border-collapse: separate; border-spacing: 0 1em; ">
+                <tr>
+                    <td><label>Responsable: </label></td>
+                    <td>
+                        @*@Html.DropDownList("cboResponsablesEditar", slListaDirectorio, new { @style = "width:300px" })*@
+                        <input type="text" id="nombreResponsable" style="width:300px"/>
+                        <input type="hidden" id="hfCodigoResponsableEditar" value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <td><label>Archivo Firma:</label></td>
+                    <td>
+                        <input type="text" id="nombreArchivo" style="width:300px"/>
+                        <a href='JavaScript:LimpiarArchivo()' id='btnLimpiarArchivo'>Eliminar</a>
+                         <input type="file" id="fileFirmaEditar" accept="image/png, image/jpeg" />
+                    </td>                                        
+                </tr>
+                <tr>
+                    <td><label>Estado</label></td>
+                    <td>
+                        <select id="cboEstadoEditar" style="width:300px">
+                            <option value="A">Activo</option>
+                            <option value="I">Inactivo</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+            <input type="button" id="btnGrabarEditarResponsable" style="width: 45%; margin-left: 10px; margin-top: 20px;" value="Grabar" />
+            <input type="button" id="btnCancelarEditar" class="b-close" style="width: 45%; margin-left: 10px; margin-top: 20px;" value="Cancelar" />
+        </form>
+    </div>
+</div>
+
+<script src="~/Areas/Eventos/Content/Scripts/AnalisisFalla/listaresponsables.js"></script>
+<script>
+    iniLista();
+</script>

@@ -1,0 +1,122 @@
+﻿@model COES.MVC.Extranet.Areas.Intervenciones.Models.Intervencion
+<div style="width:1100px; height: 600px;overflow-y: auto;overflow-x: scroll;">
+    <div class="popup-title">
+        <div class="content-titulo">Trazabilidad de Intervención  </div>
+    </div>
+    <br />
+    <table border="0" class="pretty tabla-icono" id="TablaLogExtend" style="">
+
+        <thead>
+            <tr>
+                <th style="text-align:left"></th>
+                <th style="text-align:left">Fec/Hor.Sistema</th>
+                <th style="text-align:left">Código de Seguimiento</th>
+                <th style="text-align:left">Usuario</th>
+                <th style="text-align:left">Justificacion</th>
+                <th style="text-align:left">Clase</th>
+                <th style="text-align:left">Estado</th>
+                <th style="text-align:left">Tip.Interv.</th>
+                <th style="text-align:left">Empresa</th>
+                <th style="text-align:left">Ubicación</th>
+                <th style="text-align:left">Equipo</th>
+                <th style="text-align:left">Fec.Inicio</th>
+                <th style="text-align:left">Fec.Fin</th>
+                <th style="text-align:left">MWI</th>
+                <th style="text-align:left">Ind</th>
+                <th style="text-align:left">Int</th>
+                <th style="text-align:left">Descripción</th>
+                <th style="text-align:left">Archivos</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            @foreach (var item in Model.ListaIntervenciones)
+            {
+                var sClass = "odd";
+                var sStyle = "text-wrap: nowrap;padding-left: 5px; padding-right: 5px;";
+                var sEstado = "EN PROCESO";
+                var listaMsjXInter = Model.ListaMensajes.Where(x => x.Intercodi == item.Intercodi).ToList();
+                //if (iReg % 2 == 1) { sClass = "even"; }
+                if (item.Estadocodi == 2)
+                {   //Aprobado
+                    sEstado = "APROBADO";
+                }
+                if (item.Estadocodi == 3)
+                {   //Rechazado
+                    sStyle += "background-color:#FFC4C4; text-decoration:line-through";
+                    sEstado = "RECHAZADO";
+                }
+                else if (item.Interdeleted == 1)
+                {   //Eliminado
+                    sStyle += "background-color:#E0DADA; text-decoration:line-through";
+                    sEstado = "ELIMINADO";
+                }
+                <tr id="fila_@item.Intercodi" class="@sClass">
+                    <td style="text-align:center; @sStyle"><b>@item.IntNombTipoProgramacion</b></td>
+                    <td style="text-align:center; @sStyle">@item.UltimaModificacionFechaDesc</td>
+                    <td style="text-align:center; @sStyle"><b>@item.Intercodsegempr</b></td>
+                    <td style="text-align:center; @sStyle">@item.UltimaModificacionUsuarioDesc</td>
+                    <td style="text-align:left; @sStyle">@item.Interjustifaprobrechaz</td>
+                    <td style="text-align:left; @sStyle">@item.ClaseProgramacion</td>
+                    <td style="text-align:left; @sStyle">@sEstado</td>
+                    <td style="text-align:left; @sStyle">@item.TipoEvenDesc</td>
+                    <td style="text-align:left; @sStyle">@item.AreaNomb</td>
+                    <td style="text-align:left; @sStyle">@item.FamNomb</td>
+                    <td style="text-align:left; @sStyle">@item.Equiabrev</td>
+                    <td style="text-align:center; @sStyle">@Convert.ToDateTime(item.Interfechaini).ToString("dd/MM/yyyy HH:mm")</td>
+                    <td style="text-align:center; @sStyle">@Convert.ToDateTime(item.Interfechafin).ToString("dd/MM/yyyy HH:mm")</td>
+                    <td style="text-align:center; @sStyle">@item.Intermwindispo</td>
+                    <td style="text-align:center; @sStyle">@item.Interindispo</td>
+                    <td style="text-align:center; @sStyle">@item.Interinterrup</td>
+                    <td style="text-align:left; @sStyle">@item.Interdescrip</td>
+                    <td style="text-align:left">
+                        @foreach (var arch in item.ListaArchivo)
+                        {
+                            <a onclick="arch_descargarArchivo_consulta('@arch.Modulo', @arch.Progrcodi, @arch.Intercarpetafiles, @arch.Inpsticodi, '@arch.Inarchnombrefisico', '@arch.Inarchnombreoriginal');" style="cursor:pointer;text-align:left;">@arch.Inarchnombreoriginal</a> <br />
+                        }
+                    </td>
+                </tr>
+                if (listaMsjXInter.Any())
+                {
+                    <tr>
+                        <td></td>
+                        <td style="text-align:center;"><b>Mensajes</b></td>
+                        <td colspan="16">
+                            <table border="0" class="pretty tabla-icono" id="TablaConsultaMensajes">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left">Fecha y Hora</th>
+                                        <th style="text-align:left">Usuario Envio</th>
+                                        <th style="text-align:left">Mensaje</th>
+                                        <th style="text-align:left">Archivos</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var mensaje in listaMsjXInter)
+                                    {
+                                        <tr id="fila_@mensaje.Msgcodi">
+                                            <td style="text-align:left">@mensaje.MsgfeccreacionDesc</td>
+                                            <td style="text-align:left">@mensaje.Msgusucreacion</td>
+                                            <td style="text-align:left">@mensaje.Msgasunto</td>
+                                            <td style="text-align:left">
+                                                @foreach (var arch in mensaje.ListaArchivo)
+                                                {
+                                                    <a onclick="arch_descargarArchivo_consulta('@arch.Modulo', @arch.Progrcodi, @arch.Intercarpetafiles, @arch.Inpsticodi, '@arch.Inarchnombrefisico', '@arch.Inarchnombreoriginal');" style="cursor:pointer;text-align:left;">@arch.Inarchnombreoriginal</a> <br />
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                }
+            }
+
+        </tbody>
+    </table>
+</div>
+<div>
+    <span class="button b-close btnClose"><span>X</span></span>
+</div>

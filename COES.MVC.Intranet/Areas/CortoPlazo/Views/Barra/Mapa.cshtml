@@ -1,0 +1,193 @@
+﻿@model COES.MVC.Intranet.Areas.CortoPlazo.Models.BarraModel
+
+<link href="~/Content/Css/css.css" rel="stylesheet" />
+<link href="~/Areas/Equipamiento/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAO0o47L59MVA_iReIxiAn_BvWEtzyP6Qo&libraries=places&callback=initAutocomplete"
+        async defer></script>
+<script type="text/javascript">
+    var siteRoot = "@Url.Content("~/")";
+</script>
+
+<script type="text/javascript">
+
+    var markers = [];
+    var map;
+
+    function initAutocomplete() {
+
+        var punto = new google.maps.LatLng(-8.798225459016345, -75.498046875);
+        var myOptions = {
+            zoom: 5,
+            center: punto,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        map = new google.maps.Map($("#map")[0], myOptions);
+        map.setOptions({ draggableCursor: "url(../../content/images/ubicador.gif) 25 25, default" });
+
+        if ($('#txtCoordenadaX').val() != "" && $('#txtCoordenadaY').val() != "") {
+            var latEquipo = { lat: parseFloat($('#txtCoordenadaX').val()), lng: parseFloat($('#txtCoordenadaY').val()) };
+            addMarker(latEquipo);
+        }
+
+        map.addListener('mousemove', function (e) {
+            $("#latitud").text(e.latLng.lat());
+            $("#longitud").text(e.latLng.lng());
+        });
+
+        map.addListener('click', function (e) {
+            $("#txtCoordenadaX").val(e.latLng.lat());
+            $("#txtCoordenadaY").val(e.latLng.lng());
+            deleteMarkers();
+            addMarker(e.latLng);
+        });
+
+        var input = document.getElementById('pac-input');
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+        map.addListener('bounds_changed', function () {
+            searchBox.setBounds(map.getBounds());
+        });
+
+        searchBox.addListener('places_changed', function () {
+            var places = searchBox.getPlaces();
+
+            if (places.length == 0) {
+                return;
+            }
+
+            var bounds = new google.maps.LatLngBounds();
+            places.forEach(function (place) {
+                if (place.geometry.viewport) {
+                    bounds.union(place.geometry.viewport);
+                } else {
+                    bounds.extend(place.geometry.location);
+                }
+            });
+            map.fitBounds(bounds);
+        });
+    }
+
+    $(function () {
+        $('#btnGrabarMapa').click(function () {
+            grabarCoordenada();
+        });
+    });
+
+    function addMarker(location) {
+        var marker = new google.maps.Marker({
+            position: location,
+            map: map
+        });
+        markers.push(marker);
+    }
+
+    function setMapOnAll(map) {
+        for (var i = 0; i < markers.length; i++) {
+            markers[i].setMap(map);
+        }
+    }
+
+    function clearMarkers() {
+        setMapOnAll(null);
+    }
+
+    function showMarkers() {
+        setMapOnAll(map);
+    }
+
+    function deleteMarkers() {
+        clearMarkers();
+        markers = [];
+    }
+
+    grabarCoordenada = function () {
+        if ($('#txtCoordenadaX').val() != "" && $('#txtCoordenadaY').val() != "") {
+            $.ajax({
+                type: 'POST',
+                url: siteRoot + 'cortoplazo/barra/grabarcoordenada',
+                data: {
+                    idBarra: $('#hfMapaIdBarra').val(),
+                    coordenadaX: $('#txtCoordenadaX').val(),
+                    coordenadaY: $('#txtCoordenadaY').val()
+                },
+                dataType: 'json',
+                success: function (result) {
+                    if (result == 1) {
+                        $('#mensajeMapa').removeClass();
+                        $('#mensajeMapa').text("Operación correcta");
+                        $('#mensajeMapa').addClass('action-exito');
+                    }
+                    else {
+                        $('#mensajeMapa').removeClass();
+                        $('#mensajeMapa').text("Ha ocurrido un error");
+                        $('#mensajeMapa').addClass('action-error');
+                    }
+                },
+                error: function () {
+                    $('#mensajeMapa').removeClass();
+                    $('#mensajeMapa').text("Ha ocurrido un error");
+                    $('#mensajeMapa').addClass('action-error');
+                }
+            })
+        }
+        else {
+            $('#mensajeMapa').removeClass();
+            $('#mensajeMapa').text("Seleccione las coordenadas");
+            $('#mensajeMapa').addClass('action-alert');
+        }
+    }
+
+</script>
+<body style="background-color:#fff">
+    <table style="width:100%; font-size:12px">
+        <tr>
+            <td style="width:20%; background-color:#fff" valign="top">
+                <div id="mensajeMapa" class="action-message" style="margin-top:5px">
+                    Seleccione coordenadas
+                </div>
+                <div class="map-content">
+                    <div class="label-mapa">Barra:</div>
+                    <div class="control-mapa">
+                        @Model.Entidad.Cnfbarnombre
+                    </div>                    
+                    <div class="label-mapa">Coordenada X</div>
+                    <div class="control-mapa">
+                        <input type="text" id="txtCoordenadaX" value="@Model.Entidad.Cnfbarcoorx" />
+                    </div>
+                    <div class="label-mapa">Coordenada Y</div>
+                    <div class="control-mapa">
+                        <input type="text" id="txtCoordenadaY" value="@Model.Entidad.Cnfbarcoory" />
+                    </div>
+                    <div class="boton-mapa">
+                        <input type="button" id="btnGrabarMapa" value="Grabar" />
+                    </div>
+                    <input type="hidden" id="hfMapaIdBarra" value="@Model.Entidad.Cnfbarcodi" />
+                </div>
+            </td>
+            <td width="2%"></td>
+            <td style="width:78%" valign="top">
+                <div class="contenedor-mapa">
+                    <div class="leyenda-mapa">
+                        <table>
+                            <tr>
+                                <td class="leyenda-mapa-label">Latitud:</td>
+                                <td class="leyenda-mapa-val">
+                                    <span id="latitud"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="leyenda-mapa-label">Longitud:</td>
+                                <td class="leyenda-mapa-val"><span id="longitud"></span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <input id="pac-input" type="text">
+                    <div id="map" style=" width:800px; height:580px; margin-top:5px"></div>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>

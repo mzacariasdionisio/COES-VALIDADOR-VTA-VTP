@@ -1,0 +1,134 @@
+﻿@model COES.MVC.Extranet.Areas.SistemasTransmision.Models.CalculoModel
+@{
+    ViewBag.Title = "Asignación de responsabilidad de pagos de los SST y SCT - Cálculo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<link href="~/Areas/SistemasTransmision/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/SistemasTransmision/Content/Scripts/load.js"></script>
+<script src="~/Areas/SistemasTransmision/Content/Scripts/calculo.js"></script>
+<div>
+    <div class="form-title">ASIGNACIÓN DE RESPONSABILIDAD DE PAGOS DE LOS SST Y SCT</div>
+    <div class="content-hijo">
+        <div id="idpanel" style="padding-top: inherit; background-color:#fff">
+            @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+            {<div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Periodo: @Model.EntidadRecalculo.Stpernombre / @Model.EntidadRecalculo.Strecanombre</div> }
+        else
+        { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione un Mes de cálculo y una versión de recalculo</div>}
+
+            <table border="0" cellpadding="0" cellspacing="0" style="width:700px;">
+                <tr>
+                    <td>
+                        <div class="search-content" style="margin-bottom:0px; padding:10px">
+                            <table border="0" cellpadding="5" cellspacing="2" style="width:1018px;">
+                                <tr class="THCabecera">
+                                    <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para exportar la información deseada</b></div></td>
+                                </tr>
+                                <tr>
+                                    <td style="width:150px;">Mes de Cálculo:</td>
+                                    <td style="width:100px;">
+                                        <select id="stpercodiReporte" name="stpercodiReporte" onchange="RecargarReporte();">
+                                            @foreach (var item in Model.ListaPeriodos)
+                                            {
+                                                sSelected = "";
+                                                if (@item.Stpercodi == Model.Stpercodi)
+                                                { sSelected = "selected"; }
+                                                <option value="@item.Stpercodi" @sSelected>@item.Stpernombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:50px;">Versión:</td>
+                                    <td style="width:200px; height:40px;">
+                                        <select id="strecacodiReporte" name="strecacodiReporte" onchange="RecargarReporte();">
+                                            @foreach (var item in Model.ListaRecalculo)
+                                            {
+                                                sSelected = "";
+                                                if (@item.Strecacodi == Model.Strecacodi)
+                                                { sSelected = "selected"; }
+                                                <option value="@item.Strecacodi" @sSelected>@item.Strecanombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                                @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+                                {
+                                    <tr class="THCabecera">
+                                        <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Lista de descargas disponibles</b></div></td>
+                                        <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Excel</b></div></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">GWh/OHMIOS Mensuales de Generadores Relevantes:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarReporte301Excel" title="Descargar la Información GWh/OHMIOS Mensuales de Generadores Relevantes en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">Cálculo del Factor de Participación Mensual o Anual:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarReporte302Excel" title="Descargar el Cálculo del Factor de Participación Mensual o Anual en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">Compensación Mensual:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarReporte303Excel" title="Descargar los Compensación Mensual en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">Distancias Eléctricas:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarReporteDistElecExcel" title="Descargar las Distancias Eléctricas en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">Factor de Participación:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarFactorParticipacionExcel" title="Descargar el Factor de Participación en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">Reporte Factor de Participación Recalculado:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarFactorParticipacionRecalculadoExcel" title="Descargar Reporte de Factor Participacion en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">Reporte de Compensación Mensual Asignada:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarCompensacionMensualExcel" title="Descargar Reporte de Compensacion Mensual en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">Reporte de Compensación Mensual Filtrada:</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarCompensacionMensualFiltradaExcel" title="Descargar Reporte de Compensación Mensual Filtrada en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                    <tr style="background-color:white;">
+                                        <td colspan="2">Reporte Asignación de Responsabilidad de Pago de SST y SCT :</td>
+                                        <td colspan="2"><a href="#" id="btnDescargarResponsabilidadPagoExcel" title="Descargar Reporte Asignación de Responsabilidad de Pago de SST y SCT en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                    </tr>
+                                }
+                            </table>
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Botón flotante de WhatsApp -->
+<a href="https://wa.me/51905469444" class="wsp" target="_blank" title="¿Necesitas ayuda? Escríbenos por WhatsApp">
+    <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp">
+</a>
+
+<style>
+    .wsp {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        cursor: pointer;
+        border-radius: 50%;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+    }
+
+        .wsp:hover {
+            transform: scale(1.1);
+        }
+
+        .wsp img {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+        }
+</style>

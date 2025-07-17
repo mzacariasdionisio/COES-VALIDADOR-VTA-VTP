@@ -1,0 +1,372 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.EventoModel
+
+@{
+    ViewBag.Title = "Detalle";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<script type="text/javascript">
+
+    $(function () {
+        $('#cbTipoEvento').val($('#hfTipoEvento').val());
+        $('#cbEmpresa').val($('#hfEmpresa').val());
+        $('#cbCausaEvento').val($('#hfCausaEvento').val());
+        $('#cbAreaOperativa').val($('#hfAreaOperativa').val());
+        $('#cbTipoFalla').val($('#hfTipoFalla').val());
+        $('#cbFases').val($('#hfFase').val());
+
+        if ($('#hfInterrupcion').val() == "S") { $('#cbInterrupcion').prop('checked', true); }
+        if ($('#hfVersion').val() == "S") { $('#cbMensajeSMS').prop('checked', true); }
+        if ($('#hfRelevante').val() == "1") { $('#cbRelevante').prop('checked', true); }
+        if ($('#hfAnalisisFalla').val() == "S") { $('#cbAnalisisFalla').prop('checked', true); }
+        if ($('#hfInformeFalla').val() == "S") { $('#cbInformeFallas').prop('checked', true); }
+        if ($('#hfInformeFalla2').val() == "S") { $('#cbInformeFallas2').prop('checked', true); }
+        if ($('#hfActuacionERA').val() == "S") { $('#cbActuacionERA').prop('checked', true); }
+
+        if ($('#hfPreliminar').val() == "N") {
+            $('#rBitacoraInforme').prop('checked', true);
+        }
+        else {
+            $('#rSoloBitacora').prop('checked', true);
+        }
+
+        $('#btnCancelar').click(function () {
+            document.location.href = siteRoot + 'eventos/evento/index';
+        });
+
+        $('#tab-container').easytabs({
+            animate: false
+        });
+    });
+
+    function verInformePerturbacion(id)
+    {
+        var url = siteRoot + 'eventos/evento/perturbacion?id=' + id;
+        document.location.href = url;
+    }
+
+</script>
+
+<div class="form-title">
+    <div class="content-titulo">Detalle del Evento</div>
+     <div class="content-botonera">       
+        <input type="button" id="btnCancelar" value="Regresar" />   
+    </div>
+</div>
+
+<div class="content-hijo">
+
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#paso1">Detalle</a></li>
+            <li class='tab'><a href="#paso2">Equipos Involucrados</a></li>
+            <li class='tab'><a href="#paso3">Interrupciones</a></li>        
+        </ul>
+        <div class='panel-container'>
+            <div id="paso1">
+                <h2>Datos del Evento</h2>                
+                <table style="width:auto">
+                    <tr>
+                        <td style="vertical-align:top; width:60%">
+                          
+                                <table  class="table-form-show">
+                                    <tr>
+                                        <td>Equipo:</td>
+                                        <td class="tbform-control">@Model.Evento.EMPRNOMB  @Model.Evento.EQUIABREV</td>
+                                        <td>Tipo de Evento:</td>
+                                        <td class="tbform-control">
+                                            <select id="cbTipoEvento" name="cbTipoEvento">
+                                                <option value="">--SELECCIONE--</option>
+                                                @foreach (var item in Model.ListaTipoEvento)
+                                                 {
+                                                    <option value="@item.TIPOEVENCODI">@item.TIPOEVENDESC</option>
+                                                 }
+                                            </select>
+                                            <input type="hidden" id="hfTipoEvento" value="@Model.Evento.TIPOEVENCODI" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td >Empresa que reporta:</td>
+                                        <td class="tbform-control" >
+                                            <select id="cbEmpresa" name="cbEmpresa">
+                                                <option value="">--SELECCIONE--</option>
+                                                @foreach (var item in Model.ListaEmpresas)
+                                                 {
+                                                    <option value="@item.EMPRCODI">@item.EMPRNOMB</option>
+                                                 }
+                                            </select>
+                                            <input type="hidden" id="hfEmpresa" value="@Model.Evento.EMPRCODI" />
+                                        </td>
+                                        <td >Causa:</td>
+                                        <td class="tbform-control">
+                                            <select id="cbCausaEvento" name="cbCausaEvento">
+                                                <option value="">--SELECCIONE--</option>
+                                                @foreach (var item in Model.ListaCausaEvento)
+                                                 {
+                                                    <option value="@item.SUBCAUSACODI">@item.SUBCAUSADESC</option>
+                                                 }
+                                            </select>
+                                            <input type="hidden" id="hfCausaEvento" value="@Model.Evento.SUBCAUSACODI" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td >Inicio:</td>
+                                        <td class="tbform-control">@Model.Evento.EVENINI</td>
+                                        <td >Final:</td>
+                                        <td class="tbform-control">@Model.Evento.EVENFIN</td>
+                                    </tr>
+                                    <tr>
+                                        <td>MW Interru/Descagado:</td>
+                                        <td class="tbform-control">@Model.Evento.EVENMWINDISP</td>
+                                        <td >Provoca Interrup:</td>
+                                        <td class="tbform-control">
+                                            <input type="checkbox" id="cbInterrupcion" />
+                                            <input type="hidden" id="hfInterrupcion" @Model.Evento.EVENINTERRUP />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td >Tensión Falla:</td>
+                                        <td class="tbform-control">@Model.Evento.EVENTENSION</td>
+                                        <td >Área Operativa: </td>
+                                        <td class="tbform-control">
+                                            <select id="cbAreaOperativa" name="cbAreaOperativa">
+                                                <option value="">--</option>
+                                                <option value="G">GENERACIÓN</option>
+                                                <option value="T">TRASMISIÓN</option>
+                                                <option value="D">DISTRIBUCIÓN</option>
+                                                <option value="C">CLIENTE LIBRE</option>
+                                            </select>
+                                            <input type="hidden" id="hfAreaOperativa" value="@Model.Evento.EVENAOPERA" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td >Tipo de Falla:</td>
+                                        <td class="tbform-control">
+                                            <select id="cbTipoFalla" name="cbTipoFalla">
+                                                <option value="">Ninguna</option>
+                                                <option value="M">Monofásica</option>
+                                                <option value="B">Bifásica</option>
+                                                <option value="T">Trifásica</option>
+                                                <option value="R">Recierre monofásico</option>
+                                                <option value="O">Otros</option>
+                                            </select>
+                                            <input type="hidden" id="hfTipoFalla" value="@Model.Evento.EVENTIPOFALLA" />
+                                        </td>
+                                        <td>Fases:</td>
+                                        <td class="tbform-control">
+                                            <select id="cbFases" name="cbFases">
+                                                <option value="R">R</option>
+                                                <option value="S">S</option>
+                                                <option value="T">T</option>
+                                                <option value="RT">RT</option>
+                                                <option value="RS">RS</option>
+                                                <option value="TS">TS</option>
+                                                <option value="RG">R-G</option>
+                                                <option value="SG">S-G</option>
+                                                <option value="TG">T-G</option>
+                                                <option value="RTG">RT-G</option>
+                                                <option value="RSG">RS-G</option>
+                                                <option value="TSG">TS-G</option>
+                                                <option value="R">RST</option>
+                                                <option value="">Ninguna</option>
+                                            </select>
+                                            <input type="hidden" id="hfFase" value="@Model.Evento.EVENTIPOFALLAFASE" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="tbform-label" style="padding-top:15px;">DESCRIPCIÖN(RESUMEN): </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4">
+                                            <div class="form-texto-cuadro">
+                                                @Model.Evento.EVENASUNTO
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="tbform-label" style="padding-top:15px;">DETALLE ADICIONAL Y OBSERVACIONES:  </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4">
+                                            <div class="form-texto-cuadro">
+                                                @Model.Evento.EVENDESC
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="tbform-label" style="padding-top:15px;">COMENTARIOS INTERNOS: </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4">
+                                            <div class="form-texto-cuadro">
+                                                @Model.Evento.EVENCOMENTARIOS
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                           
+                        </td>
+                        <td style="width:40px"></td>
+                        <td style="vertical-align:top;">
+                            <fieldset id="fsVersionDestino">
+                                <legend>Versión - destino</legend>
+                                <input type="checkbox" id="cbMensajeSMS" />Mensaje SMS<br />
+                                <input type="hidden" id="hfVersion" value="@Model.Evento.SMSENVIAR" />
+                                <input type="radio" id="rBitacoraInforme" name="rblBitacora" value="N" />Bitácora+Informes+WEB<br />
+                                <input type="radio" id="rSoloBitacora" name="rblBitacora" value="S" />Sólo bitácora<br />
+                                <input type="hidden" id="hfPreliminar" value="@Model.Evento.EVENPRELIMINAR" />
+                            </fieldset>
+                            <br />
+                            <br />
+                            <input type="checkbox" id="cbRelevante" />RELEVANTE (INFORME GART)
+                            <input type="hidden" id="hfRelevante" value="@Model.Evento.EVENRELEVANTE" /><br />
+
+                            <input type="checkbox" id="cbAnalisisFalla" />C.T. Análisis Fallas
+                            <input type="hidden" id="hfAnalisisFalla" value="@Model.Evento.EVENCTAF" /><br />
+
+                            <input type="checkbox" id="cbInformeFallas" />Informe de Fallas
+                            <input type="hidden" id="hfInformeFalla" value="@Model.Evento.EVENINFFALLA" /><br />
+
+                            <input type="checkbox" id="cbInformeFallas2" />Informe de Fallas N2
+                            <input type="hidden" id="hfInformeFalla2" value="@Model.Evento.EVENINFFALLAN2" /><br />
+
+                            <input type="checkbox" id="cbActuacionERA" />Actuación del ERACMF, ERACMT O EDAGSF
+                            <input type="hidden" id="hfActuacionERA" value="@Model.Evento.EVENACTUACION" /><br />
+                            <br />
+                            <div class="clear"></div>
+
+                            <div style="display:none">
+
+                                @if (@Model.Evento.EVENPERTURBACION == "S")
+                        {
+                        <a href="JavaScript:verInformePerturbacion(@Model.Evento.EVENCODI);">Ver informe perturbación</a>
+                        }
+                        else
+                        {
+                        <a href="JavaScript:verInformePerturbacion(@Model.Evento.EVENCODI);">Crear informe perturbación</a>
+                        }
+                            </div>
+
+                            <div class="contet-auditoria">
+                                <strong>Última modificación:</strong>
+                                <span>Usuario:</span> @Model.Evento.LASTUSER
+                                <span>Fecha:</span> @Model.Evento.LASTDATE
+                            </div>
+
+                        </td>
+                    </tr>
+                </table>
+                <div class="clear"></div>
+
+                <br />
+                <br />
+            </div>
+            <div id="paso2">
+                <h2>Equipos Involucrados</h2>
+
+                <table id="tablaEquipos" class="tabla-formulario">
+                    <thead>
+                        <tr>
+                            <th>Inicio</th>
+                            <th>Empresa</th>
+                            <th>Ubicación</th>
+                            <th>Equipo</th>
+                            <th>Descripción</th>
+                            <th>Final</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ListaSubEventos)
+                        { 
+                            <tr>
+                                <td>@item.Subevenini</td>
+                                <td>@item.EmprNomb</td>
+                                <th>@item.AreaNomb</th>
+                                <th>@item.EquiAbrev</th>
+                                <th>@item.Subevedescrip</th>
+                                <th>@item.Subevenfin</th>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                
+            </div>
+            <div id="paso3">
+                <h2>Interrupciones</h2>
+                            
+                <table id="tablaInterrupcion" class="tabla-formulario">
+                    <thead>
+                        <tr>
+                            <th>Pto Interrupción</th>
+                            <th>Cliente</th>
+                            <th>Pto Entrega DESC.</th>
+                            <th>MW</th>
+                            <th>Minutos</th>
+                            <th>Observ.</th>
+                            <th>Pto entrega SSEE</th>
+                            <th>Barra entrega</th>
+                            <th>Tens.</th>
+                            <th>Bajo Carga</th>
+                            <th>racMF</th>
+                            <th>etapaMF</th>
+                            <th>RM</th>
+                            <th>Última actualización</th>
+                            <th>Fecha act.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ListaInterrupciones)
+                        {
+                            <tr>
+                                <td>@item.PtoInterrupNomb</td>
+                                <td>@item.EmprNomb</td>
+                                <td>@item.PtoEntreNomb</td>
+                                <td>@item.Interrmw</td>
+                                <td>@item.Interrminu</td>
+                                <td>@item.Interrdesc</td>
+                                <td>@item.AreaNomb</td>
+                                <td>@item.EquiAbrev</td>
+                                <td>@(item.EquiTension.ToString("#,###.00") + "kV")</td>
+                                <td>
+                                    @if (item.Interrnivel == "S")
+                                    {
+                                        <input type="checkbox" checked="checked" />
+                                    }
+                                    else
+                                    {
+                                        <input type="checkbox" />
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Interrracmf == "S")
+                                    {
+                                        <input type="checkbox" checked="checked" />
+                                    }
+                                    else
+                                    {
+                                        <input type="checkbox" />
+                                    }
+                                </td>
+                                <td>@item.Interrmfetapa</td>
+                                <td>
+                                    @if (item.Interrmanualr == "S")
+                                    {
+                                        <input type="checkbox" checked="checked" />
+                                    }
+                                    else
+                                    {
+                                        <input type="checkbox" checked="checked" />
+                                    }
+                                </td>
+                                <td>@item.Lastuser</td>
+                                <td>@item.Lastdate</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>        
+        </div>
+    </div>
+</div>

@@ -1,0 +1,293 @@
+﻿@model COES.MVC.Intranet.Areas.RegistroIntegrante.Models.RevisionModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    SelectList slEmpresaRecomendacion = new SelectList(ViewBag.EmpresaRecomendacion, "Emprcodi", "Emprnomb");
+
+}
+
+<style>
+    .aPopupEmpresa {
+        position: absolute;
+        cursor: pointer;
+    }
+
+    .aPopupEmpresaPropietaria {
+        position: absolute;
+        cursor: pointer;
+    }
+
+    #tblEmpresaBuscar {
+        border-collapse: collapse;
+    }
+
+        #tblEmpresaBuscar tr {
+            background-color: transparent;
+        }
+
+            #tblEmpresaBuscar tr:hover td {
+                cursor: pointer;
+                background-color: #f3f8aa;
+            }
+
+    #tblFuerzaMayor {
+        border-collapse: collapse;
+    }
+
+        #tblFuerzaMayor tr {
+            background-color: transparent;
+        }
+
+            #tblFuerzaMayor tr:hover td {
+                cursor: pointer;
+                background-color: #f3f8aa;
+            }
+
+    .Selected {
+        background-color: #ffd800;
+    }
+</style>
+
+
+<link href="~/Content/Css/popup.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Seguimiento de Recomendaciones</div>
+</div>
+<div class="content-hijo" id="mainLayout">
+    <div class="form-main" style="margin-top:10px">
+        <div id="mensaje"></div>
+        <div style="clear:both; height:5px;"></div>
+        <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td><label>Inicio</label></td>
+                    <td>
+                        <input type="text" id="dtInicio" name="FechaInicio" value="@ViewBag.FechaInicio" />
+                    </td>
+                    <td><label>Fin</label></td>
+                    <td>
+                        <input type="text" id="dtFin" name="FechaFin" value="@ViewBag.FechaFin" />
+                    </td>
+                    <td><label>Empresa</label></td>
+                    <td>
+                        @Html.DropDownList("cboEmpresaRecomendada", slEmpresaRecomendacion, new { @style = "width:250px" })
+                    </td>
+                    <td><label>Estado</label></td>
+                    <td>
+                        <select id="cboEstado" style="width:200px">
+                            <option value='T'>TODOS</option>
+                            <option value='EN PROCESO'>EN PROCESO</option>
+                            <option value='PARCIAL'>PARCIAL</option>
+                            <option value='CUMPLIO'>CUMPLIO</option>
+                            <option value='SIN CUMPLIR'>SIN CUMPLIR</option>
+                            <option value='PENDIENTE DE RESPUESTA'>PENDIENTE DE RESPUESTA</option>
+
+                        </select>
+                    </td>
+                    <td><label>Importante</label></td>
+                    <td>
+                        <select id="cboImportante" style="width:200px">
+                            <option value='T'>TODOS</option>
+                            <option value='IMPORTANTE'>IMPORTANTE</option>
+                            <option value='NO IMPORTANTE'>NO IMPORTANTE</option>
+
+                        </select>
+                    </td>
+                    <td>
+                        <input type="button" id="btnConsultar" value='Ejecutar' />
+                        <input type="button" id="btnConsultar" value='Excel' style="display:none" />
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+        <div style="clear:both"></div>
+        <div class="content-tabla">
+            <table border="0" class="pretty tabla-adicional" id="tabla">
+                <thead>
+                    <tr>
+                        <th>OPCIONES</th>
+                        <th>CODIGO</th>
+                        <th>EMPRESA</th>
+                        <th>RECOMENDACION</th>
+                        <th>ESTADO</th>
+                        <th>RESPUESTA</th>
+                        <th>OBSERVACION</th>
+                        <th>ACCION FINAL</th>
+                        <th>NRO REG. RESPUESTA</th>
+                        <th>IMPORTANTE</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyLista"></tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+
+
+<div id="divMedidasAdoptadas" class="general-popup" style="width:1000px;min-height:300px;">    
+    <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Detalle de Recomendación</span></div>
+    <div style="clear:both; height:5px;"></div>
+
+    <div class="content-registro" style="padding-top:10px;">
+        <table style="width:auto;">
+            <tr>
+                <td class="registro-label">Codigo</td>
+                <td class="registro-label">EV -&nbsp;&nbsp;<input type="text" id="txtMedidaAdoptadaAFECORR" style="width:50px;" readonly />&nbsp;&nbsp;-&nbsp;&nbsp;<input type="text" id="txtMedidaAdoptadaAFEANIO" style="width:50px" readonly /></td>
+
+                <td class="registro-label">Nombre Evento</td>
+                <td class="registro-control"><input type="text" readonly style="width:400px;" id="txtMedidaAdoptadaEVENASUNTO" /></td>
+
+            </tr>
+            <tr>
+                <td class="registro-label">Empresa</td>
+                <td class="registro-control"><input type="text" id="txtMedidaAdoptadaEMPRNOMB" readonly style="width:250px;" /></td>
+
+                <td class="registro-label">Recomendación</td>
+                <td class="registro-control"><textarea rows="10" cols="80" id="txtMedidaAdoptadaAFRRECOMEND" readonly style="width: 400px;"></textarea></td>
+            </tr>
+        </table>
+        <h3>Datos a Modificar</h3>
+        <table style="width:100%;">
+
+            <tr>
+                <td class="registro-control" colspan="2"><input type="checkbox" id="chkMedidaAdoptadaImportante" />IMPORTANTE</td>
+                <td class="registro-control" colspan="4"><input type="checkbox" id="chkCartaRecomendacion" />Carta de Recomendación COES</td>
+            </tr>
+            <tr>
+
+                <td class="registro-label">Número de Registro de Respuesta</td>
+                <td class="registro-control">
+                    <textarea rows="10" cols="40" id="txtMedidaAdoptadaNroRegistroRespuesta" style="width: 300px;"></textarea>
+                    <br />
+                    @if (ViewBag.grabar)
+                    {
+                        <input type="button" id="btngrabarModificar" value='Grabar' onclick="ActualizarRecomendacionMA();" />
+                    }
+
+                </td>
+
+                <td class="registro-control">
+
+
+                    @if (ViewBag.grabar)
+                    {
+                        <input type="file" accept=".pdf" id="flCartaRecomendacionCOES" />
+                        <input name="btnSubirCartaRecomendacionCOES" type="button" id="btnSubirCartaRecomendacionCOES" value="Cargar Archivo">
+                    }
+
+
+                </td>
+                <td class="registro-control">
+                    <a href="#" onclick="VerCartaRecomendacionCOES()" id="btnVerCartaRecomendacionCOES" style="display:none;">
+                        <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                    </a>
+                </td>
+                <td class="registro-control">
+                    @*@if (Model.grabar)
+                        {
+
+                            <a href="#" onclick="EliminarCartaRecomendacionCOES()" id="btnEliminarCartaRecomendacionCOES" style="display:none;">
+                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                            </a>
+                        }*@
+
+                </td>
+            </tr>
+
+        </table>
+    </div>
+
+
+
+    <div class="content-registro" style="width:auto">
+
+        <div style="clear:both; height:5px;"></div>
+        <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Medida Adoptada</span></div>
+        <div style="clear:both; height:5px;"></div>
+
+        <table style="width:100%;">
+            <tr>
+                <td class="registro-label">Fecha de Medida</td>
+                <td class="registro-control"><input type="text" id="txtFechaMedidaAdoptada" style="width:100px" /></td>
+
+
+                <td class="registro-label">Nivel de Cumplimiento</td>
+                <td class="registro-control">
+                    <select id="cboNiveldeCumplimiento" style="width: 120px">
+                        <option value='R'>Seleccione</option>
+                        <option value='E'>EN PROCESO</option>
+                        <option value='P'>PARCIAL</option>
+                        <option value='C'>CUMPLIO</option>
+                        <option value='S'>SIN CUMPLIR</option>
+                        <option value='R'>PENDIENTE DE RESPUESTA</option>
+                    </select>
+                </td>
+                <td class="registro-label">Carta de Respuesta</td>
+
+                <td class="registro-control">
+
+                    @if (ViewBag.grabar)
+                    {
+                        <input type="file" accept=".pdf" id="flCartaRespuesta" style="display:none; width:250px;" />
+                        <input name="btnSubirCartadeRespuesta" style="display:none;" type="button" id="btnSubirCartadeRespuesta" value="Cargar Archivo">
+                    }
+
+                </td>
+                <td class="registro-control">
+                    <a href="#" onclick="VerCartaRespuesta()" id="btnVerCartaRespuesta" style="display:none;">
+                        <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                    </a>
+                </td>
+                <td class="registro-control">
+                    @if (ViewBag.grabar)
+                    {
+                        <a href="#" onclick="EliminarCartaRespuesta()" id="btnEliminarVerCartaRespuesta" style="display:none;">
+                            <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                        </a>
+                    }
+
+                </td>
+            </tr>
+            <tr>
+                <td class="registro-label">Medida Adoptada</td>
+                <td class="registro-control" colspan="8">
+                    <textarea id="txtMedidaAdoptada" rows="10" cols="140" style="width: 800px"></textarea>
+                </td>
+            </tr>
+        </table>
+        
+        <div style="clear:both; height:10px;"></div>
+
+        <table style="width:100%;">            
+            <tr>
+                <td>
+                    @if (ViewBag.grabar)
+                    {
+                        <input type="button" id="btnGrabarMedidaAdoptada" onclick="ActualizarRecomendacionMAG();" height="50" value="Grabar" />
+                    }
+                    <input type="button" id="btncerrar" value='Cerrar' onclick="cerrar();" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<input type="hidden" id="hfMedidaAdoptadaSelected" value="0" />
+<input type="hidden" id="hfMedidaAdoptadaEmpresaSelected" value="0" />
+
+<script src="~/Content/Scripts/jquery.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/popup.js"></script>
+<script src="~/Content/Scripts/datepicker.js"></script>
+<script src="~/Content/Scripts/jquery-ui-autocomplete.js"></script>
+<script src="~/Content/Scripts/jquery.select-to-autocomplete.min.js"></script>
+
+<script src="~/Areas/Eventos/Content/Scripts/recomendaciones.js?v=1.02"></script>
+<script>
+    iniLista();
+</script>

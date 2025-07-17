@@ -1,0 +1,165 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.MatrizModel
+
+<script type="text/javascript">
+
+    $(function () {     
+        $('.input-potencia').keydown(function (e) {
+            var str = this.id;
+            if (e.which == '13') {                        
+                var arr = str.split('-');
+                agregarItem(arr[0], arr[1], arr[2], this.value);
+            }          
+        });
+
+        validar();
+    });  
+</script>
+ 
+@{ var sumTotal = "";}
+@if (Model.ListaElementos.Count > 0)
+{
+    <table class="tabla-formulario tabla-adicional" id="tablaMatriz" border="1">
+        <thead>
+            <tr>
+                <th rowspan="2"></th>
+                <th rowspan="2"></th>
+                <td rowspan="2"></td>
+                <th rowspan="2">Empresa</th>
+                <th rowspan="2">Central</th>
+                <th rowspan="2">Equipo</th>
+                <th rowspan="2">Potencia</th>
+                @{
+    int k = 0;
+    foreach (var item in Model.ListaElementos[0].ListItems)
+    {
+
+        <th colspan="4">
+            <input type="checkbox" value="@k" />
+            <a href="JavaScript:editarHora('@item.HoraInicio.ToString("HH:mm:ss")', '@item.HoraFin.ToString("HH:mm:ss")', @k)">
+                @item.HoraInicio.ToString("HH:mm:ss")  -  @item.HoraFin.ToString("HH:mm:ss")
+            </a>
+        </th>
+        k++;
+    }
+                }
+            </tr>
+            <tr>
+                @{
+    int l = 0;
+    string estilo = "";
+
+    foreach (var item in Model.ListaElementos[0].ListItems)
+    {
+        if (l % 2 == 0) { estilo = "celdamatriz-amarrilla"; }
+        else { estilo = "celdamatriz-verde"; }
+        <th class="@estilo">MAN</th>
+                    <th class="@estilo"></th>
+                    <th class="@estilo">AUT</th>
+                    <th class="@estilo"></th>
+        l++;
+    }
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @{
+
+    int len = 0;
+    List<decimal> sumas = new List<decimal>();
+    if (Model.ListaElementos.Count > 0)
+    {
+        if (Model.ListaElementos[0].ListItems.Count > 0)
+        {
+            len = Model.ListaElementos[0].ListItems.Count * 2;
+
+            for (int t = 0; t < len; t++)
+            {
+                sumas.Add(0);
+            }
+        }
+    }
+
+
+    int i = 1;
+    foreach (var item in Model.ListaElementos)
+    {
+        <tr>
+            <td><input type="checkbox" value="@item.IdEquipo" /></td>
+            <td>@i</td>
+            <td>@item.DesURS</td>
+            <td>@item.Empresa</td>
+            <td>@item.Central</td>
+            <td>@item.Equipo</td>
+            <td>@item.Potencia</td>
+            @{
+        int j = 0;
+        foreach (var entity in item.ListItems)
+        {
+            string idManual = "man-" + item.IdEquipo + "-" + j;
+            string idAutomatico = "auto-" + item.IdEquipo + "-" + j;
+            string funManual = "checkIndicador(this,'" + idManual + "')";
+            string funAutomatico = "checkIndicador(this,'" + idAutomatico + "')";
+
+            if (len > j * 2)
+            {
+                sumas[j * 2] = sumas[j * 2] + entity.Manual;
+                sumas[j * 2 + 1] = sumas[j * 2 + 1] + entity.Automatico;
+            }
+
+            <td>
+                <input type="text" value="@entity.Manual" id="@idManual" style="width:50px" class="input-potencia" />
+            </td>
+                <td>
+                    @if (entity.IndManual == "S")
+                    {
+                        <input type="checkbox" checked="checked" onclick="@funManual" />
+                    }
+                    else
+                    {
+                        <input type="checkbox" onclick="@funManual" />
+                    }
+                </td>
+                <td><input type="text" value="@entity.Automatico" id="@idAutomatico" style="width:50px" class="input-potencia" /></td>
+                <td>
+                    @if (entity.IndAutomatico == "S")
+                    {
+                        <input type="checkbox" checked="checked" onclick="@funAutomatico" />
+                    }
+                    else
+                    {
+                        <input type="checkbox" onclick="@funAutomatico" />
+                    }
+                </td>
+                    j++;
+        }
+            }
+        </tr>
+        i++;
+    }
+
+    <tr class="tabla-total">
+            <td></td>
+        <td></td>
+        <td></td>
+            <td></td>
+            <td></td>
+        <td></td>
+        <td  style="text-align:right">TOTAL</td>
+
+        @for (int z = 0; z < sumas.Count / 2; z++)
+        {
+            sumTotal = sumTotal + (sumas[z * 2] + sumas[z * 2 + 1]).ToString() + "$";
+
+            <td>@sumas[z * 2]</td>
+            <td></td>
+            <td>@sumas[z * 2 + 1]</td>
+            <td></td>
+        }
+
+    </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<input type="hidden" id="hfSumas" value="@sumTotal" />

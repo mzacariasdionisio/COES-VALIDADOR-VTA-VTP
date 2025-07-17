@@ -1,0 +1,274 @@
+﻿
+@model COES.MVC.Intranet.Areas.Equipamiento.Models.FTAsignacionProyectoModel
+@{
+    ViewBag.Title = "Listado de Asignación proyectos Extranet ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/datatable.js"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTAsignacionproyecto/asignacionproyecto.js?v=1.1.1.0"></script>
+<link href="~/Areas/Equipamiento/Content/Css/css.css?v=1.1.1.0" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Asignación de proyectos Extranet</div>
+    <div class="content-botonera">
+        <input type="button" id="btnNuevo" value="Nuevo" style="" />
+
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+
+    <div class="search-content">
+        <table class="content-tabla-search" style="width:auto">
+            <tbody>
+                <tr>
+                    <td class="tbform-label">Empresa:</td>
+                    <td>
+                        <select id="cbEmpresa" style="width: 222px;" name="IdEmpresa" multiple="multiple">                            
+                            @foreach (var item in Model.ListaEmpresas)
+                            {
+                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                            }
+                        </select>                        
+                        <input type="hidden" id="hfEmpresa" name="empresa" />
+                    </td>
+
+                    <td class="tbform-label">Etapa:</td>
+                    <td>
+                        <select id="cbEtapa">
+                            <option value="-1">TODOS</option>
+                            @foreach (var item in Model.ListaEtapas)
+                            {
+                                <option value="@item.Ftetcodi">@item.Ftetnombre</option>
+                            }
+                        </select>
+                    </td>
+                    <td class="">
+                        <input type="button" id="btnBuscar" value="Buscar" style="" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+
+    <div class="content-tabla">
+        <div id="" style="font-size: 11px; color: #0051C8; padding-top: 10px;">
+            <b>Nota: </b>Verificar que la asignación de los equipos de un proyecto, esten correctamente habilitados para su envío en la Extranet de acuerdo su correspondiente etapa (ver columna <b>"Equipo otra Etapa"</b>).
+        </div>
+        <div class="table-list" id="listado">    </div>
+    </div>
+</div>
+
+
+<div id="popupProyecto" class="popup-class-1 general-popup" style="width: 1250px; max-width: 1250px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><div id="tituloPopup"></div></div>
+    <div id="" style="margin-top: 10px;"></div>
+    <div class="panel-container">
+        <div id="mensaje_popupProyecto"></div>
+
+
+        <input type="hidden" id="hdAccion" />
+        <input type="hidden" id="hdIdRelEmpEtapa" />
+
+
+        <div>
+            <table id="" style="margin-top: 10px; padding-left: 190px;">
+                <tr style="height: 25px;">
+                    <td class="tbform-label" style="width: 130px;">Empresa:</td>
+                    <td style="width: 200px;">
+                        <select id="cbEmpresapop" style="width:300px;">
+                            <option value="0">--  Seleccione Empresa  --</option>
+                            @foreach (var item in Model.ListaEmpresas)
+                            {
+                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+                <tr style="height: 25px;">
+                    <td class="tbform-label" style="width: 130px;">Etapa:</td>
+                    <td style="width: 200px;">
+                        <select id="cbEtapapop" style="width: 250px;">
+                            <option value="0">--  Seleccione Etapa  --</option>
+                            @foreach (var item in Model.ListaEtapas)
+                            {
+                                <option value="@item.Ftetcodi">@item.Ftetnombre</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+            </table>
+            <div id="seccionBoton"></div>
+        </div>
+
+        <div id="listadoProyectosElementosExtranetAsignacion" style="width: 1200px; height: 223px;">
+        </div>
+        <div id="nota_" style="font-size: 11px; color: #0051C8; padding-top: 10px; display:none;">
+            <b>Nota: </b>Verificar que la asignación de los equipos de un proyecto, esten correctamente habilitados para su envío en la Extranet de acuerdo su correspondiente etapa (ver columna <b>"Equipo otra Etapa"</b>).
+        </div>
+        <div id="bloqueBotones">
+            <div style="width: 150px; margin: 0 auto; text-align: center; margin-top:15px; ">
+                <input type="submit" id="btnGuardarProy" value="Guardar">
+                <input type="button" id="btnCancelarProy" value="Cancelar">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<div id="popupBusquedaPy" class="popup-class-1 general-popup" style="width: 750px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Busqueda de Proyectos Extranet </span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupBusquedaPy"></div>
+        <div id="" style="margin-top: 10px;"></div>
+
+        <div>
+            <div id="listadoProyectosAsignacion">
+            </div>
+        </div>
+        <div>
+            <div style="width: 210px; margin: 0 auto;">
+                <input type="button" id="btnAgregarPy" value="Agregar" style="margin-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupBusquedaPy')">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="popupRelEqMOConProyectos" class="popup-class-1 general-popup" style="width: 1250px; max-width: 1250px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de equipos relacionados al proyecto</span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupRelEqMOProyecto"></div>
+        <div id="" style="margin-top: 10px;"></div>
+
+        <div>
+            <div id="listadoDetalleEqMoDelProyecto" style="width: 1200px">
+            </div>
+        </div>
+        <div id="nota_2" style="font-size: 11px; color: #0051C8; padding-top: 10px; padding-bottom: 10px; display: none;">
+            <b>Nota: </b>Verificar que la asignación de los equipos de un proyecto, esten correctamente habilitados para su envío en la Extranet de acuerdo su correspondiente etapa (ver columna <b>"Equipo otra Etapa"</b>).
+        </div>
+        <div>
+            <div style="width: 200px; margin: 0 auto; text-align:center;">
+                <input type="button" id="btnActualizarDet" value="Actualizar Detalle" style="margin-top: 15px; display: none;">
+                <input type="button" id="btnCancelarActDetCIO" value="Cancelar">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="popupBusquedaEq" class="popup-class-1 general-popup" style="width: 1250px; max-width: 1250px;">
+    <span class="button b-close"><span>X</span></span> 
+    <div class="popup-title"><span>Busqueda de Equipos </span></div> 
+    <div class="panel-container"> 
+        <div id="mensaje_popupBusquedaEq"></div> 
+        <div id="" style="margin-top: 10px;"> 
+            <table class="content-tabla-search" style="width:auto"> 
+                <tr>
+                    <td class="tbform-label">Origen de Datos:</td> 
+                    <td>
+                        <input type="radio" id="origen_1" name="origen" value="1" checked> Tipo de Equipo 
+                        <input type="radio" id="origen_2" name="origen" value="2" > Categoria de Grupo 
+                    </td>
+                    <td>
+                        <select id="cbFamiliaEquipo" style=" width: 242px; display: none"> 
+                            <option value="-1">--  TODOS  --</option> 
+                            @foreach (var item in Model.ListaFamilia) 
+                            {
+                                <option value="@item.Famcodi">@item.Famnomb</option> 
+                            }
+                        </select>
+                        <select id="cbCategoriaGrupo" style=" width: 234px; display: none"> 
+                            <option value="-1">--  TODOS  --</option>
+                            @foreach (var item in Model.ListaCategoria) 
+                            {
+                                <option value="@item.Catecodi">@item.Catenomb</option> 
+                            }
+                        </select> 
+                    </td>   
+                    <td class="celda-item" style="width: 60px; display:none;">Ubicación:</td>
+                    <td style="display:none;">
+                        <select id="cbUbicacion" style="width: 400px;">
+                            <option value="-1"> -- TODOS -- </option>
+                            @foreach (var item in Model.ListaUbicacion)
+                            {
+                                <option value="@item.Areacodi">@item.Areanomb</option>
+                            }
+                        </select>
+                    </td>
+                </tr> 
+                
+            </table> 
+        </div> 
+
+        <div> 
+            <div id="listadoBusquedaElementosO" style="width: 1200px"> 
+            </div> 
+        </div> 
+        <div> 
+            <div style="width: 210px; margin: 0 auto; text-align:center;"> 
+                <input type="button" id="btnAgregarEq" value="Agregar" style="margin-top: 15px;"> 
+                <input type="button" id="btnCancelarEq" value="Cancelar" > 
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="popupAuditoria" class="popup-class-1 general-popup">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Datos de Auditoria</span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupAuditoria"></div>
+        <div id="" style="margin-top: 10px;"></div>
+
+        <div>
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Usuario Creación:</td>
+                    <td>
+                        <div id="usuCreacionVal"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Fecha Creación:</td>
+                    <td>
+                        <div id="fecCreacionVal"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Usuario Modificación:</td>
+                    <td>
+                        <div id="usuModificacionVal"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Fecha Modificación:</td>
+                    <td>
+                        <div id="fecModificacionVal"></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div>
+            <div style="width: 80px; margin: 0 auto; padding-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupAuditoria')">
+            </div>
+        </div>
+
+    </div>
+</div>
+

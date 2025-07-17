@@ -1,0 +1,203 @@
+# Elaborado por ITSE SAS
+# 13/02/2024
+
+trigger: 
+  branches:
+    include:
+    - master
+    exclude:
+      - TEST/*
+      - PREPRD/*
+  
+variables:
+  - name: system.debug
+    value: 'false'
+  - name: organization_name
+    value: "coes-sinac"
+  - name: project_name
+    value: "FramworkCoesProd"
+  - name: PtoPublicoYOtro
+    value: false
+
+pool:
+  #name: Default
+  #vmImage: 'windows-2019'
+  #name: TestPool
+  name: CompiladorPool
+
+stages:
+- stage: Build
+  displayName: CI
+  jobs:
+  - job: Compilarproyecto
+    timeoutInMinutes: 0
+    workspace: 
+      clean: all
+    steps:
+    - checkout: none
+      persistCredentials: true
+    
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          git clone https://$(System.AccessToken)@dev.azure.com/$(organization_name)/$(project_name)/_git/$(Build.Repository.Name)
+          cd $(Build.Repository.Name)
+          git checkout "$(Build.SourceBranchName)"
+          Write-Host "Buscando el commit de fusión más reciente..."
+          $lastMergeCommit = git log --merges -1 --format=%H
+          Write-Host "El commit de fusión más reciente es-> $lastMergeCommit"
+          
+          Write-Host "Extrayendo la rama fuente del commit de fusión..."
+          $parents = git log -1 --pretty=format:"%P" $lastMergeCommit
+          $lastMergedBranchSha = $parents.Split(" ")[1]
+          Write-Host "Rama fuente antes de la fusión (SHA)-> $lastMergedBranchSha"
+
+          Write-Host "Buscando el nombre de la rama fuente..."
+          $branchName = git name-rev --name-only $lastMergedBranchSha
+          Write-Host "El nombre de la última rama fusionada es-> $branchName"
+          # Remover 'remotes/origin/' del nombre de la rama
+          $cleanBranchName = $branchName -replace 'remotes/origin/', ''
+          $cleanBranchName = $cleanBranchName.Split("~")[0]
+          Write-Host "El nombre de la última rama fusionada es-> $cleanBranchName"
+          Write-Host "##vso[task.setvariable variable=ramaPR;isOutput=true]$cleanBranchName";
+          $cleanBranchName | Out-File $(Build.ArtifactStagingDirectory)\rama.txt
+
+          if ($cleanBranchName -ne 'PRELANZAMIENTO_ST1_BD1_D7'){
+            Get-Content $(Build.ArtifactStagingDirectory)\rama.txt
+
+            $ambiente = $cleanBranchName.Split("/")[0]
+            $proyecto = $cleanBranchName -replace $cleanBranchName.Split("-")[0], '' 
+
+            $valores = "$cleanBranchName" -split "_";
+            $valor = $valores[$valores.Length - 3];
+            Write-Host "##vso[task.setvariable variable=servidorDespliegue;isOutput=true]$valor";
+            $valor = $valores[$valores.Length - 2];
+            Write-Host "##vso[task.setvariable variable=baseDatos;isOutput=true]$valor";
+            $valor = $valores[$valores.Length - 1];
+            Write-Host "##vso[task.setvariable variable=proyectosInvolucrados;isOutput=true]$valor";
+            $reemplazar = $valores[-3..-1] -join "_";
+            $reemplazar = "_" + $reemplazar;
+            $valor = "$proyecto" -replace $reemplazar, "";
+            $valor = $valor.Substring(1);
+            Write-Host "##vso[task.setvariable variable=proyect;isOutput=true]$valor";
+          }else{
+            $proyecto = 'D7'
+            $valor = "$proyecto" -replace $reemplazar, "";
+            $valor = $valor.Substring(1);
+            Write-Host "##vso[task.setvariable variable=proyect;isOutput=true]$valor";
+          }
+
+      name: ObtenerRamaPR
+      
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          $ramaprelanzamiento = "PRELANZAMIENTO_ST1_BD1_D7"
+          if ("$(ObtenerRamaPR.ramaPR)" -eq $ramaprelanzamiento){
+            $proyecto = 'D7'
+            $ProyectoACompilar = ""
+          }else{
+            $proyecto = "$(ObtenerRamaPR.proyectosInvolucrados)"
+            $ProyectoACompilar = ""
+          }
+
+          switch ($proyecto) {
+              "D1" {  
+                $ProyectoACompilar = "COES.MVC.Extranet/*.csproj"
+                }
+              "D2" { 
+                $ProyectoACompilar = "COES.MVC.Intranet/*.csproj"
+                }
+              "D3" { 
+                $ProyectoACompilar = "COES.MVC.Publico/*.csproj"
+                }
+              "D4" { 
+                $ProyectoACompilar = "COES.MVC.*tranet/*.csproj"
+                }
+              "D5" { 
+                  Write-Host "##vso[task.setvariable variable=PtoPublicoYOtro;]true" 
+                  $ProyectoACompilar = "COES.MVC.Intranet/*.csproj"
+              }
+              "D6" {
+                  Write-Host "##vso[task.setvariable variable=PtoPublicoYOtro;]true" 
+                  $ProyectoACompilar = "COES.MVC.Extranet/*.csproj"
+              }
+              "D7" {
+                      $ProyectoACompilar = "COES.MVC.*/*.csproj"
+                  }
+              Default { 
+                  Write-Host "Valor no reconocido para $(ObtenerRamaPR.proyectosInvolucrados)." 
+              }
+            }
+          Write-Host "##vso[task.setvariable variable=proyecto;isOutput=true]$ProyectoACompilar";
+          Write-Host $ProyectoACompilar
+      name: establecerProyecto
+
+    - task: NuGetToolInstaller@1
+      displayName: Instalar Nuget
+    
+    - task: NodeTool@0
+      inputs:
+        versionSource: 'spec'
+        versionSpec: '18.x'
+      displayName: Instala Node
+      
+    - task: NuGetCommand@2
+      inputs:
+        command: 'restore'
+        restoreSolution: '**/*.sln'
+        feedsToUse: 'select'
+        vstsFeed: 'ad6585c8-02ff-4991-8f05-5bd302c53775/a5a703a4-86bc-4f81-aa4c-9464a8194b8c'
+      displayName: Instalando paquetes Nuget
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: |
+          cd $(Build.Repository.Name)
+          Write-Host "$(establecerProyecto.proyecto)"
+          Copy-Item -Path "Librerias\Base\bin" -Destination "COES.Base\bin" -Recurse
+          Copy-Item -Path "Librerias\Extranet\bin" -Destination "COES.MVC.Extranet\bin" -Recurse
+          Copy-Item -Path "Librerias\Datos\bin" -Destination "COES.Infraestructura.Datos\bin" -Recurse
+          Copy-Item -Path "Librerias\Aplicacion\bin" -Destination "COES.Servicios.Aplicacion\bin" -Recurse
+          Copy-Item -Path "Librerias\DTO\bin" -Destination "COES.Dominio.DTO\bin" -Recurse
+          Copy-Item -Path "Librerias\Interface\bin" -Destination "COES.Dominio.Interfaces\bin" -Recurse
+          Copy-Item -Path "Librerias\Intranet\bin" -Destination "COES.MVC.Intranet\bin" -Recurse
+          Copy-Item -Path "Librerias\Publico\bin" -Destination "COES.MVC.Publico\bin" -Recurse
+          Copy-Item -Path "Librerias\WScoes\bin\*" -Destination "COES.Old.WScoes\bin" -Recurse
+          Copy-Item -Path "Librerias\wcfSicOperacion\bin" -Destination "wcfSicOperacion\bin" -Recurse
+          Copy-Item -Path "Librerias\DataAccessLayerx\bin" -Destination "DataAccessLayerx\bin" -Recurse
+          
+          Copy-Item -Path "Plantillas.Web.Config\*.config" -Destination "$(Build.ArtifactStagingDirectory)" -Recurse
+      displayName: Copiando .dlls y plantillas .config
+    
+    - task: MSBuild@1
+      inputs:
+        solution: "$(Build.Repository.Name)/$(establecerProyecto.proyecto)"
+        #msbuildArchitecture: 'x86'
+        msbuildArchitecture: 'x64'
+        msbuildArguments: '/p:TargetFramework=net461  /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+        createLogFile: true
+        logFileVerbosity: 'detailed'
+      name: CompilacionProyecto 
+    
+    - task: MSBuild@1
+      condition: eq(variables.PtoPublicoYOtro, true)
+      inputs:
+        solution: "$(Build.Repository.Name)/COES.MVC.Publico/COES.MVC.Publico.csproj"
+        #msbuildArchitecture: 'x86'
+        msbuildArchitecture: 'x64'
+        msbuildArguments: '/p:TargetFramework=net461  /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+        createLogFile: true
+        logFileVerbosity: 'detailed'
+      name: CompilacionPublico
+      
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'netApps'
+        publishLocation: 'Container'
+      displayName: "publicar artefacto"
+    

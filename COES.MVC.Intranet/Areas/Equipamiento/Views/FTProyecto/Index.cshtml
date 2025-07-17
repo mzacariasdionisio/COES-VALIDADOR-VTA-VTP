@@ -1,0 +1,229 @@
+﻿
+@model COES.MVC.Intranet.Areas.Equipamiento.Models.FTProyectoModel
+@{
+    ViewBag.Title = "Listado de Proyectos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<script src="~/Content/Scripts/datatable.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+
+<script src="~/Content/Scripts/multiselect.js"></script>
+    <link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTProyecto/proyecto.js?v=1.0.4"></script>
+<div class="form-title">
+    <div class="content-titulo">Listado de Proyectos</div>
+    <div class="content-botonera">
+        <input type="button" id="btnNuevo" value="Nuevo" style="" />
+
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+    <input type="hidden" id="hdEmpresaEscogida" />
+    <input type="hidden" id="hdRangoIniEscogido" />
+    <input type="hidden" id="hdRangoFinEscogido" />
+    <div class="search-content">
+
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td style="padding-right: 5px;">Empresa:</td>
+                <td>
+                    <select id="cbEmpresa" style="width: 450px;">
+                        <option value="-1">[Todos]</option>
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                        <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+
+                </td>
+
+                <td style="padding-right: 5px;">Desde:</td>
+                <td>
+                    <input type="text" id="txtDesde" value="@Model.RangoIni" style="" />
+                </td>
+
+                <td style="padding-right: 5px;">Hasta:</td>
+                <td>
+                    <input type="text" id="txtHasta" value="@Model.RangoFin" style="" />
+                </td>
+
+                <td class="">
+                    <input type="button" id="btnBuscar" value="Buscar" style="" />
+                    <input type="button" id="btnExportar" value="Exportar" style="" />
+                </td>
+                <td class="">
+                    <input type="hidden" id="hfEmpresa" value="" style="" />
+                </td>
+
+            </tr>
+        </table>
+    </div>
+
+    <div class="content-tabla">
+        <div id="nota_" style="font-size: 11px; color: #0051C8;">
+            <b>Nota: </b>Los filtros 'Desde' y 'Hasta' son respecto a la fecha de creación. 
+        </div>
+        <div class="table-list" id="listado">    </div>
+    </div>
+</div>
+
+<div id="popupProyecto" class="popup-class-1 general-popup" style="width: 600px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><div id="tituloPopup"></div></div>
+    <div class="panel-container">
+        <div id="mensaje_popupProyecto"></div>
+        <div id="" style="margin-top: 10px;"></div>
+
+        <input type="hidden" id="hdEsteocodiUsado" />
+        <input type="hidden" id="hdIdEmpresa" />
+        <input type="hidden" id="hdConEstudioEo" value="S" />
+        <input type="hidden" id="hdAccion" />
+        <input type="hidden" id="hdIdProyecto" />
+
+        <div>
+            <table id="" style="margin-top: 10px; padding-left: 40px;">
+                <tr id="bloqueRadio" style="height: 25px;">
+                    <td class="tbform-label">¿Tiene Estudio EO?:</td>
+                    <td>
+                        <input type="radio" id="rdPNSi" name="PNEstudioEo" value="S">
+                        <label for="">Si</label>
+                        <input type="radio" id="rdPNNo" name="PNEstudioEo" value="N" style="margin-left: 15px;">
+                        <label for="">No</label>
+
+                        <input type="submit" id="btnBuscarEstEO" value="Buscar Estudio (EO)" style="float: right;">
+                        <input type="submit" id="btnBuscarEmpresa" value="Buscar Empresa" style="float: right; display: none;">
+                    </td>
+                </tr>
+                <tr style="height: 25px;">
+                    <td class="tbform-label">Empresa:</td>
+                    <td>
+                        <input type="text" id="txtPNEmpresa" style="width: 350px;" disabled />
+                    </td>
+                </tr>
+                <tr style="height: 25px;">
+                    <td id="campoCodigo" class="tbform-label">Código Estudio (EO):</td>
+                    <td>
+                        <input type="text" id="txtPNCodigo" style="width: 350px;" disabled />
+                    </td>
+                </tr>
+                <tr style="height: 25px;">
+                    <td class="tbform-label">Nombre Proyecto:</td>
+                    <td>
+                        <input type="text" id="txtPNNombProy" style="width: 350px;"  disabled />
+                    </td>
+                </tr>
+                <tr style="height: 25px;">
+                    <td class="tbform-label">Nombre Proyecto (Extranet):</td>
+                    <td>
+                        <input type="text" id="txtPNNombProyEx" style="width: 350px;"  disabled />
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+
+        <div id="bloqueBotones">
+            <div style="width: 150px; margin: 0 auto;">
+                <input type="submit" id="GuardarPy" value="Guardar" style="margin-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupProyecto')">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="popupBusquedaEO" class="popup-class-1 general-popup" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Busqueda Estudio EO</span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupBusquedaEO"></div>
+        <div id="" style="margin-top: 10px;"></div>
+        @*<input type="hidden" id="hdRepentcodi" />*@
+
+        <div class="search-content">
+
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td style="padding-right: 5px;">Tipo Empresa:</td>
+                    <td>
+                        <select id="cbPBEOTipoEmpresa">
+                            <option value="-2">[Todos]</option>
+                            @foreach (var item in Model.ListaTipoEmpresas)
+                            {
+                                <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                            }
+                        </select>
+                    </td>
+
+                    <td style="padding-right: 5px;">Empresa:</td>
+                    <td>
+                        <select id="cbPBEOEmpresa" style="width: 350px;">
+                            <option value="-5">--  Seleccione Empresa  --</option>
+                        </select>
+                    </td>                    
+                </tr>
+            </table>
+        </div>
+        <div>
+            <div id="listadoEstudio">
+            </div>
+        </div>
+        <div>
+            <div style="width: 200px; margin: 0 auto;">
+                <input type="submit" id="btnConfirmarEO" value="Confirmar" style="margin-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupBusquedaEO')">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="popupBusquedaEmp" class="popup-class-1 general-popup" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Busqueda de Empresa</span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupBusquedaEmp"></div>
+        <div id="" style="margin-top: 10px;"></div>
+        @*<input type="hidden" id="hdRepentcodi" />*@
+
+        <div class="search-content">
+
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td style="padding-right: 5px;">Tipo Empresa:</td>
+                    <td>
+                        <select id="cbPBEmpTipoEmpresa">
+                            <option value="-2">[Todos]</option>
+                            @foreach (var item in Model.ListaTipoEmpresas)
+                            {
+                                <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                            }
+                        </select>
+                    </td>
+
+                    <td style="padding-right: 5px;">Empresa:</td>
+                    <td>
+                        <select id="cbPBEmpEmpresa" style="width: 350px;">
+                            <option value="-5">--  Seleccione Empresa  --</option>
+                           
+                        </select>
+                    </td>                    
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            <div style="width: 200px; margin: 0 auto;">
+                <input type="submit" id="btnSeleccionarEmp" value="Seleccionar" style="margin-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupBusquedaEmp')">
+            </div>
+        </div>
+
+    </div>
+</div>
+

@@ -1,0 +1,244 @@
+﻿@model COES.MVC.Intranet.Areas.Combustibles.Models.CombustibleGasModel
+@{
+    ViewBag.Title = "PR31 Gaseoso";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Areas/Combustibles/Content/Scripts/Gas/listadoEnvioCombustibleGas.js?v=1.9.8.2"></script>
+<link href="~/Areas/Combustibles/Content/Css/Gas/css.css?v=1.9.8.2" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Registro de entrega de información por parte del Participante Generador Termoeléctrico </div>
+    <div class="content-botonera">
+        @if (Model.TienePermisoAdmin)
+        {
+            <input type="button" id="btnPopupNuevoEnvio" value="Nuevo Envío" style="" />
+        }
+        <input type="button" id="btnReportes" value="Reportes" />
+        <input type="button" id="btnEnviarMensaje" value="Enviar Mensaje" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+    <input type="hidden" id="hfEmpresa" />
+    <input type="hidden" id="hfEstado" />
+    <input type="hidden" id="hdIdEstado" value="@Model.IdEstado" />
+    <input type="hidden" id="hdIdEnvioTemporal" value="0" />
+
+    <div class="search-content">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Empresa:</td>
+                <td>
+                    <select id="cbEmpresa" name="IdEmpresa" multiple="multiple">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+                <td>Desde:</td>
+                <td>
+                    <input type="text" id="FechaDesde" style="width: 77px;" name="FechaInicio" value="@Model.FechaInicio" />
+                </td>
+                <td>Hasta:</td>
+                <td>
+                    <input type="text" id="FechaHasta" style="width: 77px;" name="FechaFin" value="@Model.FechaFin" />
+
+                </td>
+                <td style="width:600px">
+                    <input type="button" id="btnBuscar" value="Buscar" />
+                    <input type="button" style="float: right;" id="btnExpotar" value="Exportar Solicitudes" />
+                </td>
+                <td>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+
+    <div class="content-tabla">
+        <div class="tabla-header">
+            <div class="table-paginado" id="paginado"></div>
+        </div>
+
+        <!--Listado de envios por carpetas-->
+        <div class="table-list" id="listado">
+
+            <div style="float:left;width:174px;height:460px; background-color:Gainsboro" id="bandeja">
+                <div id="div_carpetas" style="margin:10px;">
+
+                </div>
+            </div>
+
+            <div id="reporte" style=" display: inline-block; float: left; width: 1001px;">
+            </div>
+
+        </div>
+    </div>
+
+    <div style="clear:both; height:30px"></div>
+
+</div>
+
+<div id="popupCargo" class="general-popup" style="width: 600px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ver Cargos</span></div>
+    <div id="mensaje_popupCargos"></div>
+    <div class="table-list" id="seccionCargos" style="margin: 20px">
+
+
+    </div>
+</div>
+
+<div id="popupAmpliar" class="general-popup" style="width: 500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ampliar plazo de envío</span></div>
+    <div id="mensaje_popupAmpliar"></div>
+
+    <div class="table-list" id="detalleAmpliacion">
+        <input type="hidden" id="hf_amplIdEnvio" />
+        <input type="hidden" id="hf_strFinMes" />
+
+        <table class="table-form-vertical" style="width: auto; margin: 0 auto; margin-top:10px;">
+            <tr>
+                <td class="tbform-label">Empresa:</td>
+                <td><span id="ampl_empresa"></span></td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Tipo de combustible:</td>
+                <td><span id="ampl_tipoComb"></span></td>
+            </tr>
+
+            <tr>
+                <td class="tbform-label">Código de envío:</td>
+                <td><span id="ampl_enviocodi"></span></td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Fecha de solicitud:</td>
+                <td><span id="ampl_fechaSolicitud"></span></td>
+            </tr>
+
+            <tr>
+                <td class="tbform-label">Fin de plazo:</td>
+                <td>
+                    <input type="text" id="idFechaAmp" value="" style="width: 90px;" />
+                    <select id="cbHora" name="IdHora" style="width: 60px;">
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" style="padding-top: 20px;">
+                    <input type="button" id="btnAmpliarPlazo" value="Ampliar" />
+                    <input type="button" id="btnCancelarAmpl" value="Cancelar" onclick="cerrarPopup('popupAmpliar')" />
+                </td>
+
+            </tr>
+        </table>
+
+    </div>
+</div>
+
+<div id="popupNuevoEnvio" class="general-popup" style="width: 500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Seleccionar empresa</span></div>
+
+    <div id="mensaje_popupNuevoEnvio"></div>
+
+    <div class="table-list" id="divNuevoEnvio">
+
+        <table class="table-form-vertical" style="width: auto; margin: 0 auto; margin-top:10px;">
+            <tr>
+                <td>Mes Vigencia:</td>
+                <td>
+                    <input type="text" id="txtFechaVigNuevo" style="width: 77px;" value="@Model.FechaFin" />
+                </td>
+            </tr>
+
+            <tr>
+                <td>Empresa:</td>
+                <td>
+                    <select id="cbEmpresaNuevo">
+                        <option value="-1">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="tbform-label">Acción:</td>
+                <td>
+                    <input type="radio" id="rd1" name="radio_accion" value="NE" checked="checked">Realizar nuevo envío
+                    <input type="radio" id="rd2" name="radio_accion" value="SE">Subsanar envío
+                </td>
+            </tr>
+            <tr id="tr_generador">
+                <td class="tbform-label">Usuario generador:</td>
+                <td>
+                    <input type="text" id="email_generador_nuevo" value="" />
+                </td>
+            </tr>
+
+            <tr id="tr_check_primera_carga">
+                <td class="tbform-label"></td>
+                <td>
+                    <input type="checkbox" id="check_primera_carga" /> Es primera carga
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" style="padding-top: 20px;">
+                    <input type="button" id="btnAceptarNuevoEnvio" value="Aceptar" />
+                    <input type="button" value="Cancelar" onclick="cerrarPopup('popupNuevoEnvio')" />
+                </td>
+
+            </tr>
+        </table>
+
+    </div>
+</div>
+
+<form id="frmEnvio" action="" method="post">
+    <input type="hidden" id="hdIdEnvioForm" name="idEnvio" />
+    <input type="hidden" id="hdTipoCentralForm" name="tipoCentral" />
+    <input type="hidden" id="hdMesVigenciaForm" name="mesVigencia" />
+    <input type="hidden" id="hdIdEmpresaForm" name="idEmpresa" />
+    <input type="hidden" id="hdTipoAccionForm" name="tipoAccionForm" />
+    <input type="hidden" id="hdUsuarioGeneradorForm" name="usuarioGenerador" />
+    <input type="hidden" id="hdEsPrimeraCargaForm" name="esPrimeraCarga" />
+</form>
+
+<div id="popupSeleccionarCentral" class="general-popup" style="width: 400px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Seleccionar tipo de Central Termoeléctrica</span></div>
+
+    <div class="table-list">
+
+        <table class="table-form-vertical" style="margin-left: 90px;">
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px; padding-bottom: 5px;">
+                    <input type="radio" name="rbTipoCentral" value="E" style="margin-left: 30px;" />Existente<br />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="">
+                    <input type="radio" name="rbTipoCentral" value="N" style="margin-left: 30px;" />Nueva<br />
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center; padding-top: 20px; padding-bottom: 20px;">
+                    <input type="button" id="btnAceptarSeleccionarCentral" value="Aceptar" />
+                </td>
+            </tr>
+        </table>
+
+    </div>
+</div>

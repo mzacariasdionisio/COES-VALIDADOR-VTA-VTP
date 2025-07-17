@@ -1,0 +1,109 @@
+﻿@model COES.MVC.Intranet.Areas.Transferencias.Models.CodigoRetiroModel
+
+<script type="text/javascript">
+
+    function cargarPrimeraPagina() {
+        var id = 1;
+        $('#hfPaginaActualHis').val(id);
+        mostrarPaginadoHis();
+        pintarBusquedaHis(id);
+    }
+
+    function cargarAnteriorPagina() {
+        var id = $('#hfPaginaActualHis').val();
+        if (id > 1) {
+            id = id - 1;
+            $('#hfPaginaActualHis').val(id);
+            mostrarPaginadoHis();
+            pintarBusquedaHis(id);
+        }
+    }
+
+    function cargarPaginaHis(id) {
+        $('#hfPaginaActualHis').val(id);
+        mostrarPaginadoHis();
+        pintarBusquedaHis(id);
+    }
+
+    function cargarSiguientePaginaHis() {
+        var id = parseInt($('#hfPaginaActualHis').val()) + 1;
+        $('#hfPaginaActualHis').val(id);
+        mostrarPaginadoHis();
+        pintarBusquedaHis(id);
+    }
+
+    function cargarUltimaPaginaHis() {
+        var id = $('#hfNroPaginasHis').val();
+        $('#hfPaginaActualHis').val(id);
+        mostrarPaginadoHis();
+        pintarBusquedaHis(id);
+    }
+
+    function mostrarPaginadoHis() {
+        var nroToShow = parseInt($('#hfNroMostrarHis').val());
+        var nroPaginas = parseInt($('#hfNroPaginasHis').val());
+        var nroActual = parseInt($('#hfPaginaActualHis').val());
+
+        $('.pag-ini').css('display', 'none');
+        $('.pag-item').css('display', 'none');
+        $('.pag-fin').css('display', 'none');
+        $('.pag-item').removeClass('paginado-activo');
+
+        $('#pag' + nroActual).addClass('paginado-activo');
+
+        if (nroToShow - nroPaginas >= 0) {
+            $('.pag-item').css('display', 'block');
+            $('.pag-ini').css('display', 'none');
+            $('.pag-fin').css('display', 'none');
+        }
+        else {
+            $('.pag-fin').css('display', 'block');
+            if (nroActual > 1) {
+                $('.pag-ini').css('display', 'block');
+            }
+            var anterior = 0;
+            var siguiente = 0;
+
+            if (nroActual == 1) {
+
+                anterior = 1;
+                siguiente = nroToShow;
+            }
+            else {
+                if (nroActual + nroToShow - 1 - nroPaginas > 0) {
+                    siguiente = nroPaginas;
+                    anterior = nroPaginas - nroToShow + 1;
+                }
+                else {
+                    anterior = nroActual;
+                    siguiente = nroActual + nroToShow - 1;
+                }
+            }
+
+            for (j = anterior; j <= siguiente; j++) {
+                $('#pag' + j).css('display', 'block')
+            }
+        }
+    }
+
+</script>
+
+@if (Model.IndicadorPagina == true)
+{
+    <div style="float:left">Nro. de registros encontrados <span>@Model.NroRegistros</span></div>
+    <div class="paginado" style="margin-bottom:0; float:right;">
+        <div id="pagFirst" class="pag-ini"><a href="JavaScript:cargarPrimeraPagina();"><<</a></div>
+        <div id="pagPrev" class="pag-ini"><a href="JavaScript:cargarAnteriorPagina();"><</a></div>
+        @for (int i = 1; i <= Model.NroPaginas; i++)
+        {
+            <div class="pag-item" id="@("pag" + i)" style="display:none"><a href="JavaScript:cargarPaginaHis(@i);"><span>@i</span></a></div>
+        }
+        <div id="pagNext" class="pag-fin"><a href="JavaScript:cargarSiguientePaginaHis();">></a></div>
+        <div id="pagLast" class="pag-fin"><a href="JavaScript:cargarUltimaPaginaHis();">>></a></div>
+    </div>
+
+    <input type="hidden" id="hfPaginaActualHis" value="1" />
+
+    <input type="hidden" id="hfNroPaginasHis" value="@Model.NroPaginas" />
+    <input type="hidden" id="hfNroMostrarHis" value="@Model.NroMostrar" />
+}

@@ -1,0 +1,172 @@
+﻿@model COES.MVC.Intranet.Areas.Ensayo.Models.EnsayoModel
+@{
+    var nSolicitudes = Model.ListaEnsayo.Where(x => x.Estadocodi == 1).Count();
+    var nAutorizados = Model.ListaEnsayo.Where(x => x.Estadocodi == 2).Count();
+    var nAprobados = Model.ListaEnsayo.Where(x => x.Estadocodi == 4).Count();
+    var nArchivos = -1;
+
+    var estado = Model.IdEstado;
+    if (Model.IdEstado == 5)
+    {
+        estado = 4;
+    }
+
+    var lista = Model.ListaEnsayo.Where(x => x.Estadocodi == estado);
+
+
+
+
+    var backColorS = "";
+    var backColorAR = "";
+    var backColorCO = "";
+    var backColorA = "";
+    var backColorAr = "";
+    switch (Model.IdEstado)
+    {
+        case 1:
+            backColorS = ";background-color:aqua";
+            break;
+        case 2:
+            backColorAR = "background-color:aqua";
+            break;
+        case 3:
+            backColorCO = "background-color:aqua";
+            break;
+        case 4:
+            backColorA = "background-color:aqua";
+            break;
+        case 5:
+            backColorAr = "background-color:aqua";
+            break;
+    }
+}
+<table cellpadding="0" cellspacing="0">
+    <tr>
+        <td style="min-width: 170px; width: 170px; height: 200px;">
+            <div style="background-color:beige" id="bandeja">
+                <div style="margin:10px;">
+                    <h3>Carpetas</h3>
+                    <table>
+                        @if (nSolicitudes > 0)
+                        {
+                            <tr onclick="buscarEnsayo(1);" style="vertical-align:central;height:25px;cursor:pointer;@backColorS"><td style="vertical-align:central;"><b>Solicitudes (@nSolicitudes)</b></td></tr>
+                        }
+                        else
+                        {
+                            <tr style="height:25px;"><td>Solicitudes </td></tr>
+                        }
+                        @if (nAutorizados > 0)
+                        {
+                            <tr onclick="buscarEnsayo(2);" style="height:25px;cursor:pointer;@backColorAR"><td><b>Autorizados (@nAutorizados)</b></td></tr>
+                        }
+                        else
+                        {
+                            <tr style="height:25px;"><td>Autorizados</td></tr>
+                        }
+                        @if (nAprobados > 0)
+                        {
+                            <tr onclick="buscarEnsayo(4);" style="height:25px;cursor:pointer;@backColorA"><td><b>Aprobadas (@nAprobados)</b></td></tr>
+                        }
+                        else
+                        {
+                            <tr style="height:25px;"><td>Aprobados</td></tr>
+                        }
+
+
+
+                    </table>
+                </div>
+            </div>
+        </td>
+        <td>
+            <div id="reporte" style="display: inline-block; width: 100%;">
+                <table border="0" class="pretty tabla-icono" cellspacing="0" id="tabla" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Empresa</th>
+                            <th>Central</th>
+                            @if (Model.IdEstado != 4)
+                            {
+                                <th>Por revisar</th>
+                                <th>Aprobados</th>
+                                <th>Observados</th>
+                            }
+
+                            <th>Usuario</th>
+                            <th>Fecha de Registro</th>
+
+                            @if (Model.OpEditar)
+                            {
+                                if (Model.IdEstado != 1)
+                                {
+                                    <th>Fecha de Ensayo</th>
+                                }
+                            }
+                            @{
+                                if (Model.OpAprobar)
+                                {
+                                    if (Model.IdEstado == 1)
+                                    {
+                                        <th>Autorizar Ensayo</th>
+                                    }
+
+                                }
+
+                                <th>Formatos</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in lista)
+                        {
+
+                            <tr>
+                                <td>@item.Ensayocodi</td>
+                                <td>@item.Emprnomb</td>
+                                <td>@item.Equinomb</td>
+                                @if (Model.IdEstado != 4)
+                                {
+                                    <td>@item.NroRevisar</td>
+                                    <td>@item.NroAprobados</td>
+                                    <td>@item.NroObservar</td>
+                                }
+                                <td>@item.Usercodi</td>
+                                <td>@item.Ensayofecha.ToString("dd/MM/yyyy HH:mm:ss")</td>
+
+                                @if (Model.OpEditar)
+                                {
+                                    if (Model.IdEstado != 1)
+                                    {
+                                        <td>@item.Ensayofechaevento.ToString("dd/MM/yyyy")</td>
+                                    }
+                                    if (Model.IdEstado == 5)
+                                    {
+                                        <td onclick="editarFormatoEnsayo(@item.Ensayocodi);" style="cursor:pointer;width:30px;"><img src="@Url.Content("~/Content/Images/btn-open.png")" title="Ver Formatos" alt="Ver Formatos" /></td>
+                                    }
+                                    else
+                                    {
+                                        <td onclick="mostrarEnsayoFormato(@item.Ensayocodi);" style="cursor:pointer;width:30px;"><img src="@Url.Content("~/Content/Images/btn-open.png")" title="Ver Formatos" alt="Ver Formatos" /></td>
+                                    }
+                                }
+                                @if (Model.OpAprobar)
+                                {
+                                    if (item.Estadocodi == 1)
+                                    {
+                                        <td onclick="popupAutorizarEnsayo(@item.Ensayocodi);" style="cursor:pointer;width:30px;"><img src="@Url.Content("~/Content/Images/btn-ok.png")" title="Autorizar Ensayo" alt="Autorizar Ensayo" /></td>
+                                    }
+
+                                    <td onclick="editarFormatoEnsayo(@item.Ensayocodi);" style="cursor:pointer;width:30px;"><img src="@Url.Content("~/Content/Images/btn-open.png")" title="Ver Formatos" alt="Ver Formatos" /></td>
+                                }
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+
+            </div>
+        </td>
+    </tr>
+</table>
+
+

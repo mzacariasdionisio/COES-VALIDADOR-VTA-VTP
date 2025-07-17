@@ -1,0 +1,212 @@
+﻿@model COES.MVC.Intranet.Areas.PrimasRER.Models.PrimasRERModel
+@{
+    ViewBag.Title = "";
+}
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@{
+    ViewBag.Title = "Evaluación de Primas RER";
+    Layout = Model.UsarLayoutModulo ? "~/Views/Shared/_LayoutAlter.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/highcharts.js"></script>
+<script src="~/Content/Scripts/Charts/graficosBase.js"></script>
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+
+@*Paso 1: Se anexa la libreria que permite el adjunto de un archivo*@
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<link href="~/Content/Css/jquery.timepicker.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.timepicker.js"></script>
+<link href="~/Areas/PrimasRER/Content/Css/css.css?v=1.0.0" rel="stylesheet" />
+<script src="~/Areas/PrimasRER/Content/Scripts/comparativo_index.js?v=1.0.0"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Comparativo Energía Estimada vs Energía Solicitada</div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <input type="hidden" id="ipericodi" value="@Model.IdPeriodo">
+    <input type="hidden" id="rerrevcodi" value="@Model.IdRevision">
+    <input type="hidden" id="rerevacodi" value="@Model.IdEvaluacion">
+    <input type="hidden" id="reresecodi">
+    <input type="hidden" id="rereeucodi">
+    <input type="hidden" id="rerccbcodi">
+    <input type="hidden" id="rerccboridatos">
+    <input type="hidden" id="nombre_solicitud_central">
+    <input type="hidden" id="nombre_unidad_generadora">
+    <div id="mensaje" style="margin-bottom:5px; margin-top:0px"></div>
+
+    <div id="tab-container" class='tab-container'>
+        <div class='panel-container'>
+
+            <div class="content-tabla">
+                <div style="padding-bottom: 4px; font-weight: bold; color: #3D90CB;">
+                    @if (Model.IndPeriodo != null)
+                    {
+                        @Model.IndPeriodo.Iperinombre
+                    }
+                    -
+                    @if (Model.RerRevision != null)
+                    {
+                        @Model.RerRevision.Rerrevnombre
+                    }
+                    @("- N° Versión")
+                    @if (Model.RerEvaluacion != null)
+                    {
+                        @Model.RerEvaluacion.Rerevanumversion
+                    }
+
+                </div>
+                <div style="clear:both; height:5px"></div>
+
+                @if (Model.ListaGenerica != null && Model.ListaGenerica.Count() > 0)
+                {
+                    <table style="margin-bottom: 25px;" role="presentation">
+                        <tr>
+                            <td style="width: 12%; vertical-align: middle; text-align: right;">
+                                <span style="font-size: 12px;">Solicitud - Central:</span>
+                            </td>
+                            <td style="padding-left: 5px; width: 13%;">
+                                <select id="cbSolicitud" style="">
+                                    <option value="0"></option>
+                                    @foreach (var item in Model.ListaGenerica)
+                                    {
+                                        <option value="@item.Entero1">@item.String1</option>
+                                    }
+                                </select>
+                            </td>
+                            <td style="padding-left: 5px; width: 12%; vertical-align: middle; text-align: right;">
+                                <span style="font-size: 12px;">Unidad de Generación:</span>
+                            </td>
+                            <td style="padding-left: 5px; width: 13%;">
+                                <select id="cbUnidadGeneracion" style="">
+                                </select>
+                            </td>
+                            <td style="padding-left: 5px; width: 10%; vertical-align: middle;">
+                                <input type="button" id="btnConsultar" value="Consultar" />
+                            </td>
+                            <td style="padding-left: 5px; width: 10%; vertical-align: middle;">
+                                <input type="button" id="btnGuardar" value="Guardar" />
+                            </td>
+                            <td style="padding-left: 5px; width: 20%; vertical-align: middle; text-align: right;">
+                                <span style="font-size: 12px;">Energía Estimada Central:</span>
+                            </td>
+                            <td style="padding-left: 5px; width: 10%; vertical-align: middle;">
+                                <input type="text" id="energia_estimada_central" disabled />
+                            </td>
+                        </tr>
+                    </table>
+                    <table>
+                        <tr>
+                            <td colspan="2" style="padding-left: 5px; width: 68%; vertical-align: middle; text-align: left;">
+                                <span style="font-size: 12px;"><label id="label_nombre_solicitud_central" /></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <span style="font-size: 12px;"><label id="label_nombre_unidad_generadora" /></span>
+                            </td>
+                            <td style="padding-left: 5px; width: 13%; vertical-align: middle; text-align: right;">
+                                <span id="comparativo_texto" style="font-size: 12px; display: none;">Energía Estimada desde Excel:</span>
+                            </td>
+                            <td style="padding-left: 5px; width: 15%; vertical-align: middle; text-align: center;">
+                                <span id="comparativo_boton" style="display: inline-block; display: none;"><input type="button" id="btnDescargar" value="Descargar" /><input type="button" id="btnImportar" value="Importar" /></span>
+                            </td>
+                            <td style="padding-left: 5px; width: 4%; vertical-align: middle;">
+                            </td>
+                        </tr>
+                        <tr id="comparativo_tr1" style="display: none;">
+                            <td rowspan="7" style="padding-left: 5px; width: 34%; vertical-align: top;">
+                                <div class="table-list" id="listado" style="width: 100%; "></div>
+                            </td>
+                            <td rowspan="7" style="padding-left: 5px; width: 34%; vertical-align: top;">
+                                <div id="idGrafico1" style="min-width: 100%; height: auto; max-width: 100%; margin: 0 auto"></div>
+                            </td>
+                            <td style="height: 5%;">
+                                &nbsp;
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr id="comparativo_tr2" style="display: none;">
+                            <td style="padding-left: 5px; padding-right: 5px; width: 13%; vertical-align: middle; text-align: right;">
+                                <span style="font-size: 12px;">Valor Tipico</span>
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr id="comparativo_tr3" style="display: none;">
+                            <td style="padding-left: 5px; width: 13%; vertical-align: middle; text-align: right;">
+                                <span style="font-size: 12px;">De:</span>
+                            </td>
+                            <td style="padding-left: 5px; padding-right: 5px; width: 15%; vertical-align: middle; text-align: right;">
+                                <span style="display: inline-block;"><input type="text" id="fecha_inicio" style="width: 90px;"><input type="text" id="hora_inicio" style="width: 80px;" readonly></span>
+                            </td>
+                            <td style="padding-left: 5px; width: 4%; vertical-align: middle;">
+                                <input type="button" id="btnCalcular" value="Calcular" />
+                            </td>
+                        </tr>
+                        <tr id="comparativo_tr4" style="display: none;">
+                            <td style="padding-left: 5px; padding-right: 5px; width: 13%; vertical-align: middle; text-align: right;">
+                                <span style="font-size: 12px;">Hasta:</span>
+                            </td>
+                            <td style="padding-left: 5px; padding-right: 5px; width: 15%; vertical-align: middle; text-align: right;">
+                                <span style="display: inline-block;"><input type="text" id="fecha_fin" style="width: 90px;"><input type="text" id="hora_fin" style="width: 80px;" readonly></span>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr id="comparativo_tr5" style="display: none;">
+                            <td style="padding-left: 5px; width: 13%; vertical-align: middle; text-align: right;">
+                                <span style="font-size: 12px;">Energía Estimada 15 min.:</span>
+                            </td>
+                            <td style="padding-left: 5px; padding-right: 5px; width: 15%; vertical-align: middle; text-align: right;">
+                                <input type="text" id="energia_estimada_15_min" style="width: 100%;" disabled>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr id="comparativo_tr6" style="display: none;">
+                            <td style="padding-left: 5px; width: 13%; vertical-align: middle; text-align: right;">
+                                <span style="font-size: 12px;">Energía Estimada Unidad:</span>
+                            </td>
+                            <td style="padding-left: 5px; padding-right: 5px; width: 15%; vertical-align: middle; text-align: right;">
+                                <input type="text" id="energia_estimada_unidad" style="width: 100%;" disabled>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr id="comparativo_tr7" style="display: none;">
+                            <td style="padding-left: 5px; width: 13%; vertical-align: middle; text-align: right;">
+                                <span style="font-size: 12px;">Energía Solicitada Unidad:</span>
+                            </td>
+                            <td style="padding-left: 5px; padding-right: 5px; width: 15%; vertical-align: middle; text-align: right;">
+                                <input type="text" id="energia_solicitada_unidad" style="width: 100%;" disabled>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                    </table>
+                }
+                else
+                {
+                    <span style="font-size: 12px; font-weight: bold; color: red;">No existen solicitudes EDI para el periodo y la revisión seleccionados</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

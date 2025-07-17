@@ -1,0 +1,222 @@
+﻿@model COES.MVC.Intranet.Areas.PrimasRER.Models.PrimasRERModel
+@{
+    ViewBag.Title = "Form";
+    string sTitulo = ViewData["sTitulo"].ToString();
+    string sAccion = ViewData["sAccion"].ToString();
+    var BARRCODI2 = (IEnumerable<SelectListItem>)TempData["BARRCODI3"];
+    var CENTGENECODI2 = (IEnumerable<SelectListItem>)TempData["CENTGENECODI3"];
+    var EMPRCODI2 = (IEnumerable<SelectListItem>)TempData["EMPRCODI3"];
+
+    string sSelected = "";
+}
+
+<script>
+    $(function () {
+
+        $('#btnGuardarNew').click(function (event) {
+            event.preventDefault();
+            nuevaCentral();
+        });
+    });
+</script>
+
+<link href="~/Areas/PrimasRER/Content/Css/centralrer.css" rel="stylesheet" />
+<script src="~/Areas/PrimasRER/Content/Scripts/centralrer.js?v=1.0.0"></script>
+<script src="~/Areas/PrimasRER/Content/Scripts/load.js"></script>
+@*ASSETEC - 18.10.2023*@
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+@*ASSETEC - 18.10.2023*@
+
+@using (Html.BeginForm("Save", "CentralRER", FormMethod.Post, new { @class = "form-search", name = "frmNewCentralRER", id = "frmNewCentralRER" }))
+{
+    <input type="hidden" name="" id="ptomediCodiSelect" value="@Model.CentralRER.Ptomedicodi" />
+    @*<input type="hidden" name="CentralRER.Ptomedicodi" id="barrTransferenciaCodi" value="" />*@
+    @Html.AntiForgeryToken()
+    <div class="ast">
+        <div class="form-title">
+            <div class="content-titulo">@sTitulo</div>
+            <div class="content-botonera">
+                <input type="submit" value="Guardar" id="btnGuardarNew" alt="Guardar" title="Guardar" />
+                <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index", "CentralRER")'" alt="Retornar" title="Retornar" />
+            </div>
+        </div>
+        <div style="padding:20px; width:1000px;">
+            <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor, verificar la siguiente información:</div>
+            <br>
+            <fieldset>
+                <legend></legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Empresa generadora (*)</td>
+                        <td class="editor-field" style="width:300px">
+                            <select id="empresaSelect" name="CentralRER.Emprcodi" onchange="cargarEquipos()" style="width:250px">
+                                <option value="-1">--Seleccione--</option>
+                                @foreach (var empresa in Model.ListEmpresas)
+                                {
+                                    <option value="@empresa.EmprCodi">@empresa.EmprNombre</option>
+                                }
+                            </select>
+                        </td>
+                        <td><div class="tbform-label">Estado</div></td>
+                        <td>
+                            <div class="editor-field">
+                                <input type="radio" id="Activo" name="CentralRER.Rercenestado" value="A" checked="checked" />Activo
+                                <input type="radio" id="Inactivo" name="CentralRER.Rercenestado" value="I" />Inactivo
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Central (*):</td>
+                        <td class="editor-field">
+                            <select id="centralSelect" name="CentralRER.Equicodi" onchange="cargarCodEntrega()" style="width:250px">
+                            </select>
+                        </td>
+                        <td colspan="2"><div class="editor-label">Nota(*): Información obligatoria</div></td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend>Datos de Contrato RER</legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Fecha de inicio (*):</td>
+                        <td class="editor-field" style="width:350px">
+                            <input type="text" id="Rercenfechainicio" name="Rercenfechainicio" class="" value="" style="width:240px" onchange="renombrarFecha()" />
+                        </td>
+                        <td>
+                            <input style="width: 200px;" type="button" id="btnCargarInformacionLVTP" value="Cargar Informacion LVTP" onclick="CargarInformacionLVTP()" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Fecha fin (*):</td>
+                        <td class="editor-field" style="width:350px">
+                            <input type="text" id="Rercenfechafin" name="Rercenfechafin" class="" value="" style="width:240px" />
+                        </td>
+                        <td>
+                            <input style="width: 200px;" type="button" id="btnCargarInformacionPMPO" value="Cargar Informacion PMPO" onclick="CargarInformacionPMPO()" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Energía Adjudicada<br>(MWh/año) (*): </td>
+                        <td class="editor-field">
+                            <input type="number" id="Rercenenergadj" name="CentralRER.Rercenenergadj" value="" style="width:240px" min="0" step="0.001" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Precio Base<br>($/MWh) (*):</td>
+                        <td class="editor-field">
+                            <input type="number" id="Rercenprecbase" name="CentralRER.Rercenprecbase" value="" style="width:240px" min="0" step="0.001" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Inflación Base (*):</td>
+                        <td class="editor-field">
+                            <input type="number" id="Rerceninflabase" name="CentralRER.Rerceninflabase" value="" style="width:240px" min="0" step="0.001" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Descripción:</td>
+                        <td class="editor-field">
+                            <input type="text" id="Rercendesccontrato" name="CentralRER.Rercendesccontrato" value="" style="width:240px" />
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend>Información LVTEA:</legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Código de entrega (*):</td>
+                        <td class="editor-field">
+                            <select id="codEntregaSelect" name="CentralRER.Codentcodi" onchange="cargarBarrTransferencia()" style="width:240px">
+                            </select>
+                        </td>
+                        <td class="tbform-label" style="width:100px">&nbsp;</td>
+                        <td colspan="2" class="tbform-label" style="width:170px">Barra Transferencia (*):</td>
+                        <td class="editor-field">
+                            <input type="text" id="barrTransferencia" name="barrTransferencia" value="" style="width:240px" readonly />
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend>Información LVTP:</legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Central/Unidad:</td>
+                        <td class="editor-field">
+                            <select id="centralUnidadSelect" name="" style="width:240px">
+                            </select>
+                        </td>
+                        <td class="tbform-label" style="width:100px">
+                            <input type="button" id="btnAgregarCentralUnidad" value="Agregar" onclick="agregarCentralUnidad()" />
+                        </td>
+                        <td class="tbform-label" style="width:170px">Cargo Prima RER:</td>
+                        <td class="editor-field">
+                            <select id="cargoPrimaRERSelect" name="CentralRER.Pingnombre" style="width:240px">
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>
+                            <table border="0" class="pretty tabla-icono" id="tablaCentralUnidad" style="width:240px">
+                                <thead>
+                                    <tr>
+                                        <th width="30px"></th>
+                                        <th style="display: none;">Value</th>
+                                        <th>Central / Unidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaBodyCentralUnidad">
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br>
+            <fieldset>
+                <legend>Información PMPO:</legend>
+                <table cellspacing="2" cellpadding="5">
+                    <tr>
+                        <td class="tbform-label" style="width:170px">Central:</td>
+                        <td class="editor-field">
+                            <select id="centralPMPOSelect" name="" style="width:240px">
+                            </select>
+                        </td>
+                        <td class="tbform-label" style="width:100px">
+                            <input type="button" id="btnAgregarCentralPMPO" value="Agregar" onclick="agregarCentralPMPO()" />
+                        </td>
+                        <td class="tbform-label" style="width:170px">Barra:</td>
+                        <td class="editor-field">
+                            <select id="barraPMPOSelect" name="CentralRER.Ptomedicodi" style="width:240px">
+                            </select>
+                            <label id="textoBarraNew"></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>
+                            <table border="0" class="pretty tabla-icono" id="" style="width:240px">
+                                <thead>
+                                    <tr>
+                                        <th width="30px"></th>
+                                        <th style="display: none;">Value</th>
+                                        <th>Central</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaBodyCentralPMPO">
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </div>
+    </div>
+}

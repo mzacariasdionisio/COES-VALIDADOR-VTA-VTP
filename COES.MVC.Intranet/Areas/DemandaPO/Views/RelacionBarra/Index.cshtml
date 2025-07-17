@@ -1,0 +1,201 @@
+﻿@model COES.MVC.Intranet.Areas.DemandaPO.Models.RelacionBarraModel
+
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "DEMANDAS - Procesos de carga automaticos y manuales y consultas de Archivos Raw";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var sMensajeExito = TempData["sMensajeExito"];
+}
+
+<link href="~/Areas/DemandaPO/Content/Css/css2.css" rel="stylesheet" />
+<script src="~/Areas/DemandaPO/Content/Scripts/relacionBarra.js?v=3.0"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<link href="~/Content/Scripts/Charts/jquery.jqplot.min.css" rel="stylesheet" />
+<link href="~/Areas/PronosticoDemanda/Content/Css/css.css" rel="stylesheet" />
+<link href="~/Areas/PronosticoDemanda/Content/Css/fixer.css" rel="stylesheet" />
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jqueryui.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+
+<script src="~/Content/Scripts/datatable.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo">Relación Barra SPL</div>
+    </div>
+    <div class="content-hijo">
+        <div id="message" class="msg-info">
+            Puede crear una relacion entre barras SPL y fórmulas
+        </div>
+        <div class="nt-header">
+            <div class="nt-header-last">
+                <div class="set-float-l set-flex-row set-align-item-center">
+                    <div class="h-panel">
+                        <div class="i-btn">
+                            <label id="btnNuevo"
+                                   title="Crear una versión">
+                                <img src="~/Content/Images/insertar.png" />
+                                <br />
+                                <label>Nueva Versión</label>
+                            </label>
+                        </div>
+                        <div class="i-btn">
+                            <label id="btnActualizar"
+                                   title="Actualiza una versión">
+                                <img src="~/Content/Images/edit.png" />
+                                <br />
+                                <label>Actualizar Versión</label>
+                            </label>
+                        </div>
+                        <div class="i-btn">
+                            <label id="btnEliminar"
+                                   title="Elimina una versión">
+                                <img src="~/Content/Images/prnlimpiar.png" />
+                                <br />
+                                <label>Eliminar Versión</label>
+                            </label>
+                        </div>
+                        <div class="i-btn">
+                            <label id="btnNuevoBarraSPL"
+                                   title="Crear una barra SPL">
+                                <img src="~/Content/Images/insertar.png" />
+                                <br />
+                                <label>Nueva Barra SPL</label>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="for-data" disabled>
+                        <select id="_dataFormulaVeg">
+                            @foreach (var item in Model.ListaFormulasVegetativa)
+                            {
+                                <option value="@item.Prrucodi">@item.Prruabrev</option>
+                            }
+                        </select>
+                        <select id="_dataFormulaInd">
+                            @foreach (var item in Model.ListaFormulasIndustrial)
+                            {
+                                <option value="@item.Prrucodi">@item.Prruabrev</option>
+                            }
+                        </select>
+                        <select id="_dataAreaDemanda">
+                            <option value="1">Area Demanda 1</option>
+                            <option value="2">Area Demanda 2</option>
+                            <option value="3">Area Demanda 3</option>
+                            <option value="4">Area Demanda 4</option>
+                            <option value="5">Area Demanda 5</option>
+                            <option value="6">Area Demanda 6</option>
+                            <option value="7">Area Demanda 7</option>
+                            <option value="8">Area Demanda 8</option>
+                            <option value="9">Area Demanda 9</option>
+                            <option value="10">Area Demanda 10</option>
+                            <option value="11">Area Demanda 11</option>
+                            <option value="12">Area Demanda 12</option>
+                            <option value="13">Area Demanda 13</option>
+                            <option value="14">Area Demanda 14</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="nt-body">
+            <div style="margin-bottom: 10px;">
+                <select id="selVersion">
+                    @foreach (var item in Model.ListaVersiones)
+                    {
+                        <option value="@item.Dposplcodi">@item.Dposplnombre</option>
+                    }
+                </select>
+            </div>
+            <table id="dt" class="pretty tabla-icono"></table>
+        </div>
+    </div>
+</div>
+
+<div id="popup-nueva-version" class="general-popup" style="min-width: 500px; min-height: 700px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Nueva Versión</span>
+        <input id="btnRegistrarVersion" class="ws-float-r" type="button" value="Guardar" />
+    </div>
+    <div class="popup-text">
+        @*<div id="pop-mensaje-version" style="display: none"></div>
+            <div id="pop-alert-version" style="display: none"></div>*@
+        <div class="v-panel">
+            <div style="width: 100%; margin-bottom: 10px;">
+                <div style="padding-right: 5px;">
+                    <label>Nombre de la versión</label>
+                    <input id="txtPopNombre" type="text" style="width: 100%;" />
+                </div>
+            </div>
+            <div style="width: 100%; margin-bottom: 10px;">
+                <div>
+                    Seleccione las barras SPL
+                </div>
+                <div class="ws-wrapper">
+                    <select id="selPopBarrasSPL" class="filtroVersionSave" style="width: 100%"></select>
+                </div>
+            </div>
+            <div style="width: 500px;">
+                <div id="htBarrasSPL"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="popup-update-version" class="general-popup" style="min-width: 500px; min-height: 700px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Actualizar Versión</span>
+        <input id="btnActualizarVersion" class="ws-float-r" type="button" value="Guardar" />
+    </div>
+    <div class="popup-text">
+        @*<div id="pop-mensaje-version" style="display: none"></div>
+            <div id="pop-alert-version" style="display: none"></div>*@
+        <div class="v-panel">
+            <div style="width: 100%; margin-bottom: 10px;">
+                <div style="padding-right: 5px;">
+                    <label>Nombre de la versión</label>
+                    <input id="txtPopNombreVersion" type="text" style="width: 100%;" disabled />
+                </div>
+            </div>
+            <div style="width: 100%; margin-bottom: 10px;">
+                <div>
+                    Seleccione las barras SPL
+                </div>
+                <div class="ws-wrapper">
+                    <select id="selPopBarrasUpdateSPL" class="filtroVersionUpdate" style="width: 100%"></select>
+                </div>
+            </div>
+            <div style="width: 500px;">
+                <div id="htBarrasUpdateSPL"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="popup-nueva-barra" class="general-popup" style="min-width: 500px; min-height: 700px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Nueva Barra SPL</span>
+        <input id="btnRegistrarBarra" class="ws-float-r" type="button" value="Guardar" />
+    </div>
+    <div class="popup-text">
+        @*<div id="pop-mensaje-barra" style="display: none"></div>
+            <div id="pop-alert-barra" style="display: none"></div>*@
+        <div class="v-panel">
+            <div style="width: 100%; margin-bottom: 10px;">
+                <div>
+                    Seleccione las barras
+                </div>
+                <div class="ws-wrapper">
+                    <select id="selPopBarras" class="filtroBarraSave" style="width: 100%"></select>
+                </div>
+            </div>
+            <div style="width: 500px;">
+                <div id="htBarras"></div>
+            </div>
+        </div>
+    </div>
+</div>

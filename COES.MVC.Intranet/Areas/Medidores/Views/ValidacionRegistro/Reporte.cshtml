@@ -1,0 +1,120 @@
+﻿@model COES.MVC.Intranet.Areas.Medidores.Models.ValidacionMedidoresModel
+@{
+    System.Globalization.NumberFormatInfo nfi = new System.Globalization.CultureInfo("en-US", false).NumberFormat;
+    nfi.NumberGroupSeparator = " ";
+    nfi.NumberDecimalSeparator = ",";
+    nfi.NumberDecimalDigits = 3;
+}
+
+<div style="clear:both; height:15px"></div>
+
+@if (!string.IsNullOrEmpty(Model.MensajeValidacion))
+{
+    <p style="display: block">
+        <b>Lista de puntos de medición que no tienen configuración de Equivalencia (MEDIDORES - DESPACHO):</b>
+        <br /><br />
+        @Html.Raw(Model.MensajeValidacion)
+    </p>
+}
+
+<table border="1" class="pretty tabla-adicional" id="tabla" role="grid">
+    <thead>
+        <tr>
+            <th>Empresa</th>
+            <th>Grupo</th>
+            <th style="background-color: #ef8808">Registros Medidores<br /> (MWh)</th>
+            <th style="background-color: #89a539">Registros SCADA<br /> (MWh)</th>
+            <th>Desviación <br />(%)</th>
+            <th style="background-color: #ef8808">MD Medidores (MW)<br /> @Model.FechaMDMedidor</th>
+            <th style="background-color: #89a539">MD SCADA (MW)<br /> @Model.FechaMDDespacho</th>
+            <th>Desviación MD<br /> (%)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var reg in Model.ListaReporte)
+        {
+            var style = "";
+            if (reg.IndColor == "S")
+            {
+                style = string.Format("style=background-color:{0}", reg.Color);
+            }
+        <tr>
+            <td>@reg.DesEmpresa</td>
+            <td style="text-align:center">@reg.DesGrupo</td>
+            <td style="text-align:right">@reg.ValorMedidor.ToString("N", nfi)</td>
+            <td style="text-align:right">@reg.ValorDespacho.ToString("N", nfi)</td>
+            <td @style>
+                <div style="width:100%; text-align:right">
+                    @if ((@reg.IndMuestra == "S") && (@reg.Desviacion < 0))
+                    {
+                        <div style="background-color: skyblue">
+                            @(reg.Desviacion.ToString("N", nfi) + "%")
+                        </div>
+                    }
+                    @if ((@reg.IndMuestra == "S") && (@reg.Desviacion >= 0) && (@reg.Desviacion < Convert.ToDecimal(5)))
+                    {
+                        <div style="background-color: #ffffbf">
+                            @(reg.Desviacion.ToString("N", nfi) + "%")
+                        </div>
+                    }
+                    @if ((@reg.IndMuestra == "S") && (@reg.Desviacion == Convert.ToDecimal(5)))
+                    {
+                        <div style="background-color: skyblue">
+                            @(reg.Desviacion.ToString("N", nfi) + "%")
+                        </div>
+                    }
+                    @if ((@reg.IndMuestra == "S") && (@reg.Desviacion > Convert.ToDecimal(5)))
+                    {
+                        <div style="background-color: yellow">
+                            @(reg.Desviacion.ToString("N", nfi) + "%")
+                        </div>
+                    }
+                </div>
+            </td>
+            <td style="text-align:right">@reg.MDMedidor.ToString("N", nfi)</td>
+            <td style="text-align:right">@reg.MDDespacho.ToString("N", nfi)</td>
+            <td @style>
+                <div style="width:100%; text-align:right">
+                    @if ((@reg.MDDesviacion < 0))
+                    {
+                    <div style="background-color: skyblue">
+                        @reg.MDDesviacion.ToString("N", nfi)%
+                    </div>
+                    }
+                    @if ( (@reg.Desviacion >= 0) && (@reg.MDDesviacion < Convert.ToDecimal(5)))
+                    {
+                    <div style="background-color: #ffffbf">
+                        @reg.MDDesviacion.ToString("N", nfi)%
+                    </div>
+                    }
+                    @if ((@reg.MDDesviacion == Convert.ToDecimal(5)))
+                    {
+                    <div style="background-color: skyblue">
+                        @reg.MDDesviacion.ToString("N", nfi)%
+                    </div>
+                    }
+                    @if ( (@reg.MDDesviacion > Convert.ToDecimal(5)))
+                    {
+                    <div style="background-color: yellow">
+                        @reg.MDDesviacion.ToString("N", nfi)%
+                    </div>
+                    }
+                </div>
+            </td>
+        </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+
+            <td></td>
+            <td>TOTALES:</td>
+            <td style="text-align:right">@Model.TotalMedidor.ToString("N", nfi)</td>
+            <td style="text-align:right">@Model.TotalDespacho.ToString("N", nfi)</td>
+            <td></td>
+            <td style="text-align:right">@Model.TotalMDMedidor.ToString("N", nfi)</td>
+            <td style="text-align:right">@Model.TotalMDDespacho.ToString("N", nfi)</td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>

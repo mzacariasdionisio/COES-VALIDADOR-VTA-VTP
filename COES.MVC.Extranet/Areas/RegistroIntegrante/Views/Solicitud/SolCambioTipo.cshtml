@@ -1,0 +1,554 @@
+﻿@model COES.MVC.Extranet.Areas.RegistroIntegrante.Models.SolCambioTipoModel
+@using COES.Servicios.Aplicacion.RegistroIntegrantes;
+@{
+    ViewBag.Title = "SolCambioTipo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    SelectList slTipoAgente = new SelectList(Model.TipoEmpresa, "Tipoemprcodi", "Tipoemprdesc");
+    SelectList slTipoDocumentoSustentatorio = new SelectList(Model.TipoDocumentoSustentario, "Id", "Nombre");
+}
+
+<style>
+    .Habilitado {
+        background-color: white;
+    }
+
+    .Deshabilitado {
+        background-color: #F2F4F3;
+    }
+</style>
+
+<link href="~/Areas/RegistroIntegrante/Content/Css/solicitud.css" rel="stylesheet" />
+<script src="~/Areas/RegistroIntegrante/Content/Scripts/cambioTipo.js?v=1.11"></script>
+
+
+<link href="~/Areas/RegistroIntegrante/Content/Css/cmxform.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<link href="~/Areas/RegistroIntegrante/Content/Css/contextmenu.css" rel="stylesheet" />
+<script src="~/Areas/RegistroIntegrante/Content/Scripts/contextmenu.js"></script>
+
+<div class="form-title" style="color: #278CCC; margin-bottom:0px;">SOLICITUD CAMBIO DE TIPO AGENTE</div>
+<div class="form-main" style="margin-top:10px">
+    <div id="mensaje" class="action-message" style="display: none; width: 95%">Por favor complete los datos solicitados.</div>
+    <div class="search-content" id="divEstado" style="margin-bottom:0px; padding:10px">
+        <table class="table-form-show">
+            <tr>
+                <td style="width:220px;">Estado de Solicitud:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtESTADO" disabled="disabled" value="@Model.objSolicitud.Soliestado" style="width:220px;" />
+                </td>
+            </tr>
+        </table>
+    </div>
+
+
+    <div style="clear:both; height:5px;"></div>
+    <div class="formato-titulo" style="color: #278CCC; margin-bottom:0px;">Datos Empresa</div>
+    <div style="clear:both; height:5px;"></div>
+    <div class="search-content" style="margin-bottom:0px; padding:10px">
+        <table class="table-form-show">
+            <tr>
+                <td style="width:220px;">2.1 Número de RUC:</td>
+                <td class="tbform-control">
+                    <label>@Model.EmprRUC</label>
+                </td>
+            </tr>
+            <tr>
+                <td>2.2 Nombre Comercial:</td>
+                <td class="tbform-control">
+                    <label>@Model.EmprNombreComercial</label>
+                </td>
+            </tr>
+            <tr>
+                <td>2.3 Denominación o Razón Social:</td>
+                <td class="tbform-control">
+                    <label>@Model.EmprRazSocial</label>
+                </td>
+            </tr>
+            <tr>
+                <td>2.3 Domicilio Legal:</td>
+                <td class="tbform-control">
+                    <label>@Model.EmprDomLegal</label>
+                </td>
+            </tr>
+            <tr>
+                <td>3.1 Tipo Agente: </td>
+                <td class="tbform-control">
+                    <label>@Model.EmprTipoAgente</label>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="clear:both; height:5px;"></div>
+    <div class="formato-titulo" style="color: #278CCC; margin-bottom:0px;">Datos Tipo Agente</div>
+
+    <div class="home-content-solicitud" tyle="line-height:20px;">
+        <input name="btnAgregarRL" type="button" id="btnAgregarRL" value="+ Agregar Tipo" class="button" style="width:200px; margin-bottom: 20px;">
+        <div id="divRepresentante">
+            <div id="listadoRepresentante">
+
+            </div>
+        </div>
+        <br />
+    </div>
+
+
+    <div id="popupAgregar" class="general-popup" style="min-width:700px">
+        <div><span class="button b-close"><span>X</span></span></div>
+
+        <div class="popup-text" id="contenidoAgregar">
+            <div class="popup-title"><span>Agregar Tipo Agente</span></div>
+            <div class="popup-text" id="contenidoAgregar">
+                <div id="mensajeAgregar" class="action-message" style="display: none; width: 95%">Por favor complete los datos solicitados.</div>
+                <table class="table-form-content">
+                    <tr style="display:none">
+                        <td class="label">Tipo:</td>
+                        <td>
+                            <select id="cbTipoDocumento" style="width:280px">
+                                @foreach (var item in Model.ListaPrincipalSecundario)
+                                {
+                                    <option value="@item.TipoPrincipalSecundarioCodigo">@item.TipoPrincipalSecundarioDescripcion</option>
+                                }
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label>6.1 Tipo Agente:</label></td>
+                        <td>
+                            @Html.DropDownListFor(x => x.TipoEmpresa, slTipoAgente, "Seleccione", new { @class = "Tipo", @style = "width:280px" })
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label>6.2 Documento Sustentatorio:</label></td>
+                        <td>@Html.DropDownListFor(x => x.TipoDocumentoSustentario, slTipoDocumentoSustentatorio, "Seleccione", new { @class = "Tipo Required", @style = "width:280px", @data_validator_id = "spnTIPODOCSUSTENTATORIO" })<span id="spnTIPODOCSUSTENTATORIO">(*)</span></td>
+                    </tr>
+                    <tr>
+                        <td><label>6.3 Archivo Digitalizado:</label></td>
+                        <td>
+
+                            <a href="JavaScript:verDigitalizado();" id="verDigitalizado" style="display:none" title="Ver">
+                                <img src="~/Content/Images/Visualizar.png" />
+                            </a>
+                            <a href="JavaScript:descargarDigitalizado();" id="descargarDigitalizado" style="display:none" title="Descargar">
+                                <img src="~/Content/Images/Download.png" />
+                            </a>
+
+                            <div id="divDocumentoIdentidad" style="display:inline">
+                                <input type="file" id="flArchivoDigitalizadoTI" accept=".pdf" onchange="return ValidarSize(this);" class="ArchivoDigitalizado Required" data-validator-id="spnArchivoDigitalizadoTI" style="width:280px;">
+                            </div>
+                            <span id="spnArchivoDigitalizadoTI">(*)</span>
+                    </tr>
+                    <tr class="Generador">
+                        <td><label>6.4 Potencia Instalada:</label></td>
+                        <td><input type="text" id="txtPotenciaInstaladaTI" class="GeneradorField Required  " data-validator-id="spnPotenciaInstaladaTI" style="width:280px;" maxlength="50"><span id="spnPotenciaInstaladaTI">(*)</span><span style="padding-left:15px;" id="spnIntegranteGenerador"></span></td>
+                    </tr>
+                    <tr class="Generador">
+                        <td><label>6.5 Número de Centrales:</label></td>
+                        <td><input type="text" id="txtNumeroCentralesTI" class="GeneradorField Required  " data-validator-id="spnNumeroCentralesTI" style="width:280px;" maxlength="50"><span id="spnNumeroCentralesTI">(*)</span></td>
+                    </tr>
+                    <tr class="Transmisor" height="35px">
+                        <td><label>6.4 Línea de Transmisión:</label></td>
+                        <td></td>
+                    </tr>
+                    <tr class="Transmisor">
+                        <td style="padding-left:80px" colspan="2">
+                            <table cellpadding="7">
+                                <tr class="TransmisorRow">
+                                    <td><input type="checkbox" id="chk500" /></td>
+                                    <td>500 kV</td>
+                                    <td><input type="text" id="val500" class="TransmisorField SumTrans  " maxlength="50" /></td>
+                                    <td>km</td>
+                                </tr>
+                                <tr class="TransmisorRow">
+                                    <td><input type="checkbox" id="chk200" /></td>
+                                    <td>200 kV</td>
+                                    <td><input type="text" id="val200" class="TransmisorField SumTrans  " maxlength="50" /></td>
+                                    <td>km</td>
+                                </tr>
+                                <tr class="TransmisorRow">
+                                    <td><input type="checkbox" id="chk138" /></td>
+                                    <td>138 kV</td>
+                                    <td><input type="text" id="val138" class="TransmisorField SumTrans  " maxlength="50" /></td>
+                                    <td>km</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Total Líneas de transmisión:</td>
+                                    <td><input type="text" id="txtTotalTransmision" readonly class="TransmisorField" /></td>
+                                    <td><b>km</b><span style="padding-left:15px;" id="spnIntegranteTransmisor"></span></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr class="Distribuidor">
+                        <td><label>6.4 Máxima demanda coincidente anual:</label></td>
+                        <td><input type="text" id="txtMaximaDemandaCoincidenteAnual" class="DistribuidorField Required  " style="width:280px;" maxlength="50"><span style="padding-left:10px;padding-right:10px">MW</span><span id="spnPaginaWeb">(*)</span></td>
+                    </tr>
+                    <tr class="UsuarioLibre">
+                        <td><label>6.4 Máxima demanda contratada:</label></td>
+                        <td><input type="text" id="txtMaximaDemandaContratada" class="UsuarioLibreField Required  " style="width:280px;" maxlength="50"><span style="padding-left:10px;padding-right:10px">MW</span><span id="spnPaginaWeb">(*)</span></td>
+                    </tr>
+                    <tr class="UsuarioLibre">
+                        <td><label>6.5 Número de Suministrador:</label></td>
+                        <td><input type="text" id="txtNumeroSuministrador" class="UsuarioLibreField Required  " style="width:280px;" maxlength="50"><span id="spnPaginaWeb">(*)</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align:center;">
+                            <input id="btnCancelarNuevo" type="button" value="Cancelar" style="margin: 5px 0 5px 0;" />
+                            <input id="btnGrabarNuevo" type="button" value="Grabar" style="margin: 5px 0 5px 0;" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div style="clear:both; height:5px;"></div>
+    <div class="formato-titulo" id="divDocumentoSustentatorioTitulo" style="color: #278CCC; margin-bottom:0px;">Documento Sustentatorio:</div>
+    <div style="clear:both; height:5px;"></div>
+    <div class="search-content" id="divDocumentoSustentatorio" style="margin-bottom:0px; padding:10px">
+        <input type="button" id="btnVer" value="Ver" />
+        <input type="button" id="btnDescargar" value="Descargar" />
+        <input type="hidden" id="hdfNombreArchivo" value="@Model.NombAdjunto" />
+    </div>
+
+    <div style="clear:both; height:5px;"></div>
+    <div class="formato-titulo" id="divObservacionTitulo" style="color: #278CCC; margin-bottom:0px;">Observación:</div>
+    <div style="clear:both; height:5px;"></div>
+    <div class="search-content" id="divObservacion" style="margin-bottom:0px; padding:10px">
+        <table class="table-form-show">
+            <tr>
+                <td style="width:220px;">Observación:</td>
+                <td class="tbform-control">
+                    <textarea id="txtObservacionfinal" disabled="disabled" style="width:470px; height:80px">@Model.objSolicitud.Soliobservacion</textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+
+    <div class="search-content" id="divUpload" style="margin-bottom:0px; padding:10px">
+
+        <table class="content-tabla-search" style="width:100%">
+            <tr>
+                <td colspan="2" class="tdPadd" style="background-color:SteelBlue;color:white;"><b>Adjuntar Documento Sustentatorio:</b></td>
+            </tr>
+            <tr>
+                <td>
+                    Seleccionar un archivo PDF que tenga como máximo 8mb.
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="search-content" id="container" style="margin-bottom:0px; padding:10px">
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <div style="clear:both; height:10px"></div>
+                    <div style="width:120px">
+                        <input type="button" id="btnSelectFileP5" value="Agregar Archivo" />
+                    </div>
+                    <div style="clear:both; height:10px"></div>
+                    <div id="fileInfo"></div>
+                    <div id="progresoP5"></div>
+                    <div id="fileInfoDocumentoSustentatorio" class="file-upload plupload_container ui-widget-content " style="display:none;"></div>
+                    <div id="filelistP5"></div>
+                    <div class="content-tabla">
+
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="clear:both; height:5px;"></div>
+    <div class="search-content" id="divSolicitar" style="margin-bottom:0px; padding:10px">
+        @*<table class="table-form-show">
+                <tr>
+                    <td style="width:220px;">Adjuntar Documento Sustentatorio:</td>
+                    <td class="tbform-control">
+                        <input type="file" id="flDocumento" class="DatosRequeridos Required" data-validator-id="spnDocumento" style="width:280px;">
+                        <span id="spnDocumento">(*)</span>
+                        <span style="padding-left:10px;padding-right:10px">PDF</span>
+                        <input type="hidden" id="hdfAdjunto" value="@Model.DetAdjunto" />
+                    </td>
+                </tr>
+            </table>*@
+        <br />
+        <input class="submit" id="btnSolicitar" type="submit" value="Solicitar" style="display:none" />
+        @*<input type="button" id="btnSolicitar" value="Solicitar" />*@
+        <input type="hidden" id="hdfSolicodi" value="@Model.objSolicitud.Solicodi" />
+    </div>
+</div>
+
+@Html.Hidden("hfRepresentanteLegalContador", "0")
+<input type="hidden" id="hdfAdjunto" value="@Model.DetAdjunto" />
+<input type="hidden" id="hdfSolicitudenCurso" value="@Model.SolicitudenCurso" />
+
+<input type="hidden" id="hdfNombreArchivoDigitalizado" />
+<input type="hidden" id="hdfAdjuntoDigitalizado" />
+
+<script type="text/javascript">
+
+    $('#btnSolicitar').click(function () {
+
+        if (!ValidarRequerido()) {
+            $("#mensaje").show();
+            return false;
+        } else
+            $("#mensaje").hide();
+
+        uploaderP5.start();
+    });
+
+
+    mostrarErrorFormato = function () {
+        alert("Error en el formato.");
+    }
+
+    loadValidacionFile5 = function (mensaje) {
+        //$('#fileInfo').innerHTML += mensaje;
+        $('#fileInfo').removeClass("file-ok");
+        $('#fileInfo').removeClass("file-alert");
+
+        $('#fileInfo').html(mensaje);
+        $('#fileInfo').addClass("file-alert");
+    }
+
+    function loadInfoFile(fileName, fileSize) {
+        $('#fileInfo').html(fileName + " (" + fileSize + ")");
+        $('#fileInfo').removeClass();
+        $('#fileInfo').addClass('action-exito');
+        $('#fileInfo').css('margin', '0px');
+        $('#fileInfo').css('padding', '5px');
+    }
+
+    function loadValidacionFile(mensaje) {
+        $('#fileInfo').html(mensaje);
+        $('#fileInfo').removeClass();
+        $('#fileInfo').addClass('action-alert');
+        $('#fileInfo').css('margin', '0px');
+        $('#fileInfo').css('padding', '5px');
+    }
+
+    function mostrarProgreso(porcentaje) {
+        $('#fileInfo').text(porcentaje + "%");
+        $('#fileInfo').removeClass();
+        $('#fileInfo').addClass('action-exito');
+        $('#fileInfo').css('margin', '0px');
+        $('#fileInfo').css('padding', '5px');
+    }
+
+    function mostrarErrorFile(mensaje) {
+        $('#fileInfo').text(mensaje);
+        $('#fileInfo').removeClass();
+        $('#fileInfo').addClass('action-error');
+        $('#fileInfo').css('margin', '0px');
+        $('#fileInfo').css('padding', '5px');
+    }
+
+    limpiarMensaje = function () {
+        $('#fileInfo').removeClass("file-alert");
+        $('#fileInfo').html("");
+    }
+
+    function getImage(ext) {
+        var image;
+        switch (ext) {
+            case "xlsx":
+            case "xls":
+                image = "../../Content/images/excel.png";
+                break;
+            case "pdf":
+                image = "../../Content/images/pdf.png";
+                break;
+            case "doc":
+            case "docx":
+                image = "../../Content/images/doc.png";
+                break;
+            case "jpg":
+                image = "../../Content/images/jpg.png";
+                break;
+        }
+        return image;
+    }
+
+
+
+    var uploaderP5 = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnSelectFileP5',
+        container: document.getElementById('container'),
+        multipart_params: {},
+        url: controlador + 'upload',
+        flash_swf_url: '~/Content/Scripts/Moxie.swf',
+        silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+            max_file_size: '8mb',
+            mime_types: [
+                { title: "Archivos Pdf .pdf", extensions: "pdf" }
+            ]
+        },
+        init: {
+            FilesAdded: function (up, files) {
+                //if (uploader.files.length == 2) {
+                //    uploader.removeFile(uploader.files[0]);
+                //}
+                var cadena = "";
+
+                plupload.each(files, function (file) {
+
+                    if (up.files.length >= 1) {
+                        $('#btnSelectFileP5').css('display', 'none');
+                    }
+                    if (up.files.length > 0 && up.files.length < 3) {
+                        $('#fileInfoDocumentoSustentatorio').css('display', 'block');
+                    }
+                    if (up.files.length < 0) {
+                        alert("Error, cantidad de archivos negativos, comunicarse con el administrador");
+                    }
+                    var ext = file.name.split(".").pop();
+                    var image = getImage(ext);
+                    var filename = file.name;
+                    if (file.name.length > 10) {
+                        filename = file.name.substring(0, 10) + " ...";
+                    }
+                    $('#fileInfoDocumentoSustentatorio').append('<div class="plupload_file context-menu-5" id="' + file.id + '"><div><a href="#" class="tooltip" title="' + file.name + '"><img width="25" height="25" src="' + image +
+                        '" /></a></div><div>' + filename + '</div><div>' + plupload.formatSize(file.size) + '</div>' +
+                        '</div>');
+
+                    $.contextMenu({
+                        selector: '.context-menu-5',
+                        callback: function (key, options) {
+                            var m = "clicked: " + key;
+                            //window.console && console.log(m) || alert(m);
+                            $(this).remove();
+                            //up.removeFile(file);
+                            up.splice(file.id, 1);
+                            if (up.files.length < 3) {
+                                $('#btnSelectFileP5').css('display', 'block');
+                            }
+                            if (up.files.length <= 0) {
+                                $('#fileInfoDocumentoSustentatorio').css('display', 'none');
+                            }
+
+                            $('#btnSolicitar').hide();
+
+                        },
+                        items: {
+                            "delete": { name: "Delete", icon: "delete" }
+                        }
+                    });
+
+                    $('.context-menu-5').on('click', function (e) {
+                        console.log('clicked', this);
+                    })
+
+                    $('#btnSolicitar').show();
+
+                });
+                limpiarMensaje();
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+                mostrarProgreso(file.percent);
+            },
+            UploadComplete: function (up, file) {
+                //procesarArchivo(sFecha + "_" + file[0].name, $("#PERICODI").val());
+
+                var RLDNI = new Array();
+                var formData = new FormData();
+                var NRepresentanteLegal = 0;
+
+                var tblRL = document.getElementById("tablaRepresentanteLegalbody");
+                NRepresentanteLegal = tblRL.rows.length;
+                var strRepresentateLegal = "";
+                var Index = 0;
+                for (var i = 0; i < NRepresentanteLegal; i++) {
+                    strRepresentateLegal += $(tblRL.rows[i].cells[0]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[1]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[2]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[3]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[4]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[5]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[6]).text() + "*";
+                    //7-baja, 8-editar, 9-quitar
+                    strRepresentateLegal += $(tblRL.rows[i].cells[10]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[11]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[12]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[13]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[14]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[15]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[16]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[17]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[18]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[19]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[20]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[21]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[22]).text() + "*";
+                    strRepresentateLegal += $(tblRL.rows[i].cells[23]).text() + "*";
+                    Index = $(tblRL.rows[i].cells[24]).text();
+                    strRepresentateLegal += Index;
+                    strRepresentateLegal += "|";
+
+                    formData.append("flArchivoDigitalizadoTI" + Index, $("#flArchivoDigitalizadoTI" + Index)[0].files[0]);
+                }
+
+                strRepresentateLegal = strRepresentateLegal.substring(0, strRepresentateLegal.length - 1);
+                formData.append("strTipo", strRepresentateLegal);
+
+                formData.append("SoliCodi", $('#hdfSolicodi').val());
+                //formData.append("DocumentoSustentatorio", $("#flDocumento")[0].files[0]);
+
+                formData.append("DocumentoNombre", file[0].name);
+                formData.append("DocumentoAdjunto", file[0].name);
+
+
+                $.ajax({
+                    type: 'POST',
+                    url: controlador + "SolicitarCambioTipo",
+                    data: formData,
+                    dataType: 'html',
+                    contentType: false,
+                    processData: false,
+                    success: function (evt) {
+                        if (evt == -1) {
+                            mostrarError();
+                        }
+                        else {
+                            alert("La solicitud ha sido enviada.");
+                            deshabilitaControles();
+                        }
+                    },
+                    error: function () {
+                        mostrarError();
+                    }
+                });
+
+            },
+            Error: function (up, err) {
+                loadValidacionFile5(err.code + "-" + err.message);
+            }
+        }
+    });
+
+
+    uploaderP5.init();
+
+</script>
+
+@Html.Hidden("hfEmpresaCondicionVarianteGenerador", Model.EmpresaCondicionVarianteGenerador)
+@Html.Hidden("hfEmpresaCondicionVarianteTransmisor", Model.EmpresaCondicionVarianteTransmisor)
+@Html.Hidden("hfEmpresaCondicionVarianteDistribuidor", Model.EmpresaCondicionVarianteDistribuidor)
+@Html.Hidden("hfEmpresaCondicionVarianteUsuarioLibre", Model.EmpresaCondicionVarianteUsuarioLibre)
+
+@Html.Hidden("hfTipoComportamientoGenerador_codigo", ConstantesRegistroIntegrantes.TipoComportamientoGeneradorCodigo)
+@Html.Hidden("hfTipoComportamientoTrasmisor_codigo", ConstantesRegistroIntegrantes.TipoComportamientoTrasmisorCodigo)
+@Html.Hidden("hfTipoComportamientoDistribuidor_codigo", ConstantesRegistroIntegrantes.TipoComportamientoDistribuidorCodigo)
+@Html.Hidden("hfTipoComportamientoUsuarioLibre_codigo", ConstantesRegistroIntegrantes.TipoComportamientoUsuarioLibreCodigo)

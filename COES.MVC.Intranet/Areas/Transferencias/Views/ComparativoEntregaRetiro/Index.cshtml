@@ -1,0 +1,444 @@
+﻿@model COES.MVC.Intranet.Areas.Transferencias.Models.ConsultaEnviosModel
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Consulta y Comparación de Entregas y Retiros Valorizados";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/TransfPotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/highcharts.js"></script>
+<script src="~/Content/Scripts/highcharts-3d.js"></script>
+<script src="~/Content/Scripts/highcharts-exporting.js"></script>
+<script src="~/Content/Scripts/highcharts-export-clientside.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/carga.css" rel="stylesheet" />
+<script src="~/Content/Scripts/datepicker.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/highcharts.js?v=@DateTime.Now.Minute"></script>
+@*<script src="~/Content/Scripts/highcharts-3d.js?v=@DateTime.Now.Minute"></script>*@
+<script src="~/Content/Scripts/highcharts-exporting.js?v=@DateTime.Now.Minute"></script>
+
+<script src="~/Content/Scripts/highcharts-export-clientside.js?v=@DateTime.Now.Millisecond"></script>
+<script src="~/Areas/Transfpotencia/Content/Scripts/load.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/comparativoEntregaRetiro.js?v=@DateTime.Now.Minute"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+
+<style>
+    .tabla-adicional tbody tr td:nth-child(3),
+    .tabla-adicional tbody tr td:nth-child(4),
+    .tabla-adicional tbody tr td:nth-child(5),
+    .tabla-adicional tbody tr td:nth-child(6),
+    .tabla-adicional tbody tr td:nth-child(7),
+    .tabla-adicional tbody tr td:nth-child(8),
+    .tabla-adicional tbody tr td:nth-child(9),
+    .tabla-adicional tbody tr td:nth-child(10) {
+        text-align: right;
+    }
+
+
+    .busque {
+        width: 200px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 12px;
+        background-color: white !important;
+        background-image: url(https://www.coes.org.pe/Portal/Content/images/search.png);
+        background-position: 10px 5px;
+        text-indent: 30px;
+        line-height: 16px;
+        height: 24px !important;
+        line-height: 25px !important;
+        background-repeat: no-repeat;
+        -webkit-transition: width 0.4s ease-in-out;
+        transition: width 0.4s ease-in-out;
+    }
+
+    .change-dashboard {
+        width: 352px;
+        float: right;
+        height: 25px;
+        line-height: 25px;
+        color: #4BA2DB;
+        cursor: pointer;
+    }
+
+        .change-dashboard .active {
+            background-color: #5BC0DE;
+            color: #fff;
+        }
+
+    .change-dashboard-item-l {
+        border-radius: 5px 0 0 5px;
+        border: 1px solid #4BA2DB;
+        width: 112px;
+        float: left;
+        text-align: center;
+        background-color: #fff;
+        font-weight: bold;
+    }
+
+    .change-dashboard-item-r {
+        border-radius: 0 5px 5px 0;
+        border: 1px solid #4BA2DB;
+        border-left: 1px none;
+        width: 112px;
+        float: left;
+        text-align: center;
+        background-color: #fff;
+        font-weight: bold;
+    }
+
+    .change-dashboard-tooltip {
+        display: none;
+        width: 183px;
+        height: 63px;
+        border-radius: 5px;
+        position: absolute;
+        z-index: 1000;
+        background-color: #4BA2DB;
+        color: #fff;
+        padding: 8px;
+        line-height: 16px;
+        margin-top: 30px;
+    }
+
+    .busque {
+        padding-left: 22px;
+    }
+</style>
+
+<div class="content-hijo">
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#paso1">Consulta entregas y retiros valorizados</a></li>
+            <li class='tab'><a href="#paso2">Comparativo entregas y retiros valorizados</a></li>
+        </ul>
+        <div class='panel-container'>
+            <div id="paso1">
+                <div id="idpanelConsulta" style="background-color:#fff; height:auto;">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td>
+                                <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                    <table class="table-search" style="width:auto" cellpadding="2" cellspacing="3">
+                                        <tr>
+                                            <td><div class="editor-label">Tipo</div></td>
+                                            <td>
+                                                <select id="trnenvtipinf" name="trnenvtipinf" style="        width: 189px;">
+
+                                                    @foreach (var item in Model.ListaTipoInfo)
+                                                    {
+                                                        sSelected = "";
+                                                        if (@item.TipoInfoCodi == Model.trnenvtipinf)
+                                                        { sSelected = "selected"; }
+                                                        <option value="@item.TipoInfoCodi" @sSelected>@item.TipoInfoNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td><div class="editor-label">Periodo</div></td>
+                                            <td>
+                                                <div class="editor-field">
+                                                    <select id="pericodi" name="pericodi" onchange="RecargarConsulta();" style="width:189px">
+                                                        @foreach (var item in Model.ListaPeriodos)
+                                                        {
+                                                            sSelected = "";
+                                                            if (@item.PeriCodi == Model.pericodi)
+                                                            { sSelected = "selected"; }
+                                                            <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </td>
+                                            <td><div class="editor-label">Versión</div></td>
+                                            <td>
+                                                <select id="recacodi" name="recacodi" style="width:189px">
+                                                    @foreach (var item in Model.ListaRecalculos)
+                                                    {
+                                                        <option value="@item.RecaCodi">@item.RecaNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>Fecha Inicio</td>
+                                            <td style="width:140px;">
+                                                <span class="editor-field"><input type="text" id="txtfechaIni" style="width:140px;" class="txtFecha" /></span>
+                                            </td>
+                                            <td>Entrega/Retiro</td>
+                                            <td style="width:150px;">
+                                                <select id="flag" name="flag">
+                                                 
+                                                    <option value="E">Entrega</option>
+                                                    <option value="R">Retiro</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><div class="editor-label">Empresa</div></td>
+                                            <td>
+                                                <select id="emprcodi" multiple="multiple">
+                                                    @foreach (var item in Model.ListaEmpresas)
+                                                    {
+                                                        <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td class="cliente"><div class="editor-label">Cliente</div></td>
+                                            <td class="cliente">
+                                                <select id="cliemprcodi" multiple="multiple">
+                                                    <option>TODOS</option>
+                                                </select>
+                                            </td>
+
+                                            <td class="barra"><div class="editor-label">Barra</div></td>
+                                            <td class="barra" style="width:150px;">
+                                                <select id="barrcodi">
+                                                    <option value="">TODOS</option>
+                                                </select>
+                                            </td>
+
+                                            <td>Fecha Fin</td>
+                                            <td style="width:140px;">
+                                                <span class="editor-field"><input type="text" id="txtfechaFin" style="width:140px;" class="txtFecha" /></span>
+                                            </td>
+                                            <td>
+                                                <input type="button" id="btnConsultar" value="Consultar" title="Consultar" />
+                                            </td>
+                                            <td>
+                                                @*<input type="button" id="btnExportar" value="Exportar" title="Exportar" />*@
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="grillaConsulta" style="height:600px">
+                    <div style="margin-left:20px;" class="listado" id="listado"></div>
+
+                </div>
+            </div>
+            <div id="paso2">
+                <div id="idpanelConsulta2" style="background-color:#fff; height:auto;">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td>
+                                <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                    <table class="table-search" style="width:auto" cellpadding="2" cellspacing="3">
+                                        <tr>
+                                            <td><div class="editor-label">Tipo</div></td>
+                                            <td colspan="10">
+                                                <select id="trnenvtipinf1" name="trnenvtipinf" style="        width: 189px;">
+
+                                                    @foreach (var item in Model.ListaTipoInfo)
+                                                    {
+                                                        sSelected = "";
+                                                        if (@item.TipoInfoCodi == Model.trnenvtipinf)
+                                                        { sSelected = "selected"; }
+                                                        <option value="@item.TipoInfoCodi" @sSelected>@item.TipoInfoNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><div class="editor-label">Periodo 1</div></td>
+                                            <td>
+                                                <select id="pericodi1" name="pericodi1" onchange="RecargarConsulta2();" style="width:189px">
+                                                    @foreach (var item in Model.ListaPeriodos)
+                                                    {
+                                                        sSelected = "";
+                                                        if (@item.PeriCodi == Model.pericodi)
+                                                        { sSelected = "selected"; }
+                                                        <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td><div class="editor-label">Versión 1</div></td>
+                                            <td>
+                                                <select id="recacodi1" name="recacodi1" style="width:189px">
+                                                    @foreach (var item in Model.ListaRecalculos)
+                                                    {
+                                                        sSelected = "";
+                                                        if (@item.RecaCodi == Model.recacodi)
+                                                        { sSelected = "selected"; }
+                                                        <option value="@item.RecaCodi">@item.RecaNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td><div class="editor-label">Periodo 2</div></td>
+                                            <td>
+                                                <select id="pericodi2" name="pericodi2" onchange="RecargarConsulta2();" style="width:189px">
+                                                    @foreach (var item in Model.ListaPeriodos)
+                                                    {
+                                                        sSelected = "";
+                                                        if (@item.PeriCodi == Model.pericodi2)
+                                                        { sSelected = "selected"; }
+                                                        <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td><div class="editor-label">Versión 2</div></td>
+                                            <td>
+                                                <select id="recacodi2" name="recacodi2" style="width:189px">
+                                                    @foreach (var item in Model.ListaRecalculos2)
+                                                    {
+                                                        <option value="@item.RecaCodi">@item.RecaNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td>Día</td>
+                                            <td style="width:140px;">
+                                                <select id="dia" name="dia" style="width:189px">
+                                                    @for (var i = 1; i <= 31; i++)
+                                                    {
+                                                        <option value="@i">@i</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                        </tr>
+                                        <tr>
+                                            <td><div class="editor-label">Empresa</div></td>
+                                            <td>
+                                                <select id="emprcodi1" style="width:189px">
+                                                    <option value="">TODOS</option>
+                                                    @foreach (var item in Model.ListaEmpresas)
+                                                    {
+                                                        <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td class="cliente1"><div class="editor-label">Cliente</div></td>
+                                            <td class="cliente1">
+                                                <select id="cliemprcodi1" multiple="multiple">
+                                                    <option>TODOS</option>
+                                                </select>
+                                            </td>
+
+                                            <td><div class="editor-label">Barra</div></td>
+                                            <td style="width:150px;">
+                                                <select id="barrcodi1">
+                                                    <option value="">TODOS</option>
+                                                </select>
+                                            </td>
+
+                                            <td><div class="editor-label">Ent./Ret.</div></td>
+                                            <td style="width:150px;">
+                                                <select id="flag1" name="flag1" style="width:189px">
+                                              
+                                                    <option value="E">Entrega</option>
+                                                    <option value="R">Retiro</option>
+                                                </select>
+                                            </td>
+
+                                            <td><div class="editor-label">Código</div></td>
+                                            <td style="width:150px;">
+                                                <select id="codigo"  multiple="multiple">
+                                                    @foreach (var item in Model.ListaCodigos)
+                                                    {
+                                                        <option value="@item.ValoTranCodEntRet">@item.ValoTranCodEntRet </option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                            </td>
+                                            <td>
+                                                <input type="button" id="btnConsultar2" value="Consultar" title="Consultar" />
+                                            </td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="grillaConsulta2" style="height:600px">
+                    <div style="margin-left:20px;" class="listado" id="listado1">
+
+
+                        <table style="width:100%">
+                            <tr>
+                                <td style="width:200px">
+
+                                    <table class="barraBuscar pretty tabla-adicional thead-fixed" style=" width: 100%; display: block; height: 400px; overflow-y: scroll;" id="tblDesviacion">
+                                        <thead>
+                                            <tr>
+                                                <th>Dia</th>
+                                                <th>Hora</th>
+                                                <th style="background-color:#0099CC">Energia valorizada 1</th>
+                                                <th style="background-color:#FF6600">Energia valorizada 2</th>
+                                                <th style="background-color:#66C6CC">% Desviación</th>
+                                                <th style="background-color:#66C6CC;display:none"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td>
+                                    <div class="change-dashboard">
+                                        <div data-id="CMP" class="CMG change-dashboard-item-l active  item-change-dashboard" data-fuente="scada">Comparación</div>
+                                        <div data-id="DSV" class="CMG change-dashboard-item-l  item-change-dashboard" data-fuente="scada">Desviación</div>
+                                    </div>
+                                    <div style="clear:both; height:20px"></div>
+
+                                    <div id="graficoEntregaRetiro_1" data-for-id="CMP" data-chart-view="hour" class="CMG-child">
+
+                                    </div>
+                                    <div id="graficoDesviacion" data-for-id="DSV" class="CMG-child">
+
+                                    </div>
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                </td>
+                                <td>
+                                </td>
+
+                            </tr>
+                        </table>
+
+
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hfComboEmpresa" />
+<input type="hidden" id="hfComboCliente" />
+<input type="hidden" id="hfComboBarra" />
+<input type="hidden" id="hfComboBarrafco" />

@@ -1,0 +1,309 @@
+﻿@model COES.MVC.Intranet.Areas.TransfPotencia.Models.AjusteSaldosModel
+@{
+    ViewBag.Title = "Transferencia de Potencia y Compensación - Ajuste de saldos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/TransfPotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/Transfpotencia/Content/Scripts/load.js"></script>
+<script src="~/Areas/TransfPotencia/Content/Scripts/ajustesaldos.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo">Ajuste de saldos</div>
+    </div>
+    @if (Model.Pericodi > 0)
+    { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Mes de valorización: @Model.EntidadPeriodo.PeriNombre</div> }
+    else
+    { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione un Mes de valorización</div> }
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Peajes</a></li>
+                <li class='tab'><a href="#paso2">Ingreso tarifario</a></li>
+                <li class='tab'><a href="#paso3">Cargos incluidos en el Peaje</a></li>
+                <li class='tab'><a href="#paso4">Saldo VTP</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div id="idpanelPeajeAjuste" style="background-color:#fff; height:auto;">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px">
+                                        <table class="table-search" style="width:auto;">
+                                            <tr>
+                                                <td style="width:120px;"><div class="editor-label">Mes de Valorización:</div></td>
+                                                <td>
+                                                    <select id="pericodiPeajeAjuste" name="pericodiPeajeAjuste" onchange="RecargarPeajeAjuste();">
+                                                        @foreach (var item in Model.ListaPeriodos)
+                                                        {
+                                                            sSelected = "";
+                                                            if (@item.PeriCodi == Model.Pericodi)
+                                                            { sSelected = "selected"; }
+                                                            <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:200px; height:40px;">
+                                                    @if (Model.Pericodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultarPeajeAjuste" value="Consultar" />
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAccionesPeajeAjuste">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnGrabarExcelPeajeAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/enviar.png" /><br />
+                                                            <span>Enviar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnValidarGrillaExcelPeajeAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/errores.png" /><br />
+                                                            <span>Mostrar errores</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnEliminarPeajeAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/borrador.png" /><br />
+                                                            <span>Eliminar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelPeajeAjuste" style="height:auto"></div>
+                </div>
+
+                <div id="paso2">
+                    <div id="idpanelIngresoAjuste" style="background-color:#fff; height:auto;">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px">
+                                        <table class="table-search" style="width:auto;">
+                                            <tr>
+                                                <td style="width:120px;"><div class="editor-label">Mes de Valorización:</div></td>
+                                                <td>
+                                                    <select id="pericodiIngresoAjuste" name="pericodiIngresoAjuste" onchange="RecargarIngresoAjuste();">
+                                                        @foreach (var item in Model.ListaPeriodos)
+                                                        {
+                                                            sSelected = "";
+                                                            if (@item.PeriCodi == Model.Pericodi)
+                                                            { sSelected = "selected"; }
+                                                            <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:200px; height:40px;">
+                                                    @if (Model.Pericodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultarIngresoAjuste" value="Consultar" />
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAccionesIngresoAjuste">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnGrabarExcelIngresoAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/enviar.png" /><br />
+                                                            <span>Enviar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnValidarGrillaExcelIngresoAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/errores.png" /><br />
+                                                            <span>Mostrar errores</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnEliminarIngresoAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/borrador.png" /><br />
+                                                            <span>Eliminar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelIngresoAjuste" style="height:auto"></div>
+                </div>
+
+                <div id="paso3">
+                    <div id="idpanelCargoAjuste" style="overflow:auto; background-color:#fff">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                        <table class="table-search" style="width:auto">
+                                            <tr>
+                                                <td style="width:150px; height:40px;"><div class="editor-label">Mes de Valorización:</div></td>
+                                                <td style="width:200px; height:40px;">
+                                                    <div class="editor-field">
+                                                        <select id="pericodiCargoAjuste" name="pericodiCargoAjuste" onchange="RecargarCargoAjuste();">
+                                                            @foreach (var item in Model.ListaPeriodos)
+                                                            {
+                                                                sSelected = "";
+                                                                if (@item.PeriCodi == Model.Pericodi)
+                                                                { sSelected = "selected"; }
+                                                                <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td style="width:200px; height:40px;">
+                                                    @if (Model.Pericodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultarCargoAjuste" value="Consultar" />
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAccionesCargoAjuste">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnGrabarExcelCargoAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/enviar.png" /><br />
+                                                            <span>Enviar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnValidarGrillaExcelCargoAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/errores.png" /><br />
+                                                            <span>Mostrar errores</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnEliminarCargoAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/borrador.png" /><br />
+                                                            <span>Eliminar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelCargoAjuste" style="height:auto"></div>
+                </div>
+
+                <div id="paso4">
+                    <div id="idpanelSaldoAjuste" style="overflow:auto; background-color:#fff">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                        <table class="table-search" style="width:auto">
+                                            <tr>
+                                                <td style="width:150px; height:40px;"><div class="editor-label">Mes de Valorización:</div></td>
+                                                <td style="width:200px; height:40px;">
+                                                    <div class="editor-field">
+                                                        <select id="pericodiSaldoAjuste" name="pericodiSaldoAjuste" onchange="RecargarSaldoAjuste();">
+                                                            @foreach (var item in Model.ListaPeriodos)
+                                                            {
+                                                                sSelected = "";
+                                                                if (@item.PeriCodi == Model.Pericodi)
+                                                                { sSelected = "selected"; }
+                                                                <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td style="width:200px; height:40px;">
+                                                    @if (Model.Pericodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultarSaldoAjuste" value="Consultar" />
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAccionesSaldoAjuste">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnGrabarExcelSaldoAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/enviar.png" /><br />
+                                                            <span>Enviar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnValidarGrillaExcelSaldoAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/errores.png" /><br />
+                                                            <span>Mostrar errores</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnEliminarSaldoAjuste">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/borrador.png" /><br />
+                                                            <span>Eliminar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelSaldoAjuste" style="height:auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="popup"></div>

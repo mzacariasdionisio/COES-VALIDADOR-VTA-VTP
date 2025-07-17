@@ -1,0 +1,292 @@
+﻿@model COES.MVC.Intranet.Areas.IND.Models.IndisponibilidadesModel
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@{
+    ViewBag.Title = "Mantenimientos";
+    Layout = Model.UsarLayoutModulo ? "~/Views/Shared/_LayoutAlter.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Areas/IND/Content/Css/css.css?v=1.3.4" rel="stylesheet" />
+<link href="~/Areas/IND/Content/Css/formulario.css?v=1.3.2" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/ellipsis.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<script src="~/Areas/IND/Content/Scripts/insumo_busquedaEquipo.js"></script>
+<script src="~/Areas/IND/Content/Scripts/insumo_mantenimiento.js?v=1.5.6"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Mantenimientos (registros del SGOCOES y registros del aplicativo PR25)</div>
+    <div class="content-botonera">
+        <input type="button" id="btnNuevo" value="Nuevo" style=" margin-right: 5px;">
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div id="mensaje_consultar" class="action-message" style="margin:0; margin-bottom:10px">Por favor seleccione Empresa y luego presione el botón Consultar.</div>
+
+    <div class="search-content">
+        <table class="content-tabla" style="width:auto" role="presentation">
+            <!-- primera fila-->
+            <tr>
+                <td class="tbform-label" style="padding-right: 0px;vertical-align: middle !important;">Periodo:</td>
+                <td>
+                    <select id="cbAnio" style="width: 57px;">
+                        @foreach (var item in Model.ListaAnio)
+                        {
+                            var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                            <option value="@item.Entero1" @(selected)>@item.String1</option>
+                        }
+                    </select>
+                    <select id="cbPeriodo" style="width: 120px;">
+                        @foreach (var item in Model.ListaPeriodo)
+                        {
+                            var selected = Model.IdPeriodo == item.Ipericodi ? "selected" : "";
+                            <option value="@item.Ipericodi" @(selected)>@item.Iperinombre</option>
+                        }
+                    </select>
+                </td>
+
+                <td class="tbform-label" style="padding-right: 0px;vertical-align: middle !important;">Recálculo:</td>
+                <td>
+                    <select id="cbRecalculo" style="width: 150px;">
+                        @if (Model.ListaRecalculo.Count > 0)
+                        {
+                            foreach (var rec in Model.ListaRecalculo)
+                            {
+                                var selected = Model.IdRecalculo == rec.Irecacodi ? "selected" : "";
+                                <option value="@rec.Irecacodi" @selected> @(rec.Irecanombre) </option>
+                            }
+                        }
+                        else
+                        {
+                            <option value="0">--</option>
+                        }
+
+                    </select>
+
+                    <span id="td_estado_recalculo" style="vertical-align: middle !important;">
+
+                    </span>
+                </td>
+
+                <td class="td_filtro_fecha">
+                    <input type="text" id="desc_fecha_ini" value="" disabled />
+                </td>
+                <td class="td_filtro_fecha">
+                    <input type="text" id="desc_fecha_fin" value="" disabled />
+                </td>
+
+                <td class="td_procesar">
+                    @if (Model.TienePermisoNuevo)
+                    {
+                        <input type="button" id="btnAbrirPopup" value="Guardar cambios" />
+                    }
+                </td>
+
+                <td class="td_procesar" colspan="3" style="width: 300px;">
+                    @if (Model.TienePermisoNuevo)
+                    {
+                        <input type="button" id="btnProcesarC1" value="Cuadro 1" title="Volver a procesar el Cuadro 1 que tiene estado generado" />
+                        <input type="button" id="btnProcesarC2" value="Cuadro 2" title="Volver a procesar el Cuadro 2 que tiene estado generado" />
+                        <input type="button" id="btnProcesarC4" value="Cuadro 4" title="Volver a procesar el Cuadro 4 que tiene estado generado" />
+                    }
+                </td>
+
+                <td colspan="5" style="display: none">
+                    Manttos:
+                    <input type="radio" name="rbFiltro" value="1" checked>Todos
+                    <input type="radio" name="rbFiltro" value="2">Uso en Cuadros
+                    <input type="radio" name="rbFiltro" value="3">SGOCOES
+                    <input type="radio" name="rbFiltro" value="4">PR25
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="5" style="padding-bottom: 15px"></td>
+            </tr>
+
+            <!-- segunda fila-->
+            <tr>
+                <td class="tbform-label" style="vertical-align: middle !important;">Tipo de Empresa:</td>
+                <td style="padding-right: 10px; width: 180px;">
+                    <select id="cbTipoEmpresa" name="IdTipoEmpresa" multiple="multiple">
+                        @foreach (var item in Model.ListaTipoEmpresa)
+                        {
+                            <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                        }
+                    </select>
+                </td>
+
+                <td class="tbform-label" style="vertical-align: middle !important;">Empresa:</td>
+                <td style="padding-right: 10px;">
+                    <div id="empresas">
+                        <select id="cbEmpresa" name="IdEmpresa" multiple="multiple">
+                            @foreach (var item in Model.ListaEmpresa)
+                            {
+                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                            }
+                        </select>
+
+                    </div>
+                </td>
+
+                <td class="tbform-label" style="vertical-align: middle !important;">Tipo de Equipo:</td>
+                <td style="padding-right: 10px; width: 180px;">
+                    <select id="cbFamilia" name="IdFamilia" multiple="multiple">
+                        @foreach (var item in Model.ListaFamilia)
+                        {
+                            <option value="@item.Famcodi">@item.Famnomb</option>
+                        }
+                    </select>
+                </td>
+
+                <td class="tbform-label" style="vertical-align: middle !important;">Mantenimiento:</td>
+                <td style="padding-right: 10px; width: 180px;">
+                    <select id="cbTipoMantenimiento" name="IdTipoMantenimiento" multiple="multiple" style="width:400px;">
+                        @foreach (var item in Model.ListaTipoMantenimiento)
+                        {
+                            <option value="@item.Evenclasecodi">@item.Evenclasedesc @item.Evenclaseabrev</option>
+                        }
+                    </select>
+                </td>
+
+                <td>
+                    <input type="button" id="btnBuscar" value="Consultar" />
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" id="hfNroPagina" name="NroPagina" value="1" />
+        <input type="hidden" id="hfEmpresa" />
+        <input type="hidden" id="hfTipoMantenimiento" />
+        <input type="hidden" id="hfTipoEmpresa" />
+        <input type="hidden" id="hfTipoEquipo" />
+        <input type="hidden" id="hfTipoMantto" />
+    </div>
+
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#vistaManttos">Manttos</a></li>
+            <li class='tab'><a href="#vistaOmision7Dias">Equipos con omisión de 7 días</a></li>
+            <li class='tab'><a href="#vistaOmisionExcesoPr">Equipos con omisión de Exceso de Pr</a></li>
+        </ul>
+
+        <div class='panel-container'>
+            <div id="vistaManttos">
+                <div class="content-tabla">
+                    <div style="clear:both; height:5px"></div>
+
+                    <div class="content-tabla">
+                        <div class="table-list" id="listado"></div>
+                    </div>
+
+                    <p style=" margin-top: 0px;">LEYENDA:</p>
+                    <table border="0" style="width:auto; display: none" id="leyenda_mantto" role="presentation">
+                        <tbody>
+                            <tr>
+                                <td style="background-color: #f2f5f7 !important; border: 1px solid black; width: 50px"></td>
+                                <td>Mantto Ejecutado que sí se usa en el PR25.</td>
+
+                                <td style="width: 50px"></td>
+                                <td style="color: blue;border: 1px solid black;padding-left: 10px; padding-right: 10px;">mantto</td>
+                                <td>Actualización de un mantto SGOCOES para el PR25. Los cambios no alteran la BD del COES.</td>
+                            </tr>
+                            <tr>
+                                <td style="background-color: #fff !important; border: 1px solid black; "></td>
+                                <td>Mantto Programado que sí se usa en el PR25.</td>
+
+                                <td style="width: 50px"></td>
+                                <td style="color: blue;border: 1px solid black;padding-left: 10px; padding-right: 10px;">mantto</td>
+                                <td>Mantto creado para el PR25, no altera la BD del COES.</td>
+                            </tr>
+                            <tr>
+                                <td style="height: 4px"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td style="background-color: #ffe9d6 !important; border: 1px solid black;"></td>
+                                <td>Mantto Ejecutado que NO se usa en el PR25.</td>
+
+                                <td style="width: 50px"></td>
+                                <td style="background-color: #969696 !important; border: 1px solid #dddddd"></td>
+                                <td>Mantto del SGOCOES que es omitido para los cálculos del PR25.</td>
+                            </tr>
+                            <tr>
+                                <td style="background-color: #fff6ef !important; border: 1px solid black; "></td>
+                                <td>Mantto Programado que NO se usa en el PR25.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style=" margin-top: 10px;">
+                        <strong>Nota: </strong> Por defecto se consideran en el PR25: Mantenimientos programados y ejecutados fuera de servicio F/S; se incluyen también los mantenimientos en servicio E/S (en calidad de pruebas y de otros tipos).
+                        <br />
+                        Las manttos de unidades de cogeneración solo son considerados para el PR25 cuando tienen activado el check de <strong>Proceso Industrial</strong>.
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="vistaOmision7Dias">
+                <div class="content-tabla">
+                    <div style="clear:both; height:5px"></div>
+
+                    <div class="content-tabla">
+                        <div class="table-list" id="listado2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vistaOmisionExcesoPr">
+                <div class="content-tabla">
+                    <div style="clear:both; height:5px"></div>
+
+                    <div class="content-tabla">
+                        <div class="table-list" id="listado3"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="popupMantenimiento" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: 1000px; max-width: 1000px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span></span></div>
+    <div id="idPopupMantenimiento">
+
+    </div>
+</div>
+
+
+<div id="popupMultiple" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: 500px; max-width: 500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Actualización múltiple</span></div>
+    <div id="idPopupMultiple">
+
+        <br />   <br />
+        Ingresar motivo:
+        <br />
+        <input type="text" value="" id="txt_motivo_cambio" placeholder="" style="width: 450px;" />
+
+        <br />
+        <br />
+        <input type="button" id="btnGuardar" value="Guardar" />
+    </div>
+</div>

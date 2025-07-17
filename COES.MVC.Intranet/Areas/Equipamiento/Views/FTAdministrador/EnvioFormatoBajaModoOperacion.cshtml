@@ -1,0 +1,455 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.FTAdministradorModel
+@{
+    ViewBag.Title = "Envío";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+
+<script src="~/Content/Scripts/tinymce/tinymce.min.js"></script>
+
+<link href="~/Areas/Equipamiento/Content/Css/principal.css?v=2.0.6" rel="stylesheet" />
+<link href="~/Areas/Equipamiento/Content/Css/fichatecnica.css?v=2.0.6" rel="stylesheet" />
+
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTAdministrador/global.js?v=2.0.6"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTAdministrador/formularioArchivos.js?v=2.0.6"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTAdministrador/envioFormatoOperacionComercial.js?v=2.0.6"></script>
+
+<div class="form-title" id="container">
+    <div class="content-titulo" style="">
+        Envío Información Ficha Técnica – Dar de baja al Modo de Operación - Envío N° @Model.IdEnvio ( <b>@Model.CarpetaEstadoDesc</b> )
+    </div>
+
+    <div style="float: left; margin-left: 20px; ">
+        @if (Model.UsarFechaSistemaManual)
+        {
+            <fieldset style="margin-top: 6px; padding-bottom: 17px; font-size: 11px; color: #3D90CB; text-align: left; text-indent: 1px; height: 10px; line-height: 0px; width: 500px;">
+                <legend>Fecha sistema</legend>
+                Representa la Fecha y Hora actual para el envío en ambiente de Pruebas.
+                <input type="text" id="horaSistema" value="@Model.FechaSistemaFull" style="width:125px;" disabled />
+            </fieldset>
+        }
+    </div>
+
+    <div class="content-botonera">
+        <input type="button" id="btnInicio" value="Salir del envío" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <input type="hidden" id="hfTipoFormato" value="@Model.EnvioTipoFormato" />
+
+    <input type="hidden" id="hfEmprcodi" value="@Model.Emprcodi" />
+    <input type="hidden" id="hfFtetcodi" value="@Model.Ftetcodi" />
+    <input type="hidden" id="hfFtprycodi" value="@Model.Ftprycodi" />
+    <input type="hidden" id="hfCodigoEquipos" value="@Model.CodigoEquipos" />
+
+    <input type="hidden" id="hfIdEnvio" value="@Model.IdEnvio" />
+    <input type="hidden" id="hfIdVersion" value="@Model.IdVersion" />
+    <input type="hidden" id="hfIdEstado" value="@Model.IdEstado" />
+    <input type="hidden" id="hfTipoOpcion" value="@Model.TipoOpcion" />
+
+    <input type="hidden" id="hdIdEnvioPadre" value="@Model.IdEnvio" />
+    <input type="hidden" id="hdIdEnvioData" value="@Model.IdEnvio" />
+
+    <input type="hidden" id="hdFechaSistema" value="@Model.strFechaSistema" />
+    <input type="hidden" id="hdNotaFecMaxRpta" value="@Model.MsgFecMaxRespuesta" />
+    <input type="hidden" id="hdNotaCancelacion" value="@Model.MsgCancelacion" />
+
+    <input type="hidden" id="hdFechaDerivacion" value="@Model.FechaDerivacion" />
+    <input type="hidden" id="hdVersionDerivada" value="@Model.FlagVersionDerivada" />
+
+    <input type="hidden" id="hdIdsAreaDelUsuario" value="@Model.StrIdsAreaDelUsuario" />
+    <input type="hidden" id="hdIdsAreaTotales" value="@Model.StrIdsAreaTotales" />
+
+    <div id="div_dia_habil" style="display: none;margin-bottom: 15px;"></div>
+
+    <div class="action-message" id="mensajeEvento" style="margin: 10px 0px 10px; display: none; padding-left: 36px; text-indent: 0px;"></div>
+
+    @if (Model.FlagFaltaHabilitarPlazo)
+    {
+        <div class="action-alert" style="margin: 10px 0px 10px; display: block; padding-left: 36px; text-indent: 0px;">El envío no tiene inicio de plazo para revisión.</div>
+    }
+
+    <div id="idMsgCancelacion" style="display:none;margin-bottom: 15px;"></div>
+    <div id="idFecMaxRpta" style="display:none;margin-bottom: 15px;"></div>
+
+    <div id class="search-content" style="margin-bottom: 0px;">
+
+        <div style="display:table; width: 100%;">
+            <div style="display:table-row">
+                <div style="display: table-cell; padding-top: 8px; padding-bottom: 8px; ">
+                    <div style="display:table">
+                        <div style="display:table-row">
+
+                            <table style="width: 800px;" class="filtro_envio">
+                                <tr>
+                                    <td>
+                                        <span> <b>Empresa:</b> </span>
+                                        <span class="desc_filtro">@Model.Emprnomb</span>
+
+                                        <span> <b style="padding-left: 10px;">Etapa:</b> </span>
+                                        <span class="desc_filtro">@Model.Ftetnombre</span>
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <table class="content-tabla-search" style="width:100%">
+                        <tr>
+
+                            <td style="width: 110px; padding: 0px; padding-top: 5px; display: none;" id="bq_observar">
+                                <input type="button" id="btnPopupObservar" value="Observar Envío" class="btn_observar" />
+                            </td>
+                            <td style="width: 125px; padding: 0px; padding-top: 5px; display: none; " id="bq_denegar">
+                                <input type="button" id="btnPopupDenegar" value="Denegar Envío" class="btn_denegar" />
+                            </td>
+
+
+                            <td style="width: 175px; padding: 0px; padding-top: 5px; display: none; " id="bq_aprobarparcialmente">
+                                <input type="button" id="btnPopupAprobarParcialmente" value="Aprobar Parcialmente Envío" class="btn_aprobarParcialmente" />
+                            </td>
+                            <td style="width: 105px; padding: 0px; padding-top: 5px; display: none; " id="bq_aprobar">
+                                <input type="button" id="btnPopupAprobar" value="Aprobar Envío" class="btn_aprobar" />
+                            </td>
+                            <td style="width: 105px; padding: 0px; padding-top: 5px; display: none; " id="bq_derivar">
+                                <input type="button" id="btnPopupDerivar" value="Derivar área COES" class="btn_derivar" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div id="idpanel" style="overflow:auto; background-color:#fff">
+
+        <div id="mensaje_GuardadoTemporal"></div>
+
+        <div id="div_listado" class="content-tabla" style="margin-top: 10px;">
+
+            <div style="float: right; padding-bottom: 8px; ">
+                <div id="bq_descargar" class="content-action">
+                    <a href="#" id="btnDescargarRevisionContenido">
+                        <div class="content-item-action">
+                            <img src="~/Content/Images/downloadExcel.png" /><br />
+                            <span>Descargar Revisión Contenido</span>
+                        </div>
+                    </a>
+                </div>
+
+            </div>
+
+            <div id="listadoDetalleEquipo">
+
+            </div>
+        </div>
+
+        <div id="div_detalle" class="content-tabla">
+
+            <div class="search-content3 barra_herramienta_envio_2" style="background-color: white; display: none;">
+                <div style="display:table">
+                    <div style="display:table-row">
+                        <div style="padding-top: 5px; padding-bottom: 0px;" class="div_herr_filtro">
+                            <div style="display:table">
+                                <div style="display:table-row">
+                                    <div class="content-action" style="display: none;">
+                                        <a href="#" id="btnAutoguardar">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/grabar.png" /><br />
+                                                <span>Guardar</span>
+                                            </div>
+                                        </a>
+                                    </div>
+
+                                    <div class="content-action" style="display: ;">
+                                        <a href="#" id="btnExpandirRestaurar">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/expandir.png" id="imgExpandirContraer" /><br />
+                                                <span id="spanExpandirContraer">Expandir</span>
+                                            </div>
+                                        </a>
+                                        <input type="hidden" id="hfExpandirContraer" value="E" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: table-cell;width:100%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="html_archivos" style="margin-top: 10px; overflow: auto; height: 650px;">
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!--popups-->
+<div id="validaciones" class="general-popup" style="z-index: 9999999999; width: 800px ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+    </div>
+</div>
+
+<!--popups comentarios celdas revision-->
+<div id="popupFormularioObservacionC" class="general-popup" style="z-index: 9999999999; width: 800px ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ingreso de Comentario</span></div>
+    <div id="mensajePopupCelda"></div>
+    <div id="idFormularioObservacion">
+
+    </div>
+</div>
+
+<div id="popupArchivoVistaPrevia" class="general-popup" style="z-index: 99999999999; width: 900px ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Vista previa de archivos</span></div>
+    <iframe id="vistaprevia" style="width: 100%; height:600px;" frameborder="0" hidden></iframe>
+</div>
+
+<!-- observacion -->
+<div id="popupObservar" class="popup-class-1 general-popup" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envío de Observacion(es)</span></div>
+    <div id="mensaje_popupObservar"></div>
+    <div id="">
+        <table class="table-form-vertical">
+            <tr>
+                <td class="tbform-label" style="text-align: right; width: 170px;">Fecha máxima de respuesta:</td>
+                <td style="width: 160px;">
+                    <input type="text" id="obs_fecMaxRpta" value="@Model.PlazoFinSubsanar" style="width: 100px" />&nbsp;&nbsp; 23:59:59
+                    <input type="hidden" id="obs_hffecMaxRpta" value="@Model.PlazoFinSubsanar" />
+                </td>
+            </tr>
+
+            <tr> </tr>
+        </table>
+
+        <table class="table-form-vertical">
+            <tr>
+                <td style="text-align:center;" colspan="2">
+                    <input type="button" id="btnEnviarObs" value="Enviar" />
+                    <input type="button" id="btnCerrarObs" value="Cancelar" onclick="cerrarPopup('popupObservar')" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+
+
+<!-- Denegar -->
+<div id="popupDenegar" class="popup-class-1 general-popup" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Denegación de Envío</span></div>
+    <div id="mensaje_popupDenegar"></div>
+    <div>
+
+        <div class="">
+            <table class="table-form-vertical">
+                <tr>
+                    <td class="tbform-label" style="width: 170px;">Mensaje al agente:</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <textarea id="desaprob_mensajeCoes" rows="10" style="width: 750px; min-width: 500px; min-height: 100px; max-width: 700px; max-height: 300px; "> </textarea>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            <table style="margin-top: 30px;" role="presentation">
+
+                <tr>
+                    <td class="tbform-label" style="text-align: right;">Para:</td>
+                    <td>
+                        @Model.AgenteUltimoEvento
+                        <input type="hidden" id="desaprob_hfparaAgente" value="@Model.AgenteUltimoEvento" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label" style="text-align: right; width: 170px;">CC agentes:</td>
+                    <td>
+                        <input type="text" id="desaprob_ccAgente" value="@Model.OtrosAgentesEmpresaDifUsuarioUltEvento" style="width: 500px" />
+                        <input type="hidden" id="desaprob_hfccAgente" value="@Model.OtrosAgentesEmpresaDifUsuarioUltEvento" />
+                    </td>
+                </tr>
+
+            </table>
+
+            <b>Nota: </b>
+            <i style="font-size: 11px;">Los correos, del campo CC Agentes, deben estar separados por punto y coma (;).</i>
+
+            <table class="table-form-vertical">
+                <tr>
+                    <td style="text-align:center;" colspan="2">
+                        <input type="button" id="btnEnviarDenegacion" value="Enviar" />
+                        <input type="button" id="btnCerrarDesaprob" value="Cancelar" onclick="cerrarPopup('popupDenegar')" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- Aprobar -->
+<div id="popupAprobar" class="popup-class-1 general-popup" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Aprobar Envío</span></div>
+    <div id="mensaje_popupAprobar"></div>
+    <div>
+
+        <div class="">
+            <table class="table-form-vertical">
+
+                <tr>
+                    <td class="tbform-label" style="text-align: right; width: 30px;">Fecha Vigencia:</td>
+                    <td style="width: 160px;">
+                        <input type="text" id="aprob_fecVigencia" value="" style="width: 100px" />&nbsp;&nbsp; 00:00:00
+                    </td>
+                </tr>
+                <tr style="height: 15px;">
+                    <td class="tbform-label" style="text-align: right; width: 30px;"></td>
+                    <td style="font-size: 10px; padding: 0px 0px 0px 20px; position: absolute;">
+                        Sistema intranet (Contenido según código de envío)
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label" style="text-align: right; width: 30px;">Enlaces de sustento:</td>
+                    <td style="">
+                        <input type="text" id="aprob_enlaceSistema" value="@Model.EnlaceSistemaIntranet" style="width: -webkit-fill-available;" />
+                        <input type="hidden" id="aprob_hfenlaceSistema" value="@Model.EnlaceSistemaIntranet" />
+                    </td>
+                </tr>
+                <tr style="height: 15px;">
+                    <td class="tbform-label" style="text-align: right; width: 30px;"></td>
+                    @if (Model.Ftetcodi == 1 || Model.Ftetcodi == 2)
+                    {
+                        <td style="font-size: 10px; padding: 0px 0px 0px 20px; position: absolute;">
+                            Carta de autorización de conexión o carta de integración
+                        </td>
+                    }
+                    @if (Model.Ftetcodi == 3)
+                    {
+                        <td style="font-size: 10px; padding: 0px 0px 0px 20px; position: absolute;">
+                            Carta de inicio de Operación Comercial
+                        </td>
+                    }
+                    @if (Model.Ftetcodi == 4)
+                    {
+                        <td style="font-size: 10px; padding: 0px 0px 0px 20px; position: absolute;">
+                            Carta de aprobación de Modificación de Ficha Técnica
+                        </td>
+                    }
+                </tr>
+                <tr>
+                    <td class="tbform-label" style="text-align: right; width: 30px;"></td>
+                    <td style="">
+                        <input type="text" id="aprob_enlaceCarta" value="" style="width: -webkit-fill-available;" />
+                    </td>
+                </tr>
+                <tr style="height: 15px;">
+                    <td class="tbform-label" style="text-align: right; width: 30px;"></td>
+                    <td style="font-size: 10px; padding: 0px 0px 0px 20px; position: absolute;">
+                        Otro
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label" style="text-align: right; width: 30px;"></td>
+                    <td style="padding: 0px 0px 0px 20px;">
+                        <input type="text" id="aprob_enlaceOtro" value="" style="width: -webkit-fill-available;" />
+
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            <table style="margin-top: 30px; width: 100%;" role="presentation">
+
+                <tr>
+                    <td class="tbform-label" style="text-align: right;">Para:</td>
+                    <td>
+                        @Model.AgenteUltimoEvento
+                        <input type="hidden" id="aprob_hfparaAgente" value="@Model.AgenteUltimoEvento" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label" style="text-align: right; width: 170px;">CC agentes:</td>
+                    <td>
+                        <input type="text" id="aprob_ccAgente" value="@Model.OtrosAgentesEmpresaDifUsuarioUltEvento" style="width: -webkit-fill-available;" />
+                        <input type="hidden" id="aprob_hfccAgente" value="@Model.OtrosAgentesEmpresaDifUsuarioUltEvento" />
+                    </td>
+                </tr>
+
+            </table>
+
+            <b>Nota: </b>
+            <i style="font-size: 11px;">Los correos, del campo CC Agentes, deben estar separados por punto y coma (;).</i>
+
+            <table class="table-form-vertical">
+                <tr>
+                    <td style="text-align:center;" colspan="2">
+                        <input type="button" id="btnEnviarAprobacion" value="Aprobar" />
+                        <input type="button" id="btnCerrarAprobacion" value="Cancelar" onclick="cerrarPopup('popupAprobar')" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<!-- Derivar -->
+<div id="popupDerivar" class="popup-class-1 general-popup" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Revisión de Ficha Técnica</span></div>
+    <div id="mensaje_popupDerivar"></div>
+    <div>
+
+        <div>
+            <table style="margin-top: 30px; width: 100%;" role="presentation">
+
+                <tr>
+                    <td class="tbform-label" style="text-align: right; width: 100px;">Fecha Máxima de Respuesta:</td>
+                    <td style="width: 60px;">
+                        <input type="text" id="deriv_fecmaxrpta" value="" style="width: 100px" />&nbsp;&nbsp; 23:59:59
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+
+        <div>
+            <table class="table-form-vertical">
+                <tr>
+                    <td style="text-align:center;" colspan="2">
+                        <input type="button" id="btnEnviarDerivacion" value="Enviar" />
+                        <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupDerivar')" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+</div>

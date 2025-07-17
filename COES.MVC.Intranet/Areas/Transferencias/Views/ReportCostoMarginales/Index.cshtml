@@ -1,0 +1,488 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/carga.css" rel="stylesheet" />
+<script src="~/Content/Scripts/datepicker.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/highcharts.js?v=@DateTime.Now.Minute"></script>
+@*<script src="~/Content/Scripts/highcharts-3d.js?v=@DateTime.Now.Minute"></script>*@
+<script src="~/Content/Scripts/highcharts-exporting.js?v=@DateTime.Now.Minute"></script>
+
+<script src="~/Content/Scripts/highcharts-export-clientside.js?v=@DateTime.Now.Millisecond"></script>
+@*<script src="~/Content/Scripts/export-csv.js"></script>*@
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<style>
+    .tabla-adicional tbody tr td:nth-child(3),
+    .tabla-adicional tbody tr td:nth-child(4),
+    .tabla-adicional tbody tr td:nth-child(5),
+    .tabla-adicional tbody tr td:nth-child(6),
+    .tabla-adicional tbody tr td:nth-child(7),
+    .tabla-adicional tbody tr td:nth-child(8),
+    .tabla-adicional tbody tr td:nth-child(9),
+    .tabla-adicional tbody tr td:nth-child(10) {
+        text-align: right;
+    }
+
+
+    .busque {
+        width: 200px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 12px;
+        background-color: white !important;
+        background-image: url(https://www.coes.org.pe/Portal/Content/images/search.png);
+        background-position: 10px 5px;
+        text-indent: 30px;
+        line-height: 16px;
+        height: 24px !important;
+        line-height: 25px !important;
+        background-repeat: no-repeat;
+        -webkit-transition: width 0.4s ease-in-out;
+        transition: width 0.4s ease-in-out;
+    }
+
+    .change-dashboard {
+        width: 352px;
+        float: right;
+        height: 25px;
+        line-height: 25px;
+        color: #4BA2DB;
+        cursor: pointer;
+    }
+
+        .change-dashboard .active {
+            background-color: #5BC0DE;
+            color: #fff;
+        }
+
+    .change-dashboard-item-l {
+        border-radius: 5px 0 0 5px;
+        border: 1px solid #4BA2DB;
+        width: 112px;
+        float: left;
+        text-align: center;
+        background-color: #fff;
+        font-weight: bold;
+    }
+
+    .change-dashboard-item-r {
+        border-radius: 0 5px 5px 0;
+        border: 1px solid #4BA2DB;
+        border-left: 1px none;
+        width: 112px;
+        float: left;
+        text-align: center;
+        background-color: #fff;
+        font-weight: bold;
+    }
+
+    .change-dashboard-tooltip {
+        display: none;
+        width: 183px;
+        height: 63px;
+        border-radius: 5px;
+        position: absolute;
+        z-index: 1000;
+        background-color: #4BA2DB;
+        color: #fff;
+        padding: 8px;
+        line-height: 16px;
+        margin-top: 30px;
+    }
+
+    .busque {
+        padding-left: 22px;
+    }
+</style>
+
+<div class="form-title">
+    <div class="content-titulo">Consulta y comparación de Costos Marginales</div>
+    <div class="content-botonera">
+
+    </div>
+</div>
+<div class="content-hijo" id="mainLayout">
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab active'><a href="#paso1" data-id="1">Consulta de Costos Marginales</a></li>
+            <li class='tab'><a href="#paso2" data-id="2">Desviaciones de Costos Marginales</a></li>
+            <li class='tab'><a href="#paso3" data-id="3">Promedidos Costos Marginales</a></li>
+        </ul>
+        <div class='panel-container'>
+
+            <div id="paso1" data-for="1">
+
+
+                <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+                    <table class="content-tabla-search" style="width:100%">
+                        <tr>
+                            <td>
+                                Periodo:
+                            </td>
+                            <td>
+                                @Html.DropDownList("cbPeriodo", "--Seleccione--")
+                            </td>
+
+
+
+                            <td>
+                                Versión:
+                            </td>
+                            <td>
+                                @Html.DropDownList("cboVersion", new List<SelectListItem>(), "--Seleccione--")
+                            </td>
+                            <td>
+                                Fecha Inicio
+                            </td>
+                            <td>
+                                <input class="txtFecha" id="txtInicio" disabled />
+                            </td>
+
+                            <td>
+                                Fecha Fin:
+                            </td>
+                            <td>
+                                <input class="txtFecha" id="txtFin" disabled />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="8" style="text-align:center; padding-top:10px">
+                                <input type="button" value="Consultar" id="btnConsultar1" />
+                                @*<input type="button" value="Exportar" id="btnExportar1" />*@
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+
+                <div style="clear:both; height:20px"></div>
+
+                <div id="listado">
+
+                    <table style="width:100%">
+                        <tr>
+                            <td style="width:200px">
+
+                                <div class="popup-title">
+                                    <span>Barra de Transferencia:</span>
+                                </div>
+                                <div style="clear:both; height:20px"></div>
+                                <table class="barraBuscar pretty tabla-adicional thead-fixed" style=" width: 100%; display: block; height: 400px; overflow-y: scroll;" id="tblBarra_costoMarginal">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="2">
+                                                <input type="text" class="busque" />
+                                            </th>
+                                        </tr>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>
+
+                                                <input type="checkbox" class="checkedAll" />
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+
+                                </table>
+
+
+                            </td>
+                            <td></td>
+                            <td>
+
+                                <div class="change-dashboard">
+                                    <div data-id="CMGTO" class="CMG change-dashboard-item-l active  item-change-dashboard" data-fuente="scada">CMG Total</div>
+                                    <div data-id="CMGCN" class="CMG change-dashboard-item-l  item-change-dashboard" data-fuente="scada">CMG Congestión</div>
+                                    <div data-id="CMGEN" class="CMG change-dashboard-item-r  item-change-dashboard" data-fuente="medidores">CMG Energia</div>
+                                </div>
+
+
+                                <div style="clear:both; height:20px"></div>
+
+                                <div id="contenedor1" style="width:1000px"></div>
+
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+
+
+            </div>
+            <div id="paso2" data-for="2" style="display:none">
+
+                <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+                    <table class="content-tabla-search" style="width:100%">
+                        <tr>
+                            <td>
+                                Periodo 1:
+                            </td>
+                            <td class="cboPeriodoInicio">
+                                @Html.DropDownList("cbPeriodo", "--Seleccione--")
+                            </td>
+
+                            <td>
+                                Versión 1:
+                            </td>
+                            <td>
+                                @Html.DropDownList("cboVersion1", new List<SelectListItem>(), "--Seleccione--")
+                            </td>
+
+                            <td>
+                                Dia:
+                            </td>
+                            <td class="cboDiaInicio">
+                                <select multiple="multiple" id="cboDiaInicio_paso2">
+                                    @*<option>--TODOS--</option>*@
+                                    @for (int i = 1; i <= 31; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Periodo 2:
+                            </td>
+                            <td class="cboPeriodoFin">
+                                @Html.DropDownList("cbPeriodo", "--Seleccione--")
+                            </td>
+
+
+                            <td>
+                                Versión 2:
+                            </td>
+                            <td>
+                                @Html.DropDownList("cboVersion2", new List<SelectListItem>(), "--Seleccione--")
+                            </td>
+
+
+                            <!--<td>
+                                Dia Fin:
+                            </td>
+                            <td class="cboDiaFin">
+                                <select multiple="multiple" id="cboFin_paso2">-->
+                                    @*<option>--TODOS--</option>*@
+                                    <!--@for (int i = 1; i <= 31; i++)
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                </select>
+                            </td>-->
+                        </tr>
+                        <tr>
+                            <td>
+                                Barra:
+                            </td>
+                            <td>
+                                <select id="cboBarra">
+                                </select>
+                            </td>
+                            <td>
+                                Tipo CM:
+                            </td>
+                            <td>
+                                <select id="cboTipoCostoMarginal">
+                                    <option value="CMGTO">CM TOTAL</option>
+                                    <option value="CMGCN">CM CONGESTION</option>
+                                    <option value="CMGEN">CM ENERGIA</option>
+                                </select>
+                            </td>
+                            <td colspan="2">
+                                <input type="button" value="Consultar" id="btnConsultar2" />
+                            </td>
+                        </tr>
+
+
+                    </table>
+
+                </div>
+
+                <div style="clear:both; height:20px"></div>
+
+                <div id="listado">
+
+                    <table style="width:100%">
+                        <tr>
+                            <td style="width:200px">
+
+                                <div class="popup-title">
+                                    <span>Desviación de Costos Marginales:</span>
+                                </div>
+                                <div style="clear:both; height:20px"></div>
+
+                                <table class="pretty tabla-adicional" id="tblAdicional">
+                                    <thead>
+                                        <tr>
+                                            <th>Hora</th>
+                                            <th style="background-color:#0099CC">Costo Marginal 1</th>
+                                            <th style="background-color:#FF6600">Costo Marginal 2</th>
+                                            <th style="background-color:#66C6CC">% Desviación</th>
+                                            <th style="background-color:#66C6CC;display:none" ></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+
+
+                            </td>
+                            <td></td>
+                            <td>
+                                <div class="change-dashboard">
+                                    <div data-id="CM" class="TIPDSV change-dashboard-item-l active  item-change-dashboard" data-fuente="scada">Comparación</div>
+                                    <div data-id="DS" class="TIPDSV change-dashboard-item-l  item-change-dashboard" data-fuente="scada">Desviación</div>
+                                </div>
+                                <div style="clear:both; height:20px"></div>
+                                <div id="contenedor2" style="width:1000px" data-chart-view="hour"></div>
+
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+
+
+
+            </div>
+
+            <div id="paso3" style="display:none" data-for="3">
+
+                <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+                    <table class="content-tabla-search" style="width:100%">
+                        <tr>
+                            <td>
+                                Tipo Promedio:
+                            </td>
+                            <td>
+                                <select id="cboTipoReporte" name="cboTipoReporte">
+                                    <option value="MN">MENSUAL</option>
+                                    <option value="DI">DIARIO</option>
+                                </select>
+                            </td>
+
+
+                            <td class="MN">
+                                Periodo 1:
+                            </td>
+                            <td class="MN cboPeriodoInicio">
+                                @Html.DropDownList("cbPeriodo", "--Seleccione--")
+                            </td>
+
+                            <td class="MN">
+                                Periodo 2:
+                            </td>
+                            <td class="MN cboPeriodoFin">
+                                @Html.DropDownList("cbPeriodo", "--Seleccione--")
+                            </td>
+                            <td class="DI">
+                                Desde:
+                            </td>
+                            <td class="DI">
+                                <input type="text" id="txtFechaInicio" class="txtFecha" />
+                            </td>
+
+                            <td class="DI">
+                                Hasta
+                            </td>
+                            <td class="DI">
+                                <input type="text" id="txtFechaFin" class="txtFecha" />
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding-top:5px">
+                                <input type="button" value="Consultar" id="btnConsultar3" />
+                                @*<input type="button" value="Exportar" />*@
+                            </td>
+                        </tr>
+
+
+                    </table>
+
+                </div>
+
+                <div style="clear:both; height:20px"></div>
+
+                <div id="listado">
+
+                    <table style="width:100%">
+                        <tr>
+                            <td style="width:200px">
+
+                                <div class="popup-title">
+                                    <span>Barra de Transferencia:</span>
+                                </div>
+                                <div style="clear:both; height:20px"></div>
+                                <table class=" barraBuscar pretty tabla-adicional thead-fixed" style=" width: 100%; display: block; height: 400px; overflow-y: scroll;" id="tblBarra_promedioMarginal">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="2">
+                                                <input type="text" class="busque" />
+                                            </th>
+                                        </tr>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>
+
+                                                <input type="checkbox" class="checkedAll" />
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+
+                                </table>
+
+
+
+                            </td>
+                            <td></td>
+                            <td>
+
+
+                                <div class="change-dashboard">
+                                    <div data-id="CMGTO" class="CMG change-dashboard-item-l active  item-change-dashboard" data-fuente="scada">CMG Total</div>
+                                    <div data-id="CMGCN" class="CMG change-dashboard-item-l  item-change-dashboard" data-fuente="scada">CMG Congestión</div>
+                                    <div data-id="CMGEN" class="CMG change-dashboard-item-r  item-change-dashboard" data-fuente="medidores">CMG Energia</div>
+                                </div>
+                                <div style="clear:both; height:20px"></div>
+
+                                <div id="contenedor3" style="width:1000px"  data-chart-view="month"></div>
+
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+
+
+
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+
+</div>
+
+
+<script src="~/Areas/Transferencias/Content/Scripts/ReportCostoMarginalesIndex.js?v=@DateTime.Now.Second"></script>

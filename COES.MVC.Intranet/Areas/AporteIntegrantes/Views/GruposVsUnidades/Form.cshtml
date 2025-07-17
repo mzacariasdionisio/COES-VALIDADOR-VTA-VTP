@@ -1,0 +1,107 @@
+﻿@model COES.MVC.Intranet.Areas.AporteIntegrantes.Models.GruposVsUnidadesModel
+@{
+    string sAccion = ViewData["sAccion"].ToString();
+    string sTitulo = ViewData["sTitulo"].ToString();
+    var sSelected = "";
+}
+
+<link href="~/Areas/AporteIntegrantes/Content/Css/transferencia.css" rel="stylesheet" />
+<script src="~/Areas/AporteIntegrantes/Content/Scripts/gruposvsunidades.js"></script>
+
+<input type="hidden" value="" id="index" />
+@using (Html.BeginForm("Save", "GruposVsUnidades", FormMethod.Post, new { id = "frmGruposVsUnidades", @class = "cmxform" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="ast">
+        <div class="form-title">
+            <div class="content-titulo">@sTitulo</div>
+            <div class="content-botonera">
+                @if (Model.bGrabar)
+                {
+                    <input type="submit" value="@sAccion" alt="@sAccion" title="@sAccion" />
+                }
+                <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index", "GruposVsUnidades")'" alt="Retornar" title="Retornar" />
+            </div>
+        </div>
+        <div style="padding:20px;width:500px;">
+            @Html.HiddenFor(model => model.Entidad.Casdducodi)
+            <table cellspacing="2" cellpadding="5">
+                @if (Model.sError != "")
+                {
+                    <tr>
+                        <td colspan="2">
+                            <div class="editor-label" style="color:red;">
+                                @Model.sError
+                            </div>
+                        </td>
+                    </tr>
+                }
+                <tr>
+                    <td>
+                        <div class="editor-label">
+                            @Html.LabelFor(model => model.Entidad.Equicodi, "Equipo")
+                            (*)
+                        </div>
+                    </td>
+                    <td>
+                        <div class="editor-field">
+                            <select name="Entidad.Equicodi">
+                                <option value="">--Seleccione--</option>
+                                @foreach (var item in Model.ListaEquiUni)
+                                {
+                                    sSelected = "";
+                                    if (item.CentGeneCodi == Model.Entidad.Equicodi) { sSelected = "selected"; }
+                                    <option value="@item.CentGeneCodi" @sSelected>@item.CentGeneNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="editor-label">
+                            @Html.LabelFor(model => model.Entidad.Casdduunidad, "Nombre Unidad Generación SDDP")
+                            (*)
+                        </div>
+                    </td>
+                    <td>
+                        <div class="editor-field">
+                            @Html.EditorFor(model => model.Entidad.Casdduunidad)
+                            @Html.ValidationMessageFor(model => model.Entidad.Casdduunidad)
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="editor-label">
+                            @Html.LabelFor(model => model.Entidad.Casddufecvigencia, "Fecha")
+                            (*)
+                        </div>
+                    </td>
+                    <td>
+                        <div class="editor-field">
+                            @Html.TextBoxFor(model => model.Casddufecvigencia, "{0:dd/MM/yyyy}", new { @class = "txtFecha" })
+                            @Html.ValidationMessageFor(model => model.Casddufecvigencia)
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+}
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+<script>
+    $("#frmGruposVsUnidades").validate({
+        rules: {
+            "Entidad.Equicodi": {
+                required: true
+            },
+            "Entidad.Casdduunidad": {
+                required: true,
+            },
+            "Casddufecvigencia": {
+                required: true
+            }
+        }
+    });
+</script>

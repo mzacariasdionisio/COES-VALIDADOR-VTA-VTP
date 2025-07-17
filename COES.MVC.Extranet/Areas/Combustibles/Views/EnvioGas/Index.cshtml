@@ -1,0 +1,188 @@
+﻿@model COES.MVC.Extranet.Areas.Combustibles.Models.CombustibleGasModel
+@{
+    ViewBag.Title = "PR31 Gaseoso";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Areas/Combustibles/Content/Scripts/Gas/combustibleGas.js?v=1.9.8.2"></script>
+<link href="~/Areas/Combustibles/Content/Css/Gas/css.css?v=1.9.8.2" rel="stylesheet" />
+
+<div class="form-title_intranet">
+    <div class="content-titulo">Registro de entrega de información por parte del Participante Generador Termoeléctrico</div>
+    <div class="content-botonera">
+        <input type="button" id="btnNuevoEnvio" value="Nuevo Envío" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+
+    <input type="hidden" id="hfEmpresa" />
+    <input type="hidden" id="hfEstado" />
+    <input type="hidden" id="hdIdEstado" value="@Model.IdEstado" />
+    <input type="hidden" id="hfFlagCentralExistente" value="@Model.FlagCentralExistente" />
+    <input type="hidden" id="hfFlagCentralNuevo" value="@Model.FlagCentralNuevo" />
+
+    <div class="search-content" style="padding: 5px;">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td class="celda-item">Empresa:</td>
+                <td>
+                    <select id="cbEmpresa" name="IdEmpresa" multiple="multiple">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+                <td class="celda-item" style="padding-left: 15px;">Desde:</td>
+                <td>
+                    <input type="text" id="FechaDesde" style="width: 77px;" name="FechaInicio" value="@Model.FechaInicio" />
+                </td>
+                <td class="celda-item" style="padding-left: 15px;">Hasta:</td>
+                <td>
+                    <input type="text" id="FechaHasta" style="width: 77px;" name="FechaFin" value="@Model.FechaFin" />
+
+                </td>
+                <td style="width:600px">
+                    <input type="button" id="btnBuscar" value="Buscar" />
+                </td>
+                <td style="width: 390px;">
+                    <a href="#" id="btnExpotar" style="text-decoration: none; float:right;">
+                        <div class="content-item-action" style="text-align: center; ">
+                            <img src="~/Content/Images/exportarExcel.png" alt="logo" style="width: 24px;" /><br />
+                            <span style=" font-size: 12px; text-decoration: none; color: #3f6bc3;">Exportar</span>
+                        </div>
+                    </a>
+                </td>
+                <td> </td>
+            </tr>
+        </table>
+    </div>
+
+
+    <div class="content-tabla">
+        <div class="tabla-header">
+            <div class="table-paginado" id="paginado"></div>
+        </div>
+
+        <!--Listado de envios por carpetas-->
+        <div class="table-list" id="listado">
+
+            <div style="float: left; width: 174px; height: 460px;" id="bandeja">
+                <div id="div_carpetas" style="margin:10px;">
+
+                </div>
+            </div>
+
+            <div id="reporte" style="display: inline-block; float: right; width: 850px; ">
+            </div>
+
+        </div>
+    </div>
+
+    <div style="clear:both; height:30px"></div>
+
+    <form id="frmEnvio" action="" method="post">
+        <input type="hidden" id="hdIdEnvioForm" name="idEnvio" />
+        <input type="hidden" id="hdTipoCentralForm" name="tipoCentral" />
+        <input type="hidden" id="hdTipoOpcionForm" name="tipoOpcion" />
+    </form>
+</div>
+
+<div id="popupCargo" class="general-popup" style="width: 600px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ver Cargos</span></div>
+    <div id="mensaje_popupCargos"></div>
+    <div class="table-list" id="seccionCargos" style="margin: 20px">
+
+
+    </div>
+</div>
+
+<div id="popupSeleccionarCentral" class="general-popup" style="width: 300px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Seleccionar tipo de Central Termoeléctrica</span></div>
+
+    <div class="table-list">
+
+        <table class="table-form-vertical" style="margin-left: 90px;">
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px; padding-bottom: 5px;">
+                    <input type="radio" name="rbTipoCentral" value="E" style="margin-left: 30px;" />Existente<br />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="">
+                    <input type="radio" name="rbTipoCentral" value="N" style="margin-left: 30px;" />Nueva<br />
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: right; padding-top: 20px; padding-bottom: 20px;">
+                    <input type="button" id="btnAceptarSeleccionarCentral" value="Aceptar" />
+                </td>
+            </tr>
+        </table>
+
+    </div>
+</div>
+
+<div id="popupSeleccionarCentralNueva" class="general-popup" style="width: 420px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Seleccionar una opción</span></div>
+
+    <div class="table-list">
+
+        <table class="table-form-vertical">
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px; padding-bottom: 5px;">
+                    <input type="radio" name="rbTipoOpcion" value="F3" style="margin-left: 30px;" />Requiero presentar información según Formato 3 del PR-31
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="">
+                    <input type="radio" name="rbTipoOpcion" value="SA" style="margin-left: 30px;" />Solicito asignación del COES
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center; padding-top: 20px; padding-bottom: 20px;">
+                    <input type="button" id="btnAceptarSeleccionarCentralNuevo" value="Aceptar" />
+                </td>
+            </tr>
+        </table>
+
+    </div>
+</div>
+
+<div id="popupCancelar" class="general-popup">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ingresar motivo de cancelación del envío</span></div>
+    <div id="mensaje_popupCancelarEnvio"></div>
+    <div id="edicionObserv">
+        <table class="table-form-vertical">
+            <tr>
+                <td class="tbform-label" style="">Motivo:</td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="hidden" id="hfIdCancelarEnvio" value="0" />
+                    <textarea id="txtMotivo" rows="5" maxlength="500" style="width:370px;"> </textarea>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="clear:both; height:20px"></div>
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align:right">
+                    <input type="button" id="btnAceptarCancelar" value="Enviar" />
+                    <input type="button" id="btnCerrarCancelar" value="Cerrar" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

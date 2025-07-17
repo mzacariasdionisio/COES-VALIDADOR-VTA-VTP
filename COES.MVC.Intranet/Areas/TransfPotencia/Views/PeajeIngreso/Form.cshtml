@@ -1,0 +1,145 @@
+﻿@model COES.MVC.Intranet.Areas.TransfPotencia.Models.PeajeIngresoModel
+@{
+    string sAccion = ViewData["sAccion"].ToString();
+    string sTitulo = ViewData["sTitulo"].ToString();
+    string sSelected = "";
+}
+<link href="~/Areas/TransfPotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+@using (Html.BeginForm("Save", "peajeingreso", FormMethod.Post, new { id = "frmFormulario", @class = "cmxform" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="ast">
+        <div class="form-title">
+            <div class="content-titulo">@sTitulo</div>
+            <div class="content-botonera">
+                @if (Model.bGrabar)
+                {
+                    <input type="submit" value="@sAccion" alt="@sAccion" title="@sAccion" />
+                }
+                <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index", "peajeingreso", new { pericodi = Model.Entidad.Pericodi, recpotcodi = Model.Entidad.Recpotcodi })'" alt="Retornar" title="Retornar" />
+            </div>
+        </div>
+        <div style="padding:20px; width:700px;">
+            @*@Html.HiddenFor(model => model.Entidad.Pingcodi)*@
+            @Html.HiddenFor(model => model.Entidad.Pericodi)
+            @Html.HiddenFor(model => model.Entidad.Recpotcodi)
+            @if (Model.sError != "" && Model.sError != null)
+            {
+                <div id="mensaje" class="action-message" style="margin:0; margin-bottom:10px">@Model.sError</div>
+
+            }
+            <table cellspacing="2" cellpadding="5">
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.Entidad.Pingcodi, "Identificador") (*)</div></td>
+                    <td><div class="editor-field">@Html.TextBoxFor(model => model.Entidad.Pingcodi, new { size = 10, maxLength = 10 })</div></td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.Entidad.Pingtipo, "Tipo") (*)</div></td>
+                    <td>
+                        <div class="editor-field">
+                            <label>@Html.RadioButtonFor(model => model.Entidad.Pingtipo, "SPT") SPT</label>
+                            <label>@Html.RadioButtonFor(model => model.Entidad.Pingtipo, "SGT") SGT</label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.Entidad.Emprcodi, "Titular") (**)</div></td>
+                    <td>
+                        <div class="editor-field">
+                            <select id="Entidad_Emprcodi" name="Entidad.Emprcodi">
+                                <option value=""></option>
+                                @foreach (var item in Model.ListaEmpresas)
+                                {
+                                    sSelected = "";
+                                    if (@item.EmprCodi == Model.Entidad.Emprcodi)
+                                    { sSelected = "selected"; }
+                                    <option value="@item.EmprCodi" @sSelected>@item.EmprNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.Entidad.Pingnombre, "Nombre") (*)</div></td>
+                    <td><div class="editor-field">@Html.TextBoxFor(model => model.Entidad.Pingnombre, new { size = 100, maxLength = 250 })</div></td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.Entidad.Pingpago, "Pago") (*)</div></td>
+                    <td>
+                        <div class="editor-field">
+                            <label>@Html.RadioButtonFor(model => model.Entidad.Pingpago, "SI") SI</label>
+                            <label>@Html.RadioButtonFor(model => model.Entidad.Pingpago, "NO") NO</label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.Entidad.Pingtransmision, "Transmisión") (*)</div></td>
+                    <td>
+                        <div class="editor-field">
+                            <label>@Html.RadioButtonFor(model => model.Entidad.Pingtransmision, "SI") SI</label>
+                            <label>@Html.RadioButtonFor(model => model.Entidad.Pingtransmision, "NO") NO</label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.Entidad.Pingcodigo, "Código")</div></td>
+                    <td><div class="editor-field">@Html.TextBoxFor(model => model.Entidad.Pingcodigo, new { size = 100, maxLength = 20 })</div></td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.Entidad.Rrpecodi, "Reparto") (**)</div></td>
+                    <td>
+                        <div class="editor-field">
+                            <select id="Entidad_Rrpecodi" name="Entidad.Rrpecodi">
+                                <option value=""></option>
+                                @foreach (var item in Model.ListaRepaRecaPeaje)
+                                {
+                                    sSelected = "";
+                                    if (@item.Rrpecodi == Model.Entidad.Rrpecodi)
+                                    { sSelected = "selected"; }
+                                    <option value="@item.Rrpecodi" @sSelected>@item.Rrpenombre</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr><td colspan="2">Notas<br>(*): Información obligatoria <br> (**): En caso no se tenga asignada una Empresa Titular (vacío), se deberá tener asociado un nombre de Reparto</td></tr>
+            </table>
+        </div>
+    </div>
+}
+<link href="~/Content/Css/validacion.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+<script>
+    jQuery.validator.addMethod("UnoSeleccionado", function (value, element, params) {
+        if (value == "" && $(params).val() == "") {
+            //Si los dos son nulos
+            var Pingpago = document.getElementsByName('Entidad.Pingpago');
+            var Pingtransmision = document.getElementsByName('Entidad.Pingtransmision');
+            //console.log(Pingpago[0].checked);
+            //console.log(Pingtransmision[1].checked);
+            if( Pingpago[1].checked && Pingtransmision[1].checked)
+            {
+                //Si Pago y Transmisión son iguales a NO
+                return true;
+            }
+            return false;
+        }
+        //caso contrario
+        return true;
+    }, '<br>Debe seleccionar una empresa o un reparto');
+
+    $("#frmFormulario").validate({
+        rules: {
+            "Entidad.Pingnombre": {
+                required: true
+            },
+            "Entidad.Emprcodi": {
+                UnoSeleccionado: "#Entidad_Rrpecodi"
+            }
+        }
+    });
+</script>

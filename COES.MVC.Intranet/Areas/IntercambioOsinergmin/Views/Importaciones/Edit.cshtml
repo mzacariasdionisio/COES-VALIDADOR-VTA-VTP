@@ -1,0 +1,171 @@
+﻿@model COES.MVC.Intranet.Areas.IntercambioOsinergmin.Models.Importacion.DetallePeriodoImportacionModel
+
+@{
+    ViewBag.Title = "Importación de registros del Sicli";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var disabled = new { @class = "form-control form-control-half", disabled = "disabled", @readonly = "readonly" };
+}
+
+<!--Hoja de estilos-->
+<link href="~/Areas/IntercambioOsinergmin/Content/Css/css.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">@ViewBag.Title</div>
+</div>
+
+<div class="content-hijo">
+    <input id="pSicliCodi" type="hidden" value="@Model.PeriodoImportacionModel.PsicliCodi" />
+    <input id="estadoCerrado" type="hidden" value="@Model.PeriodoImportacionModel.PsicliCerrado" />
+    <input id="periodo" type="hidden" value="@Model.PeriodoImportacionModel.Periodo" />
+    <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Datos Generales</div>
+    <div class="search-content">
+        <table width="960" border="0" align="center" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="width:160px;">
+                    @Html.LabelFor(model => model.FiltroPeriodoImportacion.Periodo, new { @class = "form-label" })
+                    @Html.TextBoxFor(model => model.PeriodoImportacionModel.Periodo, disabled)
+                </td>
+                <td style="width:300px;">
+                    @Html.LabelFor(model => model.PeriodoImportacionModel.FechaActualCoes, new { @class = "form-label" })
+                    @if (Model.PeriodoImportacionModel.FechaActualCoes > new DateTime(1, 1, 1, 0, 0, 0))
+                    {
+                        <input type="text" value="@String.Format("{0:dd/MM/yyyy HH:mm}", @Model.PeriodoImportacionModel.FechaActualCoes)" disabled="disabled" style="width:160px;" />
+
+                    }
+                    else
+                    {
+                        @Html.TextBoxFor(model => model.PeriodoImportacionModel.fechaVacia, disabled)
+                    }
+                </td>
+                <td align="right">
+                    <input type="button" value="Cerrar Periodo" id="btnAbrirCerrar" name="btnAbrirCerrar" class="form-action" style="visibility:hidden"/>
+                    <input type="button" value="Regresar" id="btnCancelar" name="btnCancelar" class="form-action" />
+                    <input type="button" value="Importar Información Base" id="btnImportarDatos" name="btnImportarDatos" class="form-action" />                                    
+                </td>
+                <td style="width:90px">
+                    <select id="tipoReporte" name="tipoReporte">
+                        <option value="1">Rep. Comp. Cliente</option>
+                        <option value="2">Rep. Comp. Empresa</option>
+                        <option value="3">Rep. Comp. Historico</option>
+                    </select>
+                    
+                </td>
+                <td align="left">
+                    <input type="button" value="Generar Reporte" id="btnGenerarReporte" name="btnGenerarReporte" class="form-action" />   
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <!-- alpha.HDT - Inicio 01/07/2017: Cambio para atender el requerimiento. -->
+            <li class='tab'><a href="#tap1" onclick='limpiarTab01()'>Datos de Facturación (Tabla 5)</a></li>
+            <li class='tab'><a href="#tap3" onclick='limpiarTab03()'>Datos de Suministro (Tabla 2)</a></li>
+            <li class='tab'><a href="#tap2" onclick='limpiarTab02()'>Medición cada 15 minutos (Tabla 4)</a></li>
+
+            <!-- HDT Fin -->
+        </ul>
+        <div class='panel-container' style="min-height:200px">
+            <div id="tap1">
+                <table style="width:100%;">
+                    <tr>
+                        <td style="width:70%;">
+                            <input type="button" value="Importar" id="btnImportarTabla05" name="btnImportarTabla05" />
+                            <input type="button" value="Generar suministros" id="btnGenerarSuministros" name="btnGenerarSuministros" />
+                        </td>
+                        <td style="width:30%;" align="right">
+                            <input type="button" value="Descargar Datos" id="btnExportarTabla05" name="btnExportarTabla05" />
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <div class="listado" style="width:100%;">
+                    <div class="content-tabla">
+                        <div class="table-list" id="listado05"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="tap3">
+                <table style="width:100%;">
+                    <tr>
+                        <td style="width:70%;">
+                            <input type="button" value="Importar" id="btnImportarTabla02" name="btnImportarTabla02" />
+                        </td>
+                        <td style="width:30%;" align="right"></td>
+                    </tr>
+                </table>
+                <br />
+                <div class="listado" style="width:100%;">
+                    <div class="content-tabla">
+                        <div class="table-list" id="listado02"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="tap2">
+                <table style="width:100%;">
+                    <tr>
+                        <td style="width:10%;">
+                            <input type="button" value="Importar" id="btnImportarTabla04" name="btnImportarTabla04" />
+                        </td>
+                        <td id="tdEnviarMedidores" style="width:10%;">
+                            <input type="button" value="Enviar a Medidores" id="btnEnviarMedidores" name="btnEnviarMedidores"  />
+                        </td>
+                        <td id="tdTextoFechaSincronizacion" style="width:15%;">
+                            <label class="form-label">Ult. Fecha de Sincronización</label>
+                        </td>
+                        <td id="tdFechaSincronizacion" style="width:10%;text-align:left;">
+                            <input type="text" id="fechaSincronizacion" name="fechaSincronizacion" style="width:90%" disabled="disabled" />
+                        </td>
+                        <td style="width:25%;text-align:center"></td>
+                        <td style="width:10%;text-align:center">Fecha</td>
+                        <td style="width:10%">
+                            <input type="text" id="fechaDia" name="fechaDia" style="width:90%" />
+                            <input type="hidden" id="hdnFechaIni" name="hdnFechaIni" value="@ViewBag.fechaInicio" />
+                            <input type="hidden" id="hdnFechaFin" name="hdnFechaFin" value="@ViewBag.fechaFin" />
+                        </td>
+                        <td style="width:10%;" align="right">
+                            <input type="button" value="Descargar Datos" id="btnExportarTabla04" name="btnExportarTabla04" />
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <div class="listado">
+                    <div class="content-tabla">
+                        <div class="table-list" id="listado04"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div> 
+</div>
+
+<div id="validaciones" class="general-popup" style="z-index:9999999998;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+
+    </div>
+</div>
+
+@*HDT Inicio 11/07/2017*@
+<div id="suministrosGenerar" class="general-popup" style="z-index: 9999999998; padding-right: 175px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Suministros a generar</span></div>
+    <div id="idErroresSuministro" style="height: 370px; overflow-y: auto; overflow-x: hidden; padding-right: 10px; width: 1070px; ">
+    </div>
+</div>
+@* HDT Fin *@
+
+<!--Menu contextual-->
+<script src="~/Content/Scripts/contextmenu.js"></script>
+<link href="~/Content/Css/contextmenu.css" rel="stylesheet"/>
+<!--<link href="~/Areas/IntercambioOsinergmin/Content/Css/css.css" rel="stylesheet" />-->
+<script src="~/Areas/IntercambioOsinergmin/Content/Scripts/importacionesEditar.js?v=1.1"></script>
+
+<!--Tabs-->
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+

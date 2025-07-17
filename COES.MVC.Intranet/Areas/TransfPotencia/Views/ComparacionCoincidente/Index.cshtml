@@ -1,0 +1,81 @@
+﻿@model COES.MVC.Intranet.Areas.TransfPotencia.Models.PeajeEgresoMinfoModel
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Comparativo Retiros de Energía vs Demanda Coincidente";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var sMensajeExito = TempData["sMensajeExito"];
+    string sSelected = "";
+
+    int paginaActual = Request.QueryString["pagina"] == null ? 1 : Convert.ToInt32(Request.QueryString["pagina"].ToString());
+}
+<script src="~/Areas/TransfPotencia/Content/Scripts/load.js"></script>
+<script src="~/Areas/TransfPotencia/Content/Scripts/comparacioncoincidente.js"></script>
+<link href="~/Areas/TransfPotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+
+@Html.Hidden("paginaActual", paginaActual)
+
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo" style="width:60%;">Comparativo Retiros de Energía vs Demanda Coincidente</div>
+        <div class="content-botonera">
+            <input type="button" value="Configurar relaciones de código" onclick="location.href='@Url.Action("Index", "../transferencias/gestionequivalenciavteavtp")'" alt="Configurar relaciones de código" title="Configurar relaciones de código" />
+            <input type="button" id="btnExportar" value="Exportar" onclick="" alt="Exportar" title="Exportar" />
+        </div>
+    </div>
+    <div class="content-hijo" style="padding-top:8px">
+        @if (@sMensajeExito != null)
+        {<div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">@sMensajeExito</div>}
+        <div id="idpanel" style="overflow:auto; background-color:#fff">
+            <input type="hidden" name="Recpotpreciopoteppm" id="Recpotpreciopoteppm" value="@Model.EntidadRecalculoPotencia.Recpotpreciopoteppm" />
+            <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td>
+                        <div class="search-content">
+                            <table class="content-tabla-search" style="width:auto">
+                                <tr>
+                                    <td style="width:150px; height:40px;"><div class="editor-label">Mes de Valorización:</div></td>
+                                    <td style="width:200px; height:40px;">
+                                        <div class="editor-field">
+                                            <select id="pericodi" name="pericodi" onchange="Recargar();">
+                                                @foreach (var item in Model.ListaPeriodos)
+                                                {
+                                                    sSelected = "";
+                                                    if (@item.PeriCodi == Model.Pericodi)
+                                                    { sSelected = "selected"; }
+                                                    <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </td>
+                                    <td style="width:50px; height:40px;">Versión:</td>
+                                    <td style="width:200px; height:40px;">
+                                        <select id="recpotcodi" name="recpotcodi">
+                                            @foreach (var item in Model.ListaRecalculoPotencia)
+                                            {
+                                                <option value="@item.Recpotcodi">@item.Recpotnombre</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td style="width:200px; height:40px;">
+                                        @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                                        {
+                                            <input type="button" id="btnConsultar" value="Consultar" />
+                                        }
+                                    </td>
+
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="listado" id="listado">
+        </div>
+        <div class="tabla-header">
+            <div class="table-paginado" id="paginado">
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="hfNroPagina" name="NroPagina" value="@paginaActual" />
+</div>

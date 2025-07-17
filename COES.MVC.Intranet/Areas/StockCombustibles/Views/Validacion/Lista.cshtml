@@ -1,0 +1,167 @@
+﻿@model COES.MVC.Intranet.Areas.StockCombustibles.Models.StockCombustiblesModel
+@{
+    ViewBag.Title = "Lista";
+}
+<script type="text/javascript">
+    var controlador = siteRoot + 'StockCombustibles/validacion/';
+    $(function () {
+        $('#cbSelectAll1').click(function (e) {
+            var table = $(e.target).closest('table');
+            $('td input:checkbox', table).prop('checked', this.checked);
+        });
+
+        $('#cbSelectAll2').click(function (e) {
+
+            var table = $(e.target).closest('table');
+            $('td input:checkbox', table).prop('checked', this.checked);
+        });
+
+        $('#btnAddPermisos').click(function () {
+            agregarQuitarElementos("V");
+
+        });
+
+
+        $('#btnCancelarPermisos').click(function () {
+            agregarQuitarElementos("P");
+
+        });
+    });
+
+    function agregarQuitarElementos(pestado) {
+
+        var permisos = "";
+        if (pestado == "V") {
+            $('#tbPermisos tbody tr').each(function (i, row) {
+                var $actualrow = $(row);
+                $checkbox = $actualrow.find('input:checked');
+                var $tds = $(this).find('td');
+                var $codEmpresa = $tds.eq(0).text();
+
+                if ($checkbox.is(':checked')) {
+                    permisos = permisos + $codEmpresa + ",";
+                }
+               
+            });
+        }
+        if (pestado == "P") {
+
+            $('#tbAceptados tbody tr').each(function (i, row) {
+                var $actualrow = $(row);
+                $checkbox = $actualrow.find('input:checked');
+                var $tds = $(this).find('td');
+                var $codEmpresa = $tds.eq(0).text();
+
+                if ($checkbox.is(':checked')) {
+                    permisos = permisos + $codEmpresa + ",";
+                }
+
+            });
+        }
+        
+        if (permisos == "") {
+            alert("Error: Seleccionar empresas");
+                return;
+        }
+        else {
+            permisos = permisos.substr(0, permisos.length - 1);
+        }
+        
+        var idRol = ($('#hfIdRol').val() != "") ? $('#hfIdRol').val() : "0";
+        var idOpcion = $('#hfIdOpcion').val();
+
+        $.ajax({
+            type: 'POST',
+            url: controlador + 'finalizarvalidacion',
+
+            //url: $.controler + 'FinalizarValidacion',
+            dataType: 'json',
+            data: {
+                empresas: permisos,
+                estado: (pestado == "V")?1:0,
+                formato: $('#cbFormato').val(),
+                fecha: $('#FechaDesde').val()
+            },
+            cache: false,
+            success: function (resultado) {
+                if (resultado.Resultado == 1) {
+                    mensajeError = '<div class="alert alert-success"><strong>¡Exito!</strong>La Operación se realizo exitosamente</div>';
+                    $('#mensajePermiso').html(mensajeError);
+                    alert('La Operación se realizo exitosamente');
+                    mostrarListado();
+                }
+                if (resultado == 0) {
+                    $('#mensajePermiso').css("display", "block");
+                    $('#mensajePermiso').addClass("content-error");
+                    $('#mensajePermiso').text("Ha ocurrido un error");
+                }
+            },
+            error: function () {
+                $('#mensajePermiso').css("display", "block");
+                $('#mensajePermiso').addClass("action-error");
+                $('#mensajePermiso').text("Ha ocurrido un error");
+            }
+        });
+    }
+</script>
+
+
+    <div style="float:left">
+        <table border="0" class="table pretty tabla-adicional" cellspacing="0" width="100%" id="tbPermisos">
+            <thead>
+                <tr>
+                    <th width="30">Id</th>
+                    <th width="400">Empresas no validadas</th>
+                    <th width="30" valign="top"><input type="checkbox" id="cbSelectAll1" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ListaValidacion)
+                {
+                    if (item.Validestado == 0)
+                    {
+                        <tr>
+                            <td>@item.Emprcodi</td>
+                            <td>@item.Emprnomb</td>
+                            <td align="center"><input type="checkbox" id="cbSelect1" name="cbSelect1" /></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div  style="display:inline-block;width:160px;">
+        <div style="text-align:center; margin-top:20px">
+            <input type="button" id="btnAddPermisos" class="btn btn-primary" value="Validar >>" />
+            <br /><br />
+            <input type="button" id="btnCancelarPermisos" class="btn btn-primary" value="<< Anular" />
+        </div>
+    </div>
+
+    <div style="display:inline-block;vertical-align:top;">
+        <table border="0" class="pretty tabla-adicional" cellspacing="0" width="100%" id="tbAceptados">
+            <thead>
+                <tr>
+                    <th width="30">Id</th>
+                    <th width="400">Empresas validadas</th>
+                    <th width="30" valign="top"><input type="checkbox" id="cbSelectAll2" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ListaValidacion)
+                {
+                    if (item.Validestado == 1)
+                    {
+                        <tr>
+                            <td>@item.Emprcodi</td>
+                            <td>@item.Emprnomb</td>
+                            <td><input type="checkbox" id="cbSelect2" name="cbSelect2" /></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+    </div>
+

@@ -1,0 +1,77 @@
+﻿@{
+    List<COES.MVC.Extranet.Models.MenuModel> menuList = ViewBag.Menu;
+    var contador = 0;
+}
+<ul class="menu" id="menu">
+    @foreach (var mp in menuList.Where(p => p.PadreId == 1))
+    {
+        contador = contador + 1;
+        <li>
+
+            @if (mp.DesControlador != "#")
+            {
+                @:<a href="JavaScript:OpenUrl('@mp.OpcionURL', '@mp.Tipo', @mp.OpcionId, '@mp.DesControlador', '@mp.DesAccion');">@mp.Nombre</a>
+            }
+            else
+            {
+                @:<a href="#">@mp.Nombre</a>
+            }
+
+            @if (menuList.Count(p => p.PadreId == mp.OpcionId) > 0)
+            {
+                @:<ul>
+                }
+            @RenderMenuItem(menuList, mp)
+            @if (menuList.Count(p => p.PadreId == mp.OpcionId) > 0)
+            {
+            @:</ul>
+        }
+        </li>
+    }
+</ul>
+@if (contador == 0)
+{
+    <div class="action-alert" style="margin-left:0; padding:10px">
+        Se ha perdido la sesión, por favor haga
+        <a href="~/WebForm/Account/Login.aspx">clic aquí</a>
+        para iniciar sesión nuevamente.
+    </div>
+}
+
+@helper RenderMenuItem(List<COES.MVC.Extranet.Models.MenuModel> menuList, COES.MVC.Extranet.Models.MenuModel mi)
+{
+    foreach (var cp in menuList.Where(p => p.PadreId == mi.OpcionId))
+    {
+        @:<li>
+
+
+
+
+            if (cp.DesControlador != "#")
+            {
+                @:<a href="JavaScript:OpenUrl('@cp.OpcionURL', '@cp.Tipo', @cp.OpcionId, '@cp.DesControlador', '@cp.DesAccion');">@cp.Nombre</a>
+            }
+            else
+            {
+                @:<a href="#">@cp.Nombre</a>
+            }
+
+            if (menuList.Count(p => p.PadreId == cp.OpcionId) > 0)
+            {
+                @:<ul>
+                }
+                @RenderMenuItem(menuList, cp)
+                if (menuList.Count(p => p.PadreId == cp.OpcionId) > 0)
+                {
+                @:</ul>
+            }
+            else
+            {
+            @:</li>
+        }
+    }
+}
+
+<input type="hidden" id="hfUserLogin" value="@ViewBag.UserName" />
+<input type="hidden" id="hfUserEncrypted" value="@ViewBag.UserEncrypted" />
+<input type="hidden" id="hiBaseUrlOtherApps" value="@ViewBag.BaseUrlOtherApps" />

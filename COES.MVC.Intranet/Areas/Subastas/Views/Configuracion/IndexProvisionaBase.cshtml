@@ -1,0 +1,171 @@
+﻿@model COES.MVC.Intranet.Areas.Subastas.Models.SmaConfiguracionModel
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+@{
+    ViewBag.Title = "Provisión Base";
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<link href="~/Content/Css/table.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<link href="~/Areas/Subastas/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Content/Scripts/messaje-operation.js"></script>
+<script src="~/Areas/Subastas/Content/Scripts/provisionBase.js?v=1.5.9"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Provisión Base Adjudicada</div>
+    <div class="content-botonera" id="container" style="display: block">
+        <input type="button" id="btnExportar" value="Exportar" />
+    </div>
+</div>
+
+<input type="hidden" id="NombreModulo" name="nombreModulo" value="@Model.Modulo" />
+<input type="hidden" id="tamanioMaxActa" name="tamanioMaxActa" value="@Model.TamanioMaxActa" />
+
+<div class="content-hijo" id="mainLayout">
+
+    <div class="search-content">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Fecha de Consulta:</td>
+                <td>
+                    <input type="text" id="txtFechaData" value="@Model.Fecha" />
+                </td>
+                <td>
+                    <input type="checkbox" id="chkTieneProv" name="chkTieneProv" checked onchange="listadoReporte()">
+                    URS con Provisión Base adjudicada <b>VIGENTE</b>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="clear:both"></div>
+    <div style="padding-bottom: 15px;">
+        <b>Nota</b>: Para registrar una nuevo URS primero debe Quitar el check "URS con Provisión Base adjudicada". Luego seleccionar una de todas las URS del sistema y llenar la información.
+    </div>
+
+    <div class="content-tabla">
+        <div class="table-list" id="listado_ProvisionBase"></div>
+        <div style="clear:both; margin-bottom:40px"></div>
+    </div>
+
+</div>
+
+<div id="popupHistoricoConcepto" class="general-popup" style="max-width: 1300px;width: 1300px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Histórico de Provisión Base</span></div>
+    <div class="panel-container">
+        <div class="content-botonera" style="display: none; margin-top: 5px;">
+            <input type="button" id="btnGrupodatNuevo" value="Nuevo" />
+            <input type="button" id="btnGrupodatConsultar" value="Consultar" style="display:none" />
+        </div>
+        <table class="content-tabla-search">
+            <tbody>
+                <tr class="">
+                    <td class="tbform-label" style="text-align: right">URS:</td>
+                    <td id="idURS" style="background-color: #2980B9; color: white; font-weight: bold;text-align: center;"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <fieldset style="width:auto; padding-bottom:20px">
+            <legend>Proceso de Subasta (multianual)</legend>
+            <span style="">Datos fecha de inicio y fin del proceso</span>
+
+            <table class="content-tabla-search">
+                <tbody>
+                    <tr class="filaUrsCabecera" style="display: none">
+                        <td class="tbform-label" style="">Fecha Inicio:</td>
+                        <td class="tbform-control" style="vertical-align: top;padding-left: 0px;">
+                            <input class="" id="fechaURSIni" type="text" name="fechaURSIni" value="" style="width: 92px;" />
+                        </td>
+
+                        <td class="tbform-label" style="">
+                            Fecha Fin:
+                            <input class="" id="fechaURSFin" type="text" name="fechaURSFin" value="" style="width: 92px;" />
+                        </td>
+                        <td class="tbform-control" style="vertical-align: top;">
+                        </td>
+                    </tr>
+
+                    <tr class="filaUrsCabecera" style="display: none">
+                        <td class="tbform-label" style="text-align: right">Acta:</td>
+                        <td class="tbform-control">
+                            <input type="button" id="btnSelectFile1" value="Seleccionar archivo" style="position: relative; z-index: 1;">
+                            <input id='actaCalificada' type='hidden' name='actaCalificada' value='' />
+                        </td>
+                        <td colspan="4">
+                            <div id="container" class="file-carga" style="min-height: 0px;">
+                                <div id="filelist"></div>
+                            </div>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+
+        </fieldset>
+
+
+        <!--Formulario de Grupodat-->
+        <div id="formularioGrupodat">
+            <div class="popup-title" style="padding-top: 15px;"><span></span></div>
+            <input type="hidden" id="hfGrupocodiDat" value="" />
+            <input type="hidden" id="hfConcepcodiDat" value="" />
+            <input type="hidden" id="hfDeleted" value="" />
+            <input type="hidden" id="hfFechaData" value="" />
+            <input type="hidden" id="hfActa" value="" />
+            <input type="hidden" id="hfFechaAct" value="@Model.Fecha" />
+
+            <div id="div_combo_modo">
+                Seleccionar Unidad / Modo de operación:
+                <select id="cbModoxUrs" name="" style="width: 500px">
+                </select>
+                <input type="button" id="agregar_fila" value="+" />
+            </div>
+
+            <table style=" margin-top: 15px;">
+                <tbody>
+
+                    <tr>
+                        <td class="tbform-control" style="padding-left: 0px" colspan="6">
+                            <fieldset style="width:auto; padding-bottom:20px">
+                                <legend>Oferta por período (semestral)</legend>
+
+                                <div class="content-tabla">
+                                    <div class="table-list" id="listadoFormulario"></div>
+                                </div>
+
+                            </fieldset>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td id="tdGuardarData" colspan="2">
+                            <input id="btnGrupodatGuardar" type="button" value="Registrar">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="clear:both; height:20px"></div>
+        </div>
+
+        <!--Lista de Grupodat-->
+        <div class="popup-title titulo_listado" style="padding-top: 15px; font-size: 13px;"><span>Listado</span></div>
+        <div class="content-tabla">
+            <div class="table-list" id="listadoGrupoDat">
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,325 @@
+﻿@model COES.Servicios.Aplicacion.FormatoMedicion.FormatoModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/ValorizacionDiaria/Content/Scripts/envio.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<script src="~/Areas/ValorizacionDiaria/Content/Scripts/handsontable.js?v=1"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<link href="~/Areas/ValorizacionDiaria/Content/Css/css.css" rel="stylesheet" />
+
+<div class="form-title">ENVÍO DE INFORMACÍON DE VALORIZACIÓN DIARIA</div>
+<div style="float:right; margin-right:40px">
+</div>
+<div style="clear:both"></div>
+<div class="form-main">
+    <div style='clear:both; height:5px'></div>
+    <form method="post" id="formEnvio" action="@Url.Action("indexexcelweb", "envio")">
+        <div class="form-texto-cuadro" id="filtros">
+            <table>
+                <tr>
+                    <td><label style="color:SteelBlue">Empresa</label></td>
+                    <td>
+                        <select id="cbEmpresa" name="IdEmpresa" style="width:100px;">
+                            @foreach (var item in Model.ListaEmpresas)
+                            {
+                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                            }
+                        </select>
+                        <input type="hidden" id="hfEmpresa" name="empresa" value="@Model.IdEmpresa" />
+                    </td>
+                </tr>
+                <tr>
+                    <td><label style="color:SteelBlue">Area COES</label></td>
+                    <td>
+                        <select id="cbArea" name="IdArea">
+                            @foreach (var item in Model.ListaAreas)
+                            {
+                                <option value="@item.Areacode">@item.Areaname</option>
+                            }
+                        </select>
+                        <input type="hidden" id="hfArea" name="area" value="@Model.IdArea" />
+                    </td>
+                </tr>
+                <tr>
+                    <td><label style="color:SteelBlue">Tipo de Lectura</label></td>
+                    <td>
+                        <select id="cbLectura" name="IdLectura">
+                            @*<option value="0">[Seleccionar Tipo de Lectura]</option>*@
+                            @foreach (var item in Model.ListaLectura)
+                            {
+                                <option value="@item.Lectcodi">@item.Lectnomb</option>
+                            }
+                        </select>
+                        <input type="hidden" id="hfLectura" name="area" value="@Model.IdLectura" />
+                    </td>
+                </tr>
+                <tr>
+                    <td><label style="color:SteelBlue">Formato </label></td>
+                    <td>
+                        <select id="cbFormato" name="IdFormato">
+                            <option value="0">[Seleccionar Formato]</option>
+                            @foreach (var item in Model.ListaFormato)
+                            {
+                                <option value="@item.Formatcodi">@item.Formatnombre</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <td>
+                        <div class="form-item" id="cntFecha">
+                            <label style="color:SteelBlue">Fecha&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label><input type="text" name="Dia" id="txtFecha" value="@Model.Dia" />
+                            <input type="hidden" id="hfFecha" value="@Model.Dia" />
+                        </div>
+                        <div class="form-item" id="cntSemana" style="display:none">
+                            <label style="color:SteelBlue">Semana:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                            <select name="Semana" id="cbSemana">
+                                @{
+                                    int i = 1;
+                                    foreach (var item in Model.ListaSemanas)
+                                    {
+                                        if (Model.NroSemana == i)
+                                        {
+                                            <option value="@i" selected="selected">@item</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i">@item</option>
+                                        }
+
+                                        i++;
+                                    }
+                                }
+                            </select>
+                            <input type="hidden" id="hfSemana" value="@Model.NroSemana" />
+                        </div>
+                        <div class="form-item" id="cntMes" style="display:none">
+                            <label style="color:SteelBlue">Año Mes:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                            <input type="text" name="Mes" id="txtMes" value="@Model.Mes" />
+                            <input type="hidden" id="hfMes" value="@Model.Mes" />
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td ALIGN="CENTER">
+                        <input type="submit" value="Seleccionar">
+                        <input type="hidden" id="hfFormatCodi" value="@Model.StrFormatCodi" />
+                        <input type="hidden" id="hfFormatPeriodo" value="@Model.StrFormatPeriodo" />
+                        <input type="hidden" id="hfFormatDescrip" value="@Model.StrFormatDescrip" />
+                        <input type="hidden" id="hfIdModulo" name="IdModulo" value="@Model.IdModulo" />
+                        <input type="hidden" id="hfDataExcel" value="" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </form>
+    <div id="e">
+    </div>
+    <div class="content-tabla">
+        <div class="table-list" id="listado">
+        </div>
+    </div>
+    <div id="zonaExcel" style="display:block;">
+        <div style='clear:both; height:5px'></div>
+        <div class='action-message' id='mensaje' style='display:none'></div>
+        <div style='clear:both; height:5px'></div>
+        <div id="hojaExcel">
+        </div>
+    </div>
+</div>
+<div id="validaciones">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+
+    </div>
+</div>
+
+
+
+@*<div class="form-title">
+        <div class="content-titulo">ENVÍO DE INFORMACÍON DE VALORIZACIÓN DIARIA</div>
+    </div>
+
+    <div class="content-hijo">
+        <div id="idpanel" style="overflow:auto; background-color:#fff">
+            <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione empresa y periodo</div>        <table style="width:auto">
+                <tr>
+                    <td>
+                        <div class="search-content" style="margin-bottom:0px; padding:10px">
+                            <table class="table-search" style="width:auto">
+                                <tr>
+                                    <td>Empresa:</td>
+                                    <td>
+                                        <select id="cbEmpresa" name="IdEmpresa">
+                                            @foreach (var item in Model.ListaEmpresas)
+                                            {
+                                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                            }
+                                        </select>
+                                        <input type="hidden" id="hfEmpresa" name="empresa" value="@Model.IdEmpresa" />
+                                    </td>
+                                    <td>Periodo:</td>
+                                    <td>
+                                        <input type="text" name="Mes" id="txtMes" value="@Model.Mes" />
+                                    </td>
+                                    <td>
+                                        <input type="button" id="btnConsultar" value="Aceptar" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Tipo de Lectura:</td>
+                                    <td>
+                                        <select id="cbLectura" name="IdLectura">
+                                            @*<option value="0">[Seleccionar Tipo de Lectura]</option>*@
+@*@foreach (var item in Model.ListaLectura)
+{
+    <option value="@item.Lectcodi">@item.Lectnomb</option>
+}
+                                    </select>
+<input type="hidden" id="hfLectura" name="area" value="@Model.IdLectura" />
+                                </td>
+                            </tr>
+<tr>
+    <td>Formato:</td>
+    <td>
+        <select id="cbFormato" name="IdFormato">
+            <option value="0">[Seleccionar Formato]</option>
+            @foreach (var item in Model.ListaFormato)
+            {
+                <option value="@item.Formatcodi">@item.Formatnombre</option>
+            }
+        </select>
+    </td>
+</tr>
+                        </table>
+<table>
+    <tr>
+        <td>
+            <div class="form-item" id="cntFecha">
+                <label style="color:SteelBlue">Fecha&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label><input type="text" name="Dia" id="txtFecha" value="@Model.Dia" />
+                <input type="hidden" id="hfFecha" value="@Model.Dia" />
+            </div>
+            <div class="form-item" id="cntSemana" style="display:none">
+                <label style="color:SteelBlue">Semana:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <select name="Semana" id="cbSemana">
+                    @{
+                        int i = 1;
+                        foreach (var item in Model.ListaSemanas)
+                        {
+                            if (Model.NroSemana == i)
+                            {
+                                <option value="@i" selected="selected">@item</option>
+                            }
+                            else
+                            {
+                                <option value="@i">@item</option>
+                            }
+
+                            i++;
+                        }
+                    }
+                </select>
+                <input type="hidden" id="hfSemana" value="@Model.NroSemana" />
+            </div>
+            <div class="form-item" id="cntMes" style="display:none">
+                <label style="color:SteelBlue">Año Mes:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <input type="text" name="Mes" id="txtMes" value="@Model.Mes" />
+                <input type="hidden" id="hfMes" value="@Model.Mes" />
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td ALIGN="CENTER">
+            <input type="submit" value="Seleccionar">
+            <input type="hidden" id="hfFormatCodi" value="@Model.StrFormatCodi" />
+            <input type="hidden" id="hfFormatPeriodo" value="@Model.StrFormatPeriodo" />
+            <input type="hidden" id="hfFormatDescrip" value="@Model.StrFormatDescrip" />
+            <input type="hidden" id="hfIdModulo" name="IdModulo" value="@Model.IdModulo" />
+            <input type="hidden" id="hfDataExcel" value="" />
+        </td>
+    </tr>
+</table>
+                    </div>
+                </td>
+
+<td>
+    <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAcciones">
+        <table cellpadding="0" cellspacing="0" border="0">
+            <tr>
+                <td class="content-action">
+                    <a href="#" id="btnDescargarFormato">
+                        <div class="content-item-action">
+                            <img src="~/Areas/DemandaBarras/Content/Images/bajar.png" /><br />
+                            <span>Descargar formato</span>
+                        </div>
+                    </a>
+                </td>
+                <td class="content-action">
+                    <a href="#" id="btnSelectExcel">
+                        <div class="content-item-action">
+                            <img src="~/Areas/DemandaBarras/Content/Images/subir.png" /><br />
+                            <span>Importar formato</span>
+                        </div>
+                    </a>
+                </td>
+                <td class="content-action">
+                    <a href="#" id="btnEnviarDatos">
+                        <div class="content-item-action">
+                            <img src="~/Areas/DemandaBarras/Content/Images/enviar.png" /><br />
+                            <span>Enviar datos</span>
+                        </div>
+                    </a>
+                </td>
+                <td class="content-action">
+                    <a href="#" id="btnMostrarErrores">
+                        <div class="content-item-action">
+                            <img src="~/Areas/DemandaBarras/Content/Images/errores.png" /><br />
+                            <span>Mostrar errores</span>
+                        </div>
+                    </a>
+                </td>
+                <td class="content-action">
+                    <a href="#" id="btnVerEnvios">
+                        <div class="content-item-action">
+                            <img src="~/Areas/DemandaBarras/Content/Images/envios.png" /><br />
+                            <span>Ver envíos</span>
+                        </div>
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </div>
+</td>
+            </tr>
+        </table>
+
+<div class="bodyexcel" id='consulta'></div>
+    </div>
+</div>
+
+
+<div id="validaciones" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+
+    </div>
+</div>
+
+<div id="enviosanteriores" style="z-index:9999999998;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envios Anteriores</span></div>
+    <div id="idEnviosAnteriores">
+    </div>
+</div>
+
+<input type="hidden" id="hfIdEnvio" value="@Model.IdEnvio" />
+<input type="hidden" id="hfMes" value="@Model.Mes" />
+<input type="hidden" id="hfDataExcel" value="" />
+<input type="hidden" id="hfIndicador" />*@

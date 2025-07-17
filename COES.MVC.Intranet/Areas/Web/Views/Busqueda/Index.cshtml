@@ -1,0 +1,148 @@
+﻿@{
+    ViewBag.Title = "Búsqueda";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@using COES.Dominio.DTO.Busqueda;
+
+<script src="~/Content/Scripts/jqueryui.js"></script>
+<script src="~/Areas/Web/Content/Scripts/busqueda.js"></script>
+<link href="~/Areas/Web/Content/Css/busquedas.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Búsqueda</div>
+    <div class="content-botonera"></div>
+</div>
+<div class="content-hijo" id="mainLayout" style="min-height:auto;">
+
+    <div id="mensaje"></div>
+
+    <div class="search-content">
+        <form id="selection-form">
+            <div class="option-container">
+                <input type="radio" id="option1" name="selection" value="Búsqueda Columnar" checked>
+                <label for="option1">Búsqueda Columnar</label>
+            </div>
+            <div class="option-container">
+                <input type="radio" id="option2" name="selection" value="Búsqueda Conversacional">
+                <label for="option2">Búsqueda Conversacional</label>
+            </div>
+            <br />
+            <label for="w3review">Búsqueda de texto</label>
+            <div class="ayuda-container" id="ayuda-container">
+                <div class="acordeon-header" onclick="toggleAcordeon()">¿Cómo realizar la búsqueda?</div>
+                <div class="acordeon-contenido" id="contenidoAcordeon">
+                    Este campo permite realizar consultas avanzadas sobre el índice de Azure Search. Puedes usar los siguientes operadores booleanos para refinar los resultados.
+                    <div style="display: flex; gap: 40px;">
+                        <ul>
+                            <li style="margin-top: 10px;"><code>+ </code> Obligatorio<br><small><code>+energía +renovable</code></small></li>
+                            <li style="margin-top: 10px;"><code>- </code> Excluir términos<br><small><code>energía -fósil</code></small></li>
+                        </ul>
+                        <ul>
+                            <li style="margin-top: 10px;"><code>| </code> Uno u otro<br><small><code>solar | eólica</code></small></li>
+                            <li style="margin-top: 10px;"><code>* </code> Prefijo<br><small><code>renov*</code></small></li>
+                        </ul>
+                        <ul>
+                            <li style="margin-top: 10px;"><code>" " </code> Frase exacta<br><small><code>"energía solar"</code></small></li>
+                            <li style="margin-top: 10px;"><code>( ) </code> Agrupación<br><small><code>+(energía | electricidad) +renovable</code></small></li>
+                        </ul>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <strong>Ejemplo combinado:</strong> Búsqueda inclusiva para la frase energía solar, opcional para eólica o hidráulica y excluyente para combustibles fósiles<br>
+                        <code>+"energía solar" (eólica | hidráulica) -"combustibles fósiles"</code>
+                    </div>
+                </div>
+            </div>
+            <input class="searchBox" type="text" id="Search_text" placeholder="Escriba el texto para buscar" style="width: 100%; height: 50px;" rows="4" cols="8">
+
+            <div class="table-container" id="table-container">
+                <table class="content-tabla-search" style="width:auto">
+                    <tr>
+                        <td class="registro-label">Concepto clave:</td>
+                        <td class="registro-control" colspan="8">
+                            @*<input type="text" id="Key_concepts" value="" style="width: 100%; height: auto;" />*@
+                            <input class="searchBox" type="text" id="Key_concepts" placeholder="Escriba el concepto clave" style="width: 100%; height: auto;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="registro-label">Tipo de documento:</td>
+                        <td class="registro-control" colspan="8">
+                            @Html.DropDownList("TipoDocumento", (SelectList)ViewBag.TiposDocumento, "Todos")
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Top:</td>
+                        <td class="registro-control">
+                            <input type="number" id="Result_number" value=50 min="1" step="1" max="100" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Palabras clave:</td>
+                        <td>
+                            <div id="fields-container">
+                                <div class="field-container">
+                                    <input class="dynamic-field" type="text" id="Key_word" placeholder="Escriba la palabra clave" style="width: 70%; height: auto;">
+                                    @*<input type="text" class="dynamic-field" placeholder="Agregar palabra clave" style="width: 80%; height: auto;">*@
+                                    <button id="add-field-btn" style="width: 16%;">➕</button>
+                                </div>
+                            </div>
+                            <p><span id="result-string"></span></p>
+                        </td>
+                        <td>
+                            <div id="exclude-fields-container">
+                                <div class="field-container">
+                                    <button id="exclude-field-btn" style="width: 16%;">➖</button>
+                                    <input class="exclude-dynamic-field" type="text" id="Key_word_excluded" placeholder="Escriba la palabra clave" style="width: 70%; height: auto;">
+                                    @*<input type="text" class="exclude-dynamic-field" placeholder="Excluir palabra clave" style="width: 70%; height: auto;">*@
+                                </div>
+                            </div>
+                            <p><span id="exclude-result-string"></span></p>
+                        </td>
+                    </tr>
+                    <tr>
+                    </tr>
+                    <tr>
+                        <td>Fecha Creación Desde:</td>
+                        <td>
+                            <input id="txtFechaInicio" type="text" value="2008/01/01" />
+                        </td>
+                        <td>Fecha Creación Hasta:</td>
+                        <td>
+                            <input id="txtFechaFin" type="text" value="@DateTime.Now.ToString("yyyy/MM/dd")" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <br style="display: block;" />
+            <input type="button" id="btnConsultar" value="Consultar" class="form-action" />
+            <br style="display: block;" />
+        </form>
+    </div>
+    <div id="listado" style="display: none;">
+    </div>
+
+
+</div>
+
+<div id="container-busqueda-conversacional" style="display: none; padding: 15px; padding-top: 0;">
+    <div style="width:60%; padding-right: 20px; border-right: 1px solid #ccc;">
+        <button class="btnPrimaryIntranet" id="clearHistoryButton">Limpiar</button>
+        <div id="chat-container" style="border: 1px solid #ddd; padding: 10px; height: 400px; overflow-y: auto;">
+            @if (Session["ChatHistory"] != null)
+            {
+                List<ChatHistoryDTO> historial = (List<ChatHistoryDTO>)Session["ChatHistory"];
+                foreach (var mensaje in historial)
+                {
+                    <p><strong>@(mensaje.Role == "user" ? "Tú" : "COES Search"):</strong> @mensaje.Content</p>
+                }
+            }
+        </div>
+        <h3>Referencias:</h3>
+        <ul id="citationsList" style="list-style: none; padding: 0;"></ul>
+    </div>
+    <div style="width: 40%; border-left: 1px solid #ccc; padding-left: 20px;">
+        <h3>Detalle de la Referencia:</h3>
+        <h4 id="referenceTitle">Selecciona una referencia</h4>
+        <p id="referenceContent">Aquí se mostrará el contenido de la referencia seleccionada.</p>
+        <p id="referenceUrl">Aquí se mostrará el Vínculo de la referencia seleccionada.</p>
+    </div>
+</div>

@@ -1,0 +1,103 @@
+﻿@model COES.MVC.Publico.Areas.MercadoMayorista.Models.CostoMarginalModel
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYSAy1CbZchRgcVtYn4A9xi3j9NwGgB_0&libraries=places&callback=initAutocomplete"
+        async defer></script>
+
+<script type="text/javascript">
+
+    var markers = [];
+    var map;
+    var coordenadas = @Html.Raw(Model.ListaCoordenada);
+
+    function initAutocomplete() {
+
+        var punto = new google.maps.LatLng(-9.752370139173285, -75.498046875);
+        var myOptions = {
+            zoom: 6,
+            center: punto,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        map = new google.maps.Map($("#map")[0], myOptions);
+        var infowindow = new google.maps.InfoWindow();
+
+        for(var i in coordenadas)
+        {
+            addMarker(coordenadas[i]['coorx'], coordenadas[i]['coory'], infowindow, coordenadas[i]['descripcion'], coordenadas[i]['color']);
+        }
+
+        var input = document.getElementById('pac-input');
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+
+        map.addListener('bounds_changed', function () {
+            searchBox.setBounds(map.getBounds());
+        });
+
+        searchBox.addListener('places_changed', function () {
+            var places = searchBox.getPlaces();
+
+            if (places.length == 0) {
+                return;
+            }
+
+            var bounds = new google.maps.LatLngBounds();
+            places.forEach(function (place) {
+                if (place.geometry.viewport) {
+                    bounds.union(place.geometry.viewport);
+                } else {
+                    bounds.extend(place.geometry.location);
+                }
+            });
+            map.fitBounds(bounds);
+        });
+    }
+
+    function addMarker(coorx, coory, infowindow, content, color) {
+        var marker = new google.maps.Marker({
+            position: { lat: coorx, lng: coory},
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                fillColor: color,
+                fillOpacity: 1,
+                scale: 8,
+                strokeColor: '#6F6F6F',
+                strokeWeight: 1
+            },
+            map: map
+        });
+
+        google.maps.event.addListener(marker, 'click', function() {
+            infowindow.setContent(content);
+            infowindow.open(map, marker);
+        });
+
+        markers.push(marker);
+    }
+
+    function setMapOnAll(map) {
+        for (var i = 0; i < markers.length; i++) {
+            markers[i].setMap(map);
+        }
+    }
+
+    function clearMarkers() {
+        setMapOnAll(null);
+    }
+
+    function showMarkers() {
+        setMapOnAll(map);
+    }
+
+    function deleteMarkers() {
+        clearMarkers();
+        markers = [];
+    }
+
+</script>
+
+<div class="contenedor-mapa">
+    <input id="pac-input" type="text">
+    <div id="map" style=" width: 900px; height: 800px; margin-top: 5px"></div>
+</div>

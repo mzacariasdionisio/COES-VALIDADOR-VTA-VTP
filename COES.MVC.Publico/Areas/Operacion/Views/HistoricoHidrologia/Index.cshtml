@@ -1,0 +1,293 @@
+﻿@model COES.MVC.Publico.Areas.Operacion.Models.HidrologiaModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Consulta Histórico Hidrología";
+}
+
+<!-- Estilos y Scripts -->
+
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Areas/Operacion/Content/Scripts/historicoHidrologia.js?v=@DateTime.Now.Ticks"></script>
+<script src="~/Content/Scripts/highstock.js"></script>
+
+<script type="text/javascript">
+
+
+    $(function () {
+
+    });
+
+    function CargarSemanaAnho2() {
+        CargarSemanaAnho();
+    }
+</script>
+
+<style>
+    
+    #listado table {
+        table-layout: auto !important;
+        width: auto !important;
+    }
+
+    
+    #listado th,
+    #listado td {
+        min-width: 160px;
+        white-space: nowrap;
+        text-align: center;
+        vertical-align: middle;
+    }
+</style>
+
+<style>
+    
+    #cbUnidades option[value="40"],
+    #cbUnidades option[value="1"] {
+        display: none;
+    }
+</style>
+
+<div class="main-banner" style="margin-top: -15px; background-image: url(../../Content/Images/Banners/CaracteristicasSEIN.jpg)">
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col col-md-3 order-1 order-md-0">
+            <nav class="sidebar">
+                <ul class="sidebar-nav list-unstyled">
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/DespachoProgramadoDiario" class="sidebar-nav--link">Despacho Programado Diario</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/DespachoProgramadoSemanal" class="sidebar-nav--link">Despacho Programado Semanal</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/CostoVariables" class="sidebar-nav--link">Costos Variables</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/Operacion/CaractSEIN/DespachoEjecutadoDiario" class="sidebar-nav--link">Despacho Ejecutado Diario</a>
+                    </li>
+                    <li class="sidebar-nav--item">
+                        <a href="~/eventos/mantenimiento/" class="sidebar-nav--link">Consulta de Mantenimientos</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="col-md-9 mb-md-2">
+            <div class="coes-box mb-3" style="overflow: inherit;">
+                <div class="coes-box--header coes-box--header--center-aligned">
+                    <h3 class="coes-box--title">Consulta Histórico Hidrología</h3>
+                </div>
+                <div class="coes-box--content container" id="mainLayout">
+                    <div class="coes-form-item--error coes-form-item coes-box coes-box--content pt-3 pe-3 ps-3 mb-3" id="mensaje" style="display: none;"></div>
+                    <div class="coes-filters d-flex">
+                        <form action="" class="w-100">
+                            <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap">
+                                <div class="coes-form-item">
+                                    <label class="d-block">Empresa:</label>
+                                    <select id="cbEmpresa" name="IdEmpresa" multiple="multiple">
+                                        @foreach (var item in Model.ListaEmpresas)
+                                        {
+                                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hfEmpresa" name="empresa" />
+                                </div>
+                                <div class="coes-form-item">
+                                    <label class="d-block">Cuenca:</label>
+                                    <select id="cbCuenca" name="IdCuenca" multiple="multiple">
+                                        @foreach (var item in Model.ListaCuenca)
+                                        {
+                                            <option value="@item.Equicodi">@item.Equinomb</option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hfCuenca" />
+                                </div>
+                                <div class="coes-form-item">
+                                    <label class="d-block">Instalación:</label>
+                                    <select id="cbFamilia" name="IdFamilia" multiple="multiple">
+                                        @foreach (var item in Model.ListaTipoRecursos)
+                                        {
+                                            <option value="@item.Famcodi">@item.Famnomb</option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hfFamilia" />
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap mt-2">
+                                <div class="coes-form-item">
+                                    <label class="d-block">Parámetros:</label>
+                                    <select id="cbUnidades" name="IdUnidad">
+                                        @foreach (var item in Model.ListaUnidades)
+                                        {
+                                            var descripcion = "";
+                                            switch (item.Tipoinfocodi)
+                                            {
+                                                case 11:
+                                                    descripcion = "Caudal (" + item.Tipoinfodesc + ")";
+                                                    break;
+                                                case 14:
+                                                    descripcion = "Volumen (" + item.Tipoinfodesc + ")";
+                                                    break;
+                                                case 40:
+                                                    descripcion = "Nivel (" + item.Tipoinfodesc + ")";
+                                                    break;
+                                                case 1:
+                                                    descripcion = "Médida Eléctrica (MW/MWh)";
+                                                    break;
+                                            }
+                                            <option value="@item.Tipoinfocodi">@descripcion</option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hfUnidad" />
+                                </div>
+                                <div class="coes-form-item">
+                                    <label class="d-block">Punto de Medición:</label>
+                                    <div id="listPuntoMedicion"></div>
+                                </div>
+                                <div class="coes-form-item" style="display: none !important;">
+                                    <label class="d-block">Tipo de Información:</label>
+                                    <select id="cbTipoInformacion" name="IdTipoInformacion" disabled>
+                                        @foreach (var item in Model.ListaLectura)
+                                        {
+                                            <option value="@item.Lectcodi">@item.Lectnomb</option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hfLectura" value="@Model.IdLectura" />
+                                </div>
+                            </div>
+                            @*Bloque de radio Buton*@
+
+                            <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap mt-4 mb-2">
+                                <div id="idTr2" class="coes-form-item">
+                                    <div>
+                                        <strong>&nbsp;&nbsp;&nbsp;Resolución:&nbsp;&nbsp;&nbsp;</strong>
+                                        <div id="divHoras" style="display:inline-block"><input type="radio" name="rbidTipo" onclick="handleClick(this);" value="0" />Hora</div>
+                                        <div id="divDia" style="display:inline-block"><input type="radio" name="rbidTipo" onclick="handleClick(this);" value="1" />Día</div>
+                                        <div id="divSemana1" style="display:inline-block"><input type="radio" name="rbidTipo" onclick="handleClick(this);" value="2" />Semana</div>
+                                        @*<div id="divSemana2" style="display:inline-block"><input type="radio"  name="rbidTipo" onclick="handleClick(this);" value="3" />Semana Cronológica</div>*@
+                                        <div id="divmes" style="display:inline-block"><input type="radio" name="rbidTipo" onclick="handleClick(this);" value="4" />Mes</div>
+                                        <div id="divanho" style="display:inline-block"><input type="radio" name="rbidTipo" onclick="handleClick(this);" value="5" />Año</div>
+                                        <input type="hidden" id="hfidTipo" />
+
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div id="div1" class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap mt-4 mb-2">
+                                <div class="coes-form-item">
+                                    <div>
+                                        <label class="d-block">Fecha desde:</label>
+                                        <input type="text" id="FechaDesde" name="FechaInicio" value="@Model.FechaInicio" />
+                                        <input type="hidden" id="hfFechaDesde" value="@Model.FechaInicio" />
+
+                                    </div>
+
+                                </div>
+                                @*Fechas*@
+                                <div class="coes-form-item">
+                                    <div>
+                                        <label class="d-block">Fecha hasta:</label>
+                                        <input type="text" id="FechaHasta" name="FechaFin" value="@Model.FechaFin" />
+                                        <input type="hidden" id="hfFechaHasta" value="@Model.FechaFin" />
+
+                                    </div>
+
+                                </div>
+
+
+
+                            </div>
+
+                            <div id="div2" class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap mt-4 mb-2">
+
+                                <div class="coes-form-item">
+                                    <label class="d-block">Año</label>
+                                    <div>
+
+                                        <input type="text" id="Anho" name="Año" value="@Model.Anho" onchange=CargarSemanaAnho2() />
+                                        <input type="hidden" id="hfAnho" value="@Model.Anho" />
+
+                                    </div>
+
+                                </div>
+
+                                <div class="coes-form-item">
+                                    <div>
+                                        <label class="d-block">Semana Inicio</label>
+                                        <div id="SemanaIni"> </div>
+                                        <input type="hidden" id="hfSemanaIni" />
+
+                                    </div>
+
+                                </div>
+
+                                <div class="coes-form-item">
+                                    <div>
+                                        <label class="d-block">Semana Fin</label>
+                                        <div id="SemanaFin"> </div>
+                                        <input type="hidden" id="hfSemanaFin" />
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div id="div3" class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap mt-4 mb-2">
+
+                                <div class="coes-form-item">
+                                    <div>
+                                        <label class="d-block">Año Inicio</label>
+                                        <input type="text" id="AnhoInicio" name="Añoinicio" value="@Model.Anho" onchange=CargarSemanaAnho2() />
+                                        <input type="hidden" id="hfAnhoInicio" value="@Model.Anho" />
+
+                                    </div>
+
+                                </div>
+
+                                <div class="coes-form-item">
+                                    <div>
+                                        <label class="d-block">Año Fin</label>
+                                        <input type="text" id="AnhoFin" name="Añofin" value="@Model.Anho" onchange=CargarSemanaAnho2() />
+                                        <input type="hidden" id="hfAnhoFin" value="@Model.Anho" />
+
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+
+                            <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap mt-4 mb-2">
+                                <div class="coes-form-item">
+                                    <input type="button" id="btnBuscar" class="coes-form-item--submit" value="Ver Reporte" />
+                                </div>
+                                <div class="coes-form-item">
+                                    <input type="button" id="btnExpotar" class="coes-form-item--submit" value="Exportar Reporte" />
+                                </div>
+                                <div class="coes-form-item">
+                                    <input type="button" id="btnGrafico" class="coes-form-item--submit" value="Ver Gráfico" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="content-tabla">
+                    <div class="tabla-header">
+                        <div class="table-paginado" id="paginado"></div>
+                    </div>
+                    <div style="clear:both; height:5px"></div>
+                    <div class="table-list" id="listado"></div>
+                </div>
+                <input type="hidden" id="hfLectPeriodo" value="@Model.CadenaLectPeriodo" />
+                <input type="hidden" id="hfLectCodi" value="@Model.CadenaLectCodi" />
+            </div>
+
+        </div>
+    </div>
+</div>
+

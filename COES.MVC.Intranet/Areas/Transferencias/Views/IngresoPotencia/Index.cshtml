@@ -1,0 +1,190 @@
+﻿@model COES.Dominio.DTO.Transferencias.PeriodoDTO
+@{
+    ViewBag.Title = "Transferencias - Ingreso por Potencia";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var periodo = (IEnumerable<SelectListItem>)TempData["Pericodigo"];
+    var periodo1 = (IEnumerable<SelectListItem>)TempData["Pericodigo1"];
+}
+<script src="~/Areas/Transferencias/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/load.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/ingpotencia.js?v=1"></script>
+<link href="~/Areas/Transferencias/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css" rel="stylesheet" />
+<script>
+    procesarArchivo = function (sFile, sPericodi,sVersion) {
+        $.ajax({
+            type: 'POST',
+            url: siteRoot + 'transferencias/ingresopotencia/procesararchivo',
+            data: { sNombreArchivo: sFile, sPericodi: sPericodi, sVersion: sVersion },
+            dataType: 'json',
+            cache: false,
+            success: function (resultado) {
+                if (resultado == "1") {
+                    mostrarMensaje("Archivo procesado");
+                }
+                else {
+                    mostrarMensaje(resultado);
+                }
+            },
+            error: function () {
+                mostrarError();
+            }
+        });
+    }
+</script>
+
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo">Ingreso por Potencia por Mes de Valorización</div>
+        <div class="content-botonera">
+        </div>
+    </div>
+
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Carga de Ingreso por potencia</a></li>
+                <li class='tab'><a href="#paso2">Consultar</a></li>
+            </ul>
+
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Información de carga de datos</b></div></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="editor-label">
+                                        @Html.LabelFor(model => model.PeriCodi, "Periodo")
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("Pericodi", @periodo, "--Seleccione--")
+                                        @Html.ValidationMessageFor(model => model.PeriCodi)
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="editor-label">Versión</div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="Version" style="width:100px;"></select>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="formulario-item" style="width:1000px" id="divOpcionCarga">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td><div class="formulario-label" style="width:400px">Seleccionar archivo de ingresos por potencia (Extensión: .xlsx):</div></td>
+                                                <td><div class="formulario-control" style="width:100px"><input type="button" id="btnSelectFile" value="Seleccionar" /></div></td>
+                                                <td><div class="formulario-control" style="width:100px" id="container"><input type="button" id="btnProcesarFile" value="Procesar" /></div></td>
+                                                @*ASSETEC 20181224*@
+                                                <td><div class="formulario-control" style="width:150px"><input type="button" id="btnCopiarVTP" value="Copiar desde VTP" /></div></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <script type="text/javascript">
+                                        var fullDate = new Date();
+                                        var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                                        var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                                        var uploader = new plupload.Uploader({
+                                            runtimes: 'html5,flash,silverlight,html4',
+                                            browse_button: 'btnSelectFile',
+                                            container: document.getElementById('container'),
+                                            url: siteRoot + 'transferencias/ingresopotencia/upload?sFecha=' + sFecha,
+                                            flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                                            silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                                            multi_selection: false,
+                                            filters: {
+                                                max_file_size: '100mb',
+                                                mime_types: [
+                                                    { title: "Archivos Excel .xlsx", extensions: "xlsx" }
+                                                ]
+                                            },
+                                            init: {
+                                                PostInit: function () {
+                                                    document.getElementById('btnProcesarFile').onclick = function () {
+                                                        if ($("#Pericodi").val() == "") {
+                                                            mostrarMensaje("Por favor, seleccione un periodo");
+                                                        }
+                                                        else {
+                                                            if (uploader.files.length > 0) {
+                                                                uploader.start();
+                                                            }
+                                                            else
+                                                                loadValidacionFile("Seleccione archivo.");
+                                                        }
+                                                        return false;
+                                                    };
+                                                },
+                                                FilesAdded: function (up, files) {
+                                                    if (uploader.files.length == 2) {
+                                                        uploader.removeFile(uploader.files[0]);
+                                                    }
+                                                    plupload.each(files, function (file) {
+                                                        loadInfoFile(file.name, plupload.formatSize(file.size));
+                                                    });
+                                                    up.refresh();
+                                                },
+                                                UploadProgress: function (up, file) {
+                                                    mostrarProgreso(file.percent);
+                                                },
+                                                UploadComplete: function (up, file) {
+                                                    procesarArchivo(sFecha + "_" + file[0].name, $("#Pericodi").val(), $("#Version").val());
+                                                },
+                                                Error: function (up, err) {
+                                                    loadValidacionFile(err.code + "-" + err.message);
+                                                }
+                                            }
+                                        });
+
+                                        uploader.init();
+
+                                    </script>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="progreso"></div>
+                    <div id="fileInfo"></div>
+                </div>
+                <div id="paso2">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="6"><div class="editor-label" style="color:#FFFFFF;"><b>Filtros</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">@Html.LabelFor(model => model.PeriCodi, "Periodo")</div></td>
+                                <td>
+                                    <div class="editor-field" style="width:100px;">
+                                        @Html.DropDownList("Pericodi2", @periodo1, "--Seleccione--")
+                                        @Html.ValidationMessageFor(model => model.PeriCodi)
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="editor-label">Versión </div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="VersionB" style="width:100px;"></select>
+                                    </div>
+                                </td>
+                                <td style="text-align:right;"><div><input type="button" id="btnBuscar" value="Consultar" /></div></td>
+                                <td style="text-align:left;"><div><input type="button" id="btnGenerarExcel" value="Exportar Datos" /></div></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="listado" id="listado"> </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="popup">    </div>

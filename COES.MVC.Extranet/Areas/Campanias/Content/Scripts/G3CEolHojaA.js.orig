@@ -1,0 +1,940 @@
+
+var catPropietario = 2;
+var catConcesionTemporal = 3;
+var catConcesionActual = 4;
+var catSerieVelocidad = 9;
+var catEstudioGeol = 10;
+var catEstudioTopo = 11;
+var catTipTurbina = 12;
+var catTipParqueEol = 13;
+var catTipGenerador = 14;
+var catNomSubEsacionSein = 15;
+var catPerfil = 16;
+var catPrefactibilidad = 17;
+var catFactibilidad = 18;
+var catEstudDefinitivo = 19;
+var catEia = 20;
+var catBacterias = 24;
+
+var tablaEolHoja = null;
+var datosGrafico = null;
+
+seccionUbicacionEOL = 12;
+seccionUniEol = 13;
+
+
+$(function () {
+    $('#curvaTurbinaCon').hide();
+    $('#txtFechaAdjudicacionTemporal').Zebra_DatePicker({
+        format: 'd-m-Y',
+    });
+
+    $('#txtFechaAdjudicacionActual').Zebra_DatePicker({
+        format: 'd-m-Y',
+    });
+    $('#txtFechaInicioContruccion').Zebra_DatePicker({
+        format: 'm-Y',
+    });
+    $('#txtFechaOperacionComercial').Zebra_DatePicker({
+        format: 'm-Y',
+    });
+
+    cargarCatalogo(catPropietario, "#cmbPropietario");
+    cargarCatalogo(catConcesionTemporal, "#cmbConsesionTem");
+    cargarCatalogo(catConcesionActual, "#cmbtipoConsesionActual");
+    cargarCatalogo(catSerieVelocidad, "#cmbSerieVelViento");
+    cargarCatalogo(catEstudioGeol, "#cmbEstudioGeologico");
+    cargarCatalogo(catEstudioTopo, "#cmbEstudioTopo");
+    cargarCatalogo(catTipTurbina, "#cmbTipTurbina");
+    cargarCatalogo(catTipParqueEol, "#cmbTipParqueEol");
+    cargarCatalogo(catTipGenerador, "#cmbTipGenerador");
+    cargarCatalogo(catNomSubEsacionSein, "#cmbNomSubEsacionSein");
+    cargarCatalogo(catPerfil, "#cmbPerfil");
+    cargarCatalogo(catPrefactibilidad, "#cmbPrefactibilidad");
+    cargarCatalogo(catFactibilidad, "#cmbFactibilidad");
+    cargarCatalogo(catEstudDefinitivo, "#cmbEstudDefinitivo");
+    cargarCatalogo(catEia, "#cmbEia");
+    cargarCatalogo(catBacterias, "#cmbBacterias");
+    cargarDepartamentos();
+    $('#btnGrabarEolicaHojaA').on('click', function () {
+        console.log("ejecucionGrabar")
+        grabarEolHojaA();
+    });
+    $('#btnGrabarEolicaHojaAGrafico').on('click', function () {
+        $('#dataFichaAEo').hide();
+        $('#curvaTurbinaCon').show();
+    });
+    crearTablaTurbina();
+    console.log("ejecucionGrabar");
+    crearUploadUbicacionEolA();
+    crearUploadUnidadEolA();
+
+});
+
+
+function cargarDepartamentos() {
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'ListarDepartamentos',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(''),
+        success: function (eData) {
+            console.log(eData);
+            cargarListaDepartamento(eData);
+        },
+        error: function (err) {
+            alert("Ha ocurrido un error");
+        }
+    });
+}
+
+function cargarListaDepartamento(departamentos) {
+    var selectDepartamentos = $('#cmbDepartamento');
+    $.each(departamentos, function (index, departamento) {
+        // Crear la opci�n
+        var option = $('<option>', {
+            value: departamento.Id,
+            text: departamento.Nombre
+        });
+
+        // Agregar la opci�n al select
+        selectDepartamentos.append(option);
+    });
+
+    selectDepartamentos.change(function () {
+        // Obtener el id del departamento seleccionado
+        var idSeleccionado = $(this).val();
+        // Llamar a la funci�n con el id del departamento
+        console.log(idSeleccionado);
+        cargarProvincia(idSeleccionado);
+    });
+
+}
+
+
+function cargarProvincia(id) {
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'ListarProvincias',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify({ id: id }),
+        success: function (eData) {
+            console.log(eData);
+            cargarListaProvincia(eData);
+        },
+        error: function (err) {
+            alert("Ha ocurrido un error");
+        }
+    });
+}
+
+function cargarListaProvincia(provincias) {
+    var selectProvincias = $('#cmbProvincia');
+    $.each(provincias, function (index, provincia) {
+        // Crear la opci�n
+        var option = $('<option>', {
+            value: provincia.Id,
+            text: provincia.Nombre
+        });
+
+        // Agregar la opci�n al select
+        selectProvincias.append(option);
+    });
+
+    selectProvincias.change(function () {
+        // Obtener el id del departamento seleccionado
+        var idSeleccionado = $(this).val();
+        // Llamar a la funci�n con el id del departamento
+        cargarDistrito(idSeleccionado);
+    });
+
+}
+
+function cargarDistrito(id) {
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'ListarDistritos',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify({ id: id }),
+        success: function (eData) {
+            console.log(eData);
+            cargarListaDistritos(eData);
+        },
+        error: function (err) {
+            alert("Ha ocurrido un error");
+        }
+    });
+}
+
+function cargarListaDistritos(distritos) {
+    var selectDistritos = $('#cmbDistrito');
+    $.each(distritos, function (index, distrito) {
+        // Crear la opci�n
+        var option = $('<option>', {
+            value: distrito.Id,
+            text: distrito.Nombre
+        });
+
+        // Agregar la opci�n al select
+        selectDistritos.append(option);
+    });
+
+}
+
+function getEolHojaA() {
+    var param = {};
+    param.Centralnombre = $("#txtCentralnombre").val();
+    param.Distrito = $("#cmbDistrito").val();
+    param.Propietario = $("#cmbPropietario").val();
+    param.OtroPropietario = $("#txtOtroPropietario").val();
+    param.Sociooperador = $("#txtOperador").val();
+    param.Socioinversionista = $("#txtInversionista").val();
+    param.Concesiontemporal = $("#cmbConsesionTem").val();
+    param.Fechaconcesiontemporal = $("#txtFechaAdjudicacionTemporal").val();
+    param.Tipoconcesionactual = $("#cmbtipoConsesionActual").val();
+    param.Fechaconcesionactual = $("#txtFechaAdjudicacionActual").val();
+    param.Nombreestacionmet = $("#txtNombreestacionmet").val();
+    param.Numestacionmet = $("#txtNumestacionmet").val();
+    param.Serievelviento = $("#cmbSerieVelViento").val();
+    param.Periododisanio = $("#txtPeriododisanio").val();
+    param.Estudogeologico = $("#cmbEstudioGeologico").val();
+    param.Perfodiamantinas = $("#txtPerfodiamantinas").val();
+    param.Numcalicatas = $("#txtNumcalicatas").val();
+    param.Estudiotopografico = $("#cmbEstudioTopo").val();
+    param.Levantamientotopografico = $("#txtLevantamientoTop").val();
+    param.Potenciainstalada = $("#txtPotenciainstalada").val();
+    param.Velvientoinstalada = $("#txtVelvientoinstalada").val();
+    param.Horpotnominal = $("#txtHorpotnominal").val();
+    param.Veldesconexion = $("#txtVeldesconexion").val();
+    param.Velconexion = $("#txtVelconexion").val();
+    param.Tipocontrcentral = $("#txtTipoControlCentral").val();
+    param.Rangovelturbina = $("#txtRangoVelocidad").val();
+    param.Tipoturbina = $("#cmbTipTurbina").val();
+    param.Energiaanual = $("#txtEnergiaanualC").val();
+    param.Tipoparqelico = $("#cmbTipParqueEol").val();
+    param.Tipotecgenerador = $("#cmbTipGenerador").val();
+    param.Numpalturbina = $("#txtTipoTurbina").val();
+    param.Diarotor = $("#txtDiarotor").val();
+    param.Longpala = $("#txtLongpala").val();
+    param.Alturatorre = $("#txtAlturatorre").val();
+    param.Potnomgenerador = $("#txtPotenciaNom").val();
+    param.Numunidades = $("#txtNumeroUnidAero").val();
+    param.Numpolos = $("#txtNumeroPolos").val();
+    param.Tensiongeneracion = $("#txtTensionGeneracion").val();
+    param.Bess = $("#cmbBacterias").val();
+    param.Energiamaxbat = $("#txtEnergiamaxbat").val();
+    param.Potenciamaxbat = $("#txtPotenciamaxbat").val();
+    param.Eficargabat = $("#txtEficargabat").val();
+    param.Efidescargabat = $("#txtEfidescargabat").val();
+    param.Tiempxmaxregulacion = $("#txtTiempoMax").val();
+    param.Rampcargdescarg = $("#txtRampaCargDes").val();
+    param.Tensionkv = $("#txtTensionkv").val();
+    param.Longitudkm = $("#txtLongitudkm").val();
+    param.Numternas = $("#txtNTemasTC").val();
+    param.Nombresubestacion = $("#cmbNomSubEsacionSein").val();
+    param.Perfil = $("#cmbPerfil").val();
+    param.Prefactibilidad = $("#cmbPrefactibilidad").val();
+    param.Factibilidad = $("#cmbFactibilidad").val();
+    param.Estudiodefinitivo = $("#cmbEstudDefinitivo").val();
+    param.Eia = $("#cmbEia").val();
+    param.Fechainicioconstruccion = $("#txtFechaInicioContruccion").val();
+    param.Periodoconstruccion = $("#txtFechaPeriodoContruccion").val();
+    param.Fechaoperacioncomercial = $("#txtFechaOperacionComercial").val();
+    param.Comentarios = $("#txtComentarios").val();
+    console.log(param);
+    return param;
+}
+
+function setEolHojaA(param) {
+    $("#txtCentralnombre").val(param.Centralnombre);
+    $("#cmbDistrito").val(param.Distrito);
+    $("#cmbPropietario").val(param.Propietario);
+    $("#txtOtroPropietario").val(param.OtroPropietario);
+    $("#txtOperador").val(param.Sociooperador);
+    $("#txtInversionista").val(param.Socioinversionista);
+    $("#cmbConsesionTem").val(param.Concesiontemporal);
+    $("#txtFechaAdjudicacionTemporal").val(param.Fechaconcesiontemporal);
+    $("#cmbtipoConsesionActual").val(param.Tipoconcesionactual);
+    $("#txtFechaAdjudicacionActual").val(param.Fechaconcesionactual);
+    $("#txtNombreestacionmet").val(param.Nombreestacionmet);
+    $("#txtNumestacionmet").val(param.Numestacionmet);
+    $("#cmbSerieVelViento").val(param.Serievelviento);
+    $("#txtPeriododisanio").val(param.Periododisanio);
+    $("#cmbEstudioGeologico").val(param.Estudogeologico);
+    $("#txtPerfodiamantinas").val(param.Perfodiamantinas);
+    $("#txtNumcalicatas").val(param.Numcalicatas);
+    $("#cmbEstudioTopo").val(param.Estudiotopografico);
+    $("#txtLevantamientoTop").val(param.Levantamientotopografico);
+    $("#txtPotenciainstalada").val(param.Potenciainstalada);
+    $("#txtVelvientoinstalada").val(param.Velvientoinstalada);
+    $("#txtHorpotnominal").val(param.Horpotnominal);
+    $("#txtVeldesconexion").val(param.Veldesconexion);
+    $("#txtVelconexion").val(param.Velconexion);
+    $("#txtTipoControlCentral").val(param.Tipocontrcentral);
+    $("#txtRangoVelocidad").val(param.Rangovelturbina);
+    $("#cmbTipTurbina").val(param.Tipoturbina);
+    $("#txtEnergiaanualC").val(param.Energiaanual);
+    $("#cmbTipParqueEol").val(param.Tipoparqelico);
+    $("#cmbTipGenerador").val(param.Tipotecgenerador);
+    $("#txtTipoTurbina").val(param.Numpalturbina);
+    $("#txtDiarotor").val(param.Diarotor);
+    $("#txtLongpala").val(param.Longpala);
+    $("#txtAlturatorre").val(param.Alturatorre);
+    $("#txtPotenciaNom").val(param.Potnomgenerador);
+    $("#txtNumeroUnidAero").val(param.Numunidades);
+    $("#txtNumeroPolos").val(param.Numpolos);
+    $("#txtTensionGeneracion").val(param.Tensiongeneracion);
+    $("#cmbBacterias").val(param.Bess);
+    $("#txtEnergiamaxbat").val(param.Energiamaxbat);
+    $("#txtPotenciamaxbat").val(param.Potenciamaxbat);
+    $("#txtEficargabat").val(param.Eficargabat);
+    $("#txtEfidescargabat").val(param.Efidescargabat);
+    $("#txtTiempoMax").val(param.Tiempxmaxregulacion);
+    $("#txtRampaCargDes").val(param.Rampcargdescarg);
+    $("#txtTensionkv").val(param.Tensionkv);
+    $("#txtLongitudkm").val(param.Longitudkm);
+    $("#txtNTemasTC").val(param.Numternas);
+    $("#cmbNomSubEsacionSein").val(param.Nombresubestacion);
+    $("#cmbPerfil").val(param.Perfil);
+    $("#cmbPrefactibilidad").val(param.Prefactibilidad);
+    $("#cmbFactibilidad").val(param.Factibilidad);
+    $("#cmbEstudDefinitivo").val(param.Estudiodefinitivo);
+    $("#cmbEia").val(param.Eia);
+    $("#txtFechaInicioContruccion").val(param.Fechainicioconstruccion);
+    $("#txtFechaPeriodoContruccion").val(param.Periodoconstruccion);
+    $("#txtFechaOperacionComercial").val(param.Fechaoperacioncomercial);
+    $("#txtComentarios").val(param.Comentarios);
+    if (modoModel == "consultar") {
+        desactivarCamposFormulario('FichaA');
+        $("#btnGrabarEolicaHojaA").hide();
+    }
+
+}
+
+function cargarDatosA() {
+    console.log("Editar");
+    if (modoModel == "editar" || modoModel == "consultar") {
+        var idProyecto = $("#txtPoyCodi").val();
+        $.ajax({
+            type: 'POST',
+            url: controladorFichas + 'GetEolHojaA',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({ id: idProyecto }),
+            
+            success: function (response) {
+                console.log(response);
+                var hojaAData = response.responseResult;
+                setEolHojaA(hojaAData);
+                setDatosTablaTurbina(hojaAData.RegHojaEolADetDTOs);
+                cargarArchivosRegistrados(seccionUbicacionEOL, '#tablaUbicacionEol');
+                cargarArchivosRegistrados(seccionUniEol, '#tablaUnidadAer');
+            },
+            error: function () {
+                mostrarMensaje('mensaje', 'error', 'Se ha producido un error.');
+            }
+        });
+    }
+}
+
+
+function eliminarFile(id) {
+    if (confirm('�Est� seguro de realizar esta operaci�n?')) {
+        $.ajax({
+            type: 'POST',
+            url: controladorFichas + 'EliminarFile',
+            data: {
+                id: id,
+            },
+            dataType: 'json',
+            success: function (result) {
+                if (result == 1) {
+                    $("#fila" + id).remove();
+                    mostrarMensaje('mensajeFicha', 'exito', 'El archivo se elimin� correctamente.');
+                }
+                else {
+                    mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+                }
+            },
+            error: function () {
+                mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+            }
+        });
+
+
+
+    }
+
+}
+
+<<<<<<< HEAD
+=======
+function crearPupload() {
+    uploader = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnSubirFormato',
+        url: controladorFichas + 'UploadArchivoGeneral',
+        flash_swf_url: 'Scripts/Moxie.swf',
+        silverlight_xap_url: 'Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+            max_file_size: '5mb',
+            mime_types: [
+                { title: "Imagenes", extensions: "jpg,jpeg,gif,png" },
+                { title: "Archivos comprimidos", extensions: "zip,rar,kmz" },
+                { title: "Documentos", extensions: "pdf,doc,docx,xls,xlsx,ppt,pptx,csv,msg" }
+            ]
+        },
+        init: {
+            FilesAdded: function (up, files) {
+                if (uploader.files.length == 2) {
+                    uploader.removeFile(uploader.files[0]);
+                }
+                uploader.start();
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Por favor espere ...(<strong>" + file.percent + "%</strong>)");
+            },
+            FileUploaded: function (up, file, response) {
+                var json = JSON.parse(response.response);
+                if (json.indicador == 1) {
+                    up.removeFile(file);
+                    procesarArchivoUbicacion(json.fileNameNotPath, json.nombreReal, json.extension)
+                }
+            },
+            UploadComplete: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Subida completada. <strong>Por favor espere...</strong>");
+
+            },
+            Error: function (up, err) {
+                mostrarMensaje('mensajeFicha', 'error', err.code + "-" + err.message);
+            }
+        }
+    });
+    uploader.init();
+}
+
+function crearPuploadInfBas() {
+    uploaderInfBas = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnSubirFormatoInfBasica',
+        url: controladorFichas + 'UploadArchivoGeneral',
+        flash_swf_url: 'Scripts/Moxie.swf',
+        silverlight_xap_url: 'Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+            max_file_size: '5mb',
+            mime_types: [
+                { title: "Imagenes", extensions: "jpg,jpeg,gif,png" },
+                { title: "Archivos comprimidos", extensions: "zip,rar" },
+                { title: "Documentos", extensions: "pdf,doc,docx,xls,xlsx,ppt,pptx,csv,msg" }
+            ]
+        },
+        init: {
+            FilesAdded: function (up, files) {
+                if (uploaderInfBas.files.length == 2) {
+                    uploaderInfBas.removeFile(uploaderInfBas.files[0]);
+                }
+                uploaderInfBas.start();
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Por favor espere ...(<strong>" + file.percent + "%</strong>)");
+            },
+            FileUploaded: function (up, file, response) {
+                var json = JSON.parse(response.response);
+                if (json.indicador == 1) {
+                    up.removeFile(file);
+                    procesarArchivoInfBas(json.fileNameNotPath, json.nombreReal, json.extension)
+                }
+            },
+            UploadComplete: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Subida completada. <strong>Por favor espere...</strong>");
+
+            },
+            Error: function (up, err) {
+                mostrarMensaje('mensajeFicha', 'error', err.code + "-" + err.message);
+            }
+        }
+    });
+    uploaderInfBas.init();
+}
+
+function crearPuploadEquipamiento() {
+    uploaderEquipamiento = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnSubirFormatoEquipamiento',
+        url: controladorFichas + 'UploadArchivoGeneral',
+        flash_swf_url: 'Scripts/Moxie.swf',
+        silverlight_xap_url: 'Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+            max_file_size: '5mb',
+            mime_types: [
+                { title: "Imagenes", extensions: "jpg,jpeg,gif,png" },
+                { title: "Archivos comprimidos", extensions: "zip,rar" },
+                { title: "Documentos", extensions: "pdf,doc,docx,xls,xlsx,ppt,pptx,csv,msg" }
+            ]
+        },
+        init: {
+            FilesAdded: function (up, files) {
+                if (uploaderEquipamiento.files.length == 2) {
+                    uploaderEquipamiento.removeFile(uploaderEquipamiento.files[0]);
+                }
+                uploaderEquipamiento.start();
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Por favor espere ...(<strong>" + file.percent + "%</strong>)");
+            },
+            FileUploaded: function (up, file, response) {
+                var json = JSON.parse(response.response);
+                if (json.indicador == 1) {
+                    up.removeFile(file);
+                    procesarArchivoEquipamiento(json.fileNameNotPath, json.nombreReal, json.extension)
+                }
+            },
+            UploadComplete: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Subida completada. <strong>Por favor espere...</strong>");
+
+            },
+            Error: function (up, err) {
+                mostrarMensaje('mensajeFicha', 'error', err.code + "-" + err.message);
+            }
+        }
+    });
+    uploaderEquipamiento.init();
+}
+
+function procesarArchivoInfBas(fileNameNotPath, nombreReal, tipo) {
+    param = {};
+    param.SeccCodi = 2;
+    param.ProyCodi = $("#txtPoyCodi").val();;
+    param.ArchNombre = nombreReal;
+    param.ArchNombreGenerado = fileNameNotPath;
+    param.ArchTipo = tipo;
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'GrabarRegistroArchivo',
+        data: param,
+        
+        success: function (result) {
+            if (result.responseResult > 0) {
+                mostrarMensaje('mensajeFicha', 'exito', 'Archivo registrado correctamente.');
+                console.log("Id Archivo:" + result.id)
+                agregarFilaInfBas(nombreReal, result.id);
+            }
+            else {
+                mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+            }
+        },
+        error: function () {
+            mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+        }
+    });
+}
+
+function procesarArchivoEquipamiento(fileNameNotPath, nombreReal, tipo) {
+    param = {};
+    param.SeccCodi = 3;
+    param.ProyCodi = $("#txtPoyCodi").val();;
+    param.ArchNombre = nombreReal;
+    param.ArchNombreGenerado = fileNameNotPath;
+    param.ArchTipo = tipo;
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'GrabarRegistroArchivo',
+        data: param,
+        
+        success: function (result) {
+            if (result.responseResult > 0) {
+                mostrarMensaje('mensajeFicha', 'exito', 'Archivo registrado correctamente.');
+                console.log("Id Archivo:" + result.id)
+                agregarFilaEquipamiento(nombreReal, result.id);
+            }
+            else {
+                mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+            }
+        },
+        error: function () {
+            mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+        }
+    });
+}
+
+function procesarArchivoUbicacion(fileNameNotPath, nombreReal, tipo) {
+    param = {};
+    param.SeccCodi = 1;
+    param.ProyCodi = $("#txtPoyCodi").val();;
+    param.ArchNombre = nombreReal;
+    param.ArchNombreGenerado = fileNameNotPath;
+    param.ArchTipo = tipo;
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'GrabarRegistroArchivo',
+        data: param,
+        
+        success: function (result) {
+            if (result.responseResult > 0) {
+                mostrarMensaje('mensajeFicha', 'exito', 'Archivo registrado correctamente.');
+                console.log("Id Archivo:" + result.id)
+                agregarFilaUbicacion(nombreReal, result.id);
+            }
+            else {
+                mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+            }
+        },
+        error: function () {
+            mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+        }
+    });
+}
+
+function agregarFilaUbicacion(nombre, id) {
+    // Obtener el cuerpo de la tabla
+    var nuevaFila = '<tr id="fila' + id + '">' +
+        '<td>' + nombre + '</td>' +
+        '<td> <a href="#"><img src="' + siteRoot + 'Content/Images/eliminar.png" class="btnEliminar" onclick="eliminarFile(' + id + ')" title="Eliminar archivo"/></a></td>' +
+        '</tr>';
+    var tabla = $('#tablaUbicacion');
+    tabla.append(nuevaFila);
+}
+
+function agregarFilaInfBas(nombre, id) {
+    // Obtener el cuerpo de la tabla
+    var nuevaFila = '<tr id="fila' + id + '">' +
+        '<td>' + nombre + '</td>' +
+        '<td> <a href="#"><img src="' + siteRoot + 'Content/Images/eliminar.png" class="btnEliminar" onclick="eliminarFile(' + id + ')" title="Eliminar archivo"/></a></td>' +
+        '</tr>';
+    var tabla = $('#tablaInfBasica');
+    tabla.append(nuevaFila);
+}
+
+function agregarFilaEquipamiento(nombre, id) {
+    // Obtener el cuerpo de la tabla
+    var nuevaFila = '<tr id="fila' + id + '">' +
+        '<td>' + nombre + '</td>' +
+        '<td> <a href="#"><img src="' + siteRoot + 'Content/Images/eliminar.png" class="btnEliminar" onclick="eliminarFile(' + id + ')" title="Eliminar archivo"/></a></td>' +
+        '</tr>';
+    var tabla = $('#tablaEquipamiento');
+    tabla.append(nuevaFila);
+}
+>>>>>>> 073f40b254308ac5e3aada51340b200a47badce2
+
+function grabarEolHojaA() {
+    cargarLoading();
+    var param = {};
+    param.TransmisionProyectoDTO = getCabeceraProyecto();
+    var idProyecto = $("#txtPoyCodi").val();
+    if (idProyecto != "0") {
+        param.ProyCodi = idProyecto;
+        param.RegHojaEolADTO = getEolHojaA();
+        param.RegHojaEolADetDTOs = getDatosTablaTurbina();
+        $.ajax({
+            type: 'POST',
+            url: controlador + 'GrabarEolHojaA',
+            data: param,
+            
+            success: function (result) {
+                stopLoading();
+                if (result==1) {
+                    mostrarMensaje('mensajeFicha', 'exito', 'Los datos se grabaron correctamente.')
+                }
+                else {
+                    mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+                }
+            },
+            error: function () {
+                stopLoading();
+                mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+            }
+        });
+    }
+
+}
+
+function crearTablaTurbina() {
+    var data = [];
+
+    if (datosGrafico != null && datosGrafico.length > 0) {
+        for (var i = 0; i < datosGrafico.length; i++) {
+            var row = [];
+            row.push(datosGrafico[i].Speed);
+            row.push(datosGrafico[i].Acciona);
+            data.push(row);
+        }
+    } else {
+        for (var i = 0; i < 100; i++) {
+            var row = [];
+            row.push("");
+            row.push("");
+            data.push(row);
+        }
+    }
+    var grilla = document.getElementById('tableTurbina');
+
+    if (typeof tablaEolHoja !== 'undefined' && tablaEolHoja !== null) {
+        tablaEolHoja.destroy();
+    }
+
+    tablaEolHoja = new Handsontable(grilla, {
+        data: data,
+        rowHeaders: true,
+        colHeaders: true,
+        colWidths: 170,
+        manualColumnResize: true,
+        columnSorting: false,
+        filters: false,
+        contextMenu: true,
+        autoColumnSize: true,
+        nestedHeaders: [
+            [
+                { label: 'speed', colspan: 1 },
+                { label: 'Acciona_AW100_3000', colspan: 1},
+            ]
+        ]
+    });
+
+    tablaEolHoja.render();
+}
+
+
+function getDatosTablaTurbina() {
+    var datosArray = tablaEolHoja.getData();
+    var datosObjetos = datosArray.map(function (row) {
+        return {
+            Speed: row[0],               // speed
+            Acciona: row[1]   // Acciona_AW100_3000
+        };
+    }).filter(function (obj) {
+        // Validar que ambos campos tengan datos antes de guardarlos
+        return obj.Speed !== "" && obj.Acciona !== "";
+    });
+    console.log(datosObjetos);
+    return datosObjetos;
+}
+
+function setDatosTablaTurbina(nuevosDatos) {
+    var data = [];
+
+    if (nuevosDatos != null && nuevosDatos.length > 0) {
+        for (var i = 0; i < nuevosDatos.length; i++) {
+            var row = [];
+            row.push(nuevosDatos[i].Speed);
+            row.push(nuevosDatos[i].Acciona);
+            data.push(row);
+        }
+    } else {
+        for (var i = 0; i < 100; i++) {
+            var row = [];
+            row.push("");
+            row.push("");
+            data.push(row);
+        }
+    }
+
+    if (typeof tablaEolHoja !== 'undefined' && tablaEolHoja !== null) {
+        tablaEolHoja.loadData(data);
+    } else {
+        console.error("La tabla no est� inicializada. Por favor, crea la tabla antes de actualizar los datos.");
+    }
+}
+
+function generarGrafica() {
+    var tableData = tablaEolHoja.getData();
+    datosGrafico = getDatosTablaTurbina();
+    var categories = [];
+    var data = [];
+
+    for (var i = 0; i < tableData.length; i++) {
+        if (tableData[i][0] !== "" && tableData[i][1] !== "") {
+            categories.push(tableData[i][0]);
+            data.push(parseFloat(tableData[i][1]));
+        }
+    }
+
+    Highcharts.chart("containerGraficaEO", {
+        title: {
+            text: "Acciona_AW100_3000",
+        },
+        xAxis: {
+            categories: categories,
+            title: {
+                text: null,
+            },
+        },
+        yAxis: {
+            min: 0,
+            max: 2,
+            title: {
+                text: null,
+            },
+        },
+        series: [
+            {
+                name: "Series 1",
+                data: data,
+                marker: {
+                    enabled: false,
+                },
+            },
+        ],
+    });
+}
+
+function getDatosTablaTurbina() {
+    var datosArray = tablaEolHoja.getData();
+    var datosObjetos = datosArray.map(function (row) {
+        return {
+            Speed: row[0],               // speed
+            Acciona: row[1]   // Acciona_AW100_3000
+        };
+    }).filter(function (obj) {
+        // Validar que ambos campos tengan datos antes de guardarlos
+        return obj.Speed !== "" && obj.Acciona !== "";
+    });
+    console.log(datosObjetos);
+    return datosObjetos;
+}
+
+
+function cerrarTablaGrafico() {
+    datosGrafico = getDatosTablaTurbina();
+    $('#dataFichaAEo').show();
+    $('#curvaTurbinaCon').hide();
+}
+
+function crearUploadUbicacionEolA() {
+    uploaderUbicacionEolA = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnSubirUbicacionEOL',
+        url: controladorFichas + 'UploadArchivoGeneral',
+        flash_swf_url: 'Scripts/Moxie.swf',
+        silverlight_xap_url: 'Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+            max_file_size: '5mb',
+            mime_types: [
+                { title: "Imagenes", extensions: "jpg,jpeg,gif,png" },
+                { title: "Archivos comprimidos", extensions: "zip,rar,kmz" },
+                { title: "Documentos", extensions: "pdf,doc,docx,xls,xlsx,ppt,pptx,csv,msg" }
+            ]
+        },
+        init: {
+            FilesAdded: function (up, files) {
+                if (uploaderUbicacionEolA.files.length == 2) {
+                    uploaderUbicacionEolA.removeFile(uploaderUbicacionEolA.files[0]);
+                }
+                uploaderUbicacionEolA.start();
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Por favor espere ...(<strong>" + file.percent + "%</strong>)");
+            },
+            FileUploaded: function (up, file, response) {
+                var json = JSON.parse(response.response);
+                if (json.indicador == 1) {
+                    up.removeFile(file);
+                    procesarArchivo(json.fileNameNotPath, json.nombreReal, json.extension, '#tablaUbicacionEol', seccionUbicacionEOL)
+                }
+            },
+            UploadComplete: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Subida completada. <strong>Por favor espere...</strong>");
+
+            },
+            Error: function (up, err) {
+                mostrarMensaje('mensajeFicha', 'error', err.code + "-" + err.message);
+            }
+        }
+    });
+    uploaderUbicacionEolA.init();
+}
+
+function crearUploadUnidadEolA() {
+    uploaderUnidadEolA = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnSubirUniEol',
+        url: controladorFichas + 'UploadArchivoGeneral',
+        flash_swf_url: 'Scripts/Moxie.swf',
+        silverlight_xap_url: 'Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+            max_file_size: '5mb',
+            mime_types: [
+                { title: "Imagenes", extensions: "jpg,jpeg,gif,png" },
+                { title: "Archivos comprimidos", extensions: "zip,rar,kmz" },
+                { title: "Documentos", extensions: "pdf,doc,docx,xls,xlsx,ppt,pptx,csv,msg" }
+            ]
+        },
+        init: {
+            FilesAdded: function (up, files) {
+                if (uploaderUnidadEolA.files.length == 2) {
+                    uploaderUnidadEolA.removeFile(uploaderUnidadEolA.files[0]);
+                }
+                uploaderUnidadEolA.start();
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Por favor espere ...(<strong>" + file.percent + "%</strong>)");
+            },
+            FileUploaded: function (up, file, response) {
+                var json = JSON.parse(response.response);
+                if (json.indicador == 1) {
+                    up.removeFile(file);
+                    procesarArchivo(json.fileNameNotPath, json.nombreReal, json.extension, '#tablaUnidadAer', seccionUniEol)
+                }
+            },
+            UploadComplete: function (up, file) {
+                mostrarMensaje('mensajeFicha', 'alert', "Subida completada. <strong>Por favor espere...</strong>");
+
+            },
+            Error: function (up, err) {
+                mostrarMensaje('mensajeFicha', 'error', err.code + "-" + err.message);
+            }
+        }
+    });
+    uploaderUnidadEolA.init();
+}
+
+
+function procesarArchivo(fileNameNotPath, nombreReal, tipo, tabla, seccionCodigo) {
+    param = {};
+    param.SeccCodi = seccionCodigo;
+    param.ProyCodi = $("#txtPoyCodi").val();;
+    param.ArchNombre = nombreReal;
+    param.ArchNombreGenerado = fileNameNotPath;
+    param.ArchTipo = tipo;
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'GrabarRegistroArchivo',
+        data: param,
+        
+        success: function (result) {
+            if (result.responseResult > 0) {
+                mostrarMensaje('mensajeFicha', 'exito', 'Archivo registrado correctamente.');
+                console.log("Id Archivo:" + result.id)
+                agregarFilaTablaEOL(nombreReal, result.id, tabla);
+            }
+            else {
+                mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+            }
+        },
+        error: function () {
+            mostrarMensaje('mensajeFicha', 'error', 'Se ha producido un error.');
+        }
+    });
+}
+
+
+function agregarFilaTablaEOL(nombre, id, tabla) {
+    // Obtener el cuerpo de la tabla
+    var nuevaFila = '<tr id="fila' + id + '">' +
+        '<td>' + nombre + '</td>' +
+        '<td> <a href="#"><img src="' + siteRoot + 'Content/Images/eliminar.png" class="btnEliminar" onclick="eliminarFile(' + id + ')" title="Eliminar archivo"/></a></td>' +
+        '</tr>';
+    var tabla = $(tabla);
+    tabla.append(nuevaFila);
+
+}
+
+

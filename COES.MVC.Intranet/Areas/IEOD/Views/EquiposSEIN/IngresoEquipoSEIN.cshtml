@@ -1,0 +1,156 @@
+﻿@model COES.MVC.Intranet.Areas.IEOD.Models.BusquedaModel
+@{
+    ViewBag.Title = "Agregar";
+}
+<script src="~/Areas/IEOD/Content/Scripts/addEquipoSEIN.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#Anho').Zebra_DatePicker({
+            format: 'Y',
+            onSelect: function () {
+                cargarSemanaAnho()
+            }
+        });
+        $('#idFechaEnvio').Zebra_DatePicker({
+            //direction: -1
+        });
+        $('#txtMes').Zebra_DatePicker({
+            //direction: -1,
+            format: 'm Y'
+        });
+        /* $("#idAgregar").click(function () {
+             grabarAmpliacion();
+         });*/
+        $("#idCancelar").click(function () {
+            $('#validaciones').bPopup().close();
+        });
+        $('#cbEmpresa2').change(function () {
+            /* listarFormato2($('#cbLectura2').val());*/
+        });
+        /*  $('#cbLectura2').change(function () {
+              listarFormato2($('#cbLectura2').val());
+          });*/
+        $('#trNeoUbicacion td').hide();
+        $('#trSemana td').hide();
+        $('#trSemanaAnho td').hide();
+        $('#trMes td').hide();
+        $('#Anho').val($('#hfAnho').val());
+        /* listarFormato2(-1);*/
+
+        $('#cbMotivo').change(function () {
+            if (parseInt($('#cbMotivo').val()) == 346) {
+                $('#trNeoUbicacion td').show();
+            }
+            else { $('#trNeoUbicacion td').hide(); }
+        });
+
+
+    });
+    // Llena lista de semanas del año seleccionado
+    function cargarSemanaAnho() {
+        var anho = $('#Anho').val();
+        $.ajax({
+            type: 'POST',
+            dataType: 'json',
+            url: controlador + 'CargarSemanas',
+            cache: false,
+            data: {
+                idAnho: anho
+            },
+            success: function (aData) {
+                $('#cbSemana2').get(0).options.length = 0;
+                $.each(aData, function (i, item) {
+                    $('#cbSemana2').get(0).options[$('#cbSemana2').get(0).options.length] = new Option(item.Text, item.Value);
+                });
+                $('#cbSemana2').val($('#hfSemana2').val());
+            },
+            error: function () {
+                alert("Ha ocurrido un error");
+            }
+        });
+
+    }
+</script>
+
+<table class="table-form-vertical">
+
+    <tr>
+        <td>Empresa:</td>
+        <td>
+            <select id="cbEmpresa2" name="Idempresa">
+                @foreach (var item in Model.ListaEmpresas)
+                {
+                    <option value="@item.Emprcodi">@item.Emprnomb</option>
+                }
+            </select>
+            <input type="hidden" id="hfEmpresaPto" />
+        </td>
+    </tr>
+    <tr>
+        <td>Tipo de Equipo:</td>
+        <td>
+            <select id="cbFamilia2">
+                <option value="0">--SELECCIONE--</option>
+                @foreach (var item in Model.ListaFamilia)
+                {
+                    <option value="@item.Famcodi">@item.Famnomb</option>
+                }
+            </select>
+            <input type="hidden" id="hfFamiliaPto" />
+        </td>
+    </tr>
+    <tr>
+        <td>Equipo:</td>
+        <td>
+            <select id="cbEquipo" name="idEquipo" style="font-family:monospace; width:300px">
+                <option value="0">--SELECCIONE--</option>
+                @foreach (var item in Model.ListaEquipo)
+                {
+                    var equipo = item.Equinomb;
+                    <option value="@item.Equicodi">@equipo</option>
+                }
+            </select>
+            <input type="hidden" id="hfEquipo" />
+        </td>
+    </tr>
+    <tr>
+        <td>Motivo:</td>
+        <td>
+            <select id="cbMotivo" name="IdMotivo">
+                @foreach (var item in Model.ListaMotivo)
+                {
+                    <option value="@item.Subcausacodi">@item.Subcausadesc</option>
+                }
+            </select>
+        </td>
+    </tr>
+    <tr id="trNeoUbicacion">
+        <td>Nueva Ubicacion:</td>
+        <td>
+            <select id="cbUbicacion" name="IdUbicacion">
+                @foreach (var item in Model.ListaAreas)
+                {
+                    <option value="@item.Areacodi">@item.Areanomb</option>
+                }
+            </select>
+            <input type="hidden" id="hfUbicacion" />
+        </td>
+
+    </tr>
+    <tr id="trFecha">
+        <td>Fecha:</td>
+        <td><input type="text" id="idFechaEnvio" value="@Model.Fecha" /></td>
+    </tr>
+
+    <tr>
+        <td colspan="2" style="margin:0 auto">
+            <div style="margin:0 auto">
+                <input type="button" id="idAgregar" value="Agregar" />
+                <input type="button" id="idCancelar" value="Cancelar" />
+            </div>
+        </td>
+
+    </tr>
+
+</table>

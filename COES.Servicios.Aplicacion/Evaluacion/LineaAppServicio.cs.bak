@@ -1,0 +1,2961 @@
+using COES.Base.Core;
+using COES.Dominio.DTO.Sic;
+using COES.Framework.Base.Tools;
+using COES.Servicios.Aplicacion.Factory;
+using COES.Servicios.Aplicacion.Helper;
+using COES.Servicios.Aplicacion.Proteccion.Helper;
+using COES.Servicios.Aplicacion.Intervenciones.Helper;
+using log4net;
+using Novacode;
+
+using OfficeOpenXml;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using System.Linq;
+using COES.Servicios.Aplicacion.Evaluacion.Helper;
+using DevExpress.XtraRichEdit;
+using DevExpress.XtraRichEdit.API.Native;
+using System.Drawing;
+using DocumentFormat.OpenXml.Drawing.Charts;
+using static COES.Servicios.Aplicacion.IntercambioOsinergmin.Helper.TablaHTML;
+
+
+
+
+namespace COES.Servicios.Aplicacion.Evaluacion
+{
+    /// <summary>
+    /// Clases con métodos del módulo Equipamiento
+    /// </summary>
+    public class LineaAppServicio : AppServicioBase
+    {
+
+
+
+        /// <summary>
+        /// Instancia para el manejo de logs
+        /// </summary>
+        private static readonly ILog Logger = LogManager.GetLogger(typeof(LineaAppServicio));
+
+        CalculosAppServicio calculo = new CalculosAppServicio();
+
+        #region GESPROTEC
+        /// <summary>
+        /// Devuelve el listado de lineas buscador
+        /// </summary>
+        /// <returns></returns>
+        public List<EqEquipoDTO> ListLineaEvaluacion(string equiCodi, string codigo, string ubicacion, string emprCodigo, string equiEstado)
+        {
+            return FactorySic.GetEqEquipoRepository().ListLineaEvaluacion(equiCodi, codigo, ubicacion, emprCodigo, equiEstado);
+        }
+
+        /// <summary>
+        /// Devuelve resultado de la función Registrar Linea
+        /// </summary>
+        /// <returns></returns>
+        public string RegistrarLinea(EprEquipoDTO equipo)
+        {
+            return FactorySic.GetEprEquipoRepository().RegistrarLinea(equipo);
+        }
+
+        /// <summary>
+        /// Devuelve linea por equicodi
+        /// </summary>
+        /// <returns></returns>
+        public EprEquipoDTO GetIdLineaIncluir(int equicodi)
+        {
+            return FactorySic.GetEprEquipoRepository().GetIdLineaIncluir(equicodi);
+        }
+
+        /// <summary>
+        /// Devuelve linea por equicodi
+        /// </summary>
+        /// <returns></returns>
+        public List<EprEquipoDTO> ListLineaEvaluacionPrincipal(string equicodi, string codigo, string emprcodi, string equiestado, string idsuestacion1, 
+            string idsuestacion2, string idarea, string tension, int incluirCalcular)
+        {
+            
+            var listaLinea = FactorySic.GetEprEquipoRepository().ListLineaEvaluacionPrincipal(equicodi, codigo, emprcodi, equiestado, idsuestacion1, idsuestacion2, idarea, tension);
+
+            if(incluirCalcular > 0)
+            {
+                var listaCodigos = string.Join(",", listaLinea.Select(p => p.Equicodi.Value));
+                var listaFormulas = FactorySic.GetEprCalculosRepository().ListCalculosFormulasLineaMasivo(listaCodigos, ConstantesEvaluacionAppServicio.FAMCODI_LINEA_TRANSMISION);
+
+                var diccionarioFormulas = new Dictionary<int, List<EprCalculosDTO>>();
+
+                foreach(var item in listaLinea.Select(p => p.Equicodi.Value).Distinct())
+                {
+                    diccionarioFormulas[item] = listaFormulas.Where(p => p.Equicodi == item).ToList();
+                }
+
+                foreach (var item in listaLinea)
+                {
+                    
+                    var calculosEquipo = diccionarioFormulas[item.Equicodi.Value];
+                    n_calc.EvaluarFormulas(calculosEquipo);
+
+
+                    item.CapacidadA = string.Empty;
+                    item.CapacidadMva = string.Empty;
+                    item.FactorLimitanteFinal = string.Empty;
+
+                    #region Asignacion Datos Calculados
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA && p.Estado == 1))
+                    {
+                        item.CapacidadA = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA).Valor);
+                    }                  
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMVA && p.Estado == 1))
+                    {
+                        item.CapacidadMva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMVA).Valor);
+                    }                                                                  
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal && p.Estado == 1))
+                    {
+                        item.FactorLimitanteFinal = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal).Valor.ToString();
+                    }                   
+
+                    #endregion
+                }
+            }
+
+
+            return listaLinea;
+        }
+
+        /// <summary>
+        /// Generar Excel de reporte plantilla
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="fileName"></param>
+        /// <exception cref="Exception"></exception>
+        public void GenerarExcelPlantilla(string path, string fileName)
+        {
+            try
+            {
+                List<string> hojas = new List<string>();
+                hojas.Add(ConstantesEvaluacionAppServicio.HojaLinea);
+                hojas.Add(ConstantesEvaluacionAppServicio.HojaArea);
+                hojas.Add(ConstantesEvaluacionAppServicio.HojaCelda);
+                hojas.Add(ConstantesEvaluacionAppServicio.HojaCondensador);
+                hojas.Add(ConstantesProteccionAppServicio.HojaProyecto);
+
+                string file = path + fileName;
+
+                FileInfo fi = new FileInfo(file);
+                // Revisar si existe
+                if (!fi.Exists)
+                {
+                    throw new Exception("Archivo " + fileName + " No existe");
+                }
+
+                using (ExcelPackage xlPackage = new ExcelPackage(fi))
+                {
+                    ExcelWorksheet ws = xlPackage.Workbook.Worksheets[ConstantesProteccionAppServicio.HojaPlantillaExcel];
+
+                    xlPackage.Save();
+
+                    foreach (var item in hojas)
+                    {
+                        GenerarFileExcelHoja(xlPackage, item);
+                        xlPackage.Save();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ConstantesAppServicio.LogError, ex);
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        private void GenerarFileExcelHoja(ExcelPackage xlPackage, string hoja)
+        {
+            ExcelWorksheet ws = xlPackage.Workbook.Worksheets[hoja];
+
+            switch (hoja)
+            {
+                case ConstantesEvaluacionAppServicio.HojaLinea:
+                    //obtener empresas
+                    var listaempresas = FactorySic.GetEqEquipoRepository().ListarMaestroEquiposLinea();
+                    var listaFormatoEmpresa = listaempresas.Select(x => new { x.Emprabrev, x.Areanomb, x.Equinomb, x.Emprnomb });
+
+                    ws.Cells[2, 1].LoadFromCollection(listaFormatoEmpresa, false);
+
+                    break;
+                case ConstantesEvaluacionAppServicio.HojaArea:
+                    //obtener Ubicaciones
+                    var listaUbicaciones = FactorySic.GetEqEquipoRepository().ListarMaestroEquiposArea();
+
+                    var listaFormatoRele = listaUbicaciones.Select(x => new { x.Areadesc, x.Areanomb });
+                    ws.Cells[2, 1].LoadFromCollection(listaFormatoRele, false);
+
+                    break;
+                case ConstantesEvaluacionAppServicio.HojaCelda:
+                    //obtener familias
+                    var listaFamilias = FactorySic.GetEqEquipoRepository().ListarMaestroCeldaProteccion();
+
+                    var listaFormatoCelda = listaFamilias.Select(x => new { x.Emprabrev, x.Areanomb, x.Equinomb, x.Emprnomb });
+
+                    ws.Cells[2, 1].LoadFromCollection(listaFormatoCelda, false);
+
+                    break;
+
+                case ConstantesEvaluacionAppServicio.HojaCondensador:
+                    //obtener Subestación
+                    var listaSubestaciones = FactorySic.GetEqEquipoRepository().ListarMaestroEquiposCondensador();
+
+                    var listaFormatoInterruptor = listaSubestaciones.Select(x => new { x.Emprabrev, x.Areanomb, x.Equinomb, x.Emprnomb });
+                    ws.Cells[2, 1].LoadFromCollection(listaFormatoInterruptor, false);
+
+                    break;
+
+
+                case ConstantesEvaluacionAppServicio.HojaProyecto:
+                    //obtener Subestación
+                    var listaMaestroProyecto = FactorySic.GetEprProyectoActEqpRepository().ListMaestroProyecto();
+
+                    var listaFormatoProyecto = listaMaestroProyecto.Select(x => new { x.Epproydescripcion, x.Epproynemotecnico, x.Epproynomb, x.Emprnomb, x.Epproyfecregistro });
+                    ws.Cells[2, 1].LoadFromCollection(listaFormatoProyecto, false);
+
+
+                    break;
+            }
+
+        }
+
+        /// <summary>
+        /// Metodo para validar información de cada registro del archivo de carga
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public string ValidarCargaMasivaLinea(EprCargaMasivaLineaDTO entity)
+        {
+            return FactorySic.GetEprCargaMasivaRepository().ValidarCargaMasivaLinea(entity);
+        }
+
+        /// <summary>
+        /// Metodo para grabar cada registro del srchivo de carga
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public string SaveCargaMasivaLinea(EprCargaMasivaLineaDTO entity)
+        {
+            return FactorySic.GetEprCargaMasivaRepository().SaveCargaMasivaLinea(entity);
+        }
+
+        /// <summary>
+        /// Generar Excel de reporte plantilla
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="fileName"></param>
+        /// <param name="equicodi"></param>
+        /// <param name="codigo"></param>
+        /// <param name="emprcodi"></param>
+        /// <param name="equiestado"></param>
+        /// <param name="idsuestacion1"></param>
+        /// <param name="idsuestacion2"></param>
+        /// <param name="idarea"></param>
+        ///  /// <param name="tension"></param>
+        /// <exception cref="Exception"></exception>
+        public void GenerarExcelExportar(string path, string fileName, string equicodi, string codigo, string emprcodi,
+            string equiestado, string idsuestacion1, string idsuestacion2, string idarea, string tension)
+        {
+            try
+            {
+                List<string> hojas = new List<string>();
+                hojas.Add(ConstantesEvaluacionAppServicio.HojaNorte);
+                hojas.Add(ConstantesEvaluacionAppServicio.HojaCentro);
+                hojas.Add(ConstantesEvaluacionAppServicio.HojaSur);
+
+                string file = path + fileName;
+
+                FileInfo fi = new FileInfo(file);
+                // Revisar si existe
+                if (!fi.Exists)
+                {
+                    throw new Exception("Archivo " + fileName + " No existe");
+                }
+
+                using (ExcelPackage xlPackage = new ExcelPackage(fi))
+                {
+
+                    foreach (var item in hojas)
+                    {
+
+                        switch (item)
+                        {
+                            case ConstantesEvaluacionAppServicio.HojaNorte:
+                                //obtener empresas
+                                var lista = FactorySic.GetEprCargaMasivaRepository().ListLineaEvaluacionReporte(equicodi, codigo, emprcodi, equiestado,
+                                    idsuestacion1, idsuestacion2, idarea, ConstantesEvaluacionAppServicio.CodigoAreaNorte.ToString(), tension);
+                                GenerarFileExcelHojaExportar(xlPackage, item, lista);
+
+                                break;
+                            case ConstantesEvaluacionAppServicio.HojaCentro:
+                                //obtener Ubicaciones
+                                var listaCentro = FactorySic.GetEprCargaMasivaRepository().ListLineaEvaluacionReporte(equicodi, codigo, emprcodi, equiestado,
+                                    idsuestacion1, idsuestacion2, idarea, ConstantesEvaluacionAppServicio.CodigoAreaCentro.ToString(), tension);
+                                GenerarFileExcelHojaExportar(xlPackage, item, listaCentro);
+
+                                break;
+                            case ConstantesEvaluacionAppServicio.HojaSur:
+                                //obtener familias
+                                var listaSur = FactorySic.GetEprCargaMasivaRepository().ListLineaEvaluacionReporte(equicodi, codigo, emprcodi, equiestado,
+                                    idsuestacion1, idsuestacion2, idarea, ConstantesEvaluacionAppServicio.CodigoAreaSur.ToString(), tension);
+                                GenerarFileExcelHojaExportar(xlPackage, item, listaSur);
+
+                                break;
+                        }
+
+                        xlPackage.Save();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ConstantesAppServicio.LogError, ex);
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        private void GenerarFileExcelHojaExportar(ExcelPackage xlPackage, string hoja, List<EprEquipoReporteDTO> listaLinea)
+        {
+            ExcelWorksheet ws = xlPackage.Workbook.Worksheets[hoja];
+
+            if (listaLinea.Count == 0) return;
+
+            int index = 7;
+            var nombreUsuario = "";
+
+
+            var listaCodigos = string.Join(",", listaLinea.Select(p => p.Codigo_Id));
+            var listaFormulas = FactorySic.GetEprCalculosRepository().ListCalculosFormulasLineaMasivo(listaCodigos, ConstantesEvaluacionAppServicio.FAMCODI_LINEA_TRANSMISION);
+
+
+            var diccionarioFormulas = new Dictionary<int, List<EprCalculosDTO>>();
+
+            foreach (var item in listaLinea.Select(p => p.Codigo_Id).Distinct())
+            {
+                diccionarioFormulas[item] = listaFormulas.Where(p => p.Equicodi == item).ToList();
+            }
+
+            foreach (var item in listaLinea)
+            {
+
+                var calculosEquipo = diccionarioFormulas[item.Codigo_Id];
+                n_calc.EvaluarFormulas(calculosEquipo);
+
+                #region Asignacion Datos Calculados
+
+                item.Capacidad_Mva = string.Empty;
+                item.Capac_Trans_Corr_1_A = string.Empty;
+                item.Capac_Trans_Corr_2_A = string.Empty;
+                item.Capacidad_Transmision_A = string.Empty;
+                item.Capacidad_Transmision_Mva = string.Empty;
+                item.Factor_Limitante_Calc = string.Empty;
+                item.Factor_Limitante_Final = string.Empty;
+
+                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadMva && p.Estado == 1))
+                {
+                    item.Capacidad_Mva = Convert.ToDouble(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadMva).Valor).ToString("N2");
+                }
+
+                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacTransCond1A && p.Estado == 1))
+                {
+                    item.Capac_Trans_Corr_1_A = Convert.ToDouble(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacTransCond1A).Valor).ToString("N2");
+                }
+
+                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacTransCond2A && p.Estado == 1))
+                {
+                    item.Capac_Trans_Corr_2_A = Convert.ToDouble(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacTransCond2A).Valor).ToString("N2");
+                }
+
+                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA && p.Estado == 1))
+                {
+                    item.Capacidad_Transmision_A = Convert.ToDouble(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA).Valor).ToString("N2");
+                }
+
+                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMVA && p.Estado == 1))
+                {
+                    item.Capacidad_Transmision_Mva = Convert.ToDouble(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMVA).Valor).ToString("N2");
+                }
+
+                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteCalc && p.Estado == 1))
+                {
+                    item.Factor_Limitante_Calc = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteCalc).Valor.ToString();
+                }
+
+                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal && p.Estado == 1))
+                {
+                    item.Factor_Limitante_Final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal).Valor.ToString();
+                }
+
+                #endregion
+
+                ws.Cells[index, 1].Value = item.Codigo_Id;
+                ws.Cells[index, 2].Value = item.Codigo;
+                ws.Cells[index, 3].Value = item.Ubicacion;
+                ws.Cells[index, 4].Value = item.Empresa;
+                ws.Cells[index, 5].Value = item.Area;
+                ws.Cells[index, 6].Value = item.Longitud;
+                if (!string.IsNullOrEmpty(item.Longitud_Coment)) ws.Cells[index, 6].AddComment(item.Longitud_Coment, nombreUsuario);
+
+                ws.Cells[index, 7].Value = item.Tension;
+                if (!string.IsNullOrEmpty(item.Tension_Coment)) ws.Cells[index, 7].AddComment(item.Tension_Coment, nombreUsuario);
+                ws.Cells[index, 8].Value = item.Capacidad_A;
+                if (!string.IsNullOrEmpty(item.Capacidad_A_Coment)) ws.Cells[index, 8].AddComment(item.Capacidad_A_Coment, nombreUsuario);
+                ws.Cells[index, 9].Value = item.Capacidad_Mva;
+                if (!string.IsNullOrEmpty(item.Capacidad_Mva_Coment)) ws.Cells[index, 9].AddComment(item.Capacidad_Mva_Coment, nombreUsuario);
+                ws.Cells[index, 10].Value = item.Id_Celda_1;
+                ws.Cells[index, 11].Value = item.Nombre_Celda_1;
+                ws.Cells[index, 12].Value = item.Ubicacion_Celda_1;
+                ws.Cells[index, 13].Value = item.Posicion_Nucleo_Tc_Celda_1;
+                ws.Cells[index, 14].Value = item.Pick_Up_Celda_1;
+                ws.Cells[index, 15].Value = item.Id_Celda_2;
+                ws.Cells[index, 16].Value = item.Nombre_Celda_2;
+                ws.Cells[index, 17].Value = item.Ubicacion_Celda_2;
+                ws.Cells[index, 18].Value = item.Posicion_Nucleo_Tc_Celda_2;
+                ws.Cells[index, 19].Value = item.Pick_Up_Celda_2;
+
+                ws.Cells[index, 20].Value = item.Id_Banco_Condensador;
+                ws.Cells[index, 21].Value = item.Nombre_Banco_Condensador;
+                ws.Cells[index, 22].Value = item.Ubicacion_Banco_Condensador;
+                ws.Cells[index, 23].Value = item.Capacidad_A_Banco;
+                if (!string.IsNullOrEmpty(item.CapacidadABancoComent)) ws.Cells[index, 23].AddComment(item.CapacidadABancoComent, nombreUsuario);
+                ws.Cells[index, 24].Value = item.Capacidad_Mvar_Banco;
+                if (!string.IsNullOrEmpty(item.CapacidadMvarBancoComent)) ws.Cells[index, 24].AddComment(item.CapacidadMvarBancoComent, nombreUsuario);
+                ws.Cells[index, 25].Value = item.Capac_Trans_Cond_1_Porcen;
+                if (!string.IsNullOrEmpty(item.Capac_Trans_Cond_1_Porcen_Coment)) ws.Cells[index, 25].AddComment(item.Capac_Trans_Cond_1_Porcen_Coment, nombreUsuario);
+                ws.Cells[index, 26].Value = item.Capac_Trans_Cond_1_Min;
+                if (!string.IsNullOrEmpty(item.Capac_Trans_Cond_1_Min_Coment)) ws.Cells[index, 26].AddComment(item.Capac_Trans_Cond_1_Min_Coment, nombreUsuario);
+                ws.Cells[index, 27].Value = item.Capac_Trans_Corr_1_A;
+                if (!string.IsNullOrEmpty(item.Capac_Trans_Corr_1_A_Coment)) ws.Cells[index, 27].AddComment(item.Capac_Trans_Corr_1_A_Coment, nombreUsuario);
+                ws.Cells[index, 28].Value = item.Capac_Trans_Cond_2_Porcen;
+                if (!string.IsNullOrEmpty(item.Capac_Trans_Cond_2_Porcen_Coment)) ws.Cells[index, 28].AddComment(item.Capac_Trans_Cond_2_Porcen_Coment, nombreUsuario);
+                ws.Cells[index, 29].Value = item.Capac_Trans_Cond_2_Min;
+                if (!string.IsNullOrEmpty(item.Capac_Trans_Cond_2_Min_Coment)) ws.Cells[index, 29].AddComment(item.Capac_Trans_Cond_2_Min_Coment, nombreUsuario);
+                ws.Cells[index, 30].Value = item.Capac_Trans_Corr_2_A;
+                if (!string.IsNullOrEmpty(item.Capac_Trans_Corr_2_A_Coment)) ws.Cells[index, 30].AddComment(item.Capac_Trans_Corr_2_A_Coment, nombreUsuario);
+                ws.Cells[index, 31].Value = item.Capacidad_Transmision_A;
+                if (!string.IsNullOrEmpty(item.Capacidad_Transmision_A_Coment)) ws.Cells[index, 31].AddComment(item.Capacidad_Transmision_A_Coment, nombreUsuario);
+
+                ws.Cells[index, 32].Value = item.Capacidad_Transmision_Mva;
+                if (!string.IsNullOrEmpty(item.Capacidad_Transmision_Mva_Coment)) ws.Cells[index, 32].AddComment(item.Capacidad_Transmision_Mva_Coment, nombreUsuario);
+                ws.Cells[index, 33].Value = item.Limite_Seg_Coes;
+                if (!string.IsNullOrEmpty(item.Limite_Seg_Coes_Coment)) ws.Cells[index, 33].AddComment(item.Limite_Seg_Coes_Coment, nombreUsuario);
+                ws.Cells[index, 34].Value = item.Factor_Limitante_Calc;
+                if (!string.IsNullOrEmpty(item.Factor_Limitante_Calc_Coment)) ws.Cells[index, 34].AddComment(item.Factor_Limitante_Calc_Coment, nombreUsuario);
+                ws.Cells[index, 35].Value = item.Factor_Limitante_Final;
+                if (!string.IsNullOrEmpty(item.Factor_Limitante_Final_Coment)) ws.Cells[index, 35].AddComment(item.Factor_Limitante_Final_Coment, nombreUsuario);
+
+                ws.Cells[index, 36].Value = item.Observaciones;
+                ws.Cells[index, 37].Value = item.Motivo;
+                ws.Cells[index, 38].Value = item.Usuario_Auditoria;
+                ws.Cells[index, 39].Value = item.Fecha_Modificacion;
+
+
+                         
+
+                index++;
+            }
+
+        }
+
+        public void GenerarReporteDesdePlantillaDEVExpress(string fileName, string pathLogo, string pathPlantilla)
+        {
+            pathPlantilla = FileServer.GetDirectory() + pathPlantilla + "/" + fileName;
+            int rowsCount;
+            int columnsCount;
+            int columnWidth;
+            int fonSizeTextoCentral = 10;
+            DateTime fechaProceso = new DateTime();
+            try
+            {
+                using (var wordProcessor = new RichEditDocumentServer())
+                {
+                    wordProcessor.LoadDocument(pathPlantilla);
+                    Document document = wordProcessor.Document;
+                    //document.BeginUpdate();
+                    string fontArial = "Arial";
+
+                    #region Leyenda
+                    List<EprRepLimitCapDTO> revisiones = ListRevisiones();
+
+                    columnsCount = 6;
+                    Field fieldRevisiones = EncontrarMergeFieldDevExpress(document, "tabla_de_revisiones");
+                    escribirTablaRevisionDevExpress(document, fieldRevisiones, columnsCount, revisiones);
+
+                    Field fieldActualizaciones = EncontrarMergeFieldDevExpress(document, "tabla_de_actualizaciones");
+                    List<EprRepLimitCapDTO> actualizaciones = ListActualizaciones();
+                    escribirTablaActualizacionDevExpress(document, fieldActualizaciones, actualizaciones);
+                    #endregion
+
+                    #region CapacidadTransmisionNorte
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionLN = ListCapacidadTransmision(8);
+
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionTablaLN = lstCapacidadTransmisionLN.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionParrafoLN = lstCapacidadTransmisionLN.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 9;
+
+                    Field fieldCapacidadTransmisionNorte = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transmision_lineas_norte");
+                    escribirTablaCapacidadTransmisionDevExpress(document, fieldCapacidadTransmisionNorte, columnsCount, lstCapacidadTransmisionTablaLN);
+
+                    //Field fieldCapacidadTransmisionParrafoNorte = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transmision_lineas_norte_parrafo");
+                    Field fieldCapacidadTransmisionParrafoNorte = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transmision_lineas_norte");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadTransmisionParrafoNorte, lstCapacidadTransmisionParrafoLN);
+                    #endregion
+
+                    #region CapacidadTransmisionCentro
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionLC = ListCapacidadTransmision(9);
+
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionTablaLC = lstCapacidadTransmisionLC.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionParrafoLC = lstCapacidadTransmisionLC.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 9;
+
+                    Field fieldCapacidadTransmisionCentro = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transmision_lineas_centr");
+                    escribirTablaCapacidadTransmisionDevExpress(document, fieldCapacidadTransmisionCentro, columnsCount, lstCapacidadTransmisionTablaLC);
+
+                    //Field fieldCapacidadTransmisionCentroParrafoNorte = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transmision_lineas_centr_parrafo");
+                    Field fieldCapacidadTransmisionCentroParrafoNorte = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transmision_lineas_centr");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadTransmisionCentroParrafoNorte, lstCapacidadTransmisionParrafoLC);
+                    #endregion
+
+                    #region CapacidadTransmisionSur
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionLS = ListCapacidadTransmision(10);
+
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionTablaLS = lstCapacidadTransmisionLS.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionParrafoLS = lstCapacidadTransmisionLS.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 9;
+
+                    Field fieldCapacidadTransmisionSur = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transmision_lineas_sur");
+                    escribirTablaCapacidadTransmisionDevExpress(document, fieldCapacidadTransmisionSur, columnsCount, lstCapacidadTransmisionTablaLS);
+
+                    //Field fieldCapacidadTransmisionSurParrafoLS = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transmision_lineas_sur_parrafo");
+                    Field fieldCapacidadTransmisionSurParrafoLS = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transmision_lineas_sur");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadTransmisionSurParrafoLS, lstCapacidadTransmisionParrafoLS);
+                    #endregion
+
+                    #region CapacidadTransformadorNorte
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorN = ListCapacidadTransformador(8);
+
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorNTabla = ListCapacidadTransformadorN.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorNParrafo = ListCapacidadTransformadorN.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 7;
+
+                    Field fieldCapacidadTransformadorNorte = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_norte");
+                    escribirTablaCapacidadTransformadorDevExpress(document, fieldCapacidadTransformadorNorte, columnsCount, ListCapacidadTransformadorNTabla);
+
+                    //Field fieldCapacidadTransformadorNorteParrafoLS = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_norte_parrafo");
+                    Field fieldCapacidadTransformadorNorteParrafoLN = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_norte");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadTransformadorNorteParrafoLN, ListCapacidadTransformadorNParrafo);
+                    #endregion
+
+                    #region CapacidadTransformadorCentro
+                    //Transformador Centro
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorC = ListCapacidadTransformador(9);
+
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorCTabla = ListCapacidadTransformadorC.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorCParrafo = ListCapacidadTransformadorC.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 7;
+
+                    Field fieldCapacidadTransformadorCentro = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_centro");
+                    escribirTablaCapacidadTransformadorDevExpress(document, fieldCapacidadTransformadorCentro, columnsCount, ListCapacidadTransformadorCTabla);
+
+                    //Field fieldCapacidadTransformadorParrafoLC = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_centro_parrafo");
+                    Field fieldCapacidadTransformadorParrafoLC = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_centro");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadTransformadorParrafoLC, ListCapacidadTransformadorCParrafo); //falta modificar
+                    #endregion
+
+                    #region CapacidadTransformadorSur
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorS = ListCapacidadTransformador(10);
+
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorSTabla = ListCapacidadTransformadorS.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorSParrafo = ListCapacidadTransformadorS.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 7;
+
+                    Field fieldCapacidadTransformadorSur = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_sur");
+                    escribirTablaCapacidadTransformadorDevExpress(document, fieldCapacidadTransformadorSur, columnsCount, ListCapacidadTransformadorSTabla);
+
+                    //Field fieldCapacidadTransformadorParrafoLS = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_sur_parrafo");
+                    Field fieldCapacidadTransformadorParrafoLS = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_sur");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadTransformadorParrafoLS, ListCapacidadTransformadorSParrafo); //falta modificar
+                    #endregion
+
+                    #region CapacidadAcoplamientoNorte
+                    //Acoplamiento Norte
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoN = ListCapacidadAcoplaminento(8, 0);
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoNTabla = ListCapacidadAcoplamientoN.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoNParrafo = ListCapacidadAcoplamientoN.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 8;
+
+                    Field fieldCapacidadAcoplamientoNorte = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_acoplamientos_norte");
+                    escribirTablaCapacidadAcoplamientoDevExpress(document, fieldCapacidadAcoplamientoNorte, columnsCount, ListCapacidadAcoplamientoNTabla);
+
+                    //Field fieldCapacidadAcoplamientoNorteParrafoLN = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_transformadores_sur_parrafo");
+                    Field fieldCapacidadAcoplamientoNorteParrafoLN = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_acoplamientos_norte");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadAcoplamientoNorteParrafoLN, ListCapacidadAcoplamientoNParrafo); //falta modificar
+                    #endregion
+
+                    #region CapacidadAcoplamientoCentro
+                    //Acoplamiento Centro
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoC = ListCapacidadAcoplaminento(9, 0);
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoCTabla = ListCapacidadAcoplamientoC.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoCParrafo = ListCapacidadAcoplamientoC.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 8;
+
+                    Field fieldCapacidadAcoplamientoCentro = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_acoplamientos_centro");
+                    escribirTablaCapacidadAcoplamientoDevExpress(document, fieldCapacidadAcoplamientoCentro, columnsCount, ListCapacidadAcoplamientoCTabla);
+
+                    //Field fieldCapacidadAcoplamientoNorteParrafoLC = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_acoplamientos_centro_parrafo");
+                    Field fieldCapacidadAcoplamientoNorteParrafoLC = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_acoplamientos_centro");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadAcoplamientoNorteParrafoLC, ListCapacidadAcoplamientoCParrafo); //falta modificar
+                    #endregion
+
+                    #region CapacidadAcoplamientoSur
+                    //Acoplamiento Sur
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoS = ListCapacidadAcoplaminento(10, 0);
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoSTabla = ListCapacidadAcoplamientoS.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoSParrafo = ListCapacidadAcoplamientoS.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 8;
+
+                    Field fieldCapacidadAcoplamientoSur = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_acoplamientos_sur");
+                    escribirTablaCapacidadAcoplamientoDevExpress(document, fieldCapacidadAcoplamientoSur, columnsCount, ListCapacidadAcoplamientoSTabla);
+
+                    //Field fieldCapacidadAcoplamientoNorteParrafoLS = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_acoplamientos_sur_parrafo");
+                    Field fieldCapacidadAcoplamientoNorteParrafoLS = EncontrarMergeFieldDevExpress(document, "tabla_capacidad_acoplamientos_sur");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadAcoplamientoNorteParrafoLS, ListCapacidadAcoplamientoSParrafo); //falta modificar
+                    #endregion
+
+                    #region CapacidadAcoplamientoTension60
+                    //Acoplamiento tensión 60
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamiento60 = ListCapacidadAcoplaminento(0, 60);
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamiento60Tabla = ListCapacidadAcoplamiento60.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamiento60Parrafo = ListCapacidadAcoplamiento60.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 8;
+
+                    Field fieldCapacidadAcoplamientoT60 = EncontrarMergeFieldDevExpress(document, "tabla_datos_tecnicos_subestaciones_60");
+                    escribirTablaCapacidadAcoplamientoDevExpress(document, fieldCapacidadAcoplamientoT60, columnsCount, ListCapacidadAcoplamiento60Tabla);
+
+                    //Field fieldCapacidadAcoplamientoNorteParrafoLT60 = EncontrarMergeFieldDevExpress(document, "tabla_datos_tecnicos_subestaciones_60_parrafo");
+                    Field fieldCapacidadAcoplamientoNorteParrafoLT60 = EncontrarMergeFieldDevExpress(document, "tabla_datos_tecnicos_subestaciones_60");
+                    escribirTablaCapacidadTransmisionParrafoDevExpress(document, fieldCapacidadAcoplamientoNorteParrafoLT60, ListCapacidadAcoplamiento60Parrafo); //falta modificar
+                    #endregion
+
+                    #region EmpresaSigla
+                    //Empresa siglas
+                    List<EprRepLimitCapDTO> ListEmpresaSiglas = ListaEmpresaSigla();
+                    columnsCount = 2;
+
+                    Field fieldEmpresaSigla = EncontrarMergeFieldDevExpress(document, "tabla_empresas");
+                    escribirTablaEmpresaSiglaDevExpress(document, fieldEmpresaSigla, columnsCount, ListEmpresaSiglas);
+                    #endregion
+
+                    wordProcessor.Document.Fields.Update();
+                    wordProcessor.SaveDocument(pathPlantilla, DevExpress.XtraRichEdit.DocumentFormat.OpenXml);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ConstantesAppServicio.LogError, ex);
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        private void escribirTablaCapacidadTransmisionParrafoDevExpress(Document document, Field field, List<EprRepLimitCapDTO> data, bool append = false)
+        {
+            if (field == null) return;
+
+            DocumentPosition insertPos = field.Range.Start;
+            document.Delete(field.Range);
+            document.CaretPosition = insertPos;
+            int numAct = 0;
+            foreach (var item in data)
+            {
+                numAct++;
+                DocumentPosition pos = document.CaretPosition;
+                DocumentRange range = document.InsertText(pos, $"({item.Numero.ToString()}) {item.Codigo}" + Environment.NewLine);
+
+                CharacterProperties props = document.BeginUpdateCharacters(range);
+                props.Bold = false;
+                props.FontSize = 8;
+                document.EndUpdateCharacters(props);
+
+                ParagraphProperties paraProps = document.BeginUpdateParagraphs(range);
+                paraProps.Alignment = ParagraphAlignment.Left;
+                paraProps.LineSpacingMultiplier = 1.0f;
+                document.EndUpdateParagraphs(paraProps);
+
+                document.CaretPosition = range.End;
+            }
+        }
+
+        private void escribirTablaCapacidadTransmisionDevExpress(Document document, Field field, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            if (field != null)
+            {
+                DocumentPosition insertPosition = field.Range.Start;
+                document.Delete(field.Range);
+
+                DevExpress.XtraRichEdit.API.Native.Table table = document.Tables.Create(insertPosition, list.Count + 1, columnsCount);
+                table.TableAlignment = TableRowAlignment.Center;
+                // Marcar la primera fila como repetible (cabecera)
+                table.Rows[0].RepeatAsHeaderRow = true;
+
+
+                escribirCabeceraDevExpress(document, table, 0, 0, "EMPRESA");
+                escribirCabeceraDevExpress(document, table, 0, 1, "CÓDIGO");
+                escribirCabeceraDevExpress(document, table, 0, 2, "TENSIÓN (KV)");
+                escribirCabeceraDevExpress(document, table, 0, 3, "SUBESTACIONES (SE1-SE2)");
+                escribirCabeceraDevExpress(document, table, 0, 4, "CAPACIDAD DE TRANSMISIÓN (AMP)");
+                escribirCabeceraDevExpress(document, table, 0, 5, "CAPACIDAD DE TRANSMISION (MVA)");
+                escribirCabeceraDevExpress(document, table, 0, 6, "SOBRE CARGA PERMISIBLE PORCEN.");
+                escribirCabeceraDevExpress(document, table, 0, 7, "SOBRE CARGA PERMISIBLE TIEMPO");
+                escribirCabeceraDevExpress(document, table, 0, 8, "FACTOR LIMITANTE FINAL");
+
+
+                var listaCodigos = string.Join(",", list.Select(p => Convert.ToInt32(p.Equicodi)));
+                var listaFormulas = FactorySic.GetEprCalculosRepository().ListCalculosFormulasLineaMasivo(listaCodigos, ConstantesEvaluacionAppServicio.FAMCODI_LINEA_TRANSMISION);
+
+                var diccionarioFormulas = new Dictionary<int, List<EprCalculosDTO>>();
+
+                foreach (var item in list.Select(p => Convert.ToInt32(p.Equicodi)).Distinct())
+                {
+                    diccionarioFormulas[item] = listaFormulas.Where(p => p.Equicodi == item).ToList();
+                }
+
+                int fila = 0;
+                foreach (var item in list)
+                {
+                    var calculosEquipo = diccionarioFormulas[Convert.ToInt32(item.Equicodi)];
+                    n_calc.EvaluarFormulas(calculosEquipo);
+
+                    #region Asignacion Datos Calculados                                      
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA && p.Estado == 1))
+                    {
+                        item.CapacidadTransmisionA = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA && p.Estado == 1).Valor);
+                        item.CapacidadTransmisionA += (item.Capacidad_transmision_a_coment ?? "");
+                    }
+                    else
+                    {
+                        item.CapacidadTransmisionA = " " + (item.Capacidad_transmision_a_coment ?? "");
+                    }
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMVA && p.Estado == 1))
+                    {
+                        item.CapacidadTransmisionMVA = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMVA && p.Estado == 1).Valor);
+                        item.CapacidadTransmisionMVA += (item.Capacidad_transmision_mva_coment ?? "");
+                    }
+                    else
+                    {
+                        item.CapacidadTransmisionMVA = " " + (item.Capacidad_transmision_mva_coment ?? "");
+                    }
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal && p.Estado == 1))
+                    {
+                        item.FactorLimitanteFinal = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal && p.Estado == 1).Valor.ToString();
+                        item.FactorLimitanteFinal += (item.Factor_limitante_final_coment ?? "");
+                    }
+                    else
+                    {
+                        item.FactorLimitanteFinal = " " + (item.Factor_limitante_final_coment ?? "");
+                    }
+
+                    #endregion
+
+                    fila++;
+                    escribirCeldaDevExpress(document, table, fila, 0, item.Empresa ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 1, item.Codigo ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 2, item.Tension);
+                    escribirCeldaDevExpress(document, table, fila, 3, item.Subestacion ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 4, item.CapacidadTransmisionA);
+                    escribirCeldaDevExpress(document, table, fila, 5, item.CapacidadTransmisionMVA ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 6, item.CapacidadTransmisionCondPorcen ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 7, item.CapacidadTransmisionCondMin ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 8, item.FactorLimitanteFinal);
+
+                }
+            }
+        }
+
+        private void escribirTablaActualizacionDevExpress(Document document, Field field, List<EprRepLimitCapDTO> data, bool append = false)
+        {
+            if (field == null) return;
+
+            DocumentPosition insertPos = field.Range.Start;
+            document.Delete(field.Range);
+            document.CaretPosition = insertPos;
+            int numAct = 0;
+            foreach (var item in data)
+            {
+                numAct++;
+                DocumentPosition pos = document.CaretPosition;
+                DocumentRange range = document.InsertText(pos, numAct.ToString() + ".  " + item.EpProyNomb + Environment.NewLine);
+
+                CharacterProperties props = document.BeginUpdateCharacters(range);
+                props.Bold = false;
+                props.FontSize = 10;
+                document.EndUpdateCharacters(props);
+
+                ParagraphProperties paraProps = document.BeginUpdateParagraphs(range);
+                paraProps.Alignment = ParagraphAlignment.Left;
+                document.EndUpdateParagraphs(paraProps);
+
+                document.CaretPosition = range.End;
+            }
+        }
+
+        public Field EncontrarMergeFieldDevExpress(Document document, string fieldName ) {
+
+            Field campoTabla = null;
+
+            foreach (Field f in document.Fields)
+            {
+                string fieldCode = document.GetText(f.CodeRange).Trim();
+                if (fieldCode.StartsWith("MERGEFIELD") && fieldCode.Contains(fieldName))
+                {
+                    campoTabla = f;
+                    break;
+                }
+            }
+            return campoTabla;
+        }
+
+        public void GenerarReporteDesdePlantilla(string fileName, string pathLogo, string pathPlantilla)
+        {
+
+            pathPlantilla = FileServer.GetDirectory() + pathPlantilla + "/" + fileName;
+            int rowsCount;
+            int columnsCount;
+            int columnWidth;
+            int fonSizeTextoCentral = 10;
+            DateTime fechaProceso = new DateTime();
+
+
+
+            try
+            {
+                using (DocX document = DocX.Load(pathPlantilla))
+                {
+                    #region Leyenda
+
+                    List<EprRepLimitCapDTO> revisiones = ListRevisiones();
+
+                    columnsCount = 6;
+                    Novacode.Paragraph paraTablaRevisiones = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_de_revisiones»"));
+                    escribirTablaRevision(document, paraTablaRevisiones, columnsCount, revisiones);
+                    paraTablaRevisiones.ReplaceText("«tabla_de_revisiones»", "");
+
+                    Novacode.Paragraph paraTablaActualizaciones = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_de_actualizaciones»"));
+                    paraTablaActualizaciones.Alignment = Alignment.left;
+                    List<EprRepLimitCapDTO> actualizaciones = ListActualizaciones();
+                    paraTablaActualizaciones.AppendLine();
+                    int numAct = 0;
+                    foreach (var item in actualizaciones)
+                    {
+                        numAct++;
+                        paraTablaActualizaciones.Append(numAct.ToString() + ".  " + item.EpProyNomb).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paraTablaActualizaciones.AppendLine();
+                    }
+                    paraTablaActualizaciones.ReplaceText("«tabla_de_actualizaciones»", "");
+
+                    // ----------------------------------------------------------------------------
+                    #endregion
+
+                    //#region Contenido Central del Documento
+
+
+
+                    #region Tabla 
+
+                    // --------------------------------------------------------------------------------------------
+                    // Crea la tabla
+                    // --------------------------------------------------------------------------------------------
+
+
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionLN = ListCapacidadTransmision(8);
+
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionTablaLN = lstCapacidadTransmisionLN.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionParrafoLN = lstCapacidadTransmisionLN.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 9;
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoNorte = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transmision_lineas_norte»"));
+                    escribirTablaCapacidadTransmision(document, paratablaCapacidadAcoplamientoNorte, columnsCount, lstCapacidadTransmisionTablaLN);
+                    paratablaCapacidadAcoplamientoNorte.ReplaceText("«tabla_capacidad_transmision_lineas_norte»", "");
+
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoSurParrafoLN = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transmision_lineas_norte_parrafo»"));
+                    paratablaCapacidadAcoplamientoSurParrafoLN.Alignment = Alignment.left;
+                    foreach (var item in lstCapacidadTransmisionParrafoLN)
+                    {
+                        paratablaCapacidadAcoplamientoSurParrafoLN.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadAcoplamientoSurParrafoLN.AppendLine();
+                    }
+                    paratablaCapacidadAcoplamientoSurParrafoLN.ReplaceText("«tabla_capacidad_transmision_lineas_norte_parrafo»", "");
+
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionLC = ListCapacidadTransmision(9);
+
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionTablaLC = lstCapacidadTransmisionLC.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionParrafoLC = lstCapacidadTransmisionLC.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 9;
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoCentro = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transmision_lineas_centr»"));
+                    escribirTablaCapacidadTransmision(document, paratablaCapacidadAcoplamientoCentro, columnsCount, lstCapacidadTransmisionTablaLC);
+                    paratablaCapacidadAcoplamientoCentro.ReplaceText("«tabla_capacidad_transmision_lineas_centr»", "");
+
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoSurParrafoLC = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transmision_lineas_centr_parrafo»"));
+                    paratablaCapacidadAcoplamientoSurParrafoLC.Alignment = Alignment.left;
+                    foreach (var item in lstCapacidadTransmisionParrafoLC)
+                    {
+                        paratablaCapacidadAcoplamientoSurParrafoLC.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadAcoplamientoSurParrafoLC.AppendLine();
+                    }
+                    paratablaCapacidadAcoplamientoSurParrafoLC.ReplaceText("«tabla_capacidad_transmision_lineas_centr_parrafo»", "");
+
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionLS = ListCapacidadTransmision(10);
+
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionTablaLS = lstCapacidadTransmisionLS.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> lstCapacidadTransmisionParrafoLS = lstCapacidadTransmisionLS.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 9;
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoSur = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transmision_lineas_sur»"));
+                    escribirTablaCapacidadTransmision(document, paratablaCapacidadAcoplamientoSur, columnsCount, lstCapacidadTransmisionTablaLS);
+                    paratablaCapacidadAcoplamientoSur.ReplaceText("«tabla_capacidad_transmision_lineas_sur»", "");
+
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoSurParrafoLS = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transmision_lineas_sur_parrafo»"));
+                    paratablaCapacidadAcoplamientoSurParrafoLS.Alignment = Alignment.left;
+                    foreach (var item in lstCapacidadTransmisionParrafoLS)
+                    {
+                        paratablaCapacidadAcoplamientoSurParrafoLS.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadAcoplamientoSurParrafoLS.AppendLine();
+                    }
+                    paratablaCapacidadAcoplamientoSurParrafoLS.ReplaceText("«tabla_capacidad_transmision_lineas_sur_parrafo»", "");
+
+
+
+                    //Transformador Norte
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorN = ListCapacidadTransformador(8);
+
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorNTabla = ListCapacidadTransformadorN.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorNParrafo = ListCapacidadTransformadorN.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 7;
+                    Novacode.Paragraph paratablaCapacidadTansformadorNorte = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transformadores_norte»"));
+                    escribirTablaCapacidadTransformador(document, paratablaCapacidadTansformadorNorte, columnsCount, ListCapacidadTransformadorNTabla);
+                    paratablaCapacidadTansformadorNorte.ReplaceText("«tabla_capacidad_transformadores_norte»", "");
+
+                    Novacode.Paragraph paratablaCapacidadTrnasformadorParrafoN = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transformadores_norte_parrafo»"));
+                    paratablaCapacidadTrnasformadorParrafoN.Alignment = Alignment.left;
+                    foreach (var item in ListCapacidadTransformadorNParrafo)
+                    {
+                        paratablaCapacidadTrnasformadorParrafoN.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadTrnasformadorParrafoN.AppendLine();
+                    }
+                    paratablaCapacidadTrnasformadorParrafoN.ReplaceText("«tabla_capacidad_transformadores_norte_parrafo»", "");
+
+                    //Transformador Centro
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorC = ListCapacidadTransformador(9);
+
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorCTabla = ListCapacidadTransformadorC.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorCParrafo = ListCapacidadTransformadorC.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 7;
+                    Novacode.Paragraph paratablaCapacidadTansformadorCentro = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transformadores_centro»"));
+                    escribirTablaCapacidadTransformador(document, paratablaCapacidadTansformadorCentro, columnsCount, ListCapacidadTransformadorCTabla);
+                    paratablaCapacidadTansformadorCentro.ReplaceText("«tabla_capacidad_transformadores_centro»", "");
+
+                    Novacode.Paragraph paratablaCapacidadTrnasformadorParrafoC = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transformadores_centro_parrafo»"));
+                    paratablaCapacidadTrnasformadorParrafoC.Alignment = Alignment.left;
+                    foreach (var item in ListCapacidadTransformadorCParrafo)
+                    {
+                        paratablaCapacidadTrnasformadorParrafoC.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadTrnasformadorParrafoC.AppendLine();
+                    }
+                    paratablaCapacidadTrnasformadorParrafoC.ReplaceText("«tabla_capacidad_transformadores_centro_parrafo»", "");
+
+
+                    //Transformador Centro
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorS = ListCapacidadTransformador(10);
+
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorSTabla = ListCapacidadTransformadorS.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadTransformadorSParrafo = ListCapacidadTransformadorS.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 7;
+                    Novacode.Paragraph paratablaCapacidadTansformadorSur = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transformadores_sur»"));
+                    escribirTablaCapacidadTransformador(document, paratablaCapacidadTansformadorSur, columnsCount, ListCapacidadTransformadorSTabla);
+
+                    paratablaCapacidadTansformadorSur.ReplaceText("«tabla_capacidad_transformadores_sur»", "");
+
+                    Novacode.Paragraph paratablaCapacidadTrnasformadorParrafoS = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_transformadores_sur_parrafo»"));
+                    paratablaCapacidadTrnasformadorParrafoS.Alignment = Alignment.left;
+                    foreach (var item in ListCapacidadTransformadorSParrafo)
+                    {
+                        paratablaCapacidadTrnasformadorParrafoS.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadTrnasformadorParrafoS.AppendLine();
+                    }
+                    paratablaCapacidadTrnasformadorParrafoS.ReplaceText("«tabla_capacidad_transformadores_sur_parrafo»", "");
+
+                    //Acoplamiento Norte
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoN = ListCapacidadAcoplaminento(8, 0);
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoNTabla = ListCapacidadAcoplamientoN.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoNParrafo = ListCapacidadAcoplamientoN.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 8;
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoN = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_acoplamientos_norte»"));
+                    escribirTablaCapacidadAcoplamiento(document, paratablaCapacidadAcoplamientoN, columnsCount, ListCapacidadAcoplamientoNTabla);
+                    paratablaCapacidadAcoplamientoN.ReplaceText("«tabla_capacidad_acoplamientos_norte»", "");
+
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoParrafoN = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_acoplamientos_norte_parrafo»"));
+                    paratablaCapacidadAcoplamientoParrafoN.Alignment = Alignment.left;
+                    foreach (var item in ListCapacidadAcoplamientoNParrafo)
+                    {
+                        paratablaCapacidadAcoplamientoParrafoN.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadAcoplamientoParrafoN.AppendLine();
+                    }
+                    paratablaCapacidadAcoplamientoParrafoN.ReplaceText("«tabla_capacidad_acoplamientos_norte_parrafo»", "");
+
+                    //Acoplamiento Centro
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoC = ListCapacidadAcoplaminento(9, 0);
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoCTabla = ListCapacidadAcoplamientoC.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoCParrafo = ListCapacidadAcoplamientoC.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 8;
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoC = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_acoplamientos_centro»"));
+                    escribirTablaCapacidadAcoplamiento(document, paratablaCapacidadAcoplamientoC, columnsCount, ListCapacidadAcoplamientoCTabla);
+                    paratablaCapacidadAcoplamientoC.ReplaceText("«tabla_capacidad_acoplamientos_centro»", "");
+
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoParrafoC = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_acoplamientos_centro_parrafo»"));
+                    paratablaCapacidadAcoplamientoParrafoC.Alignment = Alignment.left;
+                    foreach (var item in ListCapacidadAcoplamientoCParrafo)
+                    {
+                        paratablaCapacidadAcoplamientoParrafoC.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadAcoplamientoParrafoC.AppendLine();
+                    }
+                    paratablaCapacidadAcoplamientoParrafoC.ReplaceText("«tabla_capacidad_acoplamientos_centro_parrafo»", "");
+
+                    //Acoplamiento Sur
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoS = ListCapacidadAcoplaminento(10, 0);
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoSTabla = ListCapacidadAcoplamientoS.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamientoSParrafo = ListCapacidadAcoplamientoS.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 8;
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoS = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_acoplamientos_sur»"));
+                    escribirTablaCapacidadAcoplamiento(document, paratablaCapacidadAcoplamientoS, columnsCount, ListCapacidadAcoplamientoSTabla);
+                    paratablaCapacidadAcoplamientoS.ReplaceText("«tabla_capacidad_acoplamientos_sur»", "");
+
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoParrafoS = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_capacidad_acoplamientos_sur_parrafo»"));
+                    paratablaCapacidadAcoplamientoParrafoS.Alignment = Alignment.left;
+                    foreach (var item in ListCapacidadAcoplamientoSParrafo)
+                    {
+                        paratablaCapacidadAcoplamientoParrafoS.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadAcoplamientoParrafoS.AppendLine();
+                    }
+                    paratablaCapacidadAcoplamientoParrafoS.ReplaceText("«tabla_capacidad_acoplamientos_sur_parrafo»", "");
+
+                    //Acoplamiento tensión 60
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamiento60 = ListCapacidadAcoplaminento(0, 60);
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamiento60Tabla = ListCapacidadAcoplamiento60.Where(p => p.Numero == 0).ToList();
+                    List<EprRepLimitCapDTO> ListCapacidadAcoplamiento60Parrafo = ListCapacidadAcoplamiento60.Where(p => p.Numero > 0).ToList();
+                    columnsCount = 8;
+                    Novacode.Paragraph paratablaCapacidadAcoplamiento60 = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_datos_tecnicos_subestaciones_60»"));
+                    escribirTablaCapacidadAcoplamiento(document, paratablaCapacidadAcoplamiento60, columnsCount, ListCapacidadAcoplamiento60Tabla);
+                    paratablaCapacidadAcoplamiento60.ReplaceText("«tabla_datos_tecnicos_subestaciones_60»", "");
+
+                    Novacode.Paragraph paratablaCapacidadAcoplamientoParrafo60 = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_datos_tecnicos_subestaciones_60_parrafo»"));
+                    paratablaCapacidadAcoplamientoParrafo60.Alignment = Alignment.left;
+                    foreach (var item in ListCapacidadAcoplamiento60Parrafo)
+                    {
+                        paratablaCapacidadAcoplamientoParrafo60.Append("(" + item.Numero.ToString() + ") " + item.Codigo).FontSize(fonSizeTextoCentral).Font(new System.Drawing.FontFamily("Arial"));
+                        paratablaCapacidadAcoplamientoParrafo60.AppendLine();
+                    }
+                    paratablaCapacidadAcoplamientoParrafo60.ReplaceText("«tabla_datos_tecnicos_subestaciones_60_parrafo»", "");
+
+                    //Empresa siglas
+                    List<EprRepLimitCapDTO> ListEmpresaSiglas = ListaEmpresaSigla ();
+          
+                    columnsCount = 2;
+                    Novacode.Paragraph paratablaEmpresaSigla = document.Paragraphs.FirstOrDefault(p => p.Text.Contains("«tabla_empresas»"));
+                    escribirTablaEmpresaSigla(document, paratablaEmpresaSigla, columnsCount, ListEmpresaSiglas);
+                    paratablaEmpresaSigla.ReplaceText("«tabla_empresas»", "");
+
+                    #endregion
+                    document.Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ConstantesAppServicio.LogError, ex);
+                throw new Exception(ex.Message, ex);
+            }
+        }
+       
+        private void escribirCabeceraDevExpress(Document document, DevExpress.XtraRichEdit.API.Native.Table table, int fila, int columna, string texto)
+        {
+            /* DocumentRange cellRange = table[fila, columna].Range;
+             // Limpia el contenido anterior si es necesario
+             document.Delete(cellRange);
+
+             document.InsertText(cellRange.Start, texto);
+             // Aplicar estilo al texto
+             CharacterProperties props = document.BeginUpdateCharacters(cellRange);
+             props.Bold = true;
+             props.FontSize = 8;
+             props.ForeColor = System.Drawing.Color.White;
+             document.EndUpdateCharacters(props);
+             table[fila, columna].BackgroundColor= ColorTranslator.FromHtml("#2980B9");*/
+                    TableCell cell = table[fila, columna];
+
+            // Borrar cualquier contenido previo en la celda
+            document.Delete(cell.Range);
+
+            // Insertar texto en la celda
+            DocumentPosition insertPosition = cell.Range.Start;
+            DocumentRange insertedRange = document.InsertText(insertPosition, texto);
+
+            // Establecer propiedades de carácter
+            CharacterProperties charProps = document.BeginUpdateCharacters(insertedRange);
+            charProps.Bold = true;
+            charProps.FontSize = 7;
+            charProps.ForeColor = System.Drawing.Color.White;
+            document.EndUpdateCharacters(charProps);
+
+            // Establecer color de fondo
+            cell.BackgroundColor = ColorTranslator.FromHtml("#2980B9");
+
+            // 🔽 Esto también puede ser necesario: establecer formato de párrafo para evitar herencia de estilos
+            ParagraphProperties paraProps = document.BeginUpdateParagraphs(insertedRange);
+            paraProps.Alignment = ParagraphAlignment.Center;
+            paraProps.LineSpacingMultiplier = 1.0f;
+            document.EndUpdateParagraphs(paraProps);
+
+        }
+        
+        private void escribirCeldaDevExpress(Document document, DevExpress.XtraRichEdit.API.Native.Table table, int fila, int columna,string texto) {
+            /*DocumentRange cellRange = table[fila, columna].Range;
+            document.InsertText(cellRange.Start, texto);
+
+            CharacterProperties props = document.BeginUpdateCharacters(cellRange);
+            props.FontSize = 8;
+            document.EndUpdateCharacters(props);*/
+
+            TableCell cell = table[fila, columna];
+
+            // Borrar cualquier contenido previo en la celda
+            document.Delete(cell.Range);
+
+            // Insertar texto en la celda
+            DocumentPosition insertPosition = cell.Range.Start;
+            DocumentRange insertedRange = document.InsertText(insertPosition, texto);
+
+            // Establecer propiedades de carácter
+            CharacterProperties charProps = document.BeginUpdateCharacters(insertedRange);
+            charProps.FontSize = 7;
+            document.EndUpdateCharacters(charProps);
+
+
+            // 🔽 Esto también puede ser necesario: establecer formato de párrafo para evitar herencia de estilos
+            ParagraphProperties paraProps = document.BeginUpdateParagraphs(insertedRange);
+            paraProps.Alignment = ParagraphAlignment.Center;
+            paraProps.LineSpacingMultiplier = 1.0f;
+            document.EndUpdateParagraphs(paraProps);
+
+        }
+
+        private void escribirTablaRevisionDevExpress(Document document, Field field, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            if (field != null)
+            {
+                DocumentPosition insertPosition = field.Range.Start;
+                document.Delete(field.Range);
+
+                DevExpress.XtraRichEdit.API.Native.Table table = document.Tables.Create(insertPosition, list.Count+1, columnsCount);
+                table.TableAlignment = TableRowAlignment.Center;
+
+                TableRow headerRow = table.Rows[0];
+
+                // Establecer la altura fija
+               //headerRow.HeightType = HeightType.Exact; // altura fija
+               // headerRow.Height = 50; // altura en puntos (30 puntos = 30/72 pulgadas aprox 0.42 pulgadas)
+
+                escribirCabeceraDevExpress(document, table, 0, 0, "Fecha");
+                escribirCabeceraDevExpress(document, table, 0, 1, "Rev.");
+                escribirCabeceraDevExpress(document, table, 0, 2, "Descripción");
+          
+                escribirCabeceraDevExpress(document, table, 0, 3, "Elaboró");
+                escribirCabeceraDevExpress(document, table, 0, 4, "Revisó");
+                escribirCabeceraDevExpress(document, table, 0, 5, "Aprobó");
+
+                int fila = 0;
+                foreach (var item in list)
+                {
+                    fila++;
+                    escribirCeldaDevExpress(document, table, fila, 0, item.Eprtlcfecemision ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 1, item.Eprtlcrevision ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 2, item.Eprtlcdescripcion ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 3, item.Eprtlcusuelabora ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 4, item.Eprtlcusurevisa ?? "");
+                    escribirCeldaDevExpress(document, table, fila, 5, item.Eprtlcusuaprueba ?? "");
+
+                }
+
+
+            }
+        }
+
+        private void escribirTablaRevision(DocX document, Novacode.Paragraph paragraph, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            int columnWidth = 60;
+            int rowsCount = list.Count + 1;
+            string color = "#2980B9";
+            Novacode.Table tabla1 = UtilWordIntervenciones.CrearTablaWordDocxDesdeParagraf(document, rowsCount, columnsCount, columnWidth, paragraph);
+           
+            // --------------------------------------------------------------------------------------------
+
+            // --------------------------------------------------------------------------------------------
+            // Llena las cabeceras de la tabla
+            // --------------------------------------------------------------------------------------------
+            tabla1.Rows[0].Cells[0].Paragraphs[0].Append("Fecha");
+            tabla1.Rows[0].Cells[1].Paragraphs[0].Append("Rev.");
+            tabla1.Rows[0].Cells[2].Paragraphs[0].Append("Descripción");
+            tabla1.Rows[0].Cells[3].Paragraphs[0].Append("Elaboró");
+            tabla1.Rows[0].Cells[4].Paragraphs[0].Append("Revisó");
+            tabla1.Rows[0].Cells[5].Paragraphs[0].Append("Aprobó");
+
+            // --------------------------------------------------------------------------------------------
+
+            // --------------------------------------------------------------------------------------------
+            // Llena los datos
+            // --------------------------------------------------------------------------------------------
+            int fila = 0;
+            foreach (var item in list)
+            {
+                fila++;
+                tabla1.Rows[fila].Cells[0].Paragraphs[0].Append(item.Eprtlcfecemision??"").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                tabla1.Rows[fila].Cells[1].Paragraphs[0].Append(item.Eprtlcrevision??"").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                tabla1.Rows[fila].Cells[2].Paragraphs[0].Append(item.Eprtlcdescripcion??"").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                tabla1.Rows[fila].Cells[3].Paragraphs[0].Append(item.Eprtlcusuelabora??"").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                tabla1.Rows[fila].Cells[4].Paragraphs[0].Append(item.Eprtlcusurevisa?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                tabla1.Rows[fila].Cells[5].Paragraphs[0].Append(item.Eprtlcusuaprueba ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+
+            }
+
+            // --------------------------------------------------------------------------------------------
+
+            // --------------------------------------------------------------------------------------------
+            // Formatea la tabla
+            // --------------------------------------------------------------------------------------------
+            // Establece los formatos generales de la tabla
+            tabla1.Rows[0].Cells[0].Paragraphs[0].Bold();
+            tabla1.Rows[0].Cells[1].Paragraphs[0].Bold();
+            tabla1.Rows[0].Cells[2].Paragraphs[0].Bold();
+            tabla1.Rows[0].Cells[3].Paragraphs[0].Bold();
+            tabla1.Rows[0].Cells[4].Paragraphs[0].Bold();
+            tabla1.Rows[0].Cells[5].Paragraphs[0].Bold();
+            for (int row = 0; row < rowsCount; row++)
+            {
+                for (int col = 0; col < columnsCount; col++)
+                {
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].Alignment = Alignment.center;
+                    tabla1.Rows[row].Cells[col].Paragraphs[0].FontSize(11);
+                    tabla1.Rows[0].Cells[col].Paragraphs[0].Color(System.Drawing.Color.White);
+                }
+            }
+
+            // Colorea las cabeceras
+            for (int row = 0; row < 1; row++)
+            {
+                for (int col = 0; col < columnsCount; col++)
+                {
+                    tabla1.Rows[row].Cells[col].FillColor = System.Drawing.ColorTranslator.FromHtml(color);
+                }
+            }
+            // --------------------------------------------------------------------------------------------
+        }
+        
+        private void escribirTablaCapacidadTransmision(DocX document, Novacode.Paragraph paragraph, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            if (list.Count > 0)
+            {
+                int columnWidth = 60;
+                int rowsCount = list.Count + 1;
+                string color = "#2980B9";
+                Novacode.Table tabla1 = UtilWordIntervenciones.CrearTablaWordDocxDesdeParagraf(document, rowsCount, columnsCount, columnWidth, paragraph);
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Llena las cabeceras de la tabla
+                // --------------------------------------------------------------------------------------------
+                tabla1.Rows[0].Cells[0].Paragraphs[0].Append("EMPRESA");
+                tabla1.Rows[0].Cells[1].Paragraphs[0].Append("CÓDIGO");
+                tabla1.Rows[0].Cells[2].Paragraphs[0].Append("TENSIÓN (KV)");
+                tabla1.Rows[0].Cells[3].Paragraphs[0].Append("SUBESTACIONES (SE1-SE2)");
+                tabla1.Rows[0].Cells[4].Paragraphs[0].Append("CAPACIDAD DE TRANSMISIÓN (AMP)");
+                tabla1.Rows[0].Cells[5].Paragraphs[0].Append("CAPACIDAD DE TRANSMISION (MVA)");
+                tabla1.Rows[0].Cells[6].Paragraphs[0].Append("SOBRE CARGA PERMISIBLE PORCEN.");
+                tabla1.Rows[0].Cells[7].Paragraphs[0].Append("SOBRE CARGA PERMISIBLE TIEMPO");
+                tabla1.Rows[0].Cells[8].Paragraphs[0].Append("FACTOR LIMITANTE FINAL");
+
+                // --------------------------------------------------------------------------------------------
+
+                var listaCodigos = string.Join(",", list.Select(p => Convert.ToInt32(p.Equicodi)));
+                var listaFormulas = FactorySic.GetEprCalculosRepository().ListCalculosFormulasLineaMasivo(listaCodigos, ConstantesEvaluacionAppServicio.FAMCODI_LINEA_TRANSMISION);
+
+                var diccionarioFormulas = new Dictionary<int, List<EprCalculosDTO>>();
+
+                foreach (var item in list.Select(p => Convert.ToInt32(p.Equicodi)).Distinct())
+                {
+                    diccionarioFormulas[item] = listaFormulas.Where(p => p.Equicodi == item).ToList();
+                }
+                // --------------------------------------------------------------------------------------------
+                // Llena los datos
+                // --------------------------------------------------------------------------------------------
+                int fila = 0;
+                foreach (var item in list)
+                {
+
+                    var calculosEquipo = diccionarioFormulas[Convert.ToInt32(item.Equicodi)];
+                    n_calc.EvaluarFormulas(calculosEquipo);
+
+                    #region Asignacion Datos Calculados                                      
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA && p.Estado == 1))
+                    {
+                        item.CapacidadTransmisionA = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA && p.Estado == 1).Valor);
+                        item.CapacidadTransmisionA += (item.Capacidad_transmision_a_coment ?? "");
+                    }
+                    else
+                    {
+                        item.CapacidadTransmisionA = " " + (item.Capacidad_transmision_a_coment ?? "");
+                    }
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMVA && p.Estado == 1))
+                    {
+                        item.CapacidadTransmisionMVA = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMVA && p.Estado == 1).Valor);
+                        item.CapacidadTransmisionMVA += (item.Capacidad_transmision_mva_coment ?? "");
+                    }
+                    else
+                    {
+                        item.CapacidadTransmisionMVA = " " + (item.Capacidad_transmision_mva_coment ?? "");
+                    }
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal && p.Estado == 1))
+                    {
+                        item.FactorLimitanteFinal = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal && p.Estado == 1).Valor.ToString();
+                        item.FactorLimitanteFinal += (item.Factor_limitante_final_coment ?? "");
+                    }
+                    else
+                    {
+                        item.FactorLimitanteFinal = " " + (item.Factor_limitante_final_coment ?? "");
+                    }
+
+                    #endregion
+
+                    fila++;
+                    tabla1.Rows[fila].Cells[0].Paragraphs[0].Append(item.Empresa ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[1].Paragraphs[0].Append(item.Codigo ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[2].Paragraphs[0].Append(item.Tension).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[3].Paragraphs[0].Append(item.Subestacion ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[4].Paragraphs[0].Append(item.CapacidadTransmisionA).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[5].Paragraphs[0].Append(item.CapacidadTransmisionMVA ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[6].Paragraphs[0].Append(item.CapacidadTransmisionCondPorcen ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[7].Paragraphs[0].Append(item.CapacidadTransmisionCondMin ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[8].Paragraphs[0].Append(item.FactorLimitanteFinal).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                }
+
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Formatea la tabla
+                // --------------------------------------------------------------------------------------------
+                // Establece los formatos generales de la tabla
+                tabla1.Rows[0].Cells[0].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[1].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[2].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[3].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[4].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[5].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[6].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[7].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[8].Paragraphs[0].Bold();
+                for (int row = 0; row < rowsCount; row++)
+                {
+                    for (int col = 0; col < columnsCount; col++)
+                    {
+                        tabla1.Rows[row].Cells[col].Paragraphs[0].Alignment = Alignment.center;
+                        tabla1.Rows[row].Cells[col].Paragraphs[0].FontSize(7);
+                        tabla1.Rows[0].Cells[col].Paragraphs[0].Color(System.Drawing.Color.White);
+                    }
+                }
+
+                // Colorea las cabeceras
+                for (int row = 0; row < 1; row++)
+                {
+                    for (int col = 0; col < columnsCount; col++)
+                    {
+                        tabla1.Rows[row].Cells[col].FillColor = System.Drawing.ColorTranslator.FromHtml(color);
+                    }
+                }
+            }
+            // --------------------------------------------------------------------------------------------
+        }
+
+        private void escribirTablaCapacidadTransformadorDevExpress(Document document, Field field, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            if (list.Count > 0)
+            {
+
+                Dictionary<int, int> cantidadFilasPorDevanado = new Dictionary<int, int>
+                {
+                    { ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS, 2 },
+                    { ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS, 3 },
+                    { ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS, 4 }
+                };
+
+
+                var resultado = list
+                    .GroupBy(e => e.Famcodi)
+                    .Select(g => new
+                    {
+                        Tipo = g.Key,
+                        Conteo = g.Count(),
+                        TotalRegistros = g.Count() * cantidadFilasPorDevanado[g.Key]
+                    })
+                    .ToList();
+
+                var totalFilas = resultado.Sum(p => p.TotalRegistros);
+
+                if (field != null)
+                {
+                    DocumentPosition insertPosition = field.Range.Start;
+                    document.Delete(field.Range);
+
+                    int columnWidth = 60;
+                    int rowsCount = totalFilas + 1;
+                    string color = "#2980B9";
+
+
+                    DevExpress.XtraRichEdit.API.Native.Table table1 = document.Tables.Create(insertPosition, rowsCount, columnsCount);
+                    table1.TableAlignment = TableRowAlignment.Center;
+                    // Marcar la primera fila como repetible (cabecera)
+                    table1.Rows[0].RepeatAsHeaderRow = true;
+
+                    // --------------------------------------------------------------------------------------------
+
+                    // --------------------------------------------------------------------------------------------
+                    // Llena los datos
+                    // --------------------------------------------------------------------------------------------
+
+
+                    //Pasos previos para el calculo
+                    var diccionarioPorFamcodi = list
+                        .GroupBy(e => e.Famcodi)
+                        .ToDictionary(
+                            grupo => grupo.Key,
+                            grupo => grupo.Select(e => Convert.ToInt32(e.Equicodi)).ToList()
+                        );
+
+                    var diccionarioFormulasDosDevanados = new Dictionary<int, List<EprCalculosDTO>>();
+
+                    if (diccionarioPorFamcodi.ContainsKey(ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS))
+                    {
+                        var listaCodigosDosDevanados = string.Join(",", diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS].Distinct());
+                        var listaFormulasDosDevanados = FactorySic.GetEprCalculosRepository().ListCalculosFormulasTransformadoDosDevanadosMasivo(listaCodigosDosDevanados, ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS);
+
+                        foreach (var item in diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS].Distinct())
+                        {
+                            diccionarioFormulasDosDevanados[item] = listaFormulasDosDevanados.Where(p => p.Equicodi == item).ToList();
+                        }
+                    }
+
+
+                    var diccionarioFormulasTresDevanados = new Dictionary<int, List<EprCalculosDTO>>();
+
+                    if (diccionarioPorFamcodi.ContainsKey(ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS))
+                    {
+                        var listaCodigosTresDevanados = string.Join(",", diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS].Distinct());
+                        var listaFormulasTresDevanaTres = FactorySic.GetEprCalculosRepository().ListCalculosFormulasTransformadoTresDevanadosMasivo(listaCodigosTresDevanados, ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS);
+
+                        foreach (var item in diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS].Distinct())
+                        {
+                            diccionarioFormulasTresDevanados[item] = listaFormulasTresDevanaTres.Where(p => p.Equicodi == item).ToList();
+                        }
+                    }
+
+
+                    var diccionarioFormulasCuatroDevanados = new Dictionary<int, List<EprCalculosDTO>>();
+
+                    if (diccionarioPorFamcodi.ContainsKey(ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS))
+                    {
+                        var listaCodigosCuatroDevanados = string.Join(",", diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS].Distinct());
+                        var listaFormulasCuatroDevanaCuatro = FactorySic.GetEprCalculosRepository().ListCalculosFormulasTransformadoCuatroDevanadosMasivo(listaCodigosCuatroDevanados, ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS);
+
+
+                        foreach (var item in diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS].Distinct())
+                        {
+                            diccionarioFormulasCuatroDevanados[item] = listaFormulasCuatroDevanaCuatro.Where(p => p.Equicodi == item).ToList();
+                        }
+                    }
+
+
+                    //-----------
+
+                    int fila = 1;
+                    foreach (var item in list)
+                    {
+                        int numberOfRows = 2;
+
+                        switch (item.Famcodi)
+                        {
+                            case ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS:
+                                {
+
+                                    item.D1_capacidad_transmision_a = "";
+                                    item.D2_capacidad_transmision_a = "";
+                                    item.D1_capacidad_transmision_mva = "";
+                                    item.D2_capacidad_transmision_mva = "";
+                                    item.D1_factor_limitante_final = "";
+                                    item.D2_factor_limitante_final = "";
+
+                                    numberOfRows = 2;
+
+                                    var calculosEquipo = diccionarioFormulasDosDevanados[Convert.ToInt32(item.Equicodi)];
+                                    n_calc.EvaluarFormulas(calculosEquipo);
+
+                                    #region Devanado 1
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                    {
+                                        item.D1_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                        item.D1_capacidad_transmision_a += (item.D1_capacidad_transmision_a_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D1_capacidad_transmision_a += " " + (item.D1_capacidad_transmision_a_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                    {
+                                        item.D1_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                        item.D1_capacidad_transmision_mva += (item.D1_capacidad_transmision_mva_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D1_capacidad_transmision_mva += " " + (item.D1_capacidad_transmision_mva_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                    {
+                                        item.D1_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                        item.D1_factor_limitante_final += (item.D1_factor_limitante_final_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D1_factor_limitante_final += " " + (item.D1_factor_limitante_final_coment ?? "");
+                                    }
+
+
+                                    #endregion
+
+                                    #region Devanado 2
+
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                    {
+                                        item.D2_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                        item.D2_capacidad_transmision_a += (item.D2_capacidad_transmision_a_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D2_capacidad_transmision_a += " " + (item.D2_capacidad_transmision_a_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                    {
+                                        item.D2_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                        item.D2_capacidad_transmision_mva += (item.D2_capacidad_transmision_mva_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D2_capacidad_transmision_mva += " " + (item.D2_capacidad_transmision_mva_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                    {
+                                        item.D2_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                        item.D2_factor_limitante_final += (item.D2_factor_limitante_final_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D2_factor_limitante_final += " " + (item.D2_factor_limitante_final_coment ?? "");
+                                    }
+
+                                    #endregion
+
+                                    break;
+                                }
+                            case ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS:
+                                {
+
+                                    item.D1_capacidad_transmision_a = "";
+                                    item.D2_capacidad_transmision_a = "";
+                                    item.D3_capacidad_transmision_a = "";
+                                    item.D1_capacidad_transmision_mva = "";
+                                    item.D2_capacidad_transmision_mva = "";
+                                    item.D3_capacidad_transmision_mva = "";
+                                    item.D1_factor_limitante_final = "";
+                                    item.D2_factor_limitante_final = "";
+                                    item.D3_factor_limitante_final = "";
+
+                                    numberOfRows = 3;
+
+                                    var calculosEquipo = diccionarioFormulasTresDevanados[Convert.ToInt32(item.Equicodi)];
+                                    n_calc.EvaluarFormulas(calculosEquipo);
+
+                                    #region Devanado 1
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                    {
+                                        item.D1_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                        item.D1_capacidad_transmision_a += (item.D1_capacidad_transmision_a_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D1_capacidad_transmision_a += " " + (item.D1_capacidad_transmision_a_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                    {
+                                        item.D1_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                        item.D1_capacidad_transmision_mva += (item.D1_capacidad_transmision_mva_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D1_capacidad_transmision_mva += " " + (item.D1_capacidad_transmision_mva_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                    {
+                                        item.D1_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                        item.D1_factor_limitante_final += (item.D1_factor_limitante_final_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D1_factor_limitante_final += " " + (item.D1_factor_limitante_final_coment ?? "");
+                                    }
+
+
+                                    #endregion
+
+                                    #region Devanado 2
+
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                    {
+                                        item.D2_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                        item.D2_capacidad_transmision_a += (item.D2_capacidad_transmision_a_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D2_capacidad_transmision_a += " " + (item.D2_capacidad_transmision_a_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                    {
+                                        item.D2_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                        item.D2_capacidad_transmision_mva += (item.D2_capacidad_transmision_mva_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D2_capacidad_transmision_mva += " " + (item.D2_capacidad_transmision_mva_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                    {
+                                        item.D2_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                        item.D2_factor_limitante_final += (item.D2_factor_limitante_final_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D2_factor_limitante_final += " " + (item.D2_factor_limitante_final_coment ?? "");
+                                    }
+
+                                    #endregion
+
+                                    #region Devanado 3
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                    {
+                                        item.D3_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                        item.D3_capacidad_transmision_a += (item.D3_capacidad_transmision_a_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D3_capacidad_transmision_a += " " + (item.D3_capacidad_transmision_a_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                    {
+                                        item.D3_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                        item.D3_capacidad_transmision_mva += (item.D3_capacidad_transmision_mva_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D3_capacidad_transmision_mva += " " + (item.D3_capacidad_transmision_mva_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                    {
+                                        item.D3_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                        item.D3_factor_limitante_final += (item.D3_factor_limitante_final_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D3_factor_limitante_final += " " + (item.D3_factor_limitante_final_coment ?? "");
+                                    }
+
+                                    #endregion
+
+
+                                    break;
+                                }
+                            case ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS:
+                                {
+
+                                    item.D1_capacidad_transmision_a = "";
+                                    item.D2_capacidad_transmision_a = "";
+                                    item.D3_capacidad_transmision_a = "";
+                                    item.D4_capacidad_transmision_a = "";
+                                    item.D1_capacidad_transmision_mva = "";
+                                    item.D2_capacidad_transmision_mva = "";
+                                    item.D3_capacidad_transmision_mva = "";
+                                    item.D4_capacidad_transmision_mva = "";
+                                    item.D1_factor_limitante_final = "";
+                                    item.D2_factor_limitante_final = "";
+                                    item.D3_factor_limitante_final = "";
+                                    item.D4_factor_limitante_final = "";
+
+                                    numberOfRows = 4;
+
+                                    var calculosEquipo = diccionarioFormulasCuatroDevanados[Convert.ToInt32(item.Equicodi)];
+                                    n_calc.EvaluarFormulas(calculosEquipo);
+
+                                    #region Devanado 1
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                    {
+                                        item.D1_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                        item.D1_capacidad_transmision_a += (item.D1_capacidad_transmision_a_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D1_capacidad_transmision_a += " " + (item.D1_capacidad_transmision_a_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                    {
+                                        item.D1_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                        item.D1_capacidad_transmision_mva += (item.D1_capacidad_transmision_mva_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D1_capacidad_transmision_mva += " " + (item.D1_capacidad_transmision_mva_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                    {
+                                        item.D1_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                        item.D1_factor_limitante_final += (item.D1_factor_limitante_final_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D1_factor_limitante_final += " " + (item.D1_factor_limitante_final_coment ?? "");
+                                    }
+
+
+                                    #endregion
+
+                                    #region Devanado 2
+
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                    {
+                                        item.D2_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                        item.D2_capacidad_transmision_a += (item.D2_capacidad_transmision_a_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D2_capacidad_transmision_a += " " + (item.D2_capacidad_transmision_a_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                    {
+                                        item.D2_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                        item.D2_capacidad_transmision_mva += (item.D2_capacidad_transmision_mva_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D2_capacidad_transmision_mva += " " + (item.D2_capacidad_transmision_mva_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                    {
+                                        item.D2_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                        item.D2_factor_limitante_final += (item.D2_factor_limitante_final_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D2_factor_limitante_final += " " + (item.D2_factor_limitante_final_coment ?? "");
+                                    }
+
+                                    #endregion
+
+                                    #region Devanado 3
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                    {
+                                        item.D3_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                        item.D3_capacidad_transmision_a += (item.D3_capacidad_transmision_a_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D3_capacidad_transmision_a += " " + (item.D3_capacidad_transmision_a_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                    {
+                                        item.D3_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                        item.D3_capacidad_transmision_mva += (item.D3_capacidad_transmision_mva_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D3_capacidad_transmision_mva += " " + (item.D3_capacidad_transmision_mva_coment ?? "");
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                    {
+                                        item.D3_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                        item.D3_factor_limitante_final += (item.D3_factor_limitante_final_coment ?? "");
+                                    }
+                                    else
+                                    {
+                                        item.D3_factor_limitante_final += " " + (item.D3_factor_limitante_final_coment ?? "");
+                                    }
+
+                                    #endregion
+
+                                    #region Devanado 4
+
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                    {
+                                        item.D4_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                        item.D4_capacidad_transmision_a += item.D4_capacidad_transmision_a_coment ?? "";
+                                    }
+                                    else
+                                    {
+
+                                    }
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                    {
+                                        item.D4_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                        item.D4_capacidad_transmision_mva += item.D4_capacidad_transmision_mva_coment ?? "";
+                                    }
+                                    else
+                                    {
+                                        item.D4_capacidad_transmision_mva += " " + item.D4_capacidad_transmision_mva_coment ?? "";
+                                    }
+
+
+                                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                    {
+                                        item.D4_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                        item.D4_factor_limitante_final += item.D4_factor_limitante_final_coment ?? "";
+                                    }
+                                    else
+                                    {
+                                        item.D4_factor_limitante_final += " " + item.D4_factor_limitante_final_coment ?? "";
+                                    }
+
+                                    #endregion
+
+                                    break;
+                                }
+                        }
+
+
+                        // --------------------------------------------------------------------------------------------
+                        // Llena las cabeceras de la tabla
+                        // --------------------------------------------------------------------------------------------
+
+                        escribirCabeceraDevExpress(document, table1, 0, 0, "EMPRESA");
+                        escribirCabeceraDevExpress(document, table1, 0, 1, "CÓDIGO");
+                        escribirCabeceraDevExpress(document, table1, 0, 2, "TENSIÓN (KV)");
+                        escribirCabeceraDevExpress(document, table1, 0, 3, "SUBESTACIONES (SE1-SE2)");
+                        escribirCabeceraDevExpress(document, table1, 0, 4, "CAPACIDAD DE TRANSMISIÓN (AMP)");
+                        escribirCabeceraDevExpress(document, table1, 0, 5, "CAPACIDAD DE TRANSMISION (MVA)");
+                        escribirCabeceraDevExpress(document, table1, 0, 6, "FACTOR LIMITANTE FINAL");
+
+                        for (int i = 0; i < numberOfRows; i++)
+                        {
+                            // Llenar las celdas 
+                            if (i == 0)
+                            {
+                                escribirCeldaDevExpress(document, table1, fila, 0, item.Empresa ?? "");
+                                escribirCeldaDevExpress(document, table1, fila, 1, item.Codigo ?? "");
+                                escribirCeldaDevExpress(document, table1, fila, 3, item.Subestacion ?? "");
+                            }
+
+                            if (item.Famcodi == ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS)
+                            {
+                                escribirCeldaDevExpress(document, table1, fila, 2, i == 0 ? item.D1_tension ?? "" :
+                                                              i == 1 ? item.D2_tension ?? "" : item.D3_tension ?? "");
+
+                                escribirCeldaDevExpress(document, table1, fila, 4, i == 0 ? item.D1_capacidad_transmision_a :
+                                                               i == 1 ? item.D2_capacidad_transmision_a : item.D3_capacidad_transmision_a);
+
+                                escribirCeldaDevExpress(document, table1, fila, 5, i == 0 ? item.D1_capacidad_transmision_mva :
+                                                               i == 1 ? item.D2_capacidad_transmision_mva : item.D3_capacidad_transmision_mva);
+
+                                escribirCeldaDevExpress(document, table1, fila, 6, i == 0 ? item.D1_factor_limitante_final :
+                                                              i == 1 ? item.D2_factor_limitante_final : item.D3_factor_limitante_final);
+
+                            }
+                            else if (item.Famcodi == ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS)
+                            {
+                                escribirCeldaDevExpress(document, table1, fila, 2, i == 0 ? item.D1_tension ?? "" :
+                                  i == 1 ? item.D2_tension ?? "" :
+                                  i == 2 ? item.D3_tension ?? "" : item.D4_tension ?? "");
+
+                                escribirCeldaDevExpress(document, table1, fila, 4, i == 0 ? item.D1_capacidad_transmision_a :
+                                                                i == 1 ? item.D2_capacidad_transmision_a :
+                                                                i == 2 ? item.D3_capacidad_transmision_a : item.D4_capacidad_transmision_a);
+
+                                escribirCeldaDevExpress(document, table1, fila, 5, i == 0 ? item.D1_capacidad_transmision_mva :
+                                                                i == 1 ? item.D2_capacidad_transmision_mva :
+                                                                i == 2 ? item.D3_capacidad_transmision_mva : item.D4_capacidad_transmision_mva);
+
+                                escribirCeldaDevExpress(document, table1, fila, 6, i == 0 ? item.D1_factor_limitante_final :
+                                                              i == 1 ? item.D2_factor_limitante_final :
+                                                              i == 2 ? item.D3_factor_limitante_final : item.D4_factor_limitante_final);
+                            }
+                            else
+                            {
+                                escribirCeldaDevExpress(document, table1, fila, 2, i == 0 ? item.D1_tension ?? "" : item.D2_tension ?? "");
+                                escribirCeldaDevExpress(document, table1, fila, 4, i == 0 ? item.D1_capacidad_transmision_a : item.D2_capacidad_transmision_a);
+                                escribirCeldaDevExpress(document, table1, fila, 5, i == 0 ? item.D1_capacidad_transmision_mva : item.D2_capacidad_transmision_mva);
+                                escribirCeldaDevExpress(document, table1, fila, 6, i == 0 ? item.D1_factor_limitante_final : item.D2_factor_limitante_final);
+                            }
+
+                            fila++;
+                        }
+
+                        //table1.MergeCellsInColumn(0, fila - numberOfRows, fila - 1);
+                        //table1.MergeCellsInColumn(1, fila - numberOfRows, fila - 1);
+                        //table1.MergeCellsInColumn(3, fila - numberOfRows, fila - 1);
+
+
+                        int[] celdasMerge  = { 0, 1, 3 };
+
+                        foreach (int  columnIndex in celdasMerge)
+                        {
+                            int startRow = fila - numberOfRows;
+                            int endRow = fila - 1;
+
+                            // Asegurar que los índices estén en rango
+                            if (startRow >= 0 && endRow < table1.Rows.Count)
+                            {
+                                TableCell startCell = table1.Rows[startRow].Cells[columnIndex];
+                                TableCell endCell = table1.Rows[endRow].Cells[columnIndex];
+
+                                // Fusionar verticalmente
+                                table1.MergeCells(startCell, endCell);
+                            }
+                        }
+                    }
+
+
+
+                }
+            }
+            // --------------------------------------------------------------------------------------------
+        }
+
+        private void escribirTablaCapacidadTransformador(DocX document, Novacode.Paragraph paragraph, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            if (list.Count > 0)
+            {
+
+                Dictionary<int, int> cantidadFilasPorDevanado = new Dictionary<int, int>
+                {
+                    { ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS, 2 },
+                    { ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS, 3 },
+                    { ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS, 4 }
+                };
+
+                        
+                var resultado = list
+                    .GroupBy(e => e.Famcodi) 
+                    .Select(g => new 
+                    {
+                        Tipo = g.Key,
+                        Conteo = g.Count(), 
+                        TotalRegistros = g.Count() * cantidadFilasPorDevanado[g.Key] 
+                    })
+                    .ToList();
+
+                var totalFilas = resultado.Sum(p => p.TotalRegistros);
+
+                int columnWidth = 60;               
+                int rowsCount = totalFilas + 1;
+                string color = "#2980B9";
+                Novacode.Table tabla1 = UtilWordIntervenciones.CrearTablaWordDocxDesdeParagraf(document, rowsCount, columnsCount, columnWidth, paragraph);
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Llena las cabeceras de la tabla
+                // --------------------------------------------------------------------------------------------
+                tabla1.Rows[0].Cells[0].Paragraphs[0].Append("EMPRESA");
+                tabla1.Rows[0].Cells[1].Paragraphs[0].Append("CÓDIGO");
+                tabla1.Rows[0].Cells[2].Paragraphs[0].Append("TENSIÓN (KV)");
+                tabla1.Rows[0].Cells[3].Paragraphs[0].Append("SUBESTACIONES (SE1-SE2)");
+                tabla1.Rows[0].Cells[4].Paragraphs[0].Append("CAPACIDAD DE TRANSMISIÓN (AMP)");
+                tabla1.Rows[0].Cells[5].Paragraphs[0].Append("CAPACIDAD DE TRANSMISION (MVA)");
+                tabla1.Rows[0].Cells[6].Paragraphs[0].Append("FACTOR LIMITANTE FINAL");
+
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Llena los datos
+                // --------------------------------------------------------------------------------------------
+
+
+                //Pasos previos para el calculo
+                var diccionarioPorFamcodi = list
+                    .GroupBy(e => e.Famcodi)
+                    .ToDictionary(
+                        grupo => grupo.Key,
+                        grupo => grupo.Select(e => Convert.ToInt32(e.Equicodi)).ToList()
+                    );
+
+                var diccionarioFormulasDosDevanados = new Dictionary<int, List<EprCalculosDTO>>();
+
+                if (diccionarioPorFamcodi.ContainsKey(ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS))
+                {
+                    var listaCodigosDosDevanados = string.Join(",", diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS].Distinct());
+                    var listaFormulasDosDevanados = FactorySic.GetEprCalculosRepository().ListCalculosFormulasTransformadoDosDevanadosMasivo(listaCodigosDosDevanados, ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS);
+
+                    foreach (var item in diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS].Distinct())
+                    {
+                        diccionarioFormulasDosDevanados[item] = listaFormulasDosDevanados.Where(p => p.Equicodi == item).ToList();
+                    }
+                }
+
+
+                var diccionarioFormulasTresDevanados = new Dictionary<int, List<EprCalculosDTO>>();
+
+                if (diccionarioPorFamcodi.ContainsKey(ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS))
+                {
+                    var listaCodigosTresDevanados = string.Join(",", diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS].Distinct());
+                    var listaFormulasTresDevanaTres = FactorySic.GetEprCalculosRepository().ListCalculosFormulasTransformadoTresDevanadosMasivo(listaCodigosTresDevanados, ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS);
+
+                    foreach (var item in diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS].Distinct())
+                    {
+                        diccionarioFormulasTresDevanados[item] = listaFormulasTresDevanaTres.Where(p => p.Equicodi == item).ToList();
+                    }
+                }
+
+
+                var diccionarioFormulasCuatroDevanados = new Dictionary<int, List<EprCalculosDTO>>();
+
+                if (diccionarioPorFamcodi.ContainsKey(ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS))
+                {
+                    var listaCodigosCuatroDevanados = string.Join(",", diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS].Distinct());
+                    var listaFormulasCuatroDevanaCuatro = FactorySic.GetEprCalculosRepository().ListCalculosFormulasTransformadoCuatroDevanadosMasivo(listaCodigosCuatroDevanados, ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS);
+
+
+                    foreach (var item in diccionarioPorFamcodi[ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS].Distinct())
+                    {
+                        diccionarioFormulasCuatroDevanados[item] = listaFormulasCuatroDevanaCuatro.Where(p => p.Equicodi == item).ToList();
+                    }
+                }
+
+
+                //-----------
+
+                int fila = 1;
+                foreach (var item in list)
+                {                   
+                    int numberOfRows = 2;
+
+                    switch (item.Famcodi)
+                    {
+                        case ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_DOS_DEVANADOS:
+                            {                               
+
+                                item.D1_capacidad_transmision_a = "";
+                                item.D2_capacidad_transmision_a = "";
+                                item.D1_capacidad_transmision_mva = "";
+                                item.D2_capacidad_transmision_mva = "";
+                                item.D1_factor_limitante_final = "";
+                                item.D2_factor_limitante_final = "";
+
+                                numberOfRows = 2;
+
+                                var calculosEquipo = diccionarioFormulasDosDevanados[Convert.ToInt32(item.Equicodi)];
+                                n_calc.EvaluarFormulas(calculosEquipo);
+
+                                #region Devanado 1
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                {
+                                    item.D1_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                    item.D1_capacidad_transmision_a += (item.D1_capacidad_transmision_a_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D1_capacidad_transmision_a += " " + (item.D1_capacidad_transmision_a_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                {
+                                    item.D1_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                    item.D1_capacidad_transmision_mva += (item.D1_capacidad_transmision_mva_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D1_capacidad_transmision_mva += " " + (item.D1_capacidad_transmision_mva_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                {
+                                    item.D1_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                    item.D1_factor_limitante_final += (item.D1_factor_limitante_final_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D1_factor_limitante_final += " " + (item.D1_factor_limitante_final_coment ?? "");
+                                }
+
+
+                                #endregion
+
+                                #region Devanado 2
+
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                {
+                                    item.D2_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                    item.D2_capacidad_transmision_a += (item.D2_capacidad_transmision_a_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D2_capacidad_transmision_a += " " + (item.D2_capacidad_transmision_a_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                {
+                                    item.D2_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                    item.D2_capacidad_transmision_mva += (item.D2_capacidad_transmision_mva_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D2_capacidad_transmision_mva += " " + (item.D2_capacidad_transmision_mva_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                {
+                                    item.D2_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                    item.D2_factor_limitante_final += (item.D2_factor_limitante_final_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D2_factor_limitante_final += " " + (item.D2_factor_limitante_final_coment ?? "");
+                                }
+
+                                #endregion
+
+                                break;
+                            }
+                        case ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS:
+                            {
+                              
+                                item.D1_capacidad_transmision_a = "";
+                                item.D2_capacidad_transmision_a = "";
+                                item.D3_capacidad_transmision_a = "";
+                                item.D1_capacidad_transmision_mva = "";
+                                item.D2_capacidad_transmision_mva = "";
+                                item.D3_capacidad_transmision_mva = "";
+                                item.D1_factor_limitante_final = "";
+                                item.D2_factor_limitante_final = "";
+                                item.D3_factor_limitante_final = "";
+
+                                numberOfRows = 3;
+
+                                var calculosEquipo = diccionarioFormulasTresDevanados[Convert.ToInt32(item.Equicodi)];
+                                n_calc.EvaluarFormulas(calculosEquipo);
+
+                                #region Devanado 1
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                {
+                                    item.D1_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                    item.D1_capacidad_transmision_a += (item.D1_capacidad_transmision_a_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D1_capacidad_transmision_a += " " + (item.D1_capacidad_transmision_a_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                {
+                                    item.D1_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                    item.D1_capacidad_transmision_mva += (item.D1_capacidad_transmision_mva_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D1_capacidad_transmision_mva += " " + (item.D1_capacidad_transmision_mva_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                {
+                                    item.D1_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                    item.D1_factor_limitante_final += (item.D1_factor_limitante_final_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D1_factor_limitante_final += " " + (item.D1_factor_limitante_final_coment ?? "");
+                                }
+
+
+                                #endregion
+
+                                #region Devanado 2
+
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                {
+                                    item.D2_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                    item.D2_capacidad_transmision_a += (item.D2_capacidad_transmision_a_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D2_capacidad_transmision_a += " " + (item.D2_capacidad_transmision_a_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                {
+                                    item.D2_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                    item.D2_capacidad_transmision_mva += (item.D2_capacidad_transmision_mva_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D2_capacidad_transmision_mva += " " + (item.D2_capacidad_transmision_mva_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                {
+                                    item.D2_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                    item.D2_factor_limitante_final += (item.D2_factor_limitante_final_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D2_factor_limitante_final += " " + (item.D2_factor_limitante_final_coment ?? "");
+                                }
+
+                                #endregion
+
+                                #region Devanado 3
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                {
+                                    item.D3_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                    item.D3_capacidad_transmision_a += (item.D3_capacidad_transmision_a_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D3_capacidad_transmision_a += " " + (item.D3_capacidad_transmision_a_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                {
+                                    item.D3_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                    item.D3_capacidad_transmision_mva += (item.D3_capacidad_transmision_mva_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D3_capacidad_transmision_mva += " " + (item.D3_capacidad_transmision_mva_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                {
+                                    item.D3_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                    item.D3_factor_limitante_final += (item.D3_factor_limitante_final_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D3_factor_limitante_final += " " + (item.D3_factor_limitante_final_coment ?? "");
+                                }
+
+                                #endregion
+
+
+                                break;
+                            }
+                        case ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS:
+                            {                            
+
+                                item.D1_capacidad_transmision_a = "";
+                                item.D2_capacidad_transmision_a = "";
+                                item.D3_capacidad_transmision_a = "";
+                                item.D4_capacidad_transmision_a = "";
+                                item.D1_capacidad_transmision_mva = "";
+                                item.D2_capacidad_transmision_mva = "";
+                                item.D3_capacidad_transmision_mva = "";
+                                item.D4_capacidad_transmision_mva = "";
+                                item.D1_factor_limitante_final = "";
+                                item.D2_factor_limitante_final = "";
+                                item.D3_factor_limitante_final = "";
+                                item.D4_factor_limitante_final = "";
+
+                                numberOfRows = 4;
+
+                                var calculosEquipo = diccionarioFormulasCuatroDevanados[Convert.ToInt32(item.Equicodi)];
+                                n_calc.EvaluarFormulas(calculosEquipo);
+
+                                #region Devanado 1
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                {
+                                    item.D1_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                    item.D1_capacidad_transmision_a += (item.D1_capacidad_transmision_a_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D1_capacidad_transmision_a += " " + (item.D1_capacidad_transmision_a_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                {
+                                    item.D1_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                    item.D1_capacidad_transmision_mva += (item.D1_capacidad_transmision_mva_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D1_capacidad_transmision_mva += " " + (item.D1_capacidad_transmision_mva_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                {
+                                    item.D1_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D1_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                    item.D1_factor_limitante_final += (item.D1_factor_limitante_final_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D1_factor_limitante_final += " " + (item.D1_factor_limitante_final_coment ?? ""); 
+                                }
+
+
+                                #endregion
+
+                                #region Devanado 2
+
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                {
+                                    item.D2_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                    item.D2_capacidad_transmision_a += (item.D2_capacidad_transmision_a_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D2_capacidad_transmision_a += " " + (item.D2_capacidad_transmision_a_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                {
+                                    item.D2_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                    item.D2_capacidad_transmision_mva += (item.D2_capacidad_transmision_mva_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D2_capacidad_transmision_mva += " " + (item.D2_capacidad_transmision_mva_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                {
+                                    item.D2_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D2_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                    item.D2_factor_limitante_final += (item.D2_factor_limitante_final_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D2_factor_limitante_final += " " + (item.D2_factor_limitante_final_coment ?? "");
+                                }
+
+                                #endregion
+
+                                #region Devanado 3
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                {
+                                    item.D3_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                    item.D3_capacidad_transmision_a += (item.D3_capacidad_transmision_a_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D3_capacidad_transmision_a += " " + (item.D3_capacidad_transmision_a_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                {
+                                    item.D3_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                    item.D3_capacidad_transmision_mva += (item.D3_capacidad_transmision_mva_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D3_capacidad_transmision_mva += " " + (item.D3_capacidad_transmision_mva_coment ?? "");
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                {
+                                    item.D3_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D3_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                    item.D3_factor_limitante_final += (item.D3_factor_limitante_final_coment ?? "");
+                                }
+                                else
+                                {
+                                    item.D3_factor_limitante_final += " " + (item.D3_factor_limitante_final_coment ?? "");
+                                }
+
+                                #endregion
+
+                                #region Devanado 4
+
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_CAPACIDAD_TRANSMISION_A && p.Estado == 1))
+                                {
+                                    item.D4_capacidad_transmision_a = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_CAPACIDAD_TRANSMISION_A && p.Estado == 1).Valor, 2);
+                                    item.D4_capacidad_transmision_a += item.D4_capacidad_transmision_a_coment ?? "";
+                                }
+                                else
+                                {
+
+                                }
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1))
+                                {
+                                    item.D4_capacidad_transmision_mva = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_CAPACIDAD_TRANSMISION_MVA && p.Estado == 1).Valor, 2);
+                                    item.D4_capacidad_transmision_mva += item.D4_capacidad_transmision_mva_coment ?? "";
+                                }
+                                else
+                                {
+                                    item.D4_capacidad_transmision_mva += " " + item.D4_capacidad_transmision_mva_coment ?? "";
+                                }
+
+
+                                if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_FACTOR_LIMITANTE_FINAL && p.Estado == 1))
+                                {
+                                    item.D4_factor_limitante_final = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NOMBRE_D4_FACTOR_LIMITANTE_FINAL && p.Estado == 1).Valor.ToString();
+                                    item.D4_factor_limitante_final += item.D4_factor_limitante_final_coment ?? "";
+                                }
+                                else
+                                {
+                                    item.D4_factor_limitante_final += " " + item.D4_factor_limitante_final_coment ?? "";
+                                }
+
+                                #endregion
+
+                                break;
+                            }
+                    }               
+
+
+                    for (int i = 0; i < numberOfRows; i++)
+                    {
+                        // Crear la nueva fila en la tabla
+                        Novacode.Row row = tabla1.Rows[fila];
+
+                        // Llenar las celdas 
+                        if(i == 0)
+                        {
+                            row.Cells[0].Paragraphs[0].Append(item.Empresa).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                            row.Cells[1].Paragraphs[0].Append(item.Codigo).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                            row.Cells[3].Paragraphs[0].Append(item.Subestacion).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                        }                       
+
+                        if (item.Famcodi == ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_TRES_DEVANADOS)
+                        {
+                            row.Cells[2].Paragraphs[0].Append(i == 0 ? item.D1_tension ?? "" :
+                                                              i == 1 ? item.D2_tension ?? "" : item.D3_tension ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+
+
+                            row.Cells[4].Paragraphs[0].Append(i == 0 ? item.D1_capacidad_transmision_a :
+                                                               i == 1 ? item.D2_capacidad_transmision_a : item.D3_capacidad_transmision_a).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+
+                            row.Cells[5].Paragraphs[0].Append(i == 0 ? item.D1_capacidad_transmision_mva :
+                                                               i == 1 ? item.D2_capacidad_transmision_mva : item.D3_capacidad_transmision_mva).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+
+                            row.Cells[6].Paragraphs[0].Append(i == 0 ? item.D1_factor_limitante_final :
+                                                              i == 1 ? item.D2_factor_limitante_final : item.D3_factor_limitante_final).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+
+                        }
+                        else if (item.Famcodi == ConstantesEvaluacionAppServicio.FAMCODI_TRANSFORMADOR_CUATRO_DEVANADOS)
+                        {
+                            row.Cells[2].Paragraphs[0].Append(i == 0 ? item.D1_tension ?? "" :
+                                                              i == 1 ? item.D2_tension ?? "" :
+                                                              i == 2 ? item.D3_tension ?? "" : item.D4_tension ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+
+                            row.Cells[4].Paragraphs[0].Append(i == 0 ? item.D1_capacidad_transmision_a :
+                                                                i == 1 ? item.D2_capacidad_transmision_a :
+                                                                i == 2 ? item.D3_capacidad_transmision_a : item.D4_capacidad_transmision_a).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+
+                            row.Cells[5].Paragraphs[0].Append(i == 0 ? item.D1_capacidad_transmision_mva :
+                                                                i == 1 ? item.D2_capacidad_transmision_mva :
+                                                                i == 2 ? item.D3_capacidad_transmision_mva : item.D4_capacidad_transmision_mva).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+
+                            row.Cells[6].Paragraphs[0].Append(i == 0 ? item.D1_factor_limitante_final :
+                                                              i == 1 ? item.D2_factor_limitante_final :
+                                                              i == 2 ? item.D3_factor_limitante_final : item.D4_factor_limitante_final).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                        }
+                        else
+                        {
+                            row.Cells[2].Paragraphs[0].Append(i == 0 ? item.D1_tension ?? "" : item.D2_tension ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                            row.Cells[4].Paragraphs[0].Append(i == 0 ? item.D1_capacidad_transmision_a : item.D2_capacidad_transmision_a).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                            row.Cells[5].Paragraphs[0].Append(i == 0 ? item.D1_capacidad_transmision_mva : item.D2_capacidad_transmision_mva).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                            row.Cells[6].Paragraphs[0].Append(i == 0 ? item.D1_factor_limitante_final : item.D2_factor_limitante_final).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                        }                      
+
+                        fila++;
+                    }
+
+                    tabla1.MergeCellsInColumn(0, fila - numberOfRows, fila - 1);
+                    tabla1.MergeCellsInColumn(1, fila - numberOfRows, fila - 1);
+                    tabla1.MergeCellsInColumn(3, fila - numberOfRows, fila - 1);
+                }
+
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Formatea la tabla
+                // --------------------------------------------------------------------------------------------
+                // Establece los formatos generales de la tabla
+                tabla1.Rows[0].Cells[0].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[1].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[2].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[3].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[4].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[5].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[6].Paragraphs[0].Bold();
+                for (int row = 0; row < rowsCount; row++)
+                {
+                    for (int col = 0; col < columnsCount; col++)
+                    {
+                        tabla1.Rows[row].Cells[col].Paragraphs[0].Alignment = Alignment.center;
+                        tabla1.Rows[row].Cells[col].Paragraphs[0].FontSize(7);
+                        tabla1.Rows[0].Cells[col].Paragraphs[0].Color(System.Drawing.Color.White);
+                    }
+                }
+
+                // Colorea las cabeceras
+                for (int row = 0; row < 1; row++)
+                {
+                    for (int col = 0; col < columnsCount; col++)
+                    {
+                        tabla1.Rows[row].Cells[col].FillColor = System.Drawing.ColorTranslator.FromHtml(color);
+                    }
+                }
+            }
+            // --------------------------------------------------------------------------------------------
+        }
+        private void saltoLineaTexto(Novacode.Paragraph paragraph, string cadena) {
+
+            if (string.IsNullOrEmpty(cadena)) return;
+
+            string[] lineas = cadena.Split(new string[] { "\\n" }, StringSplitOptions.None); // Divide el texto en líneas
+            if (lineas.Length > 0)
+            {
+
+                foreach (var linea in lineas)
+                {
+                    paragraph.Append(linea).FontSize(7).Font(new System.Drawing.FontFamily("Arial")).AppendLine();
+                }
+            }
+            else {
+                paragraph.Append(cadena).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+            }
+        }
+
+        private void escribirTablaCapacidadAcoplamientoDevExpress(Document document, Field field, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            if (field != null)
+            {
+                if (list.Count > 0)
+                {
+                    int columnWidth = 60;
+                    int rowsCount = list.Count + 1;
+                    string color = "#2980B9";
+                    DocumentPosition insertPosition = field.Range.Start;
+                    document.Delete(field.Range);
+
+                    DevExpress.XtraRichEdit.API.Native.Table table = document.Tables.Create(insertPosition, list.Count + 1, columnsCount);
+                    table.TableAlignment = TableRowAlignment.Center;
+                    // Marcar la primera fila como repetible (cabecera)
+                    table.Rows[0].RepeatAsHeaderRow = true;
+                    // --------------------------------------------------------------------------------------------
+                    // Llena las cabeceras de la tabla
+                    // --------------------------------------------------------------------------------------------
+                    escribirCabeceraDevExpress(document, table, 0, 0, "EMPRESA");
+                    escribirCabeceraDevExpress(document, table, 0, 1, "CÓDIGO");
+                    escribirCabeceraDevExpress(document, table, 0, 2, "TENSIÓN (KV)");
+                    escribirCabeceraDevExpress(document, table, 0, 3, "SUBESTACIONES (SE1-SE2)");
+                    escribirCabeceraDevExpress(document, table, 0, 4, "CAPACIDAD DE TRANSMISIÓN (AMP)");
+                    escribirCabeceraDevExpress(document, table, 0, 5, "CAPACIDAD DE TRANSMISION (MVA)");
+                    escribirCabeceraDevExpress(document, table, 0, 6, "FACTOR LIMITANTE FINAL");
+                    escribirCabeceraDevExpress(document, table, 0, 7, "OBSERVACIONES");
+                    // --------------------------------------------------------------------------------------------
+                    var listaCodigos = string.Join(",", list.Select(p => Convert.ToInt32(p.Equicodi)));
+                    var listaFormulas = FactorySic.GetEprCalculosRepository().ListCalculosFormulasCeldaMasivo(listaCodigos, ConstantesEvaluacionAppServicio.FAMCODI_CELDA);
+
+                    var diccionarioFormulas = new Dictionary<int, List<EprCalculosDTO>>();
+
+                    foreach (var item in list.Select(p => Convert.ToInt32(p.Equicodi)).Distinct())
+                    {
+                        diccionarioFormulas[item] = listaFormulas.Where(p => p.Equicodi == item).ToList();
+                    }
+                    // --------------------------------------------------------------------------------------------
+                    // Llena los datos
+                    // --------------------------------------------------------------------------------------------
+                    int fila = 0;
+                    foreach (var item in list)
+                    {
+
+                        var calculosEquipo = diccionarioFormulas[Convert.ToInt32(item.Equicodi)];
+                        n_calc.EvaluarFormulas(calculosEquipo);
+
+                        #region Asignacion Datos Calculados
+
+                        if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA && p.Estado == 1))
+                        {
+                            item.CapacidadTransmisionA = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA).Valor, 2);
+                            item.CapacidadTransmisionA += (item.Capacidad_transmision_a_coment ?? "");
+                        }
+                        else
+                        {
+                            item.CapacidadTransmisionA = " " + (item.Capacidad_transmision_a_coment ?? "");
+                        }
+
+                        if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMvar && p.Estado == 1))
+                        {
+                            item.CapacidadTransmisionMVA = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMvar).Valor, 2);
+                            item.CapacidadTransmisionMVA += (item.Capacidad_transmision_mva_coment ?? "");
+                        }
+                        else
+                        {
+                            item.CapacidadTransmisionMVA = " " + (item.Capacidad_transmision_mva_coment ?? "");
+                        }
+
+                        if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal && p.Estado == 1))
+                        {
+                            item.FactorLimitanteFinal = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal).Valor.ToString();
+                            item.FactorLimitanteFinal += (item.Factor_limitante_final_coment ?? "");
+                        }
+                        else
+                        {
+                            item.FactorLimitanteFinal = " " + (item.Factor_limitante_final_coment ?? "");
+                        }
+
+                        #endregion
+
+                        fila++;
+                        escribirCeldaDevExpress(document, table, fila, 0, item.Empresa ?? "");
+                        escribirCeldaDevExpress(document, table, fila, 1, item.Codigo ?? "");
+                        escribirCeldaDevExpress(document, table, fila, 2, item.Tension);
+                        escribirCeldaDevExpress(document, table, fila, 3, item.Subestacion ?? "");
+                        escribirCeldaDevExpress(document, table, fila, 4, item.CapacidadTransmisionA);
+                        escribirCeldaDevExpress(document, table, fila, 5, item.CapacidadTransmisionMVA ?? "");
+                        escribirCeldaDevExpress(document, table, fila, 6, item.FactorLimitanteFinal);
+                        escribirCeldaDevExpress(document, table, fila, 7, item.Observaciones);
+                        
+                    }
+                }
+            }
+            // --------------------------------------------------------------------------------------------
+        }
+
+        private void escribirTablaCapacidadAcoplamiento(DocX document, Novacode.Paragraph paragraph, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            if (list.Count > 0)
+            {
+                int columnWidth = 60;
+                int rowsCount = list.Count + 1;
+                string color = "#2980B9";
+                Novacode.Table tabla1 = UtilWordIntervenciones.CrearTablaWordDocxDesdeParagraf(document, rowsCount, columnsCount, columnWidth, paragraph);
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Llena las cabeceras de la tabla
+                // --------------------------------------------------------------------------------------------
+                tabla1.Rows[0].Cells[0].Paragraphs[0].Append("EMPRESA");
+                tabla1.Rows[0].Cells[1].Paragraphs[0].Append("CÓDIGO");
+                tabla1.Rows[0].Cells[2].Paragraphs[0].Append("TENSIÓN (KV)");
+                tabla1.Rows[0].Cells[3].Paragraphs[0].Append("SUBESTACIONES (SE1-SE2)");
+                tabla1.Rows[0].Cells[4].Paragraphs[0].Append("CAPACIDAD DE TRANSMISIÓN (AMP)");
+                tabla1.Rows[0].Cells[5].Paragraphs[0].Append("CAPACIDAD DE TRANSMISION (MVA)");
+                tabla1.Rows[0].Cells[6].Paragraphs[0].Append("FACTOR LIMITANTE FINAL");
+                tabla1.Rows[0].Cells[7].Paragraphs[0].Append("OBSERVACIONES");
+                // --------------------------------------------------------------------------------------------
+                var listaCodigos = string.Join(",", list.Select(p => Convert.ToInt32(p.Equicodi)));
+                var listaFormulas = FactorySic.GetEprCalculosRepository().ListCalculosFormulasCeldaMasivo(listaCodigos, ConstantesEvaluacionAppServicio.FAMCODI_CELDA);
+
+                var diccionarioFormulas = new Dictionary<int, List<EprCalculosDTO>>();
+
+                foreach (var item in list.Select(p => Convert.ToInt32(p.Equicodi)).Distinct())
+                {
+                    diccionarioFormulas[item] = listaFormulas.Where(p => p.Equicodi == item).ToList();
+                }
+                // --------------------------------------------------------------------------------------------
+                // Llena los datos
+                // --------------------------------------------------------------------------------------------
+                int fila = 0;
+                foreach (var item in list)
+                {                   
+
+                    var calculosEquipo = diccionarioFormulas[Convert.ToInt32(item.Equicodi)];
+                    n_calc.EvaluarFormulas(calculosEquipo);
+
+                    #region Asignacion Datos Calculados
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA && p.Estado == 1))
+                    {
+                        item.CapacidadTransmisionA = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionA).Valor, 2);
+                        item.CapacidadTransmisionA += (item.Capacidad_transmision_a_coment ?? "");
+                    }
+                    else
+                    {
+                        item.CapacidadTransmisionA = " " + (item.Capacidad_transmision_a_coment ?? "");
+                    }
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMvar && p.Estado == 1))
+                    {
+                        item.CapacidadTransmisionMVA = EvaluacionHelper.RedondearValor(calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreCapacidadTransmisionMvar).Valor, 2);
+                        item.CapacidadTransmisionMVA += (item.Capacidad_transmision_mva_coment ?? "");
+                    }
+                    else
+                    {
+                        item.CapacidadTransmisionMVA = " " + (item.Capacidad_transmision_mva_coment ?? "");
+                    }
+
+                    if (calculosEquipo.Any(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal && p.Estado == 1))
+                    {
+                        item.FactorLimitanteFinal = calculosEquipo.Find(p => p.Identificador.ToUpper() == ConstantesEvaluacionAppServicio.NombreFactorLimitanteFinal).Valor.ToString();
+                        item.FactorLimitanteFinal += (item.Factor_limitante_final_coment ?? "");
+                    }
+                    else
+                    {
+                        item.FactorLimitanteFinal = " " + (item.Factor_limitante_final_coment ?? "");
+                    }
+
+                    #endregion
+
+                    fila++;
+                    tabla1.Rows[fila].Cells[0].Paragraphs[0].Append(item.Empresa ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[1].Paragraphs[0].Append(item.Codigo ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[2].Paragraphs[0].Append(item.Tension).FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[3].Paragraphs[0].Append(item.Subestacion ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[4].Paragraphs[0].Append(item.CapacidadTransmisionA ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[5].Paragraphs[0].Append(item.CapacidadTransmisionMVA ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[6].Paragraphs[0].Append(item.FactorLimitanteFinal ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[6].Paragraphs[0].Append(item.Observaciones ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                }
+
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Formatea la tabla
+                // --------------------------------------------------------------------------------------------
+                // Establece los formatos generales de la tabla
+                tabla1.Rows[0].Cells[0].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[1].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[2].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[3].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[4].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[5].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[6].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[7].Paragraphs[0].Bold();
+                for (int row = 0; row < rowsCount; row++)
+                {
+                    for (int col = 0; col < columnsCount; col++)
+                    {
+                        tabla1.Rows[row].Cells[col].Paragraphs[0].Alignment = Alignment.center;
+                        tabla1.Rows[row].Cells[col].Paragraphs[0].FontSize(7);
+                        tabla1.Rows[0].Cells[col].Paragraphs[0].Color(System.Drawing.Color.White);
+                    }
+                }
+
+                // Colorea las cabeceras
+                for (int row = 0; row < 1; row++)
+                {
+                    for (int col = 0; col < columnsCount; col++)
+                    {
+                        tabla1.Rows[row].Cells[col].FillColor = System.Drawing.ColorTranslator.FromHtml(color);
+                    }
+                }
+            }
+            // --------------------------------------------------------------------------------------------
+        }
+
+        private void escribirTablaEmpresaSiglaDevExpress(Document document, Field field, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            if (field != null)
+            {
+                if (list.Count > 0)
+                {
+                    int columnWidth = 60;
+                    int rowsCount = list.Count + 1;
+                    string color = "#2980B9";
+                    DocumentPosition insertPosition = field.Range.Start;
+                    document.Delete(field.Range);
+
+                    DevExpress.XtraRichEdit.API.Native.Table table = document.Tables.Create(insertPosition, list.Count + 1, columnsCount);
+                    table.TableAlignment = TableRowAlignment.Center;
+                    // Marcar la primera fila como repetible (cabecera)
+                    table.Rows[0].RepeatAsHeaderRow = true;
+
+                    escribirCabeceraDevExpress(document, table, 0, 0, "SIGLAS");
+                    escribirCabeceraDevExpress(document, table, 0, 1, "DESCRIPCION");
+
+                    // --------------------------------------------------------------------------------------------
+                    // Llena los datos
+                    // --------------------------------------------------------------------------------------------
+                    int fila = 0;
+                    foreach (var item in list)
+                    {
+                        fila++;
+                        escribirCeldaDevExpress(document, table, fila, 0, item.Siglas ?? "");
+                        escribirCeldaDevExpress(document, table, fila, 1, item.Descripcion ?? "");
+
+                    }
+
+                }
+            }
+            // --------------------------------------------------------------------------------------------
+        }
+
+        private void escribirTablaEmpresaSigla(DocX document, Novacode.Paragraph paragraph, int columnsCount, List<EprRepLimitCapDTO> list)
+        {
+            if (list.Count > 0)
+            {
+                int columnWidth = 60;
+                int rowsCount = list.Count + 1;
+                string color = "#2980B9";
+                Novacode.Table tabla1 = UtilWordIntervenciones.CrearTablaWordDocxDesdeParagraf(document, rowsCount, columnsCount, columnWidth, paragraph);
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Llena las cabeceras de la tabla
+                // --------------------------------------------------------------------------------------------
+                tabla1.Rows[0].Cells[0].Paragraphs[0].Append("SIGLAS");
+                tabla1.Rows[0].Cells[1].Paragraphs[0].Append("DESCRIPCION");
+                
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Llena los datos
+                // --------------------------------------------------------------------------------------------
+                int fila = 0;
+                foreach (var item in list)
+                {
+                    fila++;
+                    tabla1.Rows[fila].Cells[0].Paragraphs[0].Append(item.Siglas??"").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+                    tabla1.Rows[fila].Cells[1].Paragraphs[0].Append(item.Descripcion ?? "").FontSize(7).Font(new System.Drawing.FontFamily("Arial"));
+
+                }
+
+                // --------------------------------------------------------------------------------------------
+
+                // --------------------------------------------------------------------------------------------
+                // Formatea la tabla
+                // --------------------------------------------------------------------------------------------
+                // Establece los formatos generales de la tabla
+                tabla1.Rows[0].Cells[0].Paragraphs[0].Bold();
+                tabla1.Rows[0].Cells[1].Paragraphs[0].Bold();
+
+                for (int row = 0; row < rowsCount; row++)
+                {
+                    for (int col = 0; col < columnsCount; col++)
+                    {
+                        tabla1.Rows[row].Cells[col].Paragraphs[0].Alignment = Alignment.center;
+                        tabla1.Rows[row].Cells[col].Paragraphs[0].FontSize(7);
+                        tabla1.Rows[0].Cells[col].Paragraphs[0].Color(System.Drawing.Color.White);
+                    }
+                }
+
+                // Colorea las cabeceras
+                for (int row = 0; row < 1; row++)
+                {
+                    for (int col = 0; col < columnsCount; col++)
+                    {
+                        tabla1.Rows[row].Cells[col].FillColor = System.Drawing.ColorTranslator.FromHtml(color);
+                    }
+                }
+            }
+            // --------------------------------------------------------------------------------------------
+        }
+
+        /// <summary>
+        /// Devuelve lista de capacidad de transmisión
+        /// </summary>
+        /// <returns></returns>
+        public List<EprRepLimitCapDTO> ListCapacidadTransmision(int idAreaExcel)
+        {
+            return FactorySic.GetEprRepLimitCapRepository().ListCapacidadTransmision(idAreaExcel);
+        }
+
+
+        /// <summary>
+        /// Devuelve lista de actualizaciones
+        /// </summary>
+        /// <returns></returns>
+        public List<EprRepLimitCapDTO> ListActualizaciones()
+        {
+            return FactorySic.GetEprRepLimitCapRepository().ListActualizaciones();
+        }
+
+
+        /// <summary>
+        /// Devuelve lista de revisiones
+        /// </summary>
+        /// <returns></returns>
+        public List<EprRepLimitCapDTO> ListRevisiones()
+        {
+            return FactorySic.GetEprRepLimitCapRepository().ListRevisiones();
+        }
+
+        /// <summary>
+        /// Devuelve lista de revisiones
+        /// </summary>
+        /// <returns></returns>
+        public List<EprRepLimitCapDTO> ListCapacidadTransformador(int idAreaExcel)
+        {
+            return FactorySic.GetEprRepLimitCapRepository().ListCapacidadTransformador(idAreaExcel);
+        }
+
+        /// <summary>
+        /// Devuelve lista de revisiones
+        /// </summary>
+        /// <returns></returns>
+        public List<EprRepLimitCapDTO> ListCapacidadAcoplaminento(int idAreaExcel, int tension)
+        {
+            return FactorySic.GetEprRepLimitCapRepository().ListCapacidadAcoplaminento(idAreaExcel, tension);
+        }
+
+        public List<EprRepLimitCapDTO> ListaEmpresaSigla()
+        {
+            return FactorySic.GetEprRepLimitCapRepository().ListaEmpresaSigla();
+        }
+        #endregion
+
+        /// <summary>
+        /// Devuelve lista de areas por celda 1 y celda 2 para el formulario de Linea
+        /// </summary>
+        /// <returns></returns>
+        public List<EprAreaDTO> ListAreaxCelda(string celda1, string celda2)
+        {
+            return FactorySic.GetEprAreaRepository().ListAreaxCelda(celda1, celda2);
+        }
+
+    }
+}

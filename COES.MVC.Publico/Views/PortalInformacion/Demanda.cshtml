@@ -1,0 +1,236 @@
+﻿@model COES.MVC.Publico.Models.PortalInformacionModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/PortalInformacion/demanda.js?v=1.5"></script>
+<link href="~/Content/Css/portalinformacion.css" rel="stylesheet" />
+<script src="~/Content/Scripts/highstock.js"></script>
+<script src="~/Content/Scripts/highcharts-more.js"></script>
+<script src="~/Content/Scripts/portalInformacion/util.js"></script>
+<script src="~/Content/Scripts/jquery.format.js"></script>
+
+
+<script>
+
+
+    function switchToTabPri(tab) {
+        if (tab == "Generacion") {
+            window.location = "../portalinformacion/generacion";
+
+        }
+
+        if (tab == "Demanda") {
+            window.location = "../portalinformacion/demanda";
+        }
+    };
+</script>
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="col col-md-12 mb-md-4">
+            <div class="coes-box mb-3">
+                <div class="coes-tabs">
+                    <nav class="coes-tabs--navigation">
+
+                        <button class="coes-tab" data-tab-target="item-1" onclick="location.href='../portalinformacion/generacion'">
+                            Generación
+                        </button>
+                        <button class="coes-tab  coes-tab--active" data-tab-target="item-2" onclick="location.href='../portalinformacion/demanda'">
+                            Demanda
+                        </button>
+                    </nav>
+                    <div class="container">
+                        <div class="row">
+                            <div class="coes-filters d-flex mt-2">
+                                <div class="w-100">
+
+                                    <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap same-height-button-group">
+
+                                        <div class="coes-form-item" id="divDemanda">
+                                            <button class="coes-button" id="btnDemanda">
+                                                Demanda
+                                            </button>
+                                        </div>
+
+                                        <div class="coes-form-item" id="divPronosticoTR">
+                                            <button class="coes-button" id="btnPronosticoTR">
+                                                Pron&oacute;stico Demanda TR
+                                            </button>
+                                        </div>
+
+                                        <div class="coes-form-item active" id="divMaximaDemanda">
+                                            <button class="coes-button" id="btnMaximaDemanda">
+                                                Máxima Demanda
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col col-md-12 mb-md-4" id="filtroBusqueda">
+                            <div class="coes-box mb-2">
+                                <div class="coes-box--content container">
+                                    <div class="coes-filters d-flex ">
+                                        <form action="" class="w-100">
+                                            <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap">
+                                                <div class="col col-md-3">
+                                                    <div class="coes-form-item">
+                                                        <label class="d-block" for="">Desde:</label>
+                                                        <input type="date" class="coes-form-item--date" id="txtFechaInicial" value="@Model.FechaInicio" />
+                                                    </div>
+                                                </div>
+                                                <div class="col col-md-3">
+                                                    <div class="coes-form-item">
+                                                        <label class="d-block" for="">Hasta:</label>
+                                                        <input type="date" class="coes-form-item--date" id="txtFechaFinal" value="@Model.FechaFin" />
+                                                    </div>
+                                                </div>
+                                                <div class="col col-md-2">
+                                                    <div class="coes-form-item">
+                                                        <input type="button" id="btnConsultar" class="coes-form-item--submit" value="Consultar">
+                                                    </div>
+                                                </div>
+                                                <div class="col col-md-2">
+                                                    <div class="coes-form-item">
+                                                        <input type="button" id="btnExportar" class="coes-form-item--submit" value="Exportar">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="contenidoDemanda" style="margin-left: 24px; margin-right: 24px;">
+                        <table cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td valign="top" style="width:440px">
+                                    <div id="contentHolder" class="content-demanda">
+                                        <table class="tabla-icono table table-hover" id="tablaDemanda">
+                                            <thead>
+                                                <tr>
+                                                    <th>Fecha</th>
+                                                    <th>Ejecutado</th>
+                                                    <th>Prog. Diaria</th>
+                                                    <th>Prog. Semanal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td style="width:20px"></td>
+                                <td valign="top">
+                                    <div class="bg-dashboard">
+                                        <div id="graficoDemanda" style="height:492px; width:720px"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </div>
+                    
+                    <style>
+                        #contenidoPronosticoTR .highcharts-series-1 .highcharts-graph {
+                            stroke-dasharray: 10 !important;
+                        }
+                    </style>
+
+                    <div id="contenidoPronosticoTR" style="margin-left: 24px; margin-right: 24px; display: none;">
+                        <div class="col col-md-12 mb-md-4" id="contenidoPronosticoTrFiltroBusqueda">
+                            <div class="coes-box mb-2">
+                                <div class="coes-box--content container">
+                                    <div class="coes-filters d-flex ">
+                                        <form action="" class="w-100">
+                                            <div class="d-flex justify-content-start align-items-end flex-wrap flex-lg-nowrap">
+                                                <div class="col col-md-12">
+                                                    <div class="coes-form-item text-start">
+                                                        <a class="coes-form-item--submit" href="@Url.Action("ExportarPronosticoTiempoReal")" target="_blank">Exportar</a>
+                                                        &nbsp;&nbsp;&nbsp;
+                                                        <small><strong>Fecha de actualizaci&oacute;n:&nbsp;</strong><span id="textPronosticoTrFechaActualizacion"></span></small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <table cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td valign="top" style="width:440px">
+                                    <div id="contentHolderPronosticoTR" class="content-demanda">
+                                        <table class="tabla-icono table table-hover" id="tablaPronosticoTR">
+                                            <thead>
+                                                <tr>
+                                                    <th>Fecha</th>
+                                                    <th>Ejecutado</th>
+                                                    <th>Programac&oacute;n diaria&nbsp;/&nbsp;Reprogramaci&oacute;n Diaria</th>
+                                                    <th>Pronóstico de Demanda Automático de Tiempo Real</th>
+                                                    <th>Rango Mínimo del Pronóstico de Demanda Automático de Tiempo Real</th>
+                                                    <th>Rango Máximo del Pronóstico de Demanda Automático de Tiempo Real</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td style="width:20px"></td>
+                                <td valign="top">
+                                    <div class="bg-dashboard">
+                                        <div id="graficoPronosticoTR" style="height:492px; width:720px"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="container" id="contenidoMedidor" style="display:none">
+                        <div class="row">
+                            <div class="coes-filters d-flex mt-2">
+                                <div class="w-100">
+
+                                    <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap same-height-button-group">
+
+                                        <div class="coes-form-item" id="divReporteMaxDemanda">
+                                            <input type="button" class="reporte-maxima coes-button" id="btnReporteMaximaDemanda" value="Reporte Máxima Demanda" data-url="../medidores/MaximaDemanda/index" data-alto="1220" />
+                                        </div>
+
+
+                                        <div class="coes-form-item active" id="divDiagramaCarga">
+                                            <input type="button" class="reporte-maxima coes-button" id="btnReporteDiagramaCarga" value="Diagrama de Carga" data-url="../medidores/MaximaDemanda/DiagramaCargaMaximaDemanda" data-alto="850" />
+                                        </div>
+
+                                        <div class="coes-form-item active" id="divRecursoEnergetico">
+                                            <input type="button" class="reporte-maxima coes-button" id="btnReporteRecursoEnergetico" value="Recursos Energéticos" data-url="../medidores/MaximaDemanda/RecursoEnergetico" data-alto="1400" />
+                                        </div>
+
+                                        <div class="coes-form-item active" style="display:none" id="divDemandaPeriodo">
+                                            <input type="button" class="reporte-maxima coes-button" style="display:none" value="Demanda por Periodos" data-url="../medidores/MaximaDemanda/DemandaPeriodo" data-alto="1130" />
+                                        </div>
+
+                                        <div class="coes-form-item active" id="divRankingDemandaPotencia">
+                                            <input type="button" class="reporte-maxima coes-button" id="btnReporteRankingDemandaPotencia" value="Ranking de la Demanda de Potencia" data-url="../medidores/ranking/index" data-alto="1200" />
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <iframe id="ifrMaximaDemanda" frameborder="0" width="100%">
+                        </iframe>
+                    </div>
+                </div><!-- /.coes-tabs -->
+            </div><!-- /.coes-box-->
+        </div>
+    </div><!-- /.row -->
+</div><!-- /.container-->
+<div style="clear:both; height:20px"></div>

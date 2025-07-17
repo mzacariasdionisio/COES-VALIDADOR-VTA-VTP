@@ -1,0 +1,219 @@
+﻿@model COES.MVC.Intranet.Areas.TransfPotencia.Models.PeajeEgresoMinfoModel
+@{
+    ViewBag.Title = "Transferencia de Potencia y Compensación - Consulta y Comparación de Datos Históricos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/TransfPotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/Transfpotencia/Content/Scripts/load.js"></script>
+<script src="~/Areas/TransfPotencia/Content/Scripts/consultadatoshistoricos.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Consulta y Comparación de Datos Históricos</div>
+</div>
+
+<div class="content-hijo">
+    <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; "></div>
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#paso1" onclick="change_tab(1)">Consulta de datos</a></li>
+            <li class='tab'><a href="#paso2" id="tab2" onclick="change_tab(2)">Comparación de datos</a></li>
+        </ul>
+        <div class='panel-container'>
+            <div id="paso1">
+                <div id="idpanelConsulta" style="background-color:#fff; height:auto;">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td>
+                                <div class="search-content">
+                                    <table class="content-tabla-search" style="width:auto">
+                                        <tr>
+                                            <td>Empresa:</td>
+                                            <td>
+                                                <select id="emprcodi" multiple="multiple">
+                                                    @foreach (var item in Model.ListaEmpresas)
+                                                    {
+                                                        <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td>Versión:</td>
+                                            <td>
+                                                <select id="recpotcodiConsulta" name="recpotcodiConsulta">
+                                                    <option value="0">TODOS</option>
+                                                    <option value="1">Mensual</option>
+                                                    <option value="2">Versiones</option>
+                                                </select>
+                                            </td>
+
+                                            <td>Tipo información:</td>
+                                            <td>
+                                                <select id="pegrtipoinformacion" name="pegrtipoinformacion">
+                                                    <option value="0">Ingreso por potencia</option>
+                                                    <option value="1">Valorización de potencia</option>
+                                                    <option value="2">Cargos SPT y SGT</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Periodo Inicio:</td>
+                                            <td>
+                                                <select id="periinicio" style="width: 220px;">
+                                                    @foreach (var item in Model.ListaPeriodos)
+                                                    {
+                                                        <option value="@item.PeriCodi">@item.PeriNombre </option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td>Periodo Final:</td>
+                                            <td>
+                                                <select id="perifin">
+                                                    @foreach (var item in Model.ListaPeriodos)
+                                                    {
+                                                        <option value="@item.PeriCodi">@item.PeriNombre </option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td id="tdCentral">Central:</td>
+                                            <td id="tdCentral1">
+                                                <select id="central">
+                                                    <option value="0">TODOS</option>
+                                                    @foreach (var item in Model.ListaCentrales)
+                                                    {
+                                                        <option value="@item.CentGeneCodi">@item.CentGeneNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td id="tdCargo" style="display:none;">Cargo:</td>
+                                            <td id="tdCargo1" style="display:none;">
+                                                <select id="cargo" multiple="multiple">
+                                                    @foreach (var item in Model.ListaEmpresas)
+                                                    {
+                                                        <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                                    }
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="6">
+                                                <input type="button" id="btnConsultarVista" value="Consultar" />
+                                                <input type="button" id="btnDescargarExcelConsulta" value="Exportar" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="table-list" id="listadoConsulta"></div>
+            </div>
+            <div id="paso2">
+                <div id="idpanelComparacion" style="background-color:#fff; height:auto;">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td>
+                                <div class="search-content">
+                                    <table class="content-tabla-search" style="width:auto">
+                                        <tr>
+                                            <td>Periodo1:</td>
+                                            <td>
+                                                <select id="periinicio1" onchange="recargar();" style="width: 220px;">
+                                                    @foreach (var item in Model.ListaPeriodos)
+                                                    {
+                                                        sSelected = "";
+                                                        if (@item.PeriCodi == Model.Pericodi)
+                                                        { sSelected = "selected"; }
+                                                        <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td>Versión 1:</td>
+                                            <td>
+                                                <select id="recpotcodi1">
+                                                    @foreach (var item in Model.ListaRecalculoPotencia)
+                                                    {
+                                                        sSelected = "";
+                                                        if (@item.Recpotcodi == Model.Recpotcodi)
+                                                        { sSelected = "selected"; }
+                                                        <option value="@item.Recpotcodi" @sSelected>@item.Recpotnombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+
+                                            <td>Periodo 2:</td>
+                                            <td>
+                                                <select id="perifin1" onchange="recargar();">
+                                                    @foreach (var item in Model.ListaPeriodos)
+                                                    {
+                                                        sSelected = "";
+                                                        if (@item.PeriCodi == Model.Pericodi2)
+                                                        { sSelected = "selected"; }
+                                                        <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td>Versión 2:</td>
+                                            <td>
+                                                <select id="recpotcodi2" name="recpotcodiConsulta">
+                                                    @foreach (var item in Model.ListaRecalculoPotencia2)
+                                                    {
+                                                        sSelected = "";
+                                                        if (@item.Recpotcodi == Model.Recpotcodi2)
+                                                        { sSelected = "selected"; }
+                                                        <option value="@item.Recpotcodi" @sSelected>@item.Recpotnombre</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Empresa:</td>
+                                            <td>
+                                                <select id="emprcodi2" multiple="multiple">
+                                                    @foreach (var item in Model.ListaEmpresas)
+                                                    {
+                                                        <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                                    }
+                                                </select>
+                                            </td>
+
+                                            <td>Tipo información:</td>
+                                            <td>
+                                                <select id="pegrtipoinformacion2" name="pegrtipoinformacion">
+                                                    <option value="0">Ingreso por potencia</option>
+                                                    <option value="1">Valorización de potencia</option>
+                                                    <option value="2">Cargos SPT y SGT</option>
+                                                </select>
+                                            </td>
+
+                                            <td colspan="6" style="text-align:center">
+                                                <input type="button" id="btnConsultarComparacion" value="Consultar" />
+                                                <input type="button" id="btnDescargarComparacion" value="Exportar" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="table-list" id="listadoComparacion"></div>
+            </div>
+            </div>
+     </div>
+</div>
+
+<input type="hidden" id="hfComboEmpresa" value="0" />
+<input type="hidden" id="hfComboEmpresa2" value="0" />
+<input type="hidden" id="hfComboCargo" value="0" />

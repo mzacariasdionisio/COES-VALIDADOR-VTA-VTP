@@ -1,0 +1,619 @@
+﻿@model COES.MVC.Intranet.Areas.DemandaPO.Models.CasoModel
+
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Casos de prueba";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var sMensajeExito = TempData["sMensajeExito"];
+    string sSelected = "";
+}
+
+<link href="~/Areas/DemandaPO/Content/Css/css2.css" rel="stylesheet" />
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Areas/DemandaPO/Content/Scripts/casoPrueba.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/datatable.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo">Casos de Prueba</div>
+    </div>
+    <div class="content-hijo">
+        <div id="message" class="msg-info">
+            Puede implementar un caso de prueba y ejecutarlo
+        </div>
+        <div class="nt-header">
+            <div class="nt-header-last">
+                <div class="set-float-l set-flex-row set-align-item-center">
+                    <div class="i-btn">
+                        <label id="btnNuevo" title="Crear un nuevo caso de prueba">
+                            <img src="~/Content/Images/insertar.png" />
+                            <br />
+                            <label>Nuevo</label>
+                        </label>
+                    </div>
+                    <div class="i-btn">
+                        <label id="btnFiltro" title="Opciones para el filtrado de la tabla de datos">
+                            <img src="~/Content/Images/settings.png" />
+                            <br />
+                            <label>Filtros</label>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="nt-body">
+            <table id="dt" class="pretty tabla-icono"></table>
+        </div>
+    </div>
+</div>
+
+<div id="pop-caso" class="general-popup" style="min-width: 950px; min-height: 300px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span id="pop-caso-titulo"></span>
+        <div style="float: right;">
+            <input id="pop-caso-guardar" type="button" value="Guardar" />
+            <input id="pop-caso-ejecutar" type="button" value="Ejecutar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div>
+                <div>Nombre del caso de prueba</div>
+                <input id="pop-caso-nombre" type="text" style="width: 443px;" />
+            </div>
+            <div>
+                <div>Área operativa</div>
+                <select id="pop-caso-area" style="width: 300px;">
+                    <option value="">-SELECCIONAR-</option>
+                    @{
+                        foreach (var item in Model.ListaAreaOperativa)
+                        {
+                            <option value="@item.Areaabrev">@item.Areanomb</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div style="margin-top: 10px;">
+
+                <div class="nt-header" style="padding: 10px; font-weight: bold; align-items: center;">
+
+                    <label style="margin-right: 10px;">Data maestra</label>
+
+                    <select id="pop-caso-maes-data">
+                        <option value="">-SELECCIONAR-</option>
+                        @if (Model.ListaFormulas.Count > 0)
+                        {
+                            foreach (var item in Model.ListaFormulas)
+                            {
+                                <option value="@item.Prrucodi">@item.Prruabrev</option>
+                            }
+                        }
+                    </select>
+
+                </div>
+
+                <div class="nt-body">
+                    <div style="display: inline-flex; margin-bottom: 10px;">
+                        <div style="margin-right: 10px;">
+                            <input id="pop-caso-maes-fecini" type="text" class="pop-caso-calendar" style="width: 200px" />
+                        </div>
+                        <div>
+                            <input id="pop-caso-maes-fecfin" type="text" class="pop-caso-calendar" style="width: 200px" />
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            Funciones
+                        </div>
+                        <div class="nt-body">
+                            <table id="dtFuncDm" class="pretty tabla-icono"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 10px;">
+
+                <div class="nt-header" style="padding: 10px; font-weight: bold;">
+
+                    <label style="margin-right: 10px;">Data a procesar</label>
+
+                    <select id="pop-caso-proc-data">
+                        <option value="">-SELECCIONAR-</option>
+                        @if (Model.ListaFormulas.Count > 0)
+                        {
+                            foreach (var item in Model.ListaFormulas)
+                            {
+                                <option value="@item.Prrucodi">@item.Prruabrev</option>
+                            }
+                        }
+                    </select>
+
+                </div>
+
+                <div class="nt-body">
+                    <div style="display: inline-flex; margin-bottom: 10px;">
+                        <div style="margin-right: 10px;">
+                            <input id="pop-caso-proc-fecini" type="text" class="pop-caso-calendar" style="width: 200px" />
+                        </div>
+                        <div>
+                            <input id="pop-caso-proc-fecfin" type="text" class="pop-caso-calendar" style="width: 200px" />
+                        </div>
+                    </div>
+                    <div>
+                        <div>
+                            Funciones
+                        </div>
+                        <div class="nt-body">
+                            <table id="dtFuncDp" class="pretty tabla-icono"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="pop-filtro" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de filtros</span>
+        <div style="float: right;">
+            <input id="pop-filtro-aceptar" type="button" value="Aceptar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div>Nombre</div>
+                <select id="pop-filtro-nombre" style="width: 300px;">
+                    <option value="">-SELECCIONAR-</option>
+                    @{
+                        foreach (var item in Model.ListaNombreCasos)
+                        {
+                            <option value="@item.Nombre">@item.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div>Área operativa</div>
+                <select id="pop-filtro-area" style="width: 300px;">
+                    <option value="">-SELECCIONAR-</option>
+                    @{
+                        foreach (var item in Model.ListaAreaOperativa)
+                        {
+                            <option value="@item.Areaabrev">@item.Areanomb</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div>Usuario creación</div>
+                <select id="pop-filtro-usuario" style="width: 300px;">
+                    <option value="">-SELECCIONAR-</option>
+                    @{
+                        foreach (var item in Model.ListaUsuarios)
+                        {
+                            <option value="@item.Usuario">@item.Usuario</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-eliminar" class="general-popup" style="min-width: 300px; min-height: 100px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Eliminar caso seleccionado</span>
+        <div style="float: right;">
+            <input id="pop-eliminar-aceptar" type="button" value="Eliminar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" class="msg-warning">
+            ¿Seguro que desea eliminar el registro?
+        </div>
+    </div>
+</div>
+
+<div id="pop-copiar" class="general-popup" style="min-width: 300px; min-height: 150px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Copiar caso seleccionado</span>
+        <div style="float: right;">
+            <input id="pop-copiar-aceptar" type="button" value="Copiar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" class="msg-warning">
+            Ingrese el nombre de la copia
+        </div>
+        <div class="h-panel">
+            <div>Nombre</div>
+            <input id="pop-copiar-nombre" type="text" style="width: 293px;" />
+        </div>
+    </div>
+</div>
+
+
+<!-- FORMULARIOS POPUPS DE DATA MAESTRA-->
+
+
+<div id="pop-parametros-r1" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros R1</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-r1" type="button" value="Aceptar" />
+            <input id="pop-cancelar-r1" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div>
+                    Dias tipicos
+                </div>
+                <div class="nt-body">
+                    <table id="dtDiasTipicosR1" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div class="dbx-title">
+                    Desde (Inclusive): <input id="pop-txtDesde-r1" type="text" style="width: 100px; " value="@Model.FechaMes" />
+                </div>
+                <div class="dbx-title">
+                    Hasta (Inclusive): <input id="pop-txtHasta-r1" type="text" style="width: 100px; " value="@Model.FechaMes" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-r2" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros R2</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-r2" type="button" value="Aceptar" />
+            <input id="pop-cancelar-r2" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div>
+                    Dias tipicos
+                </div>
+                <div class="nt-body">
+                    <table id="dtDiasTipicosR2" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-f1" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros F1</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-f1" type="button" value="Aceptar" />
+            <input id="pop-cancelar-f1" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div class="dbx-title">
+                    Toleracia de rampa: <input id="pop-txtToleraciaRampa-f1" type="text" style="width: 100px; " value="0" />  MW/30min
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-f2" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros F2</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-f2" type="button" value="Aceptar" />
+            <input id="pop-cancelar-f2" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div class="dbx-title">
+                    Factor K de desviación estandar: <input id="pop-txtFactorK-f2" type="text" style="width: 100px; " value="0" /> (Numero entre 0.5 y 3)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-a1" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros A1</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-a1" type="button" value="Aceptar" />
+            <input id="pop-cancelar-a1" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px; display: none">
+                <div>Año</div>
+                <input id="pop-txtFechaAnio-a1" value="2023" type="text" style="width: 62px;" />
+            </div>
+            <div style="margin-bottom: 10px; display: none">
+                <div>Feriado</div>
+                <select id="pop-filtro-feriado-a1" style="width: 300px; display: none">
+                    <option value="">-SELECCIONAR-</option>
+                    @if (Model.ListaFeriados.Count > 0)
+                    {
+                        foreach (var item in Model.ListaFeriados)
+                        {
+                            <option value="@item.Dpofercodi">@item.Dpoferdescripcion</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div>
+                    Dias tipicos
+                </div>
+                <div class="nt-body">
+                    <table id="dtDiasTipicosA1" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-a2" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros A2</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-a2" type="button" value="Aceptar" />
+            <input id="pop-cancelar-a2" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px; display: none">
+                <div>Año</div>
+                <input id="pop-txtFechaAnio-a2" value="2023" type="text" style="width: 62px;" />
+            </div>
+            <div style="margin-bottom: 10px; display: none">
+                <div>Feriado</div>
+                <select id="pop-filtro-feriado-a2" style="width: 300px;">
+                    <option value="">-SELECCIONAR-</option>
+                    @if (Model.ListaFeriados.Count > 0)
+                    {
+                        foreach (var item in Model.ListaFeriados)
+                        {
+                            <option value="@item.Dpofercodi">@item.Dpoferdescripcion</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div>
+                    Dias tipicos
+                </div>
+                <div class="nt-body">
+                    <table id="dtDiasTipicosA2" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- FORMULARIOS POPUPS DE DATA A PROCESAR-->
+
+
+<div id="pop-parametros-dp-r1" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros R1</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-dp-r1" type="button" value="Aceptar" />
+            <input id="pop-cancelar-dp-r1" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje-dp" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div>
+                    Dias tipicos
+                </div>
+                <div class="nt-body">
+                    <table id="dtDiasTipicosDpR1" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div class="dbx-title">
+                    Desde (Inclusive): <input id="pop-txtDesde-dp-r1" type="text" style="width: 100px; " value="@Model.FechaMes" />
+                </div>
+                <div class="dbx-title">
+                    Hasta (Inclusive): <input id="pop-txtHasta-dp-r1" type="text" style="width: 100px; " value="@Model.FechaMes" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-dp-r2" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros R2</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-dp-r2" type="button" value="Aceptar" />
+            <input id="pop-cancelar-dp-r2" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje-dp" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div>
+                    Dias tipicos
+                </div>
+                <div class="nt-body">
+                    <table id="dtDiasTipicosDpR2" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-dp-f1" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros F1</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-dp-f1" type="button" value="Aceptar" />
+            <input id="pop-cancelar-dp-f1" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje-dp" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div class="dbx-title">
+                    Toleracia de rampa: <input id="pop-txtToleraciaRampa-dp-f1" type="text" style="width: 100px; " value="0" />  MW/30min
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-dp-f2" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros F2</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-dp-f2" type="button" value="Aceptar" />
+            <input id="pop-cancelar-dp-f2" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje-dp" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px;">
+                <div class="dbx-title">
+                    Factor K de desviación estandar: <input id="pop-txtFactorK-dp-f2" type="text" style="width: 100px; " value="0" /> (Numero entre 0.5 y 3)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-dp-a1" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros A1</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-dp-a1" type="button" value="Aceptar" />
+            <input id="pop-cancelar-dp-a1" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje-dp" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px; display: none">
+                <div>Año</div>
+                <input id="pop-txtFechaAnio-dp-a1" value="2023" type="text" style="width: 62px;" />
+            </div>
+            <div style="margin-bottom: 10px; display: none">
+                <div>Feriado</div>
+                <select id="pop-filtro-feriado-dp-a1" style="width: 300px; display: none">
+                    <option value="">-SELECCIONAR-</option>
+                    @if (Model.ListaFeriados.Count > 0)
+                    {
+                        foreach (var item in Model.ListaFeriados)
+                        {
+                            <option value="@item.Dpofercodi">@item.Dpoferdescripcion</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div>
+                    Dias tipicos
+                </div>
+                <div class="nt-body">
+                    <table id="dtDiasTipicosDpA1" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pop-parametros-dp-a2" class="general-popup" style="min-width: 300px; min-height: 200px;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Selección de parametros A2</span>
+        <div style="float: right;">
+            <input id="pop-aceptar-dp-a2" type="button" value="Aceptar" />
+            <input id="pop-cancelar-dp-a2" type="button" value="Cancelar" />
+        </div>
+    </div>
+    <div class="popup-text">
+        <div id="pop-mensaje-dp" style="display: none"></div>
+        <div class="h-panel">
+            <div style="margin-bottom: 10px; display: none">
+                <div>Año</div>
+                <input id="pop-txtFechaAnio-dp-a2" value="2023" type="text" style="width: 62px;" />
+            </div>
+            <div style="margin-bottom: 10px; display: none">
+                <div>Feriado</div>
+                <select id="pop-filtro-feriado-dp-a2" style="width: 300px;">
+                    <option value="">-SELECCIONAR-</option>
+                    @if (Model.ListaFeriados.Count > 0)
+                    {
+                        foreach (var item in Model.ListaFeriados)
+                        {
+                            <option value="@item.Dpofercodi">@item.Dpoferdescripcion</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div>
+                    Dias tipicos
+                </div>
+                <div class="nt-body">
+                    <table id="dtDiasTipicosDpA2" class="pretty tabla-icono"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+

@@ -1,0 +1,141 @@
+﻿@model COES.MVC.Publico.Areas.FichaTecnica.ViewModels.IndexFichaTecnicaViewModel
+@using COES.MVC.Publico.Areas.FichaTecnica.Utilities;
+@{
+    ViewBag.Title = "Fichas Técnicas";
+    Layout = "~/Areas/FichaTecnica/Views/Shared/_LayoutPage.cshtml";
+    SelectList slTIpoEquipo = SelectListHelper.SelectList(Model.TipoCentrales.ToList(), "Famcodi", "Famnomb", tieneSel: false, tieneTodos: false, selectedValue: Model.CodigoTipoEquipo);
+    SelectList slEmpresa = SelectListHelper.SelectList(Model.Empresas.ToList(), "Emprcodi", "Emprnomb", tieneSel: false, tieneTodos: true, selectedValue: Model.CodEmpresa);
+}
+<script language="javascript" type="text/javascript">
+
+
+
+    function Detalle(e) {
+        var familia = $("#CodigoTipoEquipo2").val();
+        switch (familia) {
+            case '4'://Hidraulica
+                window.location.href = '@Url.Content("~/FichaTecnica/FichaTecnica/DatosCentralH?id=")' + e + '&iFamilia=' + familia;
+                break;
+            case '5'://termoelectrica
+                window.location.href = '@Url.Content("~/FichaTecnica/FichaTecnica/DatosCentralT?id=")' + e + '&iFamilia=' + familia;
+                break;
+            case '8'://Lineas
+                window.location.href = '@Url.Content("~/FichaTecnica/FichaTecnica/DatosLinea?id=")' + e + '&iFamilia=' + familia;
+                break;
+            case '37'://Solares
+                window.location.href = '@Url.Content("~/FichaTecnica/FichaTecnica/DatosCentralSolar?id=")' + e + '&iFamilia=' + familia;
+                break;
+            case '39'://Eolicas
+                window.location.href = '@Url.Content("~/FichaTecnica/FichaTecnica/DatosCentralE?id=")' + e + '&iFamilia=' + familia;
+                break;
+            default:
+                break;
+        }
+    }
+
+</script>
+<script type="text/javascript">
+    $(function () {
+        $("#list").jqGrid({
+            url: '@Url.Action("ListarCentrales", "FichaTecnica")',
+            width: 850,
+            height: 500,
+            datatype: 'json',
+            gridview: true,
+            loadui: 'block ',
+            mtype: 'GET',
+            colNames: ['Código', 'Nombre', 'Abreviatura', 'Empresa', 'Ubicación', ''],
+            colModel: [
+                { name: 'Código', index: 'Equicodi', width: 80, align: 'left' },
+                { name: 'Nombre', index: 'Equinomb', width: 150, align: 'left' },
+                { name: 'Abreviatura', index: 'Equiabrev', width: 100, align: 'left' },
+                { name: 'Empresa', index: 'EMPRNOMB', width: 150, align: 'left' },
+                { name: 'Ubicación', index: 'AREANOMB', width: 150, align: 'left' },
+                { name: '', index: '', width: 150, align: 'center', formatter: AccionFormatter, sortable: false }],
+            pager: jQuery('#pager'),
+            rowNum: 20,
+            viewrecords: true,
+            imgpath: 'Content/themes/base/images',
+            postData: {
+                pTipoEquipo: function () { return $("#CodigoTipoEquipo2").val(); },
+                pCodEmpresa: function () { return $("#CodEmpresa").val(); },
+                pNombre: function () { return $("#NombreEquipo").val(); }
+            }
+        });
+
+        function AccionFormatter(cellvalue, options, rowObject) {
+            var strCarac = "U";
+            var strResult = '';
+            var ap = String.fromCharCode(39);
+            var strResult = '<a href="javascript:Detalle(' + cellvalue + ');">Ficha Técnica</a>';
+            return strResult;
+        }
+
+        $("#btnExportar").click(function (e) {
+            e.preventDefault();
+            console.log("entro");
+            var familia = $("#CodigoTipoEquipo2").val();
+            var empresa = $("#CodEmpresa").val();
+            var equipo = $("#NombreEquipo").val();
+        window.location.href = '@Url.Action("Exportar","FichaTecnica")?sTipoCental=' + familia + '&sEmpresa=' + empresa + '&sEquipo=' + equipo;
+
+@*            $.ajax({
+                url: '@Url.Action("Exportar", "FichaTecnica")',
+                    type: "GET",
+                    async: false,
+                    dataType: 'json',
+                    data: { sTipoCental: $("#CodigoTipoEquipo2").val(), sEmpresa: $("#CodEmpresa").val(), sEquipo: $("#NombreEquipo").val() },
+                });*@
+        });
+    });
+</script>
+<h2>Listado de Centrales</h2>
+<div class="form-search" align="center">
+
+    @using (Html.BeginForm("index", "FichaTecnica", FormMethod.Post, new { @class = "form-search", name = "frmConsultarCentrales", id = "frmConsultarCentrales" }))
+    {
+        @Html.HiddenFor(x => x.CodigoTipoEquipo2)
+        <table style="width: 100%;">
+            <tr>
+                <td align="right" style="width: 40%">
+                    <label class="control-label">Tipo Central:</label>
+                </td>
+                <td>
+                    @Html.DropDownListFor(x => x.CodigoTipoEquipo, slTIpoEquipo)
+                </td>
+                <td align="right">
+                    <label class="control-label">Empresa:</label>
+                </td>
+                <td>
+                    @Html.DropDownListFor(x => x.CodEmpresa, slEmpresa)
+                </td>
+                <td align="left">
+                    <button type="submit" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false" id="btnConsultar">
+                        <span class="ui-button-text">Consultar</span>
+                    </button>
+                </td>
+            </tr>
+            <tr>
+                <td align="right" style="width: 40%">
+                    <label class="control-label">Nombre :</label>
+                </td>
+                <td align="right">
+                    @Html.TextBoxFor(x => x.NombreEquipo, new { style = "width:210px;" })
+                </td>
+                <td></td>
+                <td></td>
+                <td>
+                    @*<input  type="submit" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false" id="btnExportar" value="Exportar"/>*@
+                    <!-- <button type="submit" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false" id="btnExportar">
+         <span class="ui-button-text">Exportar</span>
+     </button>-->
+                </td>
+            </tr>
+        </table>
+        <br />
+        <br />
+        <table id="list" class="scroll" cellpadding="0" cellspacing="0"></table>
+        <div id="pager" class="scroll"></div>
+        @Html.HiddenFor(model => model.CodEmpresa)
+    }
+</div>

@@ -1,0 +1,97 @@
+﻿@model COES.MVC.Intranet.Areas.Siosein.Models.GestorModel
+
+@{
+    int tipo = (int)Session["TIPO_LISTA"];
+    
+    string titulo = "";
+
+    if (tipo < 4) {
+        if (tipo == 1) { titulo = "Bandeja de Entrada"; }
+        if (tipo == 2) { titulo = "Bandeja de Salida"; }
+        if (tipo == 3) { titulo = "Eliminados"; }
+    }
+    if (tipo>3) { titulo = (string)Session["TITULO"]; }
+}
+
+<div>
+
+    <h2>
+        @titulo
+    </h2>
+
+    @if (tipo == 1 || tipo > 3)
+    {
+        <div class="col-lg-1" style="height: 25px; margin-bottom: 0px; padding-left: 0px; padding-right: 0px; width: 90px;">
+            <ul class="nav-pills" style="list-style-type: none;padding-left:0px">
+                <li role="presentation" class="dropdown">
+                    <a class="dropdown-toggle btn2 btn-primary" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-chevron-down"></i> Mover a <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        @if (Model.ListaCarpetas.Count > 0)
+                        {
+                            foreach (var item in Model.ListaCarpetas)
+                            {
+                                <li><a href="Javascript:MoverACarpeta(@item.Bandcodi);"><i class="fa fa-folder" style="color:#F8C63D;"></i>@item.Bandnombre</a></li>
+                            }
+                        }
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <a href="JavaScript:eliminarMensajeSeleccionados();" class="btn2 btn-danger" data-toggle="tooltip" data-placement="top" title="Descartar"><i class="fa fa-trash-o"></i> Eliminar</a>
+    }
+</div>
+
+<div>
+
+    <table class="pretty tabla-icono" id="tblListMensaje">
+        <thead>
+            <tr>
+                <th><input id="chbxMensajesAll" type="checkbox" /></th>
+                <th></th>
+                <th>CATEGORIA</th>
+                <th>ASUNTO</th>
+                <th>ADJUNTO</th>
+                <th>FECHA</th>
+            </tr>
+        </thead>  
+        <tbody>
+            @foreach (var item in Model.ListaTempMensajes)
+            {
+                string estadoCls = "unread";
+                if (@item.EstMsgCodi == 1) { estadoCls = "read"; }
+
+                <tr class="@estadoCls">
+                    <td>                    
+                        <input type="checkbox" name="chbxMensajes" value="@item.MsgCodi">                    
+                    </td>
+
+                    @if (tipo == 1)
+                    {
+                        <td><a href="JavaScript:verContenido(@item.MsgCodi);">@item.MsgFromName</a></td>
+                    }
+                    else
+                    {
+                        <td><a href="JavaScript:verContenido(@item.MsgCodi);">Para: @item.MsgTo</a></td>
+                    }
+                    <td><span class="labelN" style="background-color:@item.Tmsgcolor; color:#FFFFFF;">@item.Tmsgnombre</span></td>
+                    <td><a href="JavaScript:verContenido(@item.MsgCodi);">@item.MsgAsunto</a></td>
+
+                    @if (@item.MsgFlagAdj == 1)
+                    {
+                        <td><i class="fa fa-paperclip"></i></td>
+                    }
+                    else
+                    {
+                        <td></td>
+                    }
+
+                    <td style="font-size:11px;">@item.MsgFecha</td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+</div>
+<script src="~/Areas/Siosein/Content/Scripts/gestor/listamail.js?v=1"></script>

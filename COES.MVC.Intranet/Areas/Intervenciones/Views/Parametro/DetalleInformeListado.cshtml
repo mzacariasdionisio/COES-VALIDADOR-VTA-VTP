@@ -1,0 +1,120 @@
+﻿@model COES.MVC.Intranet.Areas.Intervenciones.Models.IntervencionesReporte
+
+@{
+    ViewBag.Title = "ActualizaReporte";
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+    var i = 0;
+}
+<script src="~/Content/Scripts/datatable.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<script src="~/Content/Scripts/tinymce/tinymce.min.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<link type="text/css" rel="stylesheet" href="~/Areas/Combustibles/Content/Css/Gas/css.css?v=9.0.0" />
+<script src="~/Areas/Intervenciones/Content/Scripts/parametro/Detalleinforme.js?v=9.4.2"></script>
+
+<div class="form-title">
+    <div class="content-titulo">
+        <span>
+            @Model.Inrepnombre
+        </span>
+        @if (Model.IndicadorPersonalizado == 1)
+            {
+                <span style="color:orange">@Model.NombrePrograma</span>
+            }
+     </div>
+    @if(Model.IndicadorPersonalizado == 1)
+            {
+                <div class="content-botonera">
+                    <input type="button" id="btnGrabarInforme" value="Grabar" />
+                    <input type="button" id="btnGenerarInforme" value="Generar informe" />
+                    <input type="button" id="btnRetornarPersonalizado" value="Regresar" />
+                </div>
+            }
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div id="mensaje"></div>
+
+    @if (Model.IndicadorPersonalizado == 1)
+    {
+        <script>
+                $(function () {
+                    cargarGrillaVariables(@Html.Raw(Json.Encode(Model.ListaVariables)))
+                });
+        </script>
+        <fieldset>
+            <legend>Variables</legend>
+            <div id="variables"></div>
+        </fieldset>
+        <div style="clear:both; height:20px"></div>
+
+    }
+
+    <input type="hidden" id="hfCodigoPrograma" value="@Model.Progrcodi" />
+    <div id="tab-container-config" class='tab-container'>
+        <input type="hidden" id="hfidrepor" value="@Model.Inrepcodi" />
+        <input type="hidden" id="hfNrotab" value="@Model.NroTabs" />
+        <ul class='etabs'>
+            @foreach (var obj in Model.ListaSecciones)
+            {
+                i++;
+                <li class='tab'><a href="#@i">@obj.Insecnombre</a></li>
+                <input type="hidden" id="hd_@i" value="@obj.Inseccodi" />
+            }
+        </ul>
+        <div class='panel-container'>
+            @{i = 0; }
+            @foreach (var obj in Model.ListaSecciones)
+            {
+                i++;
+                <input type="hidden" id="seccion_@obj.Inseccodi" value="@obj.Insecnombre" />
+                <div id="@i">
+
+                    @if (Model.IndicadorPersonalizado == 0)
+                    {
+
+                        <fieldset style="margin-bottom: 10px; padding-bottom: revert;">
+                            <legend>Variables</legend>
+                            Fecha en formato largo - <b>{FECHA_LARGA}</b> | Nro de Semana Operativa <b>{NRO_SEM_OPE}</b> | Sem año proceso - <b>{DIAANIO_ANIO}</b> | Porcentaje Reserva Prim - <b>{%RESERV_PRIM}</b> | Precio Máx Reserva Sec - <b>{PREC_MAX_RSEC}</b> <br />
+                            Volumén Total - <b>{VOL_TOTAL}</b> | Día Ini Sem Operativa <b>{DIA_INISEMOPE}</b> | Sem Inic al Sem Fin - <b>{SEM_DEL_AL}</b> | Mes Año Sem Operat- <b>{MES_ANIOSEMOPE}</b> | Dia Mes Año - <b>{DIA_MES_ANIO}</b>
+                        </fieldset>
+                    }
+
+                    <div class="content-tabla" style="overflow-x: scroll;">
+                        <div id="informacionPlantilla" style="height:20px; padding-top: 8px; padding-bottom: 12px;">
+                            <div class="tbform-label" style="width:420px; float: left; font-size:18px;">
+                                @obj.Insecnombre
+                            </div>
+                            @*<div id="valor" style="float: left; font-size:18px;">@obj.Insecnombre</div>*@
+                        </div>
+                        <table style="width:100%">
+
+                            <tbody>
+                                <tr>
+                                    <td class="registro-control" style="width:1100px;">
+                                        <textarea name="txt_@obj.Inseccodi" id="txt_@obj.Inseccodi" cols="180" rows="30">@obj.Inseccontenido</textarea>
+                                    </td>
+                                    <td class="registro-label">
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            }
+        </div>
+        @if (Model.IndicadorPersonalizado != 1)
+        {
+            <div class="botonera-item" style="width: 250px;">
+                <input type="button" value="Actualizar" id="GuardarItems" />
+                <input type="button" value="Salir" id="btnRegresar" />
+            </div>
+        }
+    </div>
+</div>

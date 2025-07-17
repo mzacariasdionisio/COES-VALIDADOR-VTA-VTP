@@ -1,0 +1,118 @@
+﻿@model COES.MVC.Publico.Areas.Medidores.Models.ReporteMaximaDemandaModel
+@using System.Globalization
+@{
+    NumberFormatInfo nfi = new CultureInfo("en-US", false).NumberFormat;
+    nfi.NumberGroupSeparator = " ";
+    nfi.NumberDecimalDigits = 3;
+    nfi.NumberDecimalSeparator = ",";
+}
+
+<div style="max-width: 1116px; margin: 0 auto; ">
+ 
+    <p style="margin-top: 30px; margin-bottom: 26px; ">
+        <span class="mensaje-fecha-consulta">@Model.MensajeFechaConsulta</span>
+        @{
+            if (Model.MensajePorcentajeConsulta != string.Empty)
+            {
+                <span class="mensaje-envio-empresa">@Model.MensajePorcentajeConsulta</span>
+            }
+        }
+    </p>
+
+    <table class="tabla-icono table table-hover" style="max-width: 1100px;">
+        <thead>
+            <tr>
+                @{
+                    if (Model.ResumenDemanda.TieneCalculoMDenHP)
+                    {
+                        <th colspan="2">Máxima demanda en hora punta</th>
+                    }
+                    else
+                    {
+                        <th colspan="2">Máxima Demanda</th>
+                    }
+                }
+                <th colspan="2" style="text-align: center; background-color: #e3e3e3;">Interconexión</th>
+                <th></th>
+            </tr>
+            <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th style="background-color: #e3e3e3;">PER-ECU Exportación <br /> MW</th>
+                <th style="background-color: #e3e3e3;">ECU-PER Importación <br /> MW</th>
+                <th>SEIN <br /> MW</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                if (Model.ResumenDemanda != null)
+                {
+                    var export = 0M;
+                    var import = 0M;
+                    if (Model.ResumenDemanda.ValorInter > 0)
+                    {
+                        export = Model.ResumenDemanda.ValorInter;
+                    }
+                    else
+                    {
+                        import = Model.ResumenDemanda.ValorInter * -1;
+                    }
+                    <tr>
+                        @*<td>@item.TipoHorario</td>*@
+                        <td style="text-align:center;">@Model.ResumenDemanda.FechaOnlyDia</td>
+                        <td style="text-align:center;">@Model.ResumenDemanda.FechaOnlyHora</td>
+                        <td style="text-align:center;">@export.ToString("N", nfi)</td>
+                        <td style="text-align:center;">@import.ToString("N", nfi)</td>
+                        <td style="text-align:center;">@Model.ResumenDemanda.Valor.ToString("N", nfi)</td>
+                    </tr>
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6">No existen registros</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <br />
+
+    @{
+        if (Model.ResumenDemanda.TieneCalculoMDenHP)
+        {
+            <strong>Nota:</strong> <span>@Model.ResumenDemanda.HorarioHPDesc</span>
+        }
+    }
+
+</div>
+
+        <br /><br />
+        <hr />
+        <br /><br />
+
+        <div style="max-width: 1116px; margin: 0 auto; ">
+            <table class="tabla-formulario" id="tablaConsolidado" role="grid" border="1" style="max-width: 1100px;">
+                <thead>
+                    <tr style="font-size: 12px; color: #212529;background-color: var(--bs-table-bg); ">
+                        <th style="">Empresa</th>
+                        <th style="">Central</th>
+                        <th>Unidad</th>
+                        <th>MW</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        foreach (var item in Model.ListaConsolidadoDemanda)
+                        {
+                            <tr>
+                                <td>@item.Empresa</td>
+                                <td>@item.Central</td>
+                                <td>@item.GrupSSAA</td>
+                                <td style=" text-align: right;">@item.Total.ToString("N", nfi)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+

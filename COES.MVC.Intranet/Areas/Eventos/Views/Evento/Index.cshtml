@@ -1,0 +1,196 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.BusquedaEventoModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Areas/Eventos/Content/Scripts/evento.js?v=1.124"></script>
+<script src="~/Areas/Eventos/Content/Scripts/mensajes.js"></script>
+<link href="~/Areas/Eventos/Content/Css/css.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Eventos</div>
+    <div class="content-botonera">
+        @if (Model.AccionEventoCtaf)
+        {
+            <input type="button" id="btnEventoCtaf" value="Evento CTAF" />
+        }
+        @if (Model.AccionNuevo)
+        {
+            if (Model.IndicadorGrabarAseg)
+            {
+                <input type="button" id="btnAseguramiento" value="Nuevo Evento AO" />
+            }
+            <input type="button" id="btnNuevo" value="Nuevo Evento" />
+            <input type="button" id="btnBitacora" value="Nueva Bitácora" />
+        }
+        <input type="button" id="btnExportar" value="Exportar" />
+        <input type="button" id="btnExportarDetalle" value="Exportar Detallado" />
+        <input type="button" id="btnLeyenda" value="Leyenda CIER" />
+
+
+    </div>
+</div>
+
+<div class="div-leyenda" id="divLeyenda">
+    <div class="div-leyenda-close" onclick="closeImportar();">X</div>
+    <div class="div-leyenda-content">
+        <div class="action-exito">Leyenda CIER</div>
+        <table class="pretty tabla-adicional">
+            <thead>
+                <tr>
+                    <th>Abreviatura</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ListaCausaEvento)
+                {
+                    <tr>
+                        <td><strong>@item.Causaevenabrev:</strong></td>
+                        <td>@item.Causaevendesc</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="div-leyenda-boton" id="container">
+            <input type="button" id="btnCerrarLeyenda" value="Cerrar" onclick="closeImportar();" />
+        </div>
+    </div>
+</div>
+
+
+
+
+<div class="content-hijo" id="mainLayout">
+
+@using (Html.BeginForm("Listar", "Evento", FormMethod.Post, new { @class = "form-search", name = "frmBusqueda", id = "frmBusqueda" }))
+{
+    <div class="search-content" style="margin-bottom:10px">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Versión:</td>
+                <td>
+                    <select id="cbVersion" name="Version" style="width:120px">
+                        <option value="-1">--TODOS--</option>
+                        <option value="N">FINAL</option>
+                        <option value="S">BITÁCORA</option>
+                        @if (Model.IndicadorGrabarAseg)
+                        {
+                            <option value="A">ASEGURAMIENTO DE LA OPERACION</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfVersion" value="@Model.Version" />
+                </td>
+                <td>Turno:</td>
+                <td>
+                    <select id="cbTurno" name="Turno" style="width:120px">
+                        <option value="">--TODOS--</option>
+                        <option value="1">TURNO 1</option>
+                        <option value="2">TURNO 2</option>
+                        <option value="3">TURNO 3</option>
+                    </select>
+                    <input type="hidden" id="hfTurno" value="@Model.Turno" />
+                </td>
+                <td>Tipo de Equipo:</td>
+                <td>
+                    <select id="cbFamilia" name="IdFamilia" style="width:160px">
+                        @foreach (var item in Model.ListaFamilias)
+                    {
+                        <option value="@item.FAMCODI">@item.FAMNOMB</option>
+                    }
+                    </select>
+                    <input type="hidden" id="hfFamilia" value="@Model.IdFamilia" />
+                </td>
+                <td>Tipo de Empresa</td>
+                <td>
+                    <select id="cbTipoEmpresa" name="IdTipoEmpresa" style="width:160px">
+                        <option value="0">-TODOS-</option>
+                        @foreach (var item in Model.ListaTipoEmpresas)
+                        {
+                            <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                        }                        
+                    </select>
+                    <input type="hidden" id="hfTipoEmpresa" value="@Model.IdTipoEmpresa" />
+                </td>
+                <td>Empresa:</td>
+                <td>
+                    <select id="cbEmpresa" name="IdEmpresa" style="width:300px">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.EMPRCODI">@item.EMPRNOMB</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEmpresa" value="@Model.IdEmpresa" />
+                </td>
+            </tr>
+            <tr>
+                <td>Desde:</td>
+                <td><input type="text" id="FechaDesde" name="FechaInicio" value="@Model.FechaInicio" style="width:120px" /></td>
+                <td>Hasta:</td>
+                <td><input type="text" id="FechaHasta" name="FechaFin" value="@Model.FechaFin" style="width:120px" /></td>
+                <td>Con Interrupción</td>
+                <td>
+                    <select id="cbInterrupcion" name="IndInterrupcion" style="width:100px">
+                        <option value="-1">--TODOS--</option>
+                        <option value="S">SI</option>
+                        <option value="N">NO</option>
+                    </select>
+                    <input type="hidden" id="hfInterrupcion" value="@Model.IndInterrupcion" />
+                </td>
+                <td>Tipo de Evento:</td>
+                <td>
+                    <select id="cbTipoEvento" name="IdTipoEvento" style="width:160px">
+                        @foreach (var item in Model.ListaTipoEvento)
+                        {
+                            <option value="@item.TIPOEVENCODI">@item.TIPOEVENDESC</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfTipoEvento" value="@Model.IdTipoEvento" />
+                </td>
+                <td>
+                    Área Operativa:
+                </td>
+                <td>
+                    <select id="cbAreaOperativa" name="AreaOperativa">
+                        <option value="-1">--TODOS--</option>
+                        <option value="G">Generación</option>
+                        <option value="T">Transmisión</option>
+                        <option value="D">Distribución</option>
+                        <option value="C">Cliente Libre</option>
+                    </select>
+                    <input type="button" id="btnBuscar" value="Buscar" style="margin-left:0" />
+                </td>                
+            </tr>
+        </table>
+    </div>
+
+    <input type="hidden" id="hfNroPagina" name="NroPagina" value="1" />   
+    <input type="hidden" id="hfCampo" name="CampoOrden" />
+    <input type="hidden" id="hfOrden" name="TipoOrden" />
+    <input type="hidden" id="hfIndicador" name="Indicador" />
+    <input type="hidden" id="hfIdOpcion" name="IdOpcion" value="@Model.IdOpcion" />
+}
+
+<div class="action-message" id="mensaje" style="display:none"></div>
+    
+<div class="content-tabla">
+    <div class="tabla-header">       
+        <div class="table-paginado" id="paginado"></div>
+    </div>
+    <div class="table-list" id="listado"></div>
+</div>
+
+<div style="clear:both; height:30px"></div>
+ 
+</div>
+
+
+<div id="popupInforme" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div id="contenedorInforme">
+
+    </div>
+</div>
+
+
+

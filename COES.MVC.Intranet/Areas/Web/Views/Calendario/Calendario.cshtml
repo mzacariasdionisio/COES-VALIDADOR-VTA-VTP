@@ -1,0 +1,249 @@
+﻿@model COES.MVC.Intranet.Areas.Web.Models.CalendarioModel
+
+
+<style>
+    #contentInfografia div {
+        width: 45px;
+        height: 15px;
+        position: absolute;
+        float: right;
+        margin-left: 879px;
+        background-color: #ff0000;
+        z-index: 20000;
+        color: #fff;
+        padding: 3px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .leyenda {        
+        margin-top: 5px;                
+    }
+
+    .leyenda-item {
+        float: left;
+        margin-right: 5px;
+        line-height: 14px;
+        padding: 2px 5px;
+        border-radius:4px;
+        font-size:11px;
+    }
+        .leyenda-item img {
+            
+
+        }
+
+    .masDetalle {
+        display: none;
+        width: 370px;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: #fff;
+        z-index: 20000;
+        position: absolute;
+        margin-left: 280px;
+        margin-top: 250px;
+        border: 4px solid #e0dbdb;
+    }
+
+    .masdetalle-close {
+        width: 15px;
+        height: 15px;
+        font-size: 15px;
+        color: #3498DB;
+        font-weight: bold;
+        float: right;
+        margin-bottom: 3px;
+        cursor: pointer;
+    }
+</style>
+
+<div id="tituloMes" class="titulo-calendario">
+    <div class="titulo-calendario-left">
+        <span id="titulo" class="titulo-calendario-main"></span><br />
+        <span id="subtitulo" class="titulo-calendario-second"></span>
+    </div>
+    <div class="titulo-calendario-center">
+        <img id="imgInfografia" />
+    </div>
+    <div style="clear:both"></div>
+</div>
+
+<div class="div-info" id="contentInfografia" style="display:none"></div>
+<div class="masDetalle content-registro">
+    <div class="masdetalle-close">
+        X
+    </div>
+    <table style="width:100%">
+        <tr>
+            <td style="width:80px" class="registro-label">Título</td>
+            <td class="registro-control">
+                <span id="spanTitulo"></span>
+            </td>
+        </tr>
+        <tr>
+            <td class="registro-label">Fecha:</td>
+            <td class="registro-control">
+                <span id="spanFechaInicio"></span>
+            </td>
+        </tr>
+        <tr style="display:none">
+            <td class="registro-label">Fecha fin:</td>
+            <td class="registro-control">
+                <span id="spanFechaFin"></span>
+            </td>
+        </tr>
+        <tr>
+            <td class="registro-label">Descripción</td>
+            <td class="registro-control">
+                <span id="spanDescripcion"></span>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id='calendar'></div>
+<div class="leyenda">
+    <div class="leyenda-item" style="padding-left:0">Leyenda:</div>
+    @foreach (var item in Model.ListaLeyenda)
+{
+    <div class="leyenda-item" style="background-color:@item.Tipcalcolor">
+        <span style="color:#fff;">@item.Tipcaldesc</span>
+        <img src="~/Content/Images/@item.Tipcalicono" />
+    </div>
+}
+</div>
+<div style="clear:both"></div>
+<span style="font-size:10px"><strong>Nota:</strong> La información contenida en el presente calendario es de carácter referencial, no modifica ni sustituye las obligaciones establecidas en cada una de las normas que rigen a los Agentes del SEIN. </span>
+
+<input type="hidden" id="hfIndicadorMes" value="N" />
+
+
+<script type="text/javascript">
+
+     $(function () {
+
+            var data = @Html.Raw(Model.Data);
+            var meses = @Html.Raw(Model.Meses);
+            var feriados = @Html.Raw(Model.Feriados);
+            var fechaActual = @Html.Raw(Model.FechaActual.ToString());
+
+            $('#calendar').fullCalendar({
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month,agendaWeek,agendaDay'
+                },
+                defaultDate: fechaActual,
+                navLinks: true,
+                locale: 'es',
+                editable: true,
+                height: 700,
+                eventLimit: true,
+                allDayDefault: false,
+                allDaySlot:false,
+                allDayText:false,
+                events: data,
+                eventRender: function (event, eventElement) {
+                    if (event.imageurl) {
+                        eventElement.find("div.fc-content").prepend("<img src='" + event.imageurl + "?v=8' width='13' height='13'>");
+                    }
+                    eventElement.attr('href', 'javascript:void(0);');
+                    eventElement.click(function() {
+                        $("#spanFechaInicio").html(moment(event.start).format('DD/MM/YYYY'));
+
+                        var fin = event.end;
+                        if(event.end == null){
+                            fin = event.start;
+                        }
+
+                        $("#spanFechaFin").html(moment(fin).format('DD/MM/YYYY HH:mm'));
+                        $("#spanTitulo").html(event.title);
+                        $("#spanDescripcion").html(event.description);
+                        $('.masDetalle').toggle('slow');
+                    });
+                },
+                dayRender: function (date, cell) {
+                    var checkmes = $.fullCalendar.formatDate(date,'YYYY-MM');
+                    meses.forEach(function(elem, i) {
+                        if(checkmes == elem['aniomes']){
+                            cell.css("background-color", elem['colordia']);
+                        }
+                    });
+
+                    var check = $.fullCalendar.formatDate(date,'YYYY-MM-DD');
+                    if(feriados.indexOf(check)> 0){
+                        $('td[data-date="' + check + '"]').css('color','#FF4F4F');
+                        $('td[data-date="' + check + '"]').css('font-weight','bold');
+                    }
+
+                    $('.masDetalle').hide();
+                },
+                viewRender: function (view, element) {
+                    var currentdate = view.intervalStart;
+                    var date = new Date(currentdate);
+
+                    $('.fc-sat').css('background-color', '#3498DB');
+                    $('.fc-sun').css('background-color', '#3498DB');
+                    $('#tituloMes').css('background-color', '#3498DB');
+                    //$('.leyenda').css('background-color', '#4BA2DB');
+                    //$('.leyenda').css('color', '#ffffff');
+
+                    if (!isNaN(date)) {
+                        var anio = date.getFullYear();
+                        var mes = date.getMonth();
+
+                        $('#titulo').css('color', '#FFFFFF');
+                        $('#subtitulo').css('color', '#FFFFFF');
+                        $('#titulo').text("");
+                        $('#subtitulo').text("");
+                        $('#imgInfografia').attr('src', 'http://www.coes.org.pe/portal/content/infografia/' + 'INFOGRAFIA.png')
+
+                        $('#hfIndicadorMes').val("N");
+
+                        meses.forEach(function(elem, i) {
+                            if ($('.fc-center h2').text().indexOf(elem['anio'].toString()) >=0 && $('.fc-center h2').text().indexOf(elem['mes'].toString()) >=0) {
+                                $('.fc-sat').css('background-color', elem['colorsat']);
+                                $('.fc-sun').css('background-color', elem['colorsun']);
+                                $('#tituloMes').css('background-color', elem['color']);
+                                //$('.leyenda').css('background-color', elem['color']);
+                                //$('.leyenda').css('color', elem['colortitulo']);
+                                $('#titulo').css('color', elem['colortitulo']);
+                                $('#subtitulo').css('color', elem['colorsubtitulo']);
+                                $('#titulo').text(elem['titulo']);
+                                $('#subtitulo').text(elem['subtitulo']);
+                                $('#imgInfografia').attr('src', 'http://www.coes.org.pe/portal/content/infografia/' + elem['imagen'])
+                                $('#hfIndicadorMes').val("S");
+                            }
+                        });
+                    }
+
+                    $('.fc-day-header').css('background-color', '#3498DB');
+                    $('.fc-day-top').css('background-color','transparent');
+                }
+            });
+
+            $('#imgInfografia').on('click', function(){
+
+                if($('#hfIndicadorMes').val() == "S"){
+                    $('#contentInfografia').html(
+                        "<div>Volver</div>" +
+                        "<img style='cursor:pointer;width:" + $('#calendar').width() +  "px' src='" + $('#imgInfografia').attr('src') + "' />"
+                    );
+                    $('#contentInfografia').toggle('slow');
+                    $('#calendar').toggle('slow');
+                }
+            });
+
+            $('#contentInfografia').on('click', function(){
+                $('#contentInfografia').toggle('slow');
+                $('#calendar').toggle('slow');
+            });
+
+            $('.masdetalle-close').on('click', function(){
+                $('.masDetalle').toggle('slow');
+            });
+        });
+</script>
+
+

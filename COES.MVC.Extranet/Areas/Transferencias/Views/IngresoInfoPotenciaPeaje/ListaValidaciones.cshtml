@@ -1,0 +1,170 @@
+﻿@model COES.MVC.Extranet.Areas.Transferencias.Models.ValidacionEnvioModel
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Transferencias - Lista de envíos";
+}
+<div>
+    <div class='action-exito' id='mensaje' style="margin-bottom:5px; margin-top:0; ">
+        Se realizó el envío de información correctamente sin embargo se encontraron algunas inconsistencias en sus datos, por favor revise.
+    </div>
+    <br />
+    <p style="border-bottom: 1px solid #6ba9d0;"><b style="color: #6ba9d0; font-size: 16px;">Existen diferencias significativas con respecto a los datos reportados de energía activa.</b></p>
+    <table border="0" class="pretty tabla-icono" id="tablaEnergiaActiva">
+        <thead>
+            <tr>
+                <th>Código VTEA</th>
+                <th>Valor VTEA</th>
+                <th>Código VTP</th>
+                <th>Valor VTP</th>
+                <th>% Variación</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ListaValidacionEnvio)
+            {
+                if (@item.VaenTipoValidacion == "2")
+                {
+            <tr>
+                @if (item.VaenValorAgrupamiento == 1)
+                {
+                    <td rowspan="@item.VaenValorCoes" class="text_center">@item.VaenCodVtea</td>
+                    <td rowspan="@item.VaenValorCoes" class="text_center">@item.VaenValorVtea</td>
+                }
+                @if (item.VaenValorAgrupamiento == 2 || item.VaenValorAgrupamiento == 3)
+                {
+                    <td rowspan="1" class="text_center">@item.VaenCodVtea</td>
+                    <td rowspan="1" class="text_center">@item.VaenValorVtea</td>
+                }
+                <td rowspan="1" class="text_center">@item.VaenCodVtp</td>
+                <td rowspan="1" class="text_center">@item.VaenValorVtp</td>
+                @if (item.VaenValorAgrupamiento == 1)
+                {
+                    <td rowspan="@item.VaenValorCoes" class="text_center" style="background-color: #f2dd8c">@item.VaenValorReportado %</td>
+                }
+                @if (item.VaenValorAgrupamiento == 3)
+                {
+                    <td rowspan="@item.VaenValorCoes" class="text_center" style="background-color: #f2dd8c">@item.VaenValorReportado %</td>
+                }
+            </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <br />
+    <p style="border-bottom: 1px solid #6ba9d0;"><b style="color: #6ba9d0; font-size: 16px;">Existen diferencias significativas con respecto a los datos de la última revisión del mes anterior.</b></p>
+    <table border="0" class="pretty tabla-icono" id="tablaHistorica">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Barra</th>
+                <th>Código</th>
+                <th>Valor Reportado</th>
+                <th>Última Revisión Anterior</th>
+                <th>% Variación</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ListaValidacionEnvio)
+            {
+                var variacion = item.VaenVariacion;
+                if (@item.VaenTipoValidacion == "1")
+                {
+                    <tr>
+                        <td class="text_center">@item.VaenNomCliente</td>
+                        <td class="text_center">@item.VaenBarraSum</td>
+                        <td class="text_center">@item.VaenCodVtp</td>
+                        <td class="text_center">@item.VaenValorReportado</td>
+                        <td class="text_center">@item.VaenRevisionAnterior</td>
+                        <td class="text_center" style="background-color: #f2dd8c">@variacion %</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <br />
+    <p style="border-bottom: 1px solid #6ba9d0;"><b style="color: #6ba9d0; font-size: 16px;">Existen diferencias en los factores de pérdida reportados con respecto a lo registrado por el COES.</b></p>
+    <table border="0" class="pretty tabla-icono" id="tablaFactorPerdida">
+        <thead>
+            <tr>
+                <th>BARRA TRANSFERENCIA / SUMINISTRO</th>
+                <th>VALOR REPORTADO</th>
+                <th>VALOR REGISTRADO POR EL COES</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ListaValidacionEnvio)
+            {
+                if (@item.VaenTipoValidacion == "3")
+                {
+                    <tr>
+                        <td class="text_center">@item.VaenBarraSum</td>
+                        <td class="text_center">@item.VaenValorReportado</td>
+                        <td class="text_center">@item.VaenValorCoes</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <br />
+    <p style="border-bottom: 1px solid #6ba9d0;"><b style="color: #6ba9d0; font-size: 16px;">Precios de Potencia menor a los calculados por el COES (@Model.PrecioPotenciaRevision)</b></p>
+    <table border="0" class="pretty tabla-icono" id="tablaPrecioPotencia">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Barra</th>
+                <th>Código</th>
+                <th>Precio Potencia S/kW-mes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ListaValidacionEnvio)
+            {
+                if (@item.VaenTipoValidacion == "4")
+                {
+                    <tr>
+                        <td class="text_center">@item.VaenNomCliente</td>
+                        <td class="text_center">@item.VaenBarraSum</td>
+                        <td class="text_center">@item.VaenCodVtp</td>
+                        <td class="text_center" style="background-color: #f2dd8c">@item.VaenPrecioPotencia</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <br />
+    <p style="border-bottom: 1px solid #6ba9d0;"><b style="color: #6ba9d0; font-size: 16px;">Precio de Peaje unitario menor a los calculados por el COES (@Model.PeajeUnitarioRegulado)</b></p>
+    <table border="0" class="pretty tabla-icono" id="tablaPrecioPotencia">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Barra</th>
+                <th>Código</th>
+                <th>Precio Unitario S/kW-mes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ListaValidacionEnvio)
+            {
+                if (@item.VaenTipoValidacion == "5")
+                {
+                    <tr>
+                        <td class="text_center">@item.VaenNomCliente</td>
+                        <td class="text_center">@item.VaenBarraSum</td>
+                        <td class="text_center">@item.VaenCodVtp</td>
+                        <td class="text_center" style="background-color: #f2dd8c">@item.VaenPeajeUnitario</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <br />
+    <br />
+    <br />
+    <div style="display: flex; justify-content: center; align-items: center;">
+        <input type="button" value="Exportar a Excel" onclick="descargarArchivoValidaciones(1);" id="btnExportarExcelValidaciones" name="btnExportarExcelValidaciones" class="form-action" />
+        <input type="button" value="Cerrar" onclick="Fn_Corregir_Errores();" id="btnCerrarValidaciones" name="btnCerrarValidaciones" class="form-action" />
+    </div>
+</div>
+<div>
+    <span class="button b-close"><span>X</span></span>
+</div>

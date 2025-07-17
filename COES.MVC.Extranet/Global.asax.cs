@@ -1,0 +1,42 @@
+﻿using COES.Framework.Base.Tools;
+using COES.MVC.Extranet.Helper;
+using COES.Servicios.Aplicacion.Intervenciones.Helper;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Http;
+using System.Web.Mvc;
+using System.Web.Routing;
+
+namespace COES.MVC.Extranet
+{
+    // Note: For instructions on enabling IIS6 or IIS7 classic mode, 
+    // visit http://go.microsoft.com/?LinkId=9394801
+    public class MvcApplication : System.Web.HttpApplication
+    {
+        protected void Application_Start()
+        {
+            AreaRegistration.RegisterAllAreas();
+
+            WebApiConfig.Register(GlobalConfiguration.Configuration);
+            FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
+            RouteConfig.RegisterRoutes(RouteTable.Routes);
+
+            ValueProviderFactories.Factories.Remove(ValueProviderFactories.Factories.OfType<System.Web.Mvc.JsonValueProviderFactory>().FirstOrDefault());
+            ValueProviderFactories.Factories.Add(new ExtranetValueProviderFactory());
+
+            //Módulo Intervenciones: Eliminar archivos temporales de la vista previa
+            FileServer.EliminarArchivosTemporalesCarpetaReporte(AppDomain.CurrentDomain.BaseDirectory + ConstantesIntervencionesAppServicio.RutaReportes, new List<string>() { "coes.png"});
+        }
+        protected void Application_PreSendRequestHeaders(object sender, EventArgs e)
+        {
+            HttpApplication app = sender as HttpApplication;
+            if (app != null &&
+                app.Context != null)
+            {
+                app.Context.Response.Headers.Remove("Server");
+            }
+        }
+    }
+}

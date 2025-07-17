@@ -1,0 +1,268 @@
+﻿@model COES.MVC.Intranet.Areas.PotenciaFirme.Models.PotenciaFirmeModel
+@{
+    ViewBag.Title = "Factor de Indisponibilidad Fortuíta";
+}
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@if (Model.UsarLayoutModulo)
+{
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+else
+{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<link href="~/Content/Css/popup.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+
+<script src="~/Areas/PotenciaFirme/Content/Scripts/index_findisponibilidad.js?v=1.9.7"></script>
+<link href="~/Areas/PotenciaFirme/Content/Css/general.css?v=4.0" rel="stylesheet" />
+<link href="~/Areas/PotenciaFirme/Content/Css/css.css?v=1.0" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Factor de Indisponibilidad Fortuita</div>
+    <div class="content-botonera">
+        @if (Model.TienePermisoNuevo)
+        {
+            @*<input type="button" id="btnNuevo" value="Nuevo" style="display: block">*@
+        }
+    </div>
+</div>
+
+<div class="content-hijo">
+    <div id="idpanel" style="overflow:auto; background-color:#fff">
+        <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; display:none"></div>
+        @*<div id="mensaje" class="action-message" hidden style="margin:0; margin-bottom:10px">Complete los datos del evento y presione "Grabar".</div>*@
+        <table role="presentation">
+            <tr>
+                <td>
+                    <div class="search-content" style="margin-bottom:0px; padding:10px">
+                        <table class="table-search" style="width:auto" role="presentation">
+                            <tr>
+
+                                <td class="filtro">
+                                    <div id="">
+                                        Periodo:
+                                        <select id="cbAnio" style="width: 57px;">
+                                            @foreach (var item in Model.ListaAnio)
+                                            {
+                                                var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                                                <option value="@item.Entero1" @(selected)>@item.String1</option>
+                                            }
+
+                                        </select>
+
+                                        <select id="cbPeriodo" style="width: 120px;">
+                                            @foreach (var item in Model.ListaPeriodo)
+                                            {
+                                                var selected = Model.IdPeriodo == item.Pfpericodi ? "selected" : "";
+                                                <option value="@item.Pfpericodi" @(selected)>@item.Pfperinombre</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <td class="filtro">
+                                    <div>
+                                        <div id="revisiones">
+                                            Recálculo:
+                                            <select id="cbRevision" name="iRevision" style="width:150px">
+                                                @if (Model.ListaRecalculo.Count > 0)
+                                                {
+                                                    foreach (var item in Model.ListaRecalculo)
+                                                    {
+                                                        var selected = Model.IdRecalculo == item.Pfrecacodi ? "selected" : "";
+                                                        <option value="@item.Pfrecacodi" @(selected)>@item.Pfrecanombre</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="0">--</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="filtro">
+                                    <div>
+                                        Empresa:
+                                        <select id="cbEmpresa" name="iEmpresa" style="width:250px">
+                                            <option value="-2">TODOS</option>
+                                            @foreach (var item in Model.ListaEmpresas)
+                                            {
+                                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <td class="filtro">
+                                    <div>
+
+                                        <div id="centrales">
+                                            Central:
+                                            <select id="cbCentral" name="iCentral" style="width:200px">
+                                                <option value="-2">TODOS</option>
+                                                @foreach (var item in Model.ListaCentrales)
+                                                {
+                                                    <option value="@item.Equicodi">@item.Equinomb</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="filtro">
+                                    <div>
+                                        <input type="button" id="btnConsultar" value="Consultar" />
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <input type="hidden" id="hperiodo" value="" />
+                                    <input type="hidden" id="hrevision" value="" />
+                                    <input type="hidden" id="hversion" value="" />
+                                    <input type="hidden" id="hempresa" value="" />
+                                    <input type="hidden" id="hcentral" value="" />
+                                </td>
+                                @*<td class="filtro"> </td>*@
+                                <td class=""> </td>
+                                <td class=""> </td>
+
+                                <td class="content-action">
+                                    <a href="#" id="btnExportExcel">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/exportarExcel_.png" alt="logo" /><br />
+                                            <span>Exportar</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                                <td class="content-action">
+                                    <a href="#" id="btnImportar">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/importarExcel_.png" alt="logo" /><br />
+                                            <span>Importar</span>
+                                        </div>
+                                    </a>
+                                    <div id="html5_1e0e3oe86rmv13b717c727d1cli3_container" class="moxie-shim moxie-shim-html5" style="position: absolute; top: 0px; left: 0px; width: 0px; height: 0px; overflow: hidden; z-index: 0;"><input id="html5_1e0e3oe86rmv13b717c727d1cli3" type="file" style="font-size: 999px; opacity: 0; position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"></div>
+                                </td>
+
+                                <td class="content-action">
+                                    <a href="#" id="btnCargarBD">
+                                        <div class="content-item-action" style="width:40px;">
+                                            <img src="~/Content/Images/btn-download.png" alt="logo" /><br />
+                                            <span>Cargar de BD</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                                <td class="content-action">
+                                    <a href="#" id="btnEditarData">
+                                        <div class="content-item-action" style="width:40px;">
+                                            <img src="~/Content/Images/btn-edit.png" alt="logo" /><br />
+                                            <span>Editar</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td class="content-action">
+                                    <a href="#" id="btnGuardarData">
+                                        <div class="content-item-action" style="width:40px;">
+                                            <img src="~/Content/Images/prnsave.png" alt="logo" /><br />
+                                            <span>Guardar</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td class="content-action">
+                                    <a href="#" id="btnVerHistorial">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/historial.png" alt="logo" /><br />
+                                            <span>Historial</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                                <td class="content-action">
+                                    <div>
+                                        <a href="#" id="btnMostrarErrores">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/errores.png" alt="logo"><br>
+                                                <span>Errores</span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </td>
+
+
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="content-tabla" id="excelwebFI" style="padding-top: 10px;width: 1110px;">
+            <div id="msj_cargar_bd" style="display: none; padding-bottom: 8px;">
+                <strong>Nota</strong>: Si no existen registros hacer clic el botón de "Cargar de BD", verificar y/o editar la información y luego clic en el botón "Guardar".
+            </div>
+
+            <p id="versionInsumo"><strong id="versnumero"> </strong></p>
+            <div id="contenidoFactorIndisponibilidad">
+
+                <div id="tblFactorIndisponibilidad" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 440px; overflow: hidden;"> </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="erroresDatos" class="general-popup" style="z-index:9999999999;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="listadoErrores">
+            <table id="tblListaerrores" style="width:500px" class="pretty tabla-adicional" role="presentation">
+                <thead>
+                    <tr>
+                        <th scope="col">ClassName</th>
+                        <th scope="col">Celda</th>
+                        <th scope="col">Valor</th>
+                        <th scope="col">Tipo de error</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="historialFI" class="general-popup" style="z-index:9999999999;height: 350px;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Historial</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaVersion">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+
+                <div class="content-tabla">
+                    <div class="table-list" id="listadoHFI"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

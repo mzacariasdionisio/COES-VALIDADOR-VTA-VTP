@@ -1,0 +1,147 @@
+﻿@model COES.MVC.Intranet.Areas.PMPO.Models.SDDPModel
+@{
+    ViewBag.Title = "Lecturas archivos .CSV";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<link href="~/Areas/PMPO/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Areas/PMPO/Content/Scripts/sddp-procesamiento-resultados.js?v=1.2.4"></script>
+
+<div class="form-title">
+    <div class="content-titulo" style="width: auto;">Procesamiento de Resultados de SDDP</div>
+
+    <div class="content-botonera">
+        <input type="button" id="btn-ver-codigo" value="Códigos SDDP" />
+    </div>
+</div>
+<div class="content-hijo" id="mainLayout">
+
+    <div id="mensaje"></div>
+
+    <div class="search-content">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td class="tbform-label" style="padding-right: 0">Año:</td>
+                <td>
+                    <select id="filtro-anio" style="width: 61px;">
+                        @foreach (var item in Model.ListaAnio)
+                        {
+                            <option value="@item.Entero1">@item.String1</option>
+                        }
+                    </select>
+                </td>
+
+                <td class="tbform-label" style="padding-right: 0">Mes:</td>
+                <td>
+                    <select id="filtro-mes" style="width: 116px;">
+                        @foreach (var item in Model.ListaMes)
+                        {
+                            <option value="@(item.PmPeriCodi +"|"+item.Semanadesc)">@item.PmPeriNombre</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+
+        </table>
+    </div>
+
+
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#vistaReporte">Reporte</a></li>
+            <li class='tab'><a href="#vistaProceso">Proceso</a></li>
+        </ul>
+        <div class='panel-container'>
+
+            <div id="vistaReporte">
+                <div id="div_reporte" class="content-tabla">
+                    <table class="pretty tabla-icono tabla_reporte_excel" style="width: auto; min-width: 500px">
+                        <thead>
+                            <tr>
+                                <th style="width: 20px">Descargar <br> Excel</th>
+                                <th>Nombre de Reporte</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            @foreach (var reg in Model.ListaPmpoformato)
+                            {
+                                var img = reg.PmFTabCodi != 18 ? "Areas/TransfPotencia/Content/Images/excel.gif" : "Content/Images/exportarExcel.png";
+                                <tr>
+                                    <td>
+                                        <a href="JavaScript:exportarArchivosNew(@(reg.PmFTabCodi));" id="" title="Descargar en formato Excel">
+                                            <img src="~/@img">
+                                        </a>
+                                    </td>
+                                    <td style="text-align: left">@reg.PmFTabDescripcionTabla</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+
+            <div id="vistaProceso">
+                <div id="div_proceso" class="content-tabla">
+                    <div style="clear:both; height:5px"></div>
+
+                    <h2>Procesamiento de los Archivos de la Salida del SDDP</h2>
+
+                    <div id="mensaje_log"></div>
+
+                    <table class="content-tabla-search" style="width:auto">
+                        <tr>
+                            <td>Carpeta</td>
+                            <td colspan="6"><input id="carpeta" type="text" style="width: 520px;" onkeyup="this.value = this.value.toLowerCase();" /></td>
+                        </tr>
+
+                        <tr>
+                            <td></td>
+                            <td colspan="4">
+                                Iniciar con: @Model.RutaCarga
+                            </td>
+                            <td></td>
+                            <td align="right"><input type="button" id="btnProcesarNew" value='Procesar' /></td>
+                        </tr>
+                    </table>
+
+                    <div id="div_log" style="display: none">
+                        <h2>Detalle de último procesamiento</h2>
+
+                        <div style="width:310px;margin-bottom: 20px;">
+                            <table id="tbl_envio" class="tabla-icono pretty dataTable" style="width: auto">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Usuario</th>
+                                        <th>Fecha y hora</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="log_cod_envio" style="height: 22px;"></td>
+                                        <td id="log_usu_envio"></td>
+                                        <td id="log_fecha_envio"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="div_log_detalle" style="width:850px"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<input type="hidden" id="hdnPericodi" value="0" />
+<input type="hidden" id="hdnRecacodi" value="0" />
+<input type="hidden" id="hdnEstado" value="" />
+<input type="hidden" id="hdRutaCarga" value="@Model.RutaCarga" />

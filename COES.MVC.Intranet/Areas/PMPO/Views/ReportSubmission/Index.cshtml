@@ -1,0 +1,343 @@
+﻿@model COES.MVC.Intranet.Areas.PMPO.Models.RemisionModel
+@{
+    ViewBag.Title = "Reporte de envíos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!--envio-->
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+
+<script src="~/Content/Scripts/moment.js"></script>
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+
+<script type="text/javascript" src="~/Content/Scripts/highstock.js"></script>
+
+<link href="~/Areas/PMPO/Content/Css/hoja/hoja.css" rel="stylesheet" />
+<script src="~/Areas/PMPO/Content/Scripts/hoja/global.js?v=2.7"></script>
+<script src="~/Areas/PMPO/Content/Scripts/hoja/hojaGlobal.js?v=2.7"></script>
+<script src="~/Areas/PMPO/Content/Scripts/hoja/hojaFormatoGrilla.js?v=2.7"></script>
+<script src="~/Areas/PMPO/Content/Scripts/hoja/hojaFormato.js?v=2.9"></script>
+
+<!--reporte-->
+<script src="~/Areas/PMPO/Content/Scripts/jquery.countdown.min.js"></script>
+
+<link rel="stylesheet" href="~/Areas/PMPO/Content/Css/css.css?v=2.0.7" />
+<script src="~/Areas/PMPO/Content/Scripts/remision-reporte-envio.js?v=2.1.4"></script>
+
+<style>
+    .div-exportar {
+        border: 3px solid #2980B9;
+        width: 460px;
+        min-height: 160px;
+        position: absolute;
+        display: none;
+        font-size: 12px;
+        right: 20px;
+        z-index: 20000;
+        background-color: #fff;
+        height: auto;
+    }
+
+    .div-exportar-close {
+        float: right;
+        font-weight: bold;
+        font-size: 14px;
+        margin: 5px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+        .div-exportar-close:hover {
+            color: #FF770D;
+        }
+
+    .div-exportar-content {
+        width: auto;
+        height: auto;
+        margin: 20px;
+    }
+
+    .div-exportar-boton {
+        width: 70px;
+        margin: auto;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="form-title" id="container">
+    <div class="content-titulo" style="width: auto;">
+        Remisión de Información para la Programación de Mediano Plazo de Operación
+    </div>
+    <input type="hidden" id="hdTipoIndex" value="1" />
+
+    <div class="content-botonera">
+        <input type="button" id="btn-notificar-apertura" value="Notificar Solicitud de Información" style="display: none" />
+        <input type="button" id="btn-notificar-vencimiento" value="Notificar Envíos pendientes" style="display: none" />
+        <input type="button" id="btn-ventana-reporte-masivo" value="Generar Reportes" />
+        <input type="button" id="btn-ver-filserver" value="Ver FileServer" />
+    </div>
+</div>
+
+<!-- Generar reporte-->
+<div class="div-exportar" id="divExportar" style="display: none">
+    <div class="div-exportar-close" onclick="closeExportar();">X</div>
+    <div class="div-exportar-content">
+        <div class="popup-title"><span>Exportar Datos</span></div>
+        <div class="action-exito">
+            Por favor seleccione el reporte a exportar:
+        </div>
+        Mes:
+        <input id="txtMesRptMasivo" type="text" value="@Model.Mes" style="width: 77px;" />
+        <br /><br />
+        Reporte:<br />
+        <input type="checkbox" name="rbFormato" value="73" style="margin-left: 30px;" checked="checked" />PMPO_CLIENTES LIBRES - NO INTEGRANTE<br />
+        <input type="checkbox" name="rbFormato" value="74" style="margin-left: 30px;" checked="checked" />PMPO_CLIENTES LIBRES<br />
+        <input type="checkbox" name="rbFormato" value="75" style="margin-left: 30px;" checked="checked" />PMPO_COGENERADORES<br />
+        <input type="checkbox" name="rbFormato" value="76" style="margin-left: 30px;" checked="checked" />PMPO_DISTRIBUIDORES<br />
+        <input type="checkbox" name="rbFormato" value="77" style="margin-left: 30px;" checked="checked" />PMPO_GENERADOR-NO INTEGRANTE<br />
+        <input type="checkbox" name="rbFormato" value="78" style="margin-left: 30px;" checked="checked" />PMPO_GENERADOR RER<br />
+
+        <div class="div-exportar-boton" id="container" style=" margin-top:30px">
+            <input type="button" id="btnExportarMasivo" value="Aceptar" />
+        </div>
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensajePlazoPmpo" class="action-message" style="margin:0; margin-bottom:10px; display: none"></div>
+
+    <div class="search-content">
+        <table class="content-tabla" style="width:auto" role="presentation">
+            <tr>
+                <td class="tbform-label" style="">Mes:</td>
+                <td>
+                    <input id="txtMesElaboracion" type="text" name="name" value="@Model.Mes" style="width: 77px;" />
+                </td>
+
+                <td class="tbform-label" style="">Tipo de Información:</td>
+                <td>
+                    <select id="ddl-information-types" style="width: 229px;">
+                        <option value="0">[ TODOS ]</option>
+                        @foreach (var item in Model.ListaFormato)
+                        {
+                            <option value="@item.Formatcodi">@item.Formatnombre</option>
+                        }
+                    </select>
+                    <select id="ddl-unidad-filtro" style="width: 125px;">
+                        @foreach (var item in Model.ListarTipoinformacion)
+                        {
+                            <option value="@item.Tipoinfocodi">@item.Tipoinfodesc</option>
+                        }
+                    </select>
+                </td>
+
+                <td class="tbform-label" style="">Empresa:</td>
+                <td>
+                    <select id="ddl-companies" style="width: 230px;">
+                        <option value="0">[ TODOS ]</option>
+                        @foreach (var item in Model.ListaEmpresa)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+
+                <td>
+                    <input type="button" id="btn-accept-report" value="Aceptar" />
+                </td>
+
+            </tr>
+
+            <tr>
+                <td class="tbform-label" style="">Estado envío:</td>
+                <td>
+                    <select id="ddl-EstaEnvio" style="width: 85px;">
+                        <option value="0">[ TODOS ]</option>
+                        <option value="1">Realizado</option>
+                        <option value="2">Pendiente</option>
+                    </select>
+                </td>
+
+                <td class="tbform-label" style="">Estado de Derivación:</td>
+                <td>
+                    <select id="ddl-EstaDerivacion" style="width: 91px;">
+                        <option value="0">[ TODOS ]</option>
+                        <option value="1">Derivado</option>
+                        <option value="2">Sin derivar</option>
+                    </select>
+                </td>
+
+                <td colspan="5">
+                </td>
+
+            </tr>
+        </table>
+    </div>
+
+    <div class="content-tabla">
+        <div id="tab-container-x-envio" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#tabReporteEnvio">Reporte</a></li>
+                <li class='tab'><a href="#tabDetalleEnvio">Detalle de envío</a></li>
+            </ul>
+            <div class='panel-container'>
+
+                <div id="tabReporteEnvio">
+                    <div class="table-list" id="listado">
+                        <div id="reporte">
+                        </div>
+                    </div>
+
+                </div>
+                <div id="tabDetalleEnvio">
+                    <div class="table-list" id="divDetalleEnvio">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<div id="popupEnviarCOES" class="popup-class-1" style="z-index:9999999999; width: 480px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Enviar a COES</span></div>
+
+    <div id="enviar-div-comments" style="margin-top: 15px;">
+        <div class="chat-toolbar">
+            <div class="chat-toolbar-buttons" style="margin-top: 15px;">
+                <a id="enviar-btn-file-attach" class="button-item btn-import">Adjuntar<br />Archivo</a>
+                <a id="enviar-btn-send" class="button-item btn-comment-send">Enviar<br /> &nbsp;</a>
+            </div>
+            <div class="chat-toolbar-text" style="padding-right: 158px;">
+                Ingresar comentario (opcional):
+                <textarea id="enviar-txt-comment"></textarea>
+            </div>
+        </div>
+        <div id="enviar-div-attachments" class="chat-attachments"></div>
+    </div>
+</div>
+
+<div id="validaciones" class="popup-class-1" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+    </div>
+</div>
+
+<div id="enviosanteriores" class="popup-class-1" style="z-index:9999999998;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envios Anteriores</span></div>
+    <div id="idEnviosAnteriores">
+
+    </div>
+</div>
+
+<div id="popupVerFeriados" class="popup-class-1" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Feriados</span></div>
+    <div id="idTablaFeriados" style="height:370px;">
+    </div>
+</div>
+
+<div id="popupRecordatorio" class="popup-class-1" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Recordatorio</span></div>
+
+    <div class="search-content" style="margin-top: 15px;">
+        <div class="field-control-group">
+            <div class="field-group">
+                <span class="field-label">
+                    Remitente :
+                </span>
+                <div class="field-control">
+                    <select id="ddl-sender_recordatorio" class="disabled">
+                        <option value="-1" selected="selected">[ TODOS ]</option>
+                        <option value="AGENTE">AGENTE</option>
+                        <option value="COES">COES</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="idTablaRecordatorio" style="height:370px;">
+
+    </div>
+</div>
+
+<!--NOTIFICACION-->
+<div id="popupNotificacion" class="general-popup" style="z-index:9999999999; display: none">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Notificación</span></div>
+    <div id="idTablaNotificacion" style="height:370px;">
+    </div>
+</div>
+
+<div id="popupMensajesPmpo" class="general-popup" style="z-index:9999999999; width: 800px; top: 100px !important">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Mensajes</span></div>
+
+    <div id="idTablaMensajesPmpo" style="min-height:370px;margin-top: 15px;">
+
+        <div id="div-comments">
+            <div id="div-message-mensaje" class="oculto"></div>
+            <div class="search-content">
+                <div class="field-control-group">
+                    <input type="hidden" id="hfEmpresaMsj" value="" />
+                    <input type="hidden" id="hfFormatoMsj" value="" />
+
+                    <div class="field-group">
+                        <span class="field-label">
+                            Remitente:
+                        </span>
+                        <div class="field-control">
+                            <select id="ddl-sender" class="disabled">
+                                <option value="-1" selected="selected">[ TODOS ]</option>
+                                <option value="COES">COES</option>
+                                <option value="AGENTE">AGENTE</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">
+                                Estado:
+                            </span>
+                            <div class="field-control">
+                                <select id="ddl-state">
+                                    <option value="-1">[ TODOS ]</option>
+                                    <option value="L">Leído</option>
+                                    <option value="P">No Leído</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="div-wrap" class="chat-wrap">
+                <div class="chat-inner">
+                    <div id="lst-comments" style="margin-top:10px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="separate-h"></div>
+
+            <div class="chat-toolbar">
+                <div class="chat-toolbar-buttons">
+                    <a id="btn-file-attach" class="button-item btn-import">Adjuntar<br />Archivo</a>
+                    <a id="btn-send" class="button-item btn-comment-send">Enviar<br />Mensage</a>
+                    <a id="download-message" class="button-item btn-download-message">Descargar<br />Mensajes</a>
+                </div><div class="chat-toolbar-text">
+                    <textarea id="txt-comment"></textarea>
+                </div>
+            </div>
+            <div id="div-attachments" class="chat-attachments"></div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,265 @@
+﻿@model COES.MVC.Intranet.Areas.IND.Models.IndisponibilidadesModel
+@{
+    ViewBag.Title = "Disponibilidad de Calor Útil";
+}
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@if (Model.UsarLayoutModulo)
+{
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+else
+{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.2"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<script src="~/Areas/IND/Content/Scripts/insumo_calorutil.js?v=1.8.50"></script>
+<link href="~/Areas/IND/Content/Css/general.css?v=4.0" rel="stylesheet" />
+<link href="~/Areas/IND/Content/Css/css.css?v=1.2" rel="stylesheet" />
+
+<style>
+    .filtro {
+        padding-left: 0px;
+        padding-right: 10px;
+    }
+</style>
+
+<div class="form-title">
+    <div class="content-titulo">Disponibilidad de Calor Útil de las Centrales de Cogeneración</div>
+    <div class="content-botonera">
+    </div>
+</div>
+
+<div class="content-hijo">
+    <div id="idpanel" style="background-color:#fff">
+        <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; display:none"></div>
+        <table role="presentation">
+            <tr>
+                <td>
+                    <div class="search-content" style="margin-bottom:0px; padding:10px">
+                        <table class="table-search" style="width:auto" role="presentation">
+                            <tr>
+
+                                <td class="filtro">
+                                    <div id="">
+                                        Periodo:
+                                        <select id="cbAnio" style="width: 57px;">
+                                            @foreach (var item in Model.ListaAnio)
+                                            {
+                                                var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                                                <option value="@item.Entero1" @(selected)>@item.String1</option>
+                                            }
+
+                                        </select>
+
+                                        <select id="cbPeriodo" style="width: 120px;">
+                                            @foreach (var item in Model.ListaPeriodo)
+                                            {
+                                                var selected = Model.IdPeriodo == item.Ipericodi ? "selected" : "";
+                                                <option value="@item.Ipericodi" @(selected)>@item.Iperinombre</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <td class="filtro">
+                                    <div>
+                                        <div id="revisiones">
+                                            Recálculo:
+                                            <select id="cbRevision" name="iRevision" style="width:150px">
+                                                @if (Model.ListaRecalculo.Count > 0)
+                                                {
+                                                    foreach (var item in Model.ListaRecalculo)
+                                                    {
+                                                        var selected = Model.IdRecalculo == item.Irecacodi ? "selected" : "";
+                                                        <option value="@item.Irecacodi" @(selected)>@item.Irecanombre</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="0">--</option>
+                                                }
+                                            </select>
+
+                                            <input type="hidden" id="hfFechaIni" value="@Model.FechaIni" />
+                                            <input type="hidden" id="hfFechaFin" value="@Model.FechaFin" />
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="filtro">
+                                    <input type="text" id="fecha_ini" value="@Model.FechaIni" style="width: 95px" />
+                                    <select id="cbHoraIni" style="width: 62px;">
+                                        @foreach (var reg in Model.ListaHoraIni)
+                                        {
+                                            <option value="@reg.Entero1" @(reg.String2)>@reg.String1</option>
+                                        }
+                                    </select>
+                                </td>
+
+                                <td class="filtro">
+                                    <input type="text" id="fecha_fin" value="@Model.FechaFin" style="width: 95px" />
+                                    <select id="cbHoraFin" style="width: 62px;">
+                                        @foreach (var reg in Model.ListaHoraFin)
+                                        {
+                                            <option value="@reg.Entero1" @(reg.String2)>@reg.String1</option>
+                                        }
+                                    </select>
+                                </td>
+
+                                <td class="filtro">
+                                    <div>
+                                        Empresa:
+                                        <select id="cbEmpresa" name="iEmpresa" style="width:250px">
+                                            <option value="-1">TODOS</option>
+                                            @foreach (var item in Model.ListaEmpresa)
+                                            {
+                                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <td class="filtro">
+                                    <div>
+                                        <input type="button" id="btnConsultar" value="Consultar" />
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <input type="hidden" id="hperiodo" value="" />
+                                    <input type="hidden" id="hrevision" value="" />
+                                    <input type="hidden" id="hversion" value="" />
+                                    <input type="hidden" id="hempresa" value="" />
+                                    <input type="hidden" id="hcentral" value="" />
+                                </td>
+
+                                <td class="filtro"> </td>
+                                <td class="filtro"> </td>
+
+                                <td class="content-action">
+                                    <a href="#" id="btnEditarData">
+                                        <div class="content-item-action" style="width:40px;">
+                                            <img src="~/Content/Images/btn-edit.png" alt="logo" /><br />
+                                            <span>Editar</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td class="content-action">
+                                    <a href="#" id="btnGuardarData">
+                                        <div class="content-item-action" style="width:40px;">
+                                            <img src="~/Content/Images/prnsave.png" alt="logo" /><br />
+                                            <span>Guardar</span>
+                                        </div>
+                                    </a>
+                                </td>
+                                <td class="content-action">
+                                    <a href="#" id="btnVerHistorial">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/historial.png" alt="logo" /><br />
+                                            <span>Historial</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                                <td class="content-action">
+                                    <a href="#" id="btnVerErrores">
+                                        <div class="content-item-action">
+                                            <img src="~/Content/Images/errores.png" alt="logo" /><br />
+                                            <span>Ver Errores</span>
+                                        </div>
+                                    </a>
+                                </td>
+
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="content-tabla" id="excelwebCU" style="padding-top: 10px;">
+            <div id="tab-container" class='tab-container'>
+                <ul class='etabs'>
+                    <li class='tab tabD'><a href="#vistaDisponibilidad">Disponibilidad Calor Útil</a></li>
+                    <li class='tab tabL'><a href="#vistaListado">Listado Sin Calor Útil</a></li>
+                </ul>
+                <div class='panel-container'>
+                    <div id="vistaDisponibilidad">
+                        <div class="content-tabla">
+                            <div style="clear:both; height:5px"></div>
+
+                            <div class="content-tabla">
+                                <p id="versionInsumo"><strong id="versnumero"> </strong></p>
+                                <div id="contenidoCalorUtil">
+
+                                    <div id="tblCalorUtil" class="" style="height: 440px;"> </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div id="vistaListado">
+                        <div class="table-list" id="listadoSinCU"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<div id="historialCU" class="general-popup" style="z-index:9999999999;height: 350px;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Historial</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaVersion">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+
+                <div class="content-tabla">
+                    <div class="table-list" id="listadoHCU"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="erroresCU" class="general-popup" style="z-index:9999999999;height: 350px;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Errores</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaVersion">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+
+                <div class="content-tabla">
+                    <table id="tblErrores" class="pretty tabla-adicional " style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>Central</th>
+                                <th>Hora</th>
+                                <th>Valor</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

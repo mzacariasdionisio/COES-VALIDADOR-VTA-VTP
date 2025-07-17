@@ -1,0 +1,174 @@
+﻿@model COES.MVC.Extranet.Areas.Campanias.Models.CampaniasModel
+@{
+    ViewBag.Title = "Información Plan de Transmisión";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Areas/Campanias/Content/Scripts/envio.js"></script>
+<link href="~/Areas/Campanias/Content/Css/css.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/Handson/moment.js"></script>
+
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<link href="~/Areas/Campanias/Content/Css/jquery.modal.min.css" rel="stylesheet" />
+<script src="~/Areas/Campanias/Content/Scripts/jquery.modal.min.js"></script>
+<script src="~/Content/Scripts/highcharts.js"></script>
+
+<script>
+
+    $(document).ready(function () {
+        console.log("Entra1");
+        var codPlanTransmi =  @Html.Raw(Json.Encode(Model.Plancodi));
+        var codPlanTransmiN =  @Html.Raw(Json.Encode(Model.PlancodiN));
+        var codPeriodo =  @Html.Raw(Json.Encode(Model.Pericodi));
+        var codEmpresa =  @Html.Raw(Json.Encode(Model.Codempresa));
+        var modo =  @Html.Raw(Json.Encode(Model.Modo));
+         if (codPlanTransmi != null) {
+             $("#txtCodPlanTransmision").val(codPlanTransmi);
+             if(codPlanTransmiN == 0){
+                ObtenerListadoProyecto(codPlanTransmi,modo);
+             }
+             cargarDatos().then(() => {
+                 if (codPlanTransmi != null) {
+                    if(codPlanTransmiN != 0 && codPlanTransmi != null){
+                        clonarPlantransmision(codPlanTransmiN);
+                    } else {
+                        buscarPlantransmision(codPlanTransmi);
+                    }
+                 }
+                 if (codPeriodo != 0)  $("#periodoSelect").val(codPeriodo);
+                 if (codEmpresa != null) $("#empresaSelect").val(codEmpresa);
+             });
+         } else {
+             $("#txtCodPlanTransmision").val("0");
+             ObtenerListadoProyecto(0,modo)
+         }
+    });
+
+
+</script>
+
+<div class="form-title_intranet">
+    <div class="content-titulo">Información Plan de Transmisión</div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+    <input type="hidden" id="txtCodPlanTransmision" name="txtCodPlanTransmision">
+    <input type="hidden" id="txtversion" name="txtversion">
+    <div class="search-content">
+        <div class="contEnvio">
+            @*<div>
+                    <label>Código:</label>
+                    <input type="text" disabled value="2" />
+                </div>*@
+            <div>
+                <label>Empresa:</label>
+                <select style="width: 185px" id="empresaSelect" style="width:220px">
+                    <option value="">Seleccione una empresa</option>
+                </select>
+            </div>
+            <div>
+                <label>Plan transmisión:</label>
+                <select style="width: 185px" id="periodoSelect" style="width:220px">
+                    <option value="">Seleccione un periodo</option>
+                </select>
+                <input type="hidden" id="hfPeriodo" name="periodo" />
+            </div>
+        </div>
+        <div class="contEnvio">
+            @if (Model.Modo != "true")
+            {<input type="button" class="btnForms" id="btnAgregar" value="Agregar" />}
+            @if (Model.Modo != "true")
+            {<input type="button" class="btnForms" value="Enviar" onclick="popupEnviarProyectos()" />}
+            <input type="button" class="btnForms" value="Regresar" id="btnAtrasP" />
+        </div>
+    </div>
+
+    <div class="content-tabla">
+        <div class="table-list" id="listadoProyecto"></div>
+    </div>
+
+    <div style="clear:both; height:30px"></div>
+
+</div>
+
+<div id="popup">   </div>
+
+<div id="modal1" class="modal" style="width:900px">
+    <div class="popup-title"><div id="tituloPopup"></div></div>
+    <div id="" style="margin-top: 10px;"></div>
+    <div class="panel-container">
+        <div class="popup-text" id="contenidoProyecto" style="margin-top:0"></div>
+    </div>
+</div>
+
+<div id="popupEliminarProyecto" class="general-popup" style="width:320px;top:0px">
+    <div>
+        <span class="button b-close">
+            <span>X</span>
+        </span>
+    </div>
+    <div class="popup-text">
+        <form>
+            <p>
+                La eliminación del proyecto es irreversible.
+                ¿ Seguro que quiere continuar ?
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center">
+                <input type="button" id="btnEliminar" value="Eliminar" style="margin-top: 15px;" onclick="cargarEliminarProyecto()">
+                <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupEliminarProyecto')">
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="popupEnviarProyecto" class="general-popup" style="width:850px;top:0px">
+    <div>
+        <span class="button b-close">
+            <span>X</span>
+        </span>
+    </div>
+    <div class="popup-text">
+            <p>
+                ¿ Estas seguro de realizar el envio ?
+            </p>
+            <p>
+                Tenga presente que una vez realizada esta acción ya no podrá modificar el contenido de ninguno de los proyectos
+            </p>
+            <table style="width:100%">
+                <tr>
+                    <td>Comentarios</td>
+                </tr>
+                <tr>
+                    <td>
+                        <textarea style="width:100%" id="txtComentarioCorreo" name="txtComentarioCorreo"></textarea>
+                    </td>
+                </tr>
+            </table>
+            <div style="display: flex; gap: 10px; justify-content: center">
+                <input type="button" value="Aceptar" style="margin-top: 15px;" onclick="enviarProyectos()">
+                <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupEnviarProyecto')">
+            </div>
+    </div>
+</div>
+
+<div id="popupProyectoGeneral" class="general-popup" style="width:320px;top:0px">
+    <div>
+        <span class="button b-close">
+            <span>X</span>
+        </span>
+    </div>
+    <div class="popup-text">
+        <form>
+            <p id="contenidoPopup">
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center">
+                <input type="button" id="btnConfirmarPopup" value="Aceptar" style="margin-top: 15px;">
+                <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupProyectoGeneral')">
+            </div>
+        </form>
+    </div>
+</div>

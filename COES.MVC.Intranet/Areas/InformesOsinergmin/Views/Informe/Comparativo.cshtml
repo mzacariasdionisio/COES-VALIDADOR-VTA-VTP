@@ -1,0 +1,48 @@
+﻿@model COES.MVC.Intranet.Areas.InformesOsinergmin.Models.InformeModel
+@{
+    string formato = "#,##0.00";
+}
+<table class="pretty tabla-icono" id="tablaComparitivo">
+    <thead>
+        <tr>
+            <th>Tipo de recurso energético</th>
+            <th>Medidores Energía (MWh)</th>
+            <th>Numeral 5.1 Reporte Supervisión Energía (MWh)</th>
+            <th>Desviación (%)</th>
+        </tr>        
+    </thead>
+    <tbody>
+        @foreach (var item in Model.ListaComprativo)
+        { 
+            <tr>
+                <td>@item.Fenergnomb</td>
+                <td>@item.EnergiaFuenteEnergia.ToString(formato)</td>
+                <td>@item.EnergiaFuenteEnergiaComparacion.ToString(formato)</td>
+                <td>
+                    @if (item.EnergiaFuenteEnergia != 0) { 
+                        <span>@(((item.EnergiaFuenteEnergia - item.EnergiaFuenteEnergiaComparacion) * 100 / item.EnergiaFuenteEnergia).ToString(formato))</span> <span>%</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th style="text-align:center">TOTAL</th>
+            <th style="text-align:center">@Model.ListaComprativo.Sum(x => x.EnergiaFuenteEnergia).ToString(formato)</th>
+            <th style="text-align:center">@Model.ListaComprativo.Sum(x => x.EnergiaFuenteEnergiaComparacion).ToString(formato)</th>
+            <th style="text-align:center">
+                @{
+                    decimal totalFuente = Model.ListaComprativo.Sum(x => x.EnergiaFuenteEnergia);
+                    decimal totalNumeral = Model.ListaComprativo.Sum(x => x.EnergiaFuenteEnergiaComparacion);
+                    decimal calculado = 0;
+                    if (totalFuente != 0)
+                    {
+                        calculado = (totalFuente - totalNumeral) * 100 / totalFuente;
+                    }
+                    <span>@calculado.ToString(formato)</span><span> %</span>
+                }
+            </th>
+        </tr>
+    </tfoot>
+</table>

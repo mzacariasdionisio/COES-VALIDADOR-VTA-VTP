@@ -1,0 +1,269 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.FTAdministradorModel
+@{
+    ViewBag.Title = "Envío Información Ficha Técnica";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTReporte/principal.js?v=1.0.2"></script>
+<link href="~/Areas/Equipamiento/Content/Css/principal.css?v=1.2.5" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Reporte Histórico de Envíos </div>
+    @*<div class="content-botonera">
+        <input type="button" id="btnReportes" value="Reportes" />
+
+    </div>*@
+</div>
+
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+
+    <input type="hidden" id="hfEmpresa" />
+    <input type="hidden" id="hfEtapa" />
+    <input type="hidden" id="hfEstado" />
+    <input type="hidden" id="hdIdEstado" value="@Model.IdEstado" />
+    <input type="hidden" id="hdAccion" />
+    <input type="hidden" id="hdNumEmpresas" value="@Model.NumeroEmpresas" />
+
+    <div class="search-content" style="padding: 5px;">
+        <table class="content-tabla-search" style="">
+            <tr>
+                <td class="celda-item" style="width: 55px;">Empresa:</td>
+                <td style="width: 150px;">
+                    <select id="cbEmpresa" style="width: 270px;" name="IdEmpresa" multiple="multiple">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+                <td class="celda-item" style="padding-left: 15px; width: 35px;">Etapa:</td>
+                <td style="width: 150px;">
+                    <select id="cbEtapa" name="IdEtapa">
+                        <option value="-1"> -- TODOS -- </option>
+                        @foreach (var item in Model.ListaEtapas)
+                        {
+                            <option value="@item.Ftetcodi">@item.Ftetnombre</option>
+                        }
+                    </select>
+                </td>
+                <td class="celda-item" style="padding-left: 15px; width: 35px;">Estado:</td>
+                <td style="width: 150px;">
+                    <select id="cbEstado" name="IdEstado">
+                        @foreach (var item in Model.ListaEstados)
+                        {
+                            <option value="@item.Estenvcodi">@item.Estenvnomb</option>
+                        }
+                    </select>
+                </td>
+                <td class="celda-item" style="padding-left: 15px; width: 35px;">Desde:</td>
+                <td style="width: 120px;">
+                    <input type="text" id="FechaDesde" style="width: 88px;" name="FechaInicio" value="@Model.FechaInicio" />
+                </td>
+                <td class="celda-item" style="padding-left: 15px; width: 35px;">Hasta:</td>
+                <td style="width: 120px;">
+                    <input type="text" id="FechaHasta" style="width: 88px;" name="FechaFin" value="@Model.FechaFin" />
+
+                </td>
+                <td style="padding-left: 15px;">
+                    <input type="button" id="btnBuscar" value="Buscar" />
+                </td>
+
+                <td>
+                    @*<input style="float: right;" type="button" id="btnExpotar" value="Exportar" />*@
+                </td>
+            </tr>
+        </table>
+
+    </div>
+
+
+    <div class="content-tabla">
+
+        <!--Listado de envios por carpetas-->
+        <div id="listadoGeneralEnvios">
+
+            @*<div style="float: left; width: 174px; height: 460px;" id="bandeja">
+                <div id="div_carpetas" style="margin:10px;">
+
+                </div>
+            </div>*@
+
+            <div id="reporte" style="display: inline-block; padding-left: 10px; width: 83%; ">
+            </div>
+
+        </div>
+    </div>
+
+    <div style="clear:both; height:30px"></div>
+
+    <form id="frmEnvio" action="" method="post">
+        <input type="hidden" id="hdidEnvioForm" name="codigoEnvio" />
+        <input type="hidden" id="hdidEmpresaForm" name="codigoEmpresa" />
+        <input type="hidden" id="hdidEtapaForm" name="codigoEtapa" />
+        <input type="hidden" id="hdidProyectoForm" name="codigoProyecto" />
+        <input type="hidden" id="hdidsEquiposForm" name="codigoEquipos" />
+        <input type="hidden" id="hdidsEquiposDarBajaForm" name="codigoModoBaja" />
+        <input type="hidden" id="hdAccionForm" name="accion" />
+    </form>
+</div>
+
+<!--Fecha de sistema manual-->
+<div id="idPopupFechaSistema" class="general-popup">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Fecha del sistema para Envío</span></div>
+
+    <div style="clear:both; height:5px"></div>
+    <div id="mensaje_Relleno" style="padding:10px; text-align:center;"></div>
+    <table class="table-search" style="width:auto">
+        <tr>
+            <td style="width: 340px;">
+                <input type="hidden" id="Env_Ftenvcodi" />
+                <div style="display: flex; flex-direction: row; gap: 8px;">
+                    <label>Representa la Fecha y Hora actual para el envío en ambiente de pruebas</label>
+                </div>
+                <div style="display: flex; flex-direction: row; gap: 8px; margin-top: 12px; align-items: center;">
+                    <label>Fecha Sistema:</label>
+                    <input type="hidden" id="FechaEnvioActual" style="width: 88px;" name="FechaEnvioActual" />
+                    <input type="text" id="FechaSistemaEnvio" style="width: 88px;" name="FechaSistema" />
+                    <select id="cbHoraSistema" name="IdHora" style="width: 60px;">
+                    </select>
+                </div>
+            </td>
+        </tr>
+        <tr>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:right">
+                <input type="button" id="btnGuardarFecha" value="Guardar" />
+            </td>
+
+            <td colspan="2" style="text-align:right">
+                <input type="button" id="btnCancelarFecha" value="Cancelar" />
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!--Inicio de revisión-->
+<div id="idPopupPlazoRevision" class="general-popup">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Habilitar plazo de inicio de revisión</span></div>
+
+    <div style="clear:both; height:5px"></div>
+    <div id="mensaje_relleno_habilitar_plazo" style="padding:10px; text-align:center;"></div>
+    <table class="table-search" style="width:auto">
+        <tr>
+            <td style="width: 340px;">
+                <input type="hidden" id="ftenvcodi_habilitar_ini_plazo" />
+                <div style="display: flex; flex-direction: row; gap: 8px; margin-top: 12px; align-items: center;">
+                    <label>Fecha:</label>
+                    <input type="text" id="fecha_habilitar_ini_plazo" style="width: 88px;"  /> 00:00:00
+                </div>
+            </td>
+        </tr>
+        <tr>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:right">
+                <input type="button" id="btnGuardarFechaIniPlazo" value="Guardar" />
+            </td>
+
+            <td colspan="2" style="text-align:right">
+                <input type="button" id="btnCancelarFechaIniPlazo" value="Cancelar" />
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!--Ampliar plazo-->
+<div id="idPopupAmpliarplazo" class="general-popup" style="width: 550px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ampliar plazo de envío</span></div>
+    <div id="mensaje_popupAmpliar"></div>
+    <div style="clear:both; height:5px"></div>
+    <table class="table-search" style="width: auto; margin: 0 auto;">
+        <tr>
+            <td class="tbform-label">Código del envío:</td>
+            <td>
+                <input type="hidden" id="Env_FtenvcodiFP" />
+                <div style="margin-left:24px" id="campoCodEnvio"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="tbform-label">Empresa:</td>
+            <td>
+                <div style="margin-left:24px" id="campoEmpresa"></div>
+            </td>
+        </tr>
+        <tr id="trProyecto">
+            <td class="tbform-label">Proyecto:</td>
+            <td>
+                <div style="margin-left:24px" id="campoProyecto"></div>
+            </td>
+        </tr>
+        <tr id="trCategoria">
+            <td class="tbform-label">Categoría:</td>
+            <td>
+                <div style="margin-left:24px" id="campoCategoria"></div>
+            </td>
+        </tr>
+        <tr id="trUbicacion">
+            <td class="tbform-label">Ubicación:</td>
+            <td>
+                <div style="margin-left:24px" id="campoUbicacion"></div>
+            </td>
+        </tr>
+        <tr id="trNombre">
+            <td class="tbform-label">Nombre:</td>
+            <td>
+                <div style="margin-left:24px" id="campoNombre"></div>
+            </td>
+        </tr>
+        <tr id="trEquiposProy">
+            <td class="tbform-label">Equipos Proyectos:</td>
+            <td>
+                <div style="margin-left:24px" id="campoEquipProy"></div>
+            </td>
+        </tr>
+        <tr id="trEtapa">
+            <td class="tbform-label">Etapa:</td>
+            <td>
+                <div style="margin-left:24px" id="campoEtapa"></div>
+            </td>
+        </tr>
+        <tr id="trFSubs">
+            <td class="tbform-label">Fecha de Subsanación:</td>
+            <td>
+                <div style="margin-left:24px" id="campoFechaSubs"></div>
+            </td>
+        </tr>
+        <tr id="trFMaxSubs">
+            <td class="tbform-label">Fecha Máxima de Subsanación:</td>
+            <td>
+                <div style="margin-left:24px" id="campoFechaMaxSubs"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="tbform-label">Fin de plazo:</td>
+            <td>
+                <input type="hidden" id="FechaAmpliarPlazo" style="width: 88px;" name="FechaAmpliarPlazo" />
+                <input type="text" id="FechaFinPlazo" style="width: 88px;margin-left:24px" name="FechaSistema" />
+                <select id="cbHoraFinPlazo" name="IdHora" style="width: 60px;">
+                </select>
+            </td>
+        </tr>
+        <tr style="text-align:center">
+            <td colspan="2">
+
+                <input style="margin-top: 16px" type="button" id="btnAmpliarPlazo" value="Ampliar" />
+                <input style="margin-top: 16px" type="button" id="btnCancelarAmpliar" value="Cancelar" />
+            </td>
+
+        </tr>
+    </table>
+</div>

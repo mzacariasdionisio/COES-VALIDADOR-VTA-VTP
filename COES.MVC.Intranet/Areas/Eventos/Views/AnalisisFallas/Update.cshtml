@@ -1,0 +1,2014 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.AnalisisFallasModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    SelectList slResponsable = new SelectList(ViewBag.ResponsableEvento, "value", "text", Model.oAnalisisFallaDTO.AFERESPONSABLE);  // new SelectList(ViewBag.ResponsableEvento, "value", "text");
+    SelectList slResponsbleReunion = new SelectList(ViewBag.ResponsableReunion, "RESPCOD", "RESPNAME");
+    SelectList slAsistenteResponsble = new SelectList(ViewBag.AsistenteResponsable, "Emprcodi", "Emprnomb");
+}
+
+<style>
+    .aPopupEmpresa {
+        position: absolute;
+        cursor: pointer;
+    }
+
+    .aPopupEmpresaPropietaria {
+        position: absolute;
+        cursor: pointer;
+    }
+
+    #tblEmpresaBuscar {
+        border-collapse: collapse;
+    }
+
+        #tblEmpresaBuscar tr {
+            background-color: transparent;
+        }
+
+            #tblEmpresaBuscar tr:hover td {
+                cursor: pointer;
+                background-color: #f3f8aa;
+            }
+
+    #tblFuerzaMayor {
+        border-collapse: collapse;
+    }
+
+        #tblFuerzaMayor tr {
+            background-color: transparent;
+        }
+
+            #tblFuerzaMayor tr:hover td {
+                cursor: pointer;
+                background-color: #f3f8aa;
+            }
+
+    .Selected {
+        background-color: #ffd800;
+    }
+
+    #busquedaEquipo {
+        top: 40px !important;
+    }
+
+    .modal-loading-background {
+        height: 100vh;
+        width: 100vw;
+        z-index: 999;
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgb(0, 0, 0, 0.4);
+        visibility: hidden;
+    }
+
+    .modal-loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #fff;
+        border: 3px solid #3D90CB;
+        border-radius: 5px;
+        z-index: 1000;
+        gap: 40px;
+        height: 100px;
+        width: 250px;
+    }
+
+</style>
+
+<link href="~/Content/Css/popup.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+
+<div class="modal-loading-background">
+    <div class="modal-loading">
+        <div class="estado-image"><img src="~/Content/Images/loading.gif" alt="Carga" /></div>
+        <div class="estado-text">Cargando...</div>
+    </div>
+</div>
+
+<div class="form-title">
+    <div class="content-titulo">
+        Análisis de Falla - Detalle
+    </div>
+    <div class="content-botonera">
+        @if (Model.grabar)
+        {
+            <input type="button" id="btngrabargeneral" value='Grabar' />
+            <div id="loadingcarga" class="loading">
+                <div class="estado-image"><img src="~/Content/Images/loading.gif" alt="Carga" /></div>
+                <div class="estado-text">Cargando...</div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="tab-container" class="tab-container" style="min-height:700px">
+        <ul class='etabs'>
+            <li class='tab'><a href="#EventoCtaf">Evento CTAF</a></li>
+            <li class='tab' id="IdEventoSco"><a href="#Evento">Evento SCO</a></li>
+            <li class='tab'><a href="#Reunion">Reunion CTAF</a></li>
+            <li class='tab'><a href="#Informe">Informe Técnico</a></li>
+            <li class='tab'><a href="#Compensacion">Compensación</a></li>
+            <li class='tab'><a id="aReconsideraciones" href="#Reconsideracion">Reconsideraciones/Apelaciones</a></li>
+        </ul>
+        <div class="panel-container">
+            <div id="EventoCtaf">
+                <div class="content-registro" style="padding-top:40px;">
+                    <table style="width:100%;">
+                        <tr>
+                            <td style="max-width: 4px;" class="registro-label">Codigo</td>
+                            <td class="registro-label">
+                                EV -&nbsp;&nbsp;
+                                @if (Model.grabar)
+                                {
+                                    <input style="width:50px;" id="txtAFECORRCtaf" value="@Model.oAnalisisFallaDTO.AFECORR" />
+                                }
+                                else
+                                {
+                                    <input style="width:50px;" id="txtAFECORRCtaf" value="@Model.oAnalisisFallaDTO.AFECORR" disabled />
+                                }
+
+                                -<input id="txtEventoAnioCtaf" style="width:50px" disabled value="@Model.oAnalisisFallaDTO.AFEANIO" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="clear:both; height:5px;"></div>
+                <div class="content-registro" style="width:auto">
+                    <table border="0" class="pretty tabla-adicional" cellspacing="0" width="100%" id="tabla" aria-describedby="report">
+                        <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                <th scope="col">Tipo</th>
+                                <th scope="col">Empresa</th>
+                                <th scope="col">Ubicación</th>
+                                <th scope="col">Familia</th>
+                                <th scope="col">Equipo</th>
+                                <th scope="col">Inicio</th>
+                                <th scope="col">CIER</th>
+                                <th scope="col">Causa</th>
+                                <th scope="col">Interrup.</th>
+                                <th scope="col">R</th>
+                                <th scope="col">Descripción</th>
+                                <th scope="col">Final</th>
+                                <th scope="col">Usuario</th>
+                                <th scope="col">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ListaEventosSco)
+                            {
+                                var id = "cb" + item.EVENCODI;
+                                var _valor = @item.EVENCODI + "|" + @item.AFECODI;
+
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" id="@id" class="chCtaf" onchange="Check(this)" value="@_valor" />
+                                    </td>
+                                    <td>@item.TIPOEVENABREV</td>
+                                    <td>@item.EMPRNOMB</td>
+                                    <td>@item.AREADESC</td>
+                                    <td>@item.FAMABREV</td>
+                                    <td>@item.EQUIABREV</td>
+                                    <td>
+                                        @if (item.EVENINI != null)
+                                        {
+                                            <span>@(((DateTime)item.EVENINI).ToString("dd/MM/yyyy HH:mm:ss"))</span>
+                                        }
+                                    </td>
+                                    <td>@item.CAUSAEVENABREV</td>
+                                    <td>@item.SUBCAUSAABREV</td>
+                                    <td>@item.EVENINTERRUP</td>
+                                    <td>@item.EVENRELEVANTE</td>
+                                    <td>@item.EVENASUNTO</td>
+                                    <td>
+                                        @if (item.EVENFIN != null)
+                                        {
+                                            <span>@(((DateTime)item.EVENFIN).ToString("dd/MM/yyyy HH:mm:ss"))</span>
+                                        }
+                                    </td>
+                                    <td>@item.LASTUSER</td>
+                                    <td>
+                                        @if (item.LASTDATE != null)
+                                        {
+                                            <span>@(((DateTime)item.LASTDATE).ToString("dd/MM/yyyy HH:mm"))</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="content-registro" style="width:auto">
+                    <div style="clear:both; height:15px;"></div>
+                    <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Informe de empresa involucradas</span></div>
+                    <div style="clear:both; height:5px;"></div>
+                    @*<div id="listadoSco"></div>*@
+                    @*<div class="bodyexcel" id='listadoScoHandsontable' style="overflow-y: auto"></div>*@
+                    <div id='listadoScoHandsontable'></div>
+                    <div style="clear:both; margin-bottom:40px"></div>
+                </div>
+
+                <div class="content-registro" style="width:auto">
+                    <div style="padding-top:20px;">
+                        <table style="width:100%;">
+                            <tr>
+                                <td class="registro-label">Responsable</td>
+                                <td class="registro-control">@Html.DropDownList("cboEventoResponsable", slResponsable, new { @style = "width:250px" })</td>
+
+                                <td class="registro-label">Estado:</td>
+                                <td class="registro-control">
+
+                                    @if (Model.oAnalisisFallaDTO.AFEESTADO == "A")
+                                    {
+                                        <input name="chkEstado" type="radio" /><span>Vigente</span>
+                                        <input id="chkEstadoAnulado" name="chkEstado" type="radio" checked /><span>Anulado</span>
+                                        <input id="chkEstadoArchivado" name="chkEstado" type="radio" /><span>Archivado</span>
+                                    }
+                                    else if (Model.oAnalisisFallaDTO.AFEESTADO == "X")
+                                    {
+                                        <input name="chkEstado" type="radio" /><span>Vigente</span>
+                                        <input id="chkEstadoAnulado" name="chkEstado" type="radio" /><span>Anulado</span>
+                                        <input id="chkEstadoArchivado" name="chkEstado" type="radio" checked /><span>Archivado</span>
+                                    }
+                                    else
+                                    {
+                                        <input name="chkEstado" type="radio" checked /><span>Vigente</span>
+                                        <input id="chkEstadoAnulado" name="chkEstado" type="radio" /><span>Anulado</span>
+                                        <input id="chkEstadoArchivado" name="chkEstado" type="radio" /><span>Archivado</span>
+
+                                    }
+                                </td>
+                                <td class="registro-control"><textarea id="txtAFEESTADOMOTIVO" rows="3" cols="40">@Model.oAnalisisFallaDTO.AFEESTADOMOTIVO</textarea></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="Evento">
+                <div id="DetalleEventoSel"></div>
+            </div>
+            <div id="Reunion">
+                <div style="padding-top:20px;">
+                    <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Convocatoria</span></div>
+                    <div style="clear:both; height:5px;"></div>
+
+                    <div class="content-registro" style="width:auto">
+                        <table cellpadding="5" style="width:100%;">
+                            <tr>
+                                <td colspan="4" class="registro-label" style="font-weight:bold">Fecha de Citación</td>
+                                <td colspan="4" class="registro-label" style="font-weight:bold">Fecha de Reunión</td>
+                                <td colspan="4" class="registro-label" style="font-weight:bold">Tipo de Reunión</td>
+                                <td colspan="2" id="lblSala" class="registro-label" style="font-weight:bold">Sala</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2" class="registro-label">Nominal</td>
+                                <td rowspan="2" class="registro-control"><input type="text" id="dtCitacionNominal" value="@Model.oAnalisisFallaDTO.AFECITFECHANOMINALstr" style="width:100px" disabled /></td>
+                                <td rowspan="2" class="registro-label">Elaboración</td>
+                                <td rowspan="2" class="registro-control"><input type="text" id="dtCitacionElaboracion" value="@Model.oAnalisisFallaDTO.AFECITFECHAELABstr" style="width:100px" /></td>
+                                <td rowspan="2" class="registro-label">Nominal</td>
+                                <td rowspan="2" class="registro-control"><input type="text" id="dtReunionNominal" value="@Model.oAnalisisFallaDTO.AFEREUFECHANOMINALstr" style="width:100px" disabled /></td>
+                                <td rowspan="2" class="registro-label">Programada</td>
+                                <td rowspan="2" class="registro-control"><input type="text" id="dtReunionProgramada" value="@Model.oAnalisisFallaDTO.AFEREUFECHAPROGstr" style="width:100px" />&nbsp;<input type="text" id="dtReunionHora" placeholder="__:__" value="@Model.oAnalisisFallaDTO.AFEREUHORAPROG" style="width:100px" /></td>
+                                <td colspan="4" class="registro-control" style="vertical-align: central; text-align: center;">
+                                    <select id="cboReunionTipoReunion" style="width:130px">
+                                        <option value="PRESENCIAL">PRESENCIAL</option>
+                                        <option value="NO PRESENCIAL">NO PRESENCIAL</option>
+                                    </select>
+                                    <input type="hidden" id="hfReunionTipoReunion" value="@Model.oAnalisisFallaDTO.AFECONVTIPOREUNION" />
+                                </td>
+                                <td rowspan="2" class="registro-control">
+                                    @if (Model.grabar && Model.oAnalisisFallaDTO.AFSALA > 0)
+                                    {
+                                        <input type="text" id="txtSala" value="@Model.oAnalisisFallaDTO.AFSALA" style="width:50px" />
+                                        <input type="button" id="btnReservarSala" value='Reservar Sala' />
+                                    }
+                                    else if (Model.grabar && Model.oAnalisisFallaDTO.AFSALA == 0)
+                                    {
+                                        <input type="text" id="txtSala" value="" style="width:50px" />
+                                        <input type="button" id="btnReservarSala" value='Reservar Sala' />
+                                    }
+                                </td>
+                            </tr>
+                            <tr id="HPresencial">
+                                <td class="registro-label">Hora Inicio</td>
+                                <td class="registro-control" style="vertical-align:central">
+                                    <input type="time" class="without_ampm" id="horaInicioReunion" name="HorarioReunion" data-mask="00:00" data-mask-selectonfocus="true" value="@Model.oAnalisisFallaDTO.AFEREUHORINI" />
+                                </td>
+                                <td class="registro-label">Hora Fin</td>
+                                <td class="registro-control" style="vertical-align:central">
+                                    <input type="time" class="without_ampm" id="horaFinReunion" name="HorarioReunion" data-mask="00:00" data-mask-selectonfocus="true" value="@Model.oAnalisisFallaDTO.AFEREUHORFIN" />
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="padding-top:20px">
+                            <table style="width:100%">
+                                <tr>
+                                    <td class="registro-label">Empresa Involucrada</td>
+                                    <td class="registro-control">
+                                        @*<input type="text" id="txtReunionEmpresaInvolucrada" data-name="" data-id="" /> &nbsp;&nbsp;<a class="aPopupEmpresa" data-target="txtReunionEmpresaInvolucrada"><img src="~/Content/Images/btn-open.png" /></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" id="btnReunionAgregar" value='Agregar' />*@
+                                        <select id="txtReunionEmpresaInvolucrada" autofocus="autofocus" autocorrect="off" autocomplete="off">
+                                            <option value="" selected="selected"></option>
+                                        </select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="button" id="btnReunionAgregar" value='Agregar' />
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                            <div style="padding-top:20px">
+                                <table style="width:100%" border="0" class="pretty tabla-adicional">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>EMPRESA</th>
+                                            <th>LAST USER</th>
+                                            <th>LASR DATE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyReunionEmpresaInvolucrada">
+
+                                        @if (Model.lsEmpresaInvolucradaReunion != null)
+                                        {
+                                            foreach (var item in Model.lsEmpresaInvolucradaReunion)
+                                            {
+                                                <tr id="@string.Format("rowReunionEmpresaInvolucrada{0}",item.EMPRCODI)" data-id="@item.EMPRCODI">
+                                                    <td>
+                                                        @if (Model.grabar)
+                                                        {
+                                                            <a href="#" onclick="EliminarEmpresaInvolucradaReunion(@item.EMPRCODI)">
+                                                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                            </a>
+                                                        }
+
+                                                    </td>
+                                                    <td>@item.EMPRNOMB</td>
+                                                    <td>@item.LASTUSER</td>
+                                                    <td>@item.LASTDATEstr</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                                @if (Model.lsEmpresaInvolucradaReunion != null && Model.lsEmpresaInvolucradaReunion.Count > 0)
+                                {
+                                    <input type="hidden" id="hfReunionEmpresaInvolucradaMaxId" value="@Model.lsEmpresaInvolucradaReunion.Max(x=> x.EMPRCODI)" />
+                                }
+                                else
+                                {
+                                    <input type="hidden" id="hfReunionEmpresaInvolucradaMaxId" value="0" />
+                                }
+
+                            </div>
+                            <div style="padding-top:20px">
+                                <table style="width:100%">
+                                    <tr>
+                                        <td class="registro-control">
+
+                                            @if (Model.grabar)
+                                            {
+
+                                                <input type="button" id="btnReunionAgregarEmpresaInvolucrada" onclick="BajarCitacion();" value='Generar Citación' />
+                                            }
+                                        </td>
+                                        <td class="registro-control">
+
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="file" id="flCitacionReunion" accept=".pdf" style="display:none;" />
+                                                <input name="btnSubirCitacionReunion" type="button" id="btnSubirCitacionReunion" value="Cargar Archivo">
+                                            }
+
+                                            <label id="lblCitacionReunion">@Model.oAnalisisFallaDTO.AFECONVCITACIONFECHAstr</label>
+
+                                        </td>
+
+
+                                        <td class="registro-control">
+                                            <a href="#" onclick="VerCitacionReunion()" id="btnVerCitacionReunion" style="display:none;">
+                                                <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                            </a>
+                                        </td>
+                                        <td class="registro-control">
+                                            @if (Model.grabar)
+                                            {
+                                                <a href="#" onclick="EliminarCitacionReunion()" id="btnEliminarCitacionReunion" style="display:none;">
+                                                    <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                </a>
+                                            }
+
+                                        </td>
+
+                                        <td class="registro-control">
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="button" id="btnEnviarCorreo" value='Enviar Correo' />
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div style="padding-top:20px">
+                                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Reunión CTAF</span></div>
+                                <div style="clear:both; height:5px;"></div>
+                                <div id="Responsable_NoPresencial" style="padding-top:20px">
+                                    <table style="width:100%">
+                                        <tr>
+                                            <td class="registro-label">Responsable</td>
+                                            <td class="registro-control">
+                                                @Html.DropDownList("cboReunionResponsable", slResponsbleReunion, new { @style = "width:250px" })
+                                                @if (Model.grabar)
+                                                {
+                                                    <input type="button" id="btnReunionResponsableAgregar" value='Agregar' />
+                                                }
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <div style="padding-top:20px">
+                                        <table style="width: 100%;" border="0" class="pretty tabla-adicional">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th>RESPONSABLE DEL ACTA DE INFORME CTAF </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbodyReunionEmpresaCTAF">
+
+                                                @if (Model.lsReunionResponsable != null)
+                                                {
+                                                    foreach (var item in Model.lsReunionResponsable)
+                                                    {
+                                                        <tr id="@string.Format("rowReunionResponsable{0}",item.RESEVENCODI)" data-id="@item.RESEVENCODI">
+                                                            <td>
+                                                                @if (Model.grabar)
+                                                                {
+                                                                    <a href="#" onclick="EliminarReunionResponsable(@item.RESEVENCODI)">
+                                                                        <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                                    </a>
+                                                                }
+
+                                                            </td>
+                                                            <td>@item.RESPNAME</td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div id="AsistenteResponsable_Presencial" style="padding-top: 20px;">
+                                    <a id="cargarAut" style="display:none" onclick='cargarAut()'>cargar automaticamente</a>
+                                    <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Asistencia de los representantes</span></div>
+                                    <div style="clear:both; height:5px;"></div>
+                                    <div style="padding-top:20px">
+                                        <table style="width:100%">
+                                            <tr>
+                                                <td class="registro-label">Empresa</td>
+                                                <td class="registro-control" style="width: 300px !important;">
+                                                    @Html.DropDownList("cboAsistenteResponsable", slAsistenteResponsble, new { @style = "width:250px" })
+                                                </td>
+                                                <td class="registro-label">Asistente</td>
+                                                <td class="registro-control">
+                                                    <input type="text" id="txtAsistenteResponsable" value="" style="width: 250px; display: inline-block;">
+                                                    @if (Model.grabar)
+                                                    {
+                                                        <input type="button" id="btnAsistenteResponsableAgregar" value='Agregar' />
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <div style="padding-top:20px">
+                                            <div id='listadoAsistenteHandsontable'></div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+
+                                <table cellpadding="8" style="width:100%">
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        @*<td>Observaciones de la Reunión</td>*@
+                                    </tr>
+                                    <tr>
+                                        <td class="registro-control">
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="button" id="btnGenerarActa" onclick="BajarActa();" value='Generar Acta' />
+                                            }
+                                        </td>
+                                        <td class="registro-label">
+                                            SELECCIONAR ACTA CT-AF
+                                        </td>
+                                        <td class="registro-control">
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="file" accept=".pdf" id="flActaReunion" style="display:none;" />
+                                                <input name="btnSubirActaReunion" type="button" id="btnSubirActaReunion" value="Cargar Archivo">
+                                            }
+                                            <label id="lblActaReunion">@Model.oAnalisisFallaDTO.AFERCTAEACTAFECHAstr</label>
+                                        </td>
+                                        <td class="registro-control">
+                                            @*<a href="#" onclick="VerActaReunion()" id="btnVerActaReunion" style="display:none;">
+                                                    <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                </a>*@
+                                            <p>Fecha límite de atención a comentarios:</p>
+                                        </td>
+                                        <td class="registro-control">
+                                            @*@if (Model.grabar)
+                                                {
+                                                    <a href="#" onclick="EliminarActaReunion()" id="btnEliminarActaReunion" style="display:none;">
+                                                        <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                    </a>
+                                                }*@
+                                        </td>
+                                        <td class="registro-control" rowspan="2">
+                                            @*<textarea id="txtAFERCTAEOBSERVACION" rows="5" cols="40">@Model.oAnalisisFallaDTO.AFERCTAEOBSERVACION</textarea>*@
+                                            <input type="button" id="btnEnviarCorreoActa" value='Enviar Correo' />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="registro-control">
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="button" onclick="BajarInformeCTAF();" value='Generar Informe CTAF' />
+                                            }
+                                        </td>
+                                        <td class="registro-label">SELECCIONAR INFORME CT-AF</td>
+                                        <td class="registro-control">
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="file" accept=".pdf" id="flInformeReunion" style="display:none;" />
+                                                <input name="btnSubirInformeReunion" type="button" id="btnSubirInformeReunion" value="Cargar Archivo">
+                                            }
+                                            <label id="lblInformeReunion">@Model.oAnalisisFallaDTO.AFERCTAEINFORMEFECHAstr</label>
+                                        </td>
+                                        <td class="registro-control">
+                                            @*<a href="#" onclick="VerInformeReunion()" id="btnVerInformeReunion" style="display:none;">
+                                                    <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                </a>*@
+                                            <input type="text" id="dtFechaLimite" value="@Model.oAnalisisFallaDTO.AFELIMATENCOMENstr" style="width:100px" />
+                                        </td>
+                                        <td class="registro-control">
+                                            @*@if (Model.grabar)
+                                                {
+                                                    <a href="#" onclick="EliminarInformeReunion()" id="btnEliminarInformeReunion" style="display:none;">
+                                                        <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                    </a>
+                                                }*@
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div id="Informe">
+                <div style="padding-top:20px">
+                    <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Elaboración de informe técnico</span></div>
+                    <div style="clear:both; height:5px;"></div>
+
+                    <div class="content-registro" style="width:auto">
+                        <table cellpadding="8" style="width:100%">
+                            <tr>
+                                <td class="registro-label">Nominal</td>
+                                <td class="registro-control"><input type="text" id="dtAFEITFECHANOMINAL" value="@Model.oAnalisisFallaDTO.AFEITFECHANOMINALstr" style="width:100px" disabled /></td>
+                                <td class="registro-label">Elaboracion</td>
+                                <td class="registro-control"><input type="text" id="dtAFEITFECHAELAB" value="@Model.oAnalisisFallaDTO.AFEITFECHAELABstr" style="width:100px" /></td>
+                                <td class="registro-control">
+                                    @if (Model.grabar)
+                                    {
+                                        <input type="button" id="btnActualizarDetalleEvento" value='Actualizar Detalle Evento' style="display:none" />
+                                        <input type="button" id="btnGenerarInformeTecnico" value="Generar Informe Técnico" />
+                                        <input type="button" id="btnGenerarDecisionCTAF" value="Generar Decisión del CTAF" />
+                                    }
+
+                                </td>
+                            </tr>
+
+                        </table>
+
+                        <div style="padding-top:20px">
+                            <h4>Recomendaciones</h4>
+                            <table cellpadding="5" style="width:100%">
+                                <tr>
+                                    <td class="registro-label">Empresa</td>
+                                    <td class="registro-control">
+                                        @*<select id="txtInformeTecnicoEmpresaRecomendacion" autofocus="autofocus" autocorrect="off" autocomplete="off">
+                                            <option value="" selected="selected"> </option>
+                                            </select>
+                                        *@
+                                        <input type="button" id="btnBuscarEquipo" value="Seleccionar" style="margin-right: 5px;" />
+                                        <input id="txtEmpresaAO" type="text" readonly="readonly">
+                                        <div style="padding-left:50px;display:inline-block"><input type="text" id="txtNumeroRecomendacion" value="1" data-name="" data-id="" style="display:none" /></div>
+                                    </td>
+                                    <td class="registro-label">Publicar Recomendación</td>
+                                    <td class="registro-control">
+                                        <textarea id="txtInformeTecnicoPublicarRecomendacion" maxlength="4000" rows="10" cols="40" style="width: auto"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="registro-control" colspan="4">
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="button" id="btnInformeTecnicoAgregarEmpresaRecomendacion" value='Agregar' />
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                            <div style="padding-top:10px;">
+                                <table style="width:100%" border="0" class="pretty tabla-adicional">
+                                    <thead>
+                                        <tr>
+                                            <th>Borrar</th>
+                                            <th style=" width: 60px;">Gestión AO</th>
+                                            <th>Medidas Adoptadas</th>
+                                            <th>EMPRESA</th>
+                                            <th>RECOMENDACIÓN</th>
+                                            <th>LAST USER</th>
+                                            <th>LAST DATE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyInformeTecnicoEmpresaRecomendacion">
+                                        @if (Model.lsEmpresaRecomendacionInformeTecnico != null)
+                                        {
+                                            foreach (var item in Model.lsEmpresaRecomendacionInformeTecnico)
+                                            {
+                                                <tr id="@string.Format("rowInformeTecnicoEmpresaRecomendacion{0}",item.EMPRCODI)" data-id="@item.AFRREC">
+                                                    <td>
+                                                        @if (Model.grabar)
+                                                        {
+                                                            if (item.EVENRCMCTAF == "S")
+                                                            {
+                                                                <a href="#" id="btnEliminar" style="cursor:not-allowed;pointer-events:none">
+                                                                    <img src="~/Content/Images/btn-cancel-disabled.png" style="margin-top: 2px; margin-bottom: 2px" />
+                                                                </a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a href="#" onclick="EliminarRecomendacionInformeTecnico(@item.EMPRCODI,@item.AFRCORR)" id="btnEliminar">
+                                                                    <img src="~/Content/Images/btn-cancel.png" style="margin-top: 2px; margin-bottom: 2px" />
+                                                                </a>
+                                                            }
+                                                        }
+
+                                                    </td>
+                                                    <td>
+                                                        <table style="border:hidden;width:55px">
+                                                            <tr>
+                                                                <td style="border:hidden">
+                                                                    @if (item.EVENRCMCTAF == "S")
+                                                                    {
+                                                                        <input type="checkbox" class="chEventoAO" checked="checked" value="@item.AFRREC" disabled="disabled" />
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <input type="checkbox" class="chEventoAO" value="@item.AFRREC" />
+                                                                    }
+
+                                                                </td>
+                                                                <td style="border:hidden">
+                                                                    @if (item.EVENRCMCTAF == "S")
+                                                                    {
+                                                                        <a href="#" onclick="EliminarEventoCtafxRecomendacion(@item.AFECODI,@item.AFRREC)" id="btnEliminarAO">
+                                                                            <img src="~/Content/Images/btn-cancel.png" style="margin-top: 2px;margin-bottom:2px" />
+                                                                        </a>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <a href="#" id="btnEliminarAO" style="cursor:not-allowed;pointer-events:none">
+                                                                            <img src="~/Content/Images/btn-cancel-disabled.png" style="margin-top: 2px;margin-bottom:2px" />
+                                                                        </a>
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                    <td>
+                                                        <a href="#" onclick="VerMedidasAdoptadas(@item.AFRREC)" id="btnMedidasAdoptadas">
+                                                            <img src="~/Content/Images/btn-properties.png" style="margin-top: 2px; margin-bottom: 2px" />
+                                                        </a>
+                                                    </td>
+                                                    <td>@item.EMPRNOMB</td>
+                                                    <td>@item.AFRRECOMEND</td>
+                                                    <td>@item.LASTUSER</td>
+                                                    <td>@item.LASTDATEstr</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                                @if (Model.lsEmpresaRecomendacionInformeTecnico != null && Model.lsEmpresaRecomendacionInformeTecnico.Count > 0)
+                                {
+                                    <input type="hidden" id="hfInformeTecnicoEmpresaRecomendacionMaxId" value="@Model.lsEmpresaRecomendacionInformeTecnico.Max(x=> x.AFRREC)" />
+                                }
+                                else
+                                {
+                                    <input type="hidden" id="hfInformeTecnicoEmpresaRecomendacionMaxId" value="0" />
+                                }
+                            </div>
+                        </div>
+                        <div style="padding-top:20px">
+                            <h4>Observaciones</h4>
+                            <table cellpadding="5" style="width:100%">
+                                <tr>
+                                    <td class="registro-label">Empresa</td>
+                                    <td class="registro-control">
+                                        <select id="txtInformeTecnicoEmpresaObservacion" autofocus="autofocus" autocorrect="off" autocomplete="off">
+                                            <option value="" selected="selected"> </option>
+                                        </select>
+
+                                    </td>
+                                    <td class="registro-label">Publicar Observación</td>
+                                    <td class="registro-control">
+                                        <textarea id="txtInformeTecnicoPublicarObservacion" maxlength="4000" rows="10" cols="40" style="width: auto"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="registro-control" colspan="4">
+
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="button" id="btnInformeTecnicoAgregarEmpresaObservacion" value='Agregar' />
+                                        }
+                                    </td>
+
+                                </tr>
+                            </table>
+                            <div style="padding-top:10px;">
+                                <table style="width:100%" border="0" class="pretty tabla-adicional">
+                                    <thead>
+                                        <tr>
+                                            <th>Borrar</th>
+                                            <th>EMPRESA</th>
+                                            <th>OBSERVACIÓN</th>
+                                            <th>LAST USER</th>
+                                            <th>LAST DATE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyInformeTecnicoEmpresaObservacion">
+
+                                        @if (Model.lsEmpresaObservacionInformeTecnico != null)
+                                        {
+                                            foreach (var item in Model.lsEmpresaObservacionInformeTecnico)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        @if (Model.grabar)
+                                                        {
+                                                            <a href="#" onclick="EliminarObservacionInformeTecnico(@item.AFOOBS)">
+                                                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                            </a>
+                                                        }
+
+                                                    </td>
+                                                    <td>@item.EMPRNOMB</td>
+                                                    <td>@item.AFOOBSERVAC</td>
+                                                    <td>@item.LASTUSER</td>
+                                                    <td>@item.LASTDATEstr</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+
+                                @if (Model.lsEmpresaObservacionInformeTecnico != null && Model.lsEmpresaObservacionInformeTecnico.Count > 0)
+                                {
+                                    <input type="hidden" id="hfInformeTecnicoEmpresaObservacionMaxId" value="@Model.lsEmpresaObservacionInformeTecnico.Max(x=> x.AFOOBS)" />
+                                }
+                                else
+                                {
+                                    <input type="hidden" id="hfInformeTecnicoEmpresaObservacionMaxId" value="0" />
+                                }
+
+                            </div>
+                        </div>
+
+                        <div style="padding-top:20px">
+                            <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>IT + Decisión</span></div>
+                            <div style="clear:both; height:5px;"></div>
+
+                            <table style="width:50%">
+                                <tr>
+                                    <td class="registro-label">Nominal</td>
+                                    <td class="registro-control"><input type="text" id="dtAFEITDECFECHANOMINAL" value="@Model.oAnalisisFallaDTO.AFEITDECFECHANOMINALstr" style="width:100px" disabled /></td>
+                                    <td class="registro-label">Elaboración</td>
+                                    <td class="registro-control"><input type="text" id="dtAFEITDECFECHAELAB" value="@Model.oAnalisisFallaDTO.AFEITDECFECHAELABstr" style="width:100px" /></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div style="padding-top:20px">
+                            <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Revisión</span></div>
+                            <div style="clear:both; height:5px;"></div>
+
+                            <table style="width:50%">
+                                <tr>
+                                    <td></td>
+                                    <td class="registro-label">Envío</td>
+                                    <td class="registro-label">Recepción</td>
+                                </tr>
+                                <tr>
+                                    <td class="registro-label">DJR</td>
+                                    <td class="registro-control"><input type="text" id="dtAFEITRDJRFECHAENVIO" value="@Model.oAnalisisFallaDTO.AFEITRDJRFECHAENVIOstr" style="width:100px" /></td>
+                                    <td class="registro-control"><input type="text" id="dtAFEITRDJRFECHARECEP" value="@Model.oAnalisisFallaDTO.AFEITRDJRFECHARECEPstr" style="width:100px" /></td>
+                                </tr>
+                                <tr>
+                                    <td class="registro-label">DO</td>
+                                    <td class="registro-control"><input type="text" id="dtAFEITRDOFECHAENVIO" value="@Model.oAnalisisFallaDTO.AFEITRDOFECHAENVIOstr" style="width:100px" /></td>
+                                    <td class="registro-control"><input type="text" id="dtAFEITRDOFECHARECEP" value="@Model.oAnalisisFallaDTO.AFEITRDOFECHARECEPstr" style="width:100px" /></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="padding-top:20px">
+                            <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Publicación</span></div>
+                            <div style="clear:both; height:5px;"></div>
+
+                            <div>
+                                <table style="width:100%">
+                                    <tr>
+                                        <td class="registro-label">Informe Técnico Final</td>
+                                        <td class="registro-control" colspan="2"><input type="text" id="dtInformeTecnicoAnual" value="@Model.oAnalisisFallaDTO.AFEITPITFFECHAstr" style="width:100px" /></td>
+                                        <td class="registro-control">
+
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="file" accept=".pdf" id="flInformeTecnicoAnual" style="display:none;" />
+                                                <input name="btnSubirInformeTecnicoAnual" type="button" id="btnSubirInformeTecnicoAnual" value="Cargar Archivo">
+                                            }
+                                            <label id="lblInformeTecnicoAnual">@Model.oAnalisisFallaDTO.AFEITPITFFECHASISTstr</label>
+
+                                        </td>
+
+
+                                        <td class="registro-control">
+                                            <a href="#" onclick="VerInformeTecnicoAnual()" id="btnVerInformeTecnicoAnual" style="display:none;">
+                                                <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                            </a>
+                                        </td>
+                                        <td class="registro-control">
+                                            @if (Model.grabar)
+                                            {
+                                                <a href="#" onclick="EliminarInformeTecnicoAnual()" id="btnEliminarInformeTecnicoAnual" style="display:none;">
+                                                    <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                </a>
+                                            }
+
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="registro-label">Desición del Evento</td>
+                                        <td class="registro-control">
+                                            @if (Model.oAnalisisFallaDTO.AFEIMPUGNA == "S")
+                                            {
+                                                <input id="chkInformeTecnicoImpugnacion" type="checkbox" checked /><label>IMPUGNACIÓN</label>
+                                            }
+                                            else
+                                            {
+                                                <input id="chkInformeTecnicoImpugnacion" type="checkbox" /><label>IMPUGNACIÓN</label>
+                                            }
+                                        </td>
+                                        <td class="registro-control">
+
+                                            @if (Model.oAnalisisFallaDTO.AFEFZAMAYOR == "S")
+                                            {
+                                                <input id="chkInformeTecnicoFuerzaMayor" type="checkbox" checked /><label>FUERZA MAYOR</label>
+                                            }
+                                            else
+                                            {
+                                                <input id="chkInformeTecnicoFuerzaMayor" type="checkbox" /><label>FUERZA MAYOR</label>
+                                            }
+
+                                        </td>
+                                        <td class="registro-control">
+
+
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="file" accept=".pdf" id="flDesicionEvento" style="display:none;" />
+                                                <input name="btnSubirDesicionEvento" type="button" id="btnSubirDesicionEvento" value="Cargar Archivo">
+                                            }
+                                            <label id="lblInformeDesicionEvento">@Model.oAnalisisFallaDTO.AFEITPDECISFFECHASISTstr</label>
+                                        </td>
+                                        <td class="registro-control">
+                                            <a href="#" onclick="VerPublicacionDesicionEventoInformeTecnico()" id="btnVerDesicionEvento" style="display:none;">
+                                                <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                            </a>
+                                        </td>
+                                        <td class="registro-control">
+                                            @if (Model.grabar)
+                                            {
+                                                <a href="#" onclick="EliminarDesicionEvento()" id="btnEliminarDesicionEvento" style="display:none;">
+                                                    <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                </a>
+                                            }
+
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div style="padding-top:20px">
+                            <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Fuerza Mayor</span></div>
+                            <div style="clear:both; height:5px;"></div>
+
+                            <div>
+                                <table style="width:100%">
+                                    <tr>
+                                        <td class="registro-label">Fecha</td>
+                                        <td class="registro-control" colspan="4">
+                                            <input type="text" id="dtFuerzaMayor" style="width:100px" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="registro-label">Empresa</td>
+                                        <td class="registro-control">
+                                            <select id="txtFuerzaMayorEmpresa" autofocus="autofocus" autocorrect="off" autocomplete="off">
+                                                <option value="" selected="selected"> </option>
+                                            </select>
+                                        </td>
+
+                                        <td class="registro-control">
+
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="file" accept=".pdf" id="flFuerzaMayor" />
+                                                <input name="btnSubirFuerzaMayor" type="button" id="btnSubirFuerzaMayor" value="Cargar Archivo">
+                                            }
+
+                                        </td>
+
+                                        <td class="registro-label">Decisión</td>
+                                        <td class="registro-control">
+
+                                            @if (Model.grabar)
+                                            {
+                                                <input type="file" accept=".pdf" id="flFuerzaMayorDesicion" />
+                                                <input name="btnSubirFuerzaMayorCoes" type="button" id="btnSubirFuerzaMayorCoes" value="Cargar Archivo">
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div style="padding-top:10px">
+                                <table id="tblFuerzaMayor" style="width:100%" border="0" class="pretty tabla-adicional">
+                                    <thead>
+                                        <tr>
+                                            <th>Seleccione</th>
+                                            <th>VER</th>
+                                            <th>ELIMINAR</th>
+                                            <th>EMPRESA</th>
+                                            <th>FECHA</th>
+                                            <th>LASTUSER</th>
+                                            <th>LASTDATE</th>
+
+                                            <th>VER</th>
+                                            <th>ELIMINAR</th>
+                                            <th>FECHA_COES</th>
+                                            <th>LASTUSER_COES</th>
+                                            <th>LASTDATE_COES</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyFuerzaMayor">
+
+                                        @if (Model.lsEmpresaFuerzaMayorInformeTecnico != null)
+                                        {
+                                            foreach (var item in Model.lsEmpresaFuerzaMayorInformeTecnico)
+                                            {
+                                                <tr ondblclick='CargarDatosFuerzaMayor(this,@item.RECLAMOCODI)'>
+                                                    <td><input type="radio" name="rdFuerzaMayor" data-id="@item.RECLAMOCODI" data-empresa="@item.EMPRCODI" /></td>
+                                                    <td>
+                                                        <a href="#" onclick="VerFuerzaMayor(@item.EMPRCODI,@item.RECLAMOCODI)">
+                                                            <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        @if (Model.grabar)
+                                                        {
+                                                            <a href="#" onclick="EliminarFuerzaMayor(@item.RECLAMOCODI,@item.EMPRCODI,@item.RPTACODI)">
+                                                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                            </a>
+                                                        }
+
+                                                    </td>
+
+                                                    <td>@item.EMPRNOMB</td>
+                                                    <td>@item.FECHA</td>
+                                                    <td>@item.LASTUSER</td>
+                                                    <td>@item.LASTDATE</td>
+
+                                                    <td>
+                                                        <a href="#" onclick="VerFuerzaMayorCoes(@item.EMPRCODI,@item.RPTACODI)">
+                                                            <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                        </a>
+                                                    </td>
+
+                                                    <td>
+                                                        @if (Model.grabar)
+                                                        {
+                                                            <a href="#" onclick="EliminarFuerzaMayorCOES(@item.RECLAMOCODI,@item.EMPRCODI,@item.RPTACODI)">
+                                                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                            </a>
+                                                        }
+
+                                                    </td>
+
+                                                    <td>@item.FECHA_COES</td>
+                                                    <td>@item.LASTUSER_COES</td>
+                                                    <td>@item.LASTDATE_COES</td>
+
+                                                </tr>
+                                            }
+                                        }
+
+
+
+                                    </tbody>
+                                </table>
+
+                                @if (Model.lsEmpresaFuerzaMayorInformeTecnico != null && Model.lsEmpresaFuerzaMayorInformeTecnico.Count > 0)
+                                {
+                                    <input type="hidden" id="hfInformeTecnicoEmpresaFuerzaMayorMaxId" value="@Model.lsEmpresaFuerzaMayorInformeTecnico.Max(x=> x.RECLAMOCODI)" />
+                                }
+                                else
+                                {
+                                    <input type="hidden" id="hfInformeTecnicoEmpresaFuerzaMayorMaxId" value="0" />
+                                }
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div id="Compensacion">
+
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Asignación de Compensaciones</span></div>
+                <div style="clear:both; height:5px;"></div>
+                <div class="content-registro" style="width:auto">
+                    <table cellpadding="5" style="width:100%">
+                        <tr>
+                            <td class="registro-label">Empresa Responsable</td>
+                            <td class="registro-control">
+                                <select id="txtCompensacionEmpresaResponsable" autofocus="autofocus" autocorrect="off" autocomplete="off">
+                                    <option value="" selected="selected"> </option>
+                                </select>
+                            </td>
+                            <td class="registro-label">Porcentaje de Participación</td>
+                            <td class="registro-control"><input id="txtCompensacionPorcentaje" type="text" /></td>
+                            <td class="registro-label">Decide</td>
+                            <td class="registro-control"><input id="txtCompensacionDecide" type="text" /></td>
+                            <td class="registro-control">
+
+                                @if (Model.oAnalisisFallaDTO.AFEEMPRESPNINGUNA == "S")
+                                {
+                                    <input id="chkEmpresaResponsableNinguna" type="checkbox" checked /><label>Ninguna</label>
+                                }
+                                else
+                                {
+                                    <input id="chkEmpresaResponsableNinguna" type="checkbox" /><label>Ninguna</label>
+                                }
+
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Observación</td>
+                            <td class="registro-control" colspan="6"><textarea id="txtCompensacionObservacion" rows="3" cols="150"></textarea></td>
+                        </tr>
+                        <tr>
+                            <td colspan="7">
+
+                                @if (Model.grabar)
+                                {
+
+                                    <input id="btnAgregarEmpresaResponsableCompensacion" type="button" value="Agregar" />
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="padding-top:10px;">
+                        <table style="width:100%" border="0" class="pretty tabla-adicional">
+                            <thead>
+                                <tr>
+                                    <th>BORRAR</th>
+                                    <th>EMPRESA</th>
+                                    <th>PARTICIP(%)</th>
+                                    <th>DECIDE</th>
+                                    <th>OBSERVACION</th>
+                                    <th>LASTUSER</th>
+                                    <th>LASTDATE</th>
+
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyCompensacionEmpresaResponsable">
+                                @if (Model.lsEmpresaResponsableCompensacion != null)
+                                {
+                                    foreach (var item in Model.lsEmpresaResponsableCompensacion)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (Model.grabar)
+                                                {
+                                                    <a href="#" onclick="EliminarEmpresaResponsableCompensacion(@item.EMPRCODI,@item.AFIDECIDE)" id="btnEliminar">
+                                                        <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                    </a>
+                                                }
+                                            </td>
+                                            <td>@item.EMPRNOMB</td>
+                                            <td>@item.AFIPORCENTAJE</td>
+                                            <td>@item.AFIDECIDE</td>
+                                            <td>@item.AFIMENSAJE</td>
+                                            <td>@item.LASTUSER</td>
+                                            <td>@item.LASTDATEstr</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                        @if (Model.lsEmpresaResponsableCompensacion != null && Model.lsEmpresaResponsableCompensacion.Count > 0)
+                        {
+                            <input type="hidden" id="hfCompensacionEmpresaResponsableMaxId" value="@Model.lsEmpresaResponsableCompensacion.Max(x=> x.EMPRCODI)" />
+                        }
+                        else
+                        {
+                            <input type="hidden" id="hfCompensacionEmpresaResponsableMaxId" value="0" />
+                        }
+                    </div>
+                    <div style="padding-top:20px;">
+                        <table cellpadding="5" style="width:50%">
+                            <tr>
+                                <td class="registro-label">Empresa Compensada</td>
+                                <td class="registro-control">
+
+                                    <select id="txtCompensacionEmpresaCompensada" autofocus="autofocus" autocorrect="off" autocomplete="off">
+                                        <option value="" selected="selected"> </option>
+                                    </select>
+                                </td>
+                                <td class="registro-control">
+
+                                    @if (Model.oAnalisisFallaDTO.AFEEMPCOMPNINGUNA == "S")
+                                    {
+                                        <input id="chkEmpresaCompensadaNinguna" type="checkbox" checked /><label>Ninguna</label>
+                                    }
+                                    else
+                                    {
+                                        <input id="chkEmpresaCompensadaNinguna" type="checkbox" /><label>Ninguna</label>
+                                    }
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="registro-control" colspan="3">
+
+                                    @if (Model.grabar)
+                                    {
+                                        <input id="btnCompensacionAgregarEmpresaCompensada" type="button" value="Agregar" />
+
+                                    }
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="padding-top:10px;">
+                            <table style="width:50%" border="0" class="pretty tabla-adicional">
+                                <thead>
+                                    <tr>
+                                        <th>BORRAR</th>
+                                        <th>EMPRESA</th>
+                                        <th>LAST USER</th>
+                                        <th>LAST DATE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyCompensacionEmpresaCompensada">
+                                    @if (Model.lsEmpresaCompensadaCompensacion != null)
+                                    {
+                                        foreach (var item in Model.lsEmpresaCompensadaCompensacion)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @if (Model.grabar)
+                                                    {
+                                                        <a href="#" onclick="EliminarEmpresaCompensadaCompensacion(@item.EMPRCODI)" id="btnEliminar">
+                                                            <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                        </a>
+                                                    }
+
+                                                </td>
+                                                <td>@item.EMPRNOMB</td>
+                                                <td>@item.LASTUSER</td>
+                                                <td>@item.LASTDATEstr</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                            @if (Model.lsEmpresaCompensadaCompensacion != null && Model.lsEmpresaCompensadaCompensacion.Count > 0)
+                            {
+                                <input type="hidden" id="hfCompensacionEmpresaCompensadaMaxId" value="@Model.lsEmpresaCompensadaCompensacion.Max(x=> x.EMPRCODI)" />
+                            }
+                            else
+                            {
+                                <input type="hidden" id="hfCompensacionEmpresaCompensadaMaxId" value="0" />
+                            }
+                        </div>
+                        <div style="padding-top:30px;">
+                            <table style="width:100%">
+                                <tr>
+                                    <td class="registro-label">Informe de calculo de compensaciones</td>
+                                    <td class="registro-control"><input type="text" id="dtFechaInformeCompensacion" value="@Model.oAnalisisFallaDTO.AFECOMPFECHAstr" style="width:100px" /></td>
+                                    <td class="registro-control">
+
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="file" accept=".pdf" style="display:none;" id="flInformeCompensacion" />
+                                            <input name="btnSubirInformeCompensacion" type="button" id="btnSubirInformeCompensacion" value="Cargar Archivo">
+                                        }
+                                        <label id="lblInformeCompensacion">@Model.oAnalisisFallaDTO.AFECOMPFECHASISTstr</label>
+
+                                    </td>
+                                    <td class="registro-control">
+                                        <a href="#" onclick="VerInformeCompensacion()" id="btnVerInformeCompensacion" style="display:none;">
+                                            <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                        </a>
+                                    </td>
+                                    <td class="registro-control">
+                                        @if (Model.grabar)
+                                        {
+                                            <a href="#" onclick="EliminarInformeCompensacion()" id="btnEliminarInformeCompensacion" style="display:none;">
+                                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                            </a>
+                                        }
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div id="Reconsideracion">
+                <div class="content-registro" style="width:auto">
+                    <div style="padding-top:20px">
+                        <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Reconsideración</span></div>
+                        <div style="clear:both; height:5px;"></div>
+                        <div>
+                            <table style="width:100%">
+                                <tr>
+                                    <td class="registro-label" rowspan="2">Empresa</td>
+                                    <td class="registro-control">
+                                        <select id="txtEmpresaReconsideracion" autofocus="autofocus" autocorrect="off" autocomplete="off">
+                                            <option value="" selected="selected"> </option>
+                                        </select>
+                                    </td>
+                                    <td class="registro-label">Fecha</td>
+                                    <td class="registro-control"><input type="text" id="dtReconsideracion" style="width:100px" /></td>
+
+                                    <td class="registro-label" rowspan="2">Respuesta COES</td>
+                                    <td class="registro-label">Fecha</td>
+                                    <td class="registro-control"><input type="text" id="dtReconsideracionCoes" style="width:100px" /></td>
+                                </tr>
+                                <tr>
+                                    <td class="registro-control" colspan="3">
+
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="file" accept=".pdf" id="flReconsideracion" />
+                                            <input name="btnSubirReconsideracion" type="button" id="btnSubirReconsideracion" value="Cargar Archivo">
+                                        }
+
+
+                                    </td>
+                                    <td class="registro-control" colspan="3">
+
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="file" accept=".pdf" id="flReconsideracionCoes" />
+                                            <input name="btnSubirReconsideracionCoes" type="button" id="btnSubirReconsideracionCoes" value="Cargar Archivo">
+                                        }
+
+
+                                    </td>
+
+                                </tr>
+                            </table>
+                        </div>
+                        <div style="padding-top:10px">
+                            <table style="width:100%" border="0" class="pretty tabla-adicional">
+                                <thead>
+                                    <tr>
+                                        <th>Seleccione</th>
+                                        <th>VER</th>
+                                        <th>ELIMINAR</th>
+                                        <th>EMPRESA</th>
+                                        <th>FECHA</th>
+                                        <th>LASTUSER</th>
+                                        <th>LASTDATE</th>
+
+                                        <th>VER</th>
+                                        <th>ELIMINAR</th>
+                                        <th>FECHA_COES</th>
+                                        <th>LASTUSER_COES</th>
+                                        <th>LASTDATE_COES</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyReconsideracionReclamoReconsideracion">
+                                    @if (Model.lsReclamoReconsideracion != null)
+                                    {
+                                        foreach (var item in Model.lsReclamoReconsideracion)
+                                        {
+                                            <tr>
+                                                <td><input type="radio" name="rdFuerzaMayor" data-id="@item.RECLAMOCODI" data-empresa="@item.EMPRCODI" /></td>
+                                                <td>
+                                                    <a href="#" onclick="VerReconsideracion(@item.EMPRCODI,@item.RECLAMOCODI)">
+                                                        <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    @if (Model.grabar)
+                                                    {
+                                                        <a href="#" onclick="EliminarReconsideracion(@item.RECLAMOCODI,@item.EMPRCODI,@item.RPTACODI)">
+                                                            <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                        </a>
+                                                    }
+
+                                                </td>
+
+                                                <td>@item.EMPRNOMB</td>
+                                                <td>@item.FECHA</td>
+                                                <td>@item.LASTUSER</td>
+                                                <td>@item.LASTDATE</td>
+
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        <a href="#" onclick="VerReconsideracionCOES(@item.EMPRCODI,@item.RPTACODI)">
+                                                            <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                        </a>
+                                                    }
+
+                                                </td>
+                                                <td>
+                                                    @if (Model.grabar)
+                                                    {
+                                                        if (item.RPTACODI != -1)
+                                                        {
+                                                            <a href="#" onclick="EliminarReconsideracionCOES(@item.RECLAMOCODI,@item.EMPRCODI,@item.RPTACODI)">
+                                                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                            </a>
+                                                        }
+                                                    }
+
+                                                </td>
+
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        @item.FECHA_COES
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        @item.LASTUSER_COES
+                                                    }
+
+                                                </td>
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        @item.LASTDATE_COES
+                                                    }
+
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                            @if (Model.lsReclamoReconsideracion != null && Model.lsReclamoReconsideracion.Count > 0)
+                            {
+                                <input type="hidden" id="hfReconsideracionReclamoReconsideracionMaxId" value="@Model.lsReclamoReconsideracion.Max(x=> x.RECLAMOCODI)" />
+                            }
+                            else
+                            {
+                                <input type="hidden" id="hfReconsideracionReclamoReconsideracionMaxId" value="0" />
+                            }
+                        </div>
+                    </div>
+
+
+                    <div style="padding-top:20px">
+                        <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Apelación</span></div>
+                        <div style="clear:both; height:5px;"></div>
+
+                        <div>
+                            <table style="width:100%">
+                                <tr>
+                                    <td class="registro-label" rowspan="2">Empresa</td>
+                                    <td class="registro-control">
+                                        <select id="txtEmpresaApelacion" autofocus="autofocus" autocorrect="off" autocomplete="off">
+                                            <option value="" selected="selected"> </option>
+                                        </select>
+                                    </td>
+                                    <td class="registro-label">Fecha</td>
+                                    <td class="registro-control"><input type="text" id="dtApelacion" style="width:100px" /></td>
+
+                                    <td class="registro-label" rowspan="2">Respuesta COES</td>
+                                    <td class="registro-label">Fecha</td>
+                                    <td class="registro-control"><input type="text" id="dtApelacionCoes" style="width:100px" /></td>
+
+
+                                </tr>
+                                <tr>
+                                    <td class="registro-control" colspan="3">
+
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="file" accept=".pdf" id="flApelacion" />
+                                            <input name="btnSubirApelacion" type="button" id="btnSubirApelacion" value="Cargar Archivo">
+                                        }
+
+
+                                    </td>
+                                    <td class="registro-control" colspan="2">
+
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="file" accept=".pdf" id="flApelacionCoes" />
+                                            <input name="btnSubirApelacionCoes" type="button" id="btnSubirApelacionCoes" value="Cargar Archivo">
+                                        }
+
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div style="padding-top:10px">
+                            <table style="width:100%" border="0" class="pretty tabla-adicional">
+                                <thead>
+                                    <tr>
+                                        <th>Seleccione</th>
+                                        <th>VER</th>
+                                        <th>ELIMINAR</th>
+                                        <th>EMPRESA</th>
+                                        <th>FECHA</th>
+                                        <th>LASTUSER</th>
+                                        <th>LASTDATE</th>
+
+                                        <th>VER</th>
+                                        <th>ELIMINAR</th>
+                                        <th>FECHA_COES</th>
+                                        <th>LASTUSER_COES</th>
+                                        <th>LASTDATE_COES</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyReconsideracionReclamoApelacion">
+
+                                    @if (Model.lsReclamoApelacion != null)
+                                    {
+                                        foreach (var item in Model.lsReclamoApelacion)
+                                        {
+                                            <tr>
+                                                <td><input type="radio" name="rdFuerzaMayor" data-id="@item.RECLAMOCODI" data-empresa="@item.EMPRCODI" /></td>
+                                                <td>
+                                                    <a href="#" onclick="VerApelacion(@item.EMPRCODI,@item.RECLAMOCODI)" id="btnMedidasAdoptadas">
+                                                        <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    @if (Model.grabar)
+                                                    {
+                                                        <a href="#" onclick="EliminarApelacion(@item.EMPRCODI,@item.RPTACODI)" id="btnEliminar">
+                                                            <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                        </a>
+                                                    }
+
+                                                </td>
+
+                                                <td>@item.EMPRNOMB</td>
+                                                <td>@item.FECHA</td>
+                                                <td>@item.LASTUSER</td>
+                                                <td>@item.LASTDATE</td>
+
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        <a href="#" onclick="VerApelacionCOES(@item.RECLAMOCODI,@item.EMPRCODI,@item.RPTACODI)">
+                                                            <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                        </a>
+                                                    }
+
+                                                </td>
+                                                <td>
+                                                    @if (Model.grabar)
+                                                    {
+                                                        if (item.RPTACODI != -1)
+                                                        {
+                                                            <a href="#" onclick="EliminarApelacionCOES(@item.RECLAMOCODI,@item.EMPRCODI,@item.RPTACODI)">
+                                                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                            </a>
+                                                        }
+                                                    }
+
+                                                </td>
+
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        @item.FECHA_COES
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        @item.LASTUSER_COES
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        @item.LASTDATE_COES
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                            @if (Model.lsReclamoApelacion != null && Model.lsReclamoApelacion.Count > 0)
+                            {
+                                <input type="hidden" id="hfReconsideracionReclamoApelacionMaxId" value="@Model.lsReclamoApelacion.Max(x=> x.RECLAMOCODI)" />
+                            }
+                            else
+                            {
+                                <input type="hidden" id="hfReconsideracionReclamoApelacionMaxId" value="0" />
+                            }
+                        </div>
+                    </div>
+
+                    <div style="padding-top:20px">
+                        <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Arbitraje</span></div>
+                        <div style="clear:both; height:5px;"></div>
+
+                        <div>
+                            <table style="width:100%">
+                                <tr>
+                                    <td class="registro-label" rowspan="2">Empresa</td>
+                                    <td class="registro-control">
+
+                                        <select id="txtEmpresaArbitraje" autofocus="autofocus" autocorrect="off" autocomplete="off">
+                                            <option value="" selected="selected"> </option>
+                                        </select>
+                                    </td>
+                                    <td class="registro-label">Fecha</td>
+                                    <td class="registro-control"><input type="text" id="dtArbitraje" style="width:100px" /></td>
+
+                                    <td class="registro-label" rowspan="2">Respuesta COES</td>
+                                    <td class="registro-label">Fecha</td>
+                                    <td class="registro-control"><input type="text" id="dtArbitrajeCoes" style="width:100px" /></td>
+
+                                </tr>
+                                <tr>
+                                    <td class="registro-control" colspan="3">
+
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="file" accept=".pdf" id="flArbitraje" />
+                                            <input name="btnSubirArbitraje" type="button" id="btnSubirArbitraje" value="Cargar Archivo">
+                                        }
+
+
+                                    </td>
+                                    <td class="registro-control" colspan="2">
+
+
+                                        @if (Model.grabar)
+                                        {
+                                            <input type="file" accept=".pdf" id="flArbitrajeCoes" />
+                                            <input name="btnSubirArbitrajeCoes" type="button" id="btnSubirArbitrajeCoes" value="Cargar Archivo">
+                                        }
+
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div style="padding-top:10px">
+                            <table style="width:100%" border="0" class="pretty tabla-adicional">
+                                <thead>
+                                    <tr>
+                                        <th>Seleccione</th>
+                                        <th>VER</th>
+                                        <th>ELIMINAR</th>
+                                        <th>EMPRESA</th>
+                                        <th>FECHA</th>
+                                        <th>LASTUSER</th>
+                                        <th>LASTDATE</th>
+
+                                        <th>VER</th>
+                                        <th>ELIMINAR</th>
+                                        <th>FECHA_COES</th>
+                                        <th>LASTUSER_COES</th>
+                                        <th>LASTDATE_COES</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyArbitraje">
+                                    @if (Model.lsReclamoArbitraje != null)
+                                    {
+                                        foreach (var item in Model.lsReclamoArbitraje)
+                                        {
+                                            <tr>
+                                                <td><input type="radio" name="rdFuerzaMayor" data-id="@item.RECLAMOCODI" data-empresa="@item.EMPRCODI" /></td>
+
+                                                <td>
+                                                    <a href="#" onclick="VerArbitraje(@item.EMPRCODI,@item.RECLAMOCODI)" id="btnMedidasAdoptadas">
+                                                        <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    @if (Model.grabar)
+                                                    {
+                                                        <a href="#" onclick="EliminarArbitraje(@item.RECLAMOCODI,@item.EMPRCODI,@item.RPTACODI)" id="btnEliminar">
+                                                            <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                        </a>
+                                                    }
+
+                                                </td>
+
+                                                <td>@item.EMPRNOMB</td>
+                                                <td>@item.FECHA</td>
+                                                <td>@item.LASTUSER</td>
+                                                <td>@item.LASTDATE</td>
+
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        <a href="#" onclick="VerArbitrajeCOES(@item.EMPRCODI,@item.RPTACODI)" id="btnMedidasAdoptadas">
+                                                            <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                                                        </a>
+                                                    }
+
+                                                </td>
+                                                <td>
+                                                    @if (Model.grabar)
+                                                    {
+
+                                                        if (item.RPTACODI != -1)
+                                                        {
+                                                            <a href="#" onclick="EliminarArbitrajeCOES(@item.RECLAMOCODI,@item.EMPRCODI,@item.RPTACODI)" id="btnEliminar">
+                                                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                                                            </a>
+                                                        }
+
+                                                    }
+
+                                                </td>
+
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        @item.FECHA_COES
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        @item.LASTUSER_COES
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (item.RPTACODI != -1)
+                                                    {
+                                                        @item.LASTDATE_COES
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+
+                                </tbody>
+                            </table>
+                            @if (Model.lsReclamoArbitraje != null && Model.lsReclamoArbitraje.Count > 0)
+                            {
+                                <input type="hidden" id="hfReconsideracionReclamoArbitrajeMaxId" value="@Model.lsReclamoArbitraje.Max(x=> x.RECLAMOCODI)" />
+                            }
+                            else
+                            {
+                                <input type="hidden" id="hfReconsideracionReclamoArbitrajeMaxId" value="0" />
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="busquedaEquipo" style="display: none">
+</div>
+
+<div id="divBuscarEmpresa" class="general-popup" style="width:500px;min-height:300px;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Buscar Empresa</span></div>
+    <div class="popup-text" id="contenidoBuscarEmpresa">
+
+        <table style="width:100%">
+            <tr>
+                <td>Nombre Empresa</td>
+                <td><input id="txtNombreEmpresaBuscar" /></td>
+                <td><input type="button" id="btnBuscarEmpresa" value="Buscar" data-target="" /></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <table id="tblEmpresaBuscar" border="0" class="pretty tabla-adicional">
+                        <thead>
+                            <tr>
+                                <th>Id Empresa</th>
+                                <th>Nombre Empresa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tblbodyEmpresa"></tbody>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="divBuscarEmpresaPropietaria" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Buscar Empresa</span></div>
+    <div class="popup-text" id="contenidoBuscarEmpresa">
+
+        <table>
+            <tr>
+                <td>Nombre Empresa</td>
+                <td><input id="txtNombreEmpresaPropietariaBuscar" /></td>
+                <td><input type="button" id="btnBuscarEmpresaPropietaria" value="Buscar" /></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <table border="0" class="pretty tabla-adicional">
+                        <thead>
+                            <tr>
+                                <th>Id Empresa</th>
+                                <th>Nombre Empresa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tblbodyEmpresaPropietaria"></tbody>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="divMedidasAdoptadas" class="general-popup" style="width:1000px;min-height:300px;">
+    <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Detalle de Recomendación</span></div>
+    <div style="clear:both; height:5px;"></div>
+
+    <div class="content-registro" style="padding-top:10px;">
+        <table style="width:auto;">
+            <tr>
+                <td class="registro-label">Codigo</td>
+                <td class="registro-label">EV -&nbsp;&nbsp;<input type="text" id="txtMedidaAdoptadaAFECORR" style="width:50px;" readonly />&nbsp;&nbsp;-&nbsp;&nbsp;<input type="text" id="txtMedidaAdoptadaAFEANIO" style="width:50px" readonly /></td>
+
+                <td class="registro-label">Nombre Evento</td>
+                <td class="registro-control"><input type="text" readonly style="width:400px;" id="txtMedidaAdoptadaEVENASUNTO" /></td>
+
+            </tr>
+            <tr>
+                <td class="registro-label">Empresa</td>
+                <td class="registro-control"><input type="text" id="txtMedidaAdoptadaEMPRNOMB" readonly style="width:250px;" /></td>
+
+                <td class="registro-label">Recomendación</td>
+                <td class="registro-control"><textarea rows="10" cols="80" id="txtMedidaAdoptadaAFRRECOMEND" readonly style="width: 400px;"></textarea></td>
+            </tr>
+        </table>
+        <h3>Datos a Modificar</h3>
+        <table style="width:100%;">
+
+            <tr>
+                <td class="registro-control" colspan="2"><input type="checkbox" id="chkMedidaAdoptadaImportante" />IMPORTANTE</td>
+                <td class="registro-control" colspan="4"><input type="checkbox" id="chkCartaRecomendacion" />Carta de Recomendación COES</td>
+            </tr>
+            <tr>
+
+                <td class="registro-label">Número de Registro de Respuesta</td>
+                <td class="registro-control">
+                    <textarea rows="10" cols="40" id="txtMedidaAdoptadaNroRegistroRespuesta" style="width: 300px;"></textarea>
+                    <br />
+                    @if (Model.grabar)
+                    {
+                        <input type="button" id="btngrabarModificar" value='Grabar' onclick="ActualizarRecomendacionMA();" />
+                    }
+
+                </td>
+
+                <td class="registro-control">
+
+
+                    @if (Model.grabar)
+                    {
+                        <input type="file" accept=".pdf" id="flCartaRecomendacionCOES" />
+                        <input name="btnSubirCartaRecomendacionCOES" type="button" id="btnSubirCartaRecomendacionCOES" value="Cargar Archivo">
+                    }
+
+
+                </td>
+                <td class="registro-control">
+                    <a href="#" onclick="VerCartaRecomendacionCOES()" id="btnVerCartaRecomendacionCOES" style="display:none;">
+                        <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                    </a>
+                </td>
+                <td class="registro-control">
+                    @*@if (Model.grabar)
+                        {
+
+                            <a href="#" onclick="EliminarCartaRecomendacionCOES()" id="btnEliminarCartaRecomendacionCOES" style="display:none;">
+                                <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                            </a>
+                        }*@
+
+                </td>
+            </tr>
+
+        </table>
+    </div>
+
+
+
+    <div class="content-registro" style="width:auto">
+
+        <div style="clear:both; height:5px;"></div>
+        <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Medida Adoptada</span></div>
+        <div style="clear:both; height:5px;"></div>
+
+        <table style="width:100%;">
+            <tr>
+                <td class="registro-label">Fecha de Medida</td>
+                <td class="registro-control"><input type="text" id="txtFechaMedidaAdoptada" style="width:100px" /></td>
+
+
+                <td class="registro-label">Nivel de Cumplimiento</td>
+                <td class="registro-control">
+                    <select id="cboNiveldeCumplimiento" style="width: 120px">
+                        <option value='E'>EN PROCESO</option>
+                        <option value='P'>PARCIAL</option>
+                        <option value='C'>CUMPLIO</option>
+                        <option value='S'>SIN CUMPLIR</option>
+                        <option value='R'>PENDIENTE DE RESPUESTA</option>
+                    </select>
+                </td>
+                <td class="registro-label">Carta de Respuesta</td>
+
+                <td class="registro-control">
+
+                    @if (Model.grabar)
+                    {
+                        <input type="file" accept=".pdf" id="flCartaRespuesta" style="display:none; width:250px;" />
+                        <input name="btnSubirCartadeRespuesta" style="display:none;" type="button" id="btnSubirCartadeRespuesta" value="Cargar Archivo">
+                    }
+
+                </td>
+                <td class="registro-control">
+                    <a href="#" onclick="VerCartaRespuesta()" id="btnVerCartaRespuesta" style="display:none;">
+                        <img src="~/Content/Images/btn-open.png" style="margin-top: 5px;" />
+                    </a>
+                </td>
+                <td class="registro-control">
+                    @if (Model.grabar)
+                    {
+                        <a href="#" onclick="EliminarCartaRespuesta()" id="btnEliminarVerCartaRespuesta" style="display:none;">
+                            <img src="~/Content/Images/btn-cancel.png" style="margin-top: 5px;" />
+                        </a>
+                    }
+
+                </td>
+            </tr>
+            <tr>
+                <td class="registro-label">Medida Adoptada</td>
+                <td class="registro-control" colspan="8">
+                    <textarea id="txtMedidaAdoptada" rows="10" cols="140" style="width: 800px"></textarea>
+                </td>
+            </tr>
+        </table>
+
+        <div style="clear:both; height:10px;"></div>
+
+        <table style="width:100%;">
+            <tr>
+                <td>
+                    @if (Model.grabar)
+                    {
+                        <input type="button" id="btnGrabarMedidaAdoptada" onclick="ActualizarRecomendacionMAG();" height="50" value="Grabar" />
+                    }
+                    <input type="button" id="btncerrar" value='Cerrar' onclick="cerrar();" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="divMensaje" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Mensaje: </span></div>
+    <div class="popup-text" id="contenidoBuscarEmpresa">
+        <ul id="ulMensaje"></ul>
+    </div>
+</div>
+
+<div id="popupNumeral" class="general-popup" style="width:320px;top:0px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title">
+        <span>Tipo de Numeral:</span>
+        <div class="content-botonera">
+            <input type="button" id="btnGrabarNumeral" value='Grabar' />
+        </div>
+    </div>
+    <div class="popup-text" id="contenidoNumeral">
+    </div>
+</div>
+
+<div id="popupEliminarAnalisis" class="general-popup" style="width:320px;top:0px">
+    <div>
+        <span class="button b-close">
+            <span>X</span>
+        </span>
+    </div>
+    <div class="popup-title">
+        <span>Eliminar Análisis Falla:</span>
+    </div>
+    <div class="popup-text">
+        <p>
+            Existen criterios de eventos generados.
+            ¿ Seguro que quiere continuar ?
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center">
+            <input id="confirmarEliminarAnalisis" type="button" value="Si" />
+            <input id="confirmarCerrarPopupEliminarAnalisis" type="button" class="b-close" value="No" />
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hfEmpresaTarget" value="" />
+<input type="hidden" id="hfCodigo" value="@Model.oAnalisisFallaDTO.AFECODI" />
+<input type="hidden" id="hfCodigoEvento" value="@Model.oAnalisisFallaDTO.EVENCODI" />
+<input type="hidden" id="hfReunionAFECONVCITACIONFECHA" value="@Model.oAnalisisFallaDTO.AFECONVCITACIONFECHAstr" />
+<input type="hidden" id="hfReunionAFERCTAEINFORMEFECHA" value="@Model.oAnalisisFallaDTO.AFERCTAEINFORMEFECHAstr" />
+<input type="hidden" id="hfReunionAFERCTAEACTAFECHA" value="@Model.oAnalisisFallaDTO.AFERCTAEACTAFECHAstr" />
+<input type="hidden" id="hfReunionAFEITPITFFECHA" value="@Model.oAnalisisFallaDTO.AFEITPITFFECHAstr" />
+<input type="hidden" id="hfReunionAFEITPITFFECHASIST" value="@Model.oAnalisisFallaDTO.AFEITPITFFECHASISTstr" />
+<input type="hidden" id="hfReunionAFEITPDECISFFECHASIST" value="@Model.oAnalisisFallaDTO.AFEITPDECISFFECHASISTstr" />
+<input type="hidden" id="hfCompensacionAFECOMPFECHA" value="@Model.oAnalisisFallaDTO.AFECOMPFECHASISTstr" />
+<input type="hidden" id="hfFuerzaMayorRECLAMOCODI" value="0" />
+<input type="hidden" id="hfMedidaAdoptadaSelected" value="0" />
+<input type="hidden" id="hfAFECORR" value="@Model.oAnalisisFallaDTO.AFECORR" />
+<input type="hidden" id="hfEquiCodi" value="0" />
+<input type="hidden" id="hfIdEmpresa" value="0" />
+<input type="hidden" id="hfIdSubestacion" value="0" />
+<input type="hidden" id="hfEvencodicheck" value="0" />
+<input type="hidden" id="hfIdTipoBusqueda" value="0" />
+
+<script src="~/Content/Scripts/jquery.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/popup.js"></script>
+<script src="~/Content/Scripts/datepicker.js"></script>
+<script src="~/Content/Scripts/jquery-ui-autocomplete.js"></script>
+<script src="~/Content/Scripts/jquery.select-to-autocomplete.min.js"></script>
+<script src="~/Areas/Eventos/Content/Scripts/analisisfalla.js?v=4.02"></script>
+<script src="~/Areas/Eventos/Content/Scripts/AnalisisFalla/busquedaequipo.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/slimselect.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/slimselect.min.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script>
+    iniUpdate();
+</script>

@@ -1,0 +1,342 @@
+var controlador = siteRoot + 'campanias/plantransmision/';
+var controladorRevision = siteRoot + 'campanias/revisionenvio/';
+var controladorFichas = siteRoot + 'campanias/fichasproyecto/';
+
+$(function () {
+});
+
+function cargarDatos() {
+    return Promise.all([cargarEmpresa()])
+        .then(cargarPeriodo);
+}
+
+function cargarEmpresaProyecto() {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            type: 'POST',
+            url: controlador + 'ListarEmpresas',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(''),
+            success: function (eData) {
+                console.log(eData);
+                cargarListaEmpresasProyecto(eData);
+                resolve();
+            },
+            error: function (err) {
+                alert("Ha ocurrido un error");
+                reject(err);
+            }
+        });
+    });
+}
+
+
+function ObtenerListadoProyecto(codigoPlan) {
+    $("#listadoProyecto").html('');
+    console.log("entro a la tramsision");
+    $.ajax({
+        type: 'POST',
+        url: controlador + 'ListadoProyecto',
+        data: {
+            id: codigoPlan,
+        },
+        success: function (eData) {
+            $('#listadoProyecto').css("width", $('.form-main').width() + "px");
+            $('#listadoProyecto').html(eData);
+            $('#tablaProyecto').dataTable({
+                bJQueryUI: true,
+                "scrollY": 440,
+                "scrollX": false,
+                "sDom": 'ft',
+                "ordering": true,
+                "order": [[0, 'desc']],
+                "iDisplayLength": -1
+            });
+            
+            $('#checkall').click(function () {
+                $('input:checkbox').prop('checked', this.checked);
+            });
+
+            $('#btnFicha').click(function () {
+                var idproyecto_val = $('input:checkbox:checked.chkbox_class').map(function () {
+                    return this.value;
+                }).get().join(",");
+                console.log('id proyecto',idproyecto_val);
+                $.ajax({
+                    type: 'POST',
+                    url: controlador + 'DescargarProyecto',
+                    data: {
+                        idproyectos: idproyecto_val,
+                    },
+                    success: function (result) {
+                        if (result.length > 0) {
+                            /*result.forEach(function (tipo, index) {
+                                setTimeout(function () {
+                                    window.location.href = controlador + `ExportarFichaExcel?tipo=${tipo}`;
+                                }, index * 100);
+                            });*/
+                            var cod = $("#txtCodPlanTransmision").val();
+                            var name = `FichasEnvio${cod}.zip`;
+                            window.location.href = controlador + `GenerarArchivosZipReporte?nameZip=${name}`;
+                        }
+                        if (result == -1) {
+                            alert("Ha ocurrido un error al generar ficha excel");
+                        }
+
+                    },
+                    error: function (err) {
+                        alert("Ha ocurrido un error");
+                    }
+                });
+
+
+            });        
+
+        },
+        error: function (err) {
+            alert("Ha ocurrido un error");
+        }
+    });
+}
+
+consultarProyecto = function (id) {
+
+    $.ajax({
+        type: 'POST',
+        url: controlador + 'proyecto',
+        data: {
+            id: id,
+            modo: "consultar"
+        },
+        
+        success: function (evt) {
+            $('#contenidoProyecto').html(evt);
+
+            $("#modal1").modal({
+                escapeClose: false,
+                clickClose: false,
+                showClose: true
+            });
+        },
+        error: function () {
+            mostrarMensaje('mensaje', 'error', 'Se ha producido un error.');
+        }
+    });
+}
+
+
+function cargarDepartamentos(){
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'ListarDepartamentos',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify(''),
+        success: function (eData) {
+            console.log(eData);
+            cargarListaDepartamento(eData);
+        },
+        error: function (err) {
+            alert("Ha ocurrido un error");
+        }
+    });
+}
+
+function buscarPlantransmision(codPlanTr) {
+    $.ajax({
+        type: 'POST',
+        url: controlador + 'BuscarPlanTransmision',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify({ id: codPlanTr }),
+        success: function (eData) {
+            console.log("Plan transmision");
+            console.log(eData);
+            if (eData != null && eData.length > 0 ) {
+                var planT = eData[0];
+                planTransEncontrado = planT;
+                var periodoCodi = String(planT.Pericodi);
+                $("#empresaSelect").val(planT.Codempresa).prop("disabled", true);
+                $("#periodoSelect").val(periodoCodi).prop("disabled", true);
+                console.log(planT);
+            }
+        },
+        error: function (err) {
+            alert("Ha ocurrido un error");
+        }
+    });
+}
+
+
+function cargarListaDepartamento(departamentos) {
+    var selectDepartamentos = $('#departamentosSelect');
+    $.each(departamentos, function (index, departamento) {
+        // Crear la opción
+        var option = $('<option>', {
+            value: departamento.Id,
+            text: departamento.Nombre
+        });
+
+        // Agregar la opción al select
+        selectDepartamentos.append(option);
+    });
+
+    selectDepartamentos.change(function () {
+        // Obtener el id del departamento seleccionado
+        var idSeleccionado = $(this).val();
+        // Llamar a la función con el id del departamento
+        console.log(idSeleccionado);
+        cargarProvincia(idSeleccionado);
+    });
+
+}
+
+function cargarProvincia(id) {
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'ListarProvincias',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify({ id: id }),
+        success: function (eData) {
+            console.log(eData);
+            cargarListaProvincia(eData);
+        },
+        error: function (err) {
+            alert("Ha ocurrido un error");
+        }
+    });
+}
+
+function cargarListaProvincia(provincias) {
+    var selectProvincias = $('#provinciasSelect');
+    selectProvincias.empty();
+    var optionDefault = $('<option>', {
+        value: "",
+        text: "Seleccione una provincia"
+    });
+    selectProvincias.append(optionDefault);
+    cargarListaDistritos([]);
+    $.each(provincias, function (index, provincia) {
+        // Crear la opción
+        var option = $('<option>', {
+            value: provincia.Id,
+            text: provincia.Nombre
+        });
+
+        // Agregar la opción al select
+        selectProvincias.append(option);
+    });
+
+    selectProvincias.change(function () {
+        // Obtener el id del departamento seleccionado
+        var idSeleccionado = $(this).val();
+        // Llamar a la función con el id del departamento
+        cargarDistrito(idSeleccionado);
+    });
+
+}
+
+function cargarDistrito(id) {
+    $.ajax({
+        type: 'POST',
+        url: controladorFichas + 'ListarDistritos',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify({ id: id }),
+        success: function (eData) {
+            console.log(eData);
+            cargarListaDistritos(eData);
+        },
+        error: function (err) {
+            alert("Ha ocurrido un error");
+        }
+    });
+}
+
+function cargarListaDistritos(distritos) {
+    var selectDistritos = $('#distritosSelect');
+    selectDistritos.empty();
+    var optionDefault = $('<option>', {
+        value: "",
+        text: "Seleccione un distrito"
+    });
+    selectDistritos.append(optionDefault);
+    $.each(distritos, function (index, distrito) {
+        // Crear la opción
+        var option = $('<option>', {
+            value: distrito.Id,
+            text: distrito.Nombre
+        });
+
+        // Agregar la opción al select
+        selectDistritos.append(option);
+    });
+
+}
+
+
+function cargarEmpresa() {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            type: 'POST',
+            url: controlador + 'ListarEmpresas',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(''),
+            success: function (eData) {
+                console.log(eData);
+                cargarListaEmpresas(eData);
+                resolve();
+            },
+            error: function (err) {
+                alert("Ha ocurrido un error");
+                reject(err);
+            }
+        });
+    });
+}
+
+function cargarListaEmpresas(empresas) {
+    var selectEmpresa = $('#empresaSelect');
+    $.each(empresas, function (index, empresa) {
+        // Crear la opción
+        var option = $('<option>', {
+            value: empresa.Emprcodi,
+            text: empresa.Emprnomb
+        });
+
+        // Agregar la opción al select
+        selectEmpresa.append(option);
+    });
+}
+
+function cargarPeriodo() {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            type: 'POST',
+            url: controlador + 'ListarPeriodos',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(''),
+            success: function (eData) {
+                console.log(eData);
+                cargarListaPeriodo(eData);
+                resolve();
+            },
+            error: function (err) {
+                alert("Ha ocurrido un error");
+                reject(err);
+            }
+        });
+
+    });
+}
+
+function cargarListaPeriodo(periodos) {
+    var selectPeriodo = $('#periodoSelect');
+    $.each(periodos, function (index, periodo) {
+        // Crear la opción
+        var option = $('<option>', {
+            value: periodo.PeriCodigo,
+            text: periodo.PeriNombre
+        });
+
+        // Agregar la opción al select
+        selectPeriodo.append(option);
+    });
+}

@@ -1,0 +1,110 @@
+﻿@model COES.MVC.Publico.Areas.Mediciones.Models.EjecutadoModel
+@{
+    System.Globalization.NumberFormatInfo nfi = new System.Globalization.CultureInfo("en-US", false).NumberFormat;
+    nfi.NumberGroupSeparator = " ";
+    nfi.NumberDecimalSeparator = ",";
+    nfi.NumberDecimalDigits = 3;
+}
+
+<table border="0" class="pretty tabla-adicional" cellspacing="0" width="100%" id="tabla">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Punto Medición</th>
+            <th>Empresa</th>
+            <th>Central</th>
+            <th>Unidad</th>
+            <th>Total Energía Activa (MWh)</th>
+
+            @{ 
+                DateTime now = DateTime.ParseExact(DateTime.Now.ToString("dd/MM/yyyy"), "dd/MM/yyyy",
+                    System.Globalization.CultureInfo.InvariantCulture);
+
+                for (int i = 1; i <= 48; i++)
+                {
+                    DateTime hora = now.AddMinutes(i * 30);
+                    <th>@hora.ToString("HH:mm")</th>
+                }
+            }
+
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.ListaDatos.Count > 0)
+        {
+            foreach (var item in Model.ListaDatos)
+            {
+                <tr>
+                    <td>
+                        @(((DateTime)item.Medifecha).ToString("dd/MM/yyyy"))
+                    </td>
+                    <td>@item.Ptomedicodi</td>
+                    <td>@item.Emprnomb</td>
+                    <td>@item.Central</td>
+                    <td>@item.Equinomb</td>
+                    @{
+                        var total = item.Meditotal;
+                        string txt = string.Empty;
+                        if (total != null)
+                        {
+                            txt = Convert.ToDecimal(total / 2).ToString("N", nfi);
+                        }
+                        <td style="text-align:right">@txt</td>
+                     }
+                     @for (int i = 1; i <= 48; i++)
+                     {
+                         var valor = item.GetType().GetProperty("H" + i.ToString()).GetValue(item, null);
+                         string texto = "";
+                         decimal valorReal = 0;
+
+                         if (valor != null)
+                         {
+                             valorReal = Convert.ToDecimal(valor);
+                             texto = valorReal.ToString("N", nfi);
+                         }
+                         <td style="text-align:right">@texto</td>
+                    }
+                </tr>
+            }
+        }
+    </tbody>
+    <tfoot>
+
+        @foreach (var item in Model.EntidadTotal)
+        {
+            <tr>
+                <td colspan="5" style="text-align:right">TOTAL</td>
+                @{
+                    var totalSum = item.Meditotal;
+                    string txtSum = string.Empty;
+
+                    decimal valortot = 0;
+                    if (totalSum != null)
+                    {
+                        valortot = Convert.ToDecimal(totalSum);
+                        txtSum = valortot.ToString("N", nfi);
+
+                    }
+                    <td style="text-align:right">@txtSum</td>
+
+                    for (int i = 1; i <= 48; i++)
+                    {
+                        var valor = item.GetType().GetProperty("H" + i.ToString()).GetValue(item, null);
+                        string texto = "";
+                        valortot = 0;
+                        if (valor != null)
+                        {
+                            valortot = Convert.ToDecimal(valor);
+                            texto = valortot.ToString("N", nfi);
+                        }
+                        <td style="text-align:right">@texto</td>
+                    }
+                }
+            </tr>
+        }
+
+
+    </tfoot>
+</table>
+
+

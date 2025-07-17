@@ -1,0 +1,90 @@
+﻿@model COES.MVC.Intranet.Areas.IndicadoresSup.Models.ReporteNumeralModel
+
+
+<div style="display:inline-block">
+    <div class="content-titulo" style="width:100%; text-align: center; font-size: 12px;margin-bottom: 2px">ESTADO ACTUAL DEL NUMERAL (No Generado, Generado o Validado)</div>
+    <table class="pretty tabla-icono" cellspacing="0" style="width: 500px;" id="tabla2">
+        <thead>
+            <tr>
+                <th>Numeral</th>
+                <th>Estado</th>
+                <th>Versión</th>
+                <th>Fecha</th>
+                <th>Usuario</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ListaNumeral)
+            {
+                var background = "white";
+                var usuario = "";
+                switch (item.Idestado)
+                {
+                    case 0:
+                        background = "#F39898"; break;
+                    case 1:
+                        background = "#FFF2CC"; usuario = item.Verrusucreacion; break;
+                    case 2:
+                        background = "#A6CD8C"; usuario = item.Vernusumodificacion; break;
+                }
+                <tr>
+                    <td>@item.Numhisabrev</td>
+                    <td style="background-color:@background;font-weight: bold;">@item.Estado</td>
+                    <td>@item.Vernnro</td>
+                    <td>@item.FechaEstado</td>
+                    <td>@usuario</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div style="display:inline-block;vertical-align: top;">
+    <div class="content-titulo" style="width:100%; text-align: center; font-size: 12px;margin-bottom: 2px">REPORTE GENERACIÓN DE NUMERALES</div>
+    <table border="0" class="pretty tabla-icono" cellspacing="0" style="width: 500px;" id="tabla">
+        <thead>
+            <tr>
+                <th>Acciones</th>
+                <th>Versión</th>
+                <th>Periodo</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th>Usuario</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ListaVersionReporte)
+            {
+                var estado = "Generado";
+                var background = "#FFF2CC";
+                var fechaestado = item.Verrfeccreacion;
+                var usuario = item.Verrusucreacion;
+                if (item.Verrestado == 2)
+                {
+                    estado = "Validado";
+                    background = "#A6CD8C";
+                    fechaestado = item.Verrfecmodificacion;
+                    usuario = item.Verrusumodificacion;
+                }
+                var periodo = item.Verrfechaperiodo.Value.ToString("MM") + " " + item.Verrfechaperiodo.Value.Year.ToString();
+                <tr>
+                    <td>
+                        @if (estado == "Generado")
+                        {
+                            <a href="JavaScript:validaVersion(@item.Verrcodi);" title="Validar"><img src="~/Content/Images/btn-ok.png" alt="" /></a>
+                        }
+                        <a onclick="consultarDetalleReporte(@item.Verrcodi)" title="Mostar Detalle"><img src="~/Content/Images/btn-open.png" alt=""></a>
+                        <a href="JavaScript:exportaVersionReporte(@item.Verrcodi);" title="Exportar"><img src="~/Content/Images/ExportExcel.png" alt="" /></a>
+                    </td>
+                    <td>@item.Verrnro</td>
+                    <td>@periodo</td>
+                    <td style="background-color:@background;font-weight: bold;">@estado</td>
+                    <td>@fechaestado</td>
+                    <td>@usuario</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<input type="hidden" id="txtNroEstado" value="@Model.NroEstadoNum" />

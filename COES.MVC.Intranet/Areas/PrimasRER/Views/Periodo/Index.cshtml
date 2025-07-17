@@ -1,0 +1,167 @@
+﻿@model COES.MVC.Intranet.Areas.PrimasRER.Models.PrimasRERModel
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@{
+    ViewBag.Title = "Periodos y Revisiones de Primas RER";
+    Layout = Model.UsarLayoutModulo ? "~/Views/Shared/_LayoutAlter.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+
+<link href="~/Areas/PrimasRER/Content/Css/css.css?v=1.0.0" rel="stylesheet" />
+<script src="~/Areas/PrimasRER/Content/Scripts/periodo_index.js?v=1.0.1"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Periodos y Revisiones</div>
+    <div class="content-botonera"></div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#vistaPeriodo">Periodo de Reporte</a></li>
+            <li class='tab'><a href="#vistaRevision">Revisión</a></li>
+        </ul>
+        <div class='panel-container'>
+            <div id="vistaPeriodo">
+                <div class="content-tabla">
+                    <div style="clear:both; height:5px"></div>
+                    <div class="content-tabla">
+                        <div class="table-list" id="listado"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="vistaRevision">
+                <div id="div_revision" class="content-tabla" style="display: none">
+                    <div style="clear:both; height:5px"></div>
+                    <table style="margin-bottom: 25px;" role="presentation">
+                        <tr>
+                            <td style="width: 50px;vertical-align: middle;">
+                                <input type="hidden" id="rev_ipericodi" value="" />
+                                <span class="rev_iperinombre" style=" font-weight: bold;font-size: 20px;"></span>
+                            </td>
+                            <td style="padding-left: 5px;">
+                                @if (Model.TienePermisoNuevo)
+                                {
+                                    <input type="button" id="btnNuevoRevision" value="Nuevo">
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="content-tabla">
+                        <div class="table-list" id="rev_listado"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Registrar / editar revision-->
+<div id="popupRevision" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: 400px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Revisión</span></div>
+    <div id="" class="">
+        <div id="" style="margin-top: 10px;"></div>
+        <input type="hidden" id="rev_rerrevcodi" value="0" />
+        <table id="" style="margin-top: 10px;" role="presentation">
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px; width: 175px;">Tipo de Revisión (*):</td>
+                <td style="width: 175px; padding-top: 20px;">
+                    <input type="radio" name="rev_tipo" value="M" checked="checked">Mensual
+                    <input type="radio" name="rev_tipo" value="R">Revisión<br>
+                </td>
+                <td style="padding-top: 20px;"></td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px;">Nombre de Revisión (*):</td>
+                <td style="padding-top: 20px;">
+                    <input type="text" id="rev_nombre" value="" style="width: 130px" />
+                </td>
+                <td style="padding-top: 20px;"></td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px;">Estado (*):</td>
+                <td style="padding-top: 20px;">
+                    <select name="rev_estado">
+                        <option value="A" selected>Abierto</option>
+                        <option value="C">Cerrado</option>
+                    </select>
+                </td>
+                <td style="padding-top: 20px;"></td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px;">Fecha de<br />creación del periodo<br />del Reporte (*):</td>
+                <td style="padding-top: 20px;">
+                    <input type="text" id="rev_fecha" value="" style="width: 130px" />
+                </td>
+                <td style="padding-top: 20px;">
+                    <img class="iconoInformativo" src="~/Content/Images/ico-info.gif" alt="Esta fecha será el límite de envió de Solicitudes de EDI en el ‘Periodo de Reporte EDI’ por el sistema Extranet. Luego de esa fecha no será posible ingresar, editar, ni eliminar Solicitudes de EDI" title="Esta fecha será el límite de envió de Solicitudes de EDI en el ‘Periodo de Reporte EDI’ por el sistema Extranet. Luego de esa fecha no será posible ingresar, editar ni eliminar Solicitudes de EDI" />
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-top: 20px;" colspan="3">(*) Campos obligatorios</td>
+            </tr>
+        </table>
+    </div>
+    <div id="" style="margin-top: 15px;">
+        <input type="button" id="btnGuardarRevision" value="Guardar" />
+    </div>
+</div>
+
+<!--Ver revision-->
+<div id="popupVerRevision" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: 500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ver Revisión</span></div>
+    <div id="" class="">
+        <div id="" style="margin-top: 10px;"></div>
+        <table id="" style="margin-top: 10px;" role="presentation">
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px; width: 175px;">Tipo de Revisión:</td>
+                <td id="ver_rev_tipo" style="width: 175px; padding-top: 20px;"></td>
+                <td style="padding-top: 20px;"></td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px;">Nombre de Revisión:</td>
+                <td id="ver_rev_nombre" style="padding-top: 20px;"></td>
+                <td style="padding-top: 20px;"></td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px;">Estado:</td>
+                <td id="ver_rev_estado" style="padding-top: 20px;"></td>
+                <td style="padding-top: 20px;"></td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px;">Fecha de<br />creación del periodo<br />del Reporte:</td>
+                <td id="ver_rev_fecha" style="padding-top: 20px;">
+                    <input type="text" id="" value="" style="width: 95px" />
+                </td>
+                <td style="padding-top: 20px;">
+                    <img class="iconoInformativo" src="~/Content/Images/ico-info.gif" alt="Esta fecha será el límite de envió de Solicitudes de EDI en el ‘Periodo de Reporte EDI’ por el sistema Extranet. Luego de esa fecha no será posible ingresar, editar, ni eliminar Solicitudes de EDI" title="Esta fecha será el límite de envió de Solicitudes de EDI en el ‘Periodo de Reporte EDI’ por el sistema Extranet. Luego de esa fecha no será posible ingresar, editar ni eliminar Solicitudes de EDI" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px;">Usuario última<br />modificación:</td>
+                <td id="ver_rev_modif_usuario" style="padding-top: 20px;"></td>
+                <td style="padding-top: 20px;"></td>
+            </tr>
+            <tr>
+                <td class="tbform-label" style="padding-top: 20px;">Fecha última<br />modificación:</td>
+                <td id="ver_rev_modif_fecha" style="padding-top: 20px;"></td>
+                <td style="padding-top: 20px;"></td>
+            </tr>
+        </table>
+    </div>
+</div>

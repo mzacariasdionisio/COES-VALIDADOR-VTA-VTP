@@ -1,0 +1,216 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.FichaTecnicaModel
+
+<style type="text/css">
+    .ui-menu {
+        width: 150px;
+        font-size: 100%;
+    }
+
+        .ui-menu kbd { /* Keyboard shortcuts for ui-contextmenu titles */
+            float: right;
+        }
+
+    ul.ui-contextmenu {
+        z-index: 99999;
+    }
+    /* custom alignment (set by 'renderColumns'' event) */
+    td.alignRight {
+        text-align: right;
+    }
+
+    td.alignCenter {
+        text-align: center;
+    }
+</style>
+
+<div class="search-content" style="padding:10px; margin-bottom:15px">
+    <table class="content-tabla-search" style="width:auto">
+        <tr>
+            <td class="tbform-label">Origen de Datos:</td>
+            <td>
+                <input type="radio" id="origen_1" name="origen" value="1" checked disabled> Tipo de Equipo
+                <input type="radio" id="origen_2" name="origen" value="2" disabled> Categoria de Grupo
+            </td>
+            <td>
+                <select id="cbFamiliaEquipo" style=" width: 242px; display: none" disabled>
+                    <option value="0">--SELECCIONE--</option>
+                    @foreach (var item in Model.ListaFamilia)
+                    {
+                        <option value="@item.Famcodi">@item.Famnomb</option>
+                    }
+                </select>
+                <select id="cbCategoriaGrupo" style=" width: 234px; display: none" disabled>
+                    <option value="0">--SELECCIONE--</option>
+                    @foreach (var item in Model.ListaCategoria)
+                    {
+                        <option value="@item.Catecodi">@item.Catenomb</option>
+                    }
+                </select>
+            </td>
+            <td class="tr_estado" style="display: none">
+                Estado:
+            </td>
+            <td class="tr_estado" style="display: none">
+                <select id="cbEstado" style=" width: 70px;" disabled>
+                    @foreach (var item in Model.ListaEstado)
+                    {
+                        <option value="@item.EstadoCodigo">@item.EstadoDescripcion</option>
+                    }
+                </select>
+            </td>
+            <td>
+                <table style="width:200px;">
+                    <tr>
+                        <td id="tdGuardar" style="display: none">
+                            <input id="btnGuardar" type="button" value="Guardar">
+                        </td>
+                        <td>
+                            <input id="btnVistaPrevia" type="button" value="Vista Previa">
+                        </td>
+                        <td id="tdCancelar" style="display: none">
+                            <input id="btnCancelar" type="button" value="Cancelar">
+                        </td>
+                        <td id="tdCancelar2" style="display: none">
+                            <input id="btnCancelar2" type="button" value="Cerrar">
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr id="tr_ficha_padre" style="display: none">
+            <td></td>
+            <td class="tbform-label" style="text-align: right">Ficha Padre:</td>
+            <td>
+                <select id="cbFichaPadre" style=" width: 351px; display: none" disabled>
+                    <option value="0">--[No Seleccionado]--</option>
+                    @foreach (var item in Model.ListaFichaTecnicaPadre)
+                    {
+                        <option value="@item.Fteqcodi">@(item.Famnomb + " - "+ item.Fteqcodi + " "  + item.Fteqnombre)</option>
+                    }
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td class="tbform-label" style="text-align: right">Nombre:</td>
+            <td><input type="text" id="txtNombre" style="width: 350px" disabled /></td>
+        </tr>
+    </table>
+</div>
+
+<div id="tab-container" class='tab-container' style="display: none">
+    <ul class='etabs'>
+        <li class='tab active'><a href="#vistaTree">Tree</a></li>
+        <li class='tab' id="tab_nota"><a href="#vistaNota">Notas</a></li>
+        <li class='tab' id="tab_previa"><a href="#vistaPrevia">Vista Previa</a></li>
+    </ul>
+    <div class='panel-container'>
+        <div id="vistaTree">
+
+            <table id="treeFT">
+                <colgroup>
+                    <col style="width:50px">
+                    <col style="width:350px">
+                    <col style="width:50px">
+                    <col style="width:150px">
+                    <col style="width:50px">
+                    <col style="width:250px">
+                    <col style="width:50px">
+                    <col style="width:50px">
+                    <col style="width:50px">
+                    <col style="width: 110px;">
+                    <col style="width: 110px;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th></th>
+                        <th>Orientación</th>
+                        <th>Tipo</th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Unidad</th>
+                        <th>Tipo</th>
+                        <th>Nota</th>
+                        <th>Usuario</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td style="text-align: center"></td>
+                        <td></td>
+                        <td style="text-align: center"></td>
+                        <td></td>
+                        <td style="text-align: center"></td>
+                        <td style="text-align: center"></td>
+                        <td style="text-align: center"></td>
+                        <td style="text-align: center"></td>
+                        <td style="text-align: center"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="vistaNota">
+            <div class="content-botonera" style="display: none">
+                <input type="button" id="btnNotaNuevo" value="Nuevo" />
+                <input type="button" id="btnNotaConsultar" value="Consultar" />
+            </div>
+
+            <!--Formulario de nota-->
+            <div id="formularioNota">
+                <div class="popup-title" style="    padding-top: 15px;"><span>Nueva Nota</span></div>
+
+                <table style=" margin-top: 15px;">
+                    <tbody>
+                        <tr>
+                            <td class="tbform-label" style="    vertical-align: top;">Número:</td>
+                            <td class="tbform-control" style="vertical-align: top;">
+                                <input type="hidden" id="hfCodigoNota" value="0" />
+                                <input type="number" id="frmNotaNum" value="" style="width: 50px;" autocomplete=off />
+                            </td>
+                            <td class="tbform-label" style="vertical-align: top;">Nota:</td>
+                            <td class="tbform-control" style="vertical-align: top;">
+                                <textarea cols="100" rows="2" id="frmNotaDesc" style="border: 1px solid #dddddd;"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td id="tdNotaGuardar" colspan="2">
+                                <input id="btnNotaGuardar" type="button" value="Agregar">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="clear:both; height:20px"></div>
+            </div>
+
+            <!--Lista de notas-->
+            <div class="popup-title" style="    padding-top: 15px;"><span>Listado</span></div>
+            <div class="content-tabla">
+                <div class="table-list" id="listadoNota"></div>
+            </div>
+        </div>
+
+        <div id="vistaPrevia">
+            <table id="reporte222" class="pretty tabla-icono tree_ficha_tecnica" style="display: block; overflow: auto hidden; table-layout: fixed; width: 1151px;"><tbody><tr><td class="agrup_raiz orden">1</td><td colspan="8" class="agrup_raiz nombre">DATOS GENERALES <span class="nota_agrup"></span></td></tr><tr><td rowspan="2"></td><td class="propiedad orden">1.1</td><td colspan="5" class="propiedad nombre">Empresa <span class="nota_item"></span></td><td class="propiedad unidad"></td><td class="propiedad valor"></td></tr><tr><td class="propiedad orden">1.2</td><td colspan="5" class="propiedad nombre">Nombre de la línea <span class="nota_item"></span></td><td class="propiedad unidad"></td><td class="propiedad valor">L.T. 6627</td></tr><tr><td class="agrup_raiz orden">2</td><td colspan="8" class="agrup_raiz nombre">LÍNEA DE TRANSMISIÓN <span class="nota_agrup"></span></td></tr><tr><td rowspan="22"></td><td class="propiedad orden">2.1</td><td colspan="5" class="propiedad nombre">Código de la línea <span class="nota_item"></span></td><td class="propiedad unidad"></td><td class="propiedad valor">768</td></tr><tr><td class="propiedad orden">2.2</td><td colspan="5" class="propiedad nombre">Nivel de Tensión <span class="nota_item"></span></td><td class="propiedad unidad">[kV]</td><td class="propiedad valor">60</td></tr><tr><td class="propiedad orden">2.3</td><td colspan="5" class="propiedad nombre">Longitud <span class="nota_item">(1)</span></td><td class="propiedad unidad">[km]</td><td class="propiedad valor">14.9</td></tr><tr><td class="propiedad orden">2.4</td><td colspan="5" class="propiedad nombre">Capacidad nominal de transmisión <span class="nota_item"></span></td><td class="propiedad unidad">[MVA]</td><td class="propiedad valor"></td></tr><tr><td rowspan="1" class="agrup_hijo orden">2.5</td><td rowspan="1" class="agrup_hijo nombre">Capacidad de sobrecarga <span class="nota_agrup">(2)</span></td><td rowspan="1" class="agrup_hijo orden">2.5.2</td><td rowspan="1" class="agrup_hijo nombre">carpeta 1 <span class="nota_agrup">(2)</span></td><td class="propiedad orden">2.5.2.3</td><td colspan="1" class="propiedad nombre">(2.7.1) RESISTENCIA DE SECUENCIA POSTITIVA R1 <span class="nota_item"></span></td><td class="propiedad unidad">[Ohm/km]</td><td class="propiedad valor">0.0763</td></tr><tr><td rowspan="1" class="agrup_hijo orden">2.6</td><td rowspan="1" class="agrup_hijo nombre">prueba 2 <span class="nota_agrup">(2)</span></td><td class="propiedad orden">2.6.2</td><td colspan="3" class="propiedad nombre">(2.7.9) CONDUCTANCIA DE SECUENCIA POSITIVA G1 <span class="nota_item"></span></td><td class="propiedad unidad">[uS/km]</td><td class="propiedad valor">0</td></tr><tr><td class="agrup_hijo orden">2.7</td><td colspan="7" class="agrup_hijo nombre">prueba <span class="nota_agrup">(2)</span></td></tr><tr><td rowspan="8" class="agrup_hijo orden">2.8</td><td rowspan="8" class="agrup_hijo nombre">Parámetros eléctricos de la línea <span class="nota_agrup"></span></td><td class="propiedad orden">2.8.1</td><td colspan="3" class="propiedad nombre">Reactancia de secuencia positiva X1 <span class="nota_item"></span></td><td class="propiedad unidad">[Ohm/km]</td><td class="propiedad valor">0.4342</td></tr><tr><td class="propiedad orden">2.8.2</td><td colspan="3" class="propiedad nombre">Resistencia de secuencia postitiva R1 <span class="nota_item"></span></td><td class="propiedad unidad">[Ohm/km]</td><td class="propiedad valor">0.0763</td></tr><tr><td class="propiedad orden">2.8.3</td><td colspan="3" class="propiedad nombre">Resistencia de secuencia cero R0 <span class="nota_item"></span></td><td class="propiedad unidad">[Ohm/km]</td><td class="propiedad valor">0.6101</td></tr><tr><td class="propiedad orden">2.8.4</td><td colspan="3" class="propiedad nombre">Resistencia mutua R0M <span class="nota_item"></span></td><td class="propiedad unidad">[Ohm/km]</td><td class="propiedad valor">0</td></tr><tr><td class="propiedad orden">2.8.5</td><td colspan="3" class="propiedad nombre">Inductancia mutua X0M <span class="nota_item"></span></td><td class="propiedad unidad">[Ohm/km]</td><td class="propiedad valor">0</td></tr><tr><td class="propiedad orden">2.8.6</td><td colspan="3" class="propiedad nombre">Susceptancia de secuencia positiva B1 <span class="nota_item"></span></td><td class="propiedad unidad">[uS/km]</td><td class="propiedad valor">4.0908</td></tr><tr><td class="propiedad orden">2.8.7</td><td colspan="3" class="propiedad nombre">Susceptancia de secuencia cero B0 <span class="nota_item"></span></td><td class="propiedad unidad">[uS/km]</td><td class="propiedad valor">2.601</td></tr><tr><td class="propiedad orden">2.8.8</td><td colspan="3" class="propiedad nombre">Conductancia de secuencia positiva G1 <span class="nota_item"></span></td><td class="propiedad unidad">[uS/km]</td><td class="propiedad valor">0</td></tr><tr><td rowspan="5" class="agrup_hijo orden">2.9</td><td rowspan="5" class="agrup_hijo nombre">Características del equipamiento <span class="nota_agrup"></span></td><td rowspan="1" class="agrup_hijo orden">2.9.1</td><td rowspan="1" class="agrup_hijo nombre">Estructuras <span class="nota_agrup"></span></td><td class="propiedad orden">2.9.1.1</td><td colspan="1" class="propiedad nombre">Material <span class="nota_item"></span></td><td class="propiedad unidad"></td><td class="propiedad valor"></td></tr><tr><td rowspan="1" class="agrup_hijo orden">2.9.2</td><td rowspan="1" class="agrup_hijo nombre">Conductor <span class="nota_agrup"></span></td><td class="propiedad orden">2.9.2.1</td><td colspan="1" class="propiedad nombre">Calibre <span class="nota_item">(1)</span></td><td class="propiedad unidad">[mm<span class="sup">2</span>]</td><td class="propiedad valor"></td></tr><tr><td rowspan="2" class="agrup_hijo orden">2.9.3</td><td rowspan="2" class="agrup_hijo nombre">Aisladores <span class="nota_agrup"></span></td><td class="propiedad orden">2.9.3.1</td><td colspan="1" class="propiedad nombre">Material <span class="nota_item"></span></td><td class="propiedad unidad"></td><td class="propiedad valor"></td></tr><tr><td class="propiedad orden">2.9.3.2</td><td colspan="1" class="propiedad nombre">Tipo <span class="nota_item"></span></td><td class="propiedad unidad"></td><td class="propiedad valor"></td></tr><tr><td rowspan="1" class="agrup_hijo orden">2.9.4</td><td rowspan="1" class="agrup_hijo nombre">Cable de Guarda <span class="nota_agrup">(3)</span></td><td class="propiedad orden">2.9.4.1</td><td colspan="1" class="propiedad nombre">Material <span class="nota_item"></span></td><td class="propiedad unidad"></td><td class="propiedad valor"></td></tr><tr><td class="propiedad orden">2.10</td><td colspan="5" class="propiedad nombre">Subestación Inicio <span class="nota_item"></span></td><td class="propiedad unidad"></td><td class="propiedad valor"></td></tr><tr><td class="propiedad orden">2.11</td><td colspan="5" class="propiedad nombre">Subestación Fin <span class="nota_item"></span></td><td class="propiedad unidad"></td><td class="propiedad valor"></td></tr><tr class="fila_nota"><td></td><td colspan="8"><table class="tabla_nota" style="width: 100%"><tbody><tr><td style="width: 50px;" class="titulo" rowspan="4">Nota:</td><td style="width: 50px;" class="num">1)</td><td style="width: 400px;" class="desc">De ser el caso indicar los diferentes tramos y sus calibres</td></tr><tr><td style="width: 50px;" class="num">2)</td><td style="width: 400px;" class="desc">Adjuntar configuración incluyendo el soporte del conductor y cable de guarda</td></tr><tr><td style="width: 50px;" class="num">3)</td><td style="width: 400px;" class="desc">En caso de existir cable tipo Cable de Guarda con Fibra Óptica u otra que incluya fibra óptica, indicar las características</td></tr><tr><td style="width: 50px;" class="num">4)</td><td style="width: 400px;" class="desc"> Adjuntar la configuración del número de conductores por fase</td></tr></tbody></table></td></tr></tbody></table>
+        </div>
+    </div>
+</div>
+
+<div style="clear:both; height:20px"></div>
+
+
+<input type="hidden" id="hfNombre" value="@Model.FichaTecnica.Fteqnombre" />
+<input type="hidden" id="hfCodigo" value="@Model.FichaTecnica.Fteqcodi" />
+<input type="hidden" id="hfFamcodi" value="@Model.FichaTecnica.Famcodi" />
+<input type="hidden" id="hfCatecodi" value="@Model.FichaTecnica.Catecodi" />
+<input type="hidden" id="hfJsonTree" value='@Model.TreeJson' />
+<input type="hidden" id="hfOrigen" value="@Model.FichaTecnica.Origen" />
+<input type="hidden" id="hfNumOrigenpadre" value="@Model.NumOrigenpadre" />
+<input type="hidden" id="hfCodigoPadre" value="@Model.FichaTecnica.Fteqpadre" />
+<input type="hidden" id="hfEstado" value="@Model.FichaTecnica.Fteqestado" />
+<input type="hidden" id="hfJsonNota" value='@Model.NotaJson' />

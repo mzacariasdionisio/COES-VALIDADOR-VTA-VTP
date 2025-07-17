@@ -1,0 +1,141 @@
+﻿@model COES.MVC.Intranet.Areas.CompensacionRSF.Models.ProvisionBaseModel
+@{
+    ViewBag.Title = "Form";
+    string sTitulo = ViewData["sTitulo"].ToString();
+    string sAccion = ViewData["sAccion"].ToString();
+    string sSelected = "";
+}
+
+<link href="~/Areas/CompensacionRSF/Content/Css/transferencia.css" rel="stylesheet" />
+<script src="~/Areas/CompensacionRSF/Content/Scripts/provisionbase.js"></script>
+<script src="~/Areas/CompensacionRSF/Content/Scripts/load.js"></script>
+
+@using (Html.BeginForm("Save", "ProvisionBase", FormMethod.Post, new { id = "frmFormulario", @class = "cmxform" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="ast">
+        <div class="form-title">
+            <div class="content-titulo">@sTitulo</div>
+            <div class="content-botonera">
+                @*@if (Model.bGrabar)
+                {
+                    <input type="submit" value="@sAccion" alt="@sAccion" title="@sAccion" />
+                }*@
+                <input type="submit" value="@sAccion" alt="@sAccion" title="@sAccion" />
+                <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index", "ProvisionBase")'" alt="Retornar" title="Retornar" />
+            </div>
+        </div>
+        <div style="padding:20px; width:800px;">
+            @Html.HiddenFor(model => model.EntidadProvisionbase.Vcrpbcodi)
+            @if (Model.sError != "" && Model.sError != null)
+            {
+                <div id="mensaje" class="action-message" style="margin:0; margin-bottom:10px">@Model.sError</div>
+            }
+        <table cellspacing="2" cellpadding="5">
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.Vcrpbperiodoini, "Periodo Inicio") (*)</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.Vcrpbperiodoini, "{0:dd/MM/yyyy}", new { @class = "txtFecha" })@Html.ValidationMessageFor(model => model.Vcrpbperiodoini)</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.Vcrpbperiodofin, "Periodo Fin") (*)</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.Vcrpbperiodofin, "{0:dd/MM/yyyy}", new { @class = "txtFecha" })@Html.ValidationMessageFor(model => model.Vcrpbperiodofin)</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadProvisionbase.Equicodi, "Central") (*)</div></td>
+                <td>
+                    <div class="editor-field">
+                        <select id="EntidadProvisionbase_Equicodi" name="EntidadProvisionbase.Equicodi">
+                            @foreach (var item in Model.ListaCentralGeneracion)
+                            {
+                                sSelected = "";
+                                if (@item.CentGeneCodi == Model.EntidadProvisionbase.Equicodi)
+                                { sSelected = "selected"; }
+                                <option value="@item.CentGeneCodi" @sSelected>@item.CentGeneNombre</option>
+                            }
+                        </select>
+                    </div>
+                </td>
+
+            </tr>
+            <tr>
+                <td><div class="editor-label">URS (*)</div></td>
+                <td>
+                    <div class="editor-field">
+                        <select id="EntidadProvisionbase_Grupocodi" name="EntidadProvisionbase.Grupocodi" style="width:220px;">
+                            @foreach (var item in Model.ListaURS)
+                            {
+                                sSelected = "";
+                                if (@item.GrupoCodi == Model.EntidadProvisionbase.Grupocodi)
+                                { sSelected = "selected"; }
+                                <option value="@item.GrupoCodi" @sSelected>@item.GrupoNomb</option>
+                            }
+                        </select>
+                    </div>
+                </td>
+
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadProvisionbase.Vcrpbpotenciabf, "PBF") <sub>subir</sub> MW (*)</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadProvisionbase.Vcrpbpotenciabf, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>@*//ASSETEC: 202010*@
+                <td><div class="editor-label">[2021].@Html.LabelFor(model => model.EntidadProvisionbase.Vcrpbpotenciabfb, "PBF") <sub>bajar</sub> MW (*)</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadProvisionbase.Vcrpbpotenciabfb, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadProvisionbase.Vcrpbpreciobf, "PrBF") <sub>subir</sub> (*)</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadProvisionbase.Vcrpbpreciobf, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">[2021].@Html.LabelFor(model => model.EntidadProvisionbase.Vcrpbpreciobfb, "PrBF") <sub>bajar</sub> (*)</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadProvisionbase.Vcrpbpreciobfb, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>
+                <td style="width:150px;">&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr><td colspan="2">Nota(*): Información obligatoria</td></tr>
+        </table>
+        </div>
+    </div>
+}
+
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+<script>
+    function FormatFecha(sFecha) {   //DD/MM/AAAA
+        if (sFecha == "") return false;
+        var sDia = sFecha.substring(0, 2);
+        var sMes = sFecha.substring(3, 5);
+        var sAnio = sFecha.substring(6, 10);
+        return new Date(sAnio, sMes, sDia);
+    }
+
+    jQuery.validator.addMethod("MasGrandeQue", function (value, element, params) {
+        //value: (val)fechafinal / params: (tag)fechainicial
+        if (FormatFecha(value)) {
+            //Si la fechafinal no es nulo compara
+            return FormatFecha(value) >= FormatFecha($(params).val());
+        }
+        //caso contrario si la fechafinal es vacia, devuelve true
+        return !isNaN(value);
+    }, '<br>Debe ser mayor que la fecha de Inicio de Operación.');
+
+    $("#frmFormulario").validate({
+        rules: {
+            Vcrpbperiodoini: {
+                required: true,
+            },
+            Vcrpbperiodofin: {
+                MasGrandeQue: "#Vcrpbperiodoini"
+            },
+            "EntidadProvisionbase.Vcrpbpotenciabf": {
+                required: true,
+                number: true
+            },
+            "EntidadProvisionbase.Vcrpbpreciobf": {
+                required: true,
+                number: true
+            }
+        }
+    });
+</script>

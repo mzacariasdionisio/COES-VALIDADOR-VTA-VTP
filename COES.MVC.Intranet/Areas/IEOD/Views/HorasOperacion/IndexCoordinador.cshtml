@@ -1,0 +1,627 @@
+﻿@model COES.MVC.Intranet.Areas.IEOD.Models.HOReporteModel
+@{
+    ViewBag.Title = "Horas de Operación";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/fixedcolumn.js?v=1.2"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/contextmenu.js"></script>
+<script src="~/Content/Scripts/jquery.plugin.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/jquery.timeentry.js"></script>
+
+<script src="~/Areas/IEOD/Content/Scripts/horasoperacion/globales.js?v=5.0.7"></script>
+<script src="~/Areas/IEOD/Content/Scripts/horasoperacion/grafico.js?v=5.0.7"></script>
+
+<script src="~/Areas/IEOD/Content/Scripts/horasoperacion/horasoperacion.js?v=5.0.7"></script>
+<script src="~/Areas/IEOD/Content/Scripts/horasoperacion/horasoperacionValidacion.js?v=5.0.7"></script>
+<script src="~/Areas/IEOD/Content/Scripts/horasoperacion/horasoperacionCoordinador.js?v=5.0.7"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/contextmenu.css" rel="stylesheet" />
+<link href="~/Areas/IEOD/Content/Css/Color.css?v=5.0.7" rel="stylesheet" />
+<link href="~/Areas/IEOD/Content/Css/css.css?v=5.0.7" rel="stylesheet" />
+<link href="~/Areas/IEOD/Content/Css/formulario.css?v=5.0.7" rel="stylesheet" />
+
+<script src="~/Areas/IEOD/Content/Scripts/horasoperacion/bitacora.js?v=5.0.7"></script>
+<script src="~/Areas/IEOD/Content/Scripts/horasoperacion/busquedaEquipo.js?v=5.0.7"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Horas de Operación</div>
+    <div class="content-botonera" id="container">
+        <input type="button" id="btnColorCentral" value="Configuración" />
+        <input type="button" id="btnManual" value="Manual de usuario" />
+        <input type="button" id="btnReporte" value="Reporte" />
+    </div>
+</div>
+
+<style type="text/css">
+    .btnAcciones {
+        width: 160px !important;
+        margin: 0 auto !important;
+    }
+
+    .tabla_filtro_ho tr td {
+        padding-right: 5px;
+    }
+</style>
+
+<div class="content-hijo" id="mainLayout" style="">
+    <input type="hidden" id="cbCentral" value="@Model.IdCentralSelect" />
+    <input type="hidden" id="cbTipoCentral" value="@Model.IdTipoCentral" />
+    <input type="hidden" id="hfEquipoDefault" value="@Model.IdEquipo" />
+    <input type="hidden" id="hfHoraFinDefecto" value="@Model.HoraFinDefecto" />
+    <input type="hidden" id="hfStrEquiposInv" value="" />
+    <input type="hidden" id="hfAlertasOcultas" value="" />
+
+    <div class="search-content" style="padding-top: 5px; padding-bottom: 1px;">
+        <table>
+            <tr>
+                <td style="vertical-align: middle;">
+                    <table class="content-tabla-search tabla_filtro_ho" style="width:auto">
+                        <tr>
+                            <td>Empresa:</td>
+                            <td>
+                                <select id="cbEmpresa" name="cbEmpresa" style="width:250px;">
+                                    <option value="-2">--TODOS--</option>
+                                    @foreach (var item in Model.ListaEmpresas)
+                                    {
+                                        <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                    }
+                                </select>
+                            </td>
+
+                            <td style="padding-left: 15px;">Fecha:</td>
+                            <td>
+                                <input type="text" id="txtFecha" name="Fecha" value="@Model.Fecha" />
+                                <input type="hidden" id="txtFechaTmp2" value="@Model.Fecha" />
+                                <input type="hidden" id="txtFechaTmpAlCargarVista" value="@Model.Fecha" />
+                                <input type="hidden" id="txtHoraMinTmpAlCargarVista" value="@Model.HoraMinutoActual" />
+                            </td>
+
+                            <td style="padding-left: 15px;">Hora y minuto:</td>
+                            <td id="celda_horamin_check">
+                                <input type="radio" name="checkHoraMinuto" value="1" checked="checked">
+                                Tiempo Real
+                                <br>
+                                <input type="radio" name="checkHoraMinuto" value="2">
+                                <input type="text" id="input_horamin_check" disabled value="@Model.HoraMinutoActual" style="width: 49px;">
+                            </td>
+                            <td id="celda_horamin_input">
+                                <input type="text" id="input_horamin" value="@Model.HoraMinutoActual" style="width: 49px;">
+                            </td>
+
+                            <td style="padding-left: 30px;">
+                                <input type="button" id="btnConsultar" value="Consultar" />
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td colspan="2">
+                                <input type="checkbox" id="chkConsultarOtros" name="chkConsultarOtros" checked="checked" /> Validación completa
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="text-align: right;">
+                    <div id="barraHorasOperacion" style="display:inline-block;">
+                        <table style="width:100%">
+                            <tr>
+                                <td style="width:50%">
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:5px; padding-bottom:10px; display:block" id="divAcciones">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                @if (Model.TienePermisoAdministrador)
+                                                {
+                                                    <td class="content-action">
+                                                        <a href="#" id="btnAgregarHoraOperacionEms">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/IEOD/Content/Images/btn-add.png" title="Agregar nueva Hora de Operación" /><br />
+                                                                <span>Agregar</span>
+                                                            </div>
+                                                        </a>
+                                                    </td>
+                                                    <td class="content-action" style="display: none">
+                                                        <a href="#" id="btnGuardarHoraOperacionEms">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/IEOD/Content/Images/save.png" id="imgGuardarHoraOperacion" style="opacity: 0.5;" title="Guardar las modificaciones a las Horas de Operación" /><br />
+                                                                <span>Guardar</span>
+                                                            </div>
+                                                        </a>
+                                                    </td>
+                                                    <td class="content-action">
+                                                        <a href="#" id="btnContinuarDia">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/IEOD/Content/Images/btn-add.png" /><br />
+                                                                <span>Continuar Día</span>
+                                                            </div>
+                                                        </a>
+                                                    </td>
+                                                }
+                                                <td class="content-action">
+                                                    <a href="#" id="btnVerEnvios">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/IEOD/Content/Images/envios.png" /><br />
+                                                            <span>Envíos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td class="content-action">
+                                                    <a href="#" id="btnVerLeyenda">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Content/Images/leyenda.png" /><br />
+                                                            <span>Leyenda</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!--Mensaje cuando se realida CRUD sobre las horas de operación-->
+    <div id="mensajePrincipal" class="action-message" style="display: none; margin: 0; margin-bottom: 10px; padding-left: 36px;">Por favor seleccione empresa y la fecha.</div>
+
+    <!--Alertas con otros aplicativos-->
+    <div id="mensajeFijo" class="action-alert" style="display: none; margin: 0; margin-bottom: 10px; margin-top: -10px;"></div>
+
+    <!--Alertas de horas de operación-->
+    <div id="mensajeAlerta" class="action-alert" style="display: none; margin: 0; margin-bottom: 10px; margin-top: -10px;"></div>
+
+    <!--mensaje de validación de guardar lista de horas de operación-->
+    <div id="divValidacion_div" class="vistaDetalle table-list" style="width: auto;color: red; display: block;"></div>
+
+    <table id="tblValidacionOtroApp" style="margin-top: 0px; margin-bottom: 5px; width: auto;">
+        <tr class="fila_val_costo_incremental" style="display: none">
+            <td colspan="2">
+                <table style="margin-top: 0px; margin-bottom: 0px;">
+                    <tr>
+                        <td>
+                            <div id="div_msj_val_costo_incremental" style="text-indent: 0px;"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <i>Presione el botón <b>Confirmar</b> para guardar la(s) hora(s) de operación.</i>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr class="fila_val_intervenciones" style="display: none">
+            <td colspan="2">
+                <table style="margin-top: 0px; margin-bottom: 0px;">
+                    <tr>
+                        <td>
+                            <div id="div_msj_val_intervenciones" style="text-indent: 0px;"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <i>Presione el botón <b>Confirmar</b> para guardar la hora de operación, esta acción enviará un correo electrónico al Administrador y usuario que registró la intervención.</i>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <input type="button" id="btnAceptar3" value="Confirmar" style="display: none" />
+                <input type="button" id="btnCancelar3" value="Cancelar" style="display: none" />
+            </td>
+            <td>
+            </td>
+        </tr>
+    </table>
+
+    <!--TABS-->
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#vistaListado">Listado</a></li>
+            <li class='tab'><a href="#vistaGrafico">Gráfico</a></li>
+            <li class='tab'><a href="#vistaDetalle">Detalle</a></li>
+            <li class='tab tab_correo' style="display: none"><a href="#vistaCorreo">Correos</a></li>
+            <li class='tab'><a href="#vistaCongestion">Congestión</a></li>
+            <li class='tab'><a href="#vistaCostoCT">Costo C.T.</a></li>
+        </ul>
+        <div class='panel-container'>
+
+            <!--Vista listado-->
+            <div id="vistaListado">
+                <div class="content-tabla">
+                    <div style="clear:both; height:5px"></div>
+                    <div id="botones-listado" style="display: none">
+                        <label style="color:red;">Existen cambios pendientes</label>
+                        <input id="btnActualizarMultiple" name="btnActualizarMultiple" type="button" class="btn btn-primary" value="Grabar cambios" />
+                    </div>
+
+                    <div class="table-list" id="listado"></div>
+
+                    <div style='clear: both; height: 30px'></div>
+                    <div class="msjModifHOP" style="display: none; margin-top: 8px;">
+                        * Existe modificación de Horas de Operación. Guardé los cambios para visualizar las alarmas EMS actualizadas.
+                    </div>
+                </div>
+            </div>
+            <!--Vista gráfico-->
+            <div id="vistaGrafico">
+                <div class="content-tabla">
+                    <div style="clear:both; height:5px"></div>
+                    <div style="margin-bottom: 15px;">
+
+                        <!--Desglose-->
+                        <table style="width: auto; border-collapse: initial; margin-top: 7px;">
+                            <tr>
+                                <td>
+                                    <input type="checkbox" id="chkDesglose" onclick="grafico_displayDiv('dv-desglose')">Desglose CMg
+                                    <input type="checkbox" id="chkCongestion" onclick="grafico_displayDiv('dv-congestion')">Congestion
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="table-list" id="grafico" style="overflow-x: auto; position: relative;"></div>
+                    <br />
+
+                    <div id="tituloGraficoUnidNoReg" style="margin-bottom: 5px; display: none;">
+                        Unidades de Generación Operativas reportadas por el EMS que pueden ser registradas como Horas de Operación (Potencia activa mayor o igual a @(Model.ValorUmbral) MW):
+                    </div>
+                    <div class="table-list" id="graficoUnidNoReg" style="overflow-x: auto; position: relative;"></div>
+                    <br />
+
+                    <div id="tituloGraficoUnidNoRegScada" style="margin-bottom: 5px; display: none;">
+                        Unidades de Generación Operativas reportadas por el SCADA que pueden ser registradas como Horas de Operación (Potencia activa mayor o igual a @(Model.ValorUmbral) MW):
+                    </div>
+                    <div class="table-list" id="graficoUnidNoRegScada" style="overflow-x: auto; position: relative; "></div>
+                    <br />
+
+                    <div class="msjModifHOP" style="display: none; margin-top: -24px;">
+                        * Existe modificación de Horas de Operación. Guardé los cambios para visualizar las alarmas EMS actualizadas.
+                    </div>
+                </div>
+            </div>
+            <div id="vistaDetalle">
+                <div id="div_vista_detalle_contenido" class="content-tabla" style="overflow-x: auto;">
+
+                    <!--Lista de formulario-->
+                    <div class="divEdicionMasiva" style="display: flex; flex-direction: row;"></div>
+
+                    <!--botones sobre todos los formularios-->
+                    <div class="table-list" style="width: auto;color: red; display: block;align-content:center;">
+                        <table class="btnAcciones">
+                            <tr>
+                                <td>
+                                    <input type="button" id="btnAceptar2" value="Aceptar" />
+                                    <input type="hidden" id="hfConfirmarValInterv" value="0" />
+                                </td>
+                                <td>
+                                    <input type="button" id="btnCancelar2" value="Cancelar" />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+            <div id="vistaCorreo">
+                <div class="content-tabla">
+                    <div id="listadoCorreo">
+
+                    </div>
+                </div>
+            </div>
+            <div id="vistaCongestion">
+                <iframe id="ifrCongestion" src="" width="1200px" height="600px" frameborder="0" scrolling="no"></iframe>
+            </div>
+            <div id="vistaCostoCT">
+                <div class="content-tabla">
+                    <div style="clear:both; height:5px"></div>
+                    <a href="#" id="btnReporteCT" style="float: right;">
+                        <div class="content-item-action" style=" text-align: right;">
+                            <img src="~/Content/Images/ExportExcel.png" class="set_size" title="Exportar"/>
+                        </div>
+                    </a>
+                    <div class="table-list" id="costoCT"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Alertas-->
+<div id="popupAlertaGenericoXHOP" class="popup-class-1" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Alerta por Hora de Operación</span></div>
+    <div id="formAlertaGenericoXHOP">
+
+    </div>
+</div>
+
+<!--Formularios-->
+
+<div id="newHorasOperacion" style="z-index:9999999998;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Registro de Horas de Operación</span></div>
+    <div id="idForHorasOperacion" style=" width: 790px">
+
+    </div>
+</div>
+
+<div id="busquedaEquipo" class="popup-class-1" style="z-index: 9999999999; display: none; width: 800px"></div>
+
+<div id="popupAgregarDesglose" class="popup-class-1" style="z-index: 9999999999; display: none; width: 342px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Desglose de la Hora de Operación</span></div>
+    <div id="divPopupDesglose" class="content-registro">
+        <div id="desc_ho_rangos_permitido_desglose" style="margin-top: 10px;"></div>
+
+        <table id="tablaAgregarDesglose" style="margin-top: 10px;">
+            <tr>
+                <td class="tbform-label" style="width: 120px;">Tipo</td>
+                <td class="tbform-control">
+                    <select id="desg_form_cbTipo" style="width: 155px;">
+                        @foreach (var item in Model.ListaTipoDesglose)
+                        {
+                            <option value="@item.TipoDesglose">@item.Subcausadesc</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Hora Inicio</td>
+                <td class="tbform-control">
+                    <input type="text" id="desg_form_txtIniF" style="width:78px;" value="" disabled />
+                    <input type="text" id="desg_form_txtIniH" style="width:70px;" value="" autocomplete="off" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Hora Fin</td>
+                <td class="tbform-control">
+                    <input type="text" id="desg_form_txtFinF" style="width:78px;" value="" disabled />
+                    <input type="text" id="desg_form_txtFinH" style="width:70px;" value="" autocomplete="off" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Valor</td>
+                <td class="tbform-control" style="text-align: right;">
+                    <input type="text" id="desg_form_valor" style="width: 50px;    text-align: right;    padding-right: 6px;" value="" autocomplete="off" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="popupBitacora" class="popup-class-1" style="z-index: 9999999999; display: none; width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Registro de Bitácora</span></div>
+    <div id="idPopupBitacora">
+
+    </div>
+</div>
+
+<div id="enviosanteriores" style="z-index:9999999998;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envíos Anteriores</span></div>
+    <div id="idEnviosAnteriores">
+    </div>
+</div>
+
+<div id="popupListaHoOrdParada" class="popup-class-1" style="z-index: 9999999999; display: none; width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Horas de Operación del día anterior con Orden de Parada</span></div>
+    <div id="divPopupListaHoOrdParada">
+    </div>
+    <div style="margin-top: 15px;">
+        <input type="button" id="btnGuardarListaHoSeleccionada" value="Guardar" />
+    </div>
+</div>
+
+<div id="popupLogCorreo" class="popup-class-1" style="width:800px; height: 650px;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Cuerpo del Correo</span></div>
+    <div class="popup-text" id="contenidoLogCorreo" style="width:800px; height: 600px;overflow-y: auto;overflow-x: auto;">
+
+    </div>
+</div>
+
+<!--Leyenda-->
+<div id="popupLeyendaDesglose" class="popup-class-1" style="z-index: 9999999999; display: none; width: 500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Leyenda del Gráfico</span></div>
+    <div id="divPopupDesglose" class="content-registro">
+        <div id="desc_ho_rangos_permitido_desglose" style="margin-top: 10px;"></div>
+
+        <table id="tablaLeyendaDesglose" style="margin-top: 10px;">
+            <tr>
+                <td style="font-weight: bold;">Leyenda de Alertas detectadas a las Horas de Operación: </td>
+            </tr>
+            <tr>
+                <td>
+                    <table style="width:100%">
+                        <tr>
+                            <td style="width: 25px">
+                                <div style="width: 4px;">
+                                    <img style="width: 20px;" src="~/Content/Images/alerta_scada.png?v=2.2" />
+                                </div>
+                            </td>
+                            <td style="width:45%">No presenta señales Scada.</td>
+
+                            <td style="width: 25px">
+                                <div style="width: 4px;">
+                                    <img style="width: 20px;" src="~/Content/Images/alerta_ems.png?v=2.2" />
+                                </div>
+                            </td>
+                            <td style="width:45%">No presenta señales EMS.</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 25px">
+                                <div style="width: 4px;">
+                                    <img style="width: 20px;" src="~/Content/Images/alerta_costo_incremental.png?v=2.2" />
+                                </div>
+                            </td>
+                            <td>Centrales con costos incrementales más caras por bajar.</td>
+
+                            <td style="width: 25px">
+                                <div style="width: 4px;">
+                                    <img style="width: 20px;" src="~/Content/Images/alerta_intervencion.png?v=2.2" />
+                                </div>
+                            </td>
+                            <td>Inconsistencia con Intervención F/S.</td>
+                        </tr>
+
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Calificación de las Horas de Operación:</td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <table style="width:100%">
+                        <tr>
+                            <td style="width: 50px; background-color: #4fc3f7 !important; color: white; border: 1px solid #848484; "></td>
+                            <td style="width:40%">Por potencia o energía</td>
+
+                            <td style="width: 50px; border: 1px solid #848484; background-color: #FAEBD7 !important; color: white;"></td>
+                            <td style="width:40%">A mínima carga</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50px; border: 1px solid #848484; background-color: #5F9EA0 !important; color: white;"></td>
+                            <td>Por tensión</td>
+
+                            <td style="width: 50px; border: 1px solid #848484; background-color: #FF7F50 !important; color: white;"></td>
+                            <td>Por RSF</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50px; border: 1px solid #848484; background-color: #FFFF00 !important; color: white;"></td>
+                            <td>Por restricción operativa temporal</td>
+                            <td style="width: 50px; border: 1px solid #848484; background-color: #008000 !important; color: white;"></td>
+                            <td>Otros</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50px; border: 1px solid #848484; background-color: #A9A9A9 !important; color: white;"></td>
+                            <td>No calificado / Aún no operó</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Desglose:</td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <table style="width:100%">
+                        <tr>
+                            <td id="td_leygraf_tipo_1" style="width: 50px; border: 1px solid #848484; background-color: #0489B1 !important; color: white;"></td>
+                            <td>Plena Carga</td>
+
+                            <td id="td_leygraf_tipo_2" style="width: 50px; border: 1px solid #848484; background-color: #5882FA !important; color: white;"></td>
+                            <td>Potencia Fija</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td id="td_leygraf_tipo_3" style="width: 50px; border: 1px solid #848484; background-color: #0040FF !important; color: white;"></td>
+                            <td>Potencia Máxima</td>
+
+                            <td id="td_leygraf_tipo_4" style="width: 50px; border: 1px solid #848484; background-color: #0431B4 !important; color: white;"></td>
+                            <td>Potencia Mínima</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Congestión:</td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <table>
+                        <tr>
+                            <td id="td_leygraf_tipo_5" style="width: 50px; border: 1px solid #848484; background-color: #F39C12 !important; color: white;"></td>
+                            <td>&nbsp;</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Sistema aislado:</td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <table>
+                        <tr>
+                            <td id="td_leygraf_tipo_5" style="width: 50px; border: 1px solid #ff0000; background-color: white !important; color: red;"></td>
+                            <td>&nbsp;</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td align="left">
+                    <table>
+                        <tr>
+                            <td style="width:70px;"><b>Pmin</b></td>
+                            <td>Potencia mínima (Ficha técnica).</td>
+                        </tr>
+                        <tr>
+                            <td><b>Pef</b></td>
+                            <td>Potencia efectiva (Ficha técnica).</td>
+                        </tr>
+                        <tr>
+                            <td><b>TminO</b></td>
+                            <td>Tiempo mínimo de operación, horas (Ficha técnica).</td>
+                        </tr>
+                        <tr>
+                            <td><b>T ÷ Arr</b></td>
+                            <td>Tiempo entre arranques, horas (Ficha técnica).</td>
+                        </tr>
+                        <tr>
+                            <td><b>PuedeOFF</b></td>
+                            <td valign="top">
+                                Hora del día que ya se podría parar la C.T.
+                                <br />
+                                = Hora (En Paralelo)+ TminO.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td valign="top"><b>PuedeON</b></td>
+                            <td>
+                                Hora del día que la C.T. puede volver a ingresar después de una parada.
+                                <br />
+                                = Hora (Fin de registro) + T ÷ Arr
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

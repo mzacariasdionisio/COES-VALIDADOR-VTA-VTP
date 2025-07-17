@@ -1,0 +1,322 @@
+﻿@{
+    ViewBag.Title = "Registro de Servicios Complementarios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<!--Hoja de estilos-->
+<link href="~/Areas/GMM/Content/Css/css.css" rel="stylesheet" />
+<!--Menu contextual-->
+<script src="~/Content/Scripts/contextmenu.js"></script>
+<link href="~/Content/Css/contextmenu.css" rel="stylesheet" />
+
+<link href="~/Areas/GMM/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Areas/GMM/Content/Scripts/complementarios.js"></script>
+
+<script src="~/Areas/GMM/Content/Scripts/util.js"></script>
+<script src="~/Areas/GMM/Content/Scripts/json2.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<style>
+    input[type="text"]:disabled {
+        background: #ccc !important;
+    }
+    input[type="text"] {
+        background: #fff !important;
+    }
+</style>
+<div class="form-title">
+    <div class="content-titulo">Registro de Insumos del Cálculo por empresa participante</div>
+</div>
+<div class="content-hijo" id="mainLayout" style="height: 1200px; width:90%;">
+    <div id="mensaje"></div>
+    <table style="vertical-align:top;">
+        <tr>
+            <td>
+                <div class="search-content" style="margin-bottom:0px; padding:15px">
+                    <table class="content-tabla-search">
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td>Periodo: </td>
+                                        <td>
+                                            <select id="anho"></select>
+                                        </td>
+                                        <td></td>
+                                        <td>Mes: </td>
+                                        <td>
+                                            <select id="mes">
+                                                <option value="1">Enero</option>
+                                                <option value="2">Febrero</option>
+                                                <option value="3">Marzo</option>
+                                                <option value="4">Abril</option>
+                                                <option value="5">Mayo</option>
+                                                <option value="6">Junio</option>
+                                                <option value="7">Julio</option>
+                                                <option value="8">Agosto</option>
+                                                <option value="9">Septiembre</option>
+                                                <option value="10">Octubre</option>
+                                                <option value="11">Noviembre</option>
+                                                <option value="12">Diciembre</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td>
+                                            @*<div style="text-align:left; width:100%;">
+                                                    <input type="button" value="Grabar" id="btnGrabar" name="btnGrabar" class="form-action-l" onclick="fnGrabarTodos();" />
+
+                                                </div>*@
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div style="display: none;">
+                                                <input type="checkbox" id="grabarCelda" checked /> Grabar al editar los valores de cada celda.
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>&emsp;</td>
+        </tr>
+
+        <!--
+        <tr>
+            <td height="220">
+                <div class="content-tabla">
+                    <b>Servicios Complementarios:</b>
+                    <div class="content-tabla">
+                        <div class="table-list" id="listadoComplementarios"></div>
+
+                    </div>
+                </div>
+            </td>
+        </tr>
+            -->
+        <!--
+        <tr>
+            <td height="220">
+                <div class="content-tabla">
+                    <b>Valor de las Entregas para empresas Generadoras:</b>
+                    <div class="content-tabla">
+                        <div class="table-list" id="listadoEntregas"></div>
+
+                    </div>
+                </div>
+            </td>
+        </tr>
+             -->
+        <!--
+        <tr>
+            <td height="220">
+                <div class="content-tabla">
+                    <b>Valor de Inflexibilidad Operativa:</b>
+                    <div class="content-tabla">
+                        <div class="table-list" id="listadoInflexibilidades"></div>
+
+                    </div>
+                </div>
+            </td>
+        </tr>
+        -->
+        <!--
+        <tr>
+            <td height="220">
+                <div class="content-tabla">
+                    <b>Recaduación por energía reactiva informe LSCIO:</b>
+                    <div class="content-tabla">
+                        <div class="table-list" id="listadoRecaudaciones"></div>
+
+                    </div>
+                </div>
+            </td>
+        </tr>
+            -->
+        <tr>
+            <td height="220">
+                <div class="content-tabla">
+                    <b>Gestión de Parámetros Generales (Cálculo primer mes de participantes):</b>
+                    <div id="divMensajePrimerMes" style="display:none;">
+                        <br />
+                        <span style="font-weight: 600; color:red;">
+                            * Se ha modificado la <b>Gestión de Parámetros Generales (Cálculo primer mes de participantes):</b> no se olvide de Grabar la información modificada
+                        </span>
+                    </div>
+                    <div id="divMensajePeriodoCerrado" style="display:none;">
+                        <br />
+                        <span style="font-weight: 600; color:red;">
+                            * El presente periodo se encuentra <b>Cerrado</b> no podra modificar ni eliminar un participante.
+                        </span>
+                    </div>
+                    <div>
+                        <div id="divTablaInsumesGen">
+                            <table border="0" class="pretty tabla-adicional" cellspacing="0" id="tablaInsumosGen">
+                                <thead>
+                                    <tr>
+                                        <th><p>Participante</p></th>
+                                        <th><p>Margen</p><p>Reserva (%)</p></th>
+                                        <th><p>Monto total</p><p>SSCC</p><p>S/.mes</p></th>
+                                        <th><p>Monto total</p><p>Inflexibilidades Operativas</p><p>S/.mes</p></th>
+                                        <th><p>Monto total recaudado</p><p>Exceso Energia Reactiva</p><p>S/.mes</p></th>
+                                        <th><p>Acciones</p></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.listadoinsumos1vez)
+                                    {
+                                        <tr class="menu-contextual" data-code="@(item.EMPRCODI)" data-codepart="@(item.EMPGCODI)">
+                                            <td style="text-align: left; width: 30%;">
+                                                <input type="text" id="@(item.EMPRCODI)_mempresa" name="@(item.EMPRCODI)_mempresa" class="form-control" style="width:100%"
+                                                       value="@item.EMPRESA" disabled />
+                                            </td>
+                                            <td style="text-align: left; width: 15%;">
+                                                <input type="text" id="@(item.EMPRCODI)_mreserva" name="@(item.EMPRCODI)_mreserva" class="form-control" style="width:100%"
+                                                       value="@item.MRESERVA" disabled />
+                                            </td>
+                                            <td style="text-align: left; width: 15%;">
+                                                <input type="text" id="@(item.EMPRCODI)_sscc" name="@(item.EMPRCODI)_sscc" class="form-control" style="width:100%"
+                                                       value="@item.SSCC" disabled />
+                                            </td>
+                                            <td style="text-align: left; width: 15%;">
+                                                <input type="text" id="@(item.EMPRCODI)_tinflex" name=@(item.EMPRCODI) _"tinflex" class="form-control" style="width:100%"
+                                                       value="@item.TINFLEX" disabled />
+                                            </td>
+                                            <td style="text-align: left; width: 15%;">
+                                                <input type="text" id="@(item.EMPRCODI)_texceso" name="@(item.EMPRCODI)_texceso" class="form-control" style="width:100%"
+                                                       value="@item.TEXCESO" disabled />
+                                            </td>
+
+                                            <td style="width:40px;">
+                                                <a class="btnEditPrimerMes" href="JavaScript:modificarAgentes('@(item.EMPRCODI)');" title="Modificar">
+                                                    <img src="~/Content/Images/btn-edit.png" title="Editar" />
+                                                </a>
+                                                <a class="btnEditPrimerMes" href="JavaScript:eliminarAgentes('@(item.EMPRCODI)');" title="Eliminar">
+                                                    <img src="~/Content/Images/Trash.png" title="Eliminar" />
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                    <div>
+                        <table id="tableFooter">
+                            <tr>
+                                <td>
+                                    <div style="text-align:left; width:100%;">
+                                        <input type="button" value="Grabar" id="btnGrabar" name="btnGrabar" class="form-action-l" style=" float: right;margin: 5px;" />
+
+                                    </div>
+                                    <div style=" text-align:left; width:100%;">
+                                        <input type="button" value="Agregar" id="btnAgregarEmpresa" name="btnAgregarEmpresa" class="form-action-l" onclick="fnPopUpEmpresa();" style=" float: right;margin-top: 5px;">
+
+
+
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <div class="content-tabla">
+                    <b>Gestión de Parámetros por Participante (a partir del segundo mes de los participantes):</b>
+                    <div id="divMensajeSegundoMes" style="display:none;">
+                        <br />
+                        <span style="font-weight: 600; color:red;">
+                            * Se ha modificado la <b>Gestión de Parámetros por Participante (a partir del segundo mes de los participantes):</b> no se olvide de Grabar la información modificada
+                        </span>
+                    </div>
+                    <div class="content-tabla">
+                        <div class="table-list" id="listadoInsumos"></div>
+                        <!-- CAMPOS-->
+                    </div>
+                </div>
+            </td>
+        </tr>
+
+    </table>
+    <br />
+
+    <br />
+
+
+</div>
+<div id="popupBuscarEmpresa" class="general-popup" style="height:300px;width:400px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Buscar Razón Social</span>
+    </div>
+    <div class="popup-text" id="contenidoEdicion">
+        <table style="width:100%">
+            <tr>
+                <td>
+                    Razón Social:
+                </td>
+                <td>
+                    <input type="text" id="empresaBuscar" name="empresaBuscar" />
+                </td>
+                <td>
+                    <input type="button" value="Buscar" id="btnBuscar" name="btnBuscar" class="form-action" onclick="buscarEmpresa();" />
+                </td>
+            </tr>
+        </table>
+        <div class="table-list" id="listadoEmpresas">
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="popuAlerta" class="general-popup" style="width:350px">
+
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Mensaje</span>
+    </div>
+    <div class="popup-text" id="contenidoEdicion">
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <span style="font-weight: 600; ">
+                        Esta seguro de eliminar el participante?
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td> </td>
+            </tr>
+            <tr>
+                <td> </td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="text-align:right; width:100%">
+                        <input type="button" value="Aceptar" id="btnGuadarEdicion" name="btnGuadarEdicion" class="form-action-r" />
+                    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

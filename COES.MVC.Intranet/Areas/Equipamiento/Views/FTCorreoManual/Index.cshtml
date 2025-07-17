@@ -1,0 +1,168 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.FTCorreoManualModel
+@{
+    ViewBag.Title = "Correos Enviados al Agente";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/datatable.js"></script>
+
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/datetime-moment.js"></script>
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<script src="~/Content/Scripts/tinymce/tinymce.min.js"></script>
+<script src="~/Areas/Equipamiento/Content/Scripts/fichatecnica/FTCorreoManual/correomanual.js?v=1.0.6"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Correos Enviados al Agente</div>
+    <div class="content-botonera">
+
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+    <input type="hidden" id="hfEmpresa" />
+    <input type="hidden" id="hfEmpresaCorreo" />
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#tabLista">Listado</a></li>
+            <li class='tab'><a href="#tabDetalle">Detalle</a></li>
+        </ul>
+        <div class='panel-container'>
+
+            <div id="tabLista">
+
+                <div class="search-content">
+                    <table class="content-tabla-search" style="width:100%">
+                        <tr>
+                            <td class="celda-item" style="width: 55px;">Empresa:</td>
+                            <td id="CajaPrincipal" style="width: 150px;">
+                                <select id="cbEmpresa" style="width: 270px;" name="IdEmpresa" multiple="multiple">
+                                    @foreach (var item in Model.ListaEmpresas)
+                                    {
+                                        <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                    }
+                                </select>
+                            </td>
+                            <td style="padding-left: 30px; width: 80px;">Fecha Desde:</td>
+                            <td style="width: 70px;">
+                                <input type="text" id="FechaDesde" style="width: 90px;" value="@Model.FechaInicio" />
+                            </td>
+                            <td style="padding-left: 30px; width: 80px;">Fecha Hasta:</td>
+                            <td style="width: 70px;">
+                                <input type="text" id="FechaHasta" style="width: 90px;" value="@Model.FechaFin" />
+                            </td>
+                            <td style="padding-left: 30px;">
+                                <input type="button" id="btnConsultar" value="Consultar" />
+                            </td>
+
+                            @if (Model.TienePermisoAdmin)
+                            {
+                                <td style="padding-left: 30px; float: right;">
+                                    <input type="button" id="btnNuevoMensaje" value="Nuevo Mensaje" />
+                                </td>
+                            }
+
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="vistaListado">
+
+                    <div id="div_listado" class="content-tabla">
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="tabDetalle">
+
+                <div id="div_detalle" class="content-tabla">
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Empresa -->
+<div id="popupEmpresa" class="popup-class-1 general-popup" style="width: 600px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Seleccionar Empresa</span></div>
+    <div id="mensaje_popupEmpresa"></div>
+    <div id="">
+        <table class="table-form-vertical">
+            <tr>
+                <td class="tbform-label" style="text-align: right; width: 120px;">Empresa:</td>
+
+                <td style="width: 150px;">
+                    <select id="cbEmpresaCorreo" style="width: 270px;" name="IdEmpresa" multiple="multiple">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+
+            <tr> </tr>
+        </table>
+
+        <table class="table-form-vertical">
+            <tr>
+                <td style="text-align:center;" colspan="2">
+                    <input type="button" id="btnSeleccionarEmpresa" value="Seleccionar" />
+                    <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupEmpresa')" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+
+<!-- Equipos -->
+<div id="popupEquipos" class="popup-class-1 general-popup" style="width: 600px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Agregar Equipos</span></div>
+    <div id="mensaje_popupEquipos"></div>
+    <div id="">
+        <table class="table-form-vertical">
+            <tr>
+                <td class="tbform-label" style="text-align: right; width: 120px;">Proyecto:</td>
+
+                <td style="width: 150px;">
+                    <select id="cbProyecto" style="width: 270px;" name="IdProyecto">
+                        <option value="0">-- Seleccione Proyecto -- </option>
+                        @foreach (var item in Model.ListadoProyectos)
+                        {
+                            <option value="@item.Ftprycodi">@item.Ftprynombre</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+
+            <tr> </tr>
+        </table>
+        <div id="listadoEquiposA" style="width: 500px; height: 223px; margin: 0 auto; padding-top: 20px;"> </div>
+        <table class="table-form-vertical" style="margin-top: 40px;">
+            <tr>
+                <td style="text-align:center;" colspan="2">
+                    <input type="button" id="btnAgregarEquipos" value="Agregar" />
+                    <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupEquipos')" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+

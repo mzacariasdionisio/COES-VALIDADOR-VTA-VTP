@@ -1,0 +1,522 @@
+﻿@model COES.MVC.Intranet.Areas.Hidrologia.Models.FormatoHidrologiaModel
+@{
+    ViewBag.Title = "Detalle de Formatos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var urlReporte = Model.Url + "hidrologia/formatomedicion/IndexDetalle?id=" + Model.IdFormatoOrigen + "&app=" + Model.CodigoApp;
+}
+<script src="~/Areas/Hidrologia/Content/Scripts/jquery.dataTables.rowReordering.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/jquery.mask.js"></script>
+<script src="~/Content/Scripts/jqueryui.js"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/formatodetalle.js?v=2.0.0"></script>
+<link href="~/Areas/Hidrologia/Content/Css/popup.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Detalle de Formatos</div>
+    <div class="content-botonera">
+        <input type="button" id="btnPopupHojaExcel" value="Agregar Hoja Excel web" />
+        @if (Model.IdFormatoOrigen <= 0)
+        {
+            <input type="button" id="btnAbrirPopupCopiaConfig" value="Ejecutar copia configuración" />
+        }
+        <input type="button" id="btnBuscar" value="Consultar" />
+        @if (Model.IdFormatoOrigen <= 0)
+        {
+            <input type="button" id="btnPunto" value="Agregar Punto" />
+        }
+
+        <input type="hidden" id="idFormatoOrigen" value="@Model.IdFormatoOrigen" />
+
+        <input type="button" id="btnRegresar" value="Regresar" />
+    </div>
+</div>
+<script src="~/Areas/Hidrologia/Content/Scripts/jqueryui.js"></script>
+<style>
+    #confPlazo input[type = number] {
+        width: 40px;
+        text-align: right;
+    }
+
+    .search-content {
+        margin-bottom: 0px !important;
+    }
+
+    select:disabled {
+        background: lightgray;
+        color: #4876AA;
+    }
+
+    input[type=text]:disabled {
+        background-color: lightgray;
+        color: #4876AA;
+    }
+</style>
+<div class="content-hijo" id="mainLayout">
+    @if (Model.IdFormatoOrigen > 0)
+    {
+        <div style="margin-bottom: 10px;">
+            La configuración de los puntos de medición se encuentra en el formato <a href="@(urlReporte)">@(Model.NombreOrigen)</a>
+        </div>
+    }
+
+    <div class="search-content">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                @if (Model.AllEmpresa == 0)
+                {
+                    <td>Empresa:</td>
+                    <td>
+                        <select id="cbFiltroEmpresa" style="width: 220px;">
+                            <option value="0">-Seleccione Empresa-</option>
+                            @foreach (var item in Model.ListaEmpresaFormato)
+                            {
+                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                            }
+                        </select>
+                        <input type="hidden" id="hfFiltroEmpresa" value="@Model.IdEmpresa" />
+                    </td>
+                }
+                else
+                {
+                    <td style="display: none">
+                        <input type="hidden" id="cbFiltroEmpresa" value="-1" />
+                        <input type="hidden" id="hfFiltroEmpresa" value="-1" />
+                    </td>
+                }
+                <td>Formato:</td>
+                <td style="font-weight: bold;">@Model.Nombre</td>
+
+                @if (Model.IndicadorHoja == "S")
+                {
+                    <td>Seleccione Hoja Excel web:</td>
+                    <td>
+                        <select id="cbHoja" style="width: 200px;">
+                            @foreach (var item in Model.ListaHoja)
+                            {
+                                <option value="@item.Hojacodi">@item.Hojanombre</option>
+                            }
+                        </select>
+                    </td>
+                }
+                else
+                {
+                    <td>Hoja Excel Web:</td>
+                    <td>
+                        <select id="cbHoja" disabled style="width: 240px;">
+                            @foreach (var item in Model.ListaHoja)
+                            {
+                                <option value="@item.Hojacodi">@item.Hojanombre</option>
+                            }
+                        </select>
+                    </td>
+                }
+            </tr>
+        </table>
+        <input type="hidden" id="hfIndicadorHoja" value="@Model.IndicadorHoja" />
+    </div>
+
+    <div class="content-tabla">
+        <div class="tabla-header">
+        </div>
+        <div class="table-list" id="listpto"></div>
+    </div>
+</div>
+
+<input type="hidden" id="hfFormato" value="@Model.IdFormato" />
+<input type="hidden" id="hdCodigoApp" name="hdCodigoApp" value="@Model.CodigoApp" />
+
+<div id="popupmpto">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Modificar Punto de Medición</span></div>
+    <div id="modificarPto">
+        <div style="clear:both; height:30px"></div>
+        <table style="width:100%">
+
+            <tr>
+                <td class="tbform-label">Limite Superior:</td>
+                <td class="tbform-control">
+                    <input type="Text" id="idLimSup" value="" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Limite Inferior:</td>
+                <td class="tbform-control">
+                    <input type="Text" id="idLimInf" value="" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Observación:</td>
+                <td class="tbform-control">
+                    <textarea id="txtObservacionPunto" maxlength="200" style="width:215px; height:50px"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Activo:</td>
+                <td class="tbform-control">
+                    <input type="checkbox" name="checkbox" id="idActivo" checked=""><br>
+                    <input type="hidden" id="hfEstadoConf" name="MinutoPlazo" value="@Model.Formatcheckplazopunto">
+                    <input type="hidden" id="hfEmprcodi" name="hfEmprcodi">
+                </td>
+            </tr>
+            @if (Model.FormatoTieneCheckAdicional)
+            {
+                <tr id="fila_adicional">
+                    <td class="tbform-label" id="td_check_adicional">¿Tiene columna adicional de check?:</td>
+                    <td class="tbform-control">
+                        <input type="checkbox" name="checkbox" id="idCheckAdicional"><br>
+                    </td>
+                </tr>
+            }
+
+            @if (Model.Formatcheckplazopunto == 1)
+            {
+                <tr>
+                    <td class="tbform-label" style="padding-top: 50px;">Fecha de vigencia:</td>
+                    <td class="tbform-control" style="padding-top: 50px;">
+
+                        @if (Model.Periodo == 3 || Model.Periodo == 5)
+                        {
+                            <input type="text" id="txtFechaVigencia" value="@DateTime.Now.ToString("MM/yyyy")" style="width:100px;" class="filtro-contenido">
+
+                        }
+                        else
+                        {
+                            <input type="text" id="txtFechaVigencia" value="@DateTime.Now.ToString("dd/MM/yyyy")" style="width:100px;" class="filtro-contenido">
+
+                        }
+
+                        <input type="hidden" id="hfFechaActual" value="@DateTime.Now.ToString("dd/MM/yyyy")">
+
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Cantidad Mínima de filas:</td>
+                    <td class="tbform-control">
+                        <input type="number" id="txtMinFilas" name="txtMinFilas" style="width:30px;" min="0" max="24" value="0">
+                    </td>
+                </tr>
+
+                <tr>
+
+                    <td class="tbform-label">Configuración de Plazo:</td>
+                    <td class="tbform-control">
+                        <div class="search-content" style="background-color: #acfdb9 !important;">
+                            <table>
+                                <tbody>
+
+                                    <tr>
+                                        <td colspan="6">Inicio de Plazo</td>
+
+                                    </tr>
+
+                                    <tr>
+                                        <td class="mes_config" style="display: table-cell;">Meses:</td>
+                                        <td class="mes_config" style="display: table-cell;">
+                                            <input type="number" id="Mesplazo" name="Mesfinplazo" disabled style="width:30px;" value="@Model.Mesplazo" aria-required="true" aria-invalid="false" class="valid">
+
+                                        </td>
+                                        <td>Días:</td>
+                                        <td>
+                                            <input type="number" id="DiaPlazo" name="DiaFinPlazo" disabled style="width:30px;" value="@Model.DiaPlazo" aria-required="true" aria-invalid="false" class="valid">
+                                        </td>
+                                        <td>Horas:</td>
+                                        <td>
+                                            <input type="time" class="without_ampm valid" id="txtMinPlazo" name="txtMinPlazo" data-mask="00:00" data-mask-selectonfocus="true" maxlength="5" autocomplete="off" aria-required="true" aria-invalid="false" disabled>
+
+                                            <input type="hidden" id="hfMinPlazo" name="MinutoPlazo" value="@Model.MinutoPlazo">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </td>
+
+                    <td class="tbform-control">
+                        <div class="search-content" style="background-color: #acfdb9 !important;">
+                            <table>
+                                <tbody>
+
+                                    <tr>
+                                        <td colspan="6">Fin de Plazo</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="mes_config" style="display: table-cell;">Meses:</td>
+                                        <td class="mes_config" style="display: table-cell;">
+                                            <input type="number" id="Mesfinplazo" name="Mesfinplazo" value="@Model.Mesfinplazo" disabled style="width:30px;" aria-required="true" aria-invalid="false" class="valid">
+                                        </td>
+                                        <td>Días:</td>
+                                        <td>
+                                            <input type="number" id="DiaFinPlazo" name="DiaFinPlazo" value="@Model.DiaFinPlazo" disabled style="width:30px;" aria-required="true" aria-invalid="false" class="valid">
+                                        </td>
+                                        <td>Horas:</td>
+                                        <td>
+                                            <input type="time" class="without_ampm" id="txtMinFinPlazo" name="txtMinFinPlazo" data-mask="00:00" data-mask-selectonfocus="true" maxlength="5" autocomplete="off" disabled>
+                                            <input type="hidden" id="hfMinFinPlazo" name="MinutoFinPlazo" value="@Model.MinutoFinPlazo">
+                                            <input type="hidden" id="hfPlzPtoCodi" name="hfPlzPtoCodi">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+
+                </tr>
+                <tr>
+                    <td class="tbform-label">Extensión de plazo:</td>
+                    <td class="tbform-control">
+
+                        <div class="search-content" style="background-color: #acfdb9 !important;">
+                            <table>
+                                <tbody>
+
+                                    <tr>
+                                        <td>Días:</td>
+                                        <td>
+                                            <input type="number" id="txtDiaPlazo" name="txtDiaPlazo" value="0" style="width:30px;" autocomplete="off" min="0">
+                                        </td>
+                                        <td>Horas:</td>
+                                        <td>
+                                            <input type="number" class="without_ampm" id="txtHoraPlazo" name="txtMinFinPlazo" style="width:30px;" autocomplete="off" min="0" value="0" max="24">
+                                            <input type="hidden" id="hfMinFinPlazoExt">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label">Vista Previa según Fecha Proceso:</td>
+                    <td class="tbform-control">
+
+                        <div class="search-content" style="background-color: #acfdb9 !important;">
+                            <table>
+                                <tbody>
+
+                                    <tr>
+                                        <td>Período Diario:</td>
+                                        <td>
+                                            <input type="text" id="txtFechaPeriodo" value="@DateTime.Now.ToString("dd/MM/yyyy")" style="width: 100px; position: relative; top: auto; right: auto; bottom: auto; left: auto;" class="filtro-contenido valid" readonly="readonly" aria-invalid="false">
+                                        </td>
+                                        <td>Período Semanal:</td>
+                                        <td>
+                                            <input type="text" id="txtAnioPeriodo" value="@DateTime.Now.ToString("yyyy")" disabled style="width: 47px;" class="filtro-contenido" />
+                                            <select id="cbSemana" style="width: 100px">
+                                                @foreach (var item in Model.ListaGenSemanas)
+                                                {
+                                                    <option value="@item.String2">@item.String1</option>
+                                                }
+                                            </select>
+                                            <input type="hidden" id="semanaActual" value="@Model.SemanaPeriodo" />
+
+                                        </td>
+
+                                        <td>Período Mensual:</td>
+                                        <td>
+                                            <input type="text" id="txtMesPeriodo" value="@Model.MesPeriodo" style="width: 100px;" class="filtro-contenido" />
+                                            <input type="hidden" id="hfPeriodo" value="@Model.Periodo" />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+
+                    <td class="tbform-control">
+                        <div class="search-content" style="background-color: #acfdb9 !important;">
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <td style=" width: 90px;">En Plazo</td>
+                                        <td><span id="txtFechaEnPlazo1">31/01/2019 00:00</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td><span id="txtFechaEnPlazo2">31/01/2019 07:00</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td rowspan="2" class="tbform-label" style="vertical-align:top">
+                        Reporte de extensión de plazo:
+                    </td>
+                    <td class="tbform-control" colspan="2">
+                        <div id="listadoHistoExtPla"></div>
+                    </td>
+                </tr>
+
+            }
+
+        </table>
+        <div style="clear:both; height:30px"></div>
+        <table>
+            <tr>
+                <td>
+                    <input type="button" value="Guardar" id="btnActualizar" />
+                </td>
+                <td>
+                    <input type="button" value="Cancelar" id="btnCancelar" />
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" id="hfPunto" value="" />
+        <input type="hidden" id="hfTipoinfo" value="" />
+        <input type="hidden" id="hfTptomedi" value="" />
+    </div>
+</div>
+
+<div id="busquedaEquipo">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Agregar Punto de Medición</span></div>
+    <div id="agregarPto"></div>
+</div>
+
+<div id="agregaEmpresa">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Seleccionar Empresa</span></div>
+    <div id="agregarEmp">
+        <div style="clear:both; height:30px"></div>
+        <table style="width:100%">
+            <tr>
+                <td class="tbform-label">Empresa:</td>
+                <td class="tbform-control">
+                    <select id="cbEmpresa2">
+                        @foreach (var item in Model.ListaEmpresa)
+                        {
+                            <option value="@item.EMPRCODI">@item.EMPRNOMB</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <div style="clear:both; height:30px"></div>
+        <table>
+            <tr>
+                <td>
+                    <input type="button" value="Seleccionar" id="btnSelEmp" />
+                </td>
+                <td>
+                    <input type="button" value="Cancelar" id="btnCancelar2" />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="popupCopiaConfig" class="general-popup">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ejecutar copia configuración de Puntos de medición</span></div>
+    <div>
+        <div style="clear:both; height:30px;margin-top: 20px;">
+            Seleccione una opción:
+        </div>
+        <table style="width:100%">
+            @if (Model.IdFormato == 95)
+            {
+                <tr>
+                    <td class="tbform-label" style="padding-bottom: 20px;">
+                        <input type="radio" id="combo1" name="cbTipoCopia" value="2" checked>Caso Demanda Diaria Prevista<br />
+                    </td>
+                    <td class="tbform-control" style="vertical-align: top; padding-left: 0px; padding-top: 6px;">
+                        Los puntos de medición de la sección Ejecutado MW se copiará para el previsto diario, semanal y mensual tanto en MW y MVAR.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td class="tbform-label" style="padding-bottom: 20px;">
+                        <input type="radio" id="combo1" name="cbTipoCopia" value="1">Caso 1<br />
+                    </td>
+                    <td class="tbform-control" style="vertical-align: top; padding-left: 0px; padding-top: 6px;">
+                        Si un punto de medición MW no tiene MVar se creará el punto faltante.
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label">
+                        <input type="radio" name="cbTipoCopia" value="3">Caso 2<br />
+                    </td>
+                    <td class="tbform-control" style="vertical-align: top; padding-left: 0px; padding-top: 6px;">
+                        Copiará los puntos de medición de este formato origen a los formatos dependientes.
+                    </td>
+                </tr>
+            }
+        </table>
+        <div style="clear:both; height:30px"></div>
+        <table>
+            <tr>
+                <td>
+                    <input type="button" value="Ejecutar" id="btnEjecutarCopiaConfig" />
+                </td>
+            </tr>
+        </table>
+
+
+    </div>
+</div>
+
+<div id="popupNuevaHoja" class="general-popup">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Agregar Hoja Excel web a formato</span></div>
+    <div>
+        <div style="clear:both; height:30px;margin-top: 20px;">
+            Seleccione una opción:
+        </div>
+        <table style="width:100%">
+            <tr>
+                <td class="tbform-label">                   Formato:                </td>
+                <td class="tbform-control">
+                    @Model.Nombre
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">                    Lectura:                </td>
+                <td class="tbform-control">
+
+                    <select id="IdLecturaNuevo" name="IdLectura">
+                        @foreach (var reg in Model.ListaLectura)
+                        {
+                            <option value="@reg.Lectcodi">@reg.Lectnomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfLecturaNuevo" value="@Model.IdLectura" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">                    Cabecera:                </td>
+                <td class="tbform-control">
+
+                    <select id="IdCabeceraNuevo" name="IdCabecera">
+                        @foreach (var reg in Model.ListaCabecera)
+                        {
+                            <option value="@reg.Cabcodi">@reg.Cabdescrip</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfCabeceraNuevo" value="@Model.IdCabecera" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">                    Nombre de Hoja:                </td>
+                <td class="tbform-control">
+                    <input type="text" id="nombreHojaExcelNuevo" value="@Model.Nombre" />
+                </td>
+            </tr>
+        </table>
+        <div style="clear:both; height:30px"></div>
+        <table>
+            <tr>
+                <td>
+                    <input type="button" value="Agregar" id="btnAgregarHoja" />
+                </td>
+            </tr>
+        </table>
+
+
+    </div>
+</div>

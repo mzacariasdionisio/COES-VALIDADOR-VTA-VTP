@@ -1,0 +1,241 @@
+﻿@model COES.MVC.Intranet.Areas.Hidrologia.Models.CargaDatosCmgCPModel
+@{
+    ViewBag.Title = "Volúmenes y caudales de Embalses para CMgCP";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Areas/Hidrologia/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Areas/Hidrologia/Content/Scripts/handsontable.full.min.js"></script>
+
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<script src="~/Areas/Hidrologia/Content/Scripts/cargadatosCmgCP.js?v=1.9"></script>
+<link href="~/Areas/Hidrologia/Content/Css/cargadatosCmgCP.css?v=1.9" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Volúmenes y caudales de Embalses para CMgCP</div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div class="content-tabla" id="excelwebPF" style="">
+        <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; display:none"></div>
+
+        <input type="hidden" id="hfAccionDetalle" value="@Model.Accion" />
+        <input type="hidden" id="hfFechaActual" value="@Model.Fecha" />
+        <input type="hidden" id="hfFechaAnterior" value="@Model.FechaAnterior" />
+        <input type="hidden" id="hfVersionCalculo" value="0" />
+
+        <div class="content-hijos" id="mainLayou">
+            <div class="search-content" style="padding-top: 0px;">
+                <table class="table-search" style="width:100%;" role="presentation">
+                    <tbody>
+                        <tr>
+                            <td style=" padding-left: 20px;">
+                                <div style="width:170px; float:left; padding-top: 20px;">
+                                    <div style="width:45px; float:left;margin-top: 5px;">
+                                        Etapa:
+                                    </div>
+                                    <div style="width:105px; float:left;">
+                                        <select id="cbEtapa" style="width: 106px;">
+                                            <option value="P" selected>Postoperativa</option>
+                                            <option value="O">Operativa</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="width:170px; float:left; padding-top: 20px;">
+                                    <div style="width:45px; float:left;margin-top: 5px;">
+                                        Fecha:
+                                    </div>
+                                    <div style="width:105px; float:left;">
+                                        <input type="text" id="txtFecha" value="@Model.FechaAnterior" />
+                                    </div>
+                                </div>
+                                <div style="width:107px; float:left; padding-top: 20px;" id="div_hora">
+                                    <div style="width:40px; float:left;margin-top: 5px;">
+                                        Hora:
+                                    </div>
+                                    <div style="width:67px; float:left;">
+                                        <select id="cbPeriodo" style="width: 62px;">
+                                            @for (var i = 0; i < 48; i++)
+                                            {
+                                                string hora = "0" + ((i + 1) / 2).ToString();
+                                                hora = hora.Substring((hora.Length > 2) ? 1 : 0, 2);
+                                                string minuto = "0" + (((i + 1) % 2) * 30).ToString();
+                                                minuto = minuto.Substring((minuto.Length > 2) ? 1 : 0, 2);
+                                                string horarmin = hora + ":" + minuto;
+                                                if (horarmin == "24:00") { horarmin = "23:59"; }
+                                                <option value="@(i+1)">@horarmin</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style="width:80px; float:left; padding-top: 20px;">
+                                    <div style="width:80px; float:left;">
+                                        <input type="button" id="btnConsultar" value="Consultar" />
+                                    </div>
+
+                                </div>
+                            </td>
+
+                             <td class="content-action" style="width: 57px;">
+                                <a href="#" id="btnDescargarF">
+                                    <div class="content-item-action" style="width:55px;">
+                                        <img src="~/Content/Images/bajar.png" alt="logo"><br>
+                                        <span>Descargar Formato</span>
+                                    </div>
+                                </a>
+                            </td>
+                            <td class="content-action item_postoperativa" style="width:57px; display: none">
+                                <a href="#" id="btnImportarF">
+                                    <div class="content-item-action" style="width:55px;">
+                                        <img src="~/Content/Images/subir.png" alt="logo"><br>
+                                        <span>Importar Formato</span>
+                                    </div>
+                                </a>
+                            </td>
+                            <td class="content-action item_postoperativa" style="width: 57px; display: none">
+                                <a href="#" id="btnGuardar">
+                                    <div class="content-item-action" style="width:55px;">
+                                        <img src="~/Content/Images/prnsave.png" alt="logo"><br>
+                                        <span>Guardar</span>
+                                    </div>
+                                </a>
+                            </td>
+                            <td class="content-action item_postoperativa" style="width: 57px; display: none">
+                                <a href="#" id="btnMostrarErrores">
+                                    <div class="content-item-action" style="width:55px;">
+                                        <img src="~/Content/Images/errores.png" alt="logo"><br>
+                                        <span>Mostrar Errores</span>
+                                    </div>
+                                </a>
+                            </td>
+                            <td class="content-action item_postoperativa" style="width: 57px; display: none">
+                                <a href="#" id="btnVerHistorial">
+                                    <div class="content-item-action" style="width:55px;">
+                                        <img src="~/Content/Images/historial.png" alt="logo"><br>
+                                        <span>Ver envíos</span>
+                                    </div>
+                                </a>
+                            </td>
+
+                            <td class="content-action " style="width: 130px;padding-top: 20px;">
+                                <input type="button" id="btnActualizarDeBD" value="Actualizar de BD" />
+                            </td>
+                            <td class="content-action item_postoperativa" style="width: 130px;padding-top: 20px; display: none">
+                                <input type="button" id="btnRecalcular" value="Recalcular" />
+                            </td>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <div class="content-tabla">
+                <div style="padding-bottom: 20px;">
+
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_4" style="float:left;"> </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;"> <b>Caudal extranet ejecutado</b></div>
+                    </div>
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_5" style="float:left;"> </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;"> <b>Caudal extranet proyectado</b></div>
+                    </div>
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_6" style="float:left;"> </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;"> <b>Caudal YUPANA</b></div>
+                    </div>
+
+                </div>
+
+                <div style="padding-bottom: 20px;">
+
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_1" style=" float:left;"> </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;width: 149px;"> <b>Potencia del IDCC</b></div>
+                    </div>
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_2" style=" float:left;"> </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;width: 158px;"> <b>Potencia del TNA</b></div>
+                    </div>
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_3" style=" float:left;"> </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;"> <b>Potencia del YUPANA</b></div>
+                    </div>
+
+                </div>
+
+
+                <div style="padding-bottom: 20px;">
+
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_0" style="float:left;"> #.# </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;width: 149px;"> <b>Volumen medido</b></div>
+                    </div>
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_7" style="float:left;"> #.# </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;width: 158px;"> <b>Volumen calculado</b></div>
+                    </div>
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_8" style="float:left;"> #.# </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;"> <b>Volumen calculado menor a Vmin</b></div>
+                    </div>
+                    <div class="bloque" style="">
+                        <div class="cuadro-sh td_fuente_9" style="float:left;"> #.# </div>
+                        <div style="float:left;padding-left: 5px; padding-right: 20px;"> <b>Volumen calculado mayor a Vmax</b></div>
+                    </div>
+
+                </div>
+
+                <div id="htTablaWeb" class="hot handsontable htRowHeaders htColumnHeaders" style="height: 440px; overflow: hidden;">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<div id="div_historial" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Historial Versiones</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaVersion">
+            <div class="content-tabla">
+                <div style="clear:both; height:5px"></div>
+
+                <div class="content-tabla">
+                    <div class="table-list" id="listadoHistorial" style="width: 600px"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="erroresDatos" class="general-popup" style="z-index:9999999999;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="listadoErrores">
+            <table id="tblListaerrores" style="width:500px" class="pretty tabla-adicional" role="presentation">
+                <thead>
+                    <tr>
+                        <th scope="col">ClassName</th>
+                        <th scope="col" style="width: 135px; min-width: 135px">Celda</th>
+                        <th scope="col" style="width: 120px; min-width: 120px">Valor</th>
+                        <th scope="col" style="width: 120px; min-width: 120px">Tipo de error</th>
+
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>

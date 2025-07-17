@@ -1,0 +1,210 @@
+﻿@model COES.MVC.Intranet.Areas.IND.Models.IndisponibilidadesModel
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@{
+    ViewBag.Title = "Periodo de Indisponibilidades";
+    Layout = Model.UsarLayoutModulo ? "~/Views/Shared/_LayoutAlter.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+
+<link href="~/Areas/IND/Content/Css/css.css?v=1.7.4" rel="stylesheet" />
+<script src="~/Areas/IND/Content/Scripts/hist_equivalencia.js?v=1.8.2"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Equivalencia de unidades Termoeléctricas e Hidroeléctricas</div>
+    <div class="content-botonera">
+        @if (Model.TienePermisoNuevo)
+        {
+            <input type="button" id="btnNuevo" value="Nuevo">
+        }
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div class="content-tabla">
+        <div class="table-list" id="listado"></div>
+    </div>
+</div>
+
+<!--Registrar-->
+<div id="popupEquivalencia" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: 500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Registro de Equivalencia</span></div>
+
+    <div id="" class="">
+        <div id="" style="margin-top: 10px;"></div>
+
+        <table class="content-tabla" style="width: auto;" role="presentation">
+            <tbody>
+                <tr>
+                    <td class="tbform-label" style="padding-left: 10px;padding-right: 2px;">Tipo de generación:</td>
+                    <td>
+                        <select id="cbFamilia" style="width: 89px;">
+                            <option value="5" selected>Térmico</option>
+                            <option value="4">Hidráulico</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label" style="padding-right: 0px;">Periodo:</td>
+                    <td>
+                        <select id="cbAnio" style="width: 57px;">
+                            @foreach (var item in Model.ListaAnio)
+                            {
+                                var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                                <option value="@item.Entero1" @(selected)>@item.String1</option>
+                            }
+                        </select>
+                        <select id="cbPeriodo" style="width: 120px;">
+                            @foreach (var item in Model.ListaPeriodo)
+                            {
+                                var selected = Model.IdPeriodo == item.Ipericodi ? "selected" : "";
+                                <option value="@item.Ipericodi" @(selected)>@item.Iperinombre</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <!-- BD Coes -->
+                <tr>
+                    <td>Empresa:</td>
+                    <td>
+                        <select id="cboEmpresa" style="width:240px;">
+                            <option value="0">--SELECCIONE--</option>
+                            @foreach (var item in Model.ListaEmpresa)
+                            {
+                                <option value="@item.Emprcodi">@(item.Emprnomb)</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Central:</td>
+                    <td>
+                        <select id="cboCentral" style="width:240px;">
+                            <option value="0">--SELECCIONE--</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Unidad:</td>
+                    <td>
+                        <select id="cboUnidad" style="width:240px;">
+                            <option value="0">--SELECCIONE--</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="height: 15px"></td>
+                </tr>
+
+
+                <!-- Excel -->
+                <tr style="display: none">
+                    <td>Empresa Excel:</td>
+                    <td>
+                        <input type="text" id="txtEmpresa" value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Central Excel:</td>
+                    <td>
+                        <input type="text" id="txtCentral" value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Unidad Excel:</td>
+                    <td>
+                        <input type="text" id="txtUnidad" value="" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="height: 15px"></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <input type="button" value="Guardar" id="btnGuardarForm" style="width:70px" />
+                    </td>
+                    <td>
+                        <input type="button" value="Limpiar" id="btnLimpiar" style="width:70px" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+<!--Registrar / editar-->
+<div id="popupEditar" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: 500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Editar Equivalencia</span></div>
+
+    <div id="" class="">
+        <div id="" style="margin-top: 10px;"></div>
+
+        <table class="content-tabla" style="width: auto;" role="presentation">
+            <tbody>
+                <!-- BD Coes -->
+                <tr>
+                    <td>Central :</td>
+                    <td>
+                        <input type="text" id="txtCentralEditCoes" disabled value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Unidad:</td>
+                    <td>
+                        <input type="text" id="txtUnidadEditCoes" disabled value="" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="height: 15px"></td>
+                </tr>
+
+                <tr>
+                    <td>Central Excel:</td>
+                    <td>
+                        <input type="text" id="txtCentralEdit" value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Unidad Excel:</td>
+                    <td>
+                        <input type="text" id="txtUnidadEdit" value="" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="height: 15px"></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <input  type="hidden" value="0" id="hfUnicodi"/>
+                        <input type="button" value="Guardar" id="btnEditForm" style="width:70px" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>

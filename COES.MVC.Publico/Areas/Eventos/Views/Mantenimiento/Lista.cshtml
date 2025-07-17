@@ -1,0 +1,378 @@
+﻿@model COES.MVC.Publico.Areas.Eventos.Models.MantenimientoModel
+@using System.Globalization
+<script type="text/javascript">
+
+    $(function () {
+        //$('#tab-container').easytabs({
+        //    animate: false
+        //});
+
+        /*
+ Tabs
+*/
+
+        //Define variables
+        var tab = $('.coes-tab')
+        var tabContent = $('.coes-tab--content')
+
+        //Event handler
+        function tabClickHandler(e) {
+
+            //Get the data attribute of the clicked tab and store it
+            let tabTarget = $(this).data('tab-target')
+
+            //To execute only on THIS instance without affect other instances on the same page
+            let closestParent = $(this).closest('.coes-tabs')
+
+            //Execute only if there are 2 ore more tabs
+            if (closestParent.find('.coes-tab').length >= 2) {
+                //Remove classes from all tabs
+                closestParent.find('.coes-tab').removeClass('coes-tab--active')
+
+                //Remove classes from all content tabs
+                closestParent.find('.coes-tab--content').removeClass('coes-tab--content-active')
+
+                //Add a class to the clicked tab
+                closestParent.find($(this)).addClass('coes-tab--active')
+
+                //Display the content of the selected tab
+                closestParent.find('#coes-tab-content-' + tabTarget).addClass('coes-tab--content-active')
+            }
+        }
+
+        //Event
+        tab.on('click', tabClickHandler)
+
+    });
+@{
+    NumberFormatInfo nfi = new CultureInfo("en-US", false).NumberFormat;
+    nfi.NumberGroupSeparator = " ";
+    nfi.NumberDecimalSeparator = ",";
+    nfi.NumberDecimalDigits = 1;
+    }
+
+</script>
+
+<div style="clear:both; height:15px"></div>
+<div id="reporte">
+    @if (Model.Resultado == "1")
+    {
+        <table border="0" class="tabla-formulario" cellspacing="0" width="100%" id="tabla">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Empresa</th>
+                    <th>Ubicación</th>
+                    <th>Tipo Equipo</th>
+                    <th>Equipo</th>
+                    <th>Inicio</th>
+                    <th>Final</th>
+                    <th>Descripción</th>
+                    <th>PROG</th>
+                    <th>Interrup.</th>
+                    <th>Indisp.</th>
+                    <th>Tensión</th>
+                    <th>Tipo Mantto</th>
+                    <th>CodEq</th>
+                    <th>TipoEq_Osinerg</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ListaManttos)
+                {
+                    DateTime EvenIni = (DateTime)item.Evenini;
+                    DateTime EvenFin = (DateTime)item.Evenfin;
+                    decimal tension = 0;
+                    string sttension = string.Empty;
+                    if (item.Equitension != null)
+                    {
+                        tension = (decimal)item.Equitension;
+                        sttension = tension.ToString("N", nfi);
+                    }
+                    <tr>
+                        <td>@item.Evenclasedesc</td>
+                        <td>@item.Emprnomb.ToString()</td>
+                        <td> @item.Areanomb</td>
+                        <td>@item.Famnomb</td>
+                        <td>@item.Equiabrev</td>
+                        <td>@EvenIni.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        <td>@EvenFin.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        <td>@item.Evendescrip </td>
+                        <td>@item.Eventipoprog</td>
+                        <td>@item.Eveninterrup</td>
+                        <td>@item.Evenindispo</td>
+                        <td>@sttension</td>
+                        <td>@item.Tipoevenabrev</td>
+                        <td>@item.Equicodi</td>
+                        <td>@item.Osigrupocodi</td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>La consulta de información no puede superar los 3 meses. Utilice filtros para reducir la cantidad de registros de la vista web o puede utilizar la opción "Exportar Reporte".</p>
+    }
+</div>
+
+    @*<div id="tab-container" class='tab-container' style="display: none;">
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Gráfico 1</a></li>
+                <li class='tab'><a href="#paso2">Gráfico 2</a></li>
+                <li class='tab'><a href="#paso3">Gráfico 3</a></li>
+                <li class="tab"><a href="#paso4">Gráfico 4</a></li>
+                <li class="tab"><a href="#paso5">Gráfico 5</a></li>
+                <li class="tab"><a href="#paso6">Gráfico 6</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="paso1">
+                    <table>
+                        <tr>
+                            <td colspan="2" class="titulo-reporte-mantenimiento"><div id="tituloManttoEmpresa"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="separacion-reporte-mantenimiento"><div>&nbsp;</div></td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <div id="legendManttoEmpresa"></div>
+                                <hr>
+                                <div id="excelManttoEmpresa"></div>
+                            </td>
+                            <td valign="top">
+                                <div id="graficoManttoEmpresa" style="width: 900px; height: 500px; margin: 0 auto"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="paso2">
+                    <table>
+                        <tr>
+                            <td colspan="2" class="titulo-reporte-mantenimiento"><div id="tituloManttoEquipo"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="separacion-reporte-mantenimiento"><div>&nbsp;</div></td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <div id="legendManttoEquipo"></div>
+                                <hr>
+                                <div id="excelManttoEquipo"></div>
+                            </td>
+                            <td valign="top">
+                                <div id="graficoManttoEquipo" style="width: 900px; height: 500px; margin: 0 auto"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="paso3">
+                    <table>
+                        <tr>
+                            <td colspan="2" class="titulo-reporte-mantenimiento"><div id="tituloManttoEmpresaEquipo1"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="separacion-reporte-mantenimiento"><div>&nbsp;</div></td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <div id="legendManttoEmpresaEquipo1"></div>
+                                <hr>
+                                <div id="excelManttoEmpresaEquipo1"></div>
+                            </td>
+                            <td valign="top">
+                                <div id="graficoManttoEmpresaEquipo1" style="width: 900px; height: 500px; margin: 0 auto"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="paso4">
+                    <table>
+                        <tr>
+                            <td colspan="2" class="titulo-reporte-mantenimiento"><div id="tituloManttoEmpresaEquipo2"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="separacion-reporte-mantenimiento"><div>&nbsp;</div></td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <div id="legendManttoEmpresaEquipo2"></div>
+                                <hr>
+                                <div id="excelManttoEmpresaEquipo2"></div>
+                            </td>
+                            <td valign="top">
+                                <div id="graficoManttoEmpresaEquipo2" style="width: 900px; height: 500px; margin: 0 auto"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="paso5">
+                    <table>
+                        <tr>
+                            <td colspan="2" class="titulo-reporte-mantenimiento"><div id="tituloManttoEquipo2"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="separacion-reporte-mantenimiento"><div>&nbsp;</div></td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <div id="legendManttoEquipo2"></div>
+                                <hr>
+                                <div id="excelManttoEquipo2"></div>
+                            </td>
+                            <td valign="top">
+                                <div id="graficoManttoEquipo2" style="width: 900px; height: 500px; margin: 0 auto"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="paso6">
+                    <table>
+                        <tr>
+                            <td colspan="2" class="titulo-reporte-mantenimiento"><div id="tituloTipoManttoTipoEmpresa"></div></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="separacion-reporte-mantenimiento"><div>&nbsp;</div></td>
+                        </tr>
+                        <tr>
+                            <td valign="top">
+                                <div id="legendTipoManttoTipoEmpresa"></div>
+                                <hr>
+                                <div id="excelTipoManttoTipoEmpresa"></div>
+                            </td>
+                            <td valign="top">
+                                <div id="graficoTipoMantoTipoEmpresa" style="width: 900px; height: 500px; margin: 0 auto"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+        </div>*@
+
+    <div class="coes-box" id="tab-grafico">
+        <div class="coes-tabs">
+            <nav class="coes-tabs--navigation">
+                <button class="coes-tab coes-tab--active" data-tab-target="1">
+                    Gráfico 1
+                </button>
+
+                <button class="coes-tab" data-tab-target="2">
+                    Gráfico 2
+                </button>
+
+                <button class="coes-tab" data-tab-target="3">
+                    Gráfico 3
+                </button>
+
+                <button class="coes-tab" data-tab-target="4">
+                    Gráfico 4
+                </button>
+
+                <button class="coes-tab" data-tab-target="5">
+                    Gráfico 5
+                </button>
+
+                <button class="coes-tab" data-tab-target="6">
+                    Gráfico 6
+                </button>
+
+            </nav>
+            <div class="coes-tab--content coes-tab--content-active" id="coes-tab-content-1" style="height: 585px;">
+
+                <h2 class="coes-preview--title mt-3 mb-3 ms-3"><a id="tituloManttoEmpresa"></a></h2>
+
+                <table>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendManttoEmpresa" style=" width: 150px;"></div>
+                            <hr>
+                            <div id="excelManttoEmpresa"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficoManttoEmpresa" style="width: 800px; height: 480px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+            <div class="coes-tab--content" id="coes-tab-content-2" style="height: 585px;">
+
+                <h2 class="coes-preview--title mt-3 mb-3 ms-3"><a id="tituloManttoEquipo"></a></h2>
+                <table>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendManttoEquipo" style=" width: 150px;"></div>
+                            <hr>
+                            <div id="excelManttoEquipo"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficoManttoEquipo" style="width: 800px; height: 480px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="coes-tab--content" id="coes-tab-content-3" style="height: 585px;">
+                <h2 class="coes-preview--title mt-3 mb-3 ms-3"><a id="tituloManttoEmpresaEquipo1"></a></h2>
+                <table>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendManttoEmpresaEquipo1" style=" width: 150px;"></div>
+                            <hr>
+                            <div id="excelManttoEmpresaEquipo1"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficoManttoEmpresaEquipo1" style="width: 800px; height: 480px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="coes-tab--content" id="coes-tab-content-4" style="height: 585px;">
+                <h2 class="coes-preview--title mt-3 mb-3 ms-3"><a id="tituloManttoEmpresaEquipo2"></a></h2>
+                <table>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendManttoEmpresaEquipo2" style=" width: 150px;"></div>
+                            <hr>
+                            <div id="excelManttoEmpresaEquipo2"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficoManttoEmpresaEquipo2" style="width: 800px; height: 480px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="coes-tab--content" id="coes-tab-content-5" style="height: 585px;">
+                <h2 class="coes-preview--title mt-3 mb-3 ms-3"><a id="tituloManttoEquipo2"></a></h2>
+                <table>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendManttoEquipo2" style=" width: 150px;"></div>
+                            <hr>
+                            <div id="excelManttoEquipo2"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficoManttoEquipo2" style="width: 800px; height: 480px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="coes-tab--content" id="coes-tab-content-6" style="height: 585px;">
+                <h2 class="coes-preview--title mt-3 mb-3 ms-3"><a id="tituloTipoManttoTipoEmpresa"></a></h2>
+                <table>
+                    <tr>
+                        <td valign="top">
+                            <div id="legendTipoManttoTipoEmpresa" style=" width: 150px;"></div>
+                            <hr>
+                            <div id="excelTipoManttoTipoEmpresa"></div>
+                        </td>
+                        <td valign="top">
+                            <div id="graficoTipoMantoTipoEmpresa" style="width: 800px; height: 480px; margin: 0 auto"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>

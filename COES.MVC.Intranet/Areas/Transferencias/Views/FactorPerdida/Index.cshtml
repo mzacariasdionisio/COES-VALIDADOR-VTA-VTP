@@ -1,0 +1,268 @@
+﻿@model COES.Dominio.DTO.Transferencias.PeriodoDTO
+@{
+    ViewBag.Title = "Transferencias - Factores de Perdida Marginales";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var periodo = (IEnumerable<SelectListItem>)TempData["Pericodigo"];
+    var periodoG = (IEnumerable<SelectListItem>)TempData["PericodigoGraf"];
+    var periodoE = (IEnumerable<SelectListItem>)TempData["PericodigoExcel"];
+    var barraE = (COES.MVC.Intranet.Areas.Transferencias.Models.BarraModel)TempData["BarrcodigoExcel"];
+    var dValorMax = TempData["dValorMax"];
+    var ListErrorLog = (List<COES.Dominio.DTO.Transferencias.ReporteLogDTO>)TempData["ListaLog"];
+}
+<script src="~/Content/Scripts/Charts/jquery.jqplot.min.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Scripts/Charts/jquery.jqplot.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/load.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/factorperdida.js?v=1.3"></script>
+<script src="~/Content/Scripts/Charts/jqplot.barRenderer.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.highlighter.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.cursor.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.pointLabels.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.dateAxisRenderer.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.logAxisRenderer.min.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/jqplot.saveAsImage.min.js"></script>
+<link href="~/Areas/Transferencias/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<div class="ast">
+
+    <div class="form-title">
+        <div class="content-titulo">Costos Marginales por Mes de Valorización</div>
+        <div class="content-botonera"></div>
+    </div>
+
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Carga de Costos Marginales</a></li>
+                <li class='tab'><a href="#paso2">Gráfico de Costos Marginales</a></li>
+                <li class='tab'><a href="#paso3">Exportar Costos Marginales</a></li>
+            </ul>
+
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2" style="width:100%">
+                            <tr class="THCabecera">
+                                <td colspan="6"><div class="editor-label" style="color:#FFFFFF;"><b>Información de carga de datos</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("Pericodi", @periodo, "--Seleccione--")
+                                        @Html.ValidationMessageFor(model => model.PeriCodi)
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="editor-label">Versión </div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="Version" style="width:100px;"></select>
+                                    </div>
+                                </td>
+                                <td style="text-align:right;"><div class="editor-label">Valor Máximo Costo Marginal hasta 20171001</div></td>
+                                <td><div class="editor-field"><input type="text" id="txtValorMaximo" value="@dValorMax" style="width:100px;" /></div></td>
+                            </tr>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="formulario-item" style="width:990px" id="divOpcionCarga">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td><div class="formulario-label" style="width:400px">Seleccionar archivo de factor de pérdida (Extensión: .xlsx):</div></td>
+                                                <td><div class="formulario-control" style="width:100px"><input type="button" id="btnSelectFile" value="Seleccionar" /></div></td>
+                                                <td><div class="formulario-control" style="width:100px" id="container"><input type="button" id="btnProcesarFile" value="Procesar" /></div></td>
+                                                <td><div class="formulario-control" style="width:150px"><input type="button" id="btnImportarSGOCOES" value="Importar de SGOCOES" /></div></td>
+                                                <td><div class="formulario-control" style="width:150px"><input type="button" id="btnAjustarIntervalos" value="Ajustar intervalos" /></div></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="progreso"></div>
+                    <div id="fileInfo"></div>
+                    <div id="contentTabla" style="height: 600px; overflow: auto;"></div>
+                    <div>
+                        @if (ListErrorLog != null)
+                        {
+                            <table class="pretty">
+                                <thead>
+                                    <tr><th colspan="3">Informe de errores en el procesamiento de la información</th></tr>
+                                    <tr>
+                                        <th>Nombre Barra</th>
+                                        <th>Dia</th>
+                                        <th>Valor Costo Marginal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in ListErrorLog)
+                                    {
+                                        <tr>
+                                            <td style="text-align:center">@item.NombreBarra</td>
+                                            <td style="text-align:left">@item.Dia</td>
+                                            <td style="text-align:center">@item.ValorCostoMarginal</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+                <div id="paso2">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="6" cellspacing="2" style="width:100%">
+                            <tr class="THCabecera">
+                                <td colspan="7"><div class="editor-label" style="color:#FFFFFF;"><b>Filtros</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td><div class="editor-field">@Html.DropDownList("PericodiG", @periodoG, "--Seleccione--")</div></td>
+                                <td><div class="editor-label">Version </div></td>
+                                <td><div class="editor-field"><select id="VersionB" style="width:100px;"></select></div></td>
+                                <td style="text-align:left;"><div class="editor-label"><input type="button" id="btnVer" value="Ver Barras" /></div></td>
+                                <td style="width:150px;">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td><div style="float:right;"><input type="button" id="reset" value="Reducir" /><input type="button" id="Clean" value="Refrescar" /></div></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <br />
+                    <br />
+                    <div style="width:100%; display: none;" id="divResultado">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div style="max-height:800px;overflow-y:scroll; width:240px;">
+                                        <table border="0" class="pretty" id="tabla">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th>Información</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="width:720px;">
+                                        <div id="grafico" style="height:400px; width:700px; "></div>
+                                        <div id="grafico2" style="height:400px; width:700px; "></div>
+                                        <br />
+                                        <div id="btnBotones">
+                                            <input type="button" id="btnImagen1" value="Imprimir Imagen 1" />
+                                            <input type="button" id="btnImagen1PNG" value="Exportar Imagen 1" />
+                                            <input type="button" id="btnImagen2" value="Imprimir Imagen 2" />
+                                            <input type="button" id="btnImagen2PNG" value="Exportar Imagen 2" />
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="clear:both">
+                            <a style="text-align:right"></a>
+                        </div>
+                    </div>
+                </div>
+                <div id="paso3">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2" style="width:100%">
+                            <tr class="THCabecera">
+                                <td colspan="7"><div class="editor-label" style="color:#FFFFFF;"><b>Descarga a Excel</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:150px;"><div class="editor-label">@Html.LabelFor(model => model.PeriCodi, "Periodo")</div></td>
+                                <td style="width:200px;"><div class="editor-field">@Html.DropDownList("PericodiE", @periodoE, "--Seleccione--")</div></td>
+                                <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td><div class="editor-label">Versión</div></td>
+                                <td style="text-align:left;">
+                                    <div class="editor-field">
+                                        <select id="VersionA" style="width:100px;"></select>
+                                    </div>
+                                </td>
+                                <td style="text-align:left;"><div><input type="button" id="btnGenerarCostoMarginal" value="Exportar Costos Marginales" /></div></td>
+                                <td style="width:300px;">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                            </tr>
+
+                            <tr>
+                                <td><div class="editor-label">Barra de transferencia</div></td>
+                                <td>
+                                    <div class="editor-label">
+                                        <select id="BarrcodiE" name="BarrcodiE" multiple="multiple">
+                                            @foreach (var item in @barraE.ListaBarras)
+                                            {
+                                                <option value="@item.BarrCodi">@item.BarrNombBarrTran </option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+                                <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td colspan="2" style="text-align:left;"><div><input type="button" id="btnGenerarCMBarra" value="Exportar Barra Formato 1" /></div></td>
+                                <td style="width:400px; text-align:left;"><div><input type="button" id="btnGenerarporBarra" value="Exportar Barra Formato 2" /></div></td>
+                            </tr>
+                            <tr></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+<div id="popAjusteIntervalo" class="general-popup" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Ajustar Intervalos</span>            
+    </div>
+    <div class="popup-text">
+        <div style="display:flex; flex-direction: row; margin-bottom: 10px;">
+            <div style="margin-right: 10px;">
+                <b>Periodo:</b> <label id="nomPeriodo"></label>
+            </div>
+            <div>
+                <b>Versión:</b> <label id="nomVersion"></label>
+            </div>
+        </div>
+        <div style="display: flex; flex-direction: row; margin-bottom: 10px;">
+            <div style="margin-right: 5px;">
+                <select id="popDia"></select>
+            </div>
+            <div style="margin-right: 5px;">
+                <select id="popIntervalo"></select>
+            </div>
+            <div>
+                <input id="popAgregar" type="button" value="Agregar" />
+            </div>
+        </div>
+        <div>
+            <table id="tbAjusteIntervalo" class="pretty tabla-icono"></table>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('btnBotones').style.display = "none";
+    //var cboPeriodo = document.getElementById('Pericodi');
+    function ASSETEC_ChartToPNG(c, p) {
+        var nw = window.open('', '', "toolbar=no,location=no,scrollbars=yes,width=750,height=550");
+        nw.document.write("<img src='" + jqplotToImg($("#" + c)) + "' />");
+        nw.focus();
+        if (p) nw.print();
+    }
+
+    $("#btnImagen1").click(function () {
+        ASSETEC_ChartToPNG("grafico", true);
+    });
+
+    $("#btnImagen2").click(function () {
+        ASSETEC_ChartToPNG("grafico2", true);
+    });
+</script>

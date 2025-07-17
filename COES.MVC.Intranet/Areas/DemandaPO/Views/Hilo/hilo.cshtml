@@ -1,0 +1,265 @@
+﻿@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "DEMANDAS - Procesos de carga automaticos y manuales y consultas de Archivos Raw";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var sMensajeExito = TempData["sMensajeExito"];
+}
+
+<link href="~/Areas/DemandaPO/Content/Css/css.css?v=1" rel="stylesheet" />
+<script src="~/Areas/DemandaPO/Content/Scripts/cargaDatos.js?v=1"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+
+<style type="text/css">
+
+    .Table {
+        display: table;
+    }
+
+    .Title {
+        display: table-caption;
+        text-align: center;
+        font-weight: bold;
+        font-size: larger;
+    }
+
+    .Heading {
+        display: table-row;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .Row {
+        display: table-row;
+    }
+
+    .Cell {
+        display: table-cell;
+        border: solid;
+        border-width: thin;
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+</style>
+
+<div class="ast">
+
+    <div class="form-title">
+        <div class="content-titulo">Carga de datos - TNA - Procedimiento Automático</div>
+    </div>
+
+    <div class="content-hijo">
+
+        <div class="flex-row row-filters" style="width: fit-content; margin-bottom: 15px;">
+            <div>
+                Fecha: <input id="filtroFecha" type="text" style="width: 130px;" />
+            </div>
+            <div>
+                <input type="button" id="btnConsultar" value="Consultar" />
+            </div>
+            <div>
+                <input id="btnExportar" type="button" value="Exportar" />
+            </div>
+            <div>
+                <input id="btnCargaManual" type="button" value="Carga Manual" />
+            </div>
+            <div>
+                <input id="btnVerificarDiaCompleto" type="button" value="Verificar Carga Automática / Completar" />
+            </div>
+            <div>
+                <input id="btnUpdateRAW" type="button" value="Optimizar IDX RAW mes" />
+            </div>
+            @*<div>
+                <input id="btnUpdateTMP" type="button" value="Optmizar IDX TMP" />
+            </div>*@
+            <div>
+                <input id="btnDeleteEstimadorRawTemporal" type="button" value="Vaciar mes T.TMP" />
+            </div>
+        </div>
+
+        <div style="background-color: azure; border: 1px dotted darkblue; border-radius: 22px; padding: 20px; ">
+            <div class="dbx-title" style="text-decoration: underline">
+                Funcionalidad disponible para el entorno de SEGUIMIENTO de la carga automatica de los archivos RAW por minuto y los IEOD de 30 minutos<br /><br />
+            </div>
+            <div class="dbx-title">
+                Carga un MES completo: <input id="txtFecMes" type="text" style="width: 120px; " value="@DateTime.Now.ToString("dd/MM/yyyy")" />
+                <input type="button" id="btnProcesarAutomaticamente1Mes" value="Procesar Raws x Minuto de todo el día" /> Se ejecuta desde el primer intervalo de 5 minutos del dia hasta fin de mes
+            </div>
+            <div style="background-color:cornflowerblue; height:1px;"></div>
+            <div style="height:10px;"></div>
+            <div class="dbx-title">
+                Carga de un DÍA completo: <input id="txtFecProcess" type="text" style="width: 120px; " value="@DateTime.Now.ToString(" dd/MM/yyyy") 00:05" />
+                <input type="button" id="btnProcesarAutomaticamente1" value="Procesar Raws x Minuto de todo el día" /> Se ejecuta desde el primer intervalo de 5 minutos para todo el dia
+            </div>
+            <div style="background-color:cornflowerblue; height:1px;"></div>
+            <div style="height:10px;"></div>
+            <div class="dbx-title">
+                Carga de una HORA: <input id="txtFecProcessHora" type="text" style="width: 130px; " value="@DateTime.Now.ToString("dd/MM/yyyy") 00:05" />
+                <input type="button" id="btnProcesarAutomaticamente1hora" value="Procesar Raws x Minuto en una hora" /> Se ejecuta desde el primer intervalo de 5 minutos para la hora
+            </div>
+            <div style="background-color:cornflowerblue; height:1px;"></div>
+            <div style="height:10px;"></div>
+            <div class="dbx-title">
+                Carga de IEOD de un DÍA completo: <input id="txtFecProcess30" type="text" style="width: 120px; " value="@DateTime.Now.ToString("dd/MM/yyyy") 00:30" />
+                <input type="button" id="btnProcesarAutomaticamente30" value="Procesar Raws x 30 Minutos de todo el día" /> Se ejecuta desde el primer intervalo de 30 minutos para todo el dia
+            </div>
+            <div style="background-color:cornflowerblue; height:1px;"></div>
+            <div style="height:10px;"></div>
+            <div class="dbx-title">
+                Simulación del proceso automático de los TNA:
+                <button id="btnIniciarTNA" type="button">Iniciar</button>
+                <button id="btnDetenerTNA" type="button" disabled>Detener</button>
+            </div>
+        </div>
+        <br /><br />
+        <div>
+
+            <div class="dbx-title">
+                Reporte de la BD Estimador TNA (Minuto)
+            </div>
+
+            <div class="dbx-content">
+
+                <div class="dbx-item">
+                    <div class="bold-larger">
+                        <div class="Table" style="border: 1px solid;">
+                            <div class="Row">
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">00</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">01</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">02</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">03</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">04</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">05</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">06</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">07</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">08</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">09</div>
+                                <div class="Cell" style="width:50px; text-align:center; background-color:cadetblue; color:white;">10</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">11</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">12</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">13</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">14</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">15</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">16</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">17</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">18</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">19</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">20</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">21</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">22</div>
+                                <div class="Cell" style="width:49px; text-align:center; background-color:cadetblue; color:white;">23</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dbx-item">
+                    <div class="bold-larger">
+                        • Carga Automática por minuto
+                    </div>
+                    <div id="statusAuto" class="status-bar"></div>
+                </div>
+
+                <div class="dbx-item">
+                    <div>
+                        • Carga desde IEOD
+                    </div>
+                    <div id="statusIeod" class="status-bar"></div>
+                </div>
+
+                <div class="dbx-item">
+                    <div>
+                        • Carga Manual
+                    </div>
+                    <div id="statusManual" class="status-bar"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="popup" class="general-popup" style="min-width: 300px; min-height: 170px;">
+
+    <span class="button b-close"><span>X</span></span>
+
+    <div class="popup-title">
+        <span>Carga Manual</span>
+    </div>
+
+    <div class="popup-text">
+
+        <div id="main">
+
+            <div class="ws-wrapper" style="min-height: 49px;">
+
+                <div class="ws-content only">
+
+                    <div class="ws-content-header">
+
+                        <div style="height: 49px;">
+                            <div>Fecha</div>
+                            <input id="txtFecha" type="text" style="width: 130px;" />
+                        </div>
+
+                        <div style="height: 49px;">
+                            <div>Ruta de la carpeta [p.e. \\testweb\CarpetaTrabajo\CargaManual\ ]</div>
+                            <input id="txtDireccion" type="text" style="width: 349px;" value="\\testweb\manual\" />
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div style="text-align: center; padding-top: 5px;">
+            <input id="btnProcesarManualmente" type="button" value="Procesar" />
+            <input id="popCancelar" type="button" class="btn-primary" value="Cerrar" />
+        </div>
+
+        <div id="message" style="display: none; color:red;">
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+        $(document).ready(function () {
+            var timer;
+
+            $("#btnIniciarTNA").click(function () {
+                $.ajax({
+                    url: '@Url.Action("IniciarTarea", "Hilo")',
+                    type: 'POST',
+                    success: function () {
+                        $("#btnIniciar").prop("disabled", true);
+                        $("#btnDetener").prop("disabled", false);
+                    },
+                    error: function () {
+                        alert("Error al iniciar la tarea.");
+                    }
+                });
+            });
+
+            $("#btnDetenerTNA").click(function () {
+                $.ajax({
+                    url: '@Url.Action("DetenerTarea", "Hilo")',
+                    type: 'POST',
+                    success: function () {
+                        $("#btnIniciar").prop("disabled", false);
+                        $("#btnDetener").prop("disabled", true);
+                    },
+                    error: function () {
+                        alert("Error al detener la tarea.");
+                    }
+                });
+            });
+        });
+</script>

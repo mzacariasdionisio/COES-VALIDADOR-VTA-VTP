@@ -1,0 +1,73 @@
+﻿@model COES.MVC.Intranet.Areas.Siosein.Models.SioseinModel
+
+@if (Model.ListaCM.Count > 0)
+{
+    string cabe = string.Empty, barr = string.Empty, ener = string.Empty, cong = string.Empty;
+
+    cabe += "<table class='pretty tabla-icono'><thead><tr>";
+    cabe += "<th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S/./MWh&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>";
+    foreach (var cab in Model.cabeceraCM)
+    {
+        cabe += "<th>" + cab.BarrNombre + "</th>";
+    }
+    cabe += "</tr></thead>";
+
+    barr += "<tbody>";
+    ener += "<tbody>";
+    cong += "<tbody>";
+    for (int h = 1; h <= 48; h++)
+    {
+        DateTime fecha = Model.Fecha_.AddMinutes(h * 30);
+        if (fecha.Hour == 0 && fecha.Minute == 0) { fecha = fecha.AddMinutes(-1); }
+        barr += "<tr><td>" + fecha.ToString(COES.Base.Core.ConstantesBase.FormatoFechaHora) + "</td>";
+        ener += "<tr><td>" + fecha.ToString(COES.Base.Core.ConstantesBase.FormatoFechaHora) + "</td>";
+        cong += "<tr><td>" + fecha.ToString(COES.Base.Core.ConstantesBase.FormatoFechaHora) + "</td>";
+        foreach (var cab in Model.cabeceraCM)
+        {
+            var barras = Model.ListaCM.Find(x => x.Barrcodi == cab.BarrCodi && x.Cmgrfecha == fecha);
+            if (barras != null) { barr += "<td>" + decimal.Round((decimal)barras.Cmgrtotal, 2) + "</td>"; } else { barr += "<td></td>"; }
+            if (barras != null) { ener += "<td>" + decimal.Round((decimal)barras.Cmgrenergia, 2) + "</td>"; } else { ener += "<td></td>"; }
+            if (barras != null) { cong += "<td>" + decimal.Round((decimal)barras.Cmgrcongestion, 2) + "</td>"; } else { cong += "<td></td>"; }
+            //barr += string.Format("<td>{0:0.00}</td>", ((barras != null) ? barras.Cmgrtotal : 0));
+            //ener += string.Format("<td>{0:0.00}</td>", ((barras != null) ? barras.Cmgrenergia : 0));
+            //cong += string.Format("<td>{0:0.00}</td>", ((barras != null) ? barras.Cmgrcongestion : 0));
+        }
+        barr += "</tr>";
+        ener += "</tr>";
+        cong += "</tr>";
+    }
+    barr += "</tbody></table>";
+    ener += "</tbody></table>";
+    cong += "</tbody></table>";
+
+    <div id="tab-container" class='tab-container'>
+        <ul id='tabss' class='etabs'>
+            <li id='tab_1' class='tab'><a href='#barra'>Cmg Barra</a></li>
+            <li id='tab_2' class='tab'><a href='#energ'>Cmg Energia</a></li>
+            <li id='tab_3' class='tab'><a href='#conge'>Cmg Congestion</a></li>
+        </ul>
+        <div class='panel-container'>
+            <div id='barra' style="overflow:auto">
+                @Html.Raw(cabe)
+                @Html.Raw(barr)
+            </div>
+            <div id='energ' style="overflow:auto">
+                @Html.Raw(cabe)
+                @Html.Raw(ener)
+            </div>
+            <div id='conge' style="overflow:auto">
+                @Html.Raw(cabe)
+                @Html.Raw(cong)
+            </div>
+        </div>
+    </div>
+    <script>$('#tab-container').easytabs({ animate: false }); $("#btnExcel").show(); $("#btnCargar").show();</script>
+}
+else
+{
+    <script>$("#btnExcel").hide(); $("#btnCargar").hide();</script>
+    <table class='pretty tabla-icono'>
+        <thead><tr><th>Costos Marginales de Corto Plazo</th></tr></thead>
+        <tr><td>¡No existen datos para mostrar!</td></tr>
+    </table>
+}

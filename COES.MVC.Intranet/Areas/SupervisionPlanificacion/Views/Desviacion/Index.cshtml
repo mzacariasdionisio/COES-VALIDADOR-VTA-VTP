@@ -1,0 +1,104 @@
+﻿@model COES.MVC.Intranet.Areas.SupervisionPlanificacion.Models.DesviacionModel
+
+@{
+    ViewBag.Title = "Carga de archivos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Areas/SupervisionPlanificacion/Content/Scripts/desviacion.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Carga de desviaciones</div>
+    <div class="content-botonera">
+    </div>
+</div>
+    
+<div class="content-hijo">    
+    
+    <div id="mensaje"></div>
+    <div class="search-content" style="margin-bottom:10px;">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Fecha proceso:</td>
+                <td><input type="text" id="txtFecha" name="Fecha" value="@Model.FechaConsulta" /></td>
+                <td>Seleccionar archivo (Extensión: .XLSX):</td>
+                <td><input type="button" id="btnSelectFile" value="Seleccionar archivo" /></td>
+                <td>
+                    <div style="width:120px" id="container">
+                        <input type="button" id="btnProcesarFile" value="Procesar archivo" />
+                    </div>
+                </td>
+                <td>
+                    <div id="fileInfo"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+
+    <script type="text/javascript">
+
+            var uploader = new plupload.Uploader({
+                runtimes: 'html5,flash,silverlight,html4',
+                browse_button: 'btnSelectFile',
+                container: document.getElementById('container'),
+                url: siteRoot + 'mediciones/desviacion/upload',
+                flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                multi_selection: false,
+
+                filters: {
+                    max_file_size: '25mb',
+                    chunk_size: '25mb',
+                    mime_types: [
+                        { title: "Archivos Excel .xlsx", extensions: "xlsx" }                      
+                    ]
+                },
+                init: {
+                    PostInit: function () {
+                        document.getElementById('btnProcesarFile').onclick = function () {
+
+                            if (uploader.files.length > 0) {
+                                uploader.start();
+                            }
+                            else
+                                loadValidacionFile("Seleccione archivo.");
+                            return false;
+
+
+                        };
+                    },
+                    FilesAdded: function (up, files) {
+                        if (uploader.files.length == 2) {
+                            uploader.removeFile(uploader.files[0]);
+                        }
+                        plupload.each(files, function (file) {
+                            loadInfoFile(file.name, plupload.formatSize(file.size));
+                        });
+                        up.refresh();
+                    },
+                    UploadProgress: function (up, file) {
+                        mostrarProgreso(file.percent);
+
+                    },
+                    UploadComplete: function (up, file) {
+                        procesarArchivo();
+                    },
+                    Error: function (up, err) {
+                        mostrarErrorFile(err.message);
+                    }
+                }
+            });
+
+            uploader.init();
+
+        </script>
+
+
+
+    <div class="listado" id="listado">
+
+    </div>
+</div>
+

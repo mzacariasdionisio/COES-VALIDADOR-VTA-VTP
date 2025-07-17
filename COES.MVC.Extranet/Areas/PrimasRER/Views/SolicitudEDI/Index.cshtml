@@ -1,0 +1,108 @@
+﻿@model COES.MVC.Extranet.Areas.PrimasRER.Models.PrimasRERModel
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Carga de Información de EDI";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    int EMPRNRO = Convert.ToInt32(TempData["RER_Emprnro"]);
+    string EMPRNOMB = Convert.ToString(TempData["RER_Emprnomb"]);
+    int IPERICODI = Model.Pericodi;
+    string sSelected = "";
+    string sMensajeExito = "";
+    string sMensajeError = "";
+    if (TempData["sMensajeExito"] != null) {
+        sMensajeExito = Convert.ToString(TempData["sMensajeExito"]);
+    }
+    if (TempData["sMensajeError"] != null)
+    {
+        sMensajeError = Convert.ToString(TempData["sMensajeError"]);
+    }
+}
+
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<link href="~/Areas/PrimasRER/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Areas/PrimasRER/Content/Scripts/solicitudEDI.js?v=2.1"></script>
+
+
+<div class="ast">
+    @if (@EMPRNOMB == "")
+    {
+        if (@EMPRNRO < 0)
+        {<div class="form-title">
+                ESTA CUENTA DE USUARIO NO ESTA RELACIONADO A NINGUNA EMPRESA PARA VER LA INFORMACIÓN DE ESTA PANTALLA
+            </div>
+        }
+        else
+        {
+            <script>seleccionarEmpresa();</script>
+            <div class="form-title">
+                DEBE SELECCIONAR UNA EMPRESA PARA VER LA INFORMACIÓN DE ESTA PANTALLA
+                @if (@EMPRNRO > 1)
+                {<a onclick="seleccionarEmpresa();" class="paginate_active">[Seleccionar una empresa]</a>}
+            </div>
+        }
+    }
+    else
+    {
+        <div class="form-title">
+            <div class="form-title" style="color: #278CCC; margin-bottom:0px; font-weight: bold">Carga de Información de EDI</div>
+
+        </div>
+        <div class="content-hijo" id="mainLayout" style="overflow:auto; background-color:#fff">
+            @if (@EMPRNRO > 1)
+            {
+                <div style="text-align: right;">
+                    <a onclick="seleccionarEmpresa();" class="paginate_button">[Cambiar empresa]</a>
+                </div>
+            }
+            <div id="mensaje">
+                @if (@sMensajeExito != "")
+                {
+                    <script>mostrarExito("@Html.Raw(sMensajeExito)");</script>
+                }
+                @if (@sMensajeError != "")
+                {
+                    <script>mostrarError("@Html.Raw(sMensajeError)");</script>
+                }
+            </div>
+            <div class="content-botonera" style="padding-top: 12px;">
+                @if (Model.bNuevo)
+                {
+                    <input type="button" id="btnNuevo" value="Nueva Solicitud" alt="Insertar nueva solicitud EDI" title="Insertar nueva solicitud EDI" />
+                }
+            </div>
+            <div class="content-busqueda">
+                <table class="table-search" style="width: auto; height: 50px;">
+                    <tr>
+                        <td style="line-height: 5px; padding-left: 20px;">
+                            <p>Periodo Reporte EDI:</p>
+                        </td>
+                        <td>
+                            <select id="cbPeriodo" style="width:140px">
+                                @foreach (var item in Model.ListaPeriodos)
+                                {
+                                    sSelected = "";
+                                    if (@item.Ipericodi == Model.Pericodi)
+                                    { sSelected = "selected"; }
+                                    <option value="@item.Ipericodi" @sSelected>@item.Iperinombre</option>
+                                }
+                            </select>
+                        </td>
+                    </tr>
+
+                </table>
+            </div>
+            <div style="clear:both"></div>
+            <div class="content-tabla">
+                <div class="table-list" id="listado"></div>
+                <div style="clear:both; margin-bottom:40px"></div>
+            </div>
+        </div>
+    }
+</div>
+<div id="popup">   </div>
+<script>
+    var sEmprnomb = '@EMPRNOMB';
+    var ipericodi = '@IPERICODI';
+</script>

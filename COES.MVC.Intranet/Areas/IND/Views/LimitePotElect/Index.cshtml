@@ -1,0 +1,191 @@
+﻿@model COES.MVC.Intranet.Areas.IND.Models.IndisponibilidadesModel
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@{
+    ViewBag.Title = "Límite de Potencia Eléctrica";
+    Layout = Model.UsarLayoutModulo ? "~/Views/Shared/_LayoutAlter.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Areas/IND/Content/Css/css.css?v=1.3.2" rel="stylesheet" />
+<link href="~/Areas/IND/Content/Css/formulario.css?v=1.3.2" rel="stylesheet" />
+
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/ellipsis.js"></script>
+
+<script src="~/Areas/IND/Content/Scripts/insumo_lim_potelect.js?v=1.1.4"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Límite de Potencia Eléctrica</div>
+    <div class="content-botonera">
+        <input type="button" id="btnNuevo" value='Nuevo' />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div class="search-content">
+        <table class="content-tabla-search" style="width:auto" role="presentation">
+            <tr>
+                <td class="tbform-label" style="padding-right: 0px;">Periodo:</td>
+                <td>
+                    <select id="cbAnio" style="width: 57px;">
+                        @foreach (var item in Model.ListaAnio)
+                        {
+                            var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                            <option value="@item.Entero1" @(selected)>@item.String1</option>
+                        }
+                    </select>
+                    <select id="cbPeriodo" style="width: 120px;">
+                        @foreach (var item in Model.ListaPeriodo)
+                        {
+                            var selected = Model.IdPeriodo == item.Ipericodi ? "selected" : "";
+                            <option value="@item.Ipericodi" @(selected)>@item.Iperinombre</option>
+                        }
+                    </select>
+
+                    <input type="hidden" id="hdFechaIni" value="@Model.FechaIni" />
+                    <input type="hidden" id="hdFechaFin" value="@Model.FechaFin" />
+                </td>
+
+                <td>
+                    <input type="button" id="btnBuscar" value="Consultar" />
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" id="hfEmpresa" />
+    </div>
+
+
+    <div class="content-tabla">
+        <div class="table-list" id="listado"></div>
+    </div>
+
+</div>
+
+<div id="popupRegistro" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Registro </span></div>
+    <div id="idPopupRegistro">
+
+        <div>
+
+            <table class="content-tabla" style="width: auto;">
+                <tr>
+                    <td style="text-align: right;"> Fecha Inicio:</td>
+                    <td>
+                        <input type="text" id="txt_fecha_ini_reg" value="@Model.FechaIni" style="width: 95px" />
+                    </td>
+
+                </tr>
+
+                <tr>
+                    <td style="text-align: right;"> Fecha Fin:</td>
+                    <td>
+                        <input type="text" id="txt_fecha_fin_reg" value="@Model.FechaFin" style="width: 95px" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="height: 15px"></td>
+                </tr>
+
+                <tr>
+                    <td>Sistema de Transmisión eléctrica:</td>
+                    <td>
+                        <input type="text" id="txt_sistransm" value="" style="width: 300px;" />
+                    </td>
+
+                    <td>Capacidad (MW)</td>
+                    <td>
+                        <input type="text" id="txt_pl" value="" style="width: 50px;" />
+                    </td>
+
+                </tr>
+
+                <tr>
+                    <td></td>
+                    <td></td>
+
+                    <td>Empresa:</td>
+                    <td>
+                        <select id="cboEmpresa" style="width:240px;">
+                            <option disabled selected>--SELECCIONE--</option>
+                            @foreach (var item in Model.ListaEmpresa)
+                            {
+                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                            }
+                        </select>
+                    </td>
+
+                </tr>
+
+                <tr>
+                    <td></td>
+                    <td></td>
+
+                    <td>Central:</td>
+                    <td>
+                        <select id="cboCentral" style="width:240px;">
+                            <option disabled selected>--SELECCIONE--</option>
+                        </select>
+                    </td>
+
+                </tr>
+
+                <tr>
+                    <td></td>
+                    <td></td>
+
+                    <td>Unidad:</td>
+                    <td>
+                        <select id="cboUnidad" style="width:240px;">
+                            <option disabled selected>--SELECCIONE--</option>
+                        </select>
+                    </td>
+
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+
+                    <td>
+                        <input type="button" id="btnAgregarUnidad" value="Agregar" />
+                    </td>
+
+                </tr>
+
+                <tr>
+                    <td colspan="5" style="height: 15px">
+                        Unidades de Generación que utilizan el Sistema de Transmisión eléctrico asociado:
+
+                        <div id="div_tabla_unidad">
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="height: 15px">
+                        <input type="button" id="btnGuardarForm" value="Guardar" />
+
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+
+    </div>
+</div>

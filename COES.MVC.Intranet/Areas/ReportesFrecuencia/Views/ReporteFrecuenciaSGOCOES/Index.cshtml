@@ -1,0 +1,485 @@
+﻿@model COES.MVC.Intranet.Areas.ReportesFrecuencia.Models.ReporteSegundosFaltantesModel
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Reporte de Frecuencia";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    //var sMensajeExito = "";
+}
+@*<script src="~/Areas/ReportesFrecuencia/Content/Scripts/EquipoGPS.js"></script>*@
+@{
+    var lista_equipos = (IEnumerable<SelectListItem>)TempData["ListaEquipos"];
+    var lista_oficial = (IEnumerable<SelectListItem>)TempData["ListaOficial"];
+}
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/TransfPotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/carga.css" rel="stylesheet" />
+<script src="~/Content/Scripts/datepicker.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/highcharts.js?v=@DateTime.Now.Minute"></script>
+<script src="~/Content/Scripts/highcharts-exporting.js?v=@DateTime.Now.Minute"></script>
+<script src="~/Content/Scripts/highcharts-export-clientside.js?v=@DateTime.Now.Millisecond"></script>
+<script src="~/Areas/Transfpotencia/Content/Scripts/load.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Areas/ReportesFrecuencia/Content/Scripts/ReporteFrecuenciaSGOCOES.js"></script>
+@*<link href="~/Areas/Transferencias/Content/Css/Transferencia.css?@(new Random().Next(1000))" rel="stylesheet" />*@
+@*<script src="~/Areas/Transferencias/Content/Scripts/GestionCodigosVTEAVTP.js?@(new Random().Next(1000))"></script>*@
+
+@*<link href="~/Content/Css/jquery-ui-1.8.13.custom.css" rel="stylesheet" />
+    <script src="~/Content/Scripts/dtpicker_fecha_hora/jquery-1.5.1.min.js"></script>
+    <script src="~/Content/Scripts/dtpicker_fecha_hora/jquery-ui-1.8.13.custom.min.js"></script>
+    <script src="~/Content/Scripts/dtpicker_fecha_hora/jquery-ui-timepicker-addon.js"></script>*@
+
+@*<script type="text/javascript">
+        $(function () {
+            $('#txtfechaIni').datetimepicker({
+                //showSecond: true,
+                //timeFormat: 'hh:mm:ss'
+                format: 'Y-m-d H:i'
+            });
+        });
+    </script>*@
+<style type="text/css">
+    a:link {
+        text-decoration: none !important;
+    }
+
+    .button_csv {
+        display: inline-block;
+        outline: none;
+        cursor: pointer;
+        padding: 0 16px;
+        background-color: #0070d2;
+        border-radius: 0.25rem;
+        border: 1px solid #0070d2;
+        color: #fff !important;
+        font-size: 11px;
+        line-height: 23px;
+        font-weight: 400;
+        text-align: center;
+        text-decoration: none;
+    }
+
+        .button_csv:hover {
+            background-color: #005fb2;
+            border-color: #005fb2;
+            color: #fff !important;
+            text-decoration: none;
+        }
+
+    .button_txt {
+        display: inline-block;
+        outline: none;
+        cursor: pointer;
+        padding: 0 16px;
+        background-color: orange;
+        border-radius: 0.25rem;
+        border: 1px solid darkorange;
+        color: #fff !important;
+        font-size: 11px;
+        line-height: 23px;
+        font-weight: 400;
+        text-align: center;
+        text-decoration: none;
+    }
+
+        .button_txt:hover {
+            background-color: darkorange;
+            border-color: orange;
+            color: #fff !important;
+            text-decoration: none;
+        }
+
+    .button_null {
+        display: inline-block;
+        outline: none;
+        cursor: pointer;
+        padding: 0 16px;
+        background-color: olive;
+        border-radius: 0.25rem;
+        border: 1px solid darkolivegreen;
+        color: #fff !important;
+        font-size: 11px;
+        line-height: 23px;
+        font-weight: 400;
+        text-align: center;
+        text-decoration: none;
+    }
+
+        .button_null:hover {
+            background-color: #4A6800;
+            border-color: olive;
+            color: #fff !important;
+            text-decoration: none;
+        }
+
+    .button_dat {
+        display: inline-block;
+        outline: none;
+        cursor: pointer;
+        padding: 0 16px;
+        background-color: #49672C;
+        border-radius: 0.25rem;
+        border: 1px solid darkgreen;
+        color: #fff !important;
+        font-size: 11px;
+        line-height: 23px;
+        font-weight: 400;
+        text-align: center;
+        text-decoration: none;
+    }
+
+        .button_dat:hover {
+            background-color: #3D5823;
+            border-color: #49672C;
+            color: #fff !important;
+            text-decoration: none;
+        }
+</style>
+
+<script type="text/javascript">
+    var reporteFrecuenciaSGOCOES = "ReporteFrecuenciaSGOCOES/";
+    var etapasERA = "EtapaERA/";
+    var imagenFrecuencia = "ImagenFrecuencia/";
+    var controler = siteRoot + "ReportesFrecuencia/" + reporteFrecuenciaSGOCOES;
+    var controlerEtapas = siteRoot + "ReportesFrecuencia/" + etapasERA;
+    var controlerImagenFecuencia = siteRoot + "ReportesFrecuencia/" + imagenFrecuencia;
+
+    function formatDateTime(date) {
+        debugger;
+        //var d = new Date(date.split("-")[0], date.split("-")[1] - 1, date.split("-")[2]);
+        var fecha = date.substr(0, 10);
+        var hora = date.substr(11, 8);
+        //yyyy/mm/dd
+        var d = new Date(fecha.split("/")[2], fecha.split("/")[1] - 1, fecha.split("/")[0]);
+
+        //var d = new Date(date),
+        var month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear(),
+            hours = hora.split(":")[0],
+            minutes = hora.split(":")[1],
+            seconds = hora.split(":")[2];
+
+        if (month.length < 2)
+            month = '0' + month;
+        if (day.length < 2)
+            day = '0' + day;
+
+        return [month, day, year].join('-') + ' ' + [hours, minutes, seconds].join(':');
+    }
+
+    
+
+    var DescargarExcel = function () {
+        var url = controler + "DescargarExcel?fechaIni=" + $("#txtfechaIni2").val() + "&fechaFin=" + $("#txtfechaFin2").val();
+        setLocationPage(url);
+    }
+
+    var EtapasERACMF = function () {
+        //var url = controlerEtapas + "Index";
+        //setLocationPage(url);
+        //$('#modalEtapas').modal('show');
+        var IdEtapas = $('#IdEtapaSelecc').val();
+        $.ajax({
+            type: "POST",
+            url: controlerEtapas + "ListaSelect",
+            data: {
+                ListaEtapas: IdEtapas
+            },
+            success: function (resp) {
+                $("#divListadoEtapas").html(resp);
+                $("#modalEtapas").modal('show');
+            }
+        });
+    }
+
+    var AgregarEtapasERACMF = function () {
+        $('#modalEtapas').removeAttr("style").hide();
+        $("#modalEtapas").css("display", "none")
+        var url = controlerEtapas + "Index";
+        setLocationPage(url);
+    }
+
+    var GuardarEtapasERACMF = function () {
+        var igps = $("#cboEquipo option:selected").val();
+        if (igps == '')
+            alert('Debe Seleccionar un Equipo');
+        else {
+            var etapaSelec = "";
+            var idEtapaSelec = "";
+            var cboxes = document.getElementsByName('EtapaId[]');
+            var len = cboxes.length;
+            for (var i = 0; i < len; i++) {
+                if (cboxes[i].checked) {
+                    etapaSelec = etapaSelec + cboxes[i].value + "|";
+                    idEtapaSelec = idEtapaSelec + cboxes[i].id + "|";
+                }
+            }
+            console.log(idEtapaSelec);
+            $('#IdEtapaSelecc').val(idEtapaSelec);
+            $('#EtapaSelecc').val(etapaSelec);
+            /*var IdEquipo = $('#cboEquipo').val();
+            var FechaIni = $('#txtfechaIni').val();
+            var FechaFin = $('#txtfechaFin').val();
+            var url = controlerImagenFecuencia + "Index?IdGPS=" + IdEquipo + "&FechaInicial=" + FechaIni + "&FechaFinal=" + FechaFin + "&Etapas=" + etapaSelec;
+            setLocationPage(url, 'Etapas');*/
+            /*$("#modalEtapas").modal({
+                show: false,
+                backdrop: 'static'
+            });*/
+            $("#btnGrafico").focus();
+            alert('Se guardo satisfactoriamente.');
+            $('#modalEtapas').removeAttr("style").hide();
+            $("#modalEtapas").css("display", "none")
+            //$('#modalEtapas').modal('hide');
+        } 
+    }
+
+    var CancelarEtapasERACMF = function () {
+        console.log('CancelarEtapasERACMF');
+        //$('#modalEtapas').modal('hide');
+        $('#modalEtapas').modal('hide');
+    }
+
+    var GeneraArchivo = function (tipo) {
+        var igps = $("#cboEquipo option:selected").val();
+        var sgps = $("#cboEquipo option:selected").text().trim();
+        if (igps == '')
+            alert('Debe Seleccionar un Equipo');
+        else {
+            var url = controler + "GeneraArchivo?IdGPS=" + igps + "&gps=" + sgps + "&fechaIni=" + $("#txtfechaIni").val() + "&fechaFin=" + $("#txtfechaFin").val() + "&tipo=" + tipo;
+            setLocationPage(url);
+        }
+    }
+
+    var graficoFrecuencias = function () {
+        //GuardarEtapasERACMF();
+        var IdEquipo = $('#cboEquipo').val();
+        var FechaIni = $('#txtfechaIni').val();
+        var FechaFin = $('#txtfechaFin').val();
+        var etapaSelec = $('#EtapaSelecc').val();
+        var url = controlerImagenFecuencia + "Index?IdGPS=" + IdEquipo + "&FechaInicial=" + FechaIni + "&FechaFinal=" + FechaFin + "&Etapas=" + etapaSelec;
+        setLocationPage(url, 'Etapas');
+    }
+
+    var ConvertirRangosNull = function (idGPS) {
+        debugger;
+        var model = {
+            idGPS: idGPS,
+            FechaIni: $("#txtfechaIni2").val(),
+            FechaFin: $("#txtfechaFin2").val()
+        }
+
+        $.ajax({
+            type: "POST",
+            url: controler + "ConvertirNull",
+            data: JSON.stringify(model),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function (data) {
+                console.log(data.result);
+                alert(data.result);
+            },
+        });
+    }
+
+    function setLocationPage(vUrl, id) {
+
+        var form = $("<form id='tmpForm'></form>");
+        $(document.body).append(form);
+        $(form).attr("action", vUrl);
+        $(form).attr("target", "blank");
+        $(form).attr("method", "post");
+        $(form).attr("id", id);
+        $(form).submit();
+    }
+
+    function openModalEtapas() {
+        // /ReportesFrecuencia/EtapaEra / ListaSelect
+        //console.log('prueba');
+    }
+
+    $(document).ready(function () {
+
+        $('#tabla').dataTable({
+            "sPaginationType": "full_numbers",
+            "destroy": "true",
+            "aaSorting": [[0, "asc"], [1, "asc"]]
+        });
+
+        $('#tabla2').dataTable({
+            "sPaginationType": "full_numbers",
+            "destroy": "true",
+            "aaSorting": [[0, "asc"], [1, "asc"]]
+        });
+
+        $("#btnBuscar").click(function () {
+            var model = {
+                FechaIni: $("#txtfechaIni").val(),
+                FechaFin: $("#txtfechaFin").val(),
+                IdEquipo: $("#cboEquipo").val()
+            };
+            debugger;
+            $(".listado").load(controler + "Lista", { FechaIni: model.FechaIni, FechaFin: model.FechaFin, IdEquipo: model.IdEquipo, IndOficial: model.IndOficial });
+        });
+
+        $("#btnManualUsuario").click(function () {
+            window.location = controler + 'DescargarManualUsuario';
+        });
+
+    });
+
+</script>
+
+<!-- jQuery Modal -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css" />
+
+<!--prueba: 
+<a href="#" onclick="openModalEtapas();" rel="modal:open">example</a>-->
+<input type="hidden" name="IdEtapaSelecc" id="IdEtapaSelecc" value="" />
+<input type="hidden" name="EtapaSelecc" id="EtapaSelecc" value="" />
+
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo">Reporte de Frecuencias SGCOES</div>
+        <div class="content-botonera" style="margin-top: 6px;">
+            <a href="#" id="btnManualUsuario" style="text-decoration: none;">
+                <div style="text-align: center; line-height: 15px; font-size: 12px;">
+                    <img src="~/Content/Images/prn-ico-manual.png" style="height: 25px; display: block; margin: 0 auto 5px auto;">
+                    <span style="color: #278CCC;">Manual de Usuario</span>
+                </div>
+            </a>
+        </div>
+    </div>
+    <div class="content-hijo" style="padding-top:8px">
+        <div class='panel-container'>
+            <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                <table border="1" cellpadding="5" cellspacing="2" style="width:100%">
+                    <tr class="THCabecera">
+                        <td colspan="10"><span class="editor-label" style="color:#FFFFFF;"><b>Filtros de búsqueda</b></span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="editor-label">Equipo</div></td>
+                        <td>
+                            <div class="editor-label input-data">
+                                @Html.DropDownList("cboEquipo", @lista_equipos, "--Seleccione--", new { @style = "width:170px !important", @class = "bg-white" })
+                            </div>
+                        </td>
+
+                        <td><div class="editor-label">Fecha Inicio</div></td>
+                        <td>
+                            <div class="editor-label input-data">
+                                <input type="datetime-local" id="txtfechaIni" class="formatFechaHora" step="1" value="@Model.FechaInicial.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                            </div>
+
+                        </td>
+
+                        <td><div class="editor-label">Fecha Final</div></td>
+                        <td>
+                            <div class="editor-label input-data">
+                                <input type="datetime-local" id="txtfechaFin" class="formatFechaHora" step="1" value="@Model.FechaFinal.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                            </div>
+                        </td>
+                        <td>
+                        <td>
+                            <div class="editor-label">
+                                <span class="editor-label">
+                                    <input type="button" id="btnBuscar" value="Consultar">
+                                </span>
+                            </div>
+                        </td>
+
+
+
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+
+                        <td style="text-align: center;">
+                            <input type="button" id="btnGrafico" value="Grafico" onclick="graficoFrecuencias()">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="button" id="btnEtapasERACMF" value="Etapas ERACMF" onclick="EtapasERACMF()">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="button" id="btnArchivo15" value="Archivo 15" onclick="GeneraArchivo('15')">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="button" id="btnArchivo30" value="Archivo 30" onclick="GeneraArchivo('30')">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="button" id="btnArchivo" value="Archivo Frec" onclick="GeneraArchivo('Frec')">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="button" id="btnOcurrencia" value="Ocurrencias" onclick="GeneraArchivo('Ocur')">
+                        </td>
+                    </tr>
+                </table>
+                <div class="content-hijo" style="padding-top:8px">
+                    <div class="listado" id="listado">
+                        @Html.Partial("Lista", Model)
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal -->
+    <div id="modalEtapas" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-header">
+            <!--<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>-->
+            <h3 id="myModalLabel">Configuración de Etapas ERACMF.</h3>
+        </div>
+        <div class="modal-body" id="divListadoEtapas">
+            <table border="0" class="pretty tabla-icono" id="tabla">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Etapa</th>
+                        <th>Umbral</th>
+                        <th style="width:30px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{int contador = 1; }
+                    @foreach (var item in Model.ListaEtapas)
+                    {
+                        <tr id="fila_@item.EtapaCodi">
+                            <td style="font-weight:bold">@contador</td>
+                            <td style="text-align:left;">@item.NombreEtapa</td>
+                            <td><div id="divEtapa_@item.EtapaCodi" contenteditable="true">@item.Umbral</div></td>
+                            <td style="width:30px;">
+                                <input type="checkbox" value="@item.NombreEtapa:@item.Umbral" name="EtapaId[]" class="chckBoxEtapa" id="@item.EtapaCodi" />
+                            </td>
+
+                        </tr>
+                        contador = contador + 1;
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <input type="button" id="btnAgregarEtapasERACMF" value="Agregar" onclick="AgregarEtapasERACMF()">
+
+            <input type="button" id="btnGuardarEtapasERACMF" value="Guardar" onclick="GuardarEtapasERACMF()">
+
+            <!--<input type="button" id="btnCancelarEtapasERACMF" value="Cancelar" onclick="CancelarEtapasERACMF()">-->
+            <!--<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>-->
+            <!--<button class="btn btn-primary">Save changes</button>-->
+
+        </div>
+    </div>
+
+</div>

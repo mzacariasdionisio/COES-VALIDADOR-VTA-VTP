@@ -1,0 +1,104 @@
+﻿@model  IEnumerable<COES.Dominio.DTO.Sic.DaiPresupuestoDTO>
+
+<script>
+    //function setSelectionRange(input, selectionStart, selectionEnd) {
+    //    if (input.setSelectionRange) {
+    //        input.focus();
+    //        input.setSelectionRange(selectionStart, selectionEnd);
+    //    } else if (input.createTextRange) {
+    //        var range = input.createTextRange();
+    //        range.collapse(true);
+
+    //        range.moveEnd('character', selectionEnd);
+    //        range.moveStart('character', selectionStart);
+    //        range.select();
+    //    }
+    //}
+
+    //function setCaretToPos(input, pos) {
+    //    setSelectionRange(input, pos, pos);
+    //}
+
+    //$(".monto").click(function () {
+    //    var inputLength = $(".monto").val().length;
+    //    setCaretToPos($(".monto")[0], inputLength)
+    //});
+
+    var options = {
+        onKeyPress: function (cep, e, field, options) {
+            if (jQuery('.monto').val() != "") {
+                $("#lblMensajeMonto").hide();
+            }
+            
+            var inputVal = jQuery('.monto').val();
+            if (inputVal.length > 3) {
+                //inputVal += ".00";
+                //var inputVal = parseFloat(inputVal);
+                
+                jQuery('.monto').val(inputVal);
+            }
+
+            // setCaretToPos(jQuery('#money')[0], 4);
+
+            var masks = '###,###,##0.00';
+            $('.monto').mask(masks, options);
+        },
+        reverse: true
+    };
+
+    $('.monto').mask("###,###,##0.00", options);
+    $('.amortizacion').mask("00", { reverse: true });
+</script>
+
+<style>
+    .text-right {
+        text-align: right !important;
+    }
+    .text-danger {
+        color:red;
+    }
+</style>
+<table border="0" class="pretty tabla-icono" cellspacing="0" width="100%" id="tabla">
+    <thead>
+        <tr>
+            <th>Año</th>
+            <th>Monto</th>
+            <th>Amortizaciones</th>
+            <th>Opciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td width="200px" id="txtPresanio">@(Model.Any() ? (Convert.ToInt32(Model.FirstOrDefault().Presanio) + 1).ToString() : DateTime.Now.Year.ToString())</td>
+            <td>
+                <input class="monto text-right" type="text" id="txtPresmonto" data-mask="###,###,##0.00" data-mask-selectonfocus="true" step="0.01" /> <strong class="text-danger">*</strong>
+                <br /><label id="lblMensajeMonto" class="text-danger" hidden>Debe ingresar monto</label>
+            </td>
+            <td>
+                <input class="amortizacion" type="text" id="txtPresamortizacion" data-mask="00" data-mask-selectonfocus="true" value="10" /> <strong class="text-danger">*</strong>
+            </td>
+            <td>
+                <a href="#" onclick="javascript: GuardarAmortizacion()"><img src="~/Areas/DevolucionAporte/Content/Images/ic_check.png" /></a>
+            </td>
+        </tr>
+        @foreach (var item in Model)
+            {
+            <tr>
+                <td>@item.Presanio</td>
+                <td>
+                    <input class="montox" type="text" style="text-align:right" id="txtPresmonto" disabled value="@(string.Format("{0:n2}", item.Presmonto.Value))" /> <strong class="text-danger">*</strong>
+                    
+                </td>
+                <td>
+                    <input class="amortizacion" type="text" id="txtPresamortizacion" disabled value="@item.Presamortizacion" data-mask="00" data-mask-selectonfocus="true" />
+                </td>
+                <td>
+                    @if (item.Tieneaportantes == 0)
+                    {
+                        <a href="#" onclick="javascript: EliminarAmortizacion(@item.Prescodi)"><img src="~/Areas/DevolucionAporte/Content/Images/ic_remove.png" /></a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

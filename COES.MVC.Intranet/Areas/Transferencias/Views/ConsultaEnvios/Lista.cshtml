@@ -1,0 +1,95 @@
+﻿@model COES.MVC.Intranet.Areas.Transferencias.Models.ConsultaEnviosModel
+@{
+    int iCount = 0;
+    int i = 0;
+}
+<form name="frmBrowse">
+    <table border="0" class="pretty tabla-icono" id="tabla">
+        <thead>
+            <tr>
+                <th style="width:30px;">Ver envío</th>
+                <th>Cod.Envío</th>
+                <th>Empresa</th>
+                <th>Fecha envío</th>
+                <th>Usuario</th>
+                <th>Tipoinformación</th>
+                <th>Cumplimiento</th>
+                <th>Considerado en VTEA</th>
+                <th>Fecha de selección</th>
+                <th>Usuario COES</th>
+                <th>Pase a Liquidación</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ListaTrnEnvios)
+            {
+                int sPK = item.TrnEnvCodi;
+
+                var sTipo = "E y R";
+                var sCumplimiento = "EN PLAZO";
+                var sColor = "cadetblue";
+                var sConsiderado = "Si";
+                var sFecSelección = "";
+
+                var sClass = "even";
+                if (i % 2 == 0) { sClass = "odd"; }
+
+                if (item.TrnEnvTipInf == "DM")
+                { sTipo = item.TrnModNombre; }
+                if (item.TrnEnvPlazo == "N")
+                {
+                    sCumplimiento = "FUERA DE PLAZO";
+                    sColor = "crimson";
+                }
+                else if (item.TrnEnvPlazo == "C")
+                {
+                    sCumplimiento = "DESDE INTRANET";
+                    sColor = "darkblue";
+                }
+                if (item.TrnEnvLiqVt == "N")
+                {
+                    sConsiderado = "No";
+                }
+                else
+                {
+                    sClass = "amarillo";
+                }
+                if (item.TrnEnvUseCoes != null)
+                {
+                    sFecSelección = item.TrnEnvFecCoes.ToString("dd/MM/yyyy HH:mm:ss");
+                }
+                i++;
+            <tr id="fila_@sPK" class="@sClass">
+                <td style="width:30px;">
+                    <a href="#" id="view_@sPK" class="view"><img src="@Url.Content("~/Content/Images/btn-open.png")" title="Listar el detalle del envío" alt="Listar el detalle del envío" /></a>
+                    <a href="#" id="export_@sPK" class="export"><img src="@Url.Content("~/Areas/TransfPotencia/Content/Images/excel.gif")" style="width:19px; height:19px" title="Listar el detalle del envío" alt="Listar el detalle del envío" /></a>
+                </td>
+                <td>@sPK</td>
+                <td class="text_left" title="@item.EmprCodi">@item.EmprNomb</td>
+                <td>@item.TrnEnvFecIns.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td>@item.TrnEnvUseIns</td>
+                <td>@sTipo</td>
+                <td style="font-weight: bold; color: @sColor">@sCumplimiento</td>
+                <td>
+                    @if (item.TrnEnvLiqVt.Equals("S"))
+                    {<span style="font-weight:bold">@sConsiderado</span> }
+                else
+                { <span>@sConsiderado</span>}
+                </td>
+                <td>@sFecSelección</td>
+                <td>@item.TrnEnvUseCoes</td>
+                <td style="width:30px;">
+                    @if (item.TrnEnvLiqVt.Equals("N") && !item.TrnEnvPlazo.Equals("C"))
+                    {
+                        iCount++;
+                        <input name="chkItem" type="checkbox" value="@sPK">
+                    }
+                    else
+                    { <span>&nbsp;</span>}
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+    <input type="hidden" id="Count" name="Count" value="@iCount">
+</form>

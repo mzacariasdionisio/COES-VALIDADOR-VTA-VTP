@@ -1,0 +1,240 @@
+﻿@model COES.MVC.Intranet.Areas.Formulas.Models.FormulaModel
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jqueryui.js"></script>
+<script src="~/Areas/Formulas/Content/Scripts/formula.js?v=4.0"></script>
+<link href="~/Areas/Formulas/Content/Css/css.css" rel="stylesheet" />
+<link href="~/Content/Scripts/Charts/jquery.jqplot.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/Charts/jquery.jqplot.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.canvasAxisTickRenderer.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.canvasTextRenderer.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.cursor.min.js"></script>
+<link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.0/themes/smoothness/jquery-ui.css" />
+<link href="~/Content/Css/scroll.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/mousewheel.min.js"></script>
+<script src="~/Content/Scripts/scroll.min.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Perfiles SCADA</div>
+    <div class="content-botonera">
+        <table style="margin-top:10px">
+            <tr>
+                <td><input type="button" id="btnImportar" value="Importar perfil" style="display:none" /></td>
+                <td><input type="button" id="btnQuitarImportado" value="Quitar importado" style="display:none" /></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="div-importar" id="divImportar">
+    <div class="div-importar-close" onclick="closeImportar();">X</div>
+
+    <div class="div-importar-content">
+        Para descargar el formato de importación, por favor <a href="JavaScript:descargarFormato();">Presione aquí</a>
+
+        <div class="form-importar-content">
+            <div class="form-importar-item">Seleccionar archivo(xlsx):</div>
+            <div class="form-importar-item">
+                <input type="button" id="btnSelectFile" value="Seleccionar" />
+            </div>
+            <div style="clear:both"></div>
+        </div>
+
+        <div id="progreso"></div>
+        <div id="fileInfo"></div>
+
+        <div class="div-importar-boton" id="container">
+            <input type="button" id="btnProcesarFile" value="Procesar" />
+        </div>
+    </div>
+</div>
+
+<div id="confirmarSave">
+    <div class="popup-title"><span>Grabar perfil</span></div>
+    <div class="popup-text" id="popupGrabar">
+        Por favor ingrese un comentario <br />
+        <textarea id="txtComentario"></textarea>
+    </div>
+    <div class="formulario-boton">
+        <input id="btnOkGrabar" type="button" value="Aceptar" />
+        <input id="btnCancelGrabar" type="button" value="Cancelar" />
+    </div>
+</div>
+
+<div class="content-hijo" style="padding-top:8px">
+    <table>
+        <tr>
+            <td style="width:370px; padding-right:15px">
+                <div id="divFormula" style="width:370px">
+                    <div class="action-message" style="margin-top:13px; margin-bottom:10px;">
+                        Seleccione fórmula.
+                    </div>
+                    <div style="clear:both; height:10px"></div>
+                    <div class="search-content" style="padding:10px">
+                        <table class="content-tabla-search" style="width:auto">
+                            <tr style="line-height:20px">
+                                <td>Área:</td>
+                                <td>
+                                    <select id="cbAreaOperativa" style="width:100px">
+                                        <option value="">-TODOS-</option>
+                                        <option value="NORTE">NORTE</option>
+                                        <option value="CENTRO">CENTRO</option>
+                                        <option value="SUR">SUR</option>
+                                        <option value="ELA">ELA</option>
+                                    </select>
+                                </td>
+                                <td style="padding-left:20px">Usuario:</td>
+                                <td>
+                                    <select id="cbUsuario" style="width:110px">
+                                        <option value="0">-TODOS-</option>
+                                        <option value="1" selected="selected">MI USUARIO</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">Actualización después de: <input type="text" id="FechaFormula" name="FechaFormula" style="width:90px" /></td>
+                            </tr>
+
+                        </table>
+                    </div>
+                    <div id="content-formula">
+                    </div>
+                    <input type="hidden" id="hfIdFormula" />
+                    <input type="hidden" id="hfSubEstacion" />
+                    <input type="hidden" id="hfArea" />
+                </div>
+            </td>
+            <td style="vertical-align:top; padding-right:15px;padding-top:12px">
+                <div id="cntValores"></div>
+            </td>
+            <td style="padding-top:12px">
+                <div class="action-alert" style="margin-top:0; margin-bottom:10px" id="mensaje">
+                    Debe grabar luego de procesar y hacer el tunnig por cada fórmula seleccionada.
+                </div>
+                <div class="search-content" style="width: 600px; padding:10px; margin:0">
+                    <table class="content-tabla-search" style="width:auto">
+                        <tr>
+                            <td style="padding:0">Desde:</td>
+                            <td style="padding:0"><input type="text" id="FechaDesde" name="FechaDesde" value="@Model.FechaDesde" style="width:110px" /></td>
+                            <td style="padding:0">Hasta:</td>
+                            <td style="padding:0"> <input type="text" id="FechaHasta" name="FechaHasta" value="@Model.FechaHasta" style="width:110px" /></td>
+                            <td style="padding:0">
+                                <select id="cbAgrupacion" style="width:150px">
+                                    <option value="1">MARTES - VIERNES</option>
+                                    <option value="2">SÁBADO</option>
+                                    <option value="3">DOMINGO</option>
+                                    <option value="4">LUNES</option>
+                                </select>
+                            </td>
+                            <td style="padding:0"><input type="button" id="btnProcesar" value="Procesar" /></td>
+                            <td style="padding:0"><input type="button" id="btnGrabar" value="Grabar" /></td>
+                        </tr>
+                    </table>
+                    <div style="clear:both; margin-bottom:10px;"></div>
+                    <table class="content-tabla-search" style="width:auto">
+                        <tr>
+                            <td style="padding:0">
+                                <div id="formula"></div>
+                            </td>
+                            <td style="font-weight:bold; padding:0; padding-left:5px">Día:</td>
+                            <td style="padding:0; padding-left:5px">
+                                <div id="diatipico"></div>
+                            </td>
+                            <td style="padding:0; padding-left:5px">Mímima</td>
+                            <td style="padding:0; padding-left:5px">
+                                <input type="text" id="txtMinima" style="width:40px" />
+                            </td>
+                            <td style="padding:0; padding-left:5px">Media</td>
+                            <td style="padding:0; padding-left:5px">
+                                <input type="text" id="txtMedia" style="width:40px" />
+                            </td>
+                            <td style="padding:0;padding-left:5px">Máxima</td>
+                            <td style="padding:0; padding-left:5px">
+                                <input type="text" id="txtMaxima" style="width:40px" />
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div id="divAjuste" style="display:none; margin-top:10px">
+                        <table style="width:auto">
+                            <tr style="line-height:20px">
+                                <td>Porcentaje banda:</td>
+                                <td>
+                                    <input type="text" id="txtBanda" onkeypress="return validarNumero(this,event)" value="10" style="width:40px" />%
+                                </td>
+                                <td>
+                                    <input type="button" id="btnBanda" value="OK" />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div style="clear:both; margin-bottom:20px;"></div>
+                <div id="resizable" style="padding:15px; padding-right:15px; background-color:#F6F6F6; width:590px; height:400px">
+                    <div id="cntGrafico" style="width:100%; height:100%"></div>
+                    <div id="chartTooltip"></div>
+                </div>
+            </td>
+            <td>
+                <div id="cntDatos"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<script type="text/javascript">
+
+    var uploader = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnSelectFile',
+        container: document.getElementById('container'),
+        url: siteRoot + 'formulas/formula/upload',
+        flash_swf_url: '~/Content/Scripts/Moxie.swf',
+        silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+            max_file_size: '2mb',
+            mime_types: [
+                { title: "Archivos Excel .xlsx", extensions: "xlsx" }
+            ]
+        },
+        init: {
+            PostInit: function () {
+                document.getElementById('btnProcesarFile').onclick = function () {
+                    if (uploader.files.length > 0) {
+                        uploader.start();
+                    }
+                    else
+                        loadValidacionFile("Seleccione archivo.");
+                    return false;
+                };
+            },
+            FilesAdded: function (up, files) {
+                if (uploader.files.length == 2) {
+                    uploader.removeFile(uploader.files[0]);
+                }
+                plupload.each(files, function (file) {
+                    loadInfoFile(file.name, plupload.formatSize(file.size));
+                });
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+                mostrarProgreso(file.percent);
+            },
+            UploadComplete: function (up, file) {
+                importar();
+            },
+            Error: function (up, err) {
+                loadValidacionFile(err.code + "-" + err.message);
+            }
+        }
+    });
+
+    uploader.init();
+
+</script>

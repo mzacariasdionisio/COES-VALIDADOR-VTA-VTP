@@ -1,0 +1,79 @@
+﻿@model COES.MVC.Intranet.Areas.SistemasTransmision.Models.ElementoStModel
+@{
+    string sAccion = ViewData["sAccion"].ToString();
+    string sTitulo = ViewData["sTitulo"].ToString();
+    //var EmpresaCodigo = (COES.MVC.Intranet.Areas.SistemasTransmision.Models.ElementoStModel)TempData["EMPRCODI2"];
+    string sSelected = "";
+}
+<link href="~/Content/Css/validacion.css" rel="stylesheet" />
+<link href="~/Areas/SistemasTransmision/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/SistemasTransmision/Content/Scripts/load.js"></script>
+@using (Html.BeginForm("Save", "ElementoSt", FormMethod.Post, new { id = "frmElemento", @class = "cmxform" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="ast">
+        <div class="form-title">
+            <div class="content-titulo">@sTitulo</div>
+            <div class="content-botonera">
+                @if (Model.bGrabar)
+                {
+                    <input type="submit" value="@sAccion" alt="@sAccion" title="@sAccion" />
+                }
+                <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index","ElementoSt")'" alt="Retornar" title="Retornar" />
+            </div>
+        </div>
+        <div style="padding:20px; width:700px;">
+            @Html.HiddenFor(model => model.EntidadSistema.Sistrncodi, new { id = "IDSistema"})
+            @Html.HiddenFor(model => model.EntidadPeriodo.Stpercodi, new { id = "pericodi" })
+            @Html.HiddenFor(model => model.EntidadSistema.Strecacodi, new { id = "recacodi" })
+            <table cellspacing="2" cellpadding="5">
+                @if (Model.sError != "")
+                {
+                    <tr>
+                        <td colspan="2">
+                            <div class="editor-label" style="color:red;">
+                                @Model.sError
+                            </div>
+                        </td>
+                    </tr>
+                }
+                
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.EntidadEmpresa.EmprCodi, "Nombre del Titular: ") (*)</div></td>
+                    <td class="editor-field" style="width:50px">
+                        <select id="EntidadSistema_Emprcodi" name="EntidadSistema.Emprcodi">
+                            @foreach (var item in Model.ListaEmpresa)
+                            {
+                                sSelected = "";
+                                if (@item.EmprCodi == Model.EntidadSistema.Emprcodi)
+                                {
+                                    sSelected = "selected";
+                                }
+                                <option value="@item.EmprCodi" @sSelected>@item.EmprNombre</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.EntidadSistema.Sistrnnombre, "Nombre del Sistema ") (*)</div></td>
+                    <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadSistema.Sistrnnombre, new { size = 50, maxLength = 50 })</div></td>
+                </tr>
+                <tr><td colspan="2">Nota(*): Información obligatoria</td></tr>
+            </table>
+        </div>
+    </div>
+}
+
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+<script>
+    $('#frmElemento').validate({
+        rules: {
+            "EntidadEmpresa.EmprCodi": {
+                required: true
+            },
+            "EntidadSistema.Sistrnnombre": {
+                required: true
+            }
+        }
+    })
+</script>

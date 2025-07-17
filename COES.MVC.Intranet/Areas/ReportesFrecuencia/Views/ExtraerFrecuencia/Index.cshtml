@@ -1,0 +1,120 @@
+﻿@model COES.MVC.Intranet.Areas.ReportesFrecuencia.Models.ExtraerFrecuenciaModel
+@Html.AntiForgeryToken()
+@{
+    ViewBag.Title = "Carga Archivo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var sMensajeExito = TempData["sMensajeExito"];
+}
+
+<script src="~/Areas/ReportesFrecuencia/Content/Scripts/ExtraerFrecuencia.js"></script>
+<script type="text/javascript">
+    var reporteExtraerFrecuencia = "ExtraerFrecuencia/";
+    var controler = siteRoot + "ReportesFrecuencia/" + reporteExtraerFrecuencia;
+
+    $(document).ready(function () {
+
+        $("#btnManualUsuario").click(function () {
+            window.location = controler + 'DescargarManualUsuario';
+        });
+
+        $("#btnBuscar").click(function () {
+            var model = {
+                FechaIni: $("#FechaInicial").val(),
+                FechaFin: $("#FechaFinal").val(),
+            };
+            $(".listado").load(controler + "Lista", { FechaIni: model.FechaIni, FechaFin: model.FechaFin});
+
+        });
+
+        $("#btnBuscar").click();
+
+    });
+
+    function cancelarOpcion() {
+        var _val_fecha_inicio = $("#hdfFechaInicio").val();
+        var _val_fecha_fin = $("#hdfFechaFinal").val();
+        $("#FechaInicial").val(_val_fecha_inicio);
+        $("#FechaFinal").val(_val_fecha_fin);
+    }
+
+</script>
+<div class="ast">
+    @if (@sMensajeExito != null)
+    {
+        <div class="exito mensajes">@sMensajeExito</div>
+    }
+    <div class="form-title" style="display: flex; align-items: center; justify-content: space-between;">
+        <div class="content-titulo">Listado</div>
+        <div class="content-botonera" style="display: flex; align-items: center; gap: 10px;">
+            @if (Model.bNuevo)
+            {
+                <input type="button" value="Cargar Archivo Al Milisegundo" onclick="location.href='@Url.Action("New","ExtraerFrecuencia")'" alt="Insertar un nuevo registro" title="Insertar un nuevo registro" />
+            }
+            <input type="button" value="Refrescar" onclick="location.href='@Url.Action("Index","ExtraerFrecuencia")'" alt="Refrescar" title="Refrescar" />
+            <a href="#" id="btnManualUsuario" style="text-decoration: none; margin-top: -7px;">
+                <div style="text-align: center; line-height: 15px; font-size: 12px;">
+                    <img src="~/Content/Images/prn-ico-manual.png" style="height: 25px; margin-left: -15px;"><br>
+                    <span style="color: #278CCC;">Manual de Usuario</span>
+                </div>
+            </a>
+        </div>
+    </div>
+    <div class="content-hijo" style="padding-top:8px">
+        <div class='panel-container'>
+            <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                <table border="1" cellpadding="5" cellspacing="2" style="width:100%">
+                    <tr class="THCabecera">
+                        <td colspan="10"><span class="editor-label" style="color:#FFFFFF;"><b>Filtros de búsqueda</b></span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="editor-label">Fecha Inicio</div></td>
+                        <td>
+                            <div class="editor-label input-data">
+                                @Html.TextBoxFor(m => m.FechaInicial, new { @class = "txtFecha", @Value = Model.FechaInicial.ToString("dd/MM/yyyy") })
+                            </div>
+                        </td>
+
+                        <td><div class="editor-label">Fecha Final</div></td>
+                        <td>
+                            <div class="editor-label input-data">
+                                @Html.TextBoxFor(m => m.FechaFinal, new { @class = "txtFecha", @Value = Model.FechaFinal.ToString("dd/MM/yyyy") })
+                            </div>
+                        </td>
+
+                        <td><div class="editor-label"><span class="editor-label"><input type="button" id="btnBuscar" value="Consultar"></span></div></td>
+
+                        <td>
+                            <div class="editor-label">
+                                <span class="editor-label">
+                                    <input type="hidden" value="@Model.FechaInicial.ToString("dd/MM/yyyy")" name="hdfFechaInicio" id="hdfFechaInicio" />
+                                    <input type="hidden" value="@Model.FechaFinal.ToString("dd/MM/yyyy")" name="hdfFechaFinal" id="hdfFechaFinal" />
+                                    <input type="button" value="Cancelar" onclick="javascript: cancelarOpcion();" alt="Cancelar" title="Cancelar" />
+                                </span>
+                            </div>
+                        </td>
+
+
+                    </tr>
+                </table>
+
+                <div class="content-hijo" style="padding-top:8px">
+                    <div class="listado" id="listado">
+                        @Html.Partial("Lista", Model)
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+    </div>
+
+
+</div>
+
+<script>
+    $('.txtFecha').Zebra_DatePicker({
+    });
+
+</script>
+

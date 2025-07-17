@@ -1,0 +1,154 @@
+﻿@model COES.MVC.Intranet.Areas.Medidores.Models.ReporteRecursoEnergeticoModel
+@using System.Globalization
+@{
+    NumberFormatInfo nfi = new CultureInfo("en-US", false).NumberFormat;
+    nfi.NumberGroupSeparator = " ";
+    nfi.NumberDecimalDigits = 3;
+    nfi.NumberDecimalSeparator = ",";
+}
+
+<div style="max-width: 1116px; margin: 0 auto; ">
+    <table class="tabla-formulario" style="max-width: 1100px;">
+        <thead>
+            <tr>
+                <th colspan="3"></th>
+                <th colspan="2" style="text-align: center; background-color: PowderBlue; color: #2980B9">Interconexión</th>
+                <th></th>
+            </tr>
+            <tr>
+                <th>Bloque Horario</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+
+                <th style="background-color: PowderBlue; color: #2980B9">PER-ECU Exportación <br /> MW</th>
+                <th style="background-color: PowderBlue; color: #2980B9">ECU-PER Importación <br /> MW</th>
+                <th>SEIN <br /> MW</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                decimal maxImport = 0M;
+                decimal maxExport = 0M;
+                var tot = 0M;
+                
+                foreach (var item in Model.ListaResumenDemanda)
+                {
+                    var export = 0M;
+                    var import = 0M;
+                    if (item.ValorInter > 0)
+                    {
+                        export = item.ValorInter;
+                    }
+                    else
+                    {
+                        import = item.ValorInter * -1;
+                    }
+                    
+                    if (item.TipoHorario != "INTERCONEXION")
+                    {
+                        if (tot < item.Valor)
+                        {
+                            tot = item.Valor;
+                            maxExport = export;
+                            maxImport = import;
+                        }
+                        <tr>
+                            <td>@item.TipoHorario</td>
+                            <td style="text-align:center;">@item.FechaOnlyDia</td>
+                            <td style="text-align:center;">@item.FechaOnlyHora</td>
+                            <td style="text-align:center;">@export.ToString("N", nfi)</td>
+                            <td style="text-align:center;">@import.ToString("N", nfi)</td>
+                            <td style="text-align:center;">@item.Valor.ToString("N", nfi)</td>
+                        </tr>
+                    }
+                }
+
+                if (Model.DemandaHP != null)
+                {
+                    if (Model.DemandaHP.ValorInter > 0)
+                    {
+                        maxExport = Model.DemandaHP.ValorInter;
+                    }
+                    else
+                    {
+                        maxImport = Model.DemandaHP.ValorInter * -1;
+                    }
+                }
+            }
+        </tbody>
+    </table>
+
+    <br /><br />
+    <hr />
+    <br /><br />
+
+    <!-- Reporte por Tipo de combustible -->
+    <table class="tabla-formulario" style="max-width: 1100px;">
+        <thead>
+            <tr>
+                <th>TIPO</th>
+                <th>MW</th>
+                <th>PARTICIPACIÓN %</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+
+                var total = 0.0M;
+                var porcentaje = 0.0M;
+                var porcExpor = 0.0M;
+                var porcImpor = 0.0M;
+                foreach (var item in Model.ListaConsolidadoRecursoEnergetico)
+                {
+                    total += item.Total;
+                    porcentaje += item.Porcentaje;
+                    <tr>
+                        <td>@item.Fenergnomb</td>
+                        <td style="text-align:right;">@item.Total.ToString("N", nfi)</td>
+                        <td style="text-align:right;"> @item.Porcentaje.ToString("N", nfi)</td>
+                    </tr>
+                }
+                var totSeinConInter = total + maxImport - maxExport;
+                if (totSeinConInter > 0)
+                {
+                    porcExpor = maxExport / totSeinConInter * 100;
+                    porcImpor = maxImport / totSeinConInter * 100;
+                }
+
+            }
+        </tbody>
+        <tbody>
+            <tr>
+                <td style="text-align: left; background-color: #5B919B; color: white">TOTAL PERÚ</td>
+                <td style="text-align: right; background-color: #5B919B; color: white">@total.ToString("N", nfi)</td>
+                <td style="text-align: right; background-color: #5B919B; color: white"> @porcentaje.ToString("N", nfi)</td>
+            </tr>
+            <tr>
+                <td>EXPORTACIÓN (PER-ECU)</td>
+                <td style="text-align:right;">@maxExport.ToString("N", nfi)</td>
+                <td style="text-align:right;"> @porcExpor.ToString("N", nfi)</td>
+            </tr>
+            <tr>
+                <td>IMPORTACIÓN (ECU-PER)</td>
+                <td style="text-align:right;">@maxImport.ToString("N", nfi)</td>
+                <td style="text-align:right;"> @porcImpor.ToString("N", nfi)</td>
+            </tr>
+        </tbody>
+        <thead class="text-info" style="background-color:#5C9CCC;color:white;">
+            <tr>
+                <td style="text-align:left;">TOTAL</td>
+                <td style="text-align:right;">@totSeinConInter.ToString("N", nfi)</td>
+                <td style="text-align:right;"> -- </td>
+            </tr>
+        </thead>
+    </table>
+
+    <br /><br />
+    <hr />
+    <br /><br />
+
+    <div id="idVistaGrafica" style='display: block; width: 750px; height: 450px; margin-left: 100px;'>
+    </div>
+</div>
+
+<input type="hidden" id="hfJsonGrafico" value="@Model.JsonGraficoPipe" />

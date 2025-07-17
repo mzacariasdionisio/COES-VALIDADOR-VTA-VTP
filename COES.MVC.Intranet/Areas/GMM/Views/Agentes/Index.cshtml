@@ -1,0 +1,411 @@
+﻿@{
+    ViewBag.Title = "Agentes GMM";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<!--Hoja de estilos-->
+<link href="~/Areas/GMM/Content/Css/css.css" rel="stylesheet" />
+<!--Menu contextual-->
+<script src="~/Content/Scripts/contextmenu.js"></script>
+<link href="~/Content/Css/contextmenu.css" rel="stylesheet" />
+<link href="~/Areas/GMM/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Areas/GMM/Content/Scripts/agentes.js"></script>
+<script src="~/Areas/GMM/Content/Scripts/messaje-operation.js"></script>
+<script src="~/Areas/GMM/Content/Scripts/util.js"></script>
+<script src="~/Areas/GMM/Content/Scripts/json2.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<div class="form-title">
+    <div class="content-titulo">Gestión de Participantes de MME</div>
+</div>
+<div class="content-hijo" id="mainLayout" style="height: 600px;">
+    <div id="mensaje"></div>
+    <table>
+        <tr>
+            <td>
+                <div class="search-content" style="margin-bottom:0px; padding:15px">
+                    <table class="content-tabla-search" style="width:auto">
+                        <thead>
+                            <tr>
+                                <th colspan="4">Búsqueda de Participantes</th>
+                            </tr>
+                        </thead>
+                        <tr>
+                            <td>Empresa:</td>
+                            <td>
+                                <select id="razonSocial" name="razonSocial" style="width:250px;">
+                                    <option value="0">Todas</option>
+                                    @foreach (var item in Model.ListaEmpresas)
+                                    {
+                                        <option value="@item.Emprruc">@item.Emprnomb</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>Tipo de Modalidad: </td>
+                            <td>
+                                <select id="tipoModalidad" name="tipoModalidad">
+                                    <!-- Ninguna, Certificado de riesgo, garantias -->
+                                    <option value="0">Todas</option>
+                                    <option value="CR">Certificado de riesgo</option>
+                                    <option value="GA">Garantías</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>RUC: </td>
+                            <td>
+                                <input style="width:100px;" type="text" id="documento" name="documento" />
+                            </td>
+                            <td>Fecha Vencimiento Desde: </td>
+                            <td>
+                                <input style="width:140px;" type="text" id="fechaIni" name="fechaIni" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Tipo de Participante: </td>
+                            <td>
+                                <select id="tipoParticipante" name="tipoParticipante">
+                                    <!-- Distribuidor, Generador y Gran Usuario -->
+                                    <option value="0">Todos</option>
+                                    <option value="D">Distribuidor</option>
+                                    <option value="G">Generador</option>
+                                    <option value="U">Gran Usuario</option>
+                                </select>
+                            </td>
+                            <td>Hasta: </td>
+                            <td>
+                                <input style="width:140px;" type="text" id="fechaFin" name="fechaFin" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Estado de Participante: </td>
+                            <td>
+                                <select id="cboEstado" name="cboEstado">
+                                    <!-- Distribuidor, Generador y Gran Usuario -->
+                                    <option value="-">Todos</option>
+                                    <option value="R">Revisión</option>
+                                    <option value="H">Habilitado</option>
+                                    <option value="S">Suspendido</option>
+                                    <option value="B">Baja</option>
+                                    <option value="0">Eliminado</option>
+                                </select>
+                            </td>
+                           
+                            <td colspan="2">
+                                <input type="checkbox" id="dosMasIncumplimientos" />
+                                <label for="dosMasIncumplimientos">Con más de 2 incumplimientos aceptados</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                            </td>
+                            <td>
+                                <div style="text-align:right; width:100%">
+                                    <input type="button" value="Nuevo" id="btnAgregar" name="btnAgregar" class="form-action" />
+                                    <input type="button" value="Buscar" id="btnConsultar" name="btnConsultar" class="form-action-r" />
+                                    <input type="button" value="Limpiar" id="btnLimpiar" name="btnLimpiar" class="form-action-r" />
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div class="content-tabla">
+        <div class="content-tabla">
+            <div class="table-list" id="listadoAgentes"></div>
+            <!-- HABILITADO | RAZON SOCIAL | TIPO | FECHA VECIMIENTO | MODALIDAD | MOTO S/. | INCUMPLIMIENTO | EDITAR -->
+        </div>
+    </div>
+    <div id="popupEdicion" class="general-popup" style="width:750px">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title">
+            <span>Editar empresa participante y modalidades de garantía</span>
+        </div>
+        <div class="popup-text" id="contenidoEdicion">
+            <div id="mensajepe"></div>
+            <table style="vertical-align:top">
+                <tr style="vertical-align: top">
+                    <td style="vertical-align: top;  width: 50% !important;">
+                        <table class="search-content" style="height: 300px;">
+                            <thead>
+                                <tr>
+                                    <th colspan=" 2">
+                                        Empresa Participante
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tr>
+                                <td width="60">
+                                    Empresa(*):
+                                </td>
+                                <td width="500">
+                                    <table>
+                                        <tr>
+                                            <td width="75%">
+                                                <input type="text" id="empresaEdit" name="empresaEdit" disabled="disabled" style="width:200px" />
+                                            </td>
+                                            <td width="25%">
+                                                <div id="divBuscarEmpresa">
+                                                    <input type="button" value="..." id="btnBuscarEmpresa" name="btnBuscarEmpresa" class="form-action" />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Documento(*):
+                                </td>
+                                <td>
+                                    <input type="text" id="documentoEdit" style="width:140px;" name="documentoEdit" maxlength="100" disabled="disabled" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Ingreso(*):
+                                </td>
+                                <td>
+                                    <input style="width:140px;" type="text" id="fechaIngresoEdit" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Tipo(*):</td>
+                                <td>
+                                    <select id="tipoParticipanteEdit">
+                                        <!-- Distribuidor, Generador y Gran Usuario -->
+                                        <option value="D">Distribuidor</option>
+                                        <option value="G">Generador</option>
+                                        <option value="U">Gran Usuario</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                Estado(*):
+                                            </td>
+                                            <td>
+                                                <input type="radio" id="enRevisionEdit" value="R" name="rbtEstadoEdit" />
+                                                <label for="enRevisionEdit">Revisión</label>
+                                            </td>
+                                            <td>
+                                                <input type="radio" id="habilitadoEdit" value="H" name="rbtEstadoEdit" />
+                                                <label for="habilitadoEdit">Habilitado</label>
+                                            </td>
+                                            <td>
+                                                <input type="radio" id="suspendidoEdit" value="S" name="rbtEstadoEdit" />
+                                                <label for="suspendidoEdit">Suspendido</label>
+                                            </td>
+                                            <td>
+                                                <input type="radio" id="bajaEdit" value="B" name="rbtEstadoEdit" />
+                                                <label for="bajaEdit">Baja</label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Comentario:
+                                </td>
+                                <td>
+                                    <textarea id="comentarioEdit" rows="3" cols="40"></textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <div style="text-align:right; width:100%">
+                                        <input type="button" value="Guardar" id="btnGuadarEdicion" name="btnGuadarEdicion" class="form-action-r" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td style="vertical-align: top;">
+                        <table class="search-content" style="height: 300px;">
+                            <thead>
+                                <tr>
+                                    <th colspan="2">
+                                        Certificado de riesgo / Garantia
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tr>
+                                <td style="width:35% !important;">
+                                    Modalidad:
+                                </td>
+                                <td style="width:65% !important;">
+                                    <select id="tipoModalidadEdit">
+                                        <!-- Ninguna, Certificado de riesgo, garantias -->
+                                        <option value="0">Seleccione...</option>
+                                        <option value="CR">Certificado de riesgo</option>
+                                        <option value="GA">Garantías</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Fecha Inicio:
+                                </td>
+                                <td>
+                                    <input style="width:140px;" type="text" id="fechaInicioEdit" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Fecha Fin:
+                                </td>
+                                <td>
+                                    <input style="width:140px;" type="text" id="fechaFinEdit" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div id="divCertificadoLab">
+                                        Tipo de Certificación:
+                                    </div>
+                                </td>
+                                <td>
+                                    <div id="divCertificadoDet">
+                                        <select id="tipoCertificacionEdit">
+                                            <option value="0">Seleccione</option>
+                                            <option value="1">A</option>
+                                            <option value="2">AA</option>
+                                            <option value="3">AAA</option>
+                                            <option value="4">AB</option>
+                                            <option value="6">B</option>
+                                        </select>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div id="divMontoLab">
+                                        Monto de garantía:
+                                    </div>
+                                </td>
+                                <td>
+                                    <div id="divMontoDet">
+                                        <input type="number" id="montoGarantiaEdit" value="0" />
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Archivo:
+                                </td>
+                                <td>
+                                    <table>
+                                        <tr>
+                                            <td width="180">
+                                                <input type="text" id="archivo" name="archivo" disabled="disabled" style="width:180px;" />
+                                            </td>
+                                            <td>
+                                                <div id="container">
+                                                    <input type="button" id="btnSelectFile" value="..." />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <span style="font-weight: 600; color: red; display: none;" id="spanAlertaPopup">
+
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <input type="button" value="Nuevo" id="btnNuevaGarantia" name="btnNuevaGarantia" class="form-action-r" />
+                                    <input type="button" value="Guardar" id="btnGuadarGarantia" name="btnGuadarGarantia" class="form-action-r" />
+
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div style="text-align:right; width:100%">
+                            <input type="button" value="Cerrar" id="btnCancelarEdicion" name="btnCancelarEdicion" class="form-action-r" />
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div id="tab-container" class='tab-container'>
+                            <ul class='etabs'>
+                                <li class='tab'><a href="#paso1" class="active">Modalidades</a></li>
+                                <li class='tab'><a href="#paso2">Estados</a></li>
+                                <li class='tab'><a href="#paso3">Incumplimientos</a></li>
+                            </ul>
+                            <div class='panel-container'>
+                                <div id="paso1">
+                                    <div class="content-tabla">
+                                        <div class="table-list" id="listadoAgenteModalidades"></div>
+                                    </div>
+                                </div>
+                                <div id="paso2">
+                                    <div class="content-tabla">
+                                        <div class="table-list" id="listadoAgenteEstados"></div>
+                                    </div>
+                                </div>
+                                <div id="paso3">
+                                    <div class="content-tabla">
+                                        <div class="table-list" id="listadoAgenteIncumplimientos"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            <input type="hidden" id="esNuevo" name="esNuevo" />
+            <input type="hidden" id="esNuevoModalidad" name="esNuevoModalidad" value="1" />
+            <input type="hidden" id="empresaSeleccionada" name="empresaSeleccionada" />
+            <input type="hidden" id="codigoAgente" name="codigoAgente" />
+            <input type="hidden" id="codigoGarantia" name="codigoGarantia" value="0" />
+            <input type="hidden" id="estadoEmpresaIni" name="estadoEmpresaIni" />
+        </div>
+    </div>
+    <div id="popupBuscarEmpresa" class="general-popup" style="height:300px;width:400px">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title">
+            <span>Buscar Razón Social</span>
+        </div>
+        <div class="popup-text" id="contenidoEdicion">
+            <table style="width:100%">
+                <tr>
+                    <td>
+                        Razón Social:
+                    </td>
+                    <td>
+                        <input type="text" id="empresaBuscar" name="empresaBuscar" />
+                    </td>
+                    <td>
+                        <input type="button" value="Buscar" id="btnBuscar" name="btnBuscar" class="form-action" />
+                    </td>
+                </tr>
+            </table>
+            <div class="table-list" id="listadoEmpresas">
+            </div>
+        </div>
+    </div>
+    <div id="MessagesClose">
+        <div class="popup-title"><span>Mensaje de Operación</span></div>
+        <div class="popup-text content-messajes-text">
+
+        </div>
+        <div class="formulario-boton">
+            <input id="btnAceptarMessages" type="button" value="Aceptar" />
+            <input id="btnCancelarMessages" type="button" value="Cancelar" style="display:none;" />
+        </div>
+    </div>
+</div>

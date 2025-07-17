@@ -1,0 +1,405 @@
+﻿@model COES.MVC.Intranet.Areas.IND.Models.IndisponibilidadesModel
+@{
+    ViewBag.Title = "PR25 - Indisponibilidades";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string opcionStyle = Model.TienePermiso ? "" : "display: none";
+}
+
+<link href="~/Areas/IND/Content/Css/general.css?v=1.5.5" rel="stylesheet" />
+<script src="~/Areas/IND/Content/Scripts/general.js?v=1.5.5"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Reporte de Indisponibilidad PR25</div>
+
+    <div style="float: right">
+        <span style="font-size: 12px;">Periodo:</span>
+        <select id="cbAnioFiltroGeneral" style="width: 57px;">
+            @foreach (var item in Model.ListaAnio)
+            {
+                var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                <option value="@item.Entero1" @(selected)>@item.String1</option>
+            }
+
+        </select>
+
+        <select id="cbPeriodoFiltroGeneral" style="width: 120px;">
+            @foreach (var item in Model.ListaPeriodo)
+            {
+                var selected = Model.IdPeriodo == item.Ipericodi ? "selected" : "";
+                <option value="@item.Ipericodi" @selected>@item.Iperinombre</option>
+            }
+        </select>
+
+        <span style="font-size: 12px;">Recálculo:</span>
+        <select id="cbRevisionFiltroGeneral" style="width:150px">
+            @if (Model.ListaRecalculo.Count > 0)
+            {
+                foreach (var item in Model.ListaRecalculo)
+                {
+                    <option value="@item.Irecacodi">@item.Irecanombre</option>
+                }
+            }
+            else
+            {
+                <option value="0">--</option>
+            }
+        </select>
+
+        <input type="button" id="btnPopupPreliminar" value="Versión Preliminar del cuadro" style="display: none" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div class="menu_periodo" style="float: left; padding-right: 5px;">
+
+        <table border="0" cellpadding="5" cellspacing="2" style="width:100%; overflow:auto; height: 123px" role="presentation">
+
+            <tbody>
+                <tr class="THCabecera">
+                    <td colspan="25">
+                        <div class="editor-label"><b>Periodo</b></div>
+                    </td>
+                </tr>
+
+                <tr class="trIconos">
+                    <td>
+                        <div id="opcionPeriodo" class="menu-item suboptions" data-url="/IND/Periodo/Index?tipoMenu=1" data-alto="680" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-procesar.png" />
+                            <br />
+                            <label>
+                                Periodo y Recálculos
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+
+    </div>
+
+    <div class="menu_reporte" style="float: left;padding-right: 5px;">
+
+        <table border="0" cellpadding="5" cellspacing="2" style="width:100%; overflow:auto; height: 123px" role="presentation">
+            <tbody>
+                <tr class="THCabecera">
+                    <td colspan="25">
+                        <div class="editor-label"><b>Cuadros</b></div>
+                    </td>
+                </tr>
+
+                <tr class="trIconos">
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/Reporte/Cuadro?idCuadro=1" data-alto="1400" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-excel.png" alt="logo" />
+                            <br />
+                            <label>
+                                Cuadro 1 Totales Térmico
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/Reporte/Cuadro?idCuadro=2" data-alto="1400" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-excel.png" alt="logo" />
+                            <br />
+                            <label>
+                                Cuadro 2 Parciales Térmico
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/Reporte/Cuadro?idCuadro=3" data-alto="1400" title="" style=" width: 50px;">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-excel.png" alt="logo" />
+                            <br />
+                            <label>
+                                Cuadro 3 Factor K
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/Reporte/Cuadro?idCuadro=4" data-alto="1400" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-excel.png" alt="logo" />
+                            <br />
+                            <label>
+                                Cuadro 4 Totales Hidráulicas
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/Reporte/Cuadro?idCuadro=5" data-alto="1400" title="" style=" width: 93px;">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-excel.png" alt="logo" />
+                            <br />
+                            <label>
+                                Cuadro 5 Disponibilidad diaria Hidráulicas
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+
+    </div>
+
+    <div class="menu_configuracion" style="float: left;padding-right: 5px;">
+
+        <table border="0" cellpadding="5" cellspacing="2" style="width:100%; overflow:auto; height: 123px" role="presentation">
+
+            <tbody>
+                <tr class="THCabecera">
+                    <td colspan="25">
+                        <div class="editor-label"><b>Insumos</b></div>
+                    </td>
+                </tr>
+
+                <tr class="trIconos">
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/Mantenimiento/Index/" data-alto="900" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-parametros.png" alt="logo" />
+                            <br />
+                            <label>
+                                Manttos
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/Evento/Index/" data-alto="700" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-parametros.png" alt="logo" />
+                            <br />
+                            <label>
+                                Eventos
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/RestriccionOperativa/Index/" data-alto="700" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-parametros.png" alt="logo" />
+                            <br />
+                            <label>
+                                Restricciones operativas
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/Combustible/IndexCombustible/" data-alto="1100" title=""><!--IND.PR25.2022-->
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-parametros.png" alt="logo" />
+                            <br />
+                            <label>
+                                Stock de Combustible
+                            </label>
+                        </div>
+                    </td>
+                    <td style="display: none">
+                        <div class="menu-item suboptions" data-url="/IND/LimitePotElect/Index/" data-alto="1000" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-parametros.png" alt="logo" />
+                            <br />
+                            <label>
+                                Límite de Potencia Elécrica
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="menu-item suboptions" data-url="/IND/Gaseoducto/Index/" data-alto="800" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-parametros.png" alt="logo" />
+                            <br />
+                            <label>
+                                Relación Gasoducto y central
+                            </label>
+                        </div>
+                    </td>
+
+                    <td style="">
+                        <div class="menu-item suboptions" data-url="/IND/UnidadGeneracion/IndexOperacionComercial/" data-alto="1400" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-parametros.png" alt="logo" />
+                            <br />
+                            <label>
+                                Operación comercial
+                            </label>
+                        </div>
+                    </td>
+                    <td style="">
+                        <div class="menu-item suboptions" data-url="/IND/UnidadGeneracion/IndexPotenciaEfectiva/" data-alto="1400" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-parametros.png" alt="logo" />
+                            <br />
+                            <label>
+                                Unidades de Generación
+                            </label>
+                        </div>
+                    </td>
+                    <!--inicio: IND.PR25.2022-->
+                    <td style="">
+                        <div class="menu-item suboptions IndexFactorK" data-url="/IND/FactorK/IndexFactorK/" data-alto="650" title="">
+                            <img src="~/Areas/PronosticoDemanda/Content/Images/prn-ico-parametros.png" alt="logo" />
+                            <br />
+                            <label>
+                                Factor K
+                            </label>
+                        </div>
+                    </td>
+                    <!--fin: IND.PR25.2022-->
+                </tr>
+
+            </tbody>
+        </table>
+
+    </div>
+
+    <div>
+        <iframe id="iframeIndisp" frameborder="0" src="" scrolling="no" height="1200" style="margin-top: 15px;">
+        </iframe>
+    </div>
+</div>
+
+<div id="popupPreliminar" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: 1000px; max-width: 1000px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Descargar versión preliminar</span></div>
+    <div id="idPreliminar">
+
+        <h3>Parámetros</h3>
+        <table style="margin-top: 10px;width: auto" role="presentation">
+            <tr>
+                <td class="tbform-label">Periodo:</td>
+                <td class="tbform-control">
+                    <span id="desc_periodoPrelim" style=" font-weight: bold; font-size: 16px;"></span>
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Recálculo:</td>
+                <td class="tbform-control">
+                    <span id="desc_recalculoPrelim" style="  font-weight: bold;font-size: 16px;COLOR: #9370DB;"></span>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="tbform-label">Cuadro:</td>
+                <td class="tbform-control">
+                    <select id="cbCuadroPrelim" style="width:150px">
+                        <option value="0">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaCuadro)
+                        {
+                            <option value="@item.Icuacodi">@item.Icuanombre</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+
+            <!--Cuadro c1-->
+            <tr class="div_cuadro_c1" style="display: none">
+                <td class="tbform-label">Tipo de generación:</td>
+                <td class="tbform-control">
+                    <span class="" id="">Grupo térmoelectrico</span>
+                    <input type="hidden" id="famcodi_cuadro_c1" value="5" />
+                </td>
+            </tr>
+            <tr class="div_cuadro_c1" style="display: none">
+                <td class="tbform-label">Tiempo</td>
+                <td class="tbform-control">
+                    <input type="radio" name="form_tiempo_c1" value="HP" checked="checked">Hora Punta
+                    <input type="radio" name="form_tiempo_c1" value="TD">Todo el día
+                </td>
+            </tr>
+
+            <!--Cuadro c2-->
+            <tr class="div_cuadro_c2" style="display: none">
+                <td class="tbform-label">Tipo de generación:</td>
+                <td class="tbform-control">
+                    <span class="" id="">Grupo térmoelectrico</span>
+                    <input type="hidden" id="famcodi_cuadro" value="5" />
+                </td>
+            </tr>
+            <tr class="div_cuadro_c2" style="display: none">
+                <td class="tbform-label">Tiempo</td>
+                <td class="tbform-control">
+                    <input type="radio" name="form_tiempo" value="HP" checked="checked">Hora Punta
+                    <input type="radio" name="form_tiempo" value="TD">Todo el día
+                </td>
+            </tr>
+            <tr class="div_cuadro_c2" style="display: none">
+                <td class="tbform-label">Factor K:</td>
+                <td class="tbform-control">
+                    <input type="hidden" id="codigo_version_factork" value="-1" />
+                    <span id="span_msg_factork"></span>
+                </td>
+
+            </tr>
+
+            <!--Cuadro c3-->
+            <tr class="div_cuadro_c3">
+                <td class="tbform-label">Tipo de generación:</td>
+                <td class="tbform-control">
+                    <span class="" id="">Grupo térmoelectrico</span>
+                    <input type="hidden" id="famcodi_cuadro_c3" value="5" />
+                </td>
+            </tr>
+
+            @*<tr class="div_cuadro_c3" style="display: none">
+                <td class="tbform-label">Potencia Asegurada:</td>
+                <td class="tbform-control">
+                    <input type="hidden" id="codigo_version_asegurada" value="-1" />
+                    <span id="span_msg_asegurada"></span>
+                </td>
+
+            </tr>*@
+
+            <!--Cuadro c4-->
+            <tr class="div_cuadro_c4" style="display: none">
+                <td class="tbform-label">Tipo de generación:</td>
+                <td class="tbform-control">
+                    <span class="" id="">Centrales hidroeléctricas</span>
+                    <input type="hidden" id="famcodi_cuadro_c4" value="4" />
+                </td>
+            </tr>
+            <tr class="div_cuadro_c4" style="display: none">
+                <td class="tbform-label">Tiempo</td>
+                <td class="tbform-control">
+                    <input type="radio" name="form_tiempo_c4" value="HP" checked="checked">Hora Punta
+                    <input type="radio" name="form_tiempo_c4" value="TD">Todo el día
+                </td>
+            </tr>
+
+            <!--Cuadro c5-->
+            <tr class="div_cuadro_c5" style="display: none">
+                <td class="tbform-label">Tipo de generación:</td>
+                <td class="tbform-control">
+                    <span class="" id="">Centrales hidroeléctricas</span>
+                    <input type="hidden" id="famcodi_cuadro_c5" value="4" />
+                </td>
+            </tr>
+            <tr class="div_cuadro_c5" style="display: none">
+                <td class="tbform-label">Origen</td>
+                <td class="tbform-control">
+                    <span id="span_msg_cuadro5"></span>
+                </td>
+            </tr>
+
+            <!--Cuadro c6-->
+            <tr class="div_cuadro_c6" style="display: none">
+                <td class="tbform-label">Tipo de generación:</td>
+                <td class="tbform-control">
+                    <span class="" id="">Grupo térmoelectrico</span>
+                    <input type="hidden" id="famcodi_cuadro_c6" value="5" />
+                </td>
+            </tr>
+
+            <!--Cuadro c7-->
+            <tr class="div_cuadro_c7" style="display: none">
+                <td class="tbform-label">Tipo de generación:</td>
+                <td class="tbform-control">
+                    <span class="" id="">Generadores térmoelectricos e hidroeléctricos</span>
+                    <input type="hidden" id="famcodi_cuadro_7" value="-1" />
+                </td>
+            </tr>
+
+        </table>
+
+        <h3>Descarga archivo</h3>
+
+        <div style="margin-top: 15px;">
+            <input type="button" id="btnDescargar" value="Descargar" />
+            <input type="button" id="btnCerrar" value="Cerrar" />
+        </div>
+
+
+    </div>
+</div>

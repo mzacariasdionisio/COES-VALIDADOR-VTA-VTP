@@ -1,0 +1,123 @@
+﻿@model COES.MVC.Intranet.Areas.IndicadoresSup.Models.VersionNumeralModel
+@{
+    var urlEq = Model.Url + "Equipamiento/Relacion/IndexEquiposRel?idTipoRel=27";
+}
+
+@if (Model.IdNumeral == 1)
+{
+    <div class="action-alert" id="mensaje_alert_paramonga" style="margin-bottom: 5px; margin-top: 0px; display: block;">
+        Verificar en <b>Detalle del cálculo</b>:
+        <ul>
+            <li>
+                Centrales de generación cuya Fuente de Energía está <b>NO DEFINIDA</b> en el PMPO. Si existen registros comunicarse con DTI, estas centrales no se consideran en este numeral al no estar configuradas.
+            </li>
+        </ul>
+    </div>
+}
+
+@if (Model.IdNumeral == 6)
+{
+    <div class="action-alert" id="mensaje_alert_paramonga" style="margin-bottom: 5px; margin-top: 0px; display: block;">
+        Verificar en <b>Detalle del cálculo</b>:
+        <ul>
+            <li>
+                Registros en la hoja <b>Equipos sin POTENCIA</b> cuya potencia sea 0. Si existen registros comunicarse con DTI, estas centrales/unidades de generación no se consideran en este numeral al no estar configuradas.
+            </li>
+            <li>
+                Registros en la hoja <b>Embalses sin Equivalencia</b> cuyo embalse no está relacionado a una Central Hidroeléctrica. Si existen registros relacionar los equipos <a target="_blank" href="@(urlEq)">aquí</a>
+            </li>
+        </ul>
+    </div>
+}
+
+@if (Model.IdNumeral == 11)
+{
+    <div class="action-alert" id="mensaje_alert_paramonga" style="margin-bottom: 5px; margin-top: 0px; display: block;">
+        Verificar en <b>Detalle del cálculo</b>:
+        <ul>
+            <li>
+                Registros cuya área está <b> NO DEFINIDO</b>. Si existen registros comunicarse con DTI, estos modos de operación no se consideran en este numeral al no estar configurados.
+            </li>
+        </ul>
+
+    </div>
+}
+
+<table border="0" class="pretty tabla-icono" cellspacing="0" width="100%" id="tabla">
+    <thead>
+        <tr>
+            <th>Acciones</th>
+            <th>Numeral</th>
+            <th>Versión</th>
+            <th>Periodo</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th>Usuario</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.ListaVersionNumeral)
+        {
+            var estado = "Generado";
+            if (item.Vernestado == 2)
+            {
+                estado = "Validado";
+            }
+            var periodo = "";
+            periodo = item.Vernfechaperiodo.Value.ToString("MM") + " " + item.Vernfechaperiodo.Value.Year.ToString();
+            <tr>
+                <td>
+                    <a onclick="mostrarNumeral(@item.Verncodi,@item.Numecodi,'@periodo');" title="Mostrar Reporte"><img src="~/Content/Images/btn-open.png" alt=""></a>
+                    @if (Model.IdNumeral == 11)
+                    {
+                        <a onclick="cargarPrecalculoEnergiaForzada(@item.Verncodi);" title="Mostrar Cálculo guardado"><img src="~/Content/Images/file.png" alt=""></a>
+                    }
+                    @if (item.Vernestado == 1)
+                    {
+                        <a onclick="validarNumeral(@item.Verncodi);" title="Validar Versión"><img src="~/Content/Images/btn-ok.png" alt=""></a>
+                    }
+                    <a onclick="exportaVersionNumerales(@item.Verncodi,@item.Numecodi,'@periodo');" title="Exportar Excel"><img src="~/Content/Images/ExportExcel.png" alt="Exportar Excel"></a>
+
+                </td>
+                <td>@item.Numhisabrev</td>
+                <td>@item.Vernnro</td>
+                <td>@periodo</td>
+                <td class="@estado">@estado</td>
+
+                @if (item.Vernfeccreacion.HasValue)
+                {
+                    <td>@item.Vernfeccreacion.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                }
+                else
+                {
+                    <td></td>
+                }
+
+
+                <td>@item.Vernusucreacion</td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (Model.IdNumeral == 1)
+{
+    <br />
+    <i>Se considera a C.T. Paramonga como Cogeneración mas no como RER, a fin de mantener coherencia con el histórico reportado.</i>
+}
+
+
+@if (Model.IdNumeral == 3)
+{
+    <br />
+    <div>Mm3: Millones de metros cúbicos.</div>
+    <br />
+    <i>
+        Para Junín, la empresa registra como volumen final el volumen útil de su embalse, sin embargo para el reporte de supervisión se considera el volumen total, por ello la diferencia será siempre de 115 Hm3.
+        <br />Cabe precisar que en el extranet de acuerdo con PR 41 el volumen a registrar siempre es el útil, por lo que se requiere en ese punto el sistema sumará 115 Hm3.
+    </i>
+
+    <br />
+}
+

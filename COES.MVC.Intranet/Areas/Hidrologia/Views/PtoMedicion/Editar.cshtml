@@ -1,0 +1,348 @@
+﻿@model COES.MVC.Intranet.Areas.Hidrologia.Models.PtoMedicionModel
+
+<script src="~/Areas/Hidrologia/Content/Scripts/ptomededit.js?v=1.2.5"></script>
+
+<link href="~/Areas/Hidrologia/Content/Css/formulario.css" rel="stylesheet" />
+@using (Html.BeginForm("Listar", "Evento", FormMethod.Post, new { @class = "form-search", name = "frmEditar", id = "frmEditar" }))
+{
+    <input type="hidden" id="hfIdCategoriaPadre" value="@Model.IdCategoriaPadre" />
+    <div class="content-registro">
+        <table>
+
+            <tr>
+                <td class="tbform-label">Empresa:</td>
+                <td class="tbform-control">
+                    @if (Model.Ptomedicion.Emprcodi> 0) {
+                        <select id="cbEmpresaPto" name="idEmpresa" disabled>
+                            @{
+                                var item = Model.ListaEmpresas.FirstOrDefault(x => x.EMPRCODI == Model.Ptomedicion.Emprcodi);
+                                <option value="@item.EMPRCODI">@item.EMPRNOMB</option>
+                            }
+                        </select>
+                    } else {
+                        <select id="cbEmpresaPto" name="idEmpresa">
+                            <option value="-1">--SELECCIONE--</option>
+                            @foreach (var item in Model.ListaEmpresas)
+                            {
+                            <option value="@item.EMPRCODI">@item.EMPRNOMB</option>
+                            }
+                        </select>
+                    }
+                    
+                    <input type="hidden" id="hfEmpresaPto" value="@Model.Ptomedicion.Emprcodi" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Fuente de datos:</td>
+                <td class="tbform-control">
+                    <select id="cbTipoPunto">
+                        <option value="1">EQUIPOS</option>
+                        <option value="2">GRUPOS</option>
+                        <!--FIT - VALORIZACION DIARIA-->
+                        <option value="3">TRANSFERENCIA</option>
+                        <!--FIT - VALORIZACION DIARIA-->
+                    </select>
+                    <input type="hidden" id="hfTipoPunto" value="@Model.IndicadorFuente" />
+                </td>
+            </tr>
+            <!--FIT - VALORIZACION DIARIA-->
+            <tr id="trTipoCliente" style="display:none">
+                <td class="tbform-label">Cliente:</td>
+                <td class="tbform-control">
+                    <select id="cbCliente" name="IdCliente">
+                        <option value="-1">TODOS</option>
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.EMPRCODI">@item.EMPRNOMB</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfCliente" value="@Model.Ptomedicion.Clientecodi" />
+                </td>
+            </tr>
+
+            <tr id="trTipoPuntoConexion" style="display:none">
+                <td class="tbform-label">Punto de conexión:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtPuntoConexion" value="@Model.Ptomedicion.PuntoConexion" />
+                </td>
+            </tr>
+
+            <tr id="trTipoBarra" style="display:none">
+                <td class="tbform-label">Barra :</td>
+                <td class="tbform-control">
+                    <select id="cbBarras" name="IdBarra">
+                        <option value="-1">TODOS</option>
+                        @foreach (var item in Model.ListBarra)
+                        {
+                            <option value="@item.BarrCodi">@item.BarrNombre</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfBarraVTP" value="@Model.Ptomedicion.Barrcodi" />
+                </td>
+            </tr>
+            <!--FIT - VALORIZACION DIARIA-->
+
+            <tr id="trTipoGrupo" style="display:none">
+                <td class="tbform-label">Tipo Grupo:</td>
+                <td class="tbform-control">
+                    <select id="cbTipoGrupo">
+                        <option value="-1">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaTipoGrupo)
+                        {
+                            <option value="@item.Catecodi">@item.Catenomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfTipoGrupo" value="@Model.IdCategoria" />
+                </td>
+            </tr>
+            <tr id="trGrupo" style="display:none">
+                <td class="tbform-label">Grupo:</td>
+                <td class="tbform-control">
+                    <select id="cbGrupo">
+                        <option value="">--SELECCIONE--</option>
+                    </select>
+                    <input type="hidden" id="hfGrupo" value="@Model.Ptomedicion.Grupocodi" />
+                </td>
+            </tr>
+            <tr id="trTipoEquipo">
+                <td class="tbform-label">Tipo Equipo:</td>
+                <td class="tbform-control">
+                    <select id="cbFamiliaPto" name="idFamilia">
+                        <option value="0">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaFamilia)
+                        {
+                            <option value="@item.Famcodi">@item.Famnomb</option>
+                        }
+                    </select>
+                    <input type="checkbox" id="checkDetallado" onclick="onchangecbFamiliaPto()" />
+                    <span>Ver clasificación detallada</span>
+                    <input type="hidden" id="hfFamiliaPto" value="@Model.Ptomedicion.Famcodi" />
+                </td>
+            </tr>
+
+            <tr id="clasificacion1" class="clasificacion" style="display:none">
+                <td class="tbform-label">Categoria superior:</td>
+                <td class="tbform-control">
+                    <select id="cbCategoriaSuperior" name="iCategoriaSup">
+                        <option value="-3">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaCategoriaSuperior)
+                        {
+                            <option value="@item.Ctgcodi">@item.Ctgnomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+            <tr id="clasificacion2" class="clasificacion" style="display:none">
+                <td class="tbform-label">Categoria:</td>
+                <td class="tbform-control">
+                    <select id="cbCategoria" name="iCategoria">
+                        <option value="-3">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaCategoria)
+                        {
+                            <option value="@item.Ctgcodi">@item.Ctgnomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+            <tr id="clasificacion3" class="clasificacion" style="display:none">
+                <td class="tbform-label">Subcategoria:</td>
+                <td class="tbform-control">
+                    <select id="cbSubclasificacion" name="Ctgdetcodi">
+                        <option value="-3">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaSubclasificacion)
+                        {
+                            <option value="@item.Ctgdetcodi">@item.Ctgdetnomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+
+            <tr id="trEquipo">
+                <td class="tbform-label">Equipo:</td>
+                <td class="tbform-control">
+                    <select id="cbEquipo" name="idEquipo" style="font-family:monospace;">
+                        <option value="0">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaEquipo)
+                        {
+                            var equipo = item.Equinomb;
+                            <option value="@item.Equicodi">@equipo</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEquipo" value="@Model.Ptomedicion.Equicodi" />
+                </td>
+            </tr>
+            <tr id="trAreaOperativa">
+                <td class="tbform-label">Área Operativa del Equipo:</td>
+                <td class="tbform-control">
+                    <select id="cbAreaOperativa">
+                        <option value="">-SELECCIONE-</option>
+                        <option value="SUR">SUR</option>
+                        <option value="NORTE">NORTE</option>
+                        <option value="CENTRO">CENTRO</option>
+                        <option value="ELECTROANDES">ELECTROANDES</option>
+                    </select>
+                    <input type="button" value="Actualizar Área" id="btnActualizarArea" />
+                    <div id="resultadoArea"></div>
+                    <input type="hidden" id="hfAreaOperativa" value="@Model.AreaOperativaEquipo" />
+                </td>
+            </tr>
+            <tr id="trOrigenLectura">
+                <td class="tbform-label">Origen Lectura:</td>
+                <td class="tbform-control">
+                    <select id="cbOrigenLectura2" name="idOrigenLectura2">
+                        <option value="0">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaOrigenLectura)
+                        {
+                            <option value="@item.Origlectcodi">@item.Origlectnombre</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfOrigenLectura2" value="@Model.Ptomedicion.Origlectcodi" />
+                </td>
+            </tr>
+            <tr id="trBarra">
+                <td class="tbform-label">Barra asociada</td>
+                <td class="tbform-control">
+                    <select id="cbEmpresaBarra" name="idEmpresaBarra">
+                        <option value="-1">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.EMPRCODI">@item.EMPRNOMB</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEmpresaBarra" value="@Model.Ptomedicion.Emprcodref" />
+                    <select id="cbBarra" name="idBarra" style="font-family:monospace; width:300px"></select>
+                    <input type="hidden" id="hfBarra" value="@Model.Ptomedicion.Codref" />
+                </td>
+            </tr>
+            <tr id="trTensionBarra">
+                <td class="tbform-label">Tensión de la Barra:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtTensionBarra" value="@Model.TensionBarra" readonly="readonly" />
+                </td>
+            </tr>
+
+            <tr id="trTipoPunto">
+                <td class="tbform-label">Tipo Punto de Medición:</td>
+                <td class="tbform-control">
+                    <select id="cbTptomedicion" name="idTipoPtomedicion2">
+                        <option value="0">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaTipoPuntoMedicion)
+                        {
+                            <option value="@item.Tipoptomedicodi">@item.Tipoptomedinomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfpmedicion2" value="@Model.Ptomedicion.Ptomedicodi" />
+                    <input type="hidden" id="hfTipoPtomedicion2" value="@Model.Ptomedicion.Tipoptomedicodi" />
+                    <input type="hidden" id="cdOrden" name="idOrden" value="0" />
+                    <input type="hidden" id="hfIdOrden" value="@Model.Ptomedicion.Orden" />
+                    <input type="hidden" id="cdOsicodi" name="idOsicodi" value="@Model.Ptomedicion.Osicodi" onkeydown="return validarLetras(event)" />
+                    <input type="hidden" id="hfOsicodi" value="@Model.Ptomedicion.Osicodi" />
+                </td>
+            </tr>
+            <tr id="trGrupoPto">
+                <td class="tbform-label">Grupo:</td>
+                <td class="tbform-control">
+                    <select id="cbGrupoPto" name="idGrupoPto">
+                        <option value="0">--SELECCIONE--</option>
+
+                    </select>
+                    <input type="hidden" id="hfGrupoPto" value="@Model.Ptomedicion.Grupocodi" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Nombre:</td>
+                <td class="tbform-control">
+                    <input type="Text" id="txtPtomedibarranomb2" name="idPtomedibarranomb2" value="@Model.Ptomedicion.Ptomedibarranomb" style="width: 400px;" maxlength="100" />
+                </td>
+            </tr>
+            <tr id="trAbreviatura">
+                <td class="tbform-label">Abreviatura:</td>
+                <td class="tbform-control">
+                    <input type="Text" id="txtPtomedielenomb2" name="idPtomedielenomb2" value="@Model.Ptomedicion.Ptomedielenomb" style="width: 400px;" maxlength="100" />
+                </td>
+            </tr>
+            <tr id="trDescripcion">
+                <td class="tbform-label">Descripción:</td>
+                <td class="tbform-control">
+                    <input type="Text" id="txtPtomedidesc2" name="idPtomedidesc" value="@Model.Ptomedicion.Ptomedidesc" style="width: 400px;" maxlength="100" />
+                </td>
+            </tr>
+            <tr id="trSuministrador">
+                <td class="tbform-label">Suministrador:</td>
+                <td class="tbform-control">
+                    <select id="cbSuministrador" name="IdSuministrador" style="font-family: monospace; width: 300px">
+                        <option value="-1">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaEmpresasSuministradoras)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                    <input type="button" value="Actualizar Suministrador" id="btnActualizarSuministrador" />
+                    <input type="hidden" id="hfSuministrador" value="@Model.IdSuministrador" />
+                </td>
+            </tr>
+            <tr id="trTensionSuministro">
+                <td class="tbform-label">Tensión Suministro:</td>
+                <td class="tbform-control">
+                    <input type="Text" id="txtTensiónSuministro" name="TensionSuministro" value="@Model.TensionSuministro" style="width: 300px;" maxlength="20" />
+                    <input type="button" value="Actualizar Suministro" id="btnActualizarSuministro" />
+                </td>
+            </tr>
+            <tr id="trSubEstacion">
+                <td class="tbform-label">Subestación Suministro:</td>
+                <td class="tbform-control">
+                    <select id="cbSubestacion" name="IdAreaCodiSuministro" style="font-family:monospace; width:300px">
+                        <option value="-1">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaAreasSuministro)
+                        {
+                            <option value="@item.Areacodi">@item.Areaabrev - @item.Areanomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfSubestacionr" value="@Model.IdAreaCodiSuministro" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Estado:</td>
+                <td class="tbform-control">
+                    <select id="cbEstadoPto" name="Ptomediestado">
+                        <option value="A">Activo</option>
+                        <option value="B">Baja</option>
+                    </select>
+                    <input type="hidden" id="hfEstadoPto" value="@Model.Ptomedicion.Ptomediestado" />
+                </td>
+            </tr>
+            <tr id="trTipoSerie">
+                <td class="tbform-label">Tipo de serie:</td>
+                <td class="tbform-control">
+                    <select id="cbTipoSerie" name="TipoSerie">
+                        <option value="-1">--SELECCIONE--</option>
+
+                        @foreach (var item in Model.ListaTipoSerie)
+                        {
+                            <option value="@item.Tiposeriecodi">@item.Tiposerienomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfTipoSerie" value="@Model.Ptomedicion.TipoSerie" />
+                </td>
+            </tr>
+            <tr id="trAreaOp">
+                <td class="tbform-label">Área Operativa:</td>
+                <td class="tbform-control">
+                    <select id="cbAreaOp" name="idAreaOperativa">
+                        <option value="-1">No Definido</option>
+                        <option value="2">Norte</option>
+                        <option value="3">Centro</option>
+                        <option value="5">Sur</option>
+                    </select>
+                    <input type="hidden" id="hfAreaOp" value="@Model.Ptomedicion.StrAreacodi" />
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div style="width:200px; margin:auto">
+        <input type="button" id="btnGrabar" value="Grabar" />
+        <input type="button" id="btnCancelar" value="Cancelar" />
+    </div>
+}
+
+

@@ -1,0 +1,156 @@
+﻿@model COES.MVC.Intranet.Areas.SistemasTransmision.Models.CalculoModel
+@{
+    ViewBag.Title = "Asignación de responsabilidad de pagos de los SST y SCT - Cálculo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/SistemasTransmision/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/SistemasTransmision/Content/Scripts/load.js"></script>
+<script src="~/Areas/SistemasTransmision/Content/Scripts/calculo.js?v=1.1"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo" style="width:800px;">Cálculo de asignación de responsabilidad de pagos de los SST y SCT</div>
+    </div>
+    @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+    { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Periodo: @Model.EntidadRecalculo.Stpernombre / @Model.EntidadRecalculo.Strecanombre</div> }
+    else
+    { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione un Mes de cálculo y una versión de recalculo</div> }
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Procesar Cálculo</a></li>
+                <li class='tab'><a href="#paso2">Reportes</a></li>
+            </ul>
+
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="6"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para procesar el cálculo</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:150px;">Periodo:</td>
+                                <td style="width:100px;">
+                                    <select id="stpercodi" name="stpercodi" onchange="recargar();">
+                                        @foreach (var item in Model.ListaPeriodos)
+                                        {
+                                            sSelected = "";
+                                            if (@item.Stpercodi == Model.Stpercodi)
+                                            { sSelected = "selected"; }
+                                            <option value="@item.Stpercodi" @sSelected>@item.Stpernombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:50px;">Versión:</td>
+                                <td style="width:200px; height:40px;">
+                                    <select id="strecacodi" name="strecacodi">
+                                        @foreach (var item in Model.ListaRecalculo)
+                                        {
+                                            <option value="@item.Strecacodi">@item.Strecanombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:200px; height:40px;">
+                                    @if (Model.bGrabar && Model.Stpercodi > 0 && Model.Strecacodi > 0)
+                                    {
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td><input type="button" value="Procesar" id="btnProcesarCalculo" alt="Procesar cálculo" title="Procesar cálculo" /></td>
+                                                <td><input type="button" value="Deshacer" id="btnBorrarCalculo" alt="Eliminar cálculo" title="Eliminar cálculo" /></td>
+                                            </tr>
+                                        </table>
+                                    }
+                                </td>
+                                <td style="width:20px; height:40px;">&nbsp;</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="paso2">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para exportar la información deseada</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:150px;">Periodo:</td>
+                                <td style="width:100px;">
+                                    <select id="stpercodiReporte" name="stpercodiReporte" onchange="recargarReporte();">
+                                        @foreach (var item in Model.ListaPeriodos)
+                                        {
+                                            sSelected = "";
+                                            if (@item.Stpercodi == Model.Stpercodi)
+                                            { sSelected = "selected"; }
+                                            <option value="@item.Stpercodi" @sSelected>@item.Stpernombre</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td style="width:50px;">Versión:</td>
+                                <td style="width:200px; height:40px;">
+                                    <select id="strecacodiReporte" name="strecacodiReporte">
+                                        @foreach (var item in Model.ListaRecalculo)
+                                        {
+                                            sSelected = "";
+                                            if (@item.Strecacodi == Model.Strecacodi)
+                                            { sSelected = "selected"; }
+                                            <option value="@item.Strecacodi" @sSelected>@item.Strecanombre</option>
+                                        }
+                                    </select>
+                                </td>
+                            </tr>
+                            @if (Model.Stpercodi > 0 && Model.Strecacodi > 0)
+                            {
+                                <tr class="THCabecera">
+                                    <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Lista de descargas disponibles</b></div></td>
+                                    <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Excel</b></div></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">GWh/OHMIOS Mensuales de Generadores Relevantes:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarReporte301Excel" title="Descargar la Información GWh/OHMIOS Mensuales de Generadores Relevantes en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Cálculo del Factor de Participación Mensual o Anual:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarReporte302Excel" title="Descargar el Cálculo del Factor de Participación Mensual o Anual en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Compensación Mensual:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarReporte303Excel" title="Descargar los Compensación Mensual en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Distancias Eléctricas:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarReporteDistElecExcel" title="Descargar las Distancias Eléctricas en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Factor de Participación Inicial:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarFactorParticipacionExcel" title="Descargar el Factor de Participación en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Reporte Factor de Participación Recalculado:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarFactorParticipacionRecalculadoExcel" title="Descargar Reporte de Factor Participacion en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Reporte de Compensación Mensual Asignada:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarCompensacionMensualExcel" title="Descargar Reporte de Compensacion Mensual en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Reporte de Compensación Mensual Filtrada:</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarCompensacionMensualFiltradaExcel" title="Descargar Reporte de Compensación Mensual Filtrada en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Reporte Asignación de Responsabilidad de Pago de SST y SCT :</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarResponsabilidadPagoExcel" title="Descargar Reporte Asignación de Responsabilidad de Pago de SST y SCT en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

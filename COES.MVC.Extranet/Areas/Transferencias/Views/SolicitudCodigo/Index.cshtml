@@ -1,0 +1,255 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var CLICODI2 = (IEnumerable<SelectListItem>)TempData["CLICODI2"];
+    var BARRCODI2 = (IEnumerable<SelectListItem>)TempData["BARRCODI2"];
+    var TIPOCONTCODI2 = (IEnumerable<SelectListItem>)TempData["TIPOCONTCODI2"];
+    var TIPOUSUACODI2 = (IEnumerable<SelectListItem>)TempData["TIPOUSUACODI2"];
+
+    var PERIODO2 = (IEnumerable<SelectListItem>)TempData["PERIODO2"];
+    var EMPRNOMB = TempData["EMPRNOMB"];
+    int EMPRNRO = Convert.ToInt32(TempData["EMPRNRO"]);
+    var sMensajeExito = TempData["sMensajeExito"];
+}
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css?v=1" rel="stylesheet" />
+<script src="~/Areas/Transferencias/Content/Scripts/solicitudCodigo.js?v=@DateTime.Now.Minute"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script>
+    $(document).ready(function () {
+        setTimeout(function () { $(".mensajes").fadeOut(800).fadeIn(800).fadeOut(500).fadeIn(500).fadeOut(300); }, 3000);
+    }
+    );
+</script>
+<div class="action-alert mensajeLogin" style="margin-left:0; padding:10px;display:none">
+    Se ha perdido la sesión, por favor haga
+    <a href="~/WebForm/Account/Login.aspx">clic aquí</a>
+    para iniciar sesión nuevamente.
+</div>
+
+<div class="ast">
+    @if (@EMPRNOMB == "")
+    {
+        if (@EMPRNRO < 0)
+        {<div class="form-title">
+                ESTA CUENTA DE USUARIO NO ESTA RELACIONADO A NINGUNA EMPRESA PARA VER LA INFORMACIÓN DE ESTA PANTALLA
+            </div>
+        }
+        else
+        {
+            <script>seleccionarEmpresa();</script>
+            <div class="form-title">
+                DEBE SELECCIONAR UNA EMPRESA PARA VER LA INFORMACIÓN DE ESTA PANTALLA
+                @if (@EMPRNRO > 1)
+                {<a onclick="seleccionarEmpresa();" class="paginate_active">[Seleccionar una empresa]</a>}
+            </div>
+            <div id="popup"></div>
+        }
+    }
+    else
+    {
+        if (@sMensajeExito != null)
+        {
+            <div class="exito mensajes">@sMensajeExito</div>}
+        <div class="form-title">
+            SOLICITUDES DE CÓDIGOS DE @EMPRNOMB @if (@EMPRNRO > 1)
+            {<a onclick="seleccionarEmpresa();" class="paginate_button">[Cambiar empresa]</a>}
+        </div>
+        <div class="content-hijo" style="padding-top:8px">
+            <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                <table cellspacing="2" cellpadding="5">
+                    <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                        <td colspan="6"><div class="editor-label"><b>Filtros de búsqueda</b></div></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="editor-label">Cliente</div>
+                        </td>
+                        <td>
+                            <div class="editor-field">@Html.DropDownList("CLICODI", @CLICODI2, "--Seleccione--")</div>
+                        </td>
+
+                        <td>
+                            <div class="editor-label">Barra de transferencia</div>
+                        </td>
+                        <td>
+                            <div class="editor-field">@Html.DropDownList("BARRTRANCODI", @BARRCODI2, "--Seleccione--")</div>
+                        </td>
+                        <td>
+                            <div class="editor-label">Tipo de contrato</div>
+                        </td>
+                        <td>
+                            <div class="editor-field">@Html.DropDownList("TIPOCONTCODI", @TIPOCONTCODI2, "--Seleccione--")</div>
+                        </td>
+                        @*<td>
+                                <div class="editor-label">Fecha de Inicio</div>
+                            </td>
+                            <td>
+                                <div class="editor-field"><input type="text" id="txtfechaIni" class="txtFecha" /></div>
+                            </td>*@
+                    </tr>
+                    <tr>
+                        @*<td>
+                                <div class="editor-label">Tipo de contrato</div>
+                            </td>
+                            <td>
+                                <div class="editor-field">@Html.DropDownList("TIPOCONTCODI", @TIPOCONTCODI2, "--Seleccione--")</div>
+                            </td>*@
+
+                        <td>
+                            <div class="editor-label">Tipo de usuario</div>
+                        </td>
+                        <td>
+                            <div class="editor-field">@Html.DropDownList("TIPOUSUACODI", @TIPOUSUACODI2, "--Seleccione--")</div>
+                        </td>
+                        <td>
+                            <div class="editor-label">Periodo declaración</div>
+                        </td>
+                        <td>
+                            <div class="editor-field">@Html.DropDownList("PERIODO2", @PERIODO2)</div>
+                        </td>
+                        @*<td>
+                                <div class="editor-label">Fecha fin</div>
+                            </td>
+                            <td>
+                                <div class="editor-field"><input type="text" id="txtfechaFin" class="txtFecha" /></div>
+                            </td>*@
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align:center;">
+                            <div class="busqueda-item">
+                                <input type="button" id="btnBuscar" value="Consultar" />
+                                <input type="button" id="btnNuevo" value="Nueva Solicitud" />
+                                <input type="button" id="btnGenerarExcel" value="Generar Excel" style="display:none;" />
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <input type="hidden" id="hfNroPagina" name="NroPagina" value="1" />
+            </div>
+            <br />
+            <br />
+
+            <table>
+                <tr>
+                    <td>
+                        <div class="exito action-messege" id="mensaje" style="display:none"></div>
+                        <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; " id="divAcciones">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="width:100px; height:50px;" class="content-action">
+                                        <a href="javascript:void(0)" id="btnAgrupar">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/ico_agrupar.png" /><br />
+                                                <span>Agrupar Filas</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td style="width:100px; height:50px;" class="content-action">
+                                        <a href="#" id="btnDesagrupar">
+                                            <div class="content-item-action">
+                                                <img src="~/Content/Images/ico_desagrupar.png" /><br />
+                                                <span>Desagrupar Filas</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td style="width:100px; height:50px;" class="content-action">
+                                        <a href="#" id="btnExportar">
+                                            <div class="content-item-action">
+                                                <img src="~/Areas/TransfPotencia/Content/Images/bajar.png" /><br />
+                                                <span>Bajar Formato</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td style="width:100px; height:50px;" class="content-action">
+                                        <input type="file" id="fileImagen" style="display:none" />
+                                        <a href="javascript:void(0)" id="btnSubir">
+                                            <div class="content-item-action">
+                                                <img src="~/Areas/TransfPotencia/Content/Images/subir.png" /><br />
+                                                <span>Subir Formato</span>
+                                            </div>
+                                        </a>
+                                    </td>
+
+                                    <td style="width:100px; height:50px;" class="content-action">
+                                        <a href="javascript:void(0)" id="btnVerErrores">
+                                            <div class="content-item-action">
+                                                <img src="~/Areas/TransfPotencia/Content/Images/errores.png" /><br />
+                                                <span>Ver Errores</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td style="width:100px; height:50px;" class="content-action">
+                                        <a href="#" id="btnEnviarDatos">
+                                            <div class="content-item-action">
+                                                <img src="~/Areas/TransfPotencia/Content/Images/grabar.png" /><br />
+                                                <span>Enviar Datos</span>
+                                            </div>
+                                        </a>
+                                    </td>
+                                    <td style="width:100px; height:50px;" class="content-action">
+                                        <a href="#" id="btnVerEnvios">
+                                            <div class="content-item-action">
+                                                <img src="~/Areas/TransfPotencia/Content/Images/errores.png" /><br />
+                                                <span>Ver Envíos</span>
+                                            </div>
+                                        </a>
+                                    </td>
+
+
+
+                                    <td style="width:100px; height:50px;" class="content-action">&nbsp;</td>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+
+
+
+            <div class="listado" id="listado" style="height:361px"></div>
+            <div class="tabla-header">
+                <div class="table-paginado" id="paginado"></div>
+            </div>
+        </div>
+        <br />
+        <br />
+    }
+</div>
+
+<div id="popupEmpresa" class="general-popup">
+    <div id="seleccionEmpresa"></div>
+
+</div>
+
+<!-- Botón flotante de WhatsApp -->
+<a href="https://wa.me/51905469444" class="wsp" target="_blank" title="¿Necesitas ayuda? Escríbenos por WhatsApp">
+    <img src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="WhatsApp">
+</a>
+
+<style>
+    .wsp {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        cursor: pointer;
+        border-radius: 50%;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+    }
+
+        .wsp:hover {
+            transform: scale(1.1);
+        }
+
+        .wsp img {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+        }
+</style>

@@ -1,0 +1,55 @@
+﻿@model COES.MVC.Publico.Models.BrowserModel
+
+<script type="text/javascript">
+    $(function () {
+        $(function () {
+            $('#cbSelectAll').click(function (e) {
+                var table = $(e.target).closest('table');
+                $('td input:checkbox', table).prop('checked', this.checked);
+            });
+        });
+
+    });
+</script>
+
+<table id="tbDocumentLibrary" class="tabla-blob">
+    <thead>
+        <tr>
+            <th>
+                <input type="checkbox" id="cbSelectAll" />
+            </th>
+            <th></th>
+            @foreach (var columna in Model.ListaColumnas)
+            {
+                <th>@columna.Columnshow</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.DocumentList)
+        {
+            string clase = (item.FileType == "F") ? "class=selector-file-contextual" : "class=selector-directory-contextual";
+            <tr style="cursor:pointer" @clase id="@item.FileUrl" title="@item.FileName">
+                <td>
+                    @if (item.FileType == "F")
+                    {
+                        <input type="checkbox" id="@item.FileName" name="cbSelect" value="@item.FileUrl" />
+                    }
+                </td>
+                <td onclick="openBlob('@item.FileUrl', '@item.FileType', '@item.Extension')"><img src="~/Content/Images/Document/@item.Icono" /></td>
+
+                @foreach (var columna in Model.ListaColumnas)
+                {
+                    if (columna.Columncodi != COES.Storage.App.Servicio.ColumnasBase.Archivo)
+                    {
+                        <td>@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor</td>
+                    }
+                    else
+                    {
+                        <td onclick="openBlob('@item.FileUrl', '@item.FileType', '@item.Extension')">@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor</td>
+                    }
+                }
+            </tr>
+        }
+    </tbody>
+</table>

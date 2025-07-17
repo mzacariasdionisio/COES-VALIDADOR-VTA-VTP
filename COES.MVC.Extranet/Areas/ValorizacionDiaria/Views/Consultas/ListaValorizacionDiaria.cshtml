@@ -1,0 +1,71 @@
+﻿@model COES.MVC.Extranet.Areas.ValorizacionDiaria.Models.ConsultasModel
+@if (Model.ValorizacionDiaria.Count == 0)
+{
+
+    <div class="action-alert">
+        <label>No se encontraron Registros!</label>
+    </div>
+}
+else
+{
+    <table class="pretty tabla-formulario" id="tabla">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Participante</th>
+                <th>Por Energía Activa (S/./dia)</th>
+                <th>Por Servicios Complementarios (S/./dia)</th>
+                <th>Por Inflexibilidades Operativas (S/./dia)</th>
+                <th>Por Exceso de Consumo de Energía Reactiva (S/./dia)</th>
+                <th>Monto total (S/.)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ValorizacionDiaria)
+            {
+                <tr>
+                    <td>@item.Valofecha.ToString("dd/MM/yyyy")</td>
+                    <td>@item.Emprnomb</td>
+                    <td style="text-align:right">@String.Format("{0:0.00}", (item.Valdretiro - item.Valdentrega))</td>
+                    <td style="text-align:right">@String.Format("{0:0.00}", item.Valdpagosc)</td>
+                    <td style="text-align:right">@String.Format("{0:0.00}", item.Valdpagoio)</td>
+                    <td style="text-align:right">@String.Format("{0:0.00}", (item.Valdcargoconsumo + item.Valdaportesadicional))</td>
+                    <td style="text-align:right">@String.Format("{0:0.00}", ((item.Valdretiro - item.Valdentrega) + item.Valdpagosc + item.Valdpagoio + (item.Valdcargoconsumo + item.Valdaportesadicional)))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+    <table class="pretty tabla-formulario" id="tabla" style="margin-top:20px">
+        <thead>
+            <tr>
+                <th>Mes</th>
+                <th>Participante</th>
+                <th>Por Capacidad (S/./Mensual)</th>
+                <th>Por Peaje de Conexión (S/./Mensual)</th>
+                <th>Monto Total (S/.)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ValorizacionDiariaMes)
+            {
+                <tr>
+                    <td>@item.Valofecha.ToString("MMMM-yyyy")</td>
+                    <td>@item.Emprnomb</td>
+                    <td style="text-align:right">
+                        @if ((((item.Valddemandacoincidente - item.Valdpfirremun) / (1 + item.Valomr)) * item.Valopreciopotencia) > 0)
+                        {
+                            @String.Format("{0:0.00}", (((item.Valddemandacoincidente - item.Valdpfirremun) / (1 + item.Valomr)) * item.Valopreciopotencia))
+                        } else
+                        {
+                            @String.Format("{0:0.00}", 0)
+                        }
+                    </td>
+                    <td style="text-align:right">@String.Format("{0:0.00}", (item.Valddemandacoincidente * item.Valdpeajeuni))</td>
+                    <td style="text-align:right">@String.Format("{0:0.00}", ((((item.Valddemandacoincidente - item.Valdpfirremun) / (1 + item.Valomr)) * item.Valopreciopotencia) + (item.Valddemandacoincidente * item.Valdpeajeuni)))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,313 @@
+﻿@model COES.MVC.Intranet.Areas.TransfPotencia.Models.PeajeEgresoMinfoModel
+@{
+    ViewBag.Title = "Transferencia de Potencia y Compensación - Ingresos y Consulta de Egresos y Peajes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/TransfPotencia/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/Transfpotencia/Content/Scripts/load.js"></script>
+<script src="~/Areas/TransfPotencia/Content/Scripts/peajeegresominfo.js?v=1.3"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+    <div class="form-title">
+        <div class="content-titulo">Ingreso y consulta de información ingresada para VTP y peajes</div>
+    </div>
+    
+    <div class="content-hijo" >
+
+
+        @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+        { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">@Model.EntidadRecalculoPotencia.Perinombre / @Model.EntidadRecalculoPotencia.Recpotnombre</div> }
+        else
+        { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione un Mes de valorización y una versión de recalculo</div> }
+
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Ingreso de mejor información</a></li>
+                <li class='tab'><a href="#paso2">Consultas sobre informarción ingresada</a></li>
+                <li class='tab'><a href="#paso3">Información faltante</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div id="idpanel" style="overflow:auto; background-color:#fff">
+                        <input type="hidden" name="Recpotpreciopoteppm" id="Recpotpreciopoteppm" value="@Model.EntidadRecalculoPotencia.Recpotpreciopoteppm" />
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; z-index:0">
+                                        <table class="table-search" style="width:auto">
+                                            <tr>
+                                                <td style="width:150px; height:40px;"><div class="editor-label">Mes de Valorización:</div></td>
+                                                <td style="width:200px; height:40px;">
+                                                    <div class="editor-field">
+                                                        <select id="pericodi" name="pericodi" onchange="Recargar();">
+                                                            @foreach (var item in Model.ListaPeriodos)
+                                                            {
+                                                                sSelected = "";
+                                                                if (@item.PeriCodi == Model.Pericodi)
+                                                                { sSelected = "selected"; }
+                                                                <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </td>
+                                                <td style="width:50px; height:40px;">Versión:</td>
+                                                <td style="width:200px; height:40px;">
+                                                    <select id="recpotcodi" name="recpotcodi">
+                                                        @foreach (var item in Model.ListaRecalculoPotencia)
+                                                        {
+                                                            <option value="@item.Recpotcodi">@item.Recpotnombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:200px; height:40px;">
+                                                    @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                                                    {
+                                                        <input type="button" id="btnConsultar" value="Consultar" />
+                                                    }
+                                                </td>
+
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:none" id="divAcciones">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnDescargarExcel">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/bajar.png" /><br />
+                                                            <span>Descargar Excel</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnSelecionarExcel">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/subir.png" /><br />
+                                                            <span>Importar Excel</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnEliminarDatos">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/borrador.png" /><br />
+                                                            <span>Eliminar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnValidarGrillaExcel">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/errores.png" /><br />
+                                                            <span>Mostrar errores</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                                <td style="width:100px; height:50px;" class="content-action">
+                                                    <a href="#" id="btnGrabarExcel">
+                                                        <div class="content-item-action">
+                                                            <img src="~/Areas/TransfPotencia/Content/Images/enviar.png" /><br />
+                                                            <span>Enviar datos</span>
+                                                        </div>
+                                                    </a>
+                                                </td>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcel" style="height:auto"></div>
+                </div>
+
+                <div id="paso2">
+                    <div id="idpanelConsulta" style="background-color:#fff; height:auto;">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content">
+                                        <table class="content-tabla-search" style="width:auto">
+                                            <tr>
+                                                <td >Mes de Valorización:</td>
+                                                <td>
+                                                    <select id="pericodiConsulta" name="pericodiConsulta" onchange="RecargarConsulta();">
+                                                        @foreach (var item in Model.ListaPeriodos)
+                                                        {
+                                                            sSelected = "";
+                                                            if (@item.PeriCodi == Model.Pericodi)
+                                                            { sSelected = "selected"; }
+                                                            <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                
+                                                <td>Versión:</td>
+                                                <td>
+                                                    <select id="recpotcodiConsulta" name="recpotcodiConsulta">
+                                                        @foreach (var item in Model.ListaRecalculoPotencia)
+                                                        {
+                                                            <option value="@item.Recpotcodi">@item.Recpotnombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                              
+                                                <td>Empresa:</td>
+                                                <td>
+                                                    <select id="emprcodi" multiple="multiple">
+                                                        @foreach (var item in Model.ListaEmpresas)
+                                                        {
+                                                            <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                
+                                                <td>Cliente:</td>
+                                                <td>
+                                                    <select id="cliemprcodi" multiple="multiple">
+                                                        @foreach (var item in Model.ListaEmpresas)
+                                                        {
+                                                            <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                            
+                                            <tr>
+                                                <td>Tipo usuario:</td>
+                                                <td>
+                                                    <select id="pegrmitipousuario" name="pegrmitipousuario">
+                                                        <option value=""></option>
+                                                        @foreach (var item in Model.ListaTipoUsuario)
+                                                        {
+                                                            <option value="@item.ToString()">@item.ToString()</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                             
+                                                <td>Licitacion:</td>
+                                                <td>
+                                                    <select id="pegrmilicitacion" name="pegrmilicitacion">
+                                                        <option value=""></option>
+                                                        @foreach (var item in Model.ListaLicitacion)
+                                                        {
+                                                            <option value="@item.ToString()">@item.ToString()</option>
+                                                        }
+                                                    </select>
+                                                </td>                                                
+                                                <td>Barra:</td>
+                                                <td>
+                                                    <select id="barrcodi" multiple="multiple">
+                                                        <option value="0">TODOS</option>
+                                                        @foreach (var item in Model.ListaBarras)
+                                                        {
+                                                            <option value="@item.BarrCodi">@item.BarrNombre </option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                               
+                                                <td>Barra flujo óptimo:</td>
+                                                <td>
+                                                    <select id="barrcodifco" multiple="multiple">
+                                                        <option value="0">TODOS</option>
+                                                        @foreach (var item in Model.ListaBarras)
+                                                        {
+                                                            <option value="@item.BarrCodi">@item.BarrNombre </option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                            </tr>                                          
+                                            <tr>
+                                                <td>Calidad:</td>
+                                                <td>
+                                                    <select id="pegrmicalidad" name="pegrmicalidad">
+                                                        <option value=""></option>
+                                                        @foreach (var item in Model.ListaCalidad)
+                                                        {
+                                                            <option value="@item.ToString()" @sSelected>@item.ToString()</option>
+                                                        }
+                                                    </select>
+                                                </td>                                                
+                                                <td colspan="6" style="text-align:center">
+                                                    @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                                                    {                                                       
+                                                          <input type="button" id="btnConsultarVista" value="Consultar" />                                                               
+                                                          <input type="button" id="btnDescargarExcelConsulta" value="Descargar Excel" />                                                               
+                                                          <input type="button" id="btnDescargarPdfConsulta" value="Descargar Pdf" />                                                            
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelConsulta" style="height:auto"></div>
+                </div>
+
+                <div id="paso3">
+                    <div id="idpanelInfoFaltante" style="background-color:#fff; height:auto;">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <div class="search-content" style="margin-bottom:0px; padding:10px">
+                                        <table class="table-search" style="width:auto;">
+                                            <tr>
+                                                <td style="width:120px;"><div class="editor-label">Mes de Valorización:</div></td>
+                                                <td>
+                                                    <select id="pericodiInfoFaltante" name="pericodiInfoFaltante" onchange="RecargarInfoFaltante();">
+                                                        @foreach (var item in Model.ListaPeriodos)
+                                                        {
+                                                            sSelected = "";
+                                                            if (@item.PeriCodi == Model.Pericodi)
+                                                            { sSelected = "selected"; }
+                                                            <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:60px;">&nbsp;</td>
+                                                <td style="width:60px;"><div class="editor-label">Versión:</div></td>
+                                                <td>
+                                                    <select id="recpotcodiInfoFaltante" name="recpotcodiInfoFaltante">
+                                                        @foreach (var item in Model.ListaRecalculoPotencia)
+                                                        {
+                                                            <option value="@item.Recpotcodi">@item.Recpotnombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td style="width:60px;">&nbsp;</td>
+                                                <td>
+                                                    @if (Model.Pericodi > 0 && Model.Recpotcodi > 0)
+                                                    {
+                                                        <input type="button" id="btnInfoFaltante" value="Consultar" />
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="grillaExcelInfoFaltante" style="height:auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div id="popup"></div>
+
+<input type="hidden" id="hfComboEmpresa" />
+<input type="hidden" id="hfComboCliente" />
+<input type="hidden" id="hfComboBarra" />
+<input type="hidden" id="hfComboBarrafco" />

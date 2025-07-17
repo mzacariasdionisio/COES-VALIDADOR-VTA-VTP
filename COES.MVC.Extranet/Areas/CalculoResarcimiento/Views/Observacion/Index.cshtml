@@ -1,0 +1,238 @@
+﻿@model COES.MVC.Extranet.Areas.CalculoResarcimiento.Model.ObservacionModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/CalculoResarcimiento/Content/Scripts/jszip.min.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<link href="~/Content/Css/Handson/select2.css" rel="stylesheet" />
+<script src="~/Areas/CalculoResarcimiento/Content/Scripts/observacion.js?v=1.20"></script>
+<link href="~/Areas/CalculoResarcimiento/Content/Css/css.css?v=1.11" rel="stylesheet" />
+<script src="~/Areas/CalculoResarcimiento/Content/Scripts/base.js?v=1.4"></script>
+<script src="~/Areas/CalculoResarcimiento/Content/Scripts/grillaobs.js?v=1.7"></script>
+<script src="~/Areas/CalculoResarcimiento/Content/Scripts/jquery.chosen.js"></script>
+<script src="~/Areas/CalculoResarcimiento/Content/Scripts/selectorobservacion.js"></script>
+<script src="~/Content/Scripts/Handson/select2.js"></script>
+<script src="~/Content/Scripts/Handson/select2handson.js"></script>
+<script src="~/Content/Scripts/Handson/htmaxlength.js"></script>
+<script src="~/Content/Scripts/Handson/moment.js"></script>
+
+<style type="text/css">
+    .handsontable .chosen-drop {
+        z-index: 100000000 !important; /* Ajusta el valor según tus necesidades */
+        position: absolute !important;
+    }
+
+    .handsontable-container {
+        overflow: visible !important;
+    }
+</style>
+
+<div class="form-title">
+    OBSERVACIONES A LAS INTERRUPCIONES DE SUMINISTRO -
+    <span id="lbEmpresa">@Model.Emprnombre</span>
+    <span class="form-title-action" id="spanCambiarEmpresa">[CAMBIAR EMPRESA]</span>
+    <input type="hidden" id="hfIdEmpresa" value="@Model.Emprcodi" />
+    <input type="hidden" id="hfIndEmpresa" value="@Model.IndicadorEmpresa" />
+</div>
+<div class="form-main">
+
+    <div id="mensaje" class="action-message">Por favor seleccione empresa y periodo</div>
+
+    <div class="action-header">
+        <div class="action-content">
+            <table id="tablaBusqueda">
+                <tr>
+                    <td>Año:</td>
+                    <td>Periodo:</td>
+                    <td rowspan="2">
+                        <input type="button" id="btnConsultar" value="Consultar" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="text" id="txtAnio" value="@Model.Anio" />
+                    </td>
+                    <td>
+                        <select id="cbPeriodo">
+                            <option value="">-SELECCIONE-</option>
+                            @foreach (var item in Model.ListaPeriodo)
+                            {
+                                <option value="@item.Repercodi">@item.Repernombre</option>
+                            }
+                        </select>
+                    </td>
+
+                </tr>
+            </table>
+
+        </div>
+        <div id="divAcciones" class="action-content">
+            <a href="#" id="btnDescargarFormato">
+                <div>
+                    <img src="~/Areas/DemandaBarras/Content/Images/bajar.png" />
+                </div>
+                <span>Descargar formato</span>
+
+            </a>
+            <a href="#" id="btnSubirFormato">
+                <div>
+                    <img src="~/Areas/DemandaBarras/Content/Images/subir.png" />
+                </div>
+                <span>Importar formato</span>
+
+            </a>
+            <a href="#" id="btnEnviarDatos">
+                <div>
+                    <img src="~/Areas/DemandaBarras/Content/Images/enviar.png" />
+                </div>
+                <span>Enviar datos</span>
+
+            </a>
+            <a href="#" id="btnMostrarErrores">
+                <div>
+                    <img src="~/Areas/DemandaBarras/Content/Images/errores.png" />
+                </div>
+                <span>Mostrar errores</span>
+
+            </a>
+            <a href="#" id="btnVerEnvios">
+                <div>
+                    <img src="~/Areas/DemandaBarras/Content/Images/envios.png" />
+                </div>
+                <span>Ver envíos</span>
+
+            </a>
+            <a href="#" id="btnOcultarColumna">
+                <div>
+                    <img src="~/Content/Images/historial.png" />
+                </div>
+                <span>Ocultar columnas</span>
+
+            </a>
+            <a href="#" id="btnSubirArchivos">
+                <div>
+                    <img src="~/Areas/DemandaBarras/Content/Images/subir.png" />
+                </div>
+                <span>Subir archivos</span>
+
+            </a>
+        </div>
+    </div>
+    <input type="button" id="btnCargarZip" style="display:none" />
+    <div id="detalleFormato" class="handsontable-container"></div>
+    <div id="leyenda" style="display:none">
+        <strong>Leyenda:</strong>
+        <div>
+            <table>
+                <tr>
+                    <td><div class="leyeamarilla"></div></td>
+                    <td><span style="font-style:italic">Interrupciones actualizadas desde el trimestral.</span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="popupEmpresa" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Seleccionar empresa</span></div>
+    <div class="popup-text" id="contenidoEmpresa">
+
+    </div>
+</div>
+
+<div id="popupColumna" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Ocultar o mostrar columnas</span></div>
+
+    <div class="popup-text">
+        <div id="mensajeColumna"></div>
+        <div id="contenedorColumnas" class="contenedor-columnas"></div>
+        <div class="popup-button">
+            <input type="button" id="btnOcultar" value="Aceptar" />
+        </div>
+    </div>
+</div>
+
+<div id="popupErrores" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Errores en el ingreso de datos</span></div>
+    <div class="popup-text" id="contenidoError">
+
+    </div>
+</div>
+
+<div id="popupErroresArchivo" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Errores en carga de archivos</span></div>
+    <div class="popup-text" id="contenidoErrorArchivo">
+
+    </div>
+</div>
+
+<div id="popupEnvio" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Envío fuera de plazo</span></div>
+    <div class="popup-text" id="contenidoEnvio">
+        <div id="mensajeComentario"></div>
+        <div class="form-element ">
+            <div>Ingrese comentario:</div>
+            <div>
+                <textarea id="txtComentario" maxlength="200"></textarea>
+            </div>
+        </div>
+        <div class="popup-button">
+            <input type="button" id="btnEnviarComentario" value="Aceptar" />
+        </div>
+    </div>
+</div>
+
+<div id="popupEnvios" class="general-popup" style="min-width:600px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Envío de observaciones de interrupciones de suministro</span></div>
+    <div class="popup-text" id="contenidoEnvios">
+
+    </div>
+</div>
+
+<div id="popupArchivo" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Carga de evidencias</span></div>
+    <div class="popup-text" id="contenidoEvidencia">
+        <div id="mensajeFileInterrupcion"></div>
+        <div class="visualizar-archivo" id="accionesArchivo">
+            <div id="descargarFileInterrupcion">
+                <img src="~/Content/Images/Contextmenu/menudown.png" />
+                <span>Visualizar archivo</span>
+            </div>
+            <div id="eliminarFileInterrrupcion">
+                <img src="~/Content/Images/Contextmenu/menudelete.png" />
+                <span>Eliminar archivo</span>
+            </div>
+        </div>
+        <div class="form-element">
+            <div>Seleccionar archivo (Peso máximo: 5MB):</div>
+            <div>
+                <input type="button" id="btnSelectFilePtoEntrega" value="Seleccionar" />
+            </div>
+        </div>
+
+        <div id="progresoPtoEntrega"></div>
+        <div id="fileInfoPtoEntrega"></div>
+
+        <div class="popup-button" id="containerPtoEntrega">
+            <input type="button" id="btnProcesarFilePtoEntrega" value="Subir" />
+        </div>
+        <input type="hidden" id="fileId" />
+        <input type="hidden" id="fileRow" />
+        <input type="hidden" id="fileColumn" />
+        <input type="hidden" id="fileIndicador" />
+    </div>
+</div>
+
+<input type="hidden" id="hfPlazoEnvio" />
+
+

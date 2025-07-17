@@ -1,0 +1,18 @@
+﻿using COES.Dominio.DTO.Transferencias;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace COES.MVC.Intranet.Areas.Transferencias.Models
+{
+    public class ValorTransferenciaModel
+    {
+        public List<ValorTransferenciaDTO> ListaValorTransferencia { get; set; }
+        public ValorTransferenciaDTO Entidad { get; set; }
+        public int IdValorTransferencia { get; set; }
+
+        public List<ComparativoDTO> ListaComparativo { get; set; }
+
+    }
+}

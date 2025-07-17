@@ -1,0 +1,575 @@
+﻿@model  COES.Dominio.DTO.Sic.EpoEstudioEoDTO
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Areas/Combustibles/Content/Css/css.css" rel="stylesheet" />
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/jquery.mask.js"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<script src="~/Content/scripts/jquery.validate.js"></script>
+
+
+
+<style>
+    .text-danger {
+        color: red !important;
+    }
+
+    .tab-container .panel-container {
+        min-height: 0px !important;
+    }
+
+    label.error {
+        color: red !important;
+    }
+
+    label.error {
+        content: '\A';
+        white-space: pre;
+        word-wrap: break-word;
+    }
+</style>
+
+<div class="form-title">
+    <div class="content-titulo">@(Model.Esteocodi == 0 ? "Registrar" : "Modificar") Información EO </div>
+    <div class="content-botonera">
+
+    </div>
+</div>
+<div class="class=" ast">
+    @using (Html.BeginForm("RegistrarEstudioEo", "EstudioEo", FormMethod.Post, new { id = "frmEstudioEo", @class = "" }))
+    {
+            @Html.HiddenFor(m => m.Esteocodi)
+            <input type="hidden" id="__Esteoterinvcodi" value="@(string.Join(",", Model.Esteoterinvcodi != null ? Model.Esteoterinvcodi : new List<int>()))" />
+            <input type="hidden" id="EstacodiEo" class="form-control" value="@Model.Estacodi" />
+
+            <div class="content-hijo" id="mainLayout">
+                <div id="mensaje"></div>
+                <h3>Estudio</h3>
+                <div>
+                    <table border="0" class="content-tabla-search" style="width:780px">
+                        <tr>
+                            <td colspan="4">
+                                <table >
+                                    <tr>
+                                        <td>Código de Estudio <strong class="text-danger">(*)</strong></td>
+                                        <td>Nombre de Estudio <strong class="text-danger">(*)</strong></td>
+                                        <td>Código de Proyecto</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            @Html.TextBoxFor(m => m.Esteocodiusu, new { @class = "form-control", required = "required", data_msg_required = "Debe ingresar el Codigo del Estudio.", autocomplete = "off" })
+                                        </td>
+                                        <td>
+                                            @Html.TextBoxFor(m => m.Esteonomb, new { id = "txt_Esteonomb", @class = "form-control", required = "required", data_msg_required = "Debe ingresar el Nombre del Estudio.", autocomplete = "off", onkeyup = "MaximoCaracteres(200)" })
+                                        </td>
+                                        <td>
+                                            @Html.TextBoxFor(m => m.Esteocodiproy, new { @class = "form-control", autocomplete = "off" })
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Gestor del Proyecto <strong class="text-danger">(*)</strong></td>
+                                        <td>Responsable de Estudio <strong class="text-danger">(*)</strong></td>
+                                        <td>Tercero Involucrado</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <select id="Emprcoditp" name="Emprcoditp" data-msg-required="Debe ingresar el Gestor del Proyecto." required>
+                                                <option value="">Seleccione</option>
+                                                @foreach (var item in ViewBag.ListadoEmpresa)
+                                                {
+                                                    string seleccionado = item.Emprcodi == Model.Emprcoditp ? "selected" : "";
+                                                    <option @seleccionado value="@item.Emprcodi">@item.Emprnomb</option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            @Html.TextBoxFor(m => m.Esteoresponsable, new { @class = "form-control", required = "required", data_msg_required = "Debe ingresar Responsable de Estudio.", autocomplete = "off" })
+                                            
+                                        </td>
+                                        <td>
+                                            <select id="Emprcoditi" name="Emprcoditi" style="width: 200px">
+                                                @foreach (var item in ViewBag.ListadoEmpresa)
+                                                {
+                                                    <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                                }
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tipo de Proyecto</td>
+                                        <td>Punto de Conexión <strong class="text-danger">(*)</strong>:</td>
+                                        <td>Zona del Proyecto</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <select id="EsteoTipoProyecto" name="EsteoTipoProyecto" class="form-control">
+                                                <option value="">Seleccione</option>
+                                                <option value="Generación Convencional" @("Generación Convencional" == Model.EsteoTipoProyecto ? "selected" : "")>Generación Convencional</option>
+                                                <option value="Generación No Convencional" @("Generación No Convencional" == Model.EsteoTipoProyecto ? "selected" : "")>Generación No Convencional</option>
+                                                <option value="Transmisión" @("Transmisión" == Model.EsteoTipoProyecto ? "selected" : "")>Transmisión</option>
+                                                <option value="Demanda" @("Demanda" == Model.EsteoTipoProyecto ? "selected" : "")>Demanda</option>
+                                            </select>
+                                        </td>
+
+
+
+                                        <td>
+                                            <select id="PuntCodi" name="PuntCodi" style="width: 225px" onchange="MostrarZonaXPunto(this)" data-msg-required = "Debe ingresar el punto de conexión." required>
+                                                <option value="">Seleccione</option>
+                                                @foreach (var item in ViewBag.ListadoPuntoConexion)
+                                                {
+                                                    string seleccionado = item.PuntCodi == Model.PuntCodi ? "selected" : "";
+                                                    <option @seleccionado value="@item.PuntCodi">@item.PuntDescripcion</option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" id="txtZona" name="txtZona" value="@ViewBag.Zona" disabled />
+                                        </td>
+
+
+
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Años puesta en servicio <strong class="text-danger">(*)</strong>:
+                                        </td>
+                                      
+                                    </tr>
+                                    <tr>
+
+                                        <td>
+                                            @Html.TextBoxFor(m => m.Esteoanospuestaservicio, new { @class = "form-control", required = "required", data_msg_required = "Debe ingresar Años puesta en Servicio.", autocomplete = "off", @type = "number", maxlength = "4", size = 4 })
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            @*<td colspan="2">Otros</td>*@
+                            <td colspan="2">Comentarios</td>
+                        </tr>
+                        <tr>
+                            @*<td colspan="2">
+                                @Html.TextAreaFor(m => m.Esteootros, new { @class = "form-control", rows = "5", cols = "50", autocomplete = "off" })
+                            </td>*@
+                            <td colspan="2">
+                                @Html.TextAreaFor(m => m.Esteoobs, new { @class = "form-control", rows = "5", cols = "50", autocomplete = "off" })
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <br />
+                <div class="clear"></div>
+                <div id="tab-container" class='tab-container'>
+                    <ul class='etabs'>
+                        <li class='tab'><a id="lnkTab1" href="#paso1">Inicio de Estudio</a></li>
+                        <li class='tab'><a id="lnkTab2" href="#paso2">Fin de Estudio</a></li>
+                        <li class='tab'><a id="lnkTab3" href="#paso3">Revision COES</a></li>
+                        <li class='tab'><a id="lnkTab4" href="#paso4">Alcance</a></li>
+                        <li class='tab'><a id="lnkTab5" href="#paso5">Verificación</a></li>
+                        @*<li class='tab'><a id="lnkTab6" href="#paso6">Aprobación de Conexión-Pruebas</a></li>
+                        <li class='tab'><a id="lnkTab7" href="#paso7">Aprobación de Operación Comercial</a></li>
+                        <li class='tab'><a id="lnkTab8" href="#paso8">Aprobación de Integración</a></li>*@
+                    </ul>
+                    <div class='panel-container'>
+                        <div id="paso1">
+                            <table border="0" class="content-tabla-search" style="width:auto">
+                                <tr>
+                                    <td>Fecha de Inicio:</td>
+                                    <td>
+                                        <input type="text" id="Esteofechaini" name="Esteofechaini" class="form-control" data-msg-required="Debe ingresar Fecha de Inicio Estudio." autocomplete="off" value="@(Model.Esteofechaini.HasValue ? (Model.Esteofechaini.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.Esteofechaini.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" required />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td> PR-20:</td>
+                                    <td>
+                                        <select id="cboPR" name="TipoConfig" data-msg-required="Debe ingresar el PR-20." required>
+                                            @foreach (var item in ViewBag.ListadoConfigura)
+                                            {
+                                                string seleccionado = item.Confcodi == Model.TipoConfig ? "selected" : "";
+                                                <option @seleccionado value="@item.Confcodi">@item.Confdescripcion</option>
+                                            }
+                                        </select>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="paso2">
+                            <table border="0" style="width:auto">
+                                <tr>
+                                    <td>No Aprobado</td>
+                                    <td>
+                                        <input type="checkbox" id="chkNoAprobado" name="chkNoAprobado" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>
+                                        <select id="Estacodi" name="Estacodi" style="width: 152px; height: 29px; margin-bottom: 3px; ">
+                                            <option value="0">Seleccionar</option>
+                                            @foreach (var item in ViewBag.ListadoEstudioEstados)
+                                            {
+                                                string seleccionado = item.Estacodi == Model.Estacodi ? "selected" : "";
+                                                <option @seleccionado value="@item.Estacodi">@item.Estadescripcion</option>
+                                            }
+                                        </select>
+                                        
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Fecha de Fin:</td>
+                                    <td>
+                                        <input type="text" id="Esteofechafin" name="Esteofechafin" class="form-control" autocomplete="off" value="@(Model.Esteofechafin.HasValue ? (Model.Esteofechafin.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.Esteofechafin.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><h3>Certificado de Conformidad</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Comunicación:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteocertconformidadtit, new { @class = "form-control", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Enlace:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteocertconformidadenl, new { @class = "form-control", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><h3>Resumen Ejecutivo</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Comunicación:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoresumenejecutivotit, new { @class = "form-control", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Enlace:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoresumenejecutivoenl, new { @class = "form-control", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="paso3">
+                            <table border="0" style="width:auto">
+                                <tr>
+                                    <td>Por Vencer:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazorevcoesporv, new { id = "txtPorVencer" , @class = "form-control", required = "required", data_msg_required = "Debe ingresar la revision COES por vencer.", autocomplete = "off", style = "width:320px" })dh
+                                    </td>
+                                    <td>Vencido:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazorevcoesvenc, new { id = "txtVencido", @class = "form-control", required = "required", data_msg_required = "Debe ingresar la revision COES No Concluido.", autocomplete = "off", style = "width:320px" })dh
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6"><h3>Absolución de Observaciones - GESTOR DEL PROYECTO</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Por Vencer:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazolevobsporv, new { id = "txtAbsolPorVen", @class = "form-control", required = "required", data_msg_required = "Debe ingresar el levantamiento de Informacion Por vencer.", autocomplete = "off", style = "width:320px" })<span id="lblTiempoPorVencer">  @(Model.TipoConfig == 1 ? "dh" : "meses")</span>
+                                    </td>
+                                    <td>Vencido:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazolevobsvenc, new { id = "txtAbsolVencido", @class = "form-control", required = "required", data_msg_required = "Debe ingresar el levantamiento de Informacion No Concluido.", autocomplete = "off", style = "width:320px" })<span id="lblTiempoPorVencido">  @(Model.TipoConfig == 1 ? "dh" : "meses") </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><h3>Envío de Alcances - COES</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Vencido:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazoalcancesvenc, new { id = "txtEnvioVencido", @class = "form-control", required = "required", data_msg_required = "Debe ingresar el alcance No Concluido.", autocomplete = "off", style = "width:320px" })dh
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><h3>Verificación del Estudio - COES</h3></td>
+
+                                    @if (Model.TipoConfig == 2)
+                                    {
+                                        <td colspan="2"><h3>Absolución de Verificación del Estudio - GESTOR DEL PROYECTO</h3></td>
+
+                                    }
+
+                                </tr>
+                                <tr>
+                                    <td>Vencido:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazoverificacionvenc, new { id = "txtVerifVencido", @class = "form-control", required = "required", data_msg_required = "Debe ingresar la verificación No Concluido.", autocomplete = "off", style = "width:320px" })dh
+                                    </td>
+
+                                    @if (Model.TipoConfig == 2)
+                                    {
+                                        <td>Vencido:</td>
+                                        <td>
+                                            @Html.TextBoxFor(m => m.Esteoplazoverificacionvencabs, new { @readonly = "readonly", id = "txtVerifVencidoObs", @class = "form-control", required = "required", data_msg_required = "Debe ingresar la Absolución de Verificación del Estudio.", autocomplete = "off", style = "width:320px" })dh
+                                        </td>
+                                    }
+
+
+                                </tr>
+                                <tr>
+                                    <td colspan="6"><h3>Revisión - TERCERO INVOLUCRADO</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Por Vencer:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazorevterinvporv, new { id = "txtReviPorVencer", @class = "form-control", required = "required", data_msg_required = "Debe ingresar la Revision del tercero involucrado Por vencer.", autocomplete = "off", style = "width:320px" })dh
+                                    </td>
+                                    <td>Vencido:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazorevterinvvenc, new { id = "txtReviVencido", @class = "form-control", required = "required", data_msg_required = "Debe ingresar la Revision del tercero involucrado No Concluido.", autocomplete = "off", style = "width:320px" })dh
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6"><h3>Envío de Estudio a Tercero Involucrado - COES</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Por Vencer:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazoenvestterinvporv, new { id = "txtEnvioEstPorVen", @class = "form-control", required = "required", data_msg_required = "Debe ingresar el Envio de Estudio del tercero Involucrado Por Vencer.", autocomplete = "off", style = "width:320px" })dh
+                                    </td>
+                                    <td>Vencido:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoplazoenvestterinvvenc, new { id = "txtEnvioEstVencido",  @class = "form-control", required = "required", data_msg_required = "Debe ingresar el Envio de Estudio del tercero Involucrado No Concluido.", autocomplete = "off", style = "width:320px" })dh
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="paso4">
+                            <table border="0" style="width:auto">
+                                <tr>
+                                    <td>Fecha Inicio:</td>
+                                    <td>
+                                        <input type="text" id="Esteoalcancefechaini" name="Esteoalcancefechaini" class="form-control" autocomplete="off" value="@(Model.Esteoalcancefechaini.HasValue ? (Model.Esteoalcancefechaini.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.Esteoalcancefechaini.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><h3>Solicitud de Alcance</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Comunicación:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoalcancesolesttit, new { @class = "form-control", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Enlace:	</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoalcancesolestenl, new { @class = "form-control", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Observación:</td>
+                                    <td>
+                                        @Html.TextAreaFor(m => m.Esteoalcancesolestobs, new { @class = "form-control", rows = "5", cols = "50", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>Nro Caracteres : @(!string.IsNullOrEmpty(Model.Esteoalcancesolestobs) ? Model.Esteoalcancesolestobs.Length.ToString() : "")</td>
+                                </tr>
+                                <tr>
+                                    <td>Fecha Final:	</td>
+                                    <td>
+                                        <input type="text" id="Esteoalcancefechafin" name="Esteoalcancefechafin" class="form-control" autocomplete="off" value="@(Model.Esteoalcancefechafin.HasValue ? (Model.Esteoalcancefechafin.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.Esteoalcancefechafin.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6"><h3>Envío de Alcance</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Comunicación:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoalcanceenviotit, new { @class = "form-control", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Enlace:	</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoalcanceenvioenl, new { @class = "form-control", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Observación:</td>
+                                    <td>
+                                        @Html.TextAreaFor(m => m.Esteoalcanceenvioobs, new { @class = "form-control", rows = "5", cols = "50", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>Nro Caracteres : @(!string.IsNullOrEmpty(Model.Esteoalcanceenvioobs) ? Model.Esteoalcanceenvioobs.Length.ToString() : "")</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="paso5">
+                            <table border="0" style="width:auto">
+                                <tr>
+                                    <td colspan="2"><h3>Verificación</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Fecha Inicio:</td>
+                                    <td>
+                                        <input type="text" id="Esteoverifechaini" name="Esteoverifechaini" class="form-control" autocomplete="off" data-msg-required="Debe ingresar la fecha Inicio verificación." value="@(Model.Esteoverifechaini.HasValue ? (Model.Esteoverifechaini.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.Esteoverifechaini.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" required />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2"><h3>Entrega de Estudio</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Comunicación:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoverientregaesttit, new { @class = "form-control", required = "required", data_msg_required = "Debe ingresar el titulo Entrega de Estudio.", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Enlace:	</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteoverientregaestenl, new { @class = "form-control", required = "required", data_msg_required = "Debe ingresar el enlace Entrega de Estudio.", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Observación:</td>
+                                    <td>
+                                        @Html.TextAreaFor(m => m.Esteoverientregaestobs, new { @class = "form-control", rows = "5", cols = "50", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>Nro Caracteres : @(!string.IsNullOrEmpty(Model.Esteoverientregaestobs) ? Model.Esteoverientregaestobs.Length.ToString() : "")</td>
+                                </tr>
+                                <tr>
+                                    <td>Fecha Final:	</td>
+                                    <td>
+                                        <input type="text" id="Esteoverifechafin" name="Esteoverifechafin" class="form-control" autocomplete="off" data-msg-required="Debe Ingresar la fecha final verificación." value="@(Model.Esteoverifechafin.HasValue ? (Model.Esteoverifechafin.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.Esteoverifechafin.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" required />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><h3>Carta de Verificación</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Comunicación:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteovericartatit, new { @class = "form-control", required = "required", data_msg_required = "Debe ingresar el titulo Carta de Verificación.", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Enlace:	</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.Esteovericartaenl, new { @class = "form-control", required = "required", data_msg_required = "Debe ingresar el enlace verificación.", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Observación:</td>
+                                    <td>
+                                        @Html.TextAreaFor(m => m.Esteovericartaobs, new { @class = "form-control", rows = "5", cols = "50", autocomplete = "off" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>Nro Caracteres : @(!string.IsNullOrEmpty(Model.Esteovericartaobs) ? Model.Esteovericartaobs.Length.ToString() : "")</td>
+                                </tr>
+
+
+                                @*Nueva Sección*@
+                                <tr>
+                                    <td colspan="3"><h3>Carta de Absolución de Observaciones (Gestor del Proyecto)</h3></td>
+                                </tr>
+                                <tr>
+                                    <td>Comunicación:</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.EsteoAbsTit, new { @class = "form-control", required = "required", data_msg_required = "Debe ingresar el título.", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Enlace:	</td>
+                                    <td>
+                                        @Html.TextBoxFor(m => m.EsteoAbsEnl, new { @class = "form-control", required = "required", data_msg_required = "Debe ingresar el enlace.", autocomplete = "off", style = "width:320px" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Fecha Fin:	</td>
+                                    <td>
+                                        <input type="text" id="EsteoAbsFFin" name="EsteoAbsFFin" class="form-control" autocomplete="off" data-msg-required="Debe ingresar la fecha final." value="@(Model.EsteoAbsFFin.HasValue ? (Model.EsteoAbsFFin.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.EsteoAbsFFin.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" required />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Observación:</td>
+                                    <td>
+                                        @Html.TextAreaFor(m => m.EsteoAbsObs, new { @class = "form-control", rows = "5", cols = "50", autocomplete = "off" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>Nro Caracteres : @(!string.IsNullOrEmpty(Model.EsteoAbsObs) ? Model.EsteoAbsObs.Length.ToString() : "")</td>
+                                </tr>
+                            </table>
+                        </div>
+                        @*<div id="paso6">
+                            <table border="0" class="content-tabla-search" style="width:auto">
+                                <tr>
+                                    <td>Fecha de Aprobación:</td>
+                                    <td>
+                                        <input type="text" id="Esteofechaconexion" name="Esteofechaconexion" class="form-control" data-msg-required="Debe ingresar Fecha de Aprobación de Conexión-Pruebas." autocomplete="off" value="@(Model.Esteofechaconexion.HasValue ? (Model.Esteofechaconexion.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.Esteofechaconexion.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" required />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>*@
+                        @*<div id="paso7">
+                            <table border="0" class="content-tabla-search" style="width:auto">
+                                <tr>
+                                    <td>Fecha de Aprobación:</td>
+                                    <td>
+                                        <input type="text" id="Esteofechaopecomercial" name="Esteofechaopecomercial" class="form-control" data-msg-required="Debe ingresar Fecha de Aprobación de Operación Comercial." autocomplete="off" value="@(Model.Esteofechaopecomercial.HasValue ? (Model.Esteofechaopecomercial.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.Esteofechaopecomercial.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" required />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>*@
+                        @*<div id="paso8">
+                            <table border="0" class="content-tabla-search" style="width:auto">
+                                <tr>
+                                    <td>Fecha de Aprobación:</td>
+                                    <td>
+                                        <input type="text" id="Esteofechaintegracion" name="Esteofechaintegracion" class="form-control" data-msg-required="Debe ingresar Fecha de Aprobación de Integración." autocomplete="off" value="@(Model.Esteofechaintegracion.HasValue ? (Model.Esteofechaintegracion.Value.ToString("dd/MM/yyyy") != "01/01/0001" ? Model.Esteofechaintegracion.Value.ToString(ViewBag.FormatoFechaFull) : "") : "")" required />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>*@
+                    </div>
+                </div>
+                <div class="row-top">
+                    <div class="col-12">
+                        <div class="float-right">
+                            <input type="button" id="btnGuardar" value="Guardar" />
+                            <input type="button" id="btnRegresar" value="Regresar" onclick="regresar()" />
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+    }
+
+</div>
+
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Areas/GestionEoEpo/Content/Script/EstudioEo/registrar.js"></script>
+

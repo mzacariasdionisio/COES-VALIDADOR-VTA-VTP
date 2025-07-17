@@ -1,0 +1,237 @@
+﻿@model  COES.Servicios.Aplicacion.FormatoMedicion.FormatoModel
+@{
+    ViewBag.Title = "Cargar Series - Hidrologicas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/CargaDatos/cargarseriesexcelweb.js?v=1.11"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/CargaDatos/handsontablesh.js?v=1.6"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<link href="~/Areas/Hidrologia/Content/Css/css.css?v=1.1" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo"> Cargar Series</div>
+    <div class="content-botonera" style="display: flex; align-items: center; height: auto; gap: 10px;">
+        <a href="#" id="btnManualUsuario" style="text-decoration: none;">
+            <div style="text-align: center; line-height: 15px; font-size: 12px;">
+                <img src="~/Content/Images/prn-ico-manual.png" style="height: 25px;"><br>
+                <span style="color: #278CCC;">Manual de Usuario</span>
+            </div>
+        </a>
+    </div>
+</div>
+<div class="content-hijo">
+    <div id="idpanel" style="overflow:auto; background-color:#fff">
+        <div class='action-message' id='mensaje' style="margin-bottom:5px">Por favor seleccione Empresa, Tipo de Serie, Tipo de Punto de Medición y Punto de Medición.</div>
+        <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+            <table class="table-search">
+                <tr>
+                    <td style="vertical-align: middle">Empresa</td>
+                    <td>
+                        <select id="cbEmpresa" name="IdEmpresa" onchange="habilitarTipoSerie(this);" style="width:250px;">
+                            <option value="">--SELECCIONE--</option>
+                            @foreach (var item in Model.ListaEmpresas)
+                            {
+                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                            }
+                        </select>
+                    </td>
+                    <td style="vertical-align: middle">Tipo de Serie</td>
+                    <td>
+                        <select id="cbTipoSerie" name="TipoSerie" disabled="disabled" onchange="habilitarTipoPuntoMedicion(this);" style="width:250px;">
+                            <option value="">--SELECCIONE--</option>
+                            @foreach (var item in Model.ListaTipoSerie)
+                            {
+                                <option value="@item.Tiposeriecodi">@item.Tiposerienomb</option>
+                            }
+                        </select>
+                    </td>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td style="vertical-align: middle">Tipo de Punto de Medición</td>
+                    <td>
+                        <select id="cbTipoPuntoMedicion" name="cbTipoPuntoMedicion" disabled="disabled" onchange="habilitarPuntoMedicion(this);" style="width:250px;">
+                            <option value="">--SELECCIONE--</option>
+                            @foreach (var item in Model.ListaTipoPuntoMedicion)
+                            {
+                                <option value="@item.TipoPtoMediCodi">@item.TipoPtoMediNomb</option>
+                            }
+                        </select>
+                    </td>
+                    <td style="vertical-align: middle">Punto de Medición</td>
+                    <td>
+                        <select id="cbPuntoMedicion" name="cbPuntoMedicion" onchange="habilitarBotonConsultar(this);" style="width:250px;">
+                            <option value="">--SELECCIONE--</option>
+                        </select>
+                        <input type="hidden" id="hfFecha" />
+
+                        <input type="hidden" id="hfIdEnvio" value="@Model.IdEnvio" />
+                        <input type="hidden" id="hfModoLectura" value="" />
+                        <input type="hidden" id="hdfAnioMinimo" value="1965" />
+                    </td>
+                    <td style="vertical-align: middle">
+                        <input type="button" id="btnConsultar" value="Seleccionar" disabled="disabled" class="btn_disabled" />
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+
+            <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:20px; display:none;" id="divAcciones">
+                <table cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td class="content-action">
+                            <a href="#" id="btnDescargarFormato">
+                                <div class="content-item-action">
+                                    <img src="~/Areas/DemandaCP/Content/Images/bajar.png" /><br />
+                                    <span>Descargar formato</span>
+                                </div>
+                            </a>
+                        </td>
+                        <td class="content-action">
+                            <a href="#" id="btnSelectExcel">
+                                <div class="content-item-action">
+                                    <img src="~/Areas/DemandaCP/Content/Images/subir.png" /><br />
+                                    <span>Importar formato</span>
+                                </div>
+                            </a>
+                        </td>
+                        <td class="content-action">
+                            <a href="#" id="btnEnviarDatos">
+                                <div class="content-item-action">
+                                    <img src="~/Areas/DemandaCP/Content/Images/enviar.png" /><br />
+                                    <span>Cargar Base de datos</span>
+                                </div>
+                            </a>
+                        </td>
+                        <td class="content-action">
+                            <a href="#" id="btnMostrarErrores">
+                                <div class="content-item-action">
+                                    <img src="~/Areas/DemandaCP/Content/Images/errores.png" /><br />
+                                    <span>Mostrar errores</span>
+                                </div>
+                            </a>
+                        </td>
+                        <td class="content-action">
+                            <a href="#" id="btnVerEnvios">
+                                <div class="content-item-action">
+                                    <img src="~/Areas/DemandaCP/Content/Images/envios.png" /><br />
+                                    <span>Ver Cargas</span>
+                                </div>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+
+            <div id="detalleCabecera" style="display:none;">
+                <table cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td colspan="7" style="text-align:center;">
+                            <b><span id="divTipoPuntoMedicion"></span> DEL <span id="divDescPuntoMedicion"></span></b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <b>CUENCA</b>
+                        </td>
+                        <td>:</td>
+                        <td>
+                            <span id="divEquipoPadreNombre"></span>
+                        </td>
+                        <td style="width:200px;">&nbsp;</td>
+                        <td>
+                            <div id="divDescEStacion"><b>ESTACIÓN</b></div>
+                        </td>
+                        <td>:</td>
+                        <td>
+                            <span id="divNombreEquipoEstHidrologica"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <b>EMPRESA</b>
+                        </td>
+                        <td>:</td>
+                        <td>
+                            <span id="divNombreEmpresa"></span>
+                        </td>
+                        <td style="width:200px;">&nbsp;</td>
+                        <td>
+                            <b>COORDENADA X</b>
+                        </td>
+                        <td>:</td>
+                        <td>
+                            <span id="divCoordenadaX"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div id="divTextEmbalseRio"><b>EMBALSE:</b></div>
+                        </td>
+                        <td>:</td>
+                        <td>
+                            <span id="divEmbalseRio"></span>
+                        </td>
+                        <td style="width:200px;">&nbsp;</td>
+                        <td>
+                            <b>COORDENADA Y</b>
+                        </td>
+                        <td>:</td>
+                        <td>
+                            <span id="divCoordenadaY"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div id="divTextPuntoMedicion"><b>PUNTO DE MEDICIÓN:</b></div>
+                        </td>
+                        <td>:</td>
+                        <td>
+                            <span id="divPuntoMedicion"></span>
+                        </td>
+                        <td style="width:200px;">&nbsp;</td>
+                        <td>
+                            <b>ALTITUD</b>
+                        </td>
+                        <td>:</td>
+                        <td>
+                            <span id="divAltitud"></span> m.s.n.m.
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="bodyexcel" id='detalleFormato'></div>
+        
+
+    </div>
+
+    </div>
+
+<div id="validaciones" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+
+    </div>
+</div>
+
+<div id="enviosanteriores" style="z-index:9999999998;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envios Anteriores</span></div>
+    <div id="idEnviosAnteriores">
+    </div>
+</div>
+
+<input type="hidden" id="hfPrueba" value="0" />
+<input type="hidden" id="hfEmpresa" value="@Model.IdEmpresa" />
+<input type="hidden" id="hfMes" value="@Model.Mes" />
+<input type="hidden" id="hfDataExcel" value="" />
+<input type="hidden" id="hfOpcion" />
+<input type="hidden" id="hfIndicador" />
+

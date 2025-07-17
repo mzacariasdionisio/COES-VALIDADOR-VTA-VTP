@@ -1,0 +1,178 @@
+﻿@model COES.MVC.Extranet.Areas.Medidores.Models.MedidorGeneracionModel
+@{
+    ViewBag.Title = "Medidores de Generación";
+    Layout = "~/Views/Shared/ViewFormato.cshtml";
+}
+
+<script type="text/javascript">
+    var INIT_RENDERIZAR = false;
+    $(function () {
+        $('#tab-container').easytabs({
+            animate: false
+        });
+
+        $('#btnIrHop').click(function () {
+            var url = siteRoot + 'IEOD/HorasOperacion/';
+            window.open(url, '_blank').focus();
+        });
+    });
+</script>
+
+<script src="~/Content/Scripts/highcharts.js"></script>
+<script src="~/Content/Scripts/highcharts-exporting.js"></script>
+
+<link href="~/Areas/Medidores/Content/Css/medidorEnvio.css" rel="stylesheet" />
+<script src="~/Areas/Medidores/Content/Scripts/medidorEnvio.js?v=2.0.5"></script>
+
+<div class="form-title_intranet">
+    <div class="content-titulo">Carga de datos de Medidores de Generación</div>
+</div>
+
+<div id="cargaDatos">
+    <input type="hidden" id="hfFormato1" value="@Model.IdFormatoCargaCentralPotActiva" />
+    <input type="hidden" id="hfFormato2" value="@Model.IdFormatoCargaCentralPotReactiva" />
+    <input type="hidden" id="hfFormato3" value="@Model.IdFormatoCargaServAuxPotReactiva" />
+
+    <div id="mensajePrincipal" class="action-exito" style="display: none; margin: 0; margin-bottom: 10px">Por favor seleccione empresa y la fecha.</div>
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#viewCentralPotActiva">@Html.Raw(Model.TituloCargaCentralPotActiva)</a></li>
+            <li class='tab'><a href="#viewCentralPotReactiva">@Html.Raw(Model.TituloCargaCentralPotReactiva)</a></li>
+            <li class='tab'><a href="#viewServAuxPotReactiva">@Html.Raw(Model.TituloCargaServAuxPotReactiva)</a></li>
+        </ul>
+        <div class='panel-container'>
+            <div id="viewCentralPotActiva">
+
+            </div>
+            <div id="viewCentralPotReactiva">
+
+            </div>
+            <div id="viewServAuxPotReactiva">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="enviosanteriores" class="popup-class-1" style="z-index:9999999998;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envios Anteriores</span></div>
+    <div id="idEnviosAnteriores">
+
+    </div>
+</div>
+
+<div id="validaciones" class="popup-class-1" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+    </div>
+</div>
+
+<div id="leyenda" style="z-index:9999999999;" class="popup_app">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Leyenda</span></div>
+    <div id="idLeyenda" style="height:370px;">
+    </div>
+</div>
+
+<div id="listaHOP" class="popup-class-1" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title">
+        <span>Horas de Operación</span>
+    </div>
+
+    <div class="content-action" style="float: right; margin-top: -47px;">
+        <a href="#" id="btnExportarHOP">
+            <div class="content-item-action">
+                <img src="~/Content/Images/excel.png" /><br />
+                <span>Exportar</span>
+            </div>
+        </a>
+    </div>
+
+    <div id="idListaHOP" style="height:370px;">
+    </div>
+
+    <div>
+        En caso requiera más detalle de los registros de Horas de Operación, <input type="button" id="btnIrHop" value="Clic aquí" style="">
+    </div>
+</div>
+
+<div id="idGrafico" class="popup-class-1 popup-class-3 ventana-grafico">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Vista Gráfica</span></div>
+    <div style="clear:both; height:10px"></div>
+
+    <input type="hidden" id="txtFechaDesde" name="FechaDesde" value="@Model.FechaDesde" style="width:100px;" />
+    <input type="hidden" id="txtFechaHasta" name="FechaHasta" value="@Model.FechaHasta" style="width:100px;" />
+
+    <div class="search-content3" id="filtro_grilla2">
+        <div style="display:table">
+            <div style="display:table-row">
+                <!--Período-->
+                <div class="filtro-label" style="display: table-cell; width: 50px; padding-left: 15px;">
+                    <label>Período:</label>
+                </div>
+                <div style="display:table-cell;width:210px;">
+                    <input type="radio" name="periodoGraf" value="1" checked> TODOS
+                    <input type="radio" name="periodoGraf" value="2"> HP
+                    <input type="radio" name="periodoGraf" value="3"> HFP
+                </div>
+                <!--Valor-->
+                <div class="filtro-label" style="display: table-cell; width: 50px; padding-left: 15px;">
+                    <label>Dato:</label>
+                </div>
+                <div style="display:table-cell;width:210px;">
+                    <input type="radio" name="datoGraf" class="datoGraf15" value="1" checked><span class="datoGraf15">15m</span>
+                    <input type="radio" name="datoGraf" class="datoGraf30" value="2"><span class="datoGraf30">30m</span>
+                    <input type="radio" name="datoGraf" class="datoGraf1" value="3"><span class="datoGraf1">1h</span>
+                </div>
+                <!--Valor-->
+                <div class="filtro-label" style="display: table-cell; width: 50px; padding-left: 15px;">
+                    <label></label>
+                </div>
+                <div style="display:table-cell;width:210px;">
+                </div>
+                <!--Exportar-->
+                <div class="content-action" style="display: table-cell;">
+                    <a href="#" id="btnExportarGrafico">
+                        <div class="content-item-action">
+                            <img src="~/Content/Images/excel.png" /><br />
+                            <span>Exportar</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div style="display:table-row">
+                <!--Central-->
+                <div class="filtro-label" style="display: table-cell; width: 50px;">
+                    <label>Central:</label>
+                </div>
+                <div class="filtro-contenido div_central2" style="display:table-cell;width:210px;">
+                    <select id="cbCentral2" style="width:220px;"></select>
+                </div>
+
+                <!--Fuente2-->
+                <div class="filtro-label" style="display: table-cell; width: 50px; padding-left: 15px;">
+                    <label>Fuente:</label>
+                </div>
+                <div class="filtro-contenido div_fuente2" style="display:table-cell;width:220px;">
+                    <select id="cbFuente2" style="width:220px;"></select>
+                </div>
+
+                <!--eje derecho -->
+                <div class="filtro-label" style="display: table-cell; width: 70px; padding-left: 15px; " ">
+                    <label>Eje Derecho:</label>
+                </div>
+                <div class="filtro-contenido div_ejeder" style="display:table-cell;width:120px;">
+                    <select id="cbEjeder"></select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="idVistaGrafica">
+
+    </div>
+</div>

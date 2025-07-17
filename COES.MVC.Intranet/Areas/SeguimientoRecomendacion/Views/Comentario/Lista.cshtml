@@ -1,0 +1,142 @@
+@model COES.MVC.Intranet.Areas.SeguimientoRecomendacion.Models.BusquedaSrmComentarioModel
+@using System.Globalization
+
+<style type="text/css">
+    .clase-reco-comen {
+        width: auto;
+        padding: 8px;
+        margin: 5px;
+        margin-left:15px;
+        border-radius: 5px;
+        border: 1px solid #ffd800;
+        background-color:#faf5c0
+    }
+</style>
+
+<div style="clear:both; height:15px"></div>
+<div style="text-align: center">
+
+    <table class="pretty tabla-adicional" style="width:100%">
+        <thead>
+            <tr>
+                <th>Acciones</th>
+                <th>Responsable</th>
+                <th>Fecha </th>
+                <th>Comentario</th>
+                <th>Auditoría</th>
+            </tr>
+        </thead>
+        @foreach (var item in Model.ListaSrmComentario)
+        {
+            <tr>
+                <td>
+                    @if (Model.AccionEditar)
+                    {
+                        <a href="JavaScript:editarCom(@item.Srmcomcodi,1,-1)" title="Editar..." background-color:#f2f4f3>
+                            <img src="~/Content/Images/btn-edit.png" />
+                        </a>
+                    }
+
+                    @if (Model.AccionEliminar)
+                    {
+                        if (item.Srmcomactivo == "S")
+                        {
+                            <a href="JavaScript:activarCom(@item.Srmcomcodi,'N')" title="Eliminar Comentario...">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="JavaScript:activarCom(@item.Srmcomcodi,'S')" title="Recuperar Comentario...">
+                                <img src="~/Content/Images/ico-warning.gif" />
+                            </a>
+                        }
+                    }
+                </td>
+                <td>
+                    @{
+
+                        var bd = Convert.ToString(item.Srmcomgruporespons);
+                        var coes = (bd + "*" == "C*");
+                        var nombre = coes ? "COES" : "Agente";
+                        var respon = (coes ? @item.Username : @item.Emprnomb);
+                    }
+                    <span>@(nombre + " - " + respon)</span>
+                </td>
+                <td>
+                    @{ 
+                        var fechaSrmcomFechacoment = "";
+                        if (item.Srmcomfechacoment != null)
+                        {
+                            fechaSrmcomFechacoment += ((DateTime)item.Srmcomfechacoment).ToString(COES.MVC.Intranet.Helper.Constantes.FormatoFecha);
+                        }                       
+                    }
+
+                    <span>@fechaSrmcomFechacoment</span>
+                    
+                 </td>
+                <td>
+                    
+                    <div class="clase-reco-comen">@item.Srmcomcomentario</div>
+
+                  
+                            @if (Model.htFiles.ContainsKey(item.Srmcomcodi))
+                            {
+                                List<COES.Framework.Base.Tools.FileData> archivos = (List<COES.Framework.Base.Tools.FileData>)Model.htFiles[item.Srmcomcodi];
+
+                                if (archivos.Count > 0)
+                                {
+
+                                    foreach (var itemF in archivos)
+                                    {
+                                        <div style="cursor:pointer; margin-left:15px;" onclick="descargarArchivo('@itemF.FileUrl', '@itemF.FileType', '@itemF.Extension')">
+                                            <img src="~/Content/Images/Document/@itemF.Icono" />
+                                            <span>@itemF.FileName</span>
+                                         </div>
+                                    }
+
+                                }
+                             }
+                                              
+
+                    
+
+                </td>
+                <td>
+                    @{
+                        var fechaSrmcomFeccreacion = "";
+                        if (item.Srmcomfeccreacion != null)
+                        {
+                            fechaSrmcomFeccreacion = ((DateTime)item.Srmcomfeccreacion).ToString(COES.MVC.Intranet.Helper.Constantes.FormatoFechaFull);
+                        }                  
+                        var fechaSrmcomFecmodificacion = "";
+                        if (item.Srmcomfecmodificacion != null)
+                        {
+                            fechaSrmcomFecmodificacion = ((DateTime)item.Srmcomfecmodificacion).ToString(COES.MVC.Intranet.Helper.Constantes.FormatoFechaFull);
+                        }
+                    }
+                    <table style="border:none">
+                        <tr>
+                            <td style="border:none">Usuario creación:</td>
+                            <td style="border:none"><span style="font-weight:bold">@item.Srmcomusucreacion</span></td>
+                        </tr>
+                        <tr>
+                            <td style="border:none">Fecha creación:</td>
+                            <td style="border:none"><span style="font-weight:bold">@fechaSrmcomFeccreacion</span></td>
+                        </tr>
+                        <tr>
+                            <td style="border:none">Usuario modificación:</td>
+                            <td style="border:none"><span style="font-weight:bold">@item.Srmcomusumodificacion</span></td>
+                        </tr>
+                        <tr>
+                            <td style="border:none">Fecha modificación:</td>
+                            <td style="border:none"><span style="font-weight:bold">@fechaSrmcomFecmodificacion</span></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>                    
+
+                }
+    </table>
+   
+</div>

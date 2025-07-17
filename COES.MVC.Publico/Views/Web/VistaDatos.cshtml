@@ -1,0 +1,367 @@
+﻿@model COES.MVC.Publico.Models.BrowserModel
+
+@if (Model.TipoVisor == "V")
+{
+    <script src='~/Content/Scripts/pdfobject.js'></script>
+
+    <script type='text/javascript'>
+        $(document).ready(function () {
+
+            if (!msieversion()) {
+                var pdfObjeto = new PDFObject({
+                    url: $('#hfIdFileVisor').val(),
+                    id: 'myPDF',
+                    pdfOpenParams: {
+                        navpanes: 0,
+                        toolbar: 0,
+                        statusbar: 0,
+                        view: 'FitV'
+                    }
+                });
+                $('#pdf').addClass('pdf');
+                var html = pdfObjeto.embed('pdf');
+            }
+            else {
+                $('#pdf').addClass('pdf');
+                $('#pdf').html("<iframe src='" + $('#hfIdFileVisor').val() + "' style='width: 100%; height: 100%;' ></iframe>");
+            }
+        });
+
+
+        function verCapitulo(enlace) {
+            enlace = "https://www.coes.org.pe/portal/browser/downloadpdf?url=" + enlace;
+            if (!msieversion()) {
+                var pdfObjeto = new PDFObject({
+                    url: enlace,
+                    id: 'myPDF',
+                    pdfOpenParams: {
+                        navpanes: 0,
+                        toolbar: 0,
+                        statusbar: 0,
+                        view: 'FitV'
+                    }
+                });
+                $('#pdf').addClass('pdf');
+                var html = pdfObjeto.embed('pdf');
+            }
+            else {
+                $('#pdf').addClass('pdf');
+                $('#pdf').html("<iframe src='" + enlace + "' style='width: 100%; height: 100%;' ></iframe>");
+            }
+        }
+
+    </script>
+}
+else if (Model.TipoVisor == "C")
+{
+    <script src='~/Content/Scripts/pdfobject.js'></script>
+    <script type='text/javascript'>
+
+        $(document).ready(function () {
+
+            var enlace = $('#hfArchivoDefecto').val();
+            if (enlace != "") {
+                verCapitulo(enlace);
+            }
+        });
+
+        function verCapitulo(enlace) {
+            enlace = "https://www.coes.org.pe/portal/browser/downloadpdf?url=" + enlace;
+            if (!msieversion()) {
+                var pdfObjeto = new PDFObject({
+                    url: enlace,
+                    id: 'myPDF',
+                    pdfOpenParams: {
+                        navpanes: 0,
+                        toolbar: 0,
+                        statusbar: 0,
+                        view: 'FitV'
+                    }
+                });
+                $('#pdf').addClass('pdf');
+                var html = pdfObjeto.embed('pdf');
+            }
+            else {
+                $('#pdf').addClass('pdf');
+                $('#pdf').html("<iframe src='" + enlace + "' style='width: 100%; height: 100%;' ></iframe>");
+            }
+        }
+
+    </script>
+}
+else if (Model.TipoVisor == "I")
+{
+    <script type='text/javascript' src='~/Content/Scripts/issuu.js' async='true'></script>
+}
+
+@if ((Model.TipoVisor == "V" || Model.TipoVisor == "I") && Model.IndicadorIssuu != "N" && Model.PosicionIssuu == "C")
+{
+    <script type="text/javascript">
+        $(function () {
+            $('#cabecera').css("display", "none");
+        });
+    </script>
+}
+else
+{
+    <script type="text/javascript">
+        $(function () {
+            $('#cabecera').css("display", "block");
+        });
+    </script>
+
+}
+
+@if (Model.TipoVisor == "C")
+{
+    <script type="text/javascript">
+        $(function () {
+            $('#btn-busqueda').css("display", "none");
+            $('#btn-indice').css("display", "block");
+
+        });
+    </script>
+}
+else
+{
+    <script type="text/javascript">
+        $(function () {
+            $('#btn-busqueda').css("display", "block");
+            $('#btn-indice').css("display", "none");
+        });
+    </script>
+}
+
+<script type="text/javascript">
+    $(function () {
+
+        $('#cbSelectAll').click(function (e) {
+            var table = $(e.target).closest('table');
+            $('td input:checkbox', table).prop('checked', this.checked);
+        });
+
+        $('.formulario-item-fecha').Zebra_DatePicker({
+        });
+
+        $('#btnConsultar').click(function () {
+            buscarArchivos();
+        });
+
+        $('#campo7').keypress(function (e) {
+            if (e.keyCode == '13') {
+                buscarArchivos();
+                return false;
+            }
+        });
+
+        $('#busquedaDoble').click(function () {
+            $('#campo7').val('');
+            $('#campo39').val('');
+            $('#campo42').val('');
+        });
+
+        //$('#cuadroBusqueda').keypress(function (e) {
+        //    if (e.keyCode == '13') {
+        //        buscarArchivos();
+        //        return false;
+        //    }
+        //});
+    });
+
+    /*
+    List - Thumbs view switch
+*/
+
+    function InfoListViewSwitch() {
+        $('.coes-views button').removeClass('active')
+        $(this).addClass('active')
+
+        if ($(this).hasClass('js-switch-list')) {
+            $('.infolist').addClass('listed')
+        } else {
+            $('.infolist').removeClass('listed')
+        }
+    }
+
+    $('.js-switch-list, .js-switch-thumbs').on('click', InfoListViewSwitch)
+
+    function activeSwitch() {
+        $('.js-switch-list').removeClass('active');
+        $('.js-switch-thumbs').addClass('active');
+        $('.infolist').removeClass('listed');
+    }
+
+    $('.search-clic').on('click', activeSwitch);
+    $('.infolist-link').on('click', activeSwitch);
+</script>
+
+<style type="text/css">
+    .formato {
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="bread-crumb" style="margin-left:3px">
+    <ul>
+        @foreach (var item in Model.BreadList)
+        {
+            <li><a id="busquedaDoble" class="search-clic" href="JavaScript:openDirectory('@item.Url')">@item.Name</a></li>
+        }
+    </ul>
+</div>
+<div style="clear:both"></div>
+@if (Model.IndicadorHeader == "S" && Model.IndicadorIssuu == "N")
+{
+    <div class="coes-box">
+        <ul class="infolist list-unstyled">
+            @foreach (var item in Model.DocumentList)
+            {
+                <li class="infolist-item">
+                    <a href="#" onclick="openBlob('@item.FileUrl', '@item.FileType', '@item.Extension')" class="infolist-link">@item.Metadatos[0].ColumnValor</a>
+                </li>
+            }
+        </ul>
+    </div>
+}
+else
+{
+    <div id="cntPaginado">
+
+    </div>
+    <div id="contentTop">
+        @if (Model.PosicionIssuu == "T")
+        {
+            @Html.Raw(Model.ContenidoIssuu)
+        }
+    </div>
+
+    <div id="contentBusqueda" class="table-responsive">
+        @if (Model.IndicadorIssuu == "N")
+        {
+            <table id="tbDocumentLibrary" class="tabla-icono table-hover">
+                <thead id="headDocument">
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="cbSelectAll" />
+                        </th>
+                        <th></th>
+                        @foreach (var columna in Model.ListaColumnas)
+                        {
+                            if (columna.Columncodi == COES.Storage.App.Servicio.ColumnasBase.Archivo && Model.TipoVisor == "C")
+                            {
+                                <th>Descripción</th>
+                            }
+                            else if (Model.TipoVisor != "C")
+                            {
+                                if (columna.Columnshow == "Tamaño")
+                                {
+                                    <th style="width: 145px;">@columna.Columnshow</th>
+                                }
+                                else
+                                {
+                                    <th>@columna.Columnshow</th>
+                                }
+
+                            }
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.DocumentList)
+                    {
+                        string clase = (item.FileType == "F") ? "class=selector-file-contextual" : "class=selector-directory-contextual";
+                        <tr style="cursor:pointer" @clase id="@item.FileUrl" title="@item.FileName">
+                            <td>
+                                @if (item.FileType == "F")
+                                {
+                                    <input type="checkbox" id="@item.FileName" name="cbSelect" value="@item.FileUrl" />
+                                }
+                            </td>
+                            <td onclick="openBlob('@item.FileUrl', '@item.FileType', '@item.Extension')"><img src="~/Content/Images/Document/@item.Icono" /></td>
+
+                            @foreach (var columna in Model.ListaColumnas)
+                            {
+                                string alineacion = "";
+                                if (columna.Typecodi != COES.Storage.App.Servicio.TiposDeDato.Html)
+                                {
+                                    if (columna.Columnalign == "L") { alineacion = "style=text-align:left"; }
+                                    if (columna.Columnalign == "C") { alineacion = "style=text-align:center"; }
+                                    if (columna.Columnalign == "R") { alineacion = "style=text-align:right"; }
+                                }
+                                else
+                                {
+                                    alineacion = "style=white-space:pre-line";
+                                }
+
+                                if (Model.TipoVisor != "C" && Model.TipoVisor != "V")
+                                {
+                                    if (columna.Columncodi != COES.Storage.App.Servicio.ColumnasBase.Archivo)
+                                    {
+                                        <td @alineacion onclick="openBlob('@item.FileUrl', '@item.FileType', '@item.Extension')">@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor</td>
+                                    }
+                                    else
+                                    {
+                                        <td @alineacion onclick="openBlob('@item.FileUrl', '@item.FileType', '@item.Extension')">@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor</td>
+                                    }
+                                }
+                                else if (Model.TipoVisor == "V")
+                                {
+
+                                    if (columna.Columncodi != COES.Storage.App.Servicio.ColumnasBase.Archivo)
+                                    {
+                                        if (item.Extension.ToLower() == ".pdf")
+                                        {
+                                            <td @alineacion onclick="verCapitulo('@item.FileUrl')">@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor</td>
+                                        }
+                                        else
+                                        {
+                                            <td @alineacion>@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor</td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (item.Extension.ToLower() == ".pdf")
+                                        {
+                                            <td @alineacion onclick="verCapitulo('@item.FileUrl', '@item.FileType', '@item.Extension')">@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor </td>
+                                        }
+                                        else
+                                        {
+                                            <td @alineacion>@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor </td>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (columna.Columncodi == COES.Storage.App.Servicio.ColumnasBase.Archivo)
+                                    {
+                                        if (item.Extension.ToLower() == ".pdf")
+                                        {
+                                            <td @alineacion onclick="verCapitulo('@item.FileUrl')"><span>@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor</span></td>
+                                        }
+                                        else
+                                        {
+                                            <td @alineacion><span>@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor</span></td>
+                                        }
+                                    }
+                                }
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            if (Model.PosicionIssuu == "C")
+            {
+                @Html.Raw(Model.ContenidoIssuu)
+            }
+        }
+    </div>
+}
+
+<input type="hidden" id="hfIndicadorCabecera" value="@Model.IndicadorHeader" />
+
+
+
+

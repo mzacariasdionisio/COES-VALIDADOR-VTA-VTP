@@ -1,0 +1,184 @@
+﻿@model COES.MVC.Intranet.Areas.Hidrologia.Models.HidrologiaModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml"; 
+}
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/reporte.js?v=4"></script>
+<script src="~/Content/Scripts/highstock.js"></script>
+<script type="text/javascript">
+   
+
+    $(function () {
+       
+    });   
+   
+    function CargarSemanaAnho2() {
+        CargarSemanaAnho();
+    }
+</script>
+
+
+<div class="form-title">
+    <div class="content-titulo">Consulta Histórica de Hidrología</div>
+    <div class="content-botonera">
+        <input type="button" id="btnBuscar" value="Reporte" />
+        <input type="button" id="btnGrafico" value="Ver Gráfico" />
+        <input type="button" id="btnExpotar" value="Exportar" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div class="search-content">
+        <table class="content-tabla-search" style="width:auto">
+            <tr >
+                <td>Empresa:</td>
+                <td style="width:200px;">
+                    <select id="cbEmpresa" name="IdEmpresa" multiple="multiple">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEmpresa" name="empresa"/>
+                </td>
+                <td>Cuenca:</td>
+                <td>
+                    <select id="cbCuenca" name="IdCuenca" multiple="multiple">
+                        @foreach (var item in Model.ListaCuenca)
+                        {
+                            <option value="@item.Equicodi">@item.Equinomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfCuenca" />
+                </td>
+                <td>
+                    Instalación:
+                </td>       
+                <td>
+                    <select id="cbFamilia" name="IdFamilia" multiple="multiple">
+                        @foreach (var item in Model.ListaTipoRecursos)
+                        {
+                            <option value="@item.Famcodi">@item.Famnomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfFamilia" />
+                </td>           
+            </tr>
+            <tr>
+                <td>Parámetros:</td>
+                <td>
+                    <select id="cbUnidades" name="IdUnidad">                        
+                        @foreach (var item in Model.ListaUnidades)
+                        {
+                            var descripcion = "";
+                            switch (item.Tipoinfocodi)
+                            {
+                                case 11:
+                                    descripcion = "Caudal (" + item.Tipoinfodesc + ")";
+                                    break;
+                                case 14:
+                                    descripcion = "Volumen (" + item.Tipoinfodesc + ")";
+                                    break;
+                                case 40:
+                                    descripcion = "Nivel (" + item.Tipoinfodesc + ")";
+                                    break;
+                                case 1:
+                                    descripcion = "Médida Eléctrica (MW/MWh)";
+                                    break;
+                            }     
+                            <option value="@item.Tipoinfocodi">@descripcion</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfUnidad" />
+                </td> 
+                <td >Punto de Medición:</td>
+                <td>
+                   <div id="listPuntoMedicion"></div> 
+                </td>
+                <td>Tipo de Información:</td>
+                <td>
+                   <select id="cbTipoInformacion" name="IdTipoInformacion">
+                        @foreach (var item in Model.ListaLectura)
+                        {
+                            <option value="@item.Lectcodi">@item.Lectnomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfLectura" value ="@Model.IdLectura" />                  
+                </td>
+                <td>
+                    
+                </td>
+            </tr>
+            <tr id="idTr2">               
+                <td colspan =" 6">
+                <div class="content-download2" >                   
+                    <div style="background-color:steelblue;color:white;border-radius: 6px 6px 6px 6px;">
+                        <strong>&nbsp;&nbsp;&nbsp;Resolución:&nbsp;&nbsp;&nbsp;</strong>
+                        <div id="divHoras" style="display:inline-block"><input type="radio"  name="rbidTipo" onclick="handleClick(this);" value="0" />Hora</div>
+                        <div id="divDia" style="display:inline-block"><input type="radio"  name="rbidTipo" onclick="handleClick(this);" value="1" />Día</div>
+                        <div id="divSemana1" style="display:inline-block"><input type="radio"  name="rbidTipo" onclick="handleClick(this);" value="2" />Semana</div>
+                        @*<div id="divSemana2" style="display:inline-block"><input type="radio"  name="rbidTipo" onclick="handleClick(this);" value="3" />Semana Cronológica</div>*@
+                        <div id="divmes" style="display:inline-block"><input type="radio" name="rbidTipo" onclick="handleClick(this);" value="4" />Mes</div>
+                        <div id="divanho" style="display:inline-block"><input type="radio" name="rbidTipo" onclick="handleClick(this);" value="5" />Año</div>
+                        <input type="hidden" id="hfidTipo" /> 
+
+                    </div>
+                </div>
+               </td> 
+            </tr>
+            <tr id="idTr3">
+                <td>Fecha desde:</td>
+                <td>
+                    <input type="text" id="FechaDesde" name="FechaInicio" value="@Model.FechaInicio"  />
+                    <input type="hidden" id="hfFechaDesde"  value="@Model.FechaInicio"  />
+                </td>
+                <td>Fecha hasta:</td>
+                <td>
+                    <input type="text" id="FechaHasta" name="FechaFin" value="@Model.FechaFin" />
+                    <input type="hidden" id="hfFechaHasta" value="@Model.FechaFin" />
+                </td>                
+             </tr>
+            <tr id="idTr">               
+                <td  >Año:</td>
+                <td >
+                    <input type="text" id="Anho" name="Año" value="@Model.Anho" onchange=CargarSemanaAnho2()/>
+                    <input type="hidden" id="hfAnho"  value="@Model.Anho"  />
+                </td>
+                <td >Semana inicio:</td>
+                <td >
+                    <div id="SemanaIni" > </div>
+                    <input type="hidden" id="hfSemanaIni" />
+                </td>                
+                <td >Semana fin:</td>
+                <td >
+                    <div id="SemanaFin" > </div>
+                    <input type="hidden" id="hfSemanaFin"/>
+                </td>               
+             </tr>
+            <tr id="idTr4">               
+                <td  >Año Inicio:</td>
+                <td >
+                    <input type="text" id="AnhoInicio" name="Añoinicio" value="@Model.Anho" onchange=CargarSemanaAnho2()/>
+                    <input type="hidden" id="hfAnhoInicio"  value="@Model.Anho"  />
+                </td>
+                <td  >Año Fin:</td>
+                <td >
+                    <input type="text" id="AnhoFin" name="Añofin" value="@Model.Anho" onchange=CargarSemanaAnho2()/>
+                    <input type="hidden" id="hfAnhoFin"  value="@Model.Anho"  />
+                </td>               
+             </tr>
+            
+        </table>
+    </div>
+    <div class="content-tabla">
+        <div class="tabla-header">       
+            <div class="table-paginado" id="paginado"></div>
+        </div>
+        <div style="clear:both; height:5px"></div>
+        <div class="table-list" id="listado"></div>
+    </div>
+    <input type="hidden" id="hfLectPeriodo" value="@Model.CadenaLectPeriodo"/>
+    <input type="hidden" id="hfLectCodi" value="@Model.CadenaLectCodi"/>     
+</div>

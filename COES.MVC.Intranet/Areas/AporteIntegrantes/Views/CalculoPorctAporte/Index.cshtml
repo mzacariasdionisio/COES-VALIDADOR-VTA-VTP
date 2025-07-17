@@ -1,0 +1,164 @@
+﻿@model COES.MVC.Intranet.Areas.AporteIntegrantes.Models.BaseModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string sSelected = "";
+}
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/AporteIntegrantes/Content/Css/transferencia.css" rel="stylesheet" />
+<script src="~/Areas/AporteIntegrantes/Content/Scripts/calculoporctaporte.js"></script>
+<script src="~/Areas/AporteIntegrantes/Content/Scripts/load.js"></script>
+
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo" style="width:800px;">Cálculo de los porcentajes de aporte</div>
+    </div>
+    @if (Model.EntidadPresupuesto.Caiprscodi > 0 && Model.EntidadAjuste.Caiajcodi > 0)
+    { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Cálculo de los porcentajes de aporte: @Model.EntidadPresupuesto.Caiprsnombre / @Model.EntidadAjuste.Caiajnombre</div> }
+    else
+    { <div class='action-message' id='mensaje' style="margin-bottom:5px; margin-top:0; ">Por favor seleccione un Presupuesto y una versión de Ajuste</div> }
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Procesar Cálculo</a></li>
+                <li class='tab'><a href="#paso2">Reportes</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="6"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para procesar el cálculo</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50px"><div>Presupuesto: </div></td>
+                                <td style="width:300px">
+                                    <div class="editor-field" style="width:300px">
+                                        <select id="caiprscodi" name="caiprscodi" onchange="refrescar();">
+                                            @foreach (var item in Model.ListaPresupuesto)
+                                            {
+                                                sSelected = "";
+                                                if (@item.Caiprscodi == Model.Caiprscodi)
+                                                {
+                                                    sSelected = "selected";
+                                                }
+                                                <option value="@item.Caiprscodi" @sSelected>@item.Caiprsnombre</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+                                <td style="width:60px">Ajuste: </td>
+                                <td style="width:250px">
+                                    <div class="editor-field" style="width:280px">
+                                        <select id="caiajcodi" name="caiajcodi" style="width:250px">
+                                            @foreach (var item in Model.ListaAjuste)
+                                            {
+                                                sSelected = "";
+                                                if (@item.Caiajcodi == Model.Caiajcodi)
+                                                {
+                                                    sSelected = "selected";
+                                                }
+                                                <option value="@item.Caiajcodi" @sSelected>@item.Caiajnombre</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <td style="width:200px; height:40px;">
+                                    @if (Model.Caiprscodi > 0 && Model.Caiajcodi > 0)
+                                    {
+                                        <input type="button" id="btnProcesar" value="Procesar" />
+                                    }
+                                </td>
+                                <td style="width:200px; height:40px;">
+                                    @if (Model.Caiprscodi > 0 && Model.Caiajcodi > 0)
+                                    {
+                                        <input type="button" id="btnDeshacer" value="Deshacer" />
+                                    }
+                                </td>
+                            </tr>
+
+                        </table>
+                    </div>
+                </div>
+                @*--------------------------------------------------------------------------------------------------------------------------------------------------*@
+                <div id="paso2">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para exportar la información deseada</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50px"><div>Presupuesto: </div></td>
+                                <td style="width:300px">
+                                    <div class="editor-field" style="width:300px">
+                                        <select id="caiprscodiRep" name="caiprscodiRep" onchange="refrescarReporte();">
+                                            @foreach (var item in Model.ListaPresupuesto)
+                                            {
+                                                sSelected = "";
+                                                if (@item.Caiprscodi == Model.Caiprscodi)
+                                                {
+                                                    sSelected = "selected";
+                                                }
+                                                <option value="@item.Caiprscodi" @sSelected>@item.Caiprsnombre</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+                                <td style="width:60px">Ajuste: </td>
+                                <td style="width:250px">
+                                    <div class="editor-field" style="width:280px">
+                                        <select id="caiajcodiRep" name="caiajcodiRep" style="width:250px">
+                                            @foreach (var item in Model.ListaAjuste)
+                                            {
+                                                sSelected = "";
+                                                if (@item.Caiajcodi == Model.Caiajcodi)
+                                                {
+                                                    sSelected = "selected";
+                                                }
+                                                <option value="@item.Caiajcodi" @sSelected>@item.Caiajnombre</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </td>
+                            </tr>
+                            @if(Model.Caiajcodi>0 && Model.Caiajcodi>0){
+                                <tr class="THCabecera">
+                                    <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Lista de descargas disponibles</b></div></td>
+                                    <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Excel</b></div></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Reporte Comparativo de Energía y Soles de Energía</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarRepEnergia" title="Descargar Reporte de Energía en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Reporte Comparativo de Potencia y Soles de Potencia</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarRepPotencia" title="Descargar Reporte de Potencia en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Reporte Comparativo de Soles por Transmisión</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarRepTransmision" title="Descargar Reporte de Transmisión en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Reporte Comparativo de Porcentajes</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarRepPorcentaje" title="Descargar Reporte de Porcentaje en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Reporte de Fuentes de Datos</td>
+                                    <td colspan="2"><a href="#" id="" title=""><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Publicación de resultados</td>
+                                    <td colspan="2"><a href="#" id="btnDescargarRepReservaAsignadaExcel" title="Descargar Reporte de Reserva Asignada en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                                </tr>
+                            }
+
+                                
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

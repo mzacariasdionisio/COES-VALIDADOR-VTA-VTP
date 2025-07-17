@@ -1,0 +1,172 @@
+﻿@model COES.MVC.Intranet.Areas.Hidrologia.Models.BusquedaModel
+@{
+    ViewBag.Title = "AgregarAmpliacion";
+}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#Anho').Zebra_DatePicker({
+            format: 'Y',
+            onSelect: function () {
+                cargarSemanaAnho()
+            }
+        });
+        $('#idFechaEnvio').Zebra_DatePicker({
+            //direction: -1
+        });
+        $('#txtMes').Zebra_DatePicker({
+            //direction: -1,
+            format: 'm Y'
+        });
+        $("#idAgregar").click(function () {
+            grabarAmpliacion();
+        });
+        $("#idCancelar").click(function () {
+            $('#validaciones').bPopup().close();
+        });
+        $('#cbEmpresa2').change(function () {           
+            listarFormato2($('#cbLectura2').val());
+        });       
+        $('#cbLectura2').change(function () {
+            listarFormato2($('#cbLectura2').val());
+        });
+
+        $('#trSemana td').hide();
+        $('#trSemanaAnho td').hide();
+        $('#trMes td').hide();
+        $('#Anho').val($('#hfAnho').val());
+        listarFormato2(-1);
+    });
+    // Llena lista de semanas del año seleccionado
+    function cargarSemanaAnho() {
+        var anho = $('#Anho').val();
+        $.ajax({
+            type: 'POST',
+            dataType: 'json',
+            url: controlador + 'CargarSemanas',
+            cache: false,
+            data: {
+                idAnho: anho
+            },
+            success: function (aData) {
+                $('#cbSemana2').get(0).options.length = 0;
+                $.each(aData, function (i, item) {
+                    $('#cbSemana2').get(0).options[$('#cbSemana2').get(0).options.length] = new Option(item.Text, item.Value);
+                });
+                $('#cbSemana2').val($('#hfSemana2').val());
+            },
+            error: function () {
+                alert("Ha ocurrido un error");
+            }
+        });
+
+    }
+</script>
+
+<table class="table-form-vertical">
+
+    <tr>
+        <td>Empresa:</td>
+        <td>
+                    <select id="cbEmpresa2"  name="Idempresa" >
+                     @foreach (var item in Model.ListaEmpresas)
+                     {   
+                          <option value="@item.Emprcodi">@item.Emprnomb</option>
+                     }
+                    </select>
+        </td>
+    </tr>
+    <tr>
+        <td>Tipo de Lectura:</td>
+        <td>
+                    <select id="cbLectura2">
+                          <option value="0">[Seleccionar Tipo de Lectura]</option>
+                            @foreach (var item in Model.ListaLectura)
+                                {
+                                    <option value="@item.Lectcodi">@item.Lectnomb</option>
+                                }
+                    </select>
+         </td>
+    </tr>
+    <tr>
+        <td>Formato:</td>
+        <td>
+            <div id="listTipoInformacion2"></div>
+         </td>
+    </tr> 
+    <tr id="trFecha">
+        <td>Fecha Envío:</td>
+        <td><input type="text" id="idFechaEnvio" value="@Model.Fecha" /></td>
+    </tr>
+    <tr id="trSemanaAnho">
+        <td>Año de Envío:</td>
+        <td>
+            <input type="text" id="Anho" name="Año" style="width:70px;" value="@Model.Anho" onchange=CargarSemanaAnho2/>
+        </td>
+    </tr>
+    <tr id="trSemana">
+        <td>Semana de Envío:</td>
+        <td>
+            <select id="cbSemana2">
+                  <option value="0">-SELECCIONE SEMANA-</option>                                           
+                    @{  
+                        
+                    int reg = 1;
+                    foreach (var item in Model.ListaSemanas)
+                       {                         
+                         if(Model.NroSemana == reg)
+                         {
+                         <option value="@item.IdTipoInfo" selected="selected">@item.NombreTipoInfo</option>
+                         }
+                         else
+                         {
+                         <option value="@item.IdTipoInfo">@item.NombreTipoInfo</option>
+                         }
+                         reg++;                         
+                       }
+                    }
+              </select>
+              <input type="hidden" id="hfSemana2" value="@Model.NroSemana" />
+        </td>              
+    </tr>
+    <tr id="trMes">
+        <td>Mes de Envío:</td>
+        <td> 
+           <input type="text" id="txtMes" value="@Model.AnhoMes" />
+        </td>
+    </tr>
+
+    <tr>
+        <td>Fecha Ampliación:</td>
+        <td><input type="text" id="idFechaAmp" value="@Model.FechaPlazo" disabled="disabled"/></td>
+    </tr>
+
+    <tr>
+        <td>Hora Plazo:</td>
+        <td>
+            <select id="cbHora"  name="IdHora" >
+            @*@for (var i = Model.HoraPlazo  ; i < 48; i++)*@
+            @for (var i = 0  ; i < 48; i++)
+            {
+                string hora = "0" + ((i + 1)/2).ToString();
+                hora = hora.Substring((hora.Length > 2)?1:0,2);
+                string minuto = "0" + (((i + 1) % 2) * 30).ToString();
+                minuto = minuto.Substring((minuto.Length > 2) ? 1 : 0, 2);
+                string horarmin = hora + ":" + minuto;
+            <option value ="@(i+1)">@horarmin</option>
+            }
+            </select>
+
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="2" style="margin:0 auto">
+            <div  style="margin:0 auto">
+                <input type="button" id="idAgregar" value ="Agregar" />
+                <input type="button" id="idCancelar" value ="Cancelar" />
+            </div>
+        </td>
+        
+    </tr>
+
+</table>

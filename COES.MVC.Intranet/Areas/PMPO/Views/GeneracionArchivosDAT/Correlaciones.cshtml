@@ -1,0 +1,210 @@
+﻿@model COES.MVC.Intranet.Areas.PMPO.Models.SDDPModel
+@{
+    ViewBag.Title = "Correlaciones";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Areas/PMPO/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Areas/PMPO/Content/Scripts/app-pmpo-correlaciones.js?v=1.0.5"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Edición de correlaciones de equipos</div>
+
+    <div class="content-botonera">
+        <input id="btnNuevo" type="button" value="Nuevo" onclick="abrirPopUpNuevo();" />
+        <input id="btnRetornar" type="button" value="Retornar" onclick="window.history.back();" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <input id="txtPmCindCodi" type="hidden" />
+    <input id="hdFecha" type="hidden" value="@Model.Fecha" />
+    <input id="hdAgrupacion" type="hidden" value="@Model.Agrupcodi" />
+
+    <div class="search-content">
+
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+
+                <td>Empresa:</td>
+                <td>
+                    <select id="cbEmpresaFiltro" style="width: 228px;">
+                        <option value="-1">--TODOS--</option>
+                        @foreach (var item in Model.ListaEmpresa)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+
+                <td>Tipo de generador:</td>
+                <td>
+                    <select id="cbCategoriaFiltro" style="width: 205px;">
+                        <option value="-1">--TODOS--</option>
+                        @foreach (var item in Model.ListaTipoSDDP)
+                        {
+                            <option value="@item.Tsddpcodi">@item.Tsddpnomb</option>
+                        }
+                    </select>
+                </td>
+
+                <td>Tipo de equipo:</td>
+                <td>
+                    <select id="cbFamiliaFiltro" style="width: 205px;">
+                        <option value="-1">--TODOS--</option>
+                        @foreach (var tipoEquipo in Model.ListaFamilia)
+                        {
+                            <option value="@tipoEquipo.Famcodi">@tipoEquipo.Famnomb</option>
+                        }
+                    </select>
+                </td>
+                <td>
+                    <input id="btnConsultar" type="button" value="Consultar" />
+                </td>
+                <td>
+                    <fieldset style="width: 232px;padding-top: 5px;padding-bottom: 7px;">
+                        <input type="radio" name="rbMantto" value="G" checked="checked">Generación
+                        <input type="radio" name="rbMantto" value="T">Transmisión
+                        <input type="radio" name="rbMantto" value="-1">Todos
+                    </fieldset>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="mensaje"></div>
+
+    <div id="listado" class="content-tabla">
+        <div id="divTablaCorrelacion">
+        </div>
+    </div>
+</div>
+
+<div id="popupPeriodo" class="general-popup">
+    <div class="popup-title"><span>Registro de Correlación</span></div>
+    <div class="popup-text">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td colspan="4">
+                    Código SDDP
+                </td>
+            </tr>
+            <tr>
+                <td>Tipo Generador: </td>
+                <td>
+                    <select id="cbTipoGenerador">
+                        <option value="-1">-Seleccionar-</option>
+                        @foreach (var item in Model.ListaTipoSDDP)
+                        {
+                            <option value="@item.Tsddpcodi">@item.Tsddpnomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Generador: </td>
+                <td>
+                    <select id="cbGenerador">
+                        <option value="-1">-Seleccionar-</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 15px;">
+            Relacionado con el equipo / Modo de operación:
+            <br/>
+            <input type="radio" name="cbFuenteRelacion" value="1" checked="checked">Equipo
+            <input type="radio" name="cbFuenteRelacion" value="2">Modo de operación
+
+        </div>
+
+        <!--filtro equipo-->
+        <table id="tbl_equipo" style="">
+            <tr>
+                <td></td>
+                <td>Tipo Equipo: </td>
+                <td>
+                    <select id="cbTipoEquipo">
+                        <option value="-1">-Seleccionar-</option>
+                        @foreach (var tipoEquipo in Model.ListaFamilia)
+                        {
+                            <option value="@tipoEquipo.Famcodi">@tipoEquipo.Famnomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>Equipo: </td>
+                <td>
+                    <select id="cbEquipo">
+                        <option value="-1">-Seleccionar-</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>% Indisponibilidad: </td>
+                <td>
+                    <input type="text" id="txtIndisponibilidad">
+                </td>
+            </tr>
+            <tr style="display: none">
+                <td></td>
+                <td>Agrupaci&oacute;n: </td>
+                <td>
+                    <input type="text" id="txtAgrupacion" value="1">
+                </td>
+            </tr>
+            <tr style="display: none">
+                <td>
+                    <a href="#" data-toggle="tooltip" title="Indispone al Grupo/Modo de Operación, en caso el equipo esté disponible"><img src="~/Areas/PMPO/Content/Images/comentarios.png" /></a>
+                    Relaci&oacute;n con TV de CC
+                </td>
+                <td>
+                    <input type="radio" id="rbPmcindRelinversaS" name="rbPmcindRelinversa" value="1" />Si
+                    <input type="radio" id="rbPmcindRelinversaN" name="rbPmcindRelinversa" value="0" />No
+
+                </td>
+                <td>Relación con equipo Gen TV que genera NO DISPONIBILIDAD a este MO.</td>
+            </tr>
+        </table>
+
+        <!--Modo de operación-->
+        <table id="tblModo" style="display: none">
+            <tr>
+                <td></td>
+                <td>Modo de Operación: </td>
+                <td>
+                    <select id="cbModoForm" style="width: 350px;">
+                        <option value="-1">-Seleccionar-</option>
+                        @foreach (var item in Model.ListaModoOp)
+                        {
+                            <option value="@item.Grupocodi">@(item.Central + " - " + item.Gruponomb)</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 15px;">
+            <b>Nota</b>:
+            <ul>
+                <li>Si registra un modo de operación no es necesario registrar los equipos que lo componen</li>
+            </ul>
+        </div>
+    </div>
+
+    <table border="0" width="100%">
+        <tr>
+            <td width="50%">
+                <div class="formulario-boton" style="float:right">
+                    <input id="btnGrabar" type="button" value="Grabar" onclick="grabarCorrelacion();" />
+                    <input id="btnCerrar" type="button" value="Cerrar" onclick="cerrarPopUp();" />
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>

@@ -1,0 +1,1265 @@
+﻿﻿@model COES.MVC.Intranet.Areas.Evaluacion.Models.ListadoTransformadorModel
+
+<style>
+
+    #tablaListado td.tooltip-celda {
+        position: relative;
+    }
+
+        #tablaListado td.tooltip-celda:hover::after {
+            content: attr(data-comment);
+            position: absolute;
+            top: 0;
+            left: 100%;
+            background-color: #f1f1f1;
+            padding: 5px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+            white-space: pre-line;
+            word-wrap: break-word;
+            max-width: 300px;
+            width: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 2000;
+            display: block;
+            box-sizing: border-box;
+            text-align: justify;
+        }
+
+    #tablaListado .tooltip-celda .badge {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 5px;
+        aspect-ratio: 1;
+        clip-path: polygon(0 0, 100% 0, 100% 100%);
+        background: red;
+    }
+</style>
+<table border="0" class="pretty tabla-icono display compact" id="tablaListado">
+    <thead>
+        <tr>
+            <th style="width: 100px">Acciones</th>
+            <th style="width: 50px">Código ID</th>
+            <th style="width: 70px">Código</th>
+            <th>Ubicación</th>
+            <th style="width: 120px">Tipo</th>
+            <th>Área</th>
+            <th>Empresa</th>
+            <th style="width: 70px">Nivel de tensión</th>
+            <th style="width: 70px">Capacidad (MVA)</th>
+            <th style="width: 70px">Capacidad (A)</th>
+            <th style="width: 140px">Factor limitante <br />final</th>
+            <th style="width: 70px">Actualizado por</th>
+            <th style="width: 70px">Actualizado el</th>
+            <th style="width: 50px">Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var item in Model.ListaTransformador)
+        {
+            <tr>
+                <td>
+                    <a href="JavaScript:consultarEquipo(@item.Equicodi);" title="Consultar"><img src="~/Content/Images/btn-open.png" alt="Consultar"></a>
+                    @if (ViewBag.PermisoEditar == "1")
+                    {
+                        <a href="Javascript:incluirProyecto(@item.Equicodi)" title="Modificar"><img src="~/Content/Images/btn-edit.png" alt="Modificar"></a>
+                    }
+                    <a href="JavaScript:historialCambio(@item.Equicodi);" title="Ver historial de actualizaciones"><img src="~/Content/Images/btn-properties.png" alt="Ver historial de actualizaciones"></a>
+
+                    @if (ViewBag.PermisoEliminar == "1")
+                    {
+                        <a href="JavaScript:confirmarExcluir(@item.Equicodi);" title="Excluir"><img src="~/Content/Images/btn-cancel.png" alt="Excluir"></a>
+                    }
+                </td>
+                <td>@item.Equicodi</td>
+                <td style="text-align: left;">@item.Codigo</td>
+                <td style="text-align: left;">@item.Ubicacion</td>
+                <td style="text-align: left;">@item.Tipo</td>
+                <td style="text-align: left;">@item.Area</td>
+                <td style="text-align: left;">@item.Empresa</td>
+
+                @if (item.CantidadFilas == 2)
+                {
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1TensionComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1TensionComent">
+                                        @if (string.IsNullOrEmpty(@item.D1Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1Tension
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1Tension
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2TensionComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2TensionComent">
+                                        @if (string.IsNullOrEmpty(@item.D2Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2Tension
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2Tension
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1CapacidadMvaComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1CapacidadMvaComent">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadMva
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadMva
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2CapacidadMvaComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2CapacidadMvaComent">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadMva
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadMva
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1CapacidadAComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1CapacidadAComent">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadA
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadA
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2CapacidadAComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2CapacidadAComent">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadA
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadA
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1FactorLimitanteFinalComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1FactorLimitanteFinalComent">
+                                        @if (string.IsNullOrEmpty(@item.D1FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1FactorLimitanteFinal
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1FactorLimitanteFinal
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2FactorLimitanteFinalComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2FactorLimitanteFinalComent">
+                                        @if (string.IsNullOrEmpty(@item.D2FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2FactorLimitanteFinal
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2FactorLimitanteFinal
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+                }
+                else if (item.CantidadFilas == 3)
+                {
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1TensionComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1TensionComent">
+                                        @if (string.IsNullOrEmpty(@item.D1Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1Tension
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1Tension
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2TensionComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2TensionComent">
+                                        @if (string.IsNullOrEmpty(@item.D2Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2Tension
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2Tension
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D3TensionComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px;" data-comment="@item.D3TensionComent">
+                                        @if (string.IsNullOrEmpty(@item.D3Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3Tension
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D3Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3Tension
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1CapacidadMvaComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1CapacidadMvaComent">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadMva
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadMva
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2CapacidadMvaComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2CapacidadMvaComent">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadMva
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadMva
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D3CapacidadMvaComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px;" data-comment="@item.D3CapacidadMvaComent">
+                                        @if (string.IsNullOrEmpty(@item.D3CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3CapacidadMva
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D3CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3CapacidadMva
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1CapacidadAComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1CapacidadAComent">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadA
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadA
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2CapacidadAComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2CapacidadAComent">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadA
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadA
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D3CapacidadAComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px;" data-comment="@item.D3CapacidadAComent">
+                                        @if (string.IsNullOrEmpty(@item.D3CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3CapacidadA
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D3CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3CapacidadA
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1FactorLimitanteFinalComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1FactorLimitanteFinalComent">
+                                        @if (string.IsNullOrEmpty(@item.D1FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1FactorLimitanteFinal
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1FactorLimitanteFinal
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2FactorLimitanteFinalComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2FactorLimitanteFinalComent">
+                                        @if (string.IsNullOrEmpty(@item.D2FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2FactorLimitanteFinal
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2FactorLimitanteFinal
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D3FactorLimitanteFinalComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px;" data-comment="@item.D3FactorLimitanteFinalComent">
+                                        @if (string.IsNullOrEmpty(@item.D3FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3FactorLimitanteFinal
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D3FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3FactorLimitanteFinal
+                                        }
+                                    </td>
+                                }
+                            </tr>
+
+                        </table>
+                    </td>
+                }
+                else
+                {
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1TensionComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1TensionComent">
+                                        @if (string.IsNullOrEmpty(@item.D1Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1Tension
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1Tension
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2TensionComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2TensionComent">
+                                        @if (string.IsNullOrEmpty(@item.D2Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2Tension
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2Tension
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D3TensionComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px;" data-comment="@item.D3TensionComent">
+                                        @if (string.IsNullOrEmpty(@item.D3Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3Tension
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D3Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3Tension
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D4TensionComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D4TensionComent">
+                                        @if (string.IsNullOrEmpty(@item.D4Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D4Tension
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D4Tension))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D4Tension
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1CapacidadMvaComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1CapacidadMvaComent">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadMva
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadMva
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2CapacidadMvaComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2CapacidadMvaComent">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadMva
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadMva
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D3CapacidadMvaComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px;" data-comment="@item.D3CapacidadMvaComent">
+                                        @if (string.IsNullOrEmpty(@item.D3CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3CapacidadMva
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D3CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3CapacidadMva
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D4CapacidadMvaComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D4CapacidadMvaComent">
+                                        @if (string.IsNullOrEmpty(@item.D4CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D4CapacidadMva
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D4CapacidadMva))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D4CapacidadMva
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1CapacidadAComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1CapacidadAComent">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadA
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1CapacidadA
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2CapacidadAComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2CapacidadAComent">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadA
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2CapacidadA
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D3CapacidadAComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px;" data-comment="@item.D3CapacidadAComent">
+                                        @if (string.IsNullOrEmpty(@item.D3CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3CapacidadA
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D3CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3CapacidadA
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D4CapacidadAComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D4CapacidadAComent">
+                                        @if (string.IsNullOrEmpty(@item.D4CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D4CapacidadA
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D4CapacidadA))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D4CapacidadA
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="text-align: right;">
+                        <table border="0">
+                            <tr>
+
+                                @if (!string.IsNullOrEmpty(@item.D1FactorLimitanteFinalComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; text-align: right; padding-right:6px;" data-comment="@item.D1FactorLimitanteFinalComent">
+                                        @if (string.IsNullOrEmpty(@item.D1FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1FactorLimitanteFinal
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D1FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D1FactorLimitanteFinal
+                                        }
+                                    </td>
+                                }
+
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D2FactorLimitanteFinalComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D2FactorLimitanteFinalComent">
+                                        @if (string.IsNullOrEmpty(@item.D2FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2FactorLimitanteFinal
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D2FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D2FactorLimitanteFinal
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D3FactorLimitanteFinalComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px;" data-comment="@item.D3FactorLimitanteFinalComent">
+                                        @if (string.IsNullOrEmpty(@item.D3FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3FactorLimitanteFinal
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D3FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D3FactorLimitanteFinal
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                            <tr>
+                                @if (!string.IsNullOrEmpty(@item.D4FactorLimitanteFinalComent))
+                                {
+                                    <td class="tooltip-celda" style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; " data-comment="@item.D4FactorLimitanteFinalComent">
+                                        @if (string.IsNullOrEmpty(@item.D4FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D4FactorLimitanteFinal
+                                        }
+                                        <div class="badge"></div>
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td style="border: none; border-top: 1px solid #dddddd; text-align: right; padding-right: 6px; ">
+                                        @if (string.IsNullOrEmpty(@item.D4FactorLimitanteFinal))
+                                        {
+                                            @: &nbsp;
+                                        }
+                                        else
+                                        {
+                                            @item.D4FactorLimitanteFinal
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        </table>
+                    </td>
+                }
+
+                <td style="text-align: left;">@item.ActualizadoPor</td>
+                <td style="text-align: left;">@item.ActualizadoEl</td>
+                <td style="text-align: left;">@item.Estado</td>
+
+            </tr>
+        }
+
+    </tbody>
+</table>

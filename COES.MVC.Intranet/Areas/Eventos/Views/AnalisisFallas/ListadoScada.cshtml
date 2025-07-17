@@ -1,0 +1,57 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.AnalisisFallasModel
+@{
+
+}
+<div id="mensajeScada" class="action-message">Por favor complete los datos</div>
+
+<div id="divScada">
+    @{ int cantScada = 1;}
+    @foreach (var canal in Model.listCanalesSp7)
+    {
+        <h3><b>@canal.Canalnomb</b></h3>
+        <div class="content-scroll" style="height:300px">
+            <table id="tablaScada" border="0" class="pretty tabla-adicional" cellspacing="0" style="margin-bottom: 5px;">
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Equipo</th>
+                        <th>Valor</th>
+                        <th>Seleccionar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int numRows = 0; }
+                    @foreach (var item in Model.listaTrCircularSp7GraficaFiltrada)
+                    {
+                        if (canal.Canalcodi == item.Canalcodi)
+                        {
+                            var idcbScada = "cb" + cantScada + "_" + numRows;
+                            var clScada = "chkScada" + cantScada;
+                            var _valor = @item.Canalcodi + "|" + @item.Fecha.ToString(COES.MVC.Intranet.Helper.Constantes.FormatoFechaFullMs) + "|" + @canal.Canalabrev + "|" + @item.Valor + "|" + @canal.Canalnomb;
+
+                            <tr>
+                                <td>@item.Fecha.ToString(COES.MVC.Intranet.Helper.Constantes.FormatoFechaFullMs)</td>
+                                <td>@canal.Canalabrev</td>
+                                <td>@item.Valor</td>
+                                <td>
+                                    <input type="checkbox" id="@idcbScada" class="@clScada" value="@_valor" onchange="CheckScada(this)">
+                                </td>
+                            </tr>
+                            { numRows++; }
+                        }
+
+                    }
+                    @{ cantScada++; }
+                    @if (numRows == 0)
+                    {
+                        <tr>
+                            <td colspan="4" style="text-align: center; font-weight: bold">SIN REGISTROS</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <input type="hidden" id="hfCanalScada" value="@canal.Canalnomb" />        
+    }
+</div>
+<input type="hidden" id="hfCantScada" value="@Model.listCanalesSp7.Count" />

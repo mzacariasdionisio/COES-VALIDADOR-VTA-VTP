@@ -1,0 +1,357 @@
+﻿using COES.Dominio.DTO.Sic;
+using COES.Framework.Base.Tools;
+using COES.Servicios.Aplicacion.IEOD;
+using COES.Servicios.Aplicacion.Intervenciones.Helper;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Web.Mvc;
+
+namespace COES.MVC.Intranet.Areas.Intervenciones.Models
+{
+    public class Intervencion
+    {
+        // -------------------------------------------------------------------------------------
+        // Comandos estandar para los permisos (Botonera)
+        // -------------------------------------------------------------------------------------
+        public bool AccionNuevo { get; set; }
+        public bool AccionEditar { get; set; }
+        public bool AccionEliminar { get; set; }
+        public bool AccionGrabar { get; set; }
+        public bool TienePermisoAdmin { get; set; }
+        public bool TienePermisoSPR { get; set; }
+        public bool TienePermisoDTI { get; set; }
+        public bool TienePermisoEjecManual { get; set; }
+        // -------------------------------------------------------------------------------------
+
+        // -------------------------------------------------------------------------------------
+        // Propiedades de Paginado
+        // -------------------------------------------------------------------------------------
+        public bool IndicadorPagina { get; set; }
+        public int NroPaginas { get; set; }
+        public int NroMostrar { get; set; }
+        public int NroPagina { get; set; }
+        public int NroRegistros { get; set; }
+        // -------------------------------------------------------------------------------------
+
+
+        // -------------------------------------------------------------------------------------
+        // Propiedades basicas del modelo de Intervenciones.
+        // -------------------------------------------------------------------------------------
+        public List<InIntervencionDTO> ListaIntervenciones { get; set; }
+        public List<InIntervencionDTO> ListaIntervencionesProgramadas { get; set; }
+        public List<InIntervencionDTO> ListaIntervencionesEjecutadas { get; set; }
+        public List<IndiceF1F2> ListaIndiceF1F2 { get; set; }
+        public InIntervencionDTO Entidad { get; set; }
+
+        public int IdIntervencion { get; set; }
+        public string Intercodis { get; set; }
+
+        // -------------------------------------------------------------------------------------   
+
+
+        // -------------------------------------------------------------------------------------
+        // Lista para combos.
+        // -------------------------------------------------------------------------------------
+        public List<EveEvenclaseDTO> ListaTiposProgramacion { get; set; }
+        public List<EveEvenclaseDTO> ListaTipProgramFiltro { get; set; }
+        public List<SiEmpresaDTO> ListaCboEmpresa { get; set; }
+        public List<EqAreaDTO> ListaCboUbicacion { get; set; }
+        public List<GenericoDTO> ListaCboEquipo { get; set; }
+        public List<EveTipoeventoDTO> ListaCboIntervencion { get; set; }
+        public List<InEstadoDTO> ListacboEstado { get; set; }
+        public List<string> ListadoActividad { get; set; }
+        public List<InClaseProgDTO> ListaClaseProgramacion { get; set; }
+        public List<EveSubcausaeventoDTO> ListaCausas { get; set; }
+        public List<EqFamiliaDTO> ListaFamilias { get; set; }
+
+        public List<SiLogDTO> ListaHistorial { get; set; }
+        public List<SiMensajeDTO> ListaMensajes { get; set; }
+        public int TipoMensaje { get; set; }
+        public int TotalMensaje { get; set; }
+        public int TotalMensajeNoEjecutado { get; set; }
+        public int TotalMensajeAlertaHo { get; set; }
+        public string Correo { get; set; }
+        public string LogoEmail { get; set; }
+
+        // -------------------------------------------------------------------------------------
+        // Consulta Cruzada.
+        // -------------------------------------------------------------------------------------
+        public List<HorasIndispo> ListadoHrasIndisponiblidad { get; set; }
+        // -------------------------------------------------------------------------------------
+
+        // -------------------------------------------------------------------------------------
+        // Propiedades relacionadas al modelo de Programaciones.
+        // -------------------------------------------------------------------------------------
+        public int IdProgramacion { get; set; }
+        public int IdTipoProgramacion { get; set; }
+        public string NombreProgramacion { get; set; }
+        public int EstadoProgramacion { get; set; }
+        public string EstadoProgramacionDesc { get; set; }
+        public string Evenclasedesc { get; set; }
+        public List<InProgramacionDTO> ListaProgramaciones { get; set; }
+        public InProgramacionDTO EntidadProgramacion { get; set; }
+
+        public string FechProgramacion { get; set; }
+        public string Resultado { get; set; }
+        public string StrMensaje { get; set; }
+        public string NombPrograDetallado { get; set; }
+        public string NombreArchivo { get; set; }
+        public string NombreArchivoTmp { get; set; }
+        // -------------------------------------------------------------------------------------
+
+        // -------------------------------------------------------------------------------------
+        // Variables para validar fechas
+        // -------------------------------------------------------------------------------------
+        public string Interfechafin { get; set; }
+        public string Interfechaini { get; set; }
+
+        public string FechaProceso { get; set; }
+
+        public string InterfechainiH { get; set; }
+        public string InterfechainiM { get; set; }
+        public string InterfechafinH { get; set; }
+        public string InterfechafinM { get; set; }
+
+        public DateTime? InterfechainiD { get; set; }
+        public DateTime? InterfechafinD { get; set; }
+
+        public string ProgrfechainiDesc { get; set; }
+        public string ProgrfechafinDesc { get; set; }
+
+        public string Progrfechaini { get; set; }
+        public string ProgrfechainiH { get; set; }
+        public string ProgrfechainiM { get; set; }
+        public string Progrfechafin { get; set; }
+        public string ProgrfechafinH { get; set; }
+        public string ProgrfechafinM { get; set; }
+        // -------------------------------------------------------------------------------------
+
+        public string Detalle { get; set; }
+
+        // -------------------------------------------------------------------------------------
+        // Almacenar los meses y años
+        // -------------------------------------------------------------------------------------
+        public IEnumerable<SelectListItem> ListaMes { get; set; }
+        public IEnumerable<SelectListItem> ListaAnio { get; set; }
+        // -------------------------------------------------------------------------------------
+
+        public string sIdsEmpresas { get; set; }
+
+        //Almacenar nombre archivo
+        public string FileName { get; set; }
+
+        //Almacenar lista Intervenciones correctas y con errores
+        public List<InIntervencionDTO> ListaIntervencionesCorrectas { get; set; }
+        public List<InIntervencionDTO> ListaIntervencionesErrores { get; set; }
+
+        //Parar habilitar o desabilitar los inputs
+        public bool EsDesabilitado { get; set; }
+
+        //Parar habilitar o desabilitar elementos del menu
+        public bool EsCerrado { get; set; }
+
+        //Parar indicar si está en plazo de reversión
+        public bool EsRevertido { get; set; }
+        //Parar indicar si permite la reversion
+        public bool PermiteReversion { get; set; }
+
+        //Parar indicar la fecha de plazo en reversión
+        public string FechaPlazo { get; set; }
+
+        //Propiedades para búsqueda de equipos
+        public List<EqFamiliaDTO> ListaFamilia { get; set; }
+        public int FiltroFamilia { get; set; }
+        public List<EqEquipoDTO> ListaEquipo { get; set; }
+        public List<AreaDTO> ListaArea { get; set; }
+
+        //propiedades para trabajar fechas
+        public string MesIni { get; set; }
+        public string MesFin { get; set; }
+
+        public string Anho { get; set; }
+        public string AnhoIni { get; set; }
+        public string AnhoFin { get; set; }
+        public string Mes { get; set; }
+        public string Semana { get; set; }
+        public string SemanaIni { get; set; }
+        public string SemanaFin { get; set; }
+        public string Dia { get; set; }
+        public string Fecha { get; set; }
+        public string FechaHoy { get; set; }
+        public int NroSemana { get; set; }
+        public string FechaInicio { get; set; }
+        public string FechaFin { get; set; }
+        public string TipoSemana { get; set; }
+        public List<FechaSemanas> ListaSemanas { get; set; }
+        public List<FechaSemanas> ListaSemanasIni { get; set; }
+        public List<FechaSemanas> ListaSemanasFin { get; set; }
+
+        //Validaciones con Aplicativos
+        public int FlagConfirmarValInter { get; set; }
+        public List<ResultadoValidacionAplicativo> ListaValidacionHorasOperacion { get; set; }
+        public List<ResultadoValidacionAplicativo> ListaValidacionScada { get; set; }
+        public List<ResultadoValidacionAplicativo> ListaValidacionEms { get; set; }
+        public List<ResultadoValidacionAplicativo> ListaValidacionIDCC { get; set; }
+        public List<ResultadoValidacionAplicativo> ListaValidacionPR21 { get; set; }
+        public List<ResultadoValidacionAplicativo> ListaValidacionMedidores { get; set; }
+
+        public string ULtimaAmpliacion { get; set; } //fecha de ultima ampliación
+        public string HoraEjecucion { get; set; }
+        public MeFormatoDTO FormatoEjecExtranet { get; set; }
+
+        //pr25
+        public bool ChkPr25 { get; set; } // S o N
+        public List<GenericoDTO> ListaTipoindispPr25 { get; set; }
+        public bool Esindisponilidadpr25 { get; set; }
+
+        //cruzadas
+        public IntervencionGridExcel GridExcel { get; internal set; }
+        public bool EsCruzadas { get; set; }
+        public bool TieneCeldaSelec { get; set; }
+
+        //Archivos
+        public bool TieneArchivos { get; set; }//flag si tiene almenos un archivo
+        public string PathPrincipal { get; set; }
+        public string PathAplicativo { get; set; }
+        public string PathSubcarpeta { get; set; }
+        public Parametro ParametroPlazo { get; set; }
+
+        // Firma Mensaje
+        public List<SiPersonaDTO> ListaEspecialista { get; set; }
+        public int IdEspecialista { get; set; }
+        public string CargoEspecialista { get; set; }
+        public string TelefonoEspecialista { get; set; }
+        public string Origen { get; set; }
+
+        //
+        public int CarpetaFiles { get; set; }
+
+        public List<InModificacion> ListaModificaciones { get; set; }
+    }
+
+    public class FechaSemanas
+    {
+        public int IdTipoInfo { get; set; }
+        public string NombreTipoInfo { get; set; }
+        public string FechaIniSem { get; set; }
+        public string FechaFinSem { get; set; }
+    }
+
+    public class IntervencionResultado
+    {
+        public string Resultado { get; set; }
+        public string Mensaje { get; set; }
+        public string Detalle { get; set; }
+        public string Reporte { get; set; }
+
+        public string NombreArchivo { get; set; }
+        public string NombreArchivoTmp { get; set; }
+
+        public int Progrcodi { get; set; }
+        public int IdTipoProgramacion { get; set; }
+        public bool EsCerrado { get; set; }
+        public bool EsRevertido { get; set; }
+
+        public List<IntervencionFila> ListaFilaWeb { get; set; }
+        public List<IntervencionFila> ListaEmpresasValidate { get; set; }
+
+        public int PintarAlerta { get; set; } //flag alertahtml
+        public bool TieneAlertaNoEjecutado { get; set; }
+        public bool TieneAlertaHoraOperacion { get; set; }
+        public bool TieneAlertaScada { get; set; }
+        public bool TieneAlertaEms { get; set; }
+        public bool TieneAlertaIDCC { get; set; }
+        public bool TieneAlertaPR21 { get; set; }
+        public bool TieneAlertaMedidores { get; set; }
+        public bool TieneAlertaEstadoPendiente { get; set; }
+
+        //para mensaje de alerta de creación o modificación por el agente
+        public int ListaIntervCount { get; set; }
+
+        public bool TieneArchivos { get; set; }//flag si tiene almenos un archivo
+
+        public string Asunto { get; set; }
+        public string Destinatario { get; set; }
+        public string CC { get; set; }
+
+        public List<InIntervencionDTO> ListaNotificaciones { get; set; }
+        public List<InIntervencionDTO> ListaExclusion { get; set; }
+
+        public InIntervencionDTO IntervencionImportada { get; set; }
+        public InIntervencionDTO IntervencionIncl { get; set; }
+        public InIntervencionDTO IntervencionExcl { get; set; }
+        public List<string> ListaMensaje { get; set; }
+        public List<string> ListaNombreArchivo { get; set; }
+    }
+
+    public class HorasIndispo
+    {
+        public int id { get; set; }
+        public string value { get; set; }
+    }
+
+    public class Parametro
+    {
+        //plazos
+        public int DiaPlazo { get; set; }
+        public int MinutoPlazo { get; set; }
+        public string FechaConsulta { get; set; }
+        public string UsuarioModificacion { get; set; }
+        public string FechaModificacion { get; set; }
+
+        //porcentajer similitud
+        public string ValorPorcentaje { get; set; }
+    }
+
+    public class InPlantillaCorreo
+    {
+        public List<SiPlantillacorreoDTO> ListadoPlantillasCorreo { get; set; }
+        public SiPlantillacorreoDTO PlantillaCorreo { get; set; }
+        public string LogoEmail { get; set; }
+
+        public bool AccionGrabar { get; set; }
+
+        public string Resultado { get; set; }
+        public string Mensaje { get; set; }
+        public string Detalle { get; set; }
+    }
+
+    public class IntervencionesReporte
+    {
+        public List<InReporteDTO> ListaReportes { get; set; }
+        public List<InSeccionDTO> ListaSecciones { get; set; }
+        public int Inrepcodi { get; set; }
+        public int NroTabs { get; set; }
+        public string Inrepnombre { get; set; }
+        public int IndicadorPersonalizado { get; set; }
+        public string[][] ListaVariables { get; set; }
+        public int Progrcodi { get; set; }
+        public string NombrePrograma { get; set; }
+    }
+
+    public class InPlantillaSustento
+    {
+        public List<InSustentopltDTO> ListadoPlantillas { get; set; }
+        public InSustentopltDTO PlantillaSustento { get; set; }
+
+        public InSustentopltItemDTO Requisito { get; set; }
+        public bool AccionGrabar { get; set; }
+
+        public string Resultado { get; set; }
+        public string Mensaje { get; set; }
+        public string Detalle { get; set; }
+    }
+
+    public class InGeneral
+    {
+        public bool EsValidoSesion { get; set; }
+        public bool EsValidoOpcion { get; set; }
+    }
+
+    public class InModificacion
+    {
+        public int Intercodi { get; set; }
+        public List<InIntervencionDTO> ListaIntervenciones { get; set; }
+    }
+}

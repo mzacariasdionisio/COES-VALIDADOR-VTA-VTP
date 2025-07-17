@@ -1,0 +1,228 @@
+﻿@model COES.MVC.Intranet.Areas.CompensacionRSF.Models.RecalculoModel
+@{
+    ViewBag.Title = "Form";
+    string sTitulo = ViewData["sTitulo"].ToString();
+    string sAccion = ViewData["sAccion"].ToString();
+    //var periodo = (IEnumerable<SelectListItem>)TempData["Pericodigo"];
+    string sSelected = "";
+}
+<link href="~/Areas/CompensacionRSF/Content/Css/transferencia.css" rel="stylesheet" />
+<script src="~/Areas/CompensacionRSF/Content/Scripts/Recalculo.js"></script>
+<script src="~/Areas/CompensacionRSF/Content/Scripts/load.js"></script>
+
+@using (Html.BeginForm("Save", "recalculo", FormMethod.Post, new { id = "frmFormulario", @class = "cmxform" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="ast">
+        <div class="form-title">
+            <div class="content-titulo">@sTitulo</div>
+            <div class="content-botonera">
+                @if (Model.bGrabar)
+                {
+                    <input type="submit" value="@sAccion" alt="@sAccion" title="@sAccion" />
+                }
+                <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index", "recalculo")'" alt="Retornar" title="Retornar" />
+            </div>
+        </div>
+        <div style="padding:20px; width:800px;">
+            @Html.HiddenFor(model => model.EntidadRecalculo.Vcrecacodi)
+            @*@if (Model.EntidadVcrRecalculo.Vcrecacodi > 0)
+                {
+                    <div id="mensaje" class="action-message" style="margin:0; margin-bottom:10px">@Model.sError</div>
+                }*@
+            @if (Model.sError != "" && Model.sError != null)
+            {
+                <div id="mensaje" class="action-message" style="margin:0; margin-bottom:10px">@Model.sError</div>
+
+            }
+        <table cellspacing="2" cellpadding="5">
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Pericodi, "Periodo") (*)</div></td>
+                @if (Model.EntidadRecalculo.Vcrecacodi > 0)
+                {@Html.HiddenFor(model => model.EntidadRecalculo.Pericodi)
+                <td>
+                    <div class="editor-field">
+                        <select id="Pericod" name="Perinom" disabled>
+                            <option value="0">--Seleccione--</option>
+                            @foreach (var item in Model.ListaPeriodos)
+                            {
+                                sSelected = "";
+                                if (@item.PeriCodi == Model.EntidadRecalculo.Pericodi)
+                                { sSelected = "selected"; }
+                                <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                            }
+                        </select>
+                    </div>
+                </td>
+            }
+            else
+            {
+                <td>
+                    <div class="editor-field">
+                        <select id="EntidadRecalculo_Pericodi" name="EntidadRecalculo.Pericodi" class="cbo">
+                            <option value="0">--Seleccione--</option>
+                            @foreach (var item in Model.ListaPeriodos)
+                            {
+                                sSelected = "";
+                                if (@item.PeriCodi == Model.EntidadRecalculo.Pericodi)
+                                { sSelected = "selected"; }
+                                <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                            }
+                        </select>
+                    </div>
+                </td>
+            }
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Vcrecanombre, "Nombre Revision") (*)</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadRecalculo.Vcrecanombre, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Vcrecakcalidad, "Constante de Calidad Kc") (*)</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadRecalculo.Vcrecakcalidad, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Vcrecapaosinergmin, "Precio Máximo asignado por Osinergmin(PAO)") (*)</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadRecalculo.Vcrecapaosinergmin, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Vcrecaresaprimsig, "Reserva primaria asignada")</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadRecalculo.Vcrecaresaprimsig, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Vcrecacostoprns, "Costo de oportunidad de la RNS S/ /MW-día")</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadRecalculo.Vcrecacostoprns, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Vcrecafactcumpl, "Factor de cumplimiento")</div></td>
+                <td><div class="editor-field">@Html.TextBoxFor(model => model.EntidadRecalculo.Vcrecafactcumpl, new { size = 50, maxLength = 50 })</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">Costo Marginal VEA (*)</div></td>
+                <td>
+                    <div class="editor-field">
+                        <select id="EntidadRecalculo_Recacodi" name="EntidadRecalculo.Recacodi" style="width:220px;">
+                            @foreach (var item in Model.ListaTrnRecalculo)
+                            {
+                                sSelected = "";
+                                if (@item.RecaCodi == Model.EntidadRecalculo.Recacodi)
+                                { sSelected = "selected"; }
+                                <option value="@item.RecaCodi" @sSelected>@item.RecaNombre</option>
+                            }
+                        </select>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">Déficit, Superávit y Reserva No Suministrada (*)</div></td>
+                <td>
+                    <div class="editor-field">
+                        <select id="EntidadRecalculo_Vcrdsrcodi" name="EntidadRecalculo.Vcrdsrcodi" style="width:220px;">
+                            @foreach (var item in Model.ListaVcrSuDeRns)
+                            {
+                                sSelected = "";
+                                if (@item.Vcrdsrcodi == Model.EntidadRecalculo.Vcrdsrcodi)
+                                { sSelected = "selected"; }
+                                <option value="@item.Vcrdsrcodi" @sSelected>@item.Vcrdsrnombre</option>
+                            }
+                        </select>
+                    </div>
+                </td>
+
+            </tr>
+            <tr>
+                <td><div class="editor-label">Incumplimiento PR-21 (INC) (*)</div></td>
+                <td>
+                    <div class="editor-field">
+                        <select id="EntidadRecalculo_Vcrinccodi" name="EntidadRecalculo.Vcrinccodi" style="width:220px;">
+                            @foreach (var item in Model.ListaIncumplimiento)
+                            {
+                                sSelected = "";
+                                if (@item.Vcrinccodi == Model.EntidadRecalculo.Vcrinccodi)
+                                { sSelected = "selected"; }
+                                <option value="@item.Vcrinccodi" @sSelected>@item.Vcrincnombre</option>
+                            }
+                        </select>
+                    </div>
+                </td>
+
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Vcrecacomentario, "Comentario de la Version")</div></td>
+                <td><div class="editor-field">@Html.TextAreaFor(model => model.EntidadRecalculo.Vcrecacomentario, new { cols = 80, @rows = 2, style = "background-color: #f8f8f8; border: 1px solid #cbd3cf; border-radius: 5px; color: #4876aa; font: 12px arial,sans-serif; text-indent: 8px; width: 300px; height: 40px;" })</div></td>
+            </tr>
+            <tr>
+                <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Vcrecaestado, "Estado") (*)</div></td>
+                <td>
+                    <div class="editor-field">
+                        <label>@Html.RadioButtonFor(model => model.EntidadRecalculo.Vcrecaestado, "Abierto") Abierto</label>
+                        <label>@Html.RadioButtonFor(model => model.EntidadRecalculo.Vcrecaestado, "Preliminar") Preliminar</label>
+                        <label>@Html.RadioButtonFor(model => model.EntidadRecalculo.Vcrecaestado, "Cerrado") Cerrado</label>
+                    </div>
+                </td>
+            </tr>
+            @if (Model.EntidadRecalculo.Vcrecacodi > 0)
+            {
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Recacodi, "Recalculo VEA")</div></td>
+                    <td>
+                        <div class="editor-field">
+                            <select id="EntidadRecalculo_Recacodi" name="EntidadRecalculo.Recacodi">
+                                <option value="0">--Seleccione--</option>
+                                @foreach (var item in Model.ListaTrnRecalculo)
+                                {
+                                    sSelected = "";
+                                    if (@item.RecaCodi == Model.EntidadRecalculo.Recacodi)
+                                    { sSelected = "selected"; }
+                                    <option value="@item.RecaCodi" @sSelected>@item.RecaNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.EntidadRecalculo.Vcrecacodidestino, "Incluir en el periodo")</div></td>
+                    <td>
+                        <div class="editor-field">
+                            <select id="Entidad_Pericodidestino" name="Entidad.Pericodidestino">
+                                <option value="0">--Seleccione--</option>
+                                @foreach (var item in Model.ListaPeriodos)
+                                {
+                                    sSelected = "";
+                                    if (@item.PeriCodi == Model.EntidadRecalculo.Vcrecacodidestino)
+                                    { sSelected = "selected"; }
+                                    <option value="@item.PeriCodi" @sSelected>@item.PeriNombre</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+            }
+            <tr>
+                <td style="width:150px;">&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr><td colspan="2">Nota(*): Información obligatoria</td></tr>
+        </table>
+        </div>
+
+    </div>
+}
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+<script>
+    $("#frmFormulario").validate({
+        rules: {
+            "EntidadRecalculo.Vcrecanombre": {
+                required: true
+            },
+            "EntidadRecalculo.Vcrecakcalidad": {
+                required: true,
+                number: true
+            },
+            "EntidadRecalculo.Vcrecapaosinergmin": {
+                required: true,
+                number: true
+            }
+        }
+    });
+</script>

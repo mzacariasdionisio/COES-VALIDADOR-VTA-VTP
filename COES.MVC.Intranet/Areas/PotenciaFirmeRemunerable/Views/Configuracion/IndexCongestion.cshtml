@@ -1,0 +1,323 @@
+﻿@model COES.MVC.Intranet.Areas.PotenciaFirmeRemunerable.Models.PotenciaFirmeRemunerableModel
+@{
+    ViewBag.Title = "Congestión";
+}
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+@if (Model.UsarLayoutModulo)
+{
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+else
+{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+<link href="~/Areas/PotenciaFirmeRemunerable/Content/Css/css.css?v=1.6" rel="stylesheet" />
+<script src="~/Areas/PotenciaFirmeRemunerable/Content/Scripts/index_entidad.js?v1.14"></script>
+<script src="~/Areas/PotenciaFirmeRemunerable/Content/Scripts/index_congestion.js?v1.16"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Congestión</div>
+
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div id="">
+
+        <table role="presentation">
+            <tr>
+                <td>
+                    <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+                        <table class="content-tabla-search" style="width:auto" role="presentation">
+                            <tr>
+                                <td style="vertical-align: middle;">Periodo:</td>
+                                <td style="width: 246px;">
+                                    <select id="cbAnioCongestion" style="width: 57px;">
+                                        @foreach (var item in Model.ListaAnio)
+                                        {
+                                            var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                                            <option value="@item.Entero1" @(selected)>@item.String1</option>
+                                        }
+                                    </select>
+                                    <select id="cbPeriodoCongestion" style="width: 120px;">
+                                        @foreach (var item in Model.ListaPeriodo)
+                                        {
+                                            var selected = Model.IdPeriodo == item.Pfrpercodi ? "selected" : "";
+                                            <option value="@item.Pfrpercodi" @(selected)>@item.Pfrpernombre</option>
+                                        }
+                                    </select>
+                                </td>
+
+                                <td class="espacio-60"> </td>
+
+                                <td style="vertical-align: middle;">Estado:</td>
+                                <td>
+                                    <select id="cbEstadoCongestion" style="width:250px">
+                                        <option value="-1">TODOS</option>
+                                        <option value="0">BAJA</option>
+                                        <option value="1">ACTIVO</option>
+
+                                    </select>
+                                </td>
+
+                                <td class="espacio-1000"> </td>
+
+                                <td>
+                                    @if (Model.TienePermisoNuevo)
+                                    {
+                                        <div>
+                                            <input type="button" id="btnNuevaCongestion" value="Nuevo" />
+                                        </div>
+                                    }
+
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="content-tabla" id="excelwebCongestion" style="padding-top: 10px; width: 1342px;">
+            <div class="table-list" id="listadoDeCongestiones">
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- POPUP NUEVA CONGESTION -->
+<div id="popupNuevaCongestion" class="popup-class-1 general-popup" style="width: 400px; ">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Nueva Congestión</span></div>
+    <div class="panel-container">
+
+        <div id="" style="margin-top: 10px;"></div>
+        <form id="frmNuevaCongestion">
+            <table id="" style="margin-top: 10px; padding-left: 60px;">
+
+                <tr id="bloque_add_congestion_periodo">
+                    <td class="tbform-label label_add_congestion">Vigencia:</td>
+                    <td><input type="text" id="new-congestion-periodo" name="Pfrentvigenciaini" value="@Model.PfrPeriodo.FechaIni.ToString("dd-MM-yyyy")" required style="width:95px" /></td>
+                    <td id="">
+                        <input type="hidden" id="hfListadoPeriodos" value="@Model.ListadoPeriodosFechasInicio" />
+
+                        <input type="hidden" id="hf_new-equipo-vigencia-congestion" value="@Model.PfrPeriodo.FechaIni.ToString("dd-MM-yyyy")" />
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_id">
+                    <td class="tbform-label label_add_congestion">Id:</td>
+                    <td id="">
+                        <input type="text" name="Pfrentid" id="new-congestion-id" value="" style="width: 120px" />
+
+                        <input type="hidden" id="hfCodDisponibleCongestion" value="@Model.CodigoDisponibleCongestion" />
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_enlace">
+                    <td class="tbform-label label_add_congestion">Enlace:</td>
+                    <td>
+                        <input type="text" name="Pfrentnomb" id="" value="" style="width: 120px" />
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_pmax">
+                    <td class="tbform-label label_add_congestion">PMáx:</td>
+                    <td>
+                        <input type="text" name="Pfrcgtpotenciamax" id="" value="" style="width: 120px" />
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_pmin">
+                    <td class="tbform-label label_add_congestion">PMín:</td>
+                    <td>
+                        <input type="text" name="Pfrcgtpotenciamin" id="" value="" style="width: 120px" />
+                    </td>
+                </tr>
+
+
+                <tr id="bloque_add_congestion_linea1">
+                    <td class="tbform-label label_add_congestion">Línea 1:</td>
+                    <td>
+                        <select id="cbLinea1" name="Pfrcgtidlinea1" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea2">
+                    <td class="tbform-label label_add_congestion">Línea 2:</td>
+                    <td>
+                        <select id="cbLinea2" name="Pfrcgtidlinea2" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea3">
+                    <td class="tbform-label label_add_congestion">Línea 3:</td>
+                    <td>
+                        <select id="cbLinea3" name="Pfrcgtidlinea3" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea4">
+                    <td class="tbform-label label_add_congestion">Línea 4:</td>
+                    <td>
+                        <select id="cbLinea4" name="Pfrcgtidlinea4" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea5">
+                    <td class="tbform-label label_add_congestion">Línea 5:</td>
+                    <td>
+                        <select id="cbLinea5" name="Pfrcgtidlinea5" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea6">
+                    <td class="tbform-label label_add_congestion">Línea 6:</td>
+                    <td>
+                        <select id="cbLinea6" name="Pfrcgtidlinea6" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea7">
+                    <td class="tbform-label label_add_congestion">Línea 7:</td>
+                    <td>
+                        <select id="cbLinea7" name="Pfrcgtidlinea7" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea8">
+                    <td class="tbform-label label_add_congestion">Línea 8:</td>
+                    <td>
+                        <select id="cbLinea8" name="Pfrcgtidlinea8" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea9">
+                    <td class="tbform-label label_add_congestion">Línea 9:</td>
+                    <td>
+                        <select id="cbLinea9" name="Pfrcgtidlinea9" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+                <tr id="bloque_add_congestion_linea10">
+                    <td class="tbform-label label_add_congestion">Línea 10:</td>
+                    <td>
+                        <select id="cbLinea10" name="Pfrcgtidlinea10" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea11">
+                    <td class="tbform-label label_add_congestion">Línea 11:</td>
+                    <td>
+                        <select id="cbLinea11" name="Pfrcgtidlinea11" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr id="bloque_add_congestion_linea12">
+                    <td class="tbform-label label_add_congestion">Línea 12:</td>
+                    <td>
+                        <select id="cbLinea12" name="Pfrcgtidlinea12" style="width: 130px;">
+                            <option value="">Seleccione Línea</option>
+                            @foreach (var item in Model.ListaLineas)
+                            {
+                                <option value="@item.Pfrentid">@item.Pfrentid</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" style="text-align: center">
+                        <input type="submit" id="" value="Guardar" style="margin-top: 15px;">
+                        <input type="button" id="" value="Cancelar" onclick="cerrarPopup('#popupNuevaCongestion')">
+
+                    </td>
+                </tr>
+
+            </table>
+        </form>
+    </div>
+
+</div>
+
+
+@Html.Partial("_PopupPropiedad")

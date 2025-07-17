@@ -1,0 +1,306 @@
+﻿@model COES.MVC.Publico.Areas.Medidores.Models.RankingModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+
+}
+<script src="~/Content/Scripts/highcharts.js"></script>
+<script src="~/Areas/Medidores/Content/Scripts/ranking.js?v=1.0"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/jquery.format.js"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/Medidores/Content/Css/medidores.css" rel="stylesheet" />
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+@*<div class="form-title" style="display:none">
+    <div class="content-titulo">Ranking de la Demanda de Potencia</div>
+    <div class="content-botonera">
+
+    </div>
+</div>*@
+
+<script>
+
+    $(function () {
+    SelecionarTab("coes-tab-content-item-1");
+    });
+
+    function switchToTab(tab) {
+        debugger;
+        if (tab == "coes-tab-content-item-1") {
+            SelecionarTab("coes-tab-content-item-1");
+        }
+
+        if (tab == "coes-tab-content-item-2") {
+            SelecionarTab("coes-tab-content-item-2");
+        }
+    };
+
+
+    SelecionarTab = function (NroTab) {
+        if (NroTab === 'coes-tab-content-item-1') {
+            $('#btnTabOrd').removeClass('coes-tab--active');
+            $('#btnTabMD').addClass('coes-tab--active');
+
+            $("#coes-tab-content-item-2").css("display", "none");
+            $("#coes-tab-content-item-1").css("display", "contents");
+        }
+        if (NroTab === 'coes-tab-content-item-2') {
+            $('#btnTabMD').removeClass('coes-tab--active');
+            $('#btnTabOrd').addClass('coes-tab--active');
+
+            $("#coes-tab-content-item-1").css("display", "none");
+            $("#coes-tab-content-item-2").css("display", "contents");
+        }
+    }
+</script>
+
+<style>
+    td {
+        vertical-align: top !important;
+    }
+</style>
+
+<div class="col col-md-12 mb-md-4">
+    <div class="coes-box mb-2" style="overflow: inherit;">
+        <div class="coes-box--header coes-box--header--center-aligned">
+            <h3 class="coes-box--title">Ranking de la Demanda de Potencia</h3>
+        </div>
+        <div class="coes-box--content container">
+            <div class="coes-filters d-flex ">
+                <form action="" class="w-100">
+                    <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap ps-3">
+
+                        <div class="coes-form-item" style="margin-right: 15px;">
+                            <label class="d-block" for="">Mes Año:</label>
+                            <input type="month" class="coes-form-item--date control-month" id="FechaConsulta" name="FechaConsulta" value="@Model.FechaConsulta" />
+                        </div>
+                      
+
+                        <div class="coes-form-item" style="margin-right: 15px;">
+                            <label class="d-block" for="">Tipo de Empresa:</label>
+                            <select id="cbTipoEmpresa" multiple="multiple">
+                                @foreach (var item in Model.ListaTipoEmpresas)
+                                {
+                                    <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                                }
+                            </select>
+                            <input type="hidden" id="hfTipoEmpresa" />
+                        </div>
+                       
+
+                        <div class="coes-form-item" style="margin-right: 15px;">
+                            <label class="d-block" for="">Empresa:</label>
+                            <div id="empresas"></div>
+                            <input type="hidden" id="hfEmpresa" />
+                        </div>
+                      
+
+
+                    </div>
+                    <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap ps-3">
+                        <div class="coes-form-item" style="margin-right: 15px;">
+                            <label class="d-block" for="">Tipo de Generación:</label>
+                            <select id="cbTipoGeneracion" multiple="multiple">
+                                @foreach (var item in Model.ListaTipoGeneracion)
+                                {
+                                    <option value="@item.Tgenercodi">@item.Tgenernomb</option>
+                                }
+                            </select>
+                            <input type="hidden" id="hfTipoGeneracion" />
+                        </div>
+                        <div class="coes-form-item" style="margin-right: 15px;">
+                            <label class="d-block" for="">Central Integrante:</label>
+                            <select id="cbCentral">
+                                <option value="0">TODOS</option>
+                                <option value="1" selected="selected">COES</option>
+                                <option value="10">NO COES</option>
+                                <option value="3">GENERACION RER</option>
+                            </select>
+                        </div>
+                        <div class="coes-form-item" style="margin-right: 15px;">
+                            <input type="button" id="btnConsultar" class="coes-form-item--submit" value="Consultar" />
+                        </div>
+
+                        <div class="coes-form-item" style="margin-right: 15px;">
+                            <input type="button" id="btnExportar" class="coes-form-item--submit" value="Exportar" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="home-txt" style="float:left; margin-bottom:20px; font-size:10px; line-height:17px; text-align: left">
+            CONFORME A LOS SIGUIENTES PROCEDIMIENTOS TÉCNICOS DEL COES:<br />
+            * <strong>PR-N° 30:</strong> VALORIZACIÓN DE LAS TRANSFERENCIAS DE POTENCIA Y COMPENSACIONES AL SISTEMA PRINCIPAL Y SISTEMA GARANTIZADO DE TRANSMISIÓN (Vigente desde el 01 de junio de 2015)<br />
+            * <strong>PR-N° 43:</strong> INTERCAMBIOS INTERNACIONALES DE ELECTRICIDAD EN EL MARCO DE LA DECISIÓN 757 DE LA CAN<br />
+            @foreach (var reg in Model.ListaNormativa)
+            {
+                <strong>* @reg.Nombre</strong>@reg.Descripcion<br />
+            }
+        </div>
+        <div style="clear:both"></div>
+        <div id="mensajeGeneral"></div>
+        @*<div class="search-content" style="margin:0">
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td>Mes Año:</td>
+                    <td><input type="text" id="FechaConsulta" name="FechaConsulta" value="@Model.FechaConsulta" style="width:120px" /></td>
+                    <td>Tipo de Empresa:</td>
+                    <td>
+                        <select id="cbTipoEmpresa" multiple="multiple">
+                            @foreach (var item in Model.ListaTipoEmpresas)
+                            {
+                                <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                            }
+                        </select>
+                        <input type="hidden" id="hfTipoEmpresa" />
+                    </td>
+                    <td>Empresa:</td>
+                    <td>
+                        <div id="empresas"></div>
+                        <input type="hidden" id="hfEmpresa" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Tipo de Generación:</td>
+                    <td>
+                        <select id="cbTipoGeneracion" multiple="multiple">
+                            @foreach (var item in Model.ListaTipoGeneracion)
+                            {
+                                <option value="@item.Tgenercodi">@item.Tgenernomb</option>
+                            }
+                        </select>
+                        <input type="hidden" id="hfTipoGeneracion" />
+                    </td>
+                    <td>Central Integrante:</td>
+                    <td>
+                        <select id="cbCentral" style="width:142px">
+                            <option value="0">TODOS</option>
+                            <option value="1" selected="selected">COES</option>
+                            <option value="10">NO COES</option>
+                            <option value="3">GENERACION RER</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="button" value="Consultar" id="btnConsultar" style="margin-left:0" />
+
+                    </td>
+                    <td><input type="button" id="btnExportar" value="Exportar" /></td>
+                </tr>
+            </table>
+        </div>*@
+
+        <div style="clear:both; height:10px"></div>
+        <input type="hidden" id="hfNroPagina" name="NroPagina" value="1" />
+                <div class="col col-md-12 mb-md-4">
+                    <div class="coes-box mb-3">
+                        <div class="coes-tabs directory-form--container">
+                            @*<div class="portal-info-item">
+                <a href="generacion">Generación</a>
+            </div>
+            <div class="portal-info-item active">
+                <a href="demanda">Demanda</a>
+            </div>*@
+                            <nav class="coes-tabs--navigation">
+                                <button class="coes-tab coes-tab--active" data-tab-target="item-1" id="btnTabMD" onclick="switchToTab('coes-tab-content-item-1');">
+                                    MD Mensual
+                                </button>
+                                <button class="coes-tab" data-tab-target="item-2" id="btnTabOrd" onclick="switchToTab('coes-tab-content-item-2');">
+                                    Ordenamiento MD
+                                </button>
+                            </nav>
+
+
+                            <div class="coes-tab--content" id="coes-tab-content-item-1">
+                                <div class="container">
+                                    <div class="row">
+                                        <h2 class="heading-5 mb-4 mt-4">Máxima Demanda Mensual</h2>
+                                        <div id="divConsulta">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div><!-- /coes-tab-content- 1-->
+
+
+                                <div class="coes-tab--content" id="coes-tab-content-item-2">
+                                    <div class="container">
+                                        <div class="row">
+                                            <h2 class="heading-5 mb-4 mt-4">Ordenamiento MD</h2>
+
+                                            <div class="reporte-resumen" style="margin-bottom:0px">
+                                                <table class="tabla-icono table table-hover" cellpadding="0" cellspacing="0">
+                                                    <tr>
+                                                        <td class="reporte-resumen-label">Produccción de Energía (MWh)</td>
+                                                        <td><span id="produccionEnergia"></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="reporte-resumen-label">Factor de Carga</td>
+                                                        <td><span id="factorCarga"></span></td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+
+                                            <table class="mt-3 mb-4">
+                                                <tr>
+                                                    <td valign="top">
+                                                        <div class="content-tabla">
+                                                            <div style="width:400px">
+                                                                <div class="paginado-ordenamiento" style="width:auto;">
+                                                                    <ul>
+                                                                        <li><a href="JavaScript:pintarPaginado(1);" class="page-item" id="page-item1">1</a></li>
+                                                                        <li><a href="JavaScript:pintarPaginado(2);" class="page-item" id="page-item2">2</a></li>
+                                                                        <li><a href="JavaScript:pintarPaginado(3);" class="page-item" id="page-item3">3</a></li>
+                                                                        <li><a href="JavaScript:pintarPaginado(4);" class="page-item" id="page-item4">4</a></li>
+                                                                        <li><a href="JavaScript:pintarPaginado(5);" class="page-item" id="page-item5">5</a></li>
+                                                                        <li><a href="JavaScript:pintarPaginado(6);" class="page-item" id="page-item6">6</a></li>
+                                                                        <li><a href="JavaScript:pintarPaginado(7);" class="page-item" id="page-item7">7</a></li>
+                                                                        <li><a href="JavaScript:pintarPaginado(8);" class="page-item" id="page-item8">8</a></li>
+                                                                        <li><a href="JavaScript:pintarPaginado(9);" class="page-item" id="page-item9">9</a></li>
+                                                                        <li><a href="JavaScript:pintarPaginado(10);" class="page-item" id="page-item10">10</a></li>
+                                                                    </ul>
+                                                                </div>
+                                                                <table class="tabla-formulario" style="width:100%" id="tablaOrdenamiento">
+                                                                    <thead>
+                                                                        <tr style="font-size: 11px; color: #212529; background-color: var(--bs-table-bg);">
+                                                                            <th> N° de <br /> Registos/MES</th>
+                                                                            <th> Fecha/Hora</th>
+                                                                            <th> Total <br /> (MW)</th>
+                                                                            <th> Importación <br /> (MW)</th>
+                                                                            <th> Exportación <br /> (MW)</th>
+                                                                            <th> Máxima <br /> Demanda <br /> (MW)</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody></tbody>
+                                                                </table>
+                                                                <div style="clear:both"></div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td style="width:5px"></td>
+                                                    <td valign="top">
+                                                        <div id="grafico" style="width:555px; height: 480px; margin: 0 auto"></div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+
+                                            </div>
+                                        </div><!-- /.container -->
+                                    </div><!--/.coes-tab-content-2 -->
+                            </div>
+
+                    </div>
+                </div>
+     
+    </div>
+</div>
+
+                    <input type="hidden" id="hfFechaConsulta" value="@Model.FechaConsulta" />
+                    <input type="hidden" id="hfFechaActual" value="@Model.FechaActual" />

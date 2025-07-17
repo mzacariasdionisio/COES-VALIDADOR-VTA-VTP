@@ -1,0 +1,282 @@
+﻿@model COES.MVC.Extranet.Areas.Medidores.Models.ReporteConsolidadoEnvioModel
+@using System.Globalization
+
+@if (Model.IdEnvio > 0 || Model.ListaConsolidado.Count > 0)
+{
+    <table class="table table-condensed table-striped">
+        <tbody>
+            <tr>
+                <th width="20%" style="text-align: left;">Responsable de Envío:</th>
+                <td>@Model.UsuarioNombre</td>
+            </tr>
+            <tr>
+                <th width="20%" style="text-align: left;">Cargo:</th>
+                <td>@Model.UsuarioCargo</td>
+            </tr>
+            <tr>
+                <th width="20%" style="text-align: left;">Correo:</th>
+                <td>@Model.UsuarioCorreo</td>
+            </tr>
+            <tr>
+                <th width="20%" style="text-align: left;">Teléfono:</th>
+                <td>@Model.UsuarioTelefono</td>
+            </tr>
+            <tr>
+                <th width="20%" style="text-align: left;">Fecha de envío:</th>
+                <td>@Model.FechaEnvio</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="table" style="width: 100%; margin-top: 10px">
+        <thead class="text-info" style="background-color:#5C9CCC;color:white">
+            <tr>
+                <th width="250" rowspan="2" valign="top">
+                    <label class="control-label">Central </label>
+                </th>
+
+                <th align="CENTER" width="180" rowspan="2" valign="top">
+                    <label class="control-label">Unidad </label>
+                </th>
+                <th align="CENTER" width="100" colspan="4" valign="top">
+                    <label class="control-label">Producción de Energía (MWh)</label>
+                </th>
+                <th align="CENTER" width="150" rowspan="2" valign="top">
+                    <label class="control-label">Servicios Auxliares (MWh)</label>
+                </th>
+            </tr>
+            <tr>
+                <th align="CENTER" width="150">
+                    <label class="control-label">Hidroeléctrica</label>
+                </th>
+                <th align="CENTER" width="150">
+                    <label class="control-label">Termoeléctrica</label>
+                </th>
+                <th align="CENTER" width="150">
+                    <label class="control-label">Solar</label>
+                </th>
+                <th align="CENTER" width="150">
+                    <label class="control-label">Eólica</label>
+                </th>
+            </tr>
+        </thead>
+        <tbody style="background-color: #ffffff;">
+            @{ var i = 0;
+             var subTotalH = "";
+             var subTotalT = "";
+             var subTotalE = "";
+             var subTotalS = "";
+             var subTotalSA = "";
+             var totalH = "";
+             var totalT = "";
+             var totalE = "";
+             var totalS = "";
+             var totalSA = 0.0M;
+             decimal totalEmpresaH = 0.0M;
+             decimal totalEmpresaT = 0.0M;
+             decimal totalEmpresaE = 0.0M;
+             decimal totalEmpresaS = 0.0M;
+             decimal totalEmpresaSA = 0.0M;
+             decimal totalEmpresaSAH = 0.0M;
+             decimal totalEmpresaSAT = 0.0M;
+             decimal totalEmpresaSAE = 0.0M;
+             decimal totalEmpresaSAS = 0.0M;
+
+             int NroGrupos = 0;
+             NumberFormatInfo nfi = new CultureInfo("en-US", false).NumberFormat;
+             nfi.NumberGroupSeparator = " ";
+             nfi.NumberDecimalDigits = 3;
+             nfi.NumberDecimalSeparator = ",";
+
+             foreach (var item in Model.ListaConsolidado)
+             {
+
+                 i = 0;
+                 subTotalH = "";
+                 subTotalT = "";
+                 subTotalE = "";
+                 subTotalS = "";
+                 totalH = "";
+                 totalT = "";
+                 totalE = "";
+                 totalS = "";
+                 totalSA = 0.0M;
+                 NroGrupos = item.Ngrupo;
+
+                 foreach (var subitem in item.listaGrupo)
+                 {
+                     switch (subitem.tipoG)
+                     {
+                         case 1: subTotalH = subitem.SubTotal.Value.ToString("N", nfi);
+                             totalH = item.total.ToString("N", nfi);        /// Solo basta con el primer grupo para totalizar el tipo de Generacion
+                             totalEmpresaH += subitem.SubTotal.Value;
+                             break;
+                         case 2: subTotalT = subitem.SubTotal.Value.ToString("N", nfi);
+                             totalT = item.total.ToString("N", nfi);
+                             totalEmpresaT += subitem.SubTotal.Value;
+                             break;
+                         case 4: subTotalE = subitem.SubTotal.Value.ToString("N", nfi);
+                             totalE = item.total.ToString("N", nfi);
+                             totalEmpresaE += subitem.SubTotal.Value;
+                             break;
+                         case 3:
+                             subTotalS = subitem.SubTotal.Value.ToString("N", nfi);
+                             totalS = item.total.ToString("N", nfi);
+                             totalEmpresaS += subitem.SubTotal.Value;
+
+                             break;
+                         case 20:
+                             subTotalSA = subitem.SubTotal.Value.ToString("N", nfi);
+                             totalSA += subitem.SubTotal.Value;
+                             totalEmpresaSA += subitem.SubTotal.Value;
+                             totalEmpresaSAH += subitem.SubTotal.Value;
+                             break;
+                         case 21:
+                             subTotalSA = subitem.SubTotal.Value.ToString("N", nfi);
+                             totalSA += subitem.SubTotal.Value;
+                             totalEmpresaSA += subitem.SubTotal.Value;
+                             totalEmpresaSAT += subitem.SubTotal.Value;
+                             break;
+                         case 22:
+                             subTotalSA = subitem.SubTotal.Value.ToString("N", nfi);
+                             totalSA += subitem.SubTotal.Value;
+                             totalEmpresaSA += subitem.SubTotal.Value;
+                             totalEmpresaSAS += subitem.SubTotal.Value;
+                             break;
+                         case 23:
+                             subTotalSA = subitem.SubTotal.Value.ToString("N", nfi);
+                             totalSA += subitem.SubTotal.Value;
+                             totalEmpresaSA += subitem.SubTotal.Value;
+                             totalEmpresaSAE += subitem.SubTotal.Value;
+
+                             break;
+                     }
+                     if (i == 0)
+                     {
+                        <tr>
+                            @if (NroGrupos > 0)
+                            {
+                                <td rowspan="@NroGrupos">@item.CentralHead</td>
+                            }
+                            else
+                            {
+                                <td rowspan="1">@item.CentralHead</td>
+                            }
+
+
+                            @if (subitem.tipoG <= 4)
+                            {
+                                <td>@subitem.Nombre </td>
+                            }
+
+                            <td style="text-align: right;">@subTotalH</td>
+                            <td style="text-align: right;">@subTotalT</td>
+                            <td style="text-align: right;">@subTotalS</td>
+                            <td style="text-align: right;">@subTotalE</td>
+                            <td></td>
+                        </tr>
+                            ++i;
+                     }
+                     else
+                     {
+                        <tr>
+                            @if (subitem.tipoG <= 4)
+                            {
+                                <td>@subitem.Nombre </td>
+                                <td style="text-align: right;">@subTotalH</td>
+                                <td style="text-align: right;">@subTotalT</td>
+                                <td style="text-align: right;">@subTotalS</td>
+                                <td style="text-align: right;">@subTotalE</td>
+                                <td></td>
+                            }
+                        </tr>
+                     }
+                 }
+                <tr style="background-color: #d9edf7">
+                    <td>Total @item.CentralHead</td>
+                    <td></td>
+                    <td style="text-align: right;">@totalH</td>
+                    <td style="text-align: right;">@totalT</td>
+                    <td style="text-align: right;">@totalS</td>
+                    <td style="text-align: right;">@totalE</td>
+                    <td style="text-align: right;">@totalSA.ToString("N", nfi)</td>
+                </tr>
+             }
+            <tr style="background-color:#5C9CCC;color:white">
+                <td>TOTAL</td>
+                <td></td>
+                <td style="text-align: right;">@totalEmpresaH.ToString("N", nfi)</td>
+                <td style="text-align: right;">@totalEmpresaT.ToString("N", nfi)</td>
+                <td style="text-align: right;">@totalEmpresaS.ToString("N", nfi)</td>
+                <td style="text-align: right;">@totalEmpresaE.ToString("N", nfi)</td>
+                <td style="text-align: right;">@totalEmpresaSA.ToString("N", nfi)</td>
+            </tr>
+            }
+        </tbody>
+
+    </table>
+
+    <hr />
+    <table class="table" style="width:100%">
+        <thead class="text-info" style="background-color:#5C9CCC;color:white">
+            <tr>
+                <th width="250" valign="top">
+                    <label class="control-label">Tipo de Generación</label>
+                </th>
+
+                <th align="CENTER" width="180" valign="top">
+                    <label class="control-label">Producción de Energía Eléctrica (MWh)</label>
+                </th>
+                <th align="CENTER" width="100" valign="top">
+                    <label class="control-label">Servicios Auxiliares (MWh)</label>
+                </th>
+                <th align="CENTER" width="150" valign="top">
+                    <label class="control-label">Producción Neta (MWh)</label>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>HIDROELÉCTRICA</td>
+                <td style="text-align: right;">@totalEmpresaH.ToString("N", nfi)</td>
+                <td style="text-align: right;">@totalEmpresaSAH.ToString("N", nfi)</td>
+                <td style="text-align: right;">@Math.Abs(totalEmpresaH - totalEmpresaSAH).ToString("N", nfi)</td>
+            </tr>
+            <tr>
+                <td>TERMOELÉCTRICA</td>
+                <td style="text-align: right;">@totalEmpresaT.ToString("N", nfi)</td>
+                <td style="text-align: right;">@totalEmpresaSAT.ToString("N", nfi)</td>
+                <td style="text-align: right;">@Math.Abs(totalEmpresaT - totalEmpresaSAT).ToString("N", nfi)</td>
+            </tr>
+            <tr>
+                <td>SOLAR</td>
+                <td style="text-align: right;">@totalEmpresaS.ToString("N", nfi)</td>
+                <td style="text-align: right;">@totalEmpresaSAS.ToString("N", nfi)</td>
+                <td style="text-align: right;">@Math.Abs(totalEmpresaS - totalEmpresaSAS).ToString("N", nfi)</td>
+            </tr>
+            <tr>
+                <td>EÓLICA</td>
+                <td style="text-align: right;">@totalEmpresaE.ToString("N", nfi)</td>
+                <td style="text-align: right;">@totalEmpresaSAE.ToString("N", nfi)</td>
+                <td style="text-align: right;">@Math.Abs(totalEmpresaE - totalEmpresaSAE).ToString("N", nfi)</td>
+            </tr>
+
+            @{
+             var sumaTotalesResumenEnergia = totalEmpresaH + totalEmpresaT + totalEmpresaS + totalEmpresaE;
+             var sumaTotalesResumenSSAA = totalEmpresaSAH + totalEmpresaSAT + totalEmpresaSAS + totalEmpresaSAE;
+
+            }
+            <tr style="background-color:#5C9CCC;color:white">
+                <td>Total </td>
+                <td style="text-align: right;">@sumaTotalesResumenEnergia.ToString("N", nfi) </td>
+                <td style="text-align: right;">@sumaTotalesResumenSSAA.ToString("N", nfi) </td>
+                <td style="text-align: right;"> @Math.Abs(sumaTotalesResumenEnergia - sumaTotalesResumenSSAA).ToString("N", nfi)</td>
+            </tr>
+        </tbody>
+
+    </table>
+}
+else
+{
+    <h3>No disponible</h3>
+}

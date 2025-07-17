@@ -1,0 +1,620 @@
+﻿@model COES.MVC.Intranet.Areas.Migraciones.Models.ParametroModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    if (Model.RepCV != null)
+    {
+        ViewBag.Title = "Actualización de Parámetros";
+    }
+    else
+    {
+        ViewBag.Title = "Grupos / Modos de operación";
+    }
+
+}
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=2.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<script src="~/Areas/Migraciones/Content/Scripts/parametrogrupomop/parametro.js?v=1.4.9"></script>
+<link href="~/Areas/Migraciones/Content/Css/css.css?v=1.4.7" rel="stylesheet" />
+<link href="~/Areas/Migraciones/Content/Css/parametro.css?v=1.4.7" rel="stylesheet" />
+
+<style>
+    .tabla-icono tbody tr td a img {
+        width: 17px !important;
+        height: 17px !important;
+    }
+</style>
+
+<div class="form-title">
+    @if (Model.RepCV != null)
+    {
+        <div class="content-titulo">Actualización de Parámetros</div>
+    }
+    else
+    {
+        <div class="content-titulo">Grupos / Modos de operación</div>
+    }
+
+    <div class="content-botonera">
+        <input type="button" id="btnConsultar" value="Consultar" />
+        @if (Model.RepCV != null)
+        {
+            <input type="button" id="btnRegresar" value="Regresar" />
+        }
+        else
+        {
+            <input type="button" id="btnNuevo" value="Nuevo" />
+        }
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="textoMensaje" style=" margin: 0; margin-bottom: 10px;"></div>
+
+    @if (Model.RepCV != null)
+    {
+        <fieldset style=" margin-bottom: 5px; padding-bottom: 10px;">
+
+            <label style="color: #2980B9; font-weight: bold;" for="fname">Tipo de Programa:</label>
+            <label for="fname">@Model.RepCV.ReptipoDesc</label>
+            <label style=" margin-left: 100px; color: #2980B9; font-weight: bold;" for="fname">Nombre:</label>
+            <label for="fname">@Model.RepCV.Repnomb</label>
+            <label style=" margin-left: 100px; color: #2980B9; font-weight: bold;" for="fname">Fecha:</label>
+            <label for="fname">@Model.Fecha</label>
+            <br><br>
+            <label style="color: #2980B9; font-weight: bold;" for="fname">Detalle:</label>
+            <label for="fname">@Model.RepCV.Repdetalle</label>
+        </fieldset>
+    }
+
+    <input type="hidden" id="hdCCEsConsultado" value="0" />
+    <input type="hidden" id="hdCCGrupocodi" value="@Model.Grupocodi" />
+    <input type="hidden" id="hdCCFecha" value="@Model.Fecha" />
+    <input type="hidden" id="hdCCAgrupcodi" value="@Model.IdAgrupacion" />
+
+    <div class="search-content">
+
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+
+                <td>Empresa:</td>
+                <td>
+                    <select id="cbEmpresa" style="width: 228px;">
+                        <option value="-2">--TODOS--</option>
+                        @foreach (var item in Model.ListaEmpresa)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+
+                <td>Categoría:</td>
+                <td>
+                    <select id="cbCategoria" style="width: 205px;">
+                        <option value="-2">--TODOS--</option>
+                        @foreach (var item in Model.ListaCategoria)
+                        {
+                            <option value="@item.Catecodi">@item.Catenomb</option>
+                        }
+                    </select>
+                </td>
+
+                <td>Nombre de Grupo/modo:</td>
+                <td>
+                    <input type="text" id="txtNombregrupo" value="" autocomplete="off" />
+                </td>
+
+                <td>
+                    <input type="checkbox" id="check_rsrvfria" style="margin-top: 5px;" />
+                    <span style="display: inline-table; ">Solo Reserva Fría</span>
+                </td>
+                <td>
+                    <input type="checkbox" id="check_nodo" style="margin-top: 5px;" />
+                    <span style="display: inline-table; ">Solo Nodo Energético</span>
+                </td>
+
+                <td>
+                    <input type="checkbox" id="check_estado_todos" checked style="margin-top: 5px;" />
+                    <span style="display: inline-table; ">Estado Todos</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="content-tabla">
+        <div id="tab-container" class='tab-container' style=" margin-top: 10px;">
+            <ul class='etabs'>
+                <li class='tab'><a href="#vistaModoOperacion">Grupos / Modos de Operación</a></li>
+                <li class='tab'><a href="#vistaDetalle">Detalle</a></li>
+                <li class='tab'><a href="#vistaParametroGeneral">Parámetros Generales</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="vistaModoOperacion">
+                    <div class="tabla-header">
+                        <div class="table-paginado" id="paginado"></div>
+                    </div>
+                    <div class="table-list" id="listado"></div>
+
+                    <div style="clear:both; height:30px"></div>
+
+                    <div id="leyenda" style="width: 100%;">
+                        <p>LEYENDA de estado actual de los grupos:</p>
+                        <table border="0" style="width: 567px;">
+                            <tbody>
+                                <tr>
+                                    <td style="width: 50px; border: 1px solid black; background-color: white !important; color: white;"></td>
+                                    <td style="padding-right: 20px;">Activo</td>
+
+                                    <td style="width: 50px; border: 1px solid black; background-color: #ffff00 !important; color: white;"></td>
+                                    <td style="padding-right: 20px;">En Proyecto</td>
+
+                                    <td style="width: 50px; border: 1px solid black; background-color: #5b6ff9 !important; color: white;"></td>
+                                    <td style="padding-right: 20px;">Fuera de COES</td>
+
+                                    <td style="width: 50px; border: 1px solid black; background-color: #FFDDDD !important; color: white;"></td>
+                                    <td style="padding-right: 20px;">Grupo de Baja</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="vistaDetalle">
+                    <div class="table-list" id="listadoParam"></div>
+                </div>
+
+                <div id="vistaParametroGeneral">
+                    <div class="table-list" id="listadoParamGenerales"></div>
+                    <div style="clear:both; height:30px"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Histórico -->
+<div id="popupHistoricoConcepto" class="general-popup" style="width: 850px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Histórico del Parámetro</span></div>
+    <div class="panel-container">
+        <div class="content-botonera" style="display: none; margin-top: 5px;">
+            <input type="button" id="btnGrupodatNuevo" value="Nuevo" />
+            <input type="button" id="btnGrupodatConsultar" value="Consultar" />
+        </div>
+        <table class="content-tabla-search">
+            <tbody>
+                <tr class="tr_grupo_unidades">
+                    <td class="tbform-label" style="text-align: right">Grupo / Modo de Operación:</td>
+                    <td id="formGrupoHistCnp">                    </td>
+
+                    <td class="tbform-label unidades_especiales">Unidades de Generación:</td>
+                    <td class="unidades_especiales">
+                        <select id="cbUnidadesEspeciales" style="width: 130px;"></select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label" style="text-align: right">Concepto:</td>
+                    <td id="formconceptoHistCnp">                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+
+        <!--Formulario de Grupodat-->
+        <div id="formularioGrupodat">
+            <div class="popup-title" style="padding-top: 15px;"><span></span></div>
+            <input type="hidden" id="hfGrupocodiDat" value="" />
+            <input type="hidden" id="hfConcepcodiDat" value="" />
+            <input type="hidden" id="hfDeleted" value="" />
+            <input type="hidden" id="hfFechaData" value="" />
+            <input type="hidden" id="hfFechaAct" value="@Model.FechaFull" />
+
+            <table style=" margin-top: 15px;">
+                <tbody>
+                    <tr>
+                        <td class="tbform-label" style="">Fecha de Vigencia:</td>
+                        <td class="tbform-control" style="vertical-align: top;">
+                            <input id="fechaData" type="text" name="fechaData" value="" />
+                        </td>
+
+                        <td class="tbform-label" style="display: none">Fecha de Actualización:</td>
+                        <td class="tbform-control" style="display: none">
+                            <input id="fechaAct" type="text" name="fechaAct" value="" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="">Valor:</td>
+                        <td class="tbform-control" style="">
+                            <input id="valorData" type="text" name="valorData" value="" />
+                        </td>
+                    </tr>
+                    <tr id="trValorcero" style="display: none">
+                        <td class="tbform-label">Valor(0) correcto:</td>
+                        <td class="tbform-control">
+                            <div>
+                                <input type="checkbox" value="" id="ChkValorCeroCorrecto">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label">Comentario:</td>
+                        <td class="tbform-control">
+                            <input type="text" id="Gdatcomentario" name="Gdatcomentario" value="" maxlength="500" style="width: 500px;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label">Sustento:</td>
+                        <td class="tbform-control">
+                            <textarea id="Gdatsustento" name="Gdatsustento" style='width: 450px; height: 60px;background-color: white; resize: none;'></textarea>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td id="tdGuardarData" colspan="2">
+                            <input id="btnGrupodatGuardar" type="button" value="Actualizar">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="clear:both; height:20px"></div>
+        </div>
+
+        <!--Lista de Grupodat-->
+        <div class="popup-title titulo_listado" style="padding-top: 15px; font-size: 13px;"><span>Listado</span></div>
+        <div class="content-tabla">
+            <div class="table-list" id="listadoGrupoDat"></div>
+        </div>
+    </div>
+
+</div>
+
+<!--Formulario de creación / edición grupo-->
+<div id="popupFormGrupo" class="general-popup" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Formulario de Grupo</span></div>
+    <div id="divFormGrupo">
+        <table class="table-form-vertical2 content-tabla-search" style="">
+            <tr id="tr_fila_lbl_codigo" style="display: none">
+                <td class="tbform-label">Código:</td>
+                <td class="tbform-control" id="lbl_codigo_NEGrupo">
+                </td>
+            </tr>
+
+            <!--Fila 1-->
+            <tr>
+                <td class="tbform-label">Nombre:</td>
+                <td class="tbform-control" colspan="5">
+                    <input type="text" id="txtFormNEGruponomb" style="width: 400px" value="" maxlength="70" />
+                    <input type="hidden" id="hdFormNEGrupocodi" value="" />
+                </td>
+            </tr>
+            <!--Fila 1-->
+            <tr>
+                <td class="tbform-label">Abreviatura:</td>
+                <td class="tbform-control" colspan="5">
+                    <input type="text" id="txtFormNEGrupoabrev" style="width: 180px" value="" maxlength="20" />
+                </td>
+            </tr>
+            <!--Fila 2-->
+            <tr>
+                <td class="tbform-label">Empresa:</td>
+                <td class="tbform-control" colspan="5">
+                    <select id="cbFormNEEmprcodi" name="cbFormNE" style="width: 400px">
+                        <option value="-1">( SINAC) NO DEFINIDO</option>
+                        @foreach (var item in Model.ListaEmpresaForm)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+            <!--Fila 2-->
+            <tr>
+                <td class="tbform-label">Ubicación:</td>
+                <td class="tbform-control" colspan="5">
+                    <select id="cbFormNEAreacodi" name="cbFormNE" style="width: 400px">
+                        @foreach (var item in Model.ListaUbicacion)
+                        {
+                            <option value="@item.Areacodi">@item.Areaabrev - @item.Areanomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+            <!--Fila 3-->
+            <tr>
+                <td class="tbform-label">Categoría de grupo:</td>
+                <td class="tbform-control">
+                    <select id="cbFormNECatecodi">
+                        <option value="0">--SELECCIONE--</option>
+                        @foreach (var item in Model.ListaCategoria)
+                        {
+                            <option value="@item.Catecodi">@item.Catenomb</option>
+                        }
+                    </select>
+                </td>
+                <td class="tbform-label tr_combo_tipo_modo_op" style="width: 183px; display: none">Tipo de modo de operación:</td>
+                <td class="tbform-control tr_combo_tipo_modo_op" style="display: none">
+                    <select id="cbFormNEGrupotipomodo" style="width: 154px">
+                        <option value="NN">No definido</option>
+                        <option value="CC">CICLO COMBINADO</option>
+                        <option value="CS">CICLO SIMPLE</option>
+                        <option value="E">ESPECIAL</option>
+                    </select>
+                </td>
+            </tr>
+            <!--Fila PRUEBA - GRUPO PADRE-->
+            <tr id="trFormGrupoPadre" style="display: none;">
+                <td class="tbform-label">Grupo padre:</td>
+                <td class="tbform-control" colspan="5">
+                    <select id="cbFormNEGrupoPadreCodi" name="cbFormNEGropoPadre" style="width: 400px">
+                        <option value="-2">SIN GRUPO PADRE</option>
+                    </select>
+                </td>
+            </tr>
+            <!--Fila 4-->
+            <tr>
+                <td class="tbform-label">Fuente de energía:</td>
+                <td class="tbform-control">
+                    <select id="cbFormNEFenergcodi" style="width: 120px;">
+                        @foreach (var item in Model.ListaFenerg)
+                        {
+                            <option value="@item.Fenergcodi">@item.Fenergnomb</option>
+                        }
+                    </select>
+                </td>
+                <td class="tbform-label" colspan="2" rowspan="4" style="width: 250px;">
+                    Central o grupo es Integrante <input type="checkbox" id="checkFormNEGrupointegrante" style=""> <br />
+                    Central o grupo es RER <input type="checkbox" id="checkFormNETipoGenerRer" style=""> <br />
+                    Central o grupo es de Cogeneración <input type="checkbox" id="checkFormNEGrupotipocogen" style=""> <br />
+                    Central pertenece al Nodo Energético <input type="checkbox" id="checkFormNEGruponodoenergetico" style=""> <br />
+                    Central pertenece a Reserva Fría <input type="checkbox" id="checkFormNEGruporeservafria" style="">
+                </td>
+            </tr>
+            <!--Fila 4-->
+            <tr>
+                <td class="tbform-label">Código Osinergmin:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtFormNEOsinergcodi" style="width: 115px" value="" maxlength="6" />
+                </td>
+            </tr>
+            <!--Fila 5-->
+            <tr>
+                <td class="tbform-label">Estado:</td>
+                <td class="tbform-control">
+                    <select id="cbFormNEGrupoEstado" style="width: 120px;">
+                        <option value="A">Activo</option>
+                        <option value="B">Baja</option>
+                        <option value="F">Fuera de COES</option>
+                        <option value="P">En Proyecto</option>
+                        <option value="X">Anulado</option>
+                    </select>
+                </td>
+            </tr>
+            <!--Fila 5-->
+            <tr>
+                <td class="tbform-label" style="width: 140px;">Visible para reporte de Despacho:</td>
+                <td class="tbform-control">
+                    <select id="cbFormNEGrupoactivo" style="width: 120px;">
+                        <option value="S">Sí</option>
+                        <option value="N">No</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="5" id="div_unidades_relacionadas">
+                </td>
+            </tr>
+
+            <tr class="tr_datos_auditoria">
+                <td class="tbform-label" style="width: 120px;">Usuario creación:</td>
+                <td id="txt_usuario_creacion" style="width: 120px;"></td>
+                <td class="tbform-label" style="width: 150px;">Fecha creación:</td>
+                <td id="txt_fecha_creacion" style="width: 120px;"></td>
+            </tr>
+
+            <tr class="tr_datos_auditoria">
+                <td class="tbform-label" style="width: 120px;">Usuario actualización:</td>
+                <td id="txt_usuario_modificacion" style="width: 120px;"></td>
+
+                <td class="tbform-label" style="width: 150px;">Fecha actualización:</td>
+                <td id="txt_fecha_modificacion" style="width: 120px;"></td>
+            </tr>
+        </table>
+        <div style="clear:both; width:100px; text-align:center; margin:auto; margin-top:20px">
+            <input type="button" value="Guardar" id="btnGuardarGrupo">
+        </div>
+    </div>
+</div>
+
+<!--popup tipo de exportación -->
+<div id="popupExportarReporte" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Exportar Reporte</span></div>
+
+    <div class="popup-text" style="margin-top:5px">
+        <div id="vistaExportar">
+            <div class="content-tabla">
+
+                <div style="width:250px; padding-left: 50px;">
+                    <div style="width:250px; padding-top:30px;">
+                        <div style="width:80px; float:left;">
+                            Tipo Exportación:
+                        </div>
+                        <div style="width:150px; float:left;">
+                            <select id="tipoExportar" name="" style="width:138px">
+                                <option value="0" selected> -- Seleccione Tipo --</option>
+                                <option value="1">Ficha técnica</option>
+                                <option value="2">Todos</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div style="width:250px; text-align:center; padding:30px; padding-top:60px;">
+
+                    <div style="width:250px;">
+                        <input type="button" id="btnExportarReporte2" value="Exportar" />
+                        <input type="button" id="btnCancelarExportacion" value="Cancelar" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="popupAsignarGrupoFT" class="popup-class-1 general-popup" style="width: 850px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Asignación de Grupo / Modo de Operación al aplicativo Extranet – Ficha Técnica</span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupAsignarGrupoFT"></div>
+        <div id="" style="margin-top: 10px;"></div>
+        <input type="hidden" id="hdGrupo" />
+        @*<input type="hidden" id="hdEsLT" />*@
+        <div class="search-content">
+
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Codigo:</td>
+                    <td style="width: 50px;">
+                        <div id="codigoVal"></div>
+                    </td>
+
+                    <td class="label_filtro" style="padding-right: 5px;">Nombre:</td>
+                    <td style="width: 250px;">
+                        <div id="nombreVal"></div>
+                    </td>
+
+                    <td class="label_filtro" style="padding-right: 5px;">Categoria de Grupo:</td>
+                    <td>
+                        <div id="categoriaVal"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Empresa:</td>
+                    <td colspan="3">
+                        <div id="empresaVal"></div>
+                    </td>
+
+                    <td class="label_filtro" style="padding-right: 5px;">Ubicación:</td>
+                    <td>
+                        <div id="ubicacionVal"></div>
+                    </td>
+
+                </tr>
+            </table>
+        </div>
+        <div>
+            <div>
+                <table id='table_a' style="margin-top: 20px;margin-bottom: 20px;">
+                    <thead>
+                        <tr>
+                            <th class='th1'>Proyectos Extranet</th>
+                            <th class='th2'>
+                                <a title="Agregar registro" href="JavaScript:agregarProyectoExtranet();"> <img src="~/Content/Images/btn-add.png" alt="" width="19" height="19" style=""></a>
+                            </th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div id="listadoProyectosExtranet" style="margin: -15px 10px 0px 10px;">
+            </div>
+        </div>
+
+        @*<div id="seccionEmpCop">
+
+            </div>*@
+        <div style="font-size: 11px; color: #0051C8; padding-left: 20px; ">
+            <b>Nota: </b>Los cambios realizados serán efectivos al presionar el botón <b>Guardar</b>.
+        </div>
+        <div>
+            <div style="width: 200px; margin: 0 auto;">
+                <input type="button" id="btnGuardarAsignacion" value="Guardar" style="margin-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupAsignarGrupoFT')">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="popupBusquedaPy" class="popup-class-1 general-popup" style="width: 910px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Busqueda de Proyectos Extranet </span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupBusquedaPy"></div>
+        <div id="" style="margin-top: 10px;"></div>
+
+        <div>
+            <div id="listadoProyectos">
+            </div>
+        </div>
+        <div>
+            <div style="width: 210px; margin: 0 auto;">
+                <input type="button" id="btnConfirmarPy" value="Confirmar Selección" style="margin-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupBusquedaPy')">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<div id="popupAuditoria" class="popup-class-1 general-popup">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Datos de Auditoria</span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupAuditoria"></div>
+        <div id="" style="margin-top: 10px;"></div>
+
+        <div>
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Usuario Creación:</td>
+                    <td>
+                        <div id="usuCreacionVal"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Fecha Creación:</td>
+                    <td>
+                        <div id="fecCreacionVal"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Usuario Modificación:</td>
+                    <td>
+                        <div id="usuModificacionVal"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label_filtro" style="padding-right: 5px;">Fecha Modificación:</td>
+                    <td>
+                        <div id="fecModificacionVal"></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div>
+            <div style="width: 80px; margin: 0 auto; padding-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupAuditoria')">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@if (Model.RepCV != null)
+{
+    <input type="hidden" id="hfRepCodi" value="@Model.RepCV.Repcodi" />
+    <input type="hidden" id="hfRepFecLimite" value="@Model.Fecha" />
+}
+<input type="hidden" id="hfEmpresa" />
+<input type="hidden" id="hfNroPagina" name="NroPagina" value="1" />

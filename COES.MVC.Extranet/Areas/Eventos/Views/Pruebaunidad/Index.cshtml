@@ -1,0 +1,149 @@
+﻿@model COES.MVC.Extranet.Areas.Eventos.Models.PruebaUnidadModel
+@{
+    ViewBag.Title = "Prueba Aleatoria de Unidades";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/Eventos/Content/Scripts/prueba_unidad.js?v=1.3"></script>
+@*<script src="~/Content/Scripts/Formato/grillaformato.js?v=1.0"></script>*@
+<script src="~/Areas/Eventos/Content/Scripts/grilla.js?v=4.0"></script>
+<script src="~/Content/Scripts/Formato/mensajes.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Areas/Eventos/Content/Css/cssEnvio.css" rel="stylesheet" />
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+
+<div class="form-title_intranet">
+    <div class="content-titulo">Prueba Aleatoria: Ingreso de datos de medidores</div>
+</div>
+<div class="content-hijo" id="mainLayout">
+    <input type="hidden" id="hfIdEnvio" value="@Model.IdEnvio" />
+    <input type="hidden" id="hfIdEmprcodi" name="Emprcodi" value="" />
+    <input type="hidden" id="hfIdEmprnomb" name="Emprnomb" value="" />
+    <input type="hidden" id="hfIdEquicodi" name="Equicodi" value="" />
+    <div id="mensaje" class="action-message" style="margin:0; margin-bottom:10px">Por favor seleccione la fecha.</div>
+    <div class='action-message' id='mensajeEvento' style='display:none'></div>
+    @using (Html.BeginForm("Listar", "Evento", FormMethod.Post, new { @class = "form-search", name = "frmBusqueda", id = "frmBusqueda" }))
+    {
+        <div class="search-content">
+            <table>
+                <tr>
+                    <td>
+                        <table class="tabla-search" style="width:auto">
+                            <tr>
+                                <td>Fecha:</td>
+                                <td>
+                                    <input type="text" id="txtFecha" name="Fecha" value="@Model.Fecha" />
+                                </td>
+                                <td>
+                                    <input type="button" id="btnConsultar" value="Aceptar" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Unidad:</td>
+                                <td>
+                                    <select id="cbEquipo" name="idEquipo" style="width:350px">
+                                        @foreach (var item in Model.ListaEmpresas)
+                                        {
+                                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                        }
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td>
+                        <div id="barra" style="display:inline-block;">
+                            <table style="width:100%">
+                                <tr>
+                                    <td style="width:40%">
+                                        <div class="search-content" style="margin-bottom:0px; padding:10px; padding-top:3px; padding-bottom:9px; display:block" id="divAcciones">
+                                            <table cellpadding="0" cellspacing="0" border="0">
+                                                <tr>
+                                                    <td class="content-action">
+                                                        <a href="#" id="btnDescargarFormato">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/Eventos/Content/Images/bajar.png" alt="Bajar"/><br />
+                                                                <span>Descargar</span>
+                                                            </div>
+                                                        </a>
+                                                    </td>
+                                                    <td class="content-action">
+                                                        <a href="#" id="btnSelectExcel">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/Eventos/Content/Images/subir.png" alt="Subir" /><br />
+                                                                <span>Importar</span>
+                                                            </div>
+                                                        </a>
+                                                    </td>
+                                                    <td class="content-action">
+                                                        <a href="#" id="btnEnviarDatos">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/Eventos/Content/Images/enviar.png" alt="Enviar"/><br />
+                                                                <span>Enviar</span>
+                                                            </div>
+                                                        </a>
+                                                    </td>
+                                                    <td class="content-action">
+                                                        <a href="#" id="btnMostrarErrores">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/Eventos/Content/Images/errores.png" alt="Errores"/><br />
+                                                                <span>Errores</span>
+                                                            </div>
+                                                        </a>
+                                                    </td>
+                                                    <td class="content-action">
+                                                        <a href="#" id="btnVerEnvios">
+                                                            <div class="content-item-action">
+                                                                <img src="~/Areas/Eventos/Content/Images/envios.png" alt="Envíos"/><br />
+                                                                <span>Envíos</span>
+                                                            </div>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </td>
+                                    <td style="width:60%">
+                                        <div id="selecFormato">
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+
+                </tr>
+
+            </table>
+
+
+        </div>
+    }
+
+    <div class="content-tabla">
+        <div class="bodyexcel" id='detalleFormato'></div>
+    </div>
+
+    <div style="clear:both; height:30px"></div>
+
+</div>
+
+<div id="validaciones" style="z-index:9999999999;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Detalle de Errores</span></div>
+    <div id="idTerrores" style="height:370px;">
+    </div>
+</div>
+
+<div id="enviosanteriores" style="z-index:9999999998;" class="general-popup">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Envios Anteriores</span></div>
+    <div id="idEnviosAnteriores">
+
+    </div>
+</div>
+
+<input type="hidden" id="hfEquipo" value="" />
+<input type="hidden" id="hfFecha" value="@Model.Dia" />

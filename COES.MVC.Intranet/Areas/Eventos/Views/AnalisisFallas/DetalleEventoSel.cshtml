@@ -1,0 +1,465 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.AnalisisFallasModel
+
+<script src="~/Areas/Eventos/Content/Scripts/analisisfalla.js?v=4.02"></script>
+<script src="~/Areas/Eventos/Content/Scripts/AnalisisFalla/seccionEvento.js"></script>
+<script src="~/Areas/Eventos/Content/Scripts/AnalisisFalla/busquedaequipo.js"></script>
+<script src="~/Areas/Eventos/Content/Scripts/AnalisisFalla/canalAnalisis.js"></script>
+@{ 
+    //Layout = "~/Areas/Eventos/Views/AnalisisFallas/Shared/_Layout.cshtml";
+}
+
+<style>
+
+    .htContextMenu.handsontable {
+       /* position: fixed;*/
+        z-index: 99999;
+    }
+
+    .b-modal __b-popup1__ {
+        z-index: 999 !important;
+    }
+
+    .intranet-modal {
+        display: none;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 999999;
+    }
+
+    .intranet-modal-content {
+        background-color: #fff;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 300px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    }
+
+</style>
+<div id="DetalleEventoSel">
+    <div class="content-registro" style="padding-top:40px;">
+        <table style="width:100%;">
+            <tr>
+                <td class="registro-label">Fecha Hora Evento</td>
+                <td class="registro-label"><input disabled value='@(((DateTime)Model.oEventoDTO.EVENINI).ToString("dd/MM/yyyy HH:mm:ss"))' /></td>
+                <td class="registro-label">Nombre Evento</td>
+                <td class="registro-label"><input disabled value="@Model.oEventoDTO.EVENASUNTO" style="width:600px" /></td>
+                <td><input type="button" id="btngrabareventoSCO" value='Grabar Evento SCO' /></td>
+            </tr>
+        </table>
+    </div>
+    <div class="content-registro" style="width:auto">
+        <div style="clear:both; height:5px;"></div>
+        <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Detalle del Evento</span></div>
+        <div style="clear:both; height:5px;"></div>
+        <table cellpadding="8" style="width:100%;">
+            <tr>
+                <td class="registro-label">Equipo:</td>
+                <td class="registro-control" colspan="3">
+                    <input type="text" id="txtEquipo" value="@Model.oEquipoDTO.EQUIABREV" disabled style="width: 330px" />
+                </td>
+
+                <td class="registro-label">Descripcion del Evento</td>
+            </tr>
+            <tr>
+                <td class="registro-label">Area:</td>
+                <td class="registro-control" colspan="3">
+                    <input type="text" id="txtArea" disabled style="width: 330px" value="@Model.oEquipoDTO.AREANOMB" />
+                </td>
+
+                <td rowspan="4"><textarea id="txtDescripcionEvento" rows="10" cols="120" style="width: auto">@Model.oEventoDTO.EVENDESC</textarea></td>
+            </tr>
+            <tr>
+                <td class="registro-label">Empresa:</td>
+                <td class="registro-control" colspan="3">
+                    <input type="text" id="txtEmpresa" disabled style="width: 330px" value="@Model.oEquipoDTO.EMPRENOMB" />
+                </td>
+            </tr>
+
+            <tr>
+                <td class="registro-label"><input type="checkbox" id="chkAFERMC" @Model.oAnalisisFallaDTO.AFERMCchk />RMC</td>
+                <td class="registro-label"><input type="checkbox" id="chkAFEERACMF" @Model.oAnalisisFallaDTO.AFEERACMFchk />ERACMF</td>
+                <td class="registro-label">MW INTERRUP</td>
+                <td class="registro-control">
+                    <input type="text" id="txtEventoInterrumpido" disabled style="width: 50px" value="@Model.oEquipoDTO.INTERRUMPIDO" />
+                </td>
+            </tr>
+            <tr>
+                <td class="registro-label"><input type="checkbox" id="chkAFERACMT" @Model.oAnalisisFallaDTO.AFERACMTchk />ERACMT</td>
+                <td class="registro-label"><input type="checkbox" id="chkAFEEDAGSF" @Model.oAnalisisFallaDTO.AFEEDAGSFchk />EDAGSF</td>
+                <td class="registro-label">MW DISMIN</td>
+                <td class="registro-control">
+                    <input type="text" id="txtEventoDisminuido" disabled style="width: 50px" value="@Model.oEquipoDTO.DISMINUIDO" />
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="tab_container_Sco" class="tab-container" style="min-height: 500px; padding-top: 20px;">
+        <ul class='etabs'>
+            <li class='tab' id="IdCondicionesPrevias"><a href="#CondicionesPrevias">Condiciones previas al evento</a></li>
+            <li class='tab' id="IdSecuenciasEvento"><a href="#SecuenciasEvento">Secuencias de Evento</a></li>
+            <li class='tab'><a href="#SenalizacionProtecciones">Señalización de Protecciones</a></li>
+            <li class='tab' id="IdContadorInterruptoresDescargadores"><a href="#ContadorInterruptoresDescargadores">Contador Interruptores y Descargadores</a></li>
+            <li class='tab' id="IdAnalisisEvento"><a href="#AnalisisEvento">Análisis del Evento</a></li>
+            <li class='tab'><a href="#ObservacionesEvento">Observaciones y Recomendaciones</a></li>
+        </ul>
+        <div class="panel-container">
+            <div id="CondicionesPrevias">
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Flujo de potencia por las principales líneas de la zona</span></div>
+                <div class="search-content" style="margin-bottom:10px">
+                    <table class="content-tabla-search" style="width:auto">
+                        <tr>
+                            <td>Ubicación:</td>
+                            <td>
+                                <select id="cbZona" name="cbZona" style="width:200px" class="f-select-s">
+
+                                    @foreach (var item in Model.ListaTrZonaSp7)
+                                    {
+                                        string cad1 = @item.Zonanomb.Trim() + "          (" + @item.Zonaabrev.Trim() + ")";
+                                        <option style="font-family: 'Courier New'" value="@item.Zonacodi">@cad1</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <select id="cbCanal" name="cbCanal" style="width:500px" class="f-select-m" multiple>
+                                    @if (Model.ListaTrCanalSp7 != null)
+                                    {
+                                        foreach (var item in Model.ListaTrCanalSp7)
+                                        {
+                                            <option style="font-family: 'Courier New'" value="@item.Canalcodi">@item.Canalnomb</option>
+                                        }
+                                    }
+                                </select>
+
+                            </td>
+
+                            <td>
+                                <input type="button" id="btnBuscarCondicionesPrevias" value="Buscar" style="margin-left:0" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="CondicionesPreviasLinea"></div>
+                <div style="clear:both; height:10px;"></div>
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Centros de generación involucrados</span></div>
+                <div class="search-content" style="margin-bottom:10px">
+                    <table class="content-tabla-search" style="width:auto">
+                        <tr>
+                            <td>Ubicación:</td>
+                            <td>
+                                <select id="cbZonaInvolucrados" name="cbZonaInvolucrados" style="width:200px" class="f-select-s">
+
+                                    @foreach (var item in Model.ListaTrZonaSp7)
+                                    {
+                                        string cad1Involucrados = @item.Zonanomb.Trim() + "          (" + @item.Zonaabrev.Trim() + ")";
+                                        <option style="font-family: 'Courier New'" value="@item.Zonacodi">@cad1Involucrados</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <select id="cbCanalInvolucrados" name="cbCanalInvolucrados" style="width:500px" class="f-select-m" multiple>
+                                    @if (Model.ListaTrCanalSp7 != null)
+                                    {
+                                        foreach (var item in Model.ListaTrCanalSp7)
+                                        {
+                                            <option style="font-family: 'Courier New'" value="@item.Canalcodi">@item.Canalnomb</option>
+                                        }
+                                    }
+                                </select>
+
+                            </td>
+
+                            <td>
+                                <input type="button" id="btnBuscarCentrales" value="Buscar" style="margin-left:0" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="CondicionesPreviasCentral"></div>
+                <div style="clear:both; height:10px;"></div>
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Flujo de Potencia por los transformadores de potencia de la zona</span></div>
+                <div class="search-content" style="margin-bottom:10px">
+                    <table class="content-tabla-search" style="width:auto">
+                        <tr>
+                            <td>Ubicación:</td>
+                            <td>
+                                <select id="cbZonaTransformadores" name="cbZonaTransformadores" style="width:200px" class="f-select-s">
+
+                                    @foreach (var item in Model.ListaTrZonaSp7)
+                                    {
+                                        string cad1Transformadores = @item.Zonanomb.Trim() + "          (" + @item.Zonaabrev.Trim() + ")";
+                                        <option style="font-family: 'Courier New'" value="@item.Zonacodi">@cad1Transformadores</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <select id="cbCanalTransformadores" name="cbCanalTransformadores" style="width:500px" class="f-select-m" multiple>
+                                    @if (Model.ListaTrCanalSp7 != null)
+                                    {
+                                        foreach (var item in Model.ListaTrCanalSp7)
+                                        {
+                                            <option style="font-family: 'Courier New'" value="@item.Canalcodi">@item.Canalnomb</option>
+                                        }
+                                    }
+                                </select>
+
+                            </td>
+
+                            <td>
+                                <input type="button" id="btnBuscarTransformadores" value="Buscar" style="margin-left:0" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="CondicionesPreviasTransformadores"></div>
+            </div>
+            <div id="SecuenciasEvento">
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Secuencias de Evento</span></div>
+                <div id="SecuenciasEventoTable"></div>
+            </div>
+            <div id="SenalizacionProtecciones">
+                <div id="CuadroSenalizacionProtecciones"></div>
+            </div>
+            <div id="ContadorInterruptoresDescargadores">
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom: 0px; font-size: 15px; font-weight: bold; text-indent: 0px; "><span>Interruptores</span></div>
+                <div id="InterruptoresTable"></div>
+                <div style="clear:both; height:10px;"></div>
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Descargadores de Sobretensión</span></div>
+                <div id="DescargadoresTable"></div>
+            </div>
+            <div id="AnalisisEvento">
+                <div class="search-content" style="margin-bottom:10px">
+                    <table class="content-tabla-search" style="width:auto">
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td style="width:56px">Fecha</td>
+                                        <td style="width:50px"><input type="text" id="txtFechaDesdeAnalisis" name="FechaInicioAnalisis" value="@Model.FechaInicioAnalisis" style="width:110px" /></td>
+                                        <td style="width:50px"><input type="text" id="txtFechaHastaAnalisis" name="FechaHastaAnalisis" value="@Model.FechaHastaAnalisis" style="width:110px" /></td>
+                                        <td style="width:50px"><input type="text" id="txtHoraIniAnalisis" name="HoraIniAnalisis" value="@Model.HoraIniAnalisis" style="width:50px" /></td>
+                                        <td style="width:200px"><input type="text" id="txtHoraFinAnalisis" name="HoraFinAnalisis" value="@Model.HoraFinAnalisis" style="width:50px" /></td>
+                                        <td>Calidad</td>
+                                        <td>
+                                            <select id="cbCalidad" name="cbCalidad" style="width:110px">
+                                                <option value="T">(Todas)</option>
+                                                <option value="V">Válido</option>
+                                                <option value="N">No válido</option>
+                                                <option value="C">Congelado</option>
+                                                <option value="I">Indeterminado</option>
+                                            </select>
+
+
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td>Ubicación:</td>
+                                        <td>
+                                            <select id="cbZonaAnalisis" name="cbZonaAnalisis" style="width:200px" class="f-select-s">
+                                                @foreach (var item in Model.ListaTrZonaSp7)
+                                                {
+                                                    string cad1 = @item.Zonanomb.Trim() + "          (" + @item.Zonaabrev.Trim() + ")";
+                                                    <option style="font-family: 'Courier New'" value="@item.Zonacodi">@cad1</option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select id="cbCanalAnalisis" name="cbCanalAnalisis" style="width:500px" class="f-select-m" multiple>
+                                                @if (Model.ListaTrCanalSp7 != null)
+                                                {
+                                                    foreach (var item in Model.ListaTrCanalSp7)
+                                                    {
+                                                        <option style="font-family: 'Courier New'" value="@item.Canalcodi">@item.Canalnomb</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="button" id="btnAgregarAnalisis" value="Agregar" style="margin-left:0" />
+                                        </td>
+                                        <td>
+                                            <input type="button" id="btnAgregarNumeral" value="Configuración Tipo Numeral" style="margin-left:0" />
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Histórico SCADA</span></div>
+                <div id="HistoricoScadaAnalisisTable"></div>
+                <div style="clear:both; height:20px;"></div>
+                <div class="content-botonera" style="float: left; margin-left: -4px;">
+                    <input type="button" id="btnGenerarAnalisis" value='Generar Análisis' />
+                </div>
+                <div style="clear:both; height:5px;"></div>
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Análisis del Evento</span></div>
+                <div id="AnalisisEventoTable"></div>
+            </div>
+            <div id="ObservacionesEvento">
+                <div class="content-registro">
+                    <h4>Recomendaciones</h4>
+                    <table cellpadding="5" style="width:100%">
+                        <tr>
+                            <td class="registro-label">Empresa</td>
+                            <td class="registro-control">
+                                <input type="button" id="btnBuscarEquipoRecomendacion" value="Seleccionar" style="margin-right: 5px;" />
+                                <input id="txtEmpresaRecomendacion" type="text" readonly="readonly">
+                            </td>
+                            <td class="registro-label">Publicar Recomendación</td>
+                            <td class="registro-control">
+                                <textarea id="txtRecomendacionObs" maxlength="4000" rows="10" cols="40" style="width: auto"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-control" colspan="4">
+                                <input type="button" id="btnAgregarRecomendacionObs" value='Agregar' />
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="padding-top:10px;">
+                        <table style="width:100%" border="0" class="pretty tabla-adicional">
+                            <thead>
+                                <tr>
+                                    <th>ACCIONES</th>
+                                    <th>EMPRESA</th>
+                                    <th>RECOMENDACIÓN</th>
+                                    <th>LAST USER</th>
+                                    <th>LAST DATE</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="tbodyRecomendacionObs">
+                                @if (Model.ListaEveRecomobserv != null)
+                                {
+                                    foreach (var item in Model.ListaEveRecomobserv)
+                                    {
+                                        <tr id="@string.Format("rowRecomendacionObservacion{0}",item.EMPRCODI)" data-id="@item.EVERECOMOBSERVCODI">
+                                            <td>
+                                                <a href="#" id="btnEliminarReco" onclick="EliminarObservacionRecomendacion(@item.EVERECOMOBSERVCODI,1)">
+                                                    <img src="~/Content/Images/btn-cancel.png" style="margin-top: 2px; margin-bottom: 2px" />
+                                                </a>
+                                            </td>
+
+                                            <td>@item.EMPRNOMB</td>
+                                            <td>@item.EVERECOMOBSERVDESC</td>
+                                            <td>@item.LASTUSER</td>
+                                            <td>
+                                                @if (item.LASTDATE != null)
+                                                {
+                                                    <span>@(((DateTime)item.LASTDATE).ToString("dd/MM/yyyy HH:mm:ss"))</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <h4>Observaciones</h4>
+                    <table cellpadding="5" style="width:100%">
+                        <tr>
+                            <td class="registro-label">Empresa</td>
+                            <td class="registro-control">
+                                <input type="button" id="btnBuscarEquipoObservacion" value="Seleccionar" style="margin-right: 5px;" />
+                                <input id="txtEmpresaObservacion" type="text" readonly="readonly">
+                            </td>
+                            <td class="registro-label">Publicar Observación</td>
+                            <td class="registro-control">
+                                <textarea id="txtObservacionobs" maxlength="4000" rows="10" cols="40" style="width: auto"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-control" colspan="4">
+                                <input type="button" id="btnAgregarObservacionobs" value='Agregar' />
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="padding-top:10px;">
+                        <table style="width:100%" border="0" class="pretty tabla-adicional">
+                            <thead>
+                                <tr>
+                                    <th>ACCIONES</th>
+                                    <th>EMPRESA</th>
+                                    <th>OBSERVACIÓN</th>
+                                    <th>LAST USER</th>
+                                    <th>LAST DATE</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="tbodyObservacionObs">
+                                @if (Model.ListaObservaciones != null)
+                                {
+                                    foreach (var item in Model.ListaObservaciones)
+                                    {
+                                        <tr id="@string.Format("rowObservacionobs{0}",item.EVERECOMOBSERVCODI)" data-id="@item.EVERECOMOBSERVCODI">
+                                            <td>
+                                                <a href="#" id="btnEliminarObservacionobs" onclick="EliminarObservacionRecomendacion(@item.EVERECOMOBSERVCODI,2)">
+                                                    <img src="~/Content/Images/btn-cancel.png" style="margin-top: 2px; margin-bottom: 2px" />
+                                                </a>
+                                            </td>
+
+                                            <td>@item.EMPRNOMB</td>
+                                            <td>@item.EVERECOMOBSERVDESC</td>
+                                            <td>@item.LASTUSER</td>
+                                            <td>
+                                                @if (item.LASTDATE != null)
+                                                {
+                                                    <span>@(((DateTime)item.LASTDATE).ToString("dd/MM/yyyy HH:mm:ss"))</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="popupScada" class="general-popup" style="width:320px;top:0px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title">
+        <span>Histórico SCADA disponible:</span>
+        <div class="content-botonera">
+            <input type="button" id="btnGrabarScada" value='Grabar' />
+        </div>
+    </div>
+    <div class="popup-text" id="contenidoScada">
+    </div>
+</div>
+
+<div id="divMensajeObs" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Mensaje: </span></div>
+    <div class="popup-text" id="contenidoBuscarEmpresaObs">
+        <ul id="ulMensajeObs"></ul>
+    </div>
+</div>
+
+<div id="GenerarAnalisisModal" class="intranet-modal">
+    <div class="intranet-modal-content">
+        <span>Generar Análisis:</span>
+        <p>
+            Se incluirán los datos de la tabla "Histórico SCADA" y de la tabla "Secuencia de Eventos" en la tabla de "Análisis del Evento" (los datos de la tabla "Análisis del Evento" no serán eliminados). 
+            ¿Está seguro?
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center">
+            <input id="confirmarGenerarAnalisis" type="button" value="Si" />
+            <input id="confirmarCerrarPopupGenerarAnalisis" type="button" value="No" />
+        </div>
+    </div>
+</div>

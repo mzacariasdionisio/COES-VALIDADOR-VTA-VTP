@@ -1,0 +1,347 @@
+﻿@model COES.MVC.Intranet.Areas.Titularidad.Models.TransferenciaModel
+
+@{
+    ViewBag.Title = Model.EsRegQueAnulaOtroReg ? "Detalle de Anulación" : "Detalle de Transferencia";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<script src="~/Areas/Titularidad/Content/Scripts/global.js?v=1.8"></script>
+<script src="~/Areas/Titularidad/Content/Scripts/transfDetalle.js?v=1.9"></script>
+
+<div class="form-title">
+    <div class="content-titulo">
+        @ViewBag.Title
+        @if (Model.Migracion.Migradeleted == 1 && !Model.EsRegQueAnulaOtroReg)
+        {
+            <b style="color: red">(Anulado)</b>
+        }
+    </div>
+    <div class="content-botonera">
+        <table cellpadding="0" cellspacing="0" style="margin-top:12px; width:auto">
+            <tr style="line-height:10px">
+                @if (Model.AccionNuevo)
+                {
+                    if (Model.Migracion.Migradeleted == 0)
+                    {
+                        <td><input type="button" id="btnAnular" value="Anular proceso" /></td>
+                    }
+                    if (Model.TieneProcesoStrPendiente)
+                    {
+                        <td><input type="button" id="btnProcesarStr" value="Procesar STR" /></td>
+                    }
+                }
+                <td><input type="button" id="btnIrAlListado" value="Ir al listado" /></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div class='panel-container'>
+        <div class="search-content" style="margin-bottom:10px">
+            <table class="content-tabla-search" style="width:auto">
+                @if (Model.EsRegQueAnulaOtroReg)
+                {
+                    <tr>
+                        <td class="tbform-label">
+                            Código de anulación:
+                        </td>
+                        <td class="tbform-control">
+                            @Model.Migracion.Migracodi
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="tbform-label">
+                            Código de transferencia anulado:
+                        </td>
+                        <td class="tbform-control">
+                            @Model.Migracodi
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    <tr>
+                        <td class="tbform-label">
+                            Código de transferencia:
+                        </td>
+                        <td class="tbform-control">
+                            @Model.Migracion.Migracodi
+                        </td>
+                    </tr>
+                }
+
+                <tr>
+                    <td class="tbform-label">Empresa origen:</td>
+                    <td class="tbform-control">
+                        @Model.Migracion.Emprcodiorigen - <b style='color:#43a243'>@Model.Migracion.Emprnomborigen</b>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Tipo de operación</td>
+                    <td class="tbform-control">
+                        <b>@Model.Migracion.Tmoperdescripcion</b>
+                    </td>
+                </tr>
+
+                @if (Model.TieneFechaCorte)
+                {
+                    <tr>
+                        <td class="tbform-label">Fecha de Corte:</td>
+                        <td class="tbform-control">
+                            @Model.Migracion.MigrafeccorteDesc
+                        </td>
+                    </tr>
+                }
+
+                <tr>
+                    <td class="tbform-label">Empresa destino:</td>
+                    <td class="tbform-control">
+                        @Model.Migracion.Emprcodi - <b style='color:#fd4444'>@Model.Migracion.Emprnombdestino</b>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Descripción</td>
+                    <td class="tbform-control">
+                        @Model.Migracion.Migradescripcion
+                    </td>
+                </tr>
+
+            </table>
+
+            <input type="hidden" value="@Model.Migracion.Migracodi" id="hdnMigracodi">
+            <input type="hidden" value="@Model.TienePermisoLogDBA" id="hdnPermisoDBA">
+        </div>
+    </div>
+
+    <script>
+        var ancho = $(".search-content").width() > 1180 ? $(".search-content").width() - 50 : 1180;
+    </script>
+
+    <div class="content-hijo">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#viewEquipo">Lista de Equipos afectados</a></li>
+                <li class='tab'><a href="#viewPto">Lista de Puntos de medición afectados</a></li>
+                <li class='tab'><a href="#viewGrupo">Lista de Grupos afectados</a></li>
+                <li class='tab'><a href="#viewDetalleAdicional">Detalle adicional</a></li>
+                <li class='tab'><a href="#viewLog">Log de Proceso</a></li>
+                @if (Model.TienePermisoLogDBA)
+                {
+                    <li class='tab'><a href="#viewLogDba">Log de Base de Datos (DTI)</a></li>
+                }
+            </ul>
+            <div class="panel-container">
+                <div id="viewEquipo">
+
+                    <div id="listadoEquipo">
+                        <table border="0" class="pretty tabla-icono" cellspacing="0" width="100%" id="reporteEquipo">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #43a243;">Empresa origen</th>
+                                    <th>Tipo de Equipo</th>
+                                    <th>Ubicación</th>
+                                    <th>Código</th>
+                                    <th>Nombre de equipo</th>
+                                    <th>Abreviatura</th>
+                                    <th>Estado Actual</th>
+                                    <th style="background-color: #43a243;">Operador origen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.ListaEquipo)
+                                {
+                                    <tr>
+
+                                        <td style="@item.Osigrupocodi">@item.EmpresaOrigen</td>
+                                        <td style="@item.Osigrupocodi">@item.Famnomb</td>
+                                        <td style="@item.Osigrupocodi">@item.AREANOMB</td>
+                                        <td style="@item.Osigrupocodi">@item.Equicodi</td>
+                                        <td style="@item.Osigrupocodi">@item.Equinomb</td>
+                                        <td style="@item.Osigrupocodi">@item.Equiabrev</td>
+                                        <td style="@item.Osigrupocodi">@item.EstadoDesc</td>
+                                        <td style="@item.Osigrupocodi">@item.Operadornomb</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="viewPto">
+
+                    <div id="listadoPto">
+                        <table border="0" class="pretty tabla-icono" cellspacing="0" width="100%" id="reportePto">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #43a243;">Empresa origen</th>
+                                    <th>Origen Lectura</th>
+                                    <th>Código</th>
+                                    <th>Nombre de Punto de medición</th>
+                                    <th>Estado Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.ListaPtoMedicion)
+                                {
+                                    <tr>
+                                        <td style="@item.ColorEstado">@item.EmprnombOrigen</td>
+                                        <td style="@item.ColorEstado">@item.Origlectnombre</td>
+                                        <td style="@item.ColorEstado">@item.Ptomedicodi</td>
+                                        <td style="@item.ColorEstado">@item.Ptomedielenomb</td>
+                                        <td style="@item.ColorEstado">@item.Ptomediestadodescrip</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="viewGrupo">
+
+                    <div id="listadoGrupo">
+                        <table border="0" class="pretty tabla-icono" cellspacing="0" width="100%" id="reporteGrupo">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #43a243;">Empresa origen</th>
+                                    <th>Categoría</th>
+                                    <th>Código</th>
+                                    <th>Nombre de Grupo</th>
+                                    <th>Estado Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.ListaGrupo)
+                                {
+                                    <tr>
+                                        <td style="@item.ColorEstado">@item.EmprnombOrigen</td>
+                                        <td style="@item.ColorEstado">@item.Catenomb</td>
+                                        <td style="@item.ColorEstado">@item.Grupocodi</td>
+                                        <td style="@item.ColorEstado">@item.Gruponomb</td>
+                                        <td style="@item.ColorEstado">@item.GrupoEstadoDesc</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="viewDetalleAdicional">
+
+                    <div id="">
+
+                        @foreach (var tabla in Model.ListaDetalleAdicional)
+                        {
+
+                            <h2>@tabla.Titulo </h2>
+                            <table border="0" class="pretty tabla-icono" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th style="background-color: #43a243;">Empresa origen</th>
+                                        <th>Código</th>
+                                        <th>@(tabla.CampoDesc1)</th>
+                                        <th>@(tabla.CampoDesc2)</th>
+                                        <th>@(tabla.CampoEstado)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in tabla.ListaDetalle)
+                                    {
+                                        <tr>
+                                            <td>@item.EmprnombOrigen</td>
+                                            <td>@item.Hempedvalorid</td>
+                                            <td>@item.Nombre</td>
+                                            <td>@item.Nombre2</td>
+                                            <td>@item.EstadoActual</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+
+                <div id="viewLog">
+
+                    <div id="listadoLog">
+                        <table border="0" class="pretty tabla-icono" cellspacing="0" width="100%" id="reporteLog">
+                            <thead>
+                                <tr>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.ListaLog)
+                                {
+                                    <tr>
+                                        <td style="height: 24px">
+                                            @switch (item.Logmigtipo.GetValueOrDefault(0))
+                                            {
+                                                case 3:
+                                                    <a title="@item.LogmigtipoDesc"><img src="~/Content/Images/ico-done.gif" alt=""></a>
+                                                    break;
+                                                case 4:
+                                                    <a title="@item.LogmigtipoDesc"><img src="~/Content/Images/error.png" alt=""></a>
+                                                    break;
+                                                default:
+                                                    @item.LogmigtipoDesc
+                                                    break;
+                                            }
+
+                                        </td>
+                                        <td style="height: 24px">@item.FechaDesc</td>
+                                        <td style="height: 24px">@item.HoraDesc</td>
+                                        <td style="height: 24px; text-align: left;padding-left: 10px;">@item.LogDesc</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @if (Model.TienePermisoLogDBA)
+                {
+                    <div id="viewLogDba">
+
+                        <div id="listadoDba">
+                            <table border="0" class="pretty tabla-icono" cellspacing="0" width="100%" id="reporteDba">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Hora</th>
+                                        <th>Tabla</th>
+                                        <th>Total Registros</th>
+                                        <th>Query</th>
+                                        <th>Error</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.ListQuerysEjecutDba)
+                                    {
+                                        <tr>
+                                            <td style="height: 24px; padding-right: 10px;padding-left: 10px">@item.FechaDesc</td>
+                                            <td style="height: 24px; padding-right: 10px;padding-left: 10px">@item.HoraDesc</td>
+                                            <td style="height: 24px; text-align: left; padding-right: 10px;padding-left: 10px">@item.Miqubanomtabla</td>
+                                            <td style="height: 24px; text-align: center; padding-right: 10px;padding-left: 10px">@item.NroRegistros</td>
+                                            <td style="height: 24px; text-align: left; padding-right: 10px;padding-left: 10px; padding-top: 5px; padding-bottom: 5px;white-space: pre-wrap;">@item.Migdbaquery</td>
+                                            <td style="height: 24px; text-align: left; padding-right: 10px;padding-left: 10px; padding-top: 5px; padding-bottom: 5px;white-space: pre-wrap;">@item.Migdbalogquery</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

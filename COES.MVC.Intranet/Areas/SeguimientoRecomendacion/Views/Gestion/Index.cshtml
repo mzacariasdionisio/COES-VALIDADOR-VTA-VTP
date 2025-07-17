@@ -1,0 +1,188 @@
+﻿@model COES.MVC.Intranet.Areas.SeguimientoRecomendacion.Models.BusquedaGestionModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Areas/SeguimientoRecomendacion/Content/Scripts/gestion.js?v=2.14"></script>
+<link href="~/Areas/Eventos/Content/Css/css.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Gesti&oacute;n de Recomendaciones</div>
+    <div class="content-botonera">
+        @if (Model.AccionNuevo)
+        { 
+          <input type="button" id="btnExportar" value="Exportar" />
+        } 
+        @*<input type="button" id="btnAlarma" value="Alarma" />*@ 
+
+    </div>
+</div>
+
+<div class="div-leyenda" id="divLeyenda">
+    <div class="div-leyenda-close" onclick="closeImportar();">X</div>
+    <div class="div-leyenda-content">
+        <div class="action-exito">Leyenda CIER</div>
+        <table class="pretty tabla-adicional">
+            <thead>
+                <tr>
+                    <th>Abreviatura</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ListaCausaEvento)
+                {
+                    <tr>
+                        <td><strong>@item.Causaevenabrev:</strong></td>
+                        <td>@item.Causaevendesc</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="div-leyenda-boton" id="container">
+            <input type="button" id="btnCerrarLeyenda" value="Cerrar" onclick="closeImportar();" />
+        </div>
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+@using (Html.BeginForm("Listar", "Evento", FormMethod.Post, new { @class = "form-search", name = "frmBusqueda", id = "frmBusqueda" }))
+{
+    <div class="search-content" style="margin-bottom:10px">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Tipo de Equipo:</td>
+                <td>
+                    <select id="cbFamilia" name="IdFamilia" style="width:160px">
+                        @foreach (var item in Model.ListaFamilias)
+                        {
+                            <option value="@item.FAMCODI">@item.FAMNOMB</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfFamilia" value="@Model.IdFamilia" />
+                </td>
+                <td>Equipo:</td>
+                <td>
+                    <input type="text" id="txtEquipo" name="EquiAbrev" value="@Model.EquiAbrev" style="width:160px" />
+                </td>
+                <td>Tipo de Empresa</td>
+                <td>
+                    <select id="cbTipoEmpresa" name="IdTipoEmpresa" style="width:160px">
+                        <option value="0">(TODOS)</option>
+                        @foreach (var item in Model.ListaTipoEmpresas)
+                        {
+                            <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfTipoEmpresa" value="@Model.IdTipoEmpresa" />
+                </td>
+                <td>Empresa:</td>
+                <td>
+                    <select id="cbEmpresa" name="IdEmpresa" style="width:300px">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.EMPRCODI">@item.EMPRNOMB</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEmpresa" value="@Model.IdEmpresa" />
+                </td>
+                <td>Tipo</td>
+                <td>
+                    <select id="cbIdTipoEventoRec" name="IdTipoEventoRec" style="width:160px;">
+                        <option value="0" selected>(TODOS)</option>
+                        <option value="1">EVENTO AO</option>
+                        <option value="2">EVENTO CTAF</option>
+                    </select>
+                </td>
+                <td>
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td id="tdLabelFechaDesde">Desde:</td>
+                <td id="tdFechaDesde">
+                    <input type="text" id="FechaDesde" name="FechaInicio" value="@Model.FechaInicio" style="width:120px" />
+                </td>
+                <td id="tdLabelFechaHasta">Hasta:</td>
+                <td id="tdFechaHasta">
+                    <input type="text" id="FechaHasta" name="FechaFin" value="@Model.FechaFin" style="width:120px" />
+                </td>
+                <td id="txtEstado">Estado:</td>
+                <td id="CmbEstado">
+                    <select id="IdEstado" name="IdEstado" style="width:160px;">
+                        <option value="0">(TODOS)</option>
+                        @foreach (var item in Model.ListaEstado)
+                        {
+                            <option value="@item.Srmstdcodi">@item.Srmstddescrip</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEstado" value="@Model.IdEstado" />
+                </td>
+                <td id="grupoNivel">
+                    <input id="cbDetalle" name="cbDetalle" type="checkbox" onclick="verDetalle()" />Detalle
+                    <input type="hidden" id="hfDetRecomendacion" name="IdDetRecomendacion" value="@Model.IdDetRecomendacion" />
+                </td>
+                <td>
+                    <input type="button" id="btnBuscar" value="Buscar" style="margin-left:0" />
+                    <select id="cmbConRecomendacion" @*onchange="verRecomendacion()"*@ style="width:180px;visibility:hidden">
+                        <option value="T" selected>(TODOS)</option>
+                        <option value="N">SIN RECOMENDACION</option>
+                        <option value="S">CON RECOMENDACION</option>
+                    </select>
+                    <input type="hidden" id="hfConRecomendacion" name="IdConRecomendacion" value="@Model.IdConRecomendacion" />
+                </td>
+                @*<td id="grupoNivel">
+            <input id="cbDetalle" name="cbDetalle" type="checkbox" onclick="verDetalle()" />Detalle
+            <input type="hidden" id="hfDetRecomendacion" name="IdDetRecomendacion" value="@Model.IdDetRecomendacion" />
+        </td>*@
+
+                @*<td id="txtCriticidad">Criticidad:</td>*@
+                <td id="CmbCriticidad">
+                    <select id="cbCriticidad" name="IdCriticidad" style="width: 160px; display:none">
+                        <option value="0">(TODOS)</option>
+                        @foreach (var item in Model.ListaCriticidad)
+                        {
+                            <option value="@item.Srmcrtcodi">@item.Srmcrtdescrip</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfCriticidad" value="@Model.IdCriticidad" />
+                </td>
+                <td>
+                    <input type="text" id="leydFecha" value="Recomendaci&oacute;n" style="width:130px; border:none" readonly="readonly" />
+
+                </td>
+            </tr>
+
+        </table>
+       
+    </div>
+
+    <input type="hidden" id="hfNroPagina" name="NroPagina" value="1" />   
+    <input type="hidden" id="hfCampo" name="CampoOrden" />
+    <input type="hidden" id="hfOrden" name="TipoOrden" />
+    <input type="hidden" id="hfIndicador" name="Indicador" />
+}
+    
+<div class="content-tabla">
+    <div class="tabla-header">       
+        <div class="table-paginado" id="paginado"></div>
+    </div>
+    <div class="table-list" id="listado"></div>
+</div>
+
+<div style="clear:both; height:30px"></div>
+ 
+</div>
+
+
+<div id="popupInforme" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div id="contenedorInforme">
+    </div>
+</div>
+
+
+

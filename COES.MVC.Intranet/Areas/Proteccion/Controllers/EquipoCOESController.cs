@@ -1,0 +1,220 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Web.Mvc;
+using COES.Dominio.DTO.Sic;
+using COES.MVC.Intranet.Areas.Equipamiento.Models;
+using COES.MVC.Intranet.Areas.Proteccion.Models;
+using COES.Servicios.Aplicacion.Equipamiento;
+using COES.Servicios.Aplicacion.Helper;
+using COES.Servicios.Aplicacion.Transferencias;
+using log4net;
+using COES.MVC.Intranet.Helper;
+using COES.MVC.Intranet.Areas.Proteccion.Helper;
+using COES.MVC.Intranet.Controllers;
+using COES.Framework.Base.Tools;
+
+
+namespace COES.MVC.Intranet.Areas.Proteccion.Controllers
+{
+    public class EquipoCOESController : BaseController
+    {
+        /// <summary>
+        /// Instancia de clase para el acceso a datos
+        /// </summary>
+        
+        EquipamientoAppServicio servicioEquipamiento = new EquipamientoAppServicio();
+        AreaAppServicio servicioArea = new AreaAppServicio();
+        ProyectoActualizacionAppServicio proyectoActualzacion = new ProyectoActualizacionAppServicio();
+        EquipoProteccionAppServicio equipoProteccion = new EquipoProteccionAppServicio();
+        private static readonly ILog log = log4net.LogManager.GetLogger(typeof(EquipoCOESController));
+        private static string NameController = MethodBase.GetCurrentMethod().DeclaringType.Name;
+        public EquipoCOESController()
+        {
+            log4net.Config.XmlConfigurator.Configure();
+        }
+        protected override void OnException(ExceptionContext filterContext)
+        {
+            try
+            {
+                log4net.Config.XmlConfigurator.Configure();
+                Exception objErr = filterContext.Exception;
+                log.Error(NameController, objErr);
+            }
+            catch (Exception ex)
+            {
+                log.Fatal(NameController, ex);
+                throw;
+            }
+        }
+
+        [AllowAnonymous]
+        public ActionResult Index()
+        {
+            EquipoCOESModel modelo = new EquipoCOESModel();
+
+            modelo.ListaUbicacion = equipoProteccion.ListSubEstacion();
+
+            List<EqFamiliaDTO> listTipoArea = servicioEquipamiento.ListEqFamiliasEquipamientoCOES();
+            listTipoArea.Sort((s1, s2) => s1.Famnomb.CompareTo(s2.Famnomb));
+            modelo.ListaTipoArea = listTipoArea;
+
+            return View(modelo);
+        }
+
+        public PartialViewResult EditarEquipo(int id, int idEpe)
+        {
+            EquipoCOESEditarModel model = new EquipoCOESEditarModel();
+            
+            model.Nombre = "";
+            model.Id = id;
+            model.IdEpe = idEpe;
+            if (idEpe > 0)
+            {
+                var equipo = proyectoActualzacion.EprEquipoGetById(idEpe);
+                if (equipo != null)
+                {
+                    model.Nombre = equipo.Epequinomb;
+                }
+            }
+
+
+            return PartialView("~/Areas/Proteccion/Views/EquipoCOES/Editar.cshtml", model);
+        }
+
+        [ActionName("Index"), HttpPost]
+        public ActionResult IndexPost(UbicacionCOESModel datos)
+        {
+            return View(datos);
+        }
+
+        [HttpPost]
+        public PartialViewResult ListaEquipo(String idUbicacion, String idTipoEquipo, String nombreEquipo, string sProgramaExistente)
+        {
+            ListadoEquipoCOESModel model = new ListadoEquipoCOESModel();
+            model.ListaEquipoCOES = servicioEquipamiento.ListaEquipoCOES(idUbicacion, idTipoEquipo, nombreEquipo, sProgramaExistente).ToList();
+            return PartialView("~/Areas/Proteccion/Views/EquipoCOES/ListaEquipo.cshtml", model);
+        }
+
+        public JsonResult GuardarEquipo(int iCodigo, int iPrCodigo, string sFlag, string sNombre)
+        {
+            try
+            {
+                EprEquipoDTO oEquipo = null;
+                var dto = proyectoActualzacion.EprEquipoGetById(iPrCodigo);
+                if (dto == null)
+                {
+                    oEquipo = new EprEquipoDTO();
+                    oEquipo.Equicodi = iCodigo;
+                    oEquipo.Epequinomb = sNombre;
+                    oEquipo.Epequiestregistro = "1";
+                    oEquipo.Epequiusucreacion = User.Identity.Name;
+                    proyectoActualzacion.EprEquipoSave(oEquipo);
+                }
+                else
+                {
+                    dto.Equicodi = iCodigo;
+                    dto.Epequinomb = sNombre;
+                    dto.Epequiestregistro = "1";
+                    dto.Epequiusumodificacion = User.Identity.Name;
+                    proyectoActualzacion.EprEquipoUpdate(dto);
+                }
+                return Json(1);
+            }
+            catch (Exception e)
+            {
+                log.Fatal(NameController, e);
+                return Json(-1);
+            }
+        }
+
+        public JsonResult EliminarEquipo(int iPrCodigo)
+        {
+            EquipoCOESEliminarModel model = new EquipoCOESEliminarModel();
+            try
+            {
+                var eliminar = proyectoActualzacion.GetCantidadEquipoSGOCOESEliminar(iPrCodigo);
+                if (eliminar.NroEquipos > 0)
+                {
+                    model.Estado = 0;
+                    model.Mensaje = "No es posible eliminar el registro, dado que existe(n) (" + eliminar.NroEquipos.ToString() + ") relé(s) asociados a este equipo";
+                    return Json(model);
+                }
+
+                var dto = proyectoActualzacion.EprEquipoGetById(iPrCodigo);
+                if (dto != null)
+                {
+                    // Validar que no exista en SEV
+                    if (dto.Epequiflagsev.Equals("1"))
+                    {
+                        model.Estado = 0;
+                        model.Mensaje = "No es posible eliminar el registro, dado que está incluido en la sección de capacidades(SEV)";
+                        return Json(model);
+                    }
+
+                    dto.Epequiestregistro = "0";
+                    dto.Epequiusumodificacion = User.Identity.Name;
+                    proyectoActualzacion.EprEquipoDelete_UpdateAuditoria(dto);
+                }
+
+                model.Estado = 1;
+                return Json(model);
+            }
+            catch (Exception e)
+            {
+                log.Fatal(NameController, e);
+                model.Estado = -1;
+                return Json(model);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ExportarEquipoCOES(string iArea, string iFamilia,string sNombre)
+        {
+            FTProyectoModel model = new FTProyectoModel();
+
+            try
+            {
+                DateTime hoy = DateTime.Now;
+                string ruta = AppDomain.CurrentDomain.BaseDirectory + ConstantesAppServicio.PathArchivoExcel;
+                string pathLogo = AppDomain.CurrentDomain.BaseDirectory + RutaDirectorio.PathLogo;
+                string nameFile = "Reporte_Equipamiento_SGOCOES_" + hoy.Year + string.Format("{0:D2}", hoy.Month) + string.Format("{0:D2}", hoy.Day) + string.Format("{0:D2}", hoy.Hour) + string.Format("{0:D2}", hoy.Minute) + string.Format("{0:D2}", hoy.Second) + ".xlsx";
+
+                List<EqEquipoDTO> lExportar = servicioEquipamiento.ListaExportarEquipoCOES(iArea, iFamilia, sNombre).ToList();
+
+                new ProteccionHelper().GenerarExportacionEquipoCOES( pathLogo, nameFile, lExportar, base.PathFiles);
+                model.Resultado = nameFile;
+            }
+            catch (Exception ex)
+            {
+                log.Error(NameController, ex);
+                model.Resultado = "-1";
+                model.Mensaje = ex.Message;
+                model.Detalle = ex.StackTrace;
+            }
+
+            return Json(model);
+        }
+
+        [HttpGet]
+        public virtual FileResult Exportar()
+        {
+            string nombreArchivo = Request["file_name"];
+            string ruta = FileServer.GetDirectory() + base.PathFiles + "/" + ConstantesProteccion.FolderReporte + "/" + nombreArchivo;
+            byte[] buffer = null;
+
+            if (System.IO.File.Exists(ruta))
+            {
+                buffer = System.IO.File.ReadAllBytes(ruta);
+                System.IO.File.Delete(ruta);
+            }
+
+            return File(buffer, System.Net.Mime.MediaTypeNames.Application.Octet, nombreArchivo);
+        }
+
+  
+
+
+    }
+}

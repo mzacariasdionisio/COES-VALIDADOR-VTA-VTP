@@ -1,0 +1,86 @@
+﻿<script type="text/javascript">
+    var treeData = @Html.Raw(ViewBag.ArbolGrupo)
+
+    $(function () {
+
+        $("#tvGrupo").fancytree({
+            imagePath: 'http://www.coes.org.pe/appintranet/Areas/Despacho/Content/images/',
+            source: treeData,
+
+            autoActivate: false, // Automatically activate a node when it is focused (using keys).
+
+            dblclick: function (e, data) {
+               $("#tituloRele").html("Nivel: "+data.node.title);
+                var llave = data.node.key;
+                if (llave) {
+                    var lstKey = llave.split(",");
+                    if (lstKey.length == 2) {
+
+                        var equicodi = lstKey[0];
+                        var nivel = lstKey[1];
+
+                        $("#pEquicodi").val(equicodi);
+                        $("#pNivel").val(nivel);
+
+                        obtenerDetalleArbol(equicodi, nivel);
+
+                        consultar();
+
+                    } else {
+                        alert("No se pudo acceder a la opción del Árbol");
+                    }
+                } else {
+                    alert("No se pudo acceder a la opción del Árbol");
+                }
+                return false;
+            }
+        });
+
+            $("#tvGrupo").fancytree("getTree").reload().done(function () {
+                const tree = $("#tvGrupo").fancytree("getTree");
+                let setKeyNivel = $("#pNivel").val();
+                let setKeyEquiCodi = $("#pEquicodi").val();
+
+                console.log("setKeyNivel", setKeyNivel);
+                if (setKeyNivel != 0) {
+
+                    let setKeyArbol = setKeyEquiCodi + "," + setKeyNivel;
+
+                    const node = tree.getNodeByKey(setKeyArbol);
+                    if (node) {
+
+                        const parentNode = node.getParent();
+                        if (parentNode) {
+                            parentNode.setExpanded(true); // Expandir solo el padre inmediato
+                        }
+
+                        const parentNode2 = parentNode.getParent();
+                        if (parentNode2) {
+                            parentNode2.setExpanded(true); // Expandir solo el padre inmediato
+                        }
+
+                        // Contraer otros nodos que no sean parte del seleccionado
+                        tree.visit(function (currentNode) {
+
+                            if (currentNode !== node && currentNode !== parentNode && currentNode !== parentNode2) {
+                                currentNode.setExpanded(false); // Contraer nodos no relacionados
+                            }
+                        });
+
+                        obtenerDetalleArbol(setKeyEquiCodi, setKeyNivel);
+                        node.setActive(); // Selecciona el nodo
+                      
+                        document.querySelector("#tvGrupo ul").classList.remove("fancytree-treefocus");
+                    }
+                } else {
+                    tree.visit(function (node) {
+                        node.setExpanded(false); // Contraer todos los nodos
+                    });
+                }
+
+                
+            });
+    });
+</script>
+
+<div id="tvGrupo"></div>

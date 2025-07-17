@@ -1,0 +1,86 @@
+﻿// Decompiled with JetBrains decompiler
+// Type: COES.Storage.App.Metadata.Data.WbGrupoblobRepository
+// Assembly: COES.Storage.App, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+// MVID: 08842ED7-FE70-4C24-AA93-4783F0BAE549
+// Assembly location: C:\Users\jose.delgado\source\repos\ENPRUEBAS\MASTER\COES.MVC.Publico\bin\COES.Storage.App.dll
+
+using COES.Storage.App.Base.Core;
+using COES.Storage.App.Metadata.Entidad;
+using COES.Storage.App.Metadata.Helper;
+using System.Data;
+using System.Data.Common;
+
+namespace COES.Storage.App.Metadata.Data
+{
+  public class WbGrupoblobRepository : RepositoryBase
+  {
+    private WbGrupoblobHelper helper = new WbGrupoblobHelper();
+
+    public WbGrupoblobRepository(string strConn)
+      : base(strConn)
+    {
+    }
+
+    public void Save(WbGrupoblobDTO entity)
+    {
+      DbCommand sqlStringCommand = this.dbProvider.GetSqlStringCommand(this.helper.SqlSave);
+      this.dbProvider.AddInParameter(sqlStringCommand, this.helper.Grupocodi, DbType.Int32, (object) entity.Grupocodi);
+      this.dbProvider.AddInParameter(sqlStringCommand, this.helper.Blobcodi, DbType.Int32, (object) entity.Blobcodi);
+      this.dbProvider.ExecuteNonQuery(sqlStringCommand);
+    }
+
+    public void Update(WbGrupoblobDTO entity)
+    {
+      DbCommand sqlStringCommand = this.dbProvider.GetSqlStringCommand(this.helper.SqlUpdate);
+      this.dbProvider.AddInParameter(sqlStringCommand, this.helper.Grupocodi, DbType.Int32, (object) entity.Grupocodi);
+      this.dbProvider.AddInParameter(sqlStringCommand, this.helper.Blobcodi, DbType.Int32, (object) entity.Blobcodi);
+      this.dbProvider.ExecuteNonQuery(sqlStringCommand);
+    }
+
+    public void Delete(int grupocodi)
+    {
+      DbCommand sqlStringCommand = this.dbProvider.GetSqlStringCommand(this.helper.SqlDelete);
+      this.dbProvider.AddInParameter(sqlStringCommand, this.helper.Grupocodi, DbType.Int32, (object) grupocodi);
+      this.dbProvider.ExecuteNonQuery(sqlStringCommand);
+    }
+
+    public WbGrupoblobDTO GetById(int grupocodi, int blobcodi)
+    {
+      DbCommand sqlStringCommand = this.dbProvider.GetSqlStringCommand(this.helper.SqlGetById);
+      this.dbProvider.AddInParameter(sqlStringCommand, this.helper.Grupocodi, DbType.Int32, (object) grupocodi);
+      this.dbProvider.AddInParameter(sqlStringCommand, this.helper.Blobcodi, DbType.Int32, (object) blobcodi);
+      WbGrupoblobDTO wbGrupoblobDto = (WbGrupoblobDTO) null;
+      using (IDataReader dr = this.dbProvider.ExecuteReader(sqlStringCommand))
+      {
+        if (dr.Read())
+          wbGrupoblobDto = this.helper.Create(dr);
+      }
+      return wbGrupoblobDto;
+    }
+
+    public System.Collections.Generic.List<WbGrupoblobDTO> List()
+    {
+      System.Collections.Generic.List<WbGrupoblobDTO> wbGrupoblobDtoList = new System.Collections.Generic.List<WbGrupoblobDTO>();
+      using (IDataReader dr = this.dbProvider.ExecuteReader(this.dbProvider.GetSqlStringCommand(this.helper.SqlList)))
+      {
+        while (dr.Read())
+          wbGrupoblobDtoList.Add(this.helper.Create(dr));
+      }
+      return wbGrupoblobDtoList;
+    }
+
+    public System.Collections.Generic.List<WbGrupoblobDTO> GetByCriteria(
+      int grupoCodi)
+    {
+      System.Collections.Generic.List<WbGrupoblobDTO> wbGrupoblobDtoList = new System.Collections.Generic.List<WbGrupoblobDTO>();
+      DbCommand sqlStringCommand = this.dbProvider.GetSqlStringCommand(this.helper.SqlGetByCriteria);
+      this.dbProvider.AddInParameter(sqlStringCommand, this.helper.Grupocodi, DbType.Int32, (object) grupoCodi);
+      using (IDataReader dr = this.dbProvider.ExecuteReader(sqlStringCommand))
+      {
+        while (dr.Read())
+          wbGrupoblobDtoList.Add(this.helper.Create(dr));
+      }
+      return wbGrupoblobDtoList;
+    }
+  }
+}

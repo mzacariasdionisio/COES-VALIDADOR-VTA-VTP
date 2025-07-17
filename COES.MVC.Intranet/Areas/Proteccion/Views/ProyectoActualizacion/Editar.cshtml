@@ -1,0 +1,328 @@
+﻿@model COES.MVC.Intranet.Areas.Proteccion.Models.ProyectoActualizacionEditarModel
+
+<script>
+
+    $(function () {
+
+        var accion = $("#Accion").val();
+        if (accion == 'NUEV') {
+
+            $('#area').css('cssText', 'background-color: #FFFFFF!important');
+            $('#titular').css('cssText', 'background-color: #FFFFFF!important');
+            $('#codigoNemoTecnico').css('cssText', 'background-color: #FFFFFF!important');
+            $('#nombres').css('cssText', 'background-color: #FFFFFF!important');
+            $('#fecha').css('cssText', 'background-color: #FFFFFF!important');
+            $('#descripcion').css('cssText', 'background-color: #FFFFFF!important');
+
+            $('#area').prop("disabled", false);
+            $('#titular').prop("disabled", false);
+            $('#codigoNemoTecnico').prop("readonly", false);
+            $('#nombres').prop("readonly", false);
+            $('#fecha').prop("readonly", false);
+            $('#descripcion').prop("readonly", false);
+            $("input[type=radio]").attr('disabled', false);
+
+            $("#optRadioN").attr('checked', 'checked');
+            $("#btnBuscarEO").hide();
+
+        } else if (accion == 'CONS') {
+
+            $('#area').css('cssText', 'background-color: #F2F4F3!important');
+            $('#titular').css('cssText', 'background-color: #F2F4F3!important');
+            $('#codigoNemoTecnico').css('cssText', 'background-color: #F2F4F3!important');
+            $('#nombres').css('cssText', 'background-color: #F2F4F3!important');
+            $('#fecha').css('cssText', 'background-color: #F2F4F3!important');
+            $('#descripcion').css('cssText', 'background-color: #F2F4F3!important');
+
+            $('#area').prop("disabled", true);
+            $('#titular').prop("disabled", true);
+            $('#codigoNemoTecnico').prop("disabled", true);
+            $('#nombres').prop("disabled", true);
+            $('#fecha').prop("disabled", true);
+            $('#descripcion').prop("disabled", true);
+            $("input[type=radio]").attr('disabled', true);
+
+            $("#optRadioN").attr('checked', 'checked');
+            $("#btnBuscarEO").hide();
+
+        } else if (accion == 'EDIT') {
+
+            $('#area').css('cssText', 'background-color: #FFFFFF!important');
+            $('#titular').css('cssText', 'background-color: #FFFFFF!important');
+            $('#codigoNemoTecnico').css('cssText', 'background-color: #FFFFFF!important');
+            $('#nombres').css('cssText', 'background-color: #FFFFFF!important');
+            $('#fecha').css('cssText', 'background-color: #FFFFFF!important');
+            $('#descripcion').css('cssText', 'background-color: #FFFFFF!important');
+
+            $('#area').prop("disabled", false);
+            $('#titular').prop("disabled", false);
+            $('#codigoNemoTecnico').prop("readonly", false);
+            $('#nombres').prop("readonly", false);
+            $('#fecha').prop("readonly", false);
+            $('#descripcion').prop("readonly", false);
+            $("input[type=radio]").attr('disabled', false);
+
+            $("#optRadioN").attr('checked', 'checked');
+            $("#btnBuscarEO").hide();
+
+        }
+        
+        $('#btnGrabar').click(function () {
+        });
+
+        $('input[type=radio][name=CtgFlagExcluyente]').on('change', function () {
+            if ($(this).val() == "S") {
+                $("#btnBuscarEO").show();
+            } else if ($(this).val() == "N") {
+                $("#btnBuscarEO").hide();
+            }
+        });
+
+        $('#btnBuscarEO').click(function () {
+
+            abrirPopup("popupBusquedaEO");
+        });
+        
+    });
+
+    function cargarEmpresasSegunTipoConEO() {
+        limpiarBarraMensaje("mensaje_popupBusquedaEO");
+        $("#listadoEstudio").html("");
+
+        var valSel = $("#cbPBEOTipoEmpresa").val();
+        var tipo;
+
+        if (isNaN(valSel)) {
+            tipo = -3;
+        } else {
+            tipo = parseInt($("#cbPBEOTipoEmpresa").val())
+        }
+
+
+        $("#cbPBEOEmpresa").empty();
+
+
+        if (tipo == -3) {
+            mostrarMensaje('mensaje_popupBusquedaEO', 'alert', "Seleccionar un tipo de empresa correcto.");
+        } else {
+
+            $.ajax({
+                type: 'POST',
+                url: controlador + 'CargarEmpresasXTipo',
+                data: {
+                    tipoEmpresa: tipo
+                },
+
+                success: function (evt) {
+                    if (evt.Resultado != "-1") {
+                        var numEmpresas = evt.ListaEmpresas.length;
+                        if (numEmpresas > 0) {
+
+                            //Lleno una variable con todos los datos de las empresas   
+                            $('#cbPBEOEmpresa').get(0).options[0] = new Option("--  Seleccione Empresa  --", "-5");
+                            $.each(evt.ListaEmpresas, function (i, item) { //item es string                           
+                                $('#cbPBEOEmpresa').get(0).options[$('#cbPBEOEmpresa').get(0).options.length] = new Option(item.Emprnomb, item.Emprcodi); // listaIdentificadores es List<string>, si es objeto usar asi item.Pfrpernombre
+                            });
+
+                            $('#cbPBEOEmpresa').multipleSelect({
+                                filter: true,
+                                single: true,
+                                onClose: function () {
+                                }
+                            });
+                            $("#cbPBEOEmpresa").multipleSelect("setSelects", [-5]);
+
+
+                            $('#cbPBEOEmpresa').change(function () {
+                                mostrarListadoEstudioEO();
+                            });
+
+                            $('#btnConfirmarEO').unbind();
+                            $('#btnConfirmarEO').click(function () {
+                                confirmarEstudioEO();
+                            });
+
+                        } else {
+                            $('#cbPBEOEmpresa').get(0).options[0] = new Option("--  Seleccione Empresa  --", "-5");
+                        }
+                    } else {
+                        mostrarMensaje('mensaje_popupBusquedaEO', 'error', "Ha ocurrido un error: " + evt.Mensaje);
+
+                    }
+                },
+                error: function (err) {
+                    mostrarMensaje('mensaje_popupBusquedaEO', 'error', 'Se ha producido un error al cargar el listado de empresas para el tipo escogido.');
+
+                }
+            });
+        }
+    }
+
+    function abrirPopup(contentPopup) {
+        setTimeout(function () {
+            $("#" + contentPopup).bPopup({
+                easing: 'easeOutBack',
+                speed: 450,
+                transition: 'slideDown',
+                modalClose: false
+            });
+        }, 50);
+    }
+
+    function limpiarPopupBusquedaConEO() {
+        limpiarBarraMensaje("mensaje_popupBusquedaEO");
+
+        $("#cbPBEOTipoEmpresa").val("-2");
+        $("#cbPBEOEmpresa").val("-5");
+
+    }
+
+    function limpiarBarraMensaje(id) {
+        $('#' + id).css("display", "none");
+        $('#' + id).removeClass();
+        $('#' + id).addClass('action-message');
+        $('#' + id).html('');
+    }
+
+    function cerrarPopup(id) {
+        $("#" + id).bPopup().close()
+    }
+
+</script>
+
+<style>
+    textarea {
+        resize: none;
+    }
+</style>
+
+<div class="panel-container">
+    @using (Html.BeginForm("Editar", "Area", FormMethod.Post, new { @name = "frmEditarProyecto", id = "frmEditarProyecto" }))
+    {
+        @Html.HiddenFor(m => m.Codigo)
+        @Html.HiddenFor(m => m.Accion)
+        @Html.HiddenFor(m => m.ListaEstadoFlag)
+
+        <table style="width:100%;margin-right: auto" class="table-form-show">
+            <tr>
+                <th style="width:25%"></th>
+                <th style="width:40%"></th>
+                <th style="width:45%"></th>
+
+            </tr>
+            <tr>
+                <td class="tbform-label">Área(*):</td>
+                <td class="tbform-control">
+                    @(Html.DropDownList("area", new SelectList(Model.ListaArea, "Areacodi", "Areanomb", Model.idArea), new { style = "width: 100%;" }))
+                </td>
+                <td class="tbform-label">
+                    ¿Tiene Estudio EO?
+                    @foreach (var item in Model.ListaEstadoFlag)
+                    {
+                        <label>
+                            <input type="radio" name="CtgFlagExcluyente" id="optRadio@(item.EstadoCodigo)" value="@item.EstadoCodigo">
+                            <span>@item.EstadoDescripcion</span>
+                        </label>
+                    }
+                    <input id="btnBuscarEO" value="Buscar EO" type="button">
+                </td>
+
+
+            </tr>
+
+            <tr>
+                <td class="tbform-label">Titular(*):</td>
+                <td class="tbform-control">
+                    @(Html.DropDownList("titular", new SelectList(Model.listaTitular, "Emprcodi", "Emprnomb", Model.idFamilia), new { style = "width: 100%;" }))
+                </td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Código(*):</td>
+                <td class="tbform-control">
+                    <input type="text" id="codigoNemoTecnico" name="codigo" style="width: 100%;" value="@Model.CodigoNemoTecnico" maxlength="20" />
+                </td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Nombre(*):</td>
+                <td class="tbform-control">
+                    <input type="text" id="nombres" name="nombres" style="width: 100%;" value="@Model.Nombre" maxlength="200" />
+                </td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Fecha(*):</td>
+                <td class="tbform-control">
+                    <input type="text" id="fecha" name="fecha" style="width: 100%;" value="@Model.FechaRegistro" />
+                </td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Descripción:</td>
+                <td class="tbform-control">
+                    <textarea type="text" id="descripcion" name="descripcion" style="width: 100%;" rows="10" cols="32" maxlength="1000">@Model.Descripcion</textarea>
+                </td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td>
+                    @if (Model.Accion != "CONS")
+                    {
+                        <input id="btnGrabar" value="Grabar" type="button">
+                    }
+
+
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    }
+</div>
+
+<div id="popupBusquedaEO" class="popup-class-1 general-popup" style="width: 800px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Busqueda Estudio EO</span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupBusquedaEO"></div>
+        <div id="" style="margin-top: 10px;"></div>
+        <div class="search-content">
+
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <th><th>
+                    <th><th>
+                    <th><th>
+                    <th><th>
+                </tr>
+                <tr>
+                    <td style="padding-right: 5px;">Tipo Empresa:</td>
+                    <td>
+                        <select id="cbPBEOTipoEmpresa">
+                            <option value="-2">[Todos]</option>
+                        </select>
+                    </td>
+
+                    <td style="padding-right: 5px;">Empresa:</td>
+                    <td>
+                        <select id="cbPBEOEmpresa" style="width: 350px;">
+                            <option value="-5">--  Seleccione Empresa  --</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div>
+            <div id="listadoEstudio">
+            </div>
+        </div>
+        <div>
+            <div style="width: 200px; margin: 0 auto;">
+                <input type="submit" id="btnConfirmarEO" value="Confirmar" style="margin-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupBusquedaEO')">
+            </div>
+        </div>
+
+    </div>
+</div>
+

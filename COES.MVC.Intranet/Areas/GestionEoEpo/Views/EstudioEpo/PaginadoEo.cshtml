@@ -1,0 +1,121 @@
+﻿<script type="text/javascript">
+
+    function cargarPrimeraPaginaEo() {
+        var id = 1;
+        $('#hfPaginaActualEo').val(id);
+        mostrarPaginadoEo();
+        pintarBusquedaEo(id);
+    }
+
+    function cargarAnteriorPaginaEo() {
+        var id = $('#hfPaginaActualEo').val();
+        if (id > 1) {
+            id = id - 1;
+            $('#hfPaginaActualEo').val(id);
+            mostrarPaginadoEo();
+            pintarBusquedaEo(id);
+        }
+    }
+
+    function cargarPaginaEo(id) {
+        $('#hfPaginaActualEo').val(id);
+        mostrarPaginadoEo();
+        pintarBusquedaEo(id);
+    }
+
+    function cargarSiguientePaginaEo() {
+        var id = parseInt($('#hfPaginaActualEo').val()) + 1;
+        $('#hfPaginaActualEo').val(id);
+        mostrarPaginadoEo();
+        pintarBusquedaEo(id);
+    }
+
+    function cargarUltimaPaginaEo() {
+        var id = $('#hfNroPaginasEo').val();
+        $('#hfPaginaActualEo').val(id);
+        mostrarPaginadoEo();
+        pintarBusquedaEo(id);
+    }
+
+    function mostrarPaginadoEo() {
+        var nroToShow = parseInt($('#hfNroMostrarEo').val());
+        var nroPaginas = parseInt($('#hfNroPaginasEo').val());
+        var nroActual = parseInt($('#hfPaginaActualEo').val());
+
+        $('.pag-iniEo').css('display', 'none');
+        $('.pag-itemEpo').css('display', 'none');
+        $('.pag-finEo').css('display', 'none');
+        $('.pag-itemEpo').removeClass('paginado-activo');
+
+        $('#pagEpo' + nroActual).addClass('paginado-activo');
+
+        if (nroToShow - nroPaginas >= 0) {
+            $('.pag-itemEpo').css('display', 'block');
+            $('.pag-iniEo').css('display', 'none');
+            $('.pag-finEo').css('display', 'none');
+        }
+        else {
+            $('.pag-finEo').css('display', 'block');
+            if (nroActual > 1) {
+                $('.pag-iniEo').css('display', 'block');
+            }
+            var anterior = 0;
+            var siguiente = 0;
+
+            if (nroActual == 1) {
+
+                anterior = 1;
+                siguiente = nroToShow;
+            }
+            else {
+                if (nroActual + nroToShow - 1 - nroPaginas > 0) {
+                    siguiente = nroPaginas;
+                    anterior = nroPaginas - nroToShow + 1;
+                }
+                else {
+                    anterior = nroActual;
+                    siguiente = nroActual + nroToShow - 1;
+                }
+            }
+
+            for (j = anterior; j <= siguiente; j++) {
+                $('#pagEpo' + j).css('display', 'block')
+            }
+        }
+    }
+
+</script>
+
+@if (Model.IndicadorPagina == true)
+{
+    if (Model.CantidadRegistros != null)
+    {
+        if (Model.CantidadRegistros.Length > 0)
+        {
+            <div class="paginado" style="float:left !important">
+                Mostrar
+                <select id="ddlCantidadRegistrosEo" onchange="CargarRegistrosEo()">
+                    @foreach (var item in Model.CantidadRegistros)
+                    {
+                        <option value="@item">@item</option>
+                    }
+                </select> registro(s)
+            </div>
+        }
+    }
+
+    <div class="paginado" style="margin-bottom:0">
+        <div id="pagFirst" class="pag-iniEo"><a href="JavaScript:cargarPrimeraPaginaEo();"><<</a></div>
+        <div id="pagPrev" class="pag-iniEo"><a href="JavaScript:cargarAnteriorPaginaEo();"><</a></div>
+        @for (int i = 1; i <= Model.NroPaginas; i++)
+        {
+            <div class="pag-itemEpo" id="@("pagEpo" + i)" style="display:none"><a href="JavaScript:cargarPaginaEo(@i);"><span>@i</span></a></div>
+        }
+        <div id="pagNext" class="pag-finEo"><a href="JavaScript:cargarSiguientePaginaEo();">></a></div>
+        <div id="pagLast" class="pag-finEo"><a href="JavaScript:cargarUltimaPaginaEo();">>></a></div>
+    </div>
+
+    <input type="hidden" id="hfPaginaActualEo" value="1" />
+    <input type="hidden" id="hfNroPaginasEo" value="@Model.NroPaginas" />
+    <input type="hidden" id="hfNroMostrarEo" value="@Model.NroMostrar" />
+}

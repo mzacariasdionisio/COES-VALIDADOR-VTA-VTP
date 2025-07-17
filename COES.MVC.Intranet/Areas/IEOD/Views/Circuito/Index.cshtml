@@ -1,0 +1,197 @@
+﻿@model COES.MVC.Intranet.Areas.IEOD.Models.CircuitoModel
+@{
+    ViewBag.Title = "Dependencia de Equipos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/multiselect.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+<script src="~/Content/Scripts/contextmenu.js"></script>
+
+<script src="~/Content/Scripts/highcharts.js"></script>
+<script src="~/Content/Scripts/highcharts_sankey.js"></script>
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<link href="~/Areas/IEOD/Content/Css/css.css?v=1.6" rel="stylesheet" />
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Areas/IEOD/Content/Scripts/circuito/circuito.js?v=1.5.2"></script>
+
+<style>
+    select:disabled {
+        background: lightgray;
+        color: #4876AA;
+    }
+
+    #vistaDetalle table tr td {
+        vertical-align: inherit;
+    }
+</style>
+
+<div class="form-title">
+    <div class="content-titulo">Dependencia de Equipos</div>
+    <div class="content-botonera">
+        <input type="button" id="btnNuevo" value="Nuevo Circuito">
+        <input type="button" id="btnManualUsuario" value="Manual de Usuario" style="display: none" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div class="search-content">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Empresas:</td>
+                <td>
+                    <select id="cbFiltroEmpresa" name="cbFiltroEmpresa" style="width:250px;" multiple="multiple">
+
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                    <input type="hidden" id="hfEmpresa" name="hfEmpresa" />
+                </td>
+                <td>
+                    <input type="button" id="btnConsultar" value="Consultar">
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="content-tabla">
+        <div style="clear:both; height:5px"></div>
+
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#vistaListado">Listado</a></li>
+                <li class='tab'><a href="#vistaDetalle">Detalle</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="vistaListado">
+                    <div class="table-list" id="listado1">
+                        <div id="resultado">
+
+                        </div>
+                    </div>
+                </div>
+                <div id="vistaDetalle">
+                    <div class="content-tabla" id="formularioCircuito" style="display: none">
+                        <fieldset style="margin:10px">
+
+                            <legend>Registro de Circuito</legend>
+
+                            <table style="width: 410px;">
+                                <tr>
+                                    <td style="width:30px">Empresa:</td>
+                                    <td>
+                                        <input type="hidden" id="cboEmpresa" />
+                                        <input type="text" id="nomEmpresa" disabled />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width:30px">Ubicación:</td>
+                                    <td>
+                                        <input type="hidden" id="cboUbicacion">
+                                        <input type="text" id="nomUbicacion" disabled>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width:30px">Equipo:</td>
+                                    <td>
+                                        <input type="hidden" id="cboEquipo">
+                                        <input type="text" id="nomEquipo" disabled>
+                                        <input type="hidden" id="famAbrev">
+                                    </td>
+                                    <td>
+                                        <input type="button" value="Seleccionar" id="btnBuscarEquipoPopup">
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="width:120px;padding-top: 14px;">Nombre Circuito:</td>
+                                    <td style="padding-top: 14px;">
+                                        <input type="text" id="nomCircuito" />
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div>
+                                <table style="width: 1100px;margin-top: 35px;">
+                                    <tr>
+                                        <td style="width: 133px;">    <h3>Detalle del circuito</h3></td>
+                                        <td>
+                                            <input type="button" id="btnAgregarDetEquipo" value="Agregar Equipos o Circuitos" style="margin-left: 0px;display: none;    text-align: left;" />
+
+                                            <input type="hidden" id="hfHoDetalleJson" value="" />
+
+                                            <input type="button" id="btnAgregarDetEquipo" value="Agregar Equipo" style="margin-left: 0px;display: none" />
+                                            <input type="hidden" id="circ_det_nomEmpresa" />
+                                            <input type="hidden" id="circ_det_nomUbicacion">
+                                            <input type="hidden" id="circ_det_cboEquipo">
+                                            <input type="hidden" id="circ_det_nomEquipo">
+                                            <input type="hidden" id="circ_det_famAbrev">
+
+                                            <input type="hidden" id="circ_det_cboCircuitoDet">
+                                            <input type="hidden" id="circ_det_nomCircuito">
+                                        </td>
+                                    </tr>
+                                    <tr style="margin-top: 55px;">
+                                        <td></td>
+                                        <td style="float:right;">                                           
+                                            <table>
+                                                <tr>
+                                                    <td>
+                                                        <span style="display: inline-table; ">Todos los estados </span>
+                                                        <input type="checkbox" id="check_estado_todos" style="margin-top: 5px;" checked>
+
+                                                    </td>
+                                                    <td style="width:90px; padding-left: 50px;">Vigencia Hasta:</td>
+                                                    <td>
+                                                        <input type="hidden" id="fecMaxVigencia" />
+                                                        <input type="text" id="datepickerMax" name="fila_det_fechaMaxVigencia" style="width:100px;" data - zdp_direction="1">
+                                                    </td>
+
+                                                </tr>
+                                                
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr style="margin-top: 15px;">
+                                        <td></td>
+                                        <td>
+                                            <div id="tablaDetalleCircuito"></div>
+
+
+
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div style="margin-top: 20px; width: 1200px;">
+                                <table class="btnAcciones" style="width: 150px; margin: 0 auto;">
+                                    <tr>
+                                        <td>
+                                            <input type="button" id="btnAceptar2" value="Aceptar" />
+                                        </td>
+                                        <td>
+                                            <input type="button" id="btnCancelar2" value="Cancelar" />
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="busquedaEquipo" class="general-popup" style="z-index: 9999999999; display: none; width: 950px; height:500px">
+</div>
+
+<input type="hidden" id="hfCodigo" value="0" />

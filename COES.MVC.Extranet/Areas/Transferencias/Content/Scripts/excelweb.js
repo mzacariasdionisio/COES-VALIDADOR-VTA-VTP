@@ -1,0 +1,941 @@
+﻿var controlador = siteRoot + 'transferencias/envio/';
+var uploader;
+var totNoNumero = 0;
+var totLimSup = 0;
+var totLimInf = 0;
+var listErrores = [];
+var listDescripErrores = ["BLANCO", "NÚMERO", "No es número", "Valor negativo", "Supera el valor máximo"];
+var listValInf = [];
+var listValSup = [];
+var validaInicial = true;
+var hot;
+var hotOptions;
+var evtHot;
+var consulta = false;
+
+$(function () {
+
+    $('#txtMes').Zebra_DatePicker({
+        format: 'm Y'
+    });
+
+    $('#btnConsultar').click(function () {
+
+        $.ajax({
+            type: 'POST',
+            url: controlador + "ObtenerUltimoEnvio",
+            dataType: 'json',
+            data: {
+                idEmpresa: $('#cbEmpresa').val(),                
+                mes: $('#txtMes').val()
+            },
+            success: function (result) {
+                $('#hfIdEnvio').val(result);
+                cargarExcelWeb();
+                consulta = 1;
+            },
+            error: function () {
+                alert("Error al cargar Excel Web");
+            }
+        });
+        
+    });    
+
+    $('#btnDescargarFormato').click(function () {
+        if (consulta) {
+            if (validarSeleccionDatos()) {
+                descargarFormato();
+            }
+            else {
+                alert("Por favor seleccione la empresa correcta.");
+            }
+        }
+        else {
+            alert("Por favor consulte los puntos de medición.");
+        }
+
+        //if (validarSeleccionDatos()) {
+        //    descargarFormato();
+        //}
+        //else {
+        //    alert("Por favor seleccione la empresa correcta.");
+        //}
+    });
+
+
+    $('#btnEnviarDatos').click(function () {
+        if (validarSeleccionDatos()) {
+            //alert("IdEnvio: " + $("#hfIdEnvio").val());
+            //if ($("#hfIdEnvio").val() != 0) {//Verificamos que se muestre la información previa del periodo
+                if (!evtHot.EnPlazo) {//Verificamos que se encuentre en plazo de envio
+                    var mensaje = mostrarMensajeEnvio();
+                    if (!evtHot.Handson.ReadOnly) {
+                        enviarDatos();
+                    }
+                    mostrarMensaje("<strong>Plazos del envío: </strong>" + mensaje);
+                } else {
+                    enviarDatos();
+                }
+            //} else {
+            //    mostrarMensaje("Por favor muestre la información del periodo actual.");      
+            //}
+        }
+    });
+
+    $('#btnMostrarErrores').click(function () {
+
+        if (consulta) {
+            if (validarSeleccionDatos()) {
+                mostrarErrores();
+            }
+            else {
+                alert("Por favor seleccione la empresa correcta.");
+            }
+        }
+        else {
+            alert("Por favor consulte los puntos de medición.");
+        }
+
+
+        //if (validarSeleccionDatos()) {
+        //    mostrarErrores();
+        //}
+        //else {
+        //    alert("Por favor seleccione la empresa correcta.");
+        //}
+    });
+
+    $('#btnVerEnvios').click(function () {
+        if (consulta) {
+            if (validarSeleccionDatos()) {
+                popUpListaEnvios();
+            }
+            else {
+                alert("Por favor seleccione la empresa correcta.");
+            }
+        }
+        else {
+            alert("Por favor consulte los puntos de medición.");
+        }
+
+
+
+        //if (validarSeleccionDatos()) {
+        //    popUpListaEnvios();
+        //}
+        //else {
+        //    alert("Por favor seleccione la empresa correcta.");
+        //}
+    });
+
+    //$('#btnValidar').click(function () {
+    //    $.ajax({
+    //        type: 'POST',
+    //        url: controlador + "SaveSessionEmpPeriodo",
+    //        dataType: 'json',
+    //        data: {
+    //            idEmpresa: $('#cbEmpresa').val(),
+    //            mes: $('#txtMes').val()
+    //        },
+    //        success: function (result) {
+    //            if (result == 0) {
+    //                var mensaje = "No es posible realizar la Validación de Coherencia Historica porque no se ha remitido el periodo actual.";
+    //                mostrarError(mensaje);
+    //            } else if(result == 1) {
+    //                var mensaje = "No es posible realizar la Validación de Coherencia Historica porque la empresa no remitio su información el mes pasado.";
+    //                mostrarError(mensaje);
+    //            } else {                   
+    //                OpenUrl('', 'F', 506, 'demandaMaxima/validacion', 'index');
+    //            }
+
+                
+    //        },
+    //        error: function () {
+    //            alert("Error al guardar los parametros de session");
+    //        }
+    //    });
+    //});
+
+    $('#btnExpandirRestaurar').click(function () {
+
+        if ($('#hfExpandirContraer').val() == "E") {
+            expandirExcel();
+            calculateSize2(1);
+            $('#hfExpandirContraer').val("C");
+            $('#spanExpandirContraer').text('Restaurar');
+
+            var img = $('#imgExpandirContraer').attr('src');
+            var newImg = img.replace('expandir.png', 'contraer.png');
+            $('#imgExpandirContraer').attr('src', newImg);
+
+        }
+        else {
+            restaurarExcel();
+            calculateSize2(2);
+            $('#hfExpandirContraer').val("E");
+            $('#spanExpandirContraer').text('Expandir');
+
+            var img = $('#imgExpandirContraer').attr('src');
+            var newImg = img.replace('contraer.png', 'expandir.png');
+            $('#imgExpandirContraer').attr('src', newImg);
+
+        }
+    });
+
+    crearPupload();
+
+    if ($('#hfMensajeError').val() != "")
+    {
+        mostrarError($('#hfMensajeError').val());
+    }
+
+
+});
+
+function crearHojaWeb() {
+
+    getModelFormato();
+
+    
+}
+
+function cargarExcelWeb() {
+    if (typeof hot != 'undefined') {
+        hot.destroy();
+    }
+    $('#hfEmpresa').val($('#cbEmpresa').val());
+    $('#hfMes').val($('#txtMes').val());
+
+    totNoNumero = 0;
+    validaInicial = true;
+    listErrores.splice(0, listErrores.length);
+
+    crearHojaWeb();
+
+    
+}
+
+function CargarDataExcelWeb(accion) {
+   
+
+    hot.destroy();
+    getModelFormato(accion);
+   
+}
+
+function validarSeleccionDatos() {
+    if (!($('#hfEmpresa').val() == $('#cbEmpresa').val() && $('#txtMes').val() == $('#hfMes').val())) {
+        return false;
+    }
+    return true;
+}
+
+//////////////////////////////////////////// crearHojaWeb ////////////////////////////////////////////////
+/// Llamada por Ajax para conseguir del servidor la informacion del Formato//////////////////////////
+function getModelFormato(accion) {
+
+    idEmpresa = $("#hfEmpresa").val();
+    idEnvio = $("#hfIdEnvio").val();
+    mes = $("#hfMes").val();
+
+    $.ajax({
+        type: 'POST',
+        url: controlador + "MostrarHojaExcelWeb",
+        dataType: 'json',
+
+        data: {
+            idEmpresa: idEmpresa,
+            idEnvio: idEnvio,
+            mes: mes
+        },
+        success: function (evt) {
+
+            //mostrarMensajeFecha("Fecha y hora de máxima demanda del periodo: <strong>" + evt.fechaMaximaDemanda + "</strong>");
+            if (evt != -1 && evt != -2) {
+
+                $.ajax({
+                    type: 'POST',
+                    url: controlador + 'descargardatos',
+                    dataType: 'json',
+                    success: function (datos) {
+                        evt.Handson.ListaExcelData = datos;
+                        crearHandsonTable(evt);
+                        evtHot = evt;
+
+                        if (accion == 2) {
+
+                            var mensaje = mostrarMensajeEnvio();
+                            mostrarExito("Los datos se enviaron correctamente. " + mensaje);
+                            
+                        }
+                        else if (accion == 5) {
+                            mostrarExito("<strong>Por favor presione el botón enviar para grabar los datos</strong>");
+
+                        }
+                        else {
+                            var mensaje = mostrarMensajeEnvio();
+                            //Cambios JDEL [Inicio] 08/04/2016 --Modificar Mensaje
+                            mostrarMensaje("<strong>Plazos del envío: </strong>" + mensaje);
+                            //mostrarMensaje("Por favor complete los datos. <strong>Plazos del envío: </strong>" + mensaje);
+                            //JDEL [Fin]
+
+                            $('#divAcciones').css('display', 'block');
+                        }
+                        
+                    },
+                    error: function () {
+                        alert("Ha ocurrido un error");
+                    }
+                });
+            }else if (evt != -2) {
+                alert("La empresa no tiene puntos de medición para cargar.");
+                document.location.href = controlador + 'index';
+            }
+            else {
+                alert("La empresa no se encuentra activa.");
+                document.location.href = controlador + 'index';
+            }
+        },
+        error: function () {
+            alert("Error al cargar Excel Web");
+        }
+    });
+}
+
+/// Muestra los envios anteriores
+function dibujarTablaEnvios(lista) {
+
+    var cadena = "<div style='clear:both; height:5px'></div> ";
+    cadena += "<table id='tablalenvio' border='1' class='pretty tabla-adicional' cellspacing='0'>";
+    cadena += "<thead><tr><th>Id Envío</th><th>Fecha Hora</th><th>Usuario</th></tr></thead>";
+    cadena += "<tbody>";
+
+    for (key in lista) {
+        var javaScriptDate = new Date(parseInt(lista[key].Enviofecha.substr(6)));
+        cadena += "<tr onclick='mostrarEnvioExcelWeb(" + lista[key].Enviocodi + ");' style='cursor:pointer'><td>" + lista[key].Enviocodi + "</td>";
+        cadena += "<td>" + getFormattedDate(javaScriptDate) + "</td>";
+        cadena += "<td>" + lista[key].Lastuser + "</td></tr>";
+    }
+    cadena += "</tbody></table>";
+    return cadena;
+
+}
+
+/// Muestra los editores
+function dibujarTablaEditor(lista, empresas) {
+
+    var cadena = "<div style='clear:both; height:5px'></div> ";
+    cadena += "<table id='tablaeditor' border='1' class='pretty tabla-adicional' cellspacing='0'>";
+    cadena += "<thead><tr><th>Punto de Medición</th><th>Empresa Suministradora del Periodo</th></tr></thead>";
+    cadena += "<tbody>";
+
+    for (key in lista) {
+        cadena += "<tr><td>" + lista[key].Ptomedidesc + "</td>";
+        cadena += "<td>";
+
+        var cadEmp = "<select style='width:280px;' id=\"cb"+lista[key].Ptomedicodi+"\" name=\"cb"+lista[key].Ptomedicodi+"\">";
+        cadEmp += " <option value=\"\">-- SELECCIONE --</option>";
+        for (emp in empresas) {
+
+            if (empresas[emp].Emprcodi == lista[key].SelEmprcodi) {
+                cadEmp += "<option selected value=\"" + empresas[emp].Emprcodi + "\">" + empresas[emp].Emprnomb + "</option>";
+            } else {
+                cadEmp += "<option value=\"" + empresas[emp].Emprcodi + "\">" + empresas[emp].Emprnomb + "</option>";
+            }        
+        }
+        cadEmp += "</select>"
+
+        cadena += cadEmp + "</td></tr>";
+
+    }
+    cadena += "</tbody></table>";
+    return cadena;
+
+}
+
+////// Carga el Formato con nueva informacion (ya sea despues de grabar la data,envio anterior, etc)
+
+
+
+
+// Actualiza datos de web excel
+function actualizaDataExcel() {
+    hot.loadData(evtHot.Handson.ListaExcelData);
+}
+
+function mostrarEnvioExcelWeb(envio) {
+    $('#enviosanteriores').bPopup().close();
+    $("#hfIdEnvio").val(envio);
+
+
+    CargarDataExcelWeb(4);
+
+
+    var mensaje = mostrarMensajeEnvio();
+    mostrarExito(mensaje);
+
+}
+
+function mostrarFormatoExcelWeb() {
+    getModelFormato();
+    crearHandsonTable();
+}
+
+validarExcelWeb = function (data, rowini, colini) {
+    var retorno = true;
+    var totBlancos = getTotBlancos(data, rowini, colini);
+    if ((totLimInf + totLimSup + totNoNumero) > 0) {
+        mostrarAlerta("Existen celdas con valores no nùmericos, favor corregir y vuelva a envíar");
+        mostrarErrores();
+        retorno = false;
+    }
+
+    return retorno;
+}
+
+function limpiarError() {
+    totLimInf = 0;
+    totLimSup = 0;
+    totNoNumero = 0;
+    listErrores = [];
+}
+
+function formatFloat(num, casasDec, sepDecimal, sepMilhar) {
+
+    if (num < 0) {
+        num = -num;
+        sinal = -1;
+    } else
+        sinal = 1;
+    var resposta = "";
+    var part = "";
+    if (num != Math.floor(num)) // decimal values present
+    {
+        part = Math.round((num - Math.floor(num)) * Math.pow(10, casasDec)).toString(); // transforms decimal part into integer (rounded)
+        while (part.length < casasDec)
+            part = '0' + part;
+        if (casasDec > 0) {
+            resposta = sepDecimal + part;
+            num = Math.floor(num);
+        } else
+            num = Math.round(num);
+    } // end of decimal part
+    else {
+        while (part.length < casasDec)
+            part = '0' + part;
+        if (casasDec > 0) {
+            resposta = sepDecimal + part;
+        }
+    }
+    while (num > 0) // integer part
+    {
+        part = (num - Math.floor(num / 1000) * 1000).toString(); // part = three less significant digits
+        num = Math.floor(num / 1000);
+        if (num > 0)
+            while (part.length < 3) // 123.023.123  if sepMilhar = '.'
+                part = '0' + part; // 023
+        resposta = part + resposta;
+        if (num > 0)
+            resposta = sepMilhar + resposta;
+    }
+    if (sinal < 0)
+        resposta = '-' + resposta;
+    return resposta;
+}
+
+function mostrarErrores() {
+    $('#idTerrores').html(dibujarTablaError());
+    setTimeout(function () {
+        $('#validaciones').bPopup({
+            easing: 'easeOutBack',
+            speed: 450,
+            transition: 'slideDown',
+            modalClose: false
+        });
+        $('#tablaError').dataTable({
+            "scrollY": 330,
+            "scrollX": true,
+            "sDom": 't',
+            "ordering": false,
+            "bPaginate": false,
+            "iDisplayLength": -1
+        });
+
+    }, 50);
+}
+
+function popUpListaEnvios() {
+    $('#idEnviosAnteriores').html(dibujarTablaEnvios(evtHot.ListaEnvios));
+    setTimeout(function () {
+        $('#enviosanteriores').bPopup({
+            easing: 'easeOutBack',
+            speed: 450,
+            transition: 'slideDown',
+            modalClose: false
+        });
+        $('#tablalenvio').dataTable({
+            "scrollY": 330,
+            "scrollX": true,
+            "sDom": 't',
+            "ordering": false,
+            "bPaginate": false,
+            "iDisplayLength": -1
+        });
+    }, 50);
+}
+
+function popUpEditarSuministro() {
+    $('#idEditorSuministro').html(dibujarTablaEditor(evtHot.ListaPtoSuministrador, evtHot.ListaEmpresasSuministradoras));
+    setTimeout(function () {
+        $('#editorsuministro').bPopup({
+            easing: 'easeOutBack',
+            speed: 450,
+            transition: 'slideDown',
+            modalClose: false
+        });
+        $('#tablaeditor').dataTable({
+            "scrollY": 330,
+            "scrollX": true,
+            "sDom": 't',
+            "ordering": false,
+            "bPaginate": false,
+            "iDisplayLength": -1
+        });
+    }, 50);
+
+    $('#btnCancelar').click(function () {
+        $('#editorsuministro').bPopup().close();
+    });
+
+    $('#btnGrabarEditor').click(function () {
+        grabarEditor();
+    });
+
+    mostrarMensaje2("Por favor complete los datos y guarde los cambios.");
+}
+
+grabarEditor = function () {
+
+    var list = evtHot.ListaPtoSuministrador;
+
+    var values = "";
+    for (key in list) {
+
+
+        if($("#cb" + list[key].Ptomedicodi).val() == ""){
+
+            mostrarMensaje2("Por favor seleccione la empresa.");
+            return;
+
+        }
+
+        if (values == "") {
+            values = $("#cb" + list[key].Ptomedicodi).val();
+        } else {
+            values += "|" + $("#cb" + list[key].Ptomedicodi).val();
+        }
+    }
+
+    $.ajax({
+        type: 'POST',
+        url: controlador + "grabarEditor",
+        dataType: 'json',
+        data: {
+            datos: values,
+            idEmpresa: $('#cbEmpresa').val(),
+            mes: $('#txtMes').val()
+        },
+        success: function (result) {            
+            $('#editorsuministro').bPopup().close();
+            consultarPuntos();
+        },
+        error: function () {
+            alert("Error al cargar Excel Web");
+        }
+    });
+}
+
+function consultarPuntos() {
+    $.ajax({
+        type: 'POST',
+        url: controlador + "ObtenerUltimoEnvio",
+        dataType: 'json',
+        data: {
+            idEmpresa: $('#cbEmpresa').val(),
+            mes: $('#txtMes').val()
+        },
+        success: function (result) {
+            $('#hfIdEnvio').val(result);
+            cargarExcelWeb();
+        },
+        error: function () {
+            alert("Error al cargar Excel Web");
+        }
+    });
+}
+
+
+function dibujarTablaError() {
+    var cadena = "<div style='clear:both; height:5px'></div> ";
+    cadena += "<table id='tablaError' border='1' class='pretty tabla-adicional' cellspacing='0'>";
+    cadena += "<thead><tr><th>Celda</th><th>Valor</th><th>Error</th></tr></thead>";
+    cadena += "<tbody>";
+    var len = listErrores.length;
+    for (var i = 0 ; i < len ; i++) {
+        cadena += "<tr><td>" + listErrores[i].Celda + "</td>";
+        cadena += "<td>" + listErrores[i].Valor + "</td>";
+        cadena += "<td>" + listDescripErrores[listErrores[i].Tipo] + "</td></tr>";
+    }
+    cadena += "</tbody></table>";
+    return cadena;
+}
+
+function agregarError(celda, valor, tipo) {
+
+    if (validarError(celda)) {
+        var regError = {
+            Celda: celda,
+            Valor: valor,
+            Tipo: tipo
+        };
+        listErrores.push(regError);
+        switch (tipo) {
+            case 2:
+                totNoNumero++;
+                break;
+            case 3:
+                totLimInf++;
+                break;
+            case 4:
+                totLimSup++;
+                break;
+        }
+    }
+}
+
+function validarError(celda) {
+    for (var j in listErrores) {
+        if (listErrores[j]['Celda'] == celda) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function eliminarError(celda, tipoError) {
+    var index = IndexOfError(celda);
+    if (index != -1) {
+        listErrores.splice(index, 1);
+    }
+    switch (tipoError) {
+        case 2:
+            totNoNumero--;
+            break;
+        case 3:
+            totLimInf--;
+            break;
+        case 4:
+            totLimSup--;
+            break;
+    }
+}
+
+function IndexOfError(celda) {
+    var index = -1;
+    //alert(celda);
+    for (var i = 0; i < listErrores.length; i++) {
+        if (listErrores[i].Celda == celda) {
+            index = i;
+            break;
+        }
+    }
+
+    return index;
+}
+
+function getExcelColumnName(pi_columnNumber) {
+    var li_dividend = pi_columnNumber;
+    var ls_columnName = "";
+    var li_modulo;
+
+    while (li_dividend > 0) {
+        li_modulo = (li_dividend - 1) % 26;
+        ls_columnName = String.fromCharCode(65 + li_modulo) + ls_columnName;
+        li_dividend = Math.floor((li_dividend - li_modulo) / 26);
+    }
+
+    return ls_columnName;
+}
+
+function getFormattedDate(date) {
+    if (date instanceof Date) {
+        var year = date.getFullYear();
+        var month = (1 + date.getMonth()).toString();
+        month = month.length > 1 ? month : '0' + month;
+        var day = date.getDate().toString();
+        day = day.length > 1 ? day : '0' + day;
+        var hours = date.getHours();
+        var minutes = date.getMinutes();
+        var ampm = hours >= 12 ? 'pm' : 'am';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        var strTime = hours + ':' + minutes + ' ' + ampm;
+
+        return year + '/' + month + '/' + day + " " + strTime;
+    }
+    else {
+        return "No es fecha";
+    }
+}
+
+descargarFormato = function () {
+    $.ajax({
+        type: 'POST',
+        url: controlador + 'generarformato',
+        dataType: 'json',
+        data: {
+            idEmpresa: $('#hfEmpresa').val(),
+            mes: $('#hfMes').val()
+        },
+        success: function (result) {
+            if (result == "1") {
+                window.location = controlador + 'descargarformato';
+            }
+            else {
+                alert(result);
+            }
+        },
+        error: function () {
+            alert("Error");
+        }
+    });
+}
+
+function enviarDatos() {
+    if (confirm("¿Desea enviar información a COES?")) {
+
+        var $container = $('#detalleFormato');
+        if (validarExcelWeb(hot.getData(), evtHot.FilasCabecera, evtHot.ColumnasCabecera)) {
+            $('#hfDataExcel').val((hot.getData()));
+            $.ajax({
+                type: 'POST',
+                dataType: 'json',
+                url: controlador + "GrabarExcelWeb",
+                data: {
+                    dataExcel: $('#hfDataExcel').val(),
+                    idEmpresa: $('#hfEmpresa').val(),
+                    mes: $('#hfMes').val()
+                },
+                beforeSend: function () {
+                    mostrarAlerta("Enviando Información ..");
+                },
+                success: function (evt) {
+                    if (evt.Resultado == 1) {
+                        $("#hfIdEnvio").val(evt.IdEnvio);
+                        CargarDataExcelWeb(2);                       
+                    }
+                    else {
+                        mostrarError("Error al Grabar");
+                    }
+                },
+                error: function () {
+                    mostrarError();
+                }
+            });
+        }
+    }
+}
+
+function leerFileUpExcel() {
+    var retorno = 0;
+    $.ajax({
+        type: 'POST',
+        url: controlador + 'LeerFileUpExcel',
+        dataType: 'json',
+        async: false,
+        data: {
+            idEmpresa: $('#hfEmpresa').val(),
+            mes: $('#hfMes').val()
+        },
+        success: function (res) {
+            retorno = res;
+        },
+        error: function () {
+            mostrarError("Ha ocurrido un error");
+        }
+    });
+    return retorno;
+}
+
+function expandirExcel() {
+    $('#idpanel').addClass("divexcel");
+    hot.render();
+}
+
+function restaurarExcel() {
+    $('#idpanel').removeClass("divexcel");
+    hot.render();
+}
+
+function getTipoError(value, limiteInf, limiteSup) {
+    if (value == "")
+        return 0; // blanco
+    if (isNaN(value)) {
+        return 2; // no numero
+    }
+    if (parseInt(value, 10) < limiteInf) {
+        return 3; //Limite Inferior
+    }
+    if (parseInt(value, 10) > limiteSup) {
+        return 4; //Limite Superior
+    }
+    return 1;//no hay error
+}
+
+function getTotBlancos(data, rowini, colini) {
+    //var arreglo = data.split(",");
+    var total = data.length;
+    var totalBlancos = 0;
+    var cadena = "";
+    for (var i = rowini ; i < total ; i++) {
+        for (var j = colini; j < data[i].length; j++) {
+            //si es numero
+            dato = data[i][j];
+            if (!data[i][j]) {
+                totalBlancos++;
+            }
+        }
+    }
+    return totalBlancos;
+}
+
+function crearPupload() {
+
+    uploader = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnSelectExcel',
+        url: siteRoot + 'demandaMaxima/envio/Upload',
+        flash_swf_url: 'Scripts/Moxie.swf',
+        silverlight_xap_url: 'Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+
+            max_file_size: '25mb',
+            mime_types: [
+                { title: "Archivos Excel .xlsx", extensions: "xlsx,xls" }
+            ]
+        },
+        init: {
+            FilesAdded: function (up, files) {
+                if (uploader.files.length == 2) {
+                    uploader.removeFile(uploader.files[0]);
+                }
+                uploader.start();
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+                mostrarAlerta("Por favor espere ...(<strong>" + file.percent + "%</strong>)");
+            },
+            UploadComplete: function (up, file) {
+
+                //if ($("#hfIdEnvio").val() == 0) {
+                //    mostrarAlerta("Por favor muestre la información del periodo actual.");
+                //    return false;
+                //} else {
+                    mostrarAlerta("Subida completada <strong>Por favor espere</strong>");
+                //}
+
+                
+                var retorno = leerFileUpExcel();
+                if (retorno == 1) {
+                    limpiarError();
+                    $("#hfIdEnvio").val(-1);//-1 indica que el handsonetable mostrara datos del archivo excel                    
+                    CargarDataExcelWeb(5);
+                   
+                }
+                else {
+                    mostrarError("Error: Formato desconocido.");
+                }
+
+            },
+            Error: function (up, err) {
+                mostrarError(err.code + "-" + err.message);
+            }
+        }
+    });
+    uploader.init();
+    setTimeout(function () {
+        document.querySelector(".moxie-shim.moxie-shim-html5").style.zIndex = "-9999";
+    }, 1000);
+}
+
+function findIndiceMerge(col, lista) {
+    for (key in lista) {
+        if ((col >= lista[key].col) && (col < (lista[key].col + lista[key].colspan))) {
+            return key;
+        }
+    }
+    return -1;
+}
+
+
+function mostrarExito(mensaje) {
+    $('#mensaje').removeClass();
+    $('#mensaje').html(mensaje);
+    $('#mensaje').addClass('action-exito');
+}
+
+function mostrarError(mensaje) {
+    $('#mensaje').removeClass();
+    $('#mensaje').html(mensaje);
+    $('#mensaje').addClass('action-error');
+}
+
+function mostrarAlerta(mensaje) {
+    $('#mensaje').removeClass();
+    $('#mensaje').html(mensaje);
+    $('#mensaje').addClass('action-alert');
+}
+
+function mostrarMensaje(mensaje) {
+    $('#mensaje').removeClass();
+    $('#mensaje').html(mensaje);
+    $('#mensaje').addClass('action-message');
+}
+
+
+function mostrarMensaje2(mensaje) {
+    $('#mensaje2').removeClass();
+    $('#mensaje2').html(mensaje);
+    $('#mensaje2').addClass('action-message');
+}
+
+function mostrarMensajeFecha(mensaje) {
+    $('#mensajefecha').removeClass();
+    $('#mensajefecha').html(mensaje);
+    $('#mensajefecha').addClass('action-message');
+}
+
+function mostrarMensajeEnvio() {
+
+    var envio = $("#hfIdEnvio").val();
+    if (envio > 0) {
+        
+        //Cambios JDEL [Inicio] 08/04/2016 - Cambiar Mensaje
+        var plazo = (evtHot.EnPlazo) ? "<strong style='color:green'>En plazo</strong>" : "<strong style='color:red'>Fuera de plazo</strong>";
+        var mensaje = plazo + " | Día inicial: 01 - día final: 03 | <strong> Envío más reciente de la empresa y el periodo: </strong>" + evtHot.IdEnvio + " (" + evtHot.FechaEnvio + ")";
+        return mensaje;
+        //var plazo = (evtHot.EnPlazo) ? "<strong style='color:green'>en plazo</strong>" : "<strong style='color:red'>fuera de plazo</strong>";
+        //var mensaje = "<strong>Código de envío</strong> : " + evtHot.IdEnvio + "   , <strong>Fecha de envío: </strong>" + evtHot.FechaEnvio + "   , <strong>Enviado en </strong>" + plazo;
+        //return mensaje;
+        //Fin JDEL [Fin]
+    }
+    else {
+        if (!evtHot.EnPlazo) {
+            return "<strong style='color:red'>Fuera de plazo</strong> | Día inicial: 01 - día final: 03 |";
+        }
+        else return "<strong style='color:green'>En plazo</strong> | Día inicial: 01 - día final: 03 |";
+    }
+}

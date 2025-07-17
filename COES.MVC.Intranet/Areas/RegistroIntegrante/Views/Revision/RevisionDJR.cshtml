@@ -1,0 +1,263 @@
+﻿@model COES.MVC.Intranet.Areas.RegistroIntegrante.Models.RevisionDJRModel
+@using COES.MVC.Intranet.Helper
+@using COES.Servicios.Aplicacion.RegistroIntegrantes;
+@{
+    ViewBag.Title = "RevisionDJR";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    #tblRepresentante td {
+        padding-bottom: 15px;
+    }
+
+    .Conforme {
+        background-color: #A9D0F5;
+    }
+    .Habilitado {
+        background-color: white;
+    }
+
+    .Deshabilitado {
+        background-color: #F2F4F3;
+    }    
+
+    #tblTA td {
+        padding-bottom: 15px;
+    }
+</style>
+
+<script src="~/Areas/RegistroIntegrante/Content/Scripts/RevisionDJR.js?v=1.15"></script>
+<div class="form-title" style="color: #278CCC; margin-bottom:0px;">REVISIÓN DJR</div>
+<div class="content-hijo" id="mainLayout">
+    <div class="form-main" style="margin-top:10px">
+        <div id="mensaje" class="action-message" style="display: none; width: 95%"></div>
+        <div style="clear:both; height:5px;"></div>
+        <div class="search-content" style="margin-bottom:0px; padding:10px">
+            <table class="table-form-show">
+                <tr>
+                    <td style="width:220px;">2.1 Número de RUC:</td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprRUC</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2.2 Nombre Comercial:</td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprNombreComercial</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2.3 Denominación o Razón Social:</td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprRazSocial</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2.3 Domicilio Legal:</td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprDomLegal</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>3.1 Tipo Agente: </td>
+                    <td class="tbform-control">
+                        <label>@Model.EmprTipoAgente</label>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div style="clear:both; height:5px;"></div>
+        <div class="search-content" style="margin-bottom:0px; padding:10px">
+            <table id="tblRepresentante">
+                <thead>
+                    <tr>
+                        <td>
+                            Representante Legal
+                        </td>
+                        <td>
+                            Apellidos
+                        </td>
+                        <td>
+                            DNI
+                        </td>
+                        <td>
+                            Cargo
+                        </td>
+                        <td>
+                            Vigencia de Poder
+                        </td>
+                        <td>Documento de Identidad</td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.ListaRepresentantes)
+                {
+                    var clase = "";
+                    var disabled = "disabled='disabled'";
+
+                    if (item.Dervcodi > 0)
+                    {
+                        if (string.IsNullOrEmpty(item.RpteObservacion))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+
+
+
+                    <tr data-id="@item.Rptecodi" class='@clase'>
+                        <td>@item.Rptetipodesc</td>
+                        <td>@item.Rpteapellidos @item.Rptenombres</td>
+                        <td>@item.Rptedocidentidad</td>
+                        <td>@item.Rptecargoempresa</td>
+                        <td>
+                            <a href="JavaScript:ver(@item.Rptecodi); " title="Ver">
+                                <img src="~/Content/Images/btn-open.png" />
+                            </a>
+                            <a href="JavaScript:descargar(@item.Rptecodi)" title="Descargar">
+                                <img src="~/Content/Images/btn-download.png" />
+                            </a>
+
+                            <input type="hidden" id="hdfAdjunto_@item.Rptecodi" data-file="@item.Rptevigenciapoder" data-file-name="@item.Rptevigenciapoderfilename" value="@string.Format("{0}*{1}",item.Rptevigenciapoder,item.Rptevigenciapoderfilename)" />
+
+                        </td>
+                        <td>
+                            <a href="JavaScript:verDocumento(@item.Rptecodi); " title="Ver">
+                                <img src="~/Content/Images/btn-open.png" />
+                            </a>
+                            <a href="JavaScript:descargarDocumento(@item.Rptecodi)" title="Descargar">
+                                <img src="~/Content/Images/btn-download.png" />
+                            </a>
+
+                            <input type="hidden" id="hdfAdjuntoDocumento_@item.Rptecodi" data-file="@item.Rptedocidentidadadj" data-file-name="@item.Rptedocidentidadadjfilename" value="@string.Format("{0}*{1}",item.Rptedocidentidadadj,item.Rptedocidentidadadjfilename)" />
+
+                        </td>
+                        <td>
+                            <a onclick="javascript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="javascript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="javascript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            <textarea id="txtObservacion_@item.Rptecodi" @disabled rows="5" cols="35" class="area">@item.RpteObservacion</textarea>
+                        </td>
+                    </tr>
+                }
+
+                </tbody>
+            </table>
+            <br />
+
+            @if (Model.TitulosAdicionales != null && Model.TitulosAdicionales.Count > 0)
+        {
+        <h4>Titulos Adicionales</h4>
+
+
+        <textarea id="txtComentarioTitulosAdicionales" disabled="disabled" rows="5" cols="35" class="area">@Model.ComentarioTitulosAdicionales</textarea>
+        <br />
+
+        <table id="tblTA">
+            <thead>
+                <tr>
+                    <td>
+                        Nombre
+                    </td>
+                    <td>Archivo</td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.TitulosAdicionales)
+                {
+                    var clase = "";
+                    var disabled = "disabled='disabled'";
+
+                    if (item.Dervcodi > 0)
+                    {
+                        if (string.IsNullOrEmpty(item.RpteObservacion))
+                        {
+                            clase = "Conforme";
+                            disabled = "disabled='disabled'";
+                        }
+                        else
+                        {
+                            clase = "Observado";
+                            disabled = "";
+                        }
+                    }
+
+
+
+                    <tr data-id="@item.Numero" class='@clase'>
+                        <td>@item.Nombre</td>
+                        <td>
+                            <a href="JavaScript:verTA(@item.Numero); " title="Ver">
+                                <img src="~/Content/Images/btn-open.png" />
+                            </a>
+                            <a href="JavaScript:descargarTA(@item.Numero)" title="Descargar">
+                                <img src="~/Content/Images/btn-download.png" />
+                            </a>
+                            <input type="hidden" id="hdfAdjuntoTA_@item.Numero" data-file="@item.Nombre" data-file-name="@item.FileName" value="@string.Format("{0}*{1}",item.Nombre,item.FileName)" />
+
+                        </td>
+                        <td>
+                            <a onclick="javascript:conforme(this)" title="Es Conforme" class="control">
+                                <img src="~/Content/Images/btn-ok.png" />
+                            </a>
+                            <a onclick="javascript:agregarobservacion(this)" title="Agregar Observación" class="control">
+                                <img src="~/Content/Images/btn-add.png" />
+                            </a>
+                            <a onclick="javascript:eliminar(this)" title="Eliminar" class="control">
+                                <img src="~/Content/Images/btn-cancel.png" />
+                            </a>
+                            <br />
+                            <textarea id="txtObservacion_@item.Numero" @disabled rows="5" cols="35" class="area">@item.RpteObservacion</textarea>
+
+
+                        </td>
+                    </tr>
+                    }
+
+            </tbody>
+        </table>
+        <br />
+        }
+        </div>
+
+        <div style="clear:both; height:5px;"></div>
+        <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+            @if (Model.RiRevision.Revifinalizado  == ConstantesRegistroIntegrantes.RevisionFinalizadoSi &&
+            Model.RiRevision.Revinotificado == ConstantesRegistroIntegrantes.RevisionNotificadoNo)
+        {
+        <input type="button" id="btnRevAsistente" value="Revisar Asistente" />
+        }
+
+            @if (Model.RiRevision.Revinotificado == ConstantesRegistroIntegrantes.RevisionNotificadoNo)
+        {
+        <input type="button" id="btnGrabar" value="Grabar" />
+        <input type="button" id="btnFinalizar" value="Finalizar" />
+        }
+        </div>
+
+
+        <input type="hidden" id="hfEmprcodi" value="@Model.EmprCodi" />
+        <input type="hidden" id="hfRevicodi" value="@Model.Revicodi" />
+        <input type="hidden" id="hfRevinotificado" value="@Model.RiRevision.Revinotificado" />
+        <input type="hidden" id="hfReviterminado" value="@Model.RiRevision.Reviterminado" />
+        <input type="hidden" id="hfRevienviado" value="@Model.RiRevision.Revienviado" />
+
+    </div>
+</div>

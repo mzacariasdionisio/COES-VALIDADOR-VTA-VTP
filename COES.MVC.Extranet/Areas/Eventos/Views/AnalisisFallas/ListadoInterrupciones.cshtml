@@ -1,0 +1,103 @@
+﻿@model COES.MVC.Extranet.Areas.Eventos.Models.AnalisisFallasModel
+
+<div style="clear:both; height:15px"></div>
+<table border="0" class="pretty tabla-adicional"  id="tabla" style='table-layout: fixed;' aria-describedby="Eventos">
+    <thead>
+        <tr>
+            <th scope="col" style='width: 40px'>ACCIÓN</th>
+            <th scope="col"  style='width: 70px'>CÓDIGO</th>
+            <th scope="col" >NOMBRE EVENTO</th>
+            <th scope="col"  style='width: 50px'>ERACMF</th>
+            <th scope="col"  style='width: 110px'>HORA INICIO EVENTO</th>
+            <th scope="col"  style='width: 110px'>HORA INICIO <br />INTERRUPCIÓN</th>
+            <th scope="col" style='width: 135px'>PLAZO ENVÍO</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ var codigoAnterior = "";
+            var codigoActual = "";
+
+            var lista =
+            from emp in Model.LstEvento
+            orderby emp.CODIGO
+            select emp;
+
+            foreach (var item in lista)
+            {
+                var sColor = "";
+                var rowspan = 0;
+                codigoActual = item.CODIGO;
+
+                var registros = (from t in lista where t.CODIGO == item.CODIGO select t).Count();
+
+            
+
+                if (item.ColorPlazo != "")
+                {
+                    sColor = "background-color:" + item.ColorPlazo + ";";
+                }
+
+
+                <tr>
+                    @if (codigoActual != codigoAnterior)
+                    {
+                        rowspan = registros;
+                        <td rowspan="@rowspan" style="width:30px">
+                            @if (item.Afefechainterr != null)
+                            {
+                                <a href="JavaScript:verDetalleEvento(@item.AFECODI)" title="Ver detalle del Evento">
+                                    <img src="~/Content/Images/btn-properties.png" style="margin-top: 3px; width:18px; height:18px;" alt="Detalle" />
+                                </a>
+                            }
+                        </td>
+                        <td rowspan="@rowspan">@item.CODIGO</td>
+                        var eventos = (from evento in lista
+                                       orderby evento.FechaEvento
+                                       where evento.CODIGO == item.CODIGO
+                                       select evento).ToList();
+                        <td style="text-align: left" rowspan="@rowspan">@eventos[0].NOMBRE_EVENTO</td>
+                    }
+                    else
+                    {
+                        if (rowspan == 1)
+                        {
+                            <td></td>
+                            <td></td>
+                            <td></td>
+
+                        }
+                    }
+
+
+                    <td>
+                        @if (item.ERACMF == "N")
+                        {
+                            <span>NO</span>
+                        }
+                        else
+                        {
+                            <span>SÍ</span>
+                        }
+                    </td>
+
+                    <td>
+                        @if (item.FechaEvento != null)
+                        {
+                            <span>@(((DateTime)item.FechaEvento).ToString("dd/MM/yyyy HH:mm:ss"))</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.Afefechainterr != null)
+                        {
+                            <span>@(((DateTime)item.Afefechainterr).ToString("dd/MM/yyyy HH:mm:ss"))</span>
+                        }
+                    </td>
+                    <td> <div style="width:13px; height:13px; display: inline-block; vertical-align:middle; padding:2px; float:left; @sColor"></div> @item.PlazoEnvio</td>
+                </tr>
+
+                codigoAnterior = codigoActual;
+                codigoActual = "";
+            }
+        }
+    </tbody>
+</table>

@@ -1,0 +1,153 @@
+@model COES.MVC.Intranet.Areas.Campanias.Models.CampaniasModel
+@{
+    ViewBag.Title = "Revision de envios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/jqueryui.js"></script>
+<script src="~/Content/Scripts/jquerytree.js"></script>
+<script src="~/Content/Scripts/jquerytreednd.js"></script>
+<script src="~/Content/Scripts/Handson/moment.js"></script>
+<script src="~/Areas/Campanias/Content/Scripts/revisarplantransmision.js"></script>
+<link href="~/Content/Css/uitree.css" rel="stylesheet" />
+<link href="~/Areas/Campanias/Content/Css/css.css" rel="stylesheet" />
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<link href="~/Areas/Campanias/Content/Css/jquery.modal.min.css" rel="stylesheet" />
+<script src="~/Areas/Campanias/Content/Scripts/jquery.modal.min.js"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Revisi&oacute;n de env&iacute;os</div>
+</div>
+
+<div class="content-hijo">
+
+    <div id="mensaje"></div>
+
+    <div class="search-content" style="margin-bottom:10px">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Tipo de proyecto:</td>
+                <td>
+                    <select id="tipoProyectoSelect" style="width:185px">
+                     <option value="1">GENERACION</option>
+                     <option value="2">TRANSMISION</option>
+                     <option value="3">ITC</option>
+                     <option value="4">DEMANDA</option>
+                     <option value="5">GENERACION DISTRIBUIDA</option>
+                     <option value="6">HIDROGENO VERDE</option>
+                    </select>
+                </td>
+                <td>Subtipo:</td>
+                <td>
+                    <select id="subtipoSelect" style="width:185px">
+                        <option value="10">G1-CentralHidroeléctrica</option>
+                        <option value="11">G2-CentralTermoelétrica</option>
+                        <option value="12">G3-CentralEólica</option>
+                        <option value="13">G4-CentralSolar</option>
+                        <option value="14">G5-CentralBiomasa</option>
+                    </select>
+                </td>
+                <td>Plan transmisi&oacute;n:</td>
+                <td>
+                    <select id="periodoSelect" style="width:185px">
+                    </select>
+                </td>
+                <td><input class="btnForms" type="button" id="btnConsultar" value="Consultar" /></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input class="btnForms" type="button" id="btnCierreMasivo" value="Cierre de envíos" />
+                </td>
+                <td>Empresa:</td>
+                <td>
+                    <select id="empresaSelect" name="empresaSelect" style="width:185px">
+                    </select>
+                </td>
+                <td>Estado:</td>
+                <td>
+                    <select id="cbEstado" name="Idestado" style="width:185px">
+                        <option value="T">Todos</option>
+                        <option value="Enviado">Enviado</option>
+                        <option value="Aprobado">Aprobado</option>
+                        <option value="Observado">Observado</option>
+                    </select>
+                    <input type="hidden" id="hfEstado" name="estado" />
+                </td>
+                <td><input class="btnForms" type="button" id="btnEnviarObservacion" value="Enviar Observación" /></td>
+            </tr>
+            <!-- <tr>
+                <td colspan="4">
+                </td>
+                <td colspan="2">
+                    <label style="display:block; width:220px">
+                        <input type="checkbox" id="cbSelectObservados" value="Observados"/>
+                        Observados
+                    </label>
+                </td>
+                <td><input class="btnForms" type="button" id="btnEnviarObservacion" value="Enviar Observación" /></td>
+            </tr> -->
+        </table>
+    </div>
+
+    <div id="listado">
+    </div>
+
+    <div id="popupEnvioActivar" class="general-popup" style="width:320px;top:0px">
+        <div>
+            <span class="button b-close">
+                <span>X</span>
+            </span>
+        </div>
+        <div class="popup-text">
+            <form id="frmEnvioActivar">
+                <p>
+                    &#191;Est&aacute;s seguro que deseas activar el env&iacute;o de versi&oacute;n <span id="versionEnvio"></span>?
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center">
+                    <input type="button" id="btnActivar" value="Activar" style="margin-top: 15px;" onclick="activarEnvioVigente()">
+                    <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupEnvioActivar')">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div id="modal1" class="modal" style="width:900px">
+    <div class="popup-title"><div id="tituloPopup"></div></div>
+    <div id="" style="margin-top: 10px;"></div>
+    <div class="panel-container">
+        <div class="popup-text" id="contenidoProyecto" style="margin-top:0"></div>
+    </div>
+</div>
+
+<div id="popupObservacion" class="general-popup" style="max-width: 700px !important;">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Observación</span></div>
+    <div class="popup-text" id="contenidoObservacion">
+    </div>
+</div>
+
+<div id="popupEnviarObservacion" class="general-popup" style="width:320px;top:0px">
+    <div>
+        <span class="button b-close">
+            <span>X</span>
+        </span>
+    </div>
+    <div class="popup-text">
+        <form>
+            <p >
+             ¿Está seguro de realizar esta operación?
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center">
+                <input type="button" id="btnEnviarPopupObs" value="Aceptar" style="margin-top: 15px;">
+                <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupEnviarObservacion')">
+            </div>
+        </form>
+    </div>
+</div>

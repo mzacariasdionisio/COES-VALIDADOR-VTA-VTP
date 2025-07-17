@@ -1,0 +1,490 @@
+﻿@model COES.MVC.Intranet.Areas.IND.Models.IndisponibilidadesModel
+
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@{
+    ViewBag.Title = "Excel web";
+    Layout = Model.UsarLayoutModulo ? "~/Views/Shared/_LayoutAlter.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js?v=1.1"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<script src="~/Content/Scripts/Handson/htmaxlength.js"></script>
+<script src="~/Content/Scripts/Handson/moment.js"></script>
+<script src="~/Areas/IND/Content/Scripts/moment-range.js"></script>
+<script src="~/Content/Scripts/Handson/select2.js"></script>
+<script src="~/Content/Scripts/Handson/select2handson.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+<link href="~/Content/Css/Handson/select2.css" rel="stylesheet" />
+
+<link href="~/Areas/IND/Content/Css/css.css?v=1.8.9" rel="stylesheet" />
+<script src="~/Areas/IND/Content/Scripts/reporte_view_grillas.js?v=1.2.5"></script>
+<script src="~/Areas/IND/Content/Scripts/reporte_view_cuadro.js?v=1.2.5"></script>
+<style>
+
+    input + span {
+        padding-right: 30px;
+    }
+
+    input:invalid + span:after {
+        position: absolute;
+        content: '✖';
+        padding-left: 5px;
+        color: red;
+    }
+
+    input:valid + span:after {
+        position: absolute;
+        content: '✔';
+        padding-left: 5px;
+        color: green;
+    }
+</style>
+
+<div class="form-title">
+    <div class="content-titulo">@(Model.Cuadro.Icuanombre + " - " + Model.IndPeriodo.Iperinombre + " - "+Model.IndRecalculo.Irecanombre+ " - Versión N° "+Model.IndReporte.Irptnumversion)</div>
+    <div class="content-botonera">
+        @if (Model.IndReporte.Irptesfinal != 1)
+        {
+            <input type="button" id="btnAprobar" class="btn_aprobar" value="Aprobar">
+        }
+        <input type="button" id="btnRegresar" value="Regresar">
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <input type="hidden" id="hfCuadro" value="@Model.IdCuadro" />
+    <input type="hidden" id="hfRecalculo" value="@Model.IndRecalculo.Irecacodi" />
+    <input type="hidden" id="hfPeriodo" value="@Model.IndPeriodo.Ipericodi" />
+    <input type="hidden" id="hfReporteVersion" value="@Model.IdReporte" />
+    <input type="hidden" id="hfFamilia" value="@Model.Famcodi" />
+    <input type="hidden" id="hfRecalculo" value="@Model.IndReporte.Irecacodi" />
+
+    <div id="mensaje" style="margin-bottom:5px; margin-top:0px"></div>
+
+    <div class="search-content" style="margin-bottom:10px">
+        <table class="content-tabla-search" style="width:auto" role="presentation">
+            <tr>
+                <td class="tbform-label" style="padding-left: 10px;padding-right: 2px; @(Model.Famcodi>0?"display: none" : "")">Tipo de generación:</td>
+                <td style="@(Model.Famcodi>0?"display: none" : "")">
+                    <select id="cbFamilia" style="width: 89px;">
+                        <option value="5" @(Model.Famcodi == 5 ? "selected" : "")>Térmico</option>
+                        <option value="4" @(Model.Famcodi == 4 ? "selected" : "")>Hidráulico</option>
+                    </select>
+                </td>
+
+                <td class="tbform-label" style="padding-left: 10px;padding-right: 2px;">Operación comercial:</td>
+                <td>
+                    <select id="cbCentralIntegrante" style="width: 50px;">
+                        <option value="S" selected>SÍ</option>
+                        <option value="N">NO</option>
+                    </select>
+                </td>
+
+                <td class="tbform-label" style="padding-left: 10px;padding-right: 2px;">Empresa:</td>
+                <td>
+                    <div id="div_empresa_filtro">
+                        <select id="cbEmpresa" name="cbEmpresa">
+                            @foreach (var item in Model.ListaEmpresa)
+                            {
+                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                            }
+                        </select>
+                    </div>
+                    <input type="hidden" id="hfEmpresa" value="-1" />
+                </td>
+
+                <td class="tbform-label" style="padding-left: 10px;padding-right: 2px;">Central:</td>
+                <td>
+                    <div id="div_central_filtro">
+                        <select id="cbCentral" name="cbCentral">
+                            @foreach (var item in Model.ListaCentral)
+                            {
+                                <option value="@item.Equipadre">@item.Central</option>
+                            }
+                        </select>
+                    </div>
+                    <input type="hidden" id="hfCentral" value="-1" />
+                </td>
+
+                <td class="tbform-label" style="padding-right: 0px;">Fecha Inicio:</td>
+                <td class="">
+                    <input type="text" id="desc_fecha_ini" value="@Model.FechaIni" />
+                    <input type="hidden" id="hfFechaIni" value="@Model.FechaIni" />
+                </td>
+
+                <td class="tbform-label" style="padding-right: 0px;">Fecha Fin:</td>
+                <td class="">
+                    <input type="text" id="desc_fecha_fin" value="@Model.FechaFin" />
+                    <input type="hidden" id="hfFechaFin" value="@Model.FechaFin" />
+                </td>
+
+                <td class="content-action">
+                    <a href="#" id="btnExportarExcel">
+                        <div class="content-item-action">
+                            <img src="~/Content/Images/ExportExcel.png" alt="logo" /><br />
+                        </div>
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#tabFort">Fortuito</a></li>
+            <li class='tab'><a href="#tabProg">Programado</a></li>
+            <li class='tab'><a href="#tabReporte">Reporte</a></li>
+        </ul>
+        <div class='panel-container'>
+
+            <div id="tabFort">
+                <div class="content-tabla">
+                    <div class="bodyexcel" id='detalleFort'></div>
+                </div>
+
+            </div>
+            <div id="tabProg">
+                <div class="content-tabla">
+                    <div class="bodyexcel" id='detalleProg'></div>
+                </div>
+            </div>
+            <div id="tabReporte">
+                <div class="table-list" id="listado1"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <div style="width:70%;" id="div_cambios_cuadro1">
+        <div style="    font-size: 18px;    font-weight: bold;    margin-bottom: 20px;    margin-top: 20px;    color: orangered;">
+            La edición de los resultados debe realizarse de forma excepcional o por cambio normativo
+        </div>
+        <div>
+            <span>Para crear, editar o eliminar una indisponibilidad debe hacer clic derecho sobre la celda e ingresar los datos.</span><br />
+            <span>(*) Las modificaciones serán efectuadas luego de hacer clic en "Guardar Cambios"</span>
+            <input type="button" value="Guardar Cambios" onclick="guardarCambios()" style="margin-bottom: 8px; float: right;">
+        </div>
+        <table class="pretty tabla-icono" id="tblCambioFor" width="100%">
+            <thead>
+                <tr>
+                    <th>Indisponibilidad</th>
+                    <th>Tipo Indisp</th>
+                    <th>Equicodi</th>
+                    <th>Grupocodi</th>
+                    <th>Tipo Cambio</th>
+                    <th>Empresa</th>
+                    <th>Central</th>
+                    <th>Unidad</th>
+                    <th>Fecha</th>
+
+                    <th>Rango Horas <br />Original</th>
+                    <th>Rango Horas <br />Modificado / Nuevo</th>
+
+                    <th>Justificación</th>
+                    <th>Conservar Valor</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+
+    <div id="div_cambios_app" style="width:90%; display: none ">
+        <div style="    font-size: 18px;    font-weight: bold;    margin-bottom: 20px;    margin-top: 20px;">
+            Histórico de cambios respecto al cálculo generado por el aplicativo
+        </div>
+
+        <div id="div_tabla_cambios">
+
+        </div>
+    </div>
+
+</div>
+
+
+<!--#region Popup  -->
+
+<div id="popupNuevo" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: auto">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Nuevo</span></div>
+
+    <div id="" class="">
+        <div id="" style="margin-top: 10px;"></div>
+
+        <form id="frmNuevo">
+
+            <table id="" style="margin-top: 10px;">
+
+                <tr>
+                    <td class="tbform-label">Empresa</td>
+                    <td><input type="text" id="txtEmpresaN" name="Emprnomb" style="width:200px" disabled /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Central</td>
+                    <td>
+                        <input type="text" id="txtCentralN" name="Central" style="width:200px" disabled />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Unidad</td>
+                    <td>
+                        <input type="text" id="txtUnidadN" name="Unidadnomb" style="width:200px" disabled />
+                        <input type="hidden" id="txtEquicodiN" name="Equicodi" />
+                        <input type="hidden" id="txtGrupocodiN" name="Grupocodi" />
+                        <input type="hidden" id="txtRowN" name="Row" />
+                        <input type="hidden" id="txtColN" name="Col" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Fecha</td>
+                    <td><input type="date" id="txtFechaN" name="Fecha" style="width:200px" disabled /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Hora Inicio</td>
+                    <td><input type="time" min="17:00" max="22:59" id="txtHInicioN" name="Idethoraini" style="width:100px" required /> <span class="validity"></span></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Hora Final</td>
+                    <td><input type="time" min="17:01" max="23:00" id="txtHFinN" name="Idethorafin" style="width:100px" required /> <span class="validity"></span></td>
+                </tr>
+
+                <tr style="display: none" class="class_fila_parcial">
+                    <td class="tbform-label">Pr</td>
+                    <td><input type="text" id="txtPr" name="Idetpr" style="width:100px" /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">T EQ_DURACIÓN</td>
+                    <td><input type="text" id="txtValor" name="Idetmin" style="width:100px" disabled /></td>
+                </tr>
+
+
+                <tr style="display: none" class="class_fila_parcial">
+                    <td class="tbform-label">T IND_PARCIAL</td>
+                    <td><input type="text" id="txtValorParcialN" name="Idetminparcial" style="width:100px" /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Justificación</td>
+                    <td>
+                        <textarea rows="3" type="text" name="Idetjustf" style="width:200px" required></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label">Conservar Información</td>
+                    <td>
+                        <input type="checkbox" name="Idetconsval" style="width:100px"/>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" style="text-align: right">
+                        <input type="submit" id="btnActualizar" value="Guardar" style="margin-top: 15px;">
+                        <input type="button" id="btnCancelar" value="Cancelar" onclick="popupClose('popupNuevo')">
+                    </td>
+                </tr>
+
+            </table>
+
+        </form>
+
+    </div>
+</div>
+
+<div id="popupEditar" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: auto">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Editar</span></div>
+
+    <div id="" class="">
+        <div id="" style="margin-top: 10px;"></div>
+
+        <form id="frmModificacion">
+
+            <table id="" style="margin-top: 10px;">
+
+                <tr>
+                    <td class="tbform-label">Empresa</td>
+                    <td><input type="text" id="txtEmpresa" name="Emprnomb" style="width:200px" disabled /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Central</td>
+                    <td>
+                        <input type="text" id="txtCentral" name="Central" style="width:200px" disabled />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Unidad</td>
+                    <td>
+                        <input type="text" id="txtUnidad" name="Unidadnomb" style="width:200px" disabled />
+                        <input type="hidden" id="txtEquicodi" name="Equicodi" />
+                        <input type="hidden" id="txtGrupocodi" name="Grupocodi" />
+                        <input type="hidden" id="txtRow" name="Row" />
+                        <input type="hidden" id="txtCol" name="Col" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Fecha</td>
+                    <td><input type="date" id="txtFecha" name="Fecha" style="width:150px" disabled /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Hora Inicio</td>
+                    <td><input type="text" id="txtHInicio" name="Idethorainiold" style="width:100px" disabled /></td>
+
+                    <td class="tbform-label">Hora Inicio Modificado</td>
+                    <td><input type="time" min="17:00" max="22:59" id="txtHInicioMod" name="Idethoraini" style="width:100px" required /> <span class="validity"></span></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Hora Final</td>
+                    <td><input type="text" id="txtHFin" name="Idethorafinold" style="width:100px" disabled /></td>
+
+                    <td class="tbform-label">Hora Final Modificado</td>
+                    <td><input type="time" min="17:01" max="23:00" id="txtHFinMod" name="Idethorafin" style="width:100px" required /> <span class="validity"></span></td>
+                </tr>
+
+                <tr style="display: none" class="class_fila_parcial">
+                    <td class="tbform-label">Pr Anterior</td>
+                    <td><input type="text" id="txtPrAnt" name="Idetprold" style="width:100px" /></td>
+
+                    <td class="tbform-label">Pr Modificado</td>
+                    <td><input type="text" id="txtValorPrMod" name="Idetpr" style="width:100px" /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">T EQ_DURACIÓN</td>
+                    <td><input type="text" id="txtValorAnt" name="Idetminold" style="width:100px" disabled /></td>
+
+                    <td class="tbform-label">T EQ_DURACIÓN Modificado</td>
+                    <td><input type="text" id="txtValorMod" name="Idetmin" style="width:100px" disabled /></td>
+                </tr>
+
+                <tr style="display: none" class="class_fila_parcial">
+                    <td class="tbform-label">T IND_PARCIAL</td>
+                    <td><input type="text" id="txtValorParcialAnt" name="Idetminparcialold" style="width:100px" /></td>
+
+                    <td class="tbform-label">T IND_PARCIAL Modificado</td>
+                    <td><input type="text" id="txtValorParcialMod" name="Idetminparcial" style="width:100px" /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Justificación</td>
+                    <td colspan="3">
+                        <textarea rows="3" type="text" name="Idetjustf" style="width:450px" required></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label">Conservar Información</td>
+                    <td><input type="checkbox" id="Conservarvalor" name="Idetconsval" style="width:100px" /></td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align: right">
+                        <input type="submit" id="btnActualizar" value="Guardar" style="margin-top: 15px;">
+                        <input type="button" id="btnCancelar" value="Cancelar" onclick="popupClose('popupEditar')">
+                    </td>
+                </tr>
+
+            </table>
+
+        </form>
+
+    </div>
+</div>
+
+<div id="popupEliminar" class="popup-class-1 general-popup" style="z-index: 9999999999; display: none; width: auto">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Eliminar</span></div>
+
+    <div id="" class="">
+        <div id="" style="margin-top: 10px;"></div>
+        <form id="frmEliminar">
+            <table id="" style="margin-top: 10px;">
+
+                <tr>
+                    <td class="tbform-label">Empresa</td>
+                    <td><input type="text" id="txtEmpresaD" name="Emprnomb" style="width:200px" disabled /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Central</td>
+                    <td>
+                        <input type="text" id="txtCentralD" name="Central" style="width:200px" disabled />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Unidad</td>
+                    <td>
+                        <input type="text" id="txtUnidadD" name="Unidadnomb" style="width:200px" disabled />
+                        <input type="hidden" id="txtEquicodiD" name="Equicodi" />
+                        <input type="hidden" id="txtGrupocodiD" name="Grupocodi" />
+                        <input type="hidden" id="txtRowD" name="Row" />
+                        <input type="hidden" id="txtColD" name="Col" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Fecha</td>
+                    <td><input type="date" id="txtFechaD" name="Fecha" style="width:200px" disabled /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Hora Inicio</td>
+                    <td><input type="text" id="txtHInicioD" name="Idethorainiold" style="width:100px" disabled /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Hora Fin</td>
+                    <td><input type="text" id="txtHFinD" name="Idethorafinold" style="width:100px" disabled /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Nuevo Valor</td>
+                    <td><input type="text" id="txtValorD" name="Idetminold" style="width:100px" disabled /></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Justificación</td>
+                    <td>
+                        <textarea rows="3" type="text" name="Idetjustf" style="width:200px" required></textarea>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" style="text-align: right">
+                        <input type="submit" id="btnEliminar" value="Eliminar" style="margin-top: 15px;">
+                        <input type="button" id="btnCancelar" value="Cancelar" onclick="popupClose('popupEliminar')">
+                    </td>
+                </tr>
+
+            </table>
+        </form>
+
+    </div>
+</div>
+
+
+<!--#endregion -->

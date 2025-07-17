@@ -1,0 +1,110 @@
+﻿@model COES.MVC.Publico.Models.BrowserModel
+
+<script type="text/javascript">
+    $(function () {
+        $('#cbSelectAll').click(function (e) {
+            var table = $(e.target).closest('table');
+            $('td input:checkbox', table).prop('checked', this.checked);
+        });
+
+
+
+        mostrarAnidado = function (id) {
+            if ($('#iconExpand' + id).prop("src").indexOf($('#hfExpandir').val()) > 0) {
+                $('#iconExpand' + id).prop("src", $('#hfContraer').val());
+
+                $('.filas-ocultas' + id + ' td:nth-child(4)').css("text-indent", "20px");
+            }
+            else {
+                $('#iconExpand' + id).prop("src", $('#hfExpandir').val());
+            }
+
+            $('.filas-ocultas' + id).toggle();
+
+        }
+    });
+</script>
+
+<div class="bread-crumb" style="margin-left:3px">
+    <ul>
+        @foreach (var item in Model.BreadList)
+        {
+            <li><a href="JavaScript:openDirectory('@item.Url')">@item.Name</a></li>
+        }
+    </ul>
+</div>
+<div style="clear:both"></div>
+
+<table style="width:100%" class="form-general" cellpadding="0" cellspacing="0">
+    <tr>
+        <td style="width:100%" valign="top">
+            <table id="tbDocumentLibrary" class="tabla-blobweb">
+                <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="cbSelectAll" />
+                        </th>
+                        <th></th>
+                        <th></th>
+                        @foreach (var columna in Model.ListaColumnas)
+                        {
+                            if (columna.Columncodi == COES.Storage.App.Servicio.ColumnasBase.Archivo && Model.TipoVisor == "C")
+                            {
+                                <th>Capítulo</th>
+                            }
+                            else if (Model.TipoVisor != "C")
+                            {
+                                <th>@columna.Columnshow</th>
+                            }
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.DocumentList)
+                    {
+                        string style = (item.Padrecodi == -1) ? "style=cursor:pointer" : "style=display:none;";
+                        string clase = (item.Padrecodi == -1) ? "class=filas-ocultas" : "class=filas-ocultas" + item.Padrecodi;
+
+                        <tr @style @clase id="@item.FileUrl" title="@item.FileName">
+                            <td>
+                                <input type="checkbox" id="@item.FileName" name="cbSelect" value="@item.FileUrl" />
+                            </td>
+                            <td>
+                                @if (item.IndMain == "S")
+                                {
+                                    var idIcon = "iconExpand" + @item.Blobcodi;
+
+                                    <a href="JavaScript:mostrarAnidado(@item.Blobcodi);" title="Ver documentos asociados">
+                                        <img src="~/Content/Images/expand.png" id="@idIcon" />
+                                    </a>
+                                    <input type="hidden" id="hfContraer" value="~/Content/Images/collapse.png" />
+                                    <input type="hidden" id="hfExpandir" value="~/Content/Images/expand.png" />
+
+                                }
+                            </td>
+                            <td onclick="openBlob('@item.FileUrl', '@item.FileType', '@item.Extension')"><img src="~/Content/Images/Document/@item.Icono" /></td>
+
+                            @foreach (var columna in Model.ListaColumnas)
+                            {
+                                string alineacion = "";
+                                if (columna.Typecodi != COES.Storage.App.Servicio.TiposDeDato.Html)
+                                {
+                                    if (columna.Columnalign == "L") { alineacion = "style=text-align:left"; }
+                                    if (columna.Columnalign == "C") { alineacion = "style=text-align:center"; }
+                                    if (columna.Columnalign == "R") { alineacion = "style=text-align:right"; }
+                                }
+                                else
+                                {
+                                    alineacion = "style=white-space:pre-line";
+                                }
+                                <td @alineacion onclick="openBlob('@item.FileUrl', '@item.FileType', '@item.Extension')">@item.Metadatos.Where(x => x.ColumnCodi == columna.Columncodi).First().ColumnValor</td>
+
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </td>
+    </tr>
+</table>
+

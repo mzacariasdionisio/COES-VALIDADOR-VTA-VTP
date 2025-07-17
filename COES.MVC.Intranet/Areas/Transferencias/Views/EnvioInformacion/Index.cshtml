@@ -1,0 +1,558 @@
+﻿@{
+    ViewBag.Title = "Transferencias - Carga de mejor Información";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var PERIANIOMES2 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES2"];
+    var PERIANIOMES1 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES1"];
+    var PERIANIOMES3 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES3"];
+    var PERIANIOMES4 = (IEnumerable<SelectListItem>)TempData["PERIANIOMES4"];
+    var EMPRCODI1 = (COES.MVC.Intranet.Areas.Transferencias.Models.EmpresaModel)TempData["EMPRCODI1"];
+    var EMPRCODI2 = (COES.MVC.Intranet.Areas.Transferencias.Models.EmpresaModel)TempData["EMPRCODI2"];
+    var EMPRCODI3 = (COES.MVC.Intranet.Areas.Transferencias.Models.EmpresaModel)TempData["EMPRCODI3"];
+    var EMPRCODI4 = (COES.MVC.Intranet.Areas.Transferencias.Models.EmpresaModel)TempData["EMPRCODI4"];
+    var EMPRCODI5 = (COES.MVC.Intranet.Areas.Transferencias.Models.EmpresaModel)TempData["EMPRCODI5"];
+
+    var BARRCODI = (IEnumerable<SelectListItem>)TempData["BARRCODI"];
+    var BARRCODI3 = (IEnumerable<SelectListItem>)TempData["BARRCODI3"];
+
+}
+<link href="~/Content/Scripts/Charts/jquery.jqplot.min.css" rel="stylesheet" />
+<script src="~/Areas/Transferencias/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Areas/Transferencias/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Content/Scripts/Charts/jquery.jqplot.min.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/envioInformacion.js?@(new Random().Next(1000))"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/Charts/jqplot.barRenderer.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.highlighter.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.cursor.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.pointLabels.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.dateAxisRenderer.min.js"></script>
+<script src="~/Content/Scripts/Charts/jqplot.logAxisRenderer.min.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/jqplot.saveAsImage.min.js"></script>
+<script>
+    procesarArchivo = function (sFile, sPericodi, sEmpresa, sVersion) {
+        $.ajax({
+            type: 'POST',
+            url: siteRoot + 'transferencias/envioinformacion/procesararchivo',
+            data: { sNombreArchivo: sFile, sPericodi: sPericodi, sEmp: sEmpresa, sVer: sVersion },
+            dataType: 'json',
+            cache: false,
+            success: function (resultado) {                
+                if (resultado == "1") {
+                    debugger
+                    mostrarMensaje("Archivo procesado");
+                }
+                else {                    
+                    mostrarMensaje(resultado);
+                }
+            },
+            error: function () {
+                //mostrarError();
+            }
+        });
+    }
+
+    procesarArchivoBase = function (sFile, sPericodi, sEmpresa, sVersion) {
+        $.ajax({
+            type: 'POST',
+            url: siteRoot + 'transferencias/envioinformacion/procesararchivobase',
+            data: { sNombreArchivo: sFile, sPericodi: sPericodi, sEmp: sEmpresa, sVer: sVersion },
+            dataType: 'json',
+            cache: false,
+            success: function (resultado) {
+                if (resultado == "1") {
+                    mostrarMensaje("Archivo procesado");
+                }
+                else if (resultado == "-1") {
+                    mostrarMensaje("Lo sentimos, se ha producido un error al cargar la información");
+                }
+                else {
+                    mostrarMensaje(resultado);
+                }
+            },
+            error: function () {
+                //mostrarError();
+            }
+        });
+    }
+
+    procesarArchivoModelo = function (sFile, sPericodi, sEmpresa, sVersion, sTrnmodcodi,) {
+        $.ajax({
+            type: 'POST',
+            url: siteRoot + 'transferencias/envioinformacion/procesararchivomodelo',
+            data: { sNombreArchivo: sFile, sPericodi: sPericodi, sEmp: sEmpresa, sVer: sVersion, sTrnmodcodi: sTrnmodcodi, recacodi: sVersion },
+            dataType: 'json',
+            cache: false,
+            success: function (resultado) {
+                if (resultado == "1") {
+                    mostrarMensaje("Archivo procesado");
+                }
+                else if (resultado == "-1") {
+                    mostrarMensaje("Lo sentimos, se ha producido un error al cargar la información");
+                }
+                else {
+                    mostrarMensaje(resultado);
+                }
+            },
+            error: function () {
+                //mostrarError();
+            }
+        });
+    }
+</script>
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo">Carga de mejor Información: Entregas y Retiros</div>
+        <div class="content-botonera">
+        </div>
+    </div>
+
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Descargar Formato</a></li>
+                <li class='tab'><a href="#paso2">Subir Archivo</a></li>
+                <li class='tab'><a href="#paso3">Gráficos Entrega Y Retiros</a></li>
+                <li class='tab'><a href="#paso4">Gráficos Información Base</a></li>
+                <li class='tab'><a href="#paso5">Resumen Energía Mensual</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="11"><div class="editor-label" style="color:#FFFFFF;"><b>Filtros de descarga</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PERIANIOMES", @PERIANIOMES2, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td><div class="editor-label">Version </div></td>
+                                <td><div class="editor-field"><select id="VersionDes" style="width:100px;"></select></div></td>
+                                <td><div class="editor-label">Empresa</div></td>
+                                <td>
+                                    <select id="EMPRCODI" multiple="multiple">                                    
+                                        @foreach (var item in @EMPRCODI1.ListaEmpresas)
+                                        {
+                                            <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hcbEMPRCODI" />
+                                </td>
+                                <td>
+                                    <div class="editor-label">Tipo de Información</div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="tipoinfocodi" name="tipoinfocodi" style="margin-right: 30px; width: 200px !important;">
+                                            <option value="0">ENTREGAS Y RETIROS</option>
+                                            <option value="1">INFORMACIÓN BASE</option>
+                                            <option value="2">DATOS DE MODELOS</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div id="tdModelo" class="editor-label" style="display: none;">Modelos</div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="trnmodcodi" name="trnmodcodi" style="margin-right: 30px; width: 200px !important;display: none;">
+                                        </select>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <input type="button" id="btnExportar" value="Exportar" alt="Exportar formato" />                                        
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="paso2">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="6" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="10"><div class="editor-label" style="color:#FFFFFF;"><b>Subir excel de entrega y retiros</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PERICODI2", @PERIANIOMES1, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td><div class="editor-label">Version </div></td>
+                                <td><div class="editor-field"><select id="Version" style="width:100px;"></select></div></td>
+                                <td><div class="editor-label">Empresa</div></td>
+                                <td>
+                                    <select id="EMPRCODI2" multiple="multiple">
+                                        @foreach (var item in @EMPRCODI2.ListaEmpresas)
+                                        {
+                                            <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hcbEMPRCODI2" />
+                                </td>
+                                <td>
+                                    <div class="editor-label">Tipo de Información</div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="tipoinfocodi2" name="tipoinfocodi2" style="margin-right: 30px; width: 200px !important;">
+                                            <option value="ER">ENTREGAS Y RETIROS</option>
+                                            <option value="IB">INFORMACIÓN BASE</option>
+                                            <option value="MD">DATOS DE MODELOS</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div id="tdModelo2" class="editor-label" style="display: none;">Modelos</div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="trnmodcodi2" name="trnmodcodi2" style="margin-right: 30px; width: 200px !important;display: none;">
+                                        </select>
+                                    </div>
+                                </td>                             
+                            </tr>
+                            <tr>
+                                <td colspan="10">
+                                    <div class="formulario-item" style="width:900px" id="divOpcionCarga">
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td><div class="formulario-label" style="width:500px">Seleccionar archivo de entrega/retiro o Informacion Base (Extensión: .XLSX):</div></td>
+                                                <td><div class="formulario-control" style="width:120px"><input type="button" id="btnSelectFile" value="Seleccionar archivo" /></div></td>
+                                                <td><div class="formulario-control" style="width:120px" id="container"><input type="button" id="btnProcesarFile" value="Procesar archivo" /></div></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="progreso"></div>
+                    <div id="fileInfo"></div>
+                    <script type="text/javascript">
+                        var fullDate = new Date();
+                        var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+                        var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+                        var uploader = new plupload.Uploader({
+                            runtimes: 'html5,flash,silverlight,html4',
+                            browse_button: 'btnSelectFile',
+                            container: document.getElementById('container'),
+                            url: siteRoot + 'transferencias/envioinformacion/upload?sFecha=' + sFecha,
+                            flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                            silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                            multi_selection: false,
+                            filters: {
+                                max_file_size: '100mb',
+                                mime_types: [
+                                    { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                                    { title: "Archivos Excel .xls", extensions: "xls" }
+                                ]
+                            },
+                            init: {
+                                PostInit: function () {
+                                    document.getElementById('btnProcesarFile').onclick = function () {
+                                        if ($("#PERICODI2").val() == "") {
+                                            mostrarMensaje("Por favor, seleccione un periodo");
+                                        }
+                                        else {
+                                            //if ($("#EMPRCODI2").multipleSelect('getSelects') == "") {
+                                            if ($("#hcbEMPRCODI2").val() == '') {
+                                                mostrarMensaje("Por favor, seleccione una empresa");
+                                            }
+                                            else {
+                                                if (uploader.files.length > 0) {
+                                                    uploader.start();
+                                                }
+                                                else
+                                                    loadValidacionFile("Seleccione archivo.");
+                                            }
+                                        }
+                                        return false;
+                                    };
+                                },
+                                FilesAdded: function (up, files) {
+                                    if (uploader.files.length == 2) {
+                                        uploader.removeFile(uploader.files[0]);
+                                    }
+                                    plupload.each(files, function (file) {
+                                        loadInfoFile(file.name, plupload.formatSize(file.size));
+                                    });
+                                    up.refresh();
+                                },
+                                UploadProgress: function (up, file) {
+                                    mostrarProgreso(file.percent);
+                                },
+                                UploadComplete: function (up, file) {                                    
+                                    switch ($("#tipoinfocodi2").val()) {
+                                        case "ER":
+                                            procesarArchivo(sFecha + "_" + file[0].name, $("#PERICODI2").val(), $("#hcbEMPRCODI2").val(), $("#Version").val());
+                                            break;
+                                        case "IB":
+                                            procesarArchivoBase(sFecha + "_" + file[0].name, $("#PERICODI2").val(), $("#hcbEMPRCODI2").val(), $("#Version").val());
+                                            break;
+                                        case "MD":
+                                            procesarArchivoModelo(sFecha + "_" + file[0].name, $("#PERICODI2").val(), $("#hcbEMPRCODI2").val(), $("#Version").val(), $("#trnmodcodi2").val());
+                                            break;
+                                    }
+                                },
+                                Error: function (up, err) {
+                                    loadValidacionFile(err.code + "-" + err.message);
+                                }
+                            }
+                        });
+                        uploader.init();
+                    </script>
+                </div>
+
+                <div id="paso3">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="6" cellspacing="2">
+                            <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                <td colspan="7"><div class="editor-label"><b>Gráfico de entregas y retiros</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td><div class="editor-field">@Html.DropDownList("PERICODI3", @PERIANIOMES3, "--Seleccione--")</div></td>
+                                <td><div class="editor-label">Version </div></td>
+                                <td><div class="editor-field"><select id="VersionG" style="width:100px;"></select></div></td>
+                                <td colspan="3">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Barra de transferencia</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("BARRCODI3", @BARRCODI3, "(TODOS)")
+                                    </div>
+                                </td>
+                                <td><div class="editor-label">Empresa</div></td>
+                                <td>
+                                    <select id="EMPRCODI3">
+                                        
+                                    </select>
+                                    <input type="hidden" id="hcbEMPRCODI3" />
+                                </td>
+                                <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                                <td><input type="button" id="btnVer" value="Ver Codigos" /></td>
+                                <td><input type="button" id="btnDescargarEntregaRetiro" value="Descargar Entrega / Retiro" /></td>
+                            </tr>
+                        </table>
+                        <br /><br />
+                        <div style="width:100%; display: none;" id="divResultado">
+                            <table border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td valign="top">
+                                        <div style="max-height:800px; overflow-y:scroll; width:auto;">
+                                            <table border="0" class="pretty" id="tabla">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">&nbsp;</th>
+                                                        <th scope="col">Código</th>
+                                                        <th scope="col">Empresa</th>
+                                                        <th scope="col">Central/Cliente</th>
+                                                        <th scope="col">Barra</th>
+                                                        <th scope="col">Información</th>
+                                                        <th scope="col">Total</th>
+                                                        <th scope="col">&nbsp;</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                    <td valign="top">
+                                        <div style="width:670px;">
+                                            <div id="grafico" style="height:400px; width:665px; "></div>
+                                            <div id="grafico2" style="height:400px; width:665px; "></div>
+                                            <br />
+                                            <div id="btnBotones" style="text-align:center">
+                                                <input type="button" id="btnImagen1" value="Imprimir Imagen 1" />                                                
+                                                <input type="button" id="btnImagen2" value="Imprimir Imagen 2" />
+                                                <input type="button" id="reset" value="Reducir" />
+                                                <input type="button" id="Clean" value="Limpiar" />
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr><td colspan="2">&nbsp;</td></tr>
+                            </table>
+                            <div style="clear:both">
+                                <a style="text-align:right"></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="paso4">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table cellspacing="2" cellpadding="6" border="1">
+                            <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                <td colspan="8"><div class="editor-label"><b>Gráfico de Informacion Base: </b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td><div class="editor-field">@Html.DropDownList("PERICODI4", @PERIANIOMES3, "--Seleccione--")</div></td>
+                                <td><div class="editor-label">Version</div></td>
+                                <td><select id="Version4" style="width:100px;"></select></td>
+                                <td><div class="editor-label">Empresa</div></td>
+                                <td>
+                                    <select id="EMPRCODI4" multiple="multiple">
+                                        @foreach (var item in @EMPRCODI4.ListaEmpresas)
+                                        {
+                                            <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hcbEMPRCODI4" />
+                                </td>
+                                <td><div><input type="button" id="btnVer4" value="Ver Codigos" /></div></td>
+                                <td><input type="button" id="btnDescargarInfoBase" value="Descargar Info. Base" /></td>
+                            </tr>
+                        </table>
+                        <br /><br />
+                        <div style="width:100%; display: none;" id="divResultado4">
+                            <table border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td valign="top">
+                                        <div style="max-height:800px; overflow-y:scroll; width:300px;">
+                                            <table border="0" class="pretty" id="tabla4">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">&nbsp;</th>
+                                                        <th scope="col">Código</th>
+                                                        <th scope="col">Empresa</th>
+                                                        <th scope="col">Central/Cliente</th>
+                                                        <th scope="col">Barra</th>
+                                                        <th scope="col">Información</th>
+                                                        <th scope="col">Total</th>
+                                                        <th scope="col">&nbsp;</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                    <td valign="top">
+                                        <div style="width:670px;">
+                                            <div id="grafico4" style="height:400px; width:665px; "></div>
+                                            <div id="grafico24" style="height:400px; width:665px; "></div>
+                                            <br />
+                                            <div id="btnBotonesIB" style="text-align:center">
+                                                <input type="button" id="btnImagen1IB" value="Imprimir Imagen 1" />
+                                                <input type="button" id="btnImagen2IB" value="Imprimir Imagen 2" />
+                                                <input type="button" id="reset4" value="Reducir" />
+                                                <input type="button" id="Clean4" value="Limpiar" />
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr><td colspan="2">&nbsp;</td></tr>
+                            </table>
+                            <div style="clear:both">
+                                <a style="text-align:right"></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="paso5">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera" style="color:#FFFFFF; background-color:#2980B9;">
+                                <td colspan="5"><div class="editor-label" style="color:#FFFFFF;"><b>Descarga de Resumen energía mensual</b></div></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="editor-label"> Periodo:  </div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PericodiC", @PERIANIOMES4, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="editor-label">Version </div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="VersionC" style="width:100px;"></select>
+                                    </div>
+                                </td>
+                                <td><div><input type="button" id="btnDescargarEnergiaMensual" value="Descargar Energía Mensual" /></div></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="editor-label">Barra de transferencia:</div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("BARRCODI", @BARRCODI, "(TODOS)")
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="editor-label">Empresa:  </div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="EMPRCODI5" multiple="multiple">
+                                            @foreach (var item in @EMPRCODI5.ListaEmpresas)
+                                            {
+                                                <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                            }
+                                        </select>
+                                        <input type="hidden" id="hcbEMPRCODI5" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    document.getElementById('btnBotones').style.display = "none";
+    document.getElementById('btnBotonesIB').style.display = "none";
+    //var cboPeriodo = document.getElementById('Pericodi');
+    function ASSETEC_ChartToPNG(c, p) {
+        var nw = window.open('', '', "toolbar=no,location=no,scrollbars=yes,width=750,height=550");
+        nw.document.write("<img src='" + jqplotToImg($("#" + c)) + "' />");
+        nw.focus();
+        if (p) nw.print();
+    }
+
+    $("#btnImagen1").click(function () {
+        ASSETEC_ChartToPNG("grafico", true);
+    });
+
+    $("#btnImagen2").click(function () {
+        ASSETEC_ChartToPNG("grafico2", true);
+    });
+
+    $("#btnImagen1IB").click(function () {
+        ASSETEC_ChartToPNG("grafico4", true);
+    });
+
+    $("#btnImagen2IB").click(function () {
+        ASSETEC_ChartToPNG("grafico24", true);
+    });
+
+    $("#btnImagen1PNG").click(function () {
+        var imgData = $("#grafico").jqplotToImageStr({});
+        if (imgData) {
+            window.location.href = imgData.replace("image/png", "image/octet-stream");
+        }
+    });
+    //Salvar como PNG: $("#grafico").jqplotSaveImage();
+</script>

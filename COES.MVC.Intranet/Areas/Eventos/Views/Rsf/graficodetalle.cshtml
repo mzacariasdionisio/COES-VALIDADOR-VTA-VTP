@@ -1,0 +1,172 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.RsfGraficoModel
+
+<style>
+
+    
+
+    .tb-rsf-panel {
+
+    }
+
+        .tb-rsf-panel thead tr th {
+            background-color: #5BC0DE;
+            text-align:center;
+            color:#fff;
+            font-weight:bold;
+            line-height:22px;
+        }
+
+    .td-nombre {
+        background-color: #F2F5F7;
+        padding-right: 20px;
+        text-align: right;
+        font-weight: normal;
+        border: 1px solid #DDDDDD;
+        padding: 4px 0;
+        padding-right: 20px;
+      
+    }
+
+    .td-grafico {
+        border: 1px solid #E4E4E4;
+        padding: 4px 0;
+        cursor: pointer;
+    }
+        .td-grafico div {
+            height:15px;
+        
+        }
+
+    .rsf-tooltip {
+        display:none; 
+        position:absolute;
+        z-index:2;
+        margin-left:40px;
+        margin-top:15px;
+        width:200px;
+        border-radius:5px;
+        border:3px solid #5BC0DE;
+        background-color:#fff;
+        padding:10px;
+        height:65px !important;
+    }
+
+</style>
+
+<script type="text/javascript">
+    mostrarTooltip = function (evt) {        
+        $(evt).find(".rsf-tooltip").css("display", "block");
+    };
+
+    ocultarTooltip = function (evt) {
+        $(evt).find(".rsf-tooltip").css("display", "none");
+    };
+
+</script>
+
+<table class="tb-rsf-panel">
+    @{
+        var list = Model.ListaGrafico;
+
+        int index = 0;
+        foreach (var item in list)
+        {
+            if (index == 0)
+            {
+                <thead>
+                    <tr>
+                        <th>URS</th>
+                        @foreach (var header in item.ListaHoras)
+                        {
+                            <th style="width:300px; max-width:300px">@header</th>
+                        }
+                    </tr>
+                </thead>
+                break;
+            }
+        }
+                <tbody>
+                    @{index = 0;
+                        foreach (var item in list)
+                        {
+                            if (index > 0)
+                            {                                                  
+                                var indexItem = 0;
+
+                    <tr>
+                        <td class="td-nombre">@item.Nombre</td>
+                        @foreach (var valor in item.ListaValores)
+                        {
+                            var clase = "";
+                            if (indexItem > 0)
+                            {
+                                /*if (valor.RsfDown != item.ListaValores[indexItem - 1].RsfDown)
+                                {
+                                    claseDown = "estilo";
+                                }
+                                if (valor.RsfUp != item.ListaValores[indexItem - 1].RsfUp)
+                                {
+                                    claseUp = "estilo";
+                                }*/
+                                if (item.ListaValores[indexItem - 1].RsfDown == 0 && item.ListaValores[indexItem - 1].RsfUp == 0) { clase = "estilo"; }
+                                else { clase = ""; }
+                            }
+
+                        <td style="width:300px; max-width:300px" class="td-grafico" onmouseover="mostrarTooltip(this)" onmouseout="ocultarTooltip(this)" >
+                            @{ 
+                                var escala = Convert.ToInt32(((valor.Load > valor.RsfDown)? valor.Load: valor.RsfDown) + valor.RsfUp);
+                                string w1 = "0px";
+                                string w2 = "0px";
+                                string w3 = "0px";
+                                string w4 = "0px";
+                                //- Cambios de la escala
+
+                                if (escala > 0)
+                                {
+                                    w1 = Convert.ToInt32((valor.Load - valor.RsfDown) * 290 / escala) + "px";
+                                    w2 = Convert.ToInt32((valor.RsfDown) * 290 / escala) + "px";
+                                    w3 = (valor.Load > 0) ? "3px" : "0px";
+                                    w4 = Convert.ToInt32((valor.RsfUp) * 290 / escala) + "px";
+                                }
+                            }
+                            <div style="width:@w1; background-color:#fff; float:left" >&nbsp;</div>
+                            <div style="width:@w2; background-color:#92D050; float:left" class="@clase">&nbsp;</div>
+                            <div style="width:@w3; background-color:#3972CE; float:left" >&nbsp;</div>
+                            <div style="width:@w4; background-color:#ED7D31; float:left" class="@clase">&nbsp;</div>
+
+                            <div class="rsf-tooltip">
+                                <table>
+                                    <tr>                                       
+                                        <td colspan="3" style="text-align:center; font-weight:bold">@item.Nombre</td>
+                                       
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color:#3972CE; width: 20px;" ></td>
+                                        <td style="padding-left:10px">Punto Inflexión:</td>
+                                        <td>@(valor.Load) MW</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color:#92D050; width:20px;"></td>
+                                        <td style="padding-left:10px">RSF DOWN:</td>
+                                        <td>@(valor.RsfDown) MW</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color:#ED7D31; width:20px;"></td>
+                                        <td style="padding-left:10px">RSF UP:</td>
+                                        <td>@(valor.RsfUp) MW</td>
+                                    </tr>
+                                </table>   
+                                <div style="clear:both"></div>
+                            </div>
+                        </td>
+                                    indexItem++;
+                                }
+                    </tr>
+                            }
+                            index++;
+                        }
+                    }
+                </tbody>
+    }
+
+</table>

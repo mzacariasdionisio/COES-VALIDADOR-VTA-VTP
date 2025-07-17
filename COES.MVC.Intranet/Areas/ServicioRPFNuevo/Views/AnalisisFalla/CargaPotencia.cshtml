@@ -1,0 +1,100 @@
+﻿@model COES.MVC.Intranet.Areas.ServicioRPFNuevo.Models.AnalisisFallaModel
+
+
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/ServicioRPF/Content/Scripts/potencia.js"></script>
+
+<div class="formulario-item" style="width:700px">
+    <div class="formulario-label" style="width:250px">Seleccionar archivo (Extensión: .XLSX):</div>
+    <div class="formulario-control" style="width:120px" id="container">
+        <input type="button" id="btnProcesarFile" value="Procesar" />
+    </div>
+    <div class="formulario-control" style="width:120px">
+        <input type="button" id="btnSelectFile" value="Seleccionar" />
+    </div>
+
+</div>
+
+<div id="progreso"></div>
+<div id="fileInfo"></div>
+
+<div id="datosCargados">
+
+    @if (Model.ListaPotencia.Count > 0)
+    {
+        <table class="tabla-formulario" border="1">
+            <thead>
+                <tr>
+                    <th>Empresa</th>
+                    <th>Central</th>
+                    <th>Unidad</th>
+                    <th>Potencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ListaPotencia)
+                {
+                    <tr>
+                        <td>@item.EMPRNOMB</td>
+                        <td>@item.EQUINOMB</td>
+                        <td>@item.EQUIABREV</td>
+                        <td>@item.POTENCIAMAX.ToString("#,###.00")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+</div>
+
+<script type="text/javascript">
+
+    var uploader = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnSelectFile',
+        container: document.getElementById('container'),
+        url: siteRoot + 'serviciorpf/analisisnormal/upload',
+        flash_swf_url: '~/Content/Scripts/Moxie.swf',
+        silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+            max_file_size: '2mb',
+            mime_types: [
+                { title: "Archivos Excel .xlsx", extensions: "xlsx" }
+            ]
+        },
+        init: {
+            PostInit: function () {
+                document.getElementById('btnProcesarFile').onclick = function () {
+                    if (uploader.files.length > 0) {
+                        uploader.start();
+                    }
+                    else
+                        loadValidacionFile("Seleccione archivo.");
+                    return false;
+                };
+            },
+            FilesAdded: function (up, files) {
+                if (uploader.files.length == 2) {
+                    uploader.removeFile(uploader.files[0]);
+                }
+                plupload.each(files, function (file) {
+                    loadInfoFile(file.name, plupload.formatSize(file.size));
+                });
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+                mostrarProgreso(file.percent);
+            },
+            UploadComplete: function (up, file) {
+                procesarArchivo();
+            },
+            Error: function (up, err) {
+                loadValidacionFile(err.code + "-" + err.message);
+            }
+        }
+    });
+
+    uploader.init();
+
+</script>

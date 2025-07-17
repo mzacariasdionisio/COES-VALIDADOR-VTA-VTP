@@ -1,0 +1,347 @@
+﻿@model COES.MVC.Extranet.Areas.Eventos.Models.InformeModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Areas/Eventos/Content/Scripts/informe.js"></script>
+
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/Eventos/Content/Css/css.css" rel="stylesheet" />
+
+<div class="form-title" style="color: #278CCC; margin-bottom:15px;">EVENTOS - INFORME</div>
+<div class="form-main" style="margin:0 20px;" >
+    
+   <div class="cnt-opcion-informe">
+       <div class="opcion-informe-active" id="enlaceEvento" ><a href="JavaScript:openEvento();">Datos del evento</a></div>
+       @if (Model.IdEmpresa == -1)
+       {
+           <div class="opcion-informe" id="enlaceInformeI"><a href="JavaScript:openInforme(@Model.IdInformePreliminarInicial, 'I');">Informe Preliminar Inicial</a></div>
+       }
+       <div class="opcion-informe" id="enlaceInformeP"><a href="JavaScript:openInforme(@Model.IdInformePreliminar, 'P');">Informe Preliminar</a></div>
+       <div class="opcion-informe" id="enlaceInformeF"><a href="JavaScript:openInforme(@Model.IdInformeFinal, 'F')">Informe Final</a></div>
+       <div class="opcion-informe" id="enlaceInformeC"><a href="JavaScript:openInforme(@Model.IdInformeComplementario, 'C')">Informe Complementario</a></div>
+       <div class="opcion-informe" id="enlaceInformeA" style="display:none"><a href="JavaScript:openInforme(@Model.IdInformeFile, 'A')">Archivos</a></div>
+   </div>
+   <div id="contenidoEvento">
+       
+                <table style="width:auto">
+                    <tr>
+                        <td valign="top" style="width:750px; padding-top:15px">
+                            <div class="formato-titulo" style="display:none">
+                                <div class="formato-title" style="width:200px" >Datos del Evento</div>                            
+                            </div>
+                            <div style="clear:both; height:10px;"></div>
+                            <table class="table-form-content" aria-describedby="Datos">
+                                <tr>
+                                    <td class="label">Tipo de Evento:</td>
+                                    <td>@Model.Entidad.Tipoevenabrev</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Hora Inicio:</td>
+                                    <td>@(((DateTime)Model.Entidad.Evenini).ToString("dd/MM/yyyy HH:mm"))</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Hora Fin:</td>
+                                    <td>@(((DateTime)Model.Entidad.Evenfin).ToString("dd/MM/yyyy HH:mm"))</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Resumen del evento:</td>
+                                    <td style="padding:20px 20px">
+                                        @Model.Entidad.Evenasunto
+                                    </td>                                
+                                </tr>
+                                <tr>
+                                    <td class="label">Descripción</td>
+                                    <td>@Model.Entidad.Evendesc</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">Equipos involucrados:</td>
+                                    <td style="padding:20px">                                                                                
+                                        <table class="tabla-formulario" id="tablaEquipo" aria-describedby="Equipo">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Empresa</th>
+                                                    <th scope="col">Ubicación</th>
+                                                    <th scope="col">Tipo</th>
+                                                    <th scope="col">Central</th>
+                                                    <th scope="col">Equipo</th>
+                                                    <th scope="col">Nivel Tensión</th>                                                    
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in Model.ListaEquipos)
+                                                {
+                                                    <tr>
+                                                        <td>@item.Equinomb</td>
+                                                        <td>@item.TAREAABREV @item.AREANOMB</td>
+                                                        <td>@item.FAMABREV</td>
+                                                        <td>@item.DESCENTRAL</td>
+                                                        <td>@item.Equiabrev</td>
+                                                        <td>@item.Equitension</td>                                                        
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+
+                        <td valign="top" style="padding-left:30px; width:270px; padding-top:15px">
+                            <div class="formato-titulo" style="display:none">
+                                <div class="formato-title" style="width:200px">Informes</div>
+                            </div>
+                            <div style="clear:both; height:0px;"></div>
+                            <div class="content-info">
+                                Por favor revise los plazos de envío.
+                            </div>
+                            <table style=" border-spacing: 0;border-collapse: collapse;padding:0; ">
+                                @if (Model.IdEmpresa == -1)
+                                {
+                                    <tr style="line-height:18px">
+                                        <td>Informe preliminar inicial:</td>
+                                        <td style="padding-left:5px"><span style="color:red">@Model.PlazoPreliminarInicial</span></td>
+                                    </tr>
+                                }
+                                <tr style="line-height:18px">
+                                    <td>Informe preliminar:</td>
+                                    <td style="padding-left:5px"><span style="color:red">@Model.PlazoPreliminar</span></td>
+                                </tr>
+                                <tr style="line-height:18px">
+                                    <td>Informe Final:</td>
+                                    <td style="padding-left:5px"><span style="color:red">@Model.PlazoFinal</span></td>
+                                </tr>
+                            </table>
+                            <div class="formato-clear-heigth"></div>
+
+                            Empresa que reporta: <strong>@Model.EmpresaReporta</strong>
+
+                        </td>
+                    </tr>
+                </table>
+                
+            </div>
+   <div id="contenidoInforme">
+       
+   </div>       
+    
+    <div style="width:90px; margin:15px auto; text-align:center">
+        <input type="button" id="btnListado" value="Ir al listado" />
+    </div>
+
+</div>
+
+<input type="hidden" id="hfCodigoEvento" value="@Model.Entidad.Evencodi" />
+<input type="hidden" id="hfCodigoEmpresa" value="@Model.IdEmpresa" />
+
+<div id="popupElemento" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Agregar elemento</span></div>
+    <div class="popup-text" id="contenidoElemento" style="width:570px; margin-bottom:0">         
+    </div>
+</div>
+
+<div id="popupFile" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Modificar descripción</span></div>
+    <div class="popup-text">
+        <textarea id="txtDescripcionFile" maxlength="90"></textarea>
+        <div style="clear:both"></div>
+        <div style="width:130px; margin:auto; text-align:center; margin-top:10px">
+            <input type="button" id="btnGrabarFile" value="OK" />
+            <input type="button" id="btnCancelarFile" value="Cancelar" />
+        </div>
+        <input type="hidden" id="hfIdFileReporte" />
+    </div>
+</div>
+
+<div id="popupExportar" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    
+    <div class="popup-text">
+
+        @{
+            var idstilo = "style=display:block";
+            if (Model.IdEmpresa == -1) {
+                idstilo = "style=display:none";
+            }
+        }
+
+        <div id="contentlogo" @idstilo>
+
+        <div class="popup-title"><span>Configuración de logo</span></div>
+        <table cellpadding="0" cellspacing="0" border="0">
+            <tr>
+                <td valign="top" style="width:300px; text-align:center; padding-top:20px">
+                    Empresa: <strong>@Model.EmpresaReporta</strong>
+                    <div style="clear:both; height:10px"></div>
+                                        
+                    @if (Model.LogoEmpresa != "N")
+                    {
+                        <span>Logo:</span>
+                        <img src="http://www.coes.org.pe/appfileserver/documentos/Logos/@Model.LogoEmpresa" id="imgLogoEmpresa" />    
+                    }
+                    else
+                    {
+                        <span>No existe logo de la empresa.</span>
+                        <img id="imgLogoEmpresa" />
+                    }
+                </td>
+                <td valign="top">
+                    Por favor cargue el logo a incluir en los informes con las siguientes consideraciones:
+                    <ul>
+                        <li>Extensiones permitidas: png, jpg, gif</li>
+                        <li>Peso máximo: 200 KB</li>
+                        <li>Dimensiones máximas: 300px ancho por 100px alto</li>
+                    </ul>                    
+                    <div id="filelogo"></div>
+                    <br />
+                    <div id="containerlogo" style="width:300px; text-align:center; height:25px; margin:auto" class="action-informe">
+                        <a id="pickfileslogo" href="javascript:;"><img src="~/Content/Images/btnAddFiles.png" title="Seleccionar archivos a subir" /></a>
+                        <a id="uploadfileslogo" href="javascript:;"><img src="~/Content/Images/btnSubir.png" title="Subir archivos" /></a>
+                        <input type="hidden" id="hfNombreLogo" />
+                    </div>
+
+                    <script type="text/javascript">
+                        var uploaderLogo = new plupload.Uploader({
+                            runtimes: 'html5,flash,silverlight,html4',
+                            browse_button: 'pickfileslogo',
+                            container: document.getElementById('containerlogo'),
+                            url: siteRoot + 'eventos/informe/uploadlogo?idEmpresa=' + @Model.IdEmpresa,
+                            flash_swf_url: 'Scripts/Moxie.swf',
+                            silverlight_xap_url: 'Scripts/Moxie.xap',
+                            filters: {
+                                max_file_size: '1mb',
+                                mime_types: [
+                                    {title : "Image files", extensions : "jpg,gif,png"}                                 
+                                ]
+                            },
+                            init: {
+                                PostInit: function () {
+                                    document.getElementById('filelogo').innerHTML = '';
+                                    document.getElementById('uploadfileslogo').onclick = function () {
+                                        if (uploaderLogo.files.length > 0) {
+                                            uploaderLogo.start();
+                                        }
+                                        else
+                                            document.getElementById('filelogo').innerHTML = '<div class="action-alert">Seleccione archivo</div>';
+                                        return false;
+                                    };
+                                },
+                                FilesAdded: function (up, files) {
+                                    document.getElementById('filelogo').innerHTML = '';
+                                    if (uploaderLogo.files.length == 2) {
+                                        uploaderLogo.removeFile(uploaderLogo.files[0]);
+                                    }
+                                    plupload.each(files, function (file) {
+                                        document.getElementById('filelogo').innerHTML = '<div class="file-name">' + file.name + ' (' + plupload.formatSize(file.size) + ')</div>';
+                                        $('#hfNombreLogo').val(file.name);
+                                    });
+                                    up.refresh();
+                                },
+                                UploadProgress: function (up, file) {
+                                    document.getElementById('filelogo').innerHTML = '<span>' + file.percent + "%</span>";
+                                },
+                                UploadComplete: function (up, file) {
+                                    cargarLogo(@Model.IdEmpresa, $('#hfNombreLogo').val().split(".").pop());
+                                    document.getElementById('filelogo').innerHTML = '';
+                                },
+                                Error: function (up, err) {
+                                    document.getElementById('filelogo').innerHTML = '<div class="action-alert">' + err.message +'</div>';
+                                }
+                            }
+                        });
+                        uploaderLogo.init();                      
+                    </script>
+
+
+
+                </td>
+            </tr>
+        </table>
+        
+        <div style="clear:both; height:20px"></div>
+        
+        </div>
+
+        <div class="popup-title"><span>Exportar informe</span></div>
+        Por favor seleccione el formato de exportación:
+        <div style="width:130px; margin:auto; text-align:center; margin-top:10px">
+            <input type="button" id="btnExportarWord" value="WORD" />
+            <input type="button" id="btnExportarPDF" value="PDF" />
+        </div>      
+    </div>
+</div>
+
+<div id="popupFinalizar" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Finalizar informe</span></div>
+    <div class="popup-text">
+        <div class="action-alert" id="divMensajeFinalizar">
+            El informe se finalizará fuera del plazo establecido.
+        </div>
+        Luego de finalizar no podrá modificar el informe. ¿Está seguro de dar por finalizado este informe?
+        <div style="width:200px; margin:auto; text-align:center; margin-top:20px">
+            <input type="button" id="btnAceptarFinalizar" value="Aceptar" />
+            <input type="button" id="btnCancelarFinalizar" value="Cancelar" />
+        </div>
+    </div>
+</div>
+
+
+<div id="popupCopiar" class="general-popup" style="width:500px">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Copiar informe</span></div>
+    <div class="popup-text">       
+
+         <div class="content-registro" >
+             <table style="width:480px">
+                 <tr>
+                     <td class="registro-label">Origen:</td>
+                     <td class="registro-control">
+                         <select id="cbOrigenFinal">
+                             <option value="P">Preliminar</option>
+                         </select>
+                         <select id="cbOrigenComplementario">
+                             <option value="P">Preliminar</option>
+                             <option value="F">Final</option>
+                         </select>
+                     </td>
+                </tr>
+                <tr>
+                    <td class="registro-label">Acción:</td>
+                    <td class="registro-control">
+                        <table cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td><input type="radio" name="OpcionCopia" value="N" checked="checked" /></td>
+                                <td>Agregar</td>    
+                                <td><input type="radio" name="OpcionCopia" value="S" /></td>
+                                <td>Sobreescribir</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>       
+        <div style="width:200px; margin:auto; text-align:center; margin-top:10px">
+            <input type="button" id="btnAceptarCopia" value="Aceptar" />
+            <input type="button" id="btnCancelarCopia" value="Cancelar" />
+        </div>
+        <div>
+            <strong>Nota:</strong>
+            <div style="clear:both; height:7px"></div>
+            <strong style="color:#3D90CB">Agregar:</strong> Añade los elementos del informe origen al informe actual.
+            <div style="clear:both; height:7px"></div>
+            <strong style="color:#3D90CB">Sobreescribir:</strong> Reemplaza los elementos del informe actual con los elementos del informe origen.
+        </div>
+    </div>
+</div>
+
+
+<input type="hidden" id="CodigoInformePreliminar" value="@Model.IdInformePreliminar" />
+<input type="hidden" id="CodigoInformeComplementario" value="@Model.IdInformeComplementario" />
+<input type="hidden" id="CodigoInformeFinal" value="@Model.IdInformeFinal" />
+<input type="hidden" id="CodigoInformePreliminarInicial" value="@Model.IdInformePreliminarInicial" />

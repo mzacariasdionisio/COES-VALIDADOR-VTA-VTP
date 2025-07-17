@@ -1,0 +1,207 @@
+﻿@model COES.MVC.Intranet.Areas.Combustibles.Models.CombustibleGasModel
+@{
+    ViewBag.Title = "Configuración Aplicativo PR31 - Gaseoso";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/datatable.js"></script>
+
+
+<link type="text/css" rel="stylesheet" href="~/Areas/Combustibles/Content/Css/Gas/css.css?v=1.9.7.2" />
+<script src="~/Areas/Combustibles/Content/Scripts/Gas/configuracionCentral.js?v=1.9.7.2"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Configuración de Centrales Térmicas</div>
+    <div class="content-botonera">
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje_centrales"></div>
+
+    @if (Model.TienePermisoAdmin)
+    {
+        <div style="margin-bottom: 15px;">
+            <input type="button" id="btnActualizar" value="Cargar de BD" />
+            Nota: esta acción permite actualizar el listado de las centrales térmicas.
+        </div>
+    }
+
+    <div>
+        <table border="0" class="pretty tabla-adicional" id="tablaCentrales" style="width: auto">
+            <thead>
+                <tr style="height:20px">
+                    <th rowspan="2" style="width: 60px;">Acciones</th>
+                    <th rowspan="2" style="width: 300px;">Empresa</th>
+                    <th rowspan="2" style="width: 250px;">Central</th>
+                    <th rowspan="2" style="width: 120px;">Tipo Combustible</th>
+                    <th rowspan="2" style="width: 80px;">Estado</th>
+                    <th rowspan="2" style="width: 40px;">Orden</th>
+                    <th rowspan="1" colspan="2" style="width: 120px;">Tipo</th>
+
+                    <th rowspan="2" style="width: 65px;">Visible en Extranet</th>
+                </tr>
+                <tr style="height:20px">
+                    <th style="width: 60px;">Nuevo</th>
+                    <th style="width: 60px;">Existente</th>
+
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (Model.ListadoCentrales.Any())
+                {
+                    foreach (var item in Model.ListadoCentrales)
+                    {
+                        <tr>
+                            <td style="width: 60px; background-color:@item.Color">
+                                @if (Model.TienePermisoAdmin)
+                                {
+                                    <a href="JavaScript:editarCentral(@item.Cbcxfecodi);" title="Visualizar o editar los dato de la central">
+                                        <img style="float: none;" src="~/Content/Images/btn-edit.png" alt="Visualizar o editar los dato de la central" />
+                                    </a>
+                                }
+                            </td>
+                            <td style="width: 300px; background-color:@item.Color; text-align:left;">@item.Emprnomb</td>
+                            <td style="width: 250px; background-color:@item.Color; text-align:left;">@item.Equinomb</td>
+                            <td style="width: 120px; background-color:@item.Color">@item.Fenergnomb</td>
+                            <td style="width: 80px; background-color:@item.Color">@item.EstadoDesc</td>
+                            <td style="width: 40px; background-color:@item.Color">@item.Cbcxfeorden</td>
+                            <td style="width: 60px; background-color:@item.Color">
+                                @if (item.Cbcxfenuevo == 1)
+                                {
+                                    <input type="checkbox" class="chbx" checked onclick="return false;">
+                                }
+                                else
+                                {
+                                    if (item.Cbcxfenuevo == 0)
+                                    {
+                                        <input type="checkbox" class="chbx" onclick="return false;">
+                                    }
+                                }
+                            </td>
+                            <td style="width: 60px; background-color:@item.Color">
+                                @if (item.Cbcxfeexistente == 1)
+                                {
+                                    <input type="checkbox" class="chbx" checked onclick="return false;">
+                                }
+                                else
+                                {
+                                    if (item.Cbcxfeexistente == 0)
+                                    {
+                                        <input type="checkbox" class="chbx" onclick="return false;">
+                                    }
+                                }
+                            </td>
+                            <td style="width: 65px; background-color:@item.Color">
+                                @if (item.Cbcxfevisibleapp == 1)
+                                {
+                                    <input type="checkbox" class="chbx" checked onclick="return false;">
+                                }
+                                else
+                                {
+                                    if (item.Cbcxfevisibleapp == 0)
+                                    {
+                                        <input type="checkbox" class="chbx" onclick="return false;">
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<div id="popupEditarCentral" class="popup-class-1 general-popup" style="width: 500px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Editar Central</span></div>
+    <div class="panel-container">
+        <div id="mensaje_popupEditar"></div>
+        <div id="" style="margin-top: 10px;"></div>
+        <input type="hidden" id="hfIdCentral" />
+
+        <div>
+            <table id="" style="margin-top: 10px; padding-left: 80px;">
+                <tr style="height: 25px;">
+                    <td class="tbform-label">Empresa:</td>
+                    <td>
+                        <div id="campoEmpresa"></div>
+                    </td>
+                </tr>
+                <tr style="height: 25px;">
+                    <td class="tbform-label">Central:</td>
+                    <td>
+                        <div id="campoCentral"></div>
+                    </td>
+                </tr>
+                <tr style="height: 25px;">
+                    <td class="tbform-label">Orden:</td>
+                    <td>
+                        <input type="number" min="0" step="1" style="width: 40px;" id="orden">
+                    </td>
+                </tr>
+                <tr style="height: 25px;">
+                    <td class="tbform-label">Tipo:</td>
+                    <td>
+                        <input type="checkbox" id="chbxExistente">
+                        <input type="hidden" value="0" />
+                        <label style="padding-right: 25px;">Existente</label>
+                        <input type="checkbox" id="chbxNueva">
+                        <label>Nueva</label><br>
+                    </td>
+                </tr>
+                <tr style="height: 25px;">
+                    <td class="tbform-label">Visibilidad en Extranet:</td>
+                    <td>
+                        <input type="checkbox" id="chbxEnExtranet">
+
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div style="padding-top: 20px; padding-bottom: 20px;">
+            <table border="0" class="pretty tabla-adicional" id="tablaValoresCentral" style="width: auto">
+                <thead>
+                    <tr style="height:20px">
+                        <th style="width: 270px;">Ítem</th>
+                        <th style="width: 90px;">Mínimo</th>
+                        <th style="width: 90px;">Máximo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="width: 270px;">Precio Unitario Por Suministro F3 (USD/GJ)</td>
+                        <td><input type="number" min="0" step="0.00000000001" style="width: 90px;" id="minPUSum"></td>
+                        <td><input type="number" min="0" step="0.00000000001" style="width: 90px;" id="maxPUSum"></td>
+                    </tr>
+                    <tr>
+                        <td style="width: 270px;">Precio Unitario Por Transporte F3 (USD/GJ)</td>
+                        <td><input type="number" min="0" step="0.00000000001" style="width: 90px;" id="minPUTransp"></td>
+                        <td><input type="number" min="0" step="0.00000000001" style="width: 90px;" id="maxPUTransp"></td>
+                    </tr>
+                    <tr>
+                        <td style="width: 270px;">Precio Unitario Por Distribución F3 (USD/GJ)</td>
+                        <td><input type="number" min="0" step="0.00000000001" style="width: 90px;" id="minPUDistrib"></td>
+                        <td><input type="number" min="0" step="0.00000000001" style="width: 90px;" id="maxPUDistrib"></td>
+                    </tr>
+                    <tr>
+                        <td style="width: 270px;">Costo de Gas Natural (USD/GJ)</td>
+                        <td><input type="number" min="0" step="0.00000000001" style="width: 90px;" id="minCostoGN"></td>
+                        <td><input type="number" min="0" step="0.00000000001" style="width: 90px;" id="maxCostoGN"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <div style="width: 150px; margin: 0 auto;">
+                <input type="submit" id="GuardarCentral" value="Guardar" style="margin-top: 15px;">
+                <input type="button" id="" value="Cancelar" onclick="cerrarPopup('popupEditarCentral')">
+
+            </div>
+        </div>
+
+    </div>
+</div>

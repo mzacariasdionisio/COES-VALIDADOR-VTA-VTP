@@ -1,0 +1,146 @@
+﻿@model COES.MVC.Intranet.Areas.Combustibles.Models.CombustibleGasModel
+@{
+    ViewBag.Title = "Reporte";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/highcharts.js"></script>
+<script src="~/Content/Scripts/grouped-categories.js"></script>
+<script src="~/Content/Scripts/Charts/graficosBase.js?v=1.0"></script>
+<script src="~/Areas/Combustibles/Content/Scripts/Gas/index_historico.js?v=1.3"></script>
+<link href="~/Areas/Combustibles/Content/Css/Gas/css.css?v=1.0" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Consulta histórica</div>
+    <div class="content-botonera">
+        <input type="button" id="btnBuscar" value="Reporte" />
+        <input type="button" id="btnGrafico" value="Ver gráfico" />
+        <input type="button" id="btnExportar" value="Exportar" />
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+    <input type="hidden" id="hfEmpresa" />
+    <input type="hidden" id="hfEstado" />
+    <input type="hidden" id="hfCentral" />
+    <div class="search-content" style="margin-bottom:0px; padding:10px">
+
+        <table class="content-tabla-search" style="width:auto" role="presentation">
+            <tr>
+                <td style="vertical-align: middle;">Empresa:</td>
+                <td>
+                    <select id="cbEmpresa" name="IdEmpresa" multiple="multiple">
+                        @foreach (var item in Model.ListaEmpresas)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+
+                <td style="vertical-align: middle;">Central:</td>
+                <td>
+                    <select id="cbCentral" name="IdCentral" multiple="multiple">
+                        @foreach (var item in Model.ListadoCentrales)
+                        {
+                            <option value="@item.Equicodi">@item.Equinomb</option>
+                        }
+                    </select>
+                </td>
+
+                @*<td style="vertical-align: middle;">Estado:</td>
+                    <td>
+                        <select id="cbEstado" name="IdEstado" multiple="multiple">
+                            @foreach (var item in Model.ListadoEstados)
+                            {
+                                <option value="@item.Estenvcodi">@item.Estenvabrev</option>
+                            }
+                        </select>
+                    </td>*@
+
+                <td>Tipo de Reporte:</td>
+                <td>
+                    <select id="cbTipoReporte" name="IdTipoReporte" style=" width: 320px;">
+                        <option value="0">--SELECCIONE--</option>
+                        <option value="1">Reporte Costos Variables (S//kWh)</option>
+                        <option value="2">Reporte Costos Variables (USD/kWh)</option>
+                        <option value="3">Reporte Costo de C.G. - PCI (USD/GJ)</option>
+                        <option value="4">Reporte P.U. de C.G. por concepto - PCI (USD/GJ)</option>
+                        <option value="5">Reporte P.U. de C.G. por concepto – Formato 3 (USD/GJ)</option>
+                        <option value="6">Reporte de Poder calorífico</option>
+                    </select>
+                </td>
+
+                @*<td>Fecha Desde:</td>
+                    <td>
+                        <input type="text" id="FechaDesde" style="width: 90px;" name="FechaInicio" value="@Model.FechaInicio" />
+                    </td>
+                    <td>Fecha Hasta:</td>
+                    <td>
+                        <input type="text" id="FechaHasta" style="width: 90px;" name="FechaFin" value="@Model.FechaFin" />
+                    </td>
+
+                    <td>
+                        <input type="button" id="btnBuscar" value="Consultar" />
+                        <input type="button" style="float: right;" id="btnExpotar" value="Exportar" />
+                    </td>*@
+            </tr>
+            <tr>
+                <td colspan=" 8">
+                    <div class="content-download2">
+                        <div style="background-color:steelblue;color:white;border-radius: 6px 6px 6px 6px;">
+                            <strong>&nbsp;&nbsp;&nbsp;Resolución:&nbsp;&nbsp;&nbsp;</strong>
+                            <div id="divDia" style="display:inline-block"><input type="radio" name="rbidTipo" onclick="handleClick(this);" value="1" />Día</div>
+                            <div id="divmes" style="display:inline-block"><input type="radio" name="rbidTipo" onclick="handleClick(this);" value="2" />Mes</div>
+                            <input type="hidden" id="hfidTipo" />
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Fecha desde:</td>
+                <td>
+                    <input type="text" id="FechaDesde" style="width: 90px;" name="FechaInicio" value="@Model.FechaInicio" />
+                    <input type="hidden" id="hfFechaDesde" value="@Model.FechaInicio" />
+                </td>
+                <td>Fecha hasta:</td>
+                <td>
+                    <input type="text" id="FechaHasta" style="width: 90px;" name="FechaFin" value="@Model.FechaFin" />
+                    <input type="hidden" id="hfFechaHasta" value="@Model.FechaFin" />
+                </td>
+            </tr>
+
+        </table>
+    </div>
+    <br />
+    <span id="idnota"></span>
+    <br />
+    <div class="content-tabla" id="listado" style="">
+        <div class="table-list" id="listadoEnvios">
+
+        </div>
+
+        <div id="idGrafico1" style="height:500px; width:90%;"></div>
+
+        </br>
+        <table id="IdCombo" class="content-tabla-search" style="width:auto" hidden>
+            <tr>
+                <td>T. Medida:</td>
+                <td>
+                    <select id="cboTipoMedida" style="width:200px">
+                        <option disabled selected hidden>[SELECCIONAR]</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+
+        <div id="idGrafico2" style="height: 600px; width: 90%;"></div>
+        @*<div id="grafico2" style="width: 1100px; height: 600px; float: left;"></div>*@
+
+    </div>
+
+</div>

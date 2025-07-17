@@ -1,0 +1,157 @@
+﻿@model COES.MVC.Extranet.Areas.IEOD.Models.HorasOperacionModel
+
+<div class="content-registro">
+    <div class="msjNotificacionEdit" style="display: none">
+        El usuario Administrador realizó la última modificación en el sistema, favor de verificar.
+    </div>
+    <table>
+        <tr>
+            <td class="tbform-label">Central</td>
+            <td class="tbform-control">
+                <select id="cbCentral2" name="cbCentral2" style="width:220px;" @Model.ActFiltroCtral>
+                    @if (Model.ListaCentrales.Count > 0)
+                    {
+                        foreach (var item in Model.ListaCentrales)
+                        {
+                            <option value="@item.Equicodi">@item.Equinomb</option>
+                        }
+                    }
+                </select>
+                <input type="hidden" id="hfCentral" name="hfCentral" value="@Model.IdCentralSelect" />
+                <input type="hidden" id="hfTipoCentral" name="hfTipoCentral" value="@Model.IdTipoCentral" />
+            </td>
+        </tr>
+
+        @if (Model.IdTipoCentral != 39 && Model.IdTipoCentral != 37 && Model.TipoHidrologiaCentral == 0)//Hidrológica, Termoeléctrica
+        {
+            <tr class="tr-grupo-modo">
+                <td class="tbform-label">@Model.EtiquetaFiltro</td>
+                <td class="tbform-control">
+                    <div id="listaModoGrupo"></div>
+                </td>
+            </tr>
+        }
+        @if (Model.TipoHidrologiaCentral == 0)
+        {
+            <tr class="tr-tipo-operacion" style="display: none">
+                <td class="tbform-label">Calificación</td>
+                <td class="tbform-control">
+                    <select id="cbTipoOp" name="cbTipoOp" style="width:220px;">
+                        @if (Model.ListaTipoOperacion.Count > 0)
+                        {
+                            foreach (var item in Model.ListaTipoOperacion)
+                            {
+                                <option value="@item.Subcausacodi">@item.Subcausadesc</option>
+                            }
+                        }
+                    </select>
+                    <input type="checkbox" id="chkEnsayoPotenciaEfectiva" name="chkEnsayoPotenciaEfectiva" style="display: none" /><span id="txtEnsayoPotenciaEfectiva">Realizó ensayos de Potencia Efectiva</span>
+
+                    <input type="hidden" id="hfTipoOerac" name="hfTipoOerac" value="@Model.IdTipoOperSelect" />
+                </td>
+            </tr>
+        }
+
+        <tr class="unidades_no_esp titulo" style="display: none"><td colspan="2"></td></tr>
+        <tr class="unidades_no_esp" style="display: none">
+            <td colspan="2" class="search-content">
+                <div id="unidades_no_esp"></div>
+            </td>
+        </tr>
+
+        <tr>
+            <td class="tbform-label">Orden de Arranque</td>
+            <td class="tbform-control">
+                <select id="txtOrdenArranqueF" style="width:122px;" disabled>
+                    @foreach (var item in Model.ListaFechaArranque)
+                    {
+                        var selected = "";
+                        if (item == Model.Fechahorordarranq)
+                        {
+                            selected = "selected";
+                        }
+                        <option value="@item" @selected>@item</option>
+                    }
+                </select>
+                <input type="text" id="txtOrdenArranqueH" style="width:100px;" value="@Model.Hophorordarranq" autocomplete="off" />
+            </td>
+        </tr>
+        <tr>
+            <td class="tbform-label">En Paralelo</td>
+            <td class="tbform-control">
+                <input type="text" id="txtEnParaleloF" style="width:120px;" value="@Model.Fecha" disabled />
+                <input type="text" id="txtEnParaleloH" name="HoraIni" style="width:100px;" value="@Model.HoraIni" autocomplete="off" />
+                <input type="checkbox" id="chkArranqueBlackStart" name="chkArranqueBlackStart" style="display: none" /><span id="txtArranqueBlackStart">Arranque en Black Start</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="tbform-label">Fuera de Servicio (F/S) por Falla</td>
+            <td class="tbform-control">
+                <input type="checkbox" id="chkFueraServicio" name="chkFueraServicio" onchange="activarDesactivarCampos(this.checked);" />
+            </td>
+        </tr>
+        <tr>
+            <td class="tbform-label">Orden de Parada</td>
+            <td class="tbform-control">
+                <input type="text" id="txtOrdenParadaF" style="width:120px;" value="@Model.Fecha" disabled />
+                <input type="text" id="txtOrdenParadaH" name="TxtOrdenParadaH" style="width:100px;" value="@Model.Hophorparada" />
+            </td>
+        </tr>
+        <tr>
+            <td class="tbform-label">Fuera de Paralelo</td>
+            <td class="tbform-control">
+                <input type="text" id="txtFueraParaleloF" style="width:120px;" value="@Model.FechaFin" disabled />
+                <input type="text" id="txtFueraParaleloH" name="TxtFueraParaleloH" style="width:100px;" value="@Model.HoraFin" autocomplete="off" />
+            </td>
+        </tr>
+
+        <tr class="unidades_modo titulo" style="display: none">
+            <td colspan="2"></td>
+        </tr>
+        <tr class="unidades_modo" style="display: none">
+            <td colspan="2" class="search-content">
+                <div id="unidades_especiales"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="tbform-label">Observación</td>
+            <td colspan='2' class="tbform-control">
+                <div id="leyendaBlackStartCReservFria" style="display: none;font-style: italic;color: red;">* Indicar si el arranque fue con Black Start.</div>
+                <div id="leyendaGeneradoresCReservFria" style="display: none;font-style: italic;color: red;">* Indicar las unidades, generadores o grupos que operaron.</div>
+                <textarea cols=50 rows=3 maxlength="600" id='txtObservacion' name='txtObservacion'>@Model.Hopobs</textarea>
+            </td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <td>
+                <input type="button" id="btnAceptar2" value="Aceptar" />
+            </td>
+            <td>
+                <input type="button" id="btnCancelar2" value="Cancelar" />
+            </td>
+        </tr>
+    </table>
+</div>
+
+<input type="hidden" id="hfCentral" name="hfCentral" value="@Model.IdCentralSelect" />
+<input type="hidden" id="hfIdPos" name="hfIdPos" value="@Model.IdPos" />
+<input type="hidden" id="hfIdModoGrupo" name="hfIdModoGrupo" value="@Model.IdGrupoModo" />
+<input type="hidden" id="hfTipoCentral" name="hfTipoCentral" value="@Model.IdTipoCentral" />
+<input type="hidden" id="hfOPFueraServ" name="hfOPFueraServ" value="@Model.OpfueraServ" />
+<input type="hidden" id="hfOpArranqBlackStart" name="hfOpArranqBlackStart" value="@Model.OpArranqBlackStart" />
+<input type="hidden" id="hfOpOpEnsayope" name="hfOpOpEnsayope" value="@Model.OpEnsayope" />
+
+<input type="hidden" id="hfFechaAnterior" name="hfFechaAnterior" value="@Model.FechaAnterior" />
+<input type="hidden" id="hfFecha" name="hfFecha" value="@Model.Fecha" />
+<input type="hidden" id="hfFechaFin" name="hfFecha" value="@Model.FechaFin" />
+<input type="hidden" id="hfFechaSiguiente" name="hfFechaSiguiente" value="@Model.FechaSiguiente" />
+
+<input type="hidden" id="hfFlagCentralRsvFriaToRegistrarUnidad" name="hfFlagCentralRsvFriaToRegistrarUnidad" value="@Model.FlagCentralRsvFriaToRegistrarUnidad" />
+
+<input type="hidden" id="hfHopnotifuniesp" name="hfHopnotifuniesp" value="@Model.Hopnotifuniesp" />
+<input type="hidden" id="cbEmpresa2" name="cbEmpresa2" value="@Model.Hopnotifuniesp" />
+
+<input type="hidden" id="hfParamSolarHoraIni" name="hfParamSolarHoraIni" value="@Model.ParamSolar.HoraInicio" />
+<input type="hidden" id="hfParamSolarHoraFin" name="hfParamSolarHoraFin" value="@Model.ParamSolar.HoraFin" />

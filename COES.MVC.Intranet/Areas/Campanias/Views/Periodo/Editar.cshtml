@@ -1,0 +1,131 @@
+﻿@model COES.MVC.Intranet.Areas.Campanias.Models.PeriodoModel
+@using Newtonsoft.Json
+
+<script>
+    cargarAccordion();
+    var fichasSeleccionadas = @Html.Raw(JsonConvert.SerializeObject(Model.PeriodoDTO.ListaDetallePeriodo));
+    var estadoEditar =  @Html.Raw(JsonConvert.SerializeObject(Model.PeriodoDTO.PeriEstado));
+    cargarCatalogoEstadoEditar(catalogoEstado, '#cbEstadoRegistrar', estadoEditar);
+    console.log("E" + estadoEditar);
+</script>
+ 
+<div class="content-registro">
+    <div class="popup-title" style="margin-bottom:10px"><span>Actualizar Datos del Periodo</span></div>
+    <div id="mensajeEdicion" class="action-message">Por favor complete los datos</div>
+    <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#paso1">Registro</a></li>
+            <li class='tab'><a href="#paso2">Fichas</a></li>
+        </ul>
+        <div class='panel-container'>
+            <div id="paso1">
+                <form id="frmRegistro">
+                    <!-- <div id="mensajeEdicion" class="action-message">Por favor complete los datos</div>-->
+                    <table style="width:100%">
+
+                        <tr>
+                            <td class="registro-label">Codigo:</td>
+                            <td class="registro-control">
+                                <input type="text" id="txtCodigo" name="Codigo" style="width:150px" maxlength="60" disabled value="@Model.PeriodoDTO.PeriCodigo" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Periodo:</td>
+                            <td class="registro-control">
+                                <input type="text" id="txtPeriodo" name="Periodo" style="width:400px" maxlength="120" value="@Model.PeriodoDTO.PeriNombre" disabled="@Model.Disabled"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Fecha Inicial:</td>
+                            <td class="registro-control">
+                                <input type="text" id="txtFechaInicial" name="FechaInicial" style="width:100px" value="@Model.PeriodoDTO.PeriFechaInicio.ToString("dd/MM/yyyy") " disabled="@Model.Disabled"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Fecha Final:</td>
+                            <td class="registro-control">
+                                <input type="text" id="txtFechaFinal" name="FechaFinal" style="width: 100px" value="@Model.PeriodoDTO.PeriFechaFin.ToString("dd/MM/yyyy")" disabled="@Model.Disabled"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Hora:</td>
+                            <td class="registro-control">
+                                <input type="text" id="txtHora" name="Hora" style="width: 70px" value="@Model.PeriodoDTO.PeriHoraFin.ToString("HH:mm")" disabled="@Model.Disabled"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Estado:</td>
+                            <td class="registro-control">
+                                <select style="width: 185px" id="cbEstadoRegistrar" name="Estado" disabled="@Model.Disabled">
+                                    <option value="S">Seleccione un Estado</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr><td colspan="2"><h4>Horizonte</h4></td></tr>
+                        <tr>
+                            <td class="registro-label">Años Atras:</td>
+                            <td class="registro-control">
+                                <input type="text" id="txtAnioAtras" name="AnioAtras" style="width: 70px" value="@Model.PeriodoDTO.PeriHorizonteAtras" disabled="@Model.Disabled"/>
+                                <label id="fechaAtrasResultado"></label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Años Adelante:</td>
+                            <td class="registro-control">
+                                <input type="text" id="txtAnioAdelante" name="AnioAdelante" style="width: 70px" value="@Model.PeriodoDTO.PeriHorizonteAdelante" disabled="@Model.Disabled"/>
+                                <label id="fechaAdelanteResultado"></label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="registro-label">Comentarios:</td>
+                            <td class="registro-control">
+                                <textarea type="text" id="txtComentario" name="Comentarios" value="@Model.PeriodoDTO.PeriComentario" disabled="@Model.Disabled"> @Model.PeriodoDTO.PeriComentario </textarea>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+
+            </div>
+            <div id="paso2" class="accordion-container">
+                @if (Model.ListaTipoProyecto.Count > 0)
+                {
+                    foreach (var item in Model.ListaTipoProyecto)
+                    {
+                        <div class="accordion-item">
+                            <h3>@item.TipoNombre</h3>
+                            @if (item.ListaTipoFichaProyecto.Count > 0)
+                            {
+                                foreach (var subitem in item.ListaTipoFichaProyecto)
+                                {
+                                    <button class="accordion">@subitem.TipoFiNombre</button>
+                                    <div class="panel">
+                                        @if (subitem.ListaHojaFichas.Count > 0)
+                                        {
+                                            foreach (var fichaitem in subitem.ListaHojaFichas)
+                                            {
+                                                <div class="ficha-item">
+                                                    <input class="chkFicha dataCheck_@item.TipoCodigo" type="checkbox" name="dataCheck[]" value="@fichaitem.HojaCodigo" disabled="@Model.Disabled"/>
+                                                    <span>@fichaitem.HojaNombre     @item.TipoCodigo</span>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                }
+            </div>
+
+
+        </div>
+        <div style="width:200px; margin:auto; text-align:center; margin-top:20px">
+            <input type="button" id="btnActualizar" value="Actualizar" disabled="@Model.Disabled" hidden="@Model.Disabled"/>
+            <input type="button" id="btnCancelarPeriodo" value="Cancelar" />
+        </div>
+    </div>
+
+
+
+</div>
+ 

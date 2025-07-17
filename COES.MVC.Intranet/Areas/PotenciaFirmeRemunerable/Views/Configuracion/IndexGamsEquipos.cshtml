@@ -1,0 +1,189 @@
+﻿@model COES.MVC.Intranet.Areas.PotenciaFirmeRemunerable.Models.PotenciaFirmeRemunerableModel
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@{
+    ViewBag.Title = "Relación Generadores GAMS con Equipos";
+    Layout = Model.UsarLayoutModulo ? "~/Views/Shared/_LayoutAlter.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/Areas/PotenciaFirmeRemunerable/Content/Css/css.css?v=1.4" rel="stylesheet" />
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Areas/PotenciaFirmeRemunerable/Content/Scripts/index_entidad.js?v=2.1"></script>
+<script src="~/Areas/PotenciaFirmeRemunerable/Content/Scripts/index_gamsequipo.js?v=2.3"></script>
+
+<div class="form-title">
+    <div class="content-titulo">Relación Generadores GAMS con Equipos</div>
+    <div class="content-botonera">
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div class="search-content">
+        <table class="content-tabla-search" style="width:auto" role="presentation">
+            <tr>
+                <td class="tbform-label" style="padding-right: 0px;">Periodo:</td>
+                <td style="width: 246px;">
+                    <select id="cbAnio" style="width: 57px;">
+                        @foreach (var item in Model.ListaAnio)
+                        {
+                            var selected = Model.AnioActual == item.Entero1 ? "selected" : "";
+                            <option value="@item.Entero1" @(selected)>@item.String1</option>
+                        }
+                    </select>
+                    <select id="cbPeriodo" style="width: 120px;">
+                        @foreach (var item in Model.ListaPeriodo)
+                        {
+                            var selected = Model.IdPeriodo == item.Pfrpercodi ? "selected" : "";
+                            <option value="@item.Pfrpercodi" @(selected)>@item.Pfrpernombre</option>
+                        }
+                    </select>
+                </td>
+
+                <td class="espacio-60"> </td>
+
+                <td style="vertical-align: middle;">Estado:</td>
+                <td>
+                    <select id="cbEstado" style="width:250px">
+                        <option value="-1">TODOS</option>
+                        <option value="0">BAJA</option>
+                        <option value="1">ACTIVO</option>
+
+                    </select>
+                </td>
+
+                <td class="espacio-1000"> </td>
+
+                <td>
+                    <input type="button" id="btnNuevo" value="Nuevo">
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="align-content:space-between;">
+        <div style="height: 25px; float: left;">
+            <label>
+                <input type="text" disabled style="background-color: #fcff22; border-radius: 50%; height: 13px; width: 15px; margin: 3px;" /> Ficticios
+            </label>
+        </div>
+    </div>
+
+    <div class="content-tabla">
+        <div class="table-list" id="listadoGamsEquipo">
+
+        </div>
+    </div>
+
+</div>
+
+
+<div id="popupNuevo" class="general-popup" style="width: auto">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Nueva Relación Generadores GAMS con Equipos</span></div>
+    <div class="panel-container">
+
+        <div id="" style="margin-top: 10px;"></div>
+        <form id="frmNuevo">
+            <table id="" style="margin-top: 10px;">
+
+                <tr>
+                    <td class="tbform-label">Vigencia:</td>
+                    <td><input type="text" name="Pfrentvigenciaini" id="new-equipo-periodo" value="@Model.PfrPeriodo.FechaIni.ToString("dd-MM-yyyy")" required style="width:95px" /></td>
+                </tr>
+
+                <tr id="bloque_add_gamsequipo_id">
+                    <td class="tbform-label">Id:</td>
+                    <td id="">
+                        <input type="text" name="Pfrentid" id="new-gamsequipo-id" value="" style="width: 120px" />
+                        <input type="hidden" id="hfCodDisponibleGamsequipo" value="@Model.CodigoDisponibleGamsequipo" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label">Barra:</td>
+                    <td>
+                        <select id="cboBarraGams" style="width:200px" name="Pfrentcodibarragams" required>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Num. Unidad:</td>
+                    <td><input type="text" name="Pfrrgeunidad" style="width:195px"></td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Central:</td>
+                    <td>
+                        <select id="cboUnidad" name="Idunidad" style="width:350px" required>
+                            @*<option selected disabled>-- SELECCIONAR --</option>
+                                @foreach (var item in Model.ListaUnidad)
+                                {
+                                    var sUnidad = string.Format("{0} | {1} {2}", item.Emprnomb, item.Central, (!string.IsNullOrEmpty(item.Equinomb)) ? "| " + item.Equinomb : string.Empty);
+                                    <option value="@string.Format("{0}|{1}|{2}|{3}",item.Equipadre,item.Grupocodi,item.Equicodi,item.Equinomb)">@sUnidad</option>
+
+                                }*@
+                        </select>
+
+                    </td>
+                </tr>
+
+                <tr id="idaddQmax">
+                    <td class="tbform-label">QMáx:</td>
+                    <td>
+                        <input type="text" name="Pfrrgeqmax" id="" value="" style="width: 120px" />
+                    </td>
+                </tr>
+
+                <tr id="idaddQmin">
+                    <td class="tbform-label">QMín:</td>
+                    <td>
+                        <input type="text" name="Pfrrgeqmin" id="" value="" style="width: 120px" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Ficticio:</td>
+                    <td>
+                        <input type="checkbox" name="Pfrentficticio" id="idficticio" onclick="$(this).attr('value', this.checked ? 1 : 0)">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Ref:</td>
+                    <td>
+                        <input type="checkbox" name="Pfrrgeref" id="idcheckbox" onclick="$(this).attr('value', this.checked ? 1 : 0)">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="2">
+                        <div id="vigenciaDesc" style="margin-top: 10px;"></div>
+                        <div id="vigenciaDescFin" style="margin-top: 10px;"></div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" style="text-align: center">
+                        <input type="button" id="btnCancelar" value="Cancelar" onclick="popupClose('popupNuevo')">
+                        <input type="submit" id="btnGuardar" value="Guardar" style="margin-top: 15px;">
+                    </td>
+                </tr>
+
+            </table>
+        </form>
+    </div>
+
+</div>
+
+@Html.Partial("_PopupPropiedad")

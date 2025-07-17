@@ -1,0 +1,436 @@
+﻿@model COES.MVC.Extranet.Areas.Subastas.Models.SubastaModel
+@{
+    ViewBag.Title = "Mercado de Ajuste de la Reserva Secundaria";
+    Layout = "~/Areas/Subastas/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/content/Css/multiselect.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+<link href="~/areas/subastas/content/css/excel.css?v=2.0.0" rel="stylesheet" />
+<link href="~/Areas/Subastas/Content/Css/css.css?v=2.0.0" rel="stylesheet" />
+
+<script type="text/javascript">
+    $(function () {
+        TIPO_OFERTA_GLOBAL = @Model.TipoOferta.GetHashCode();
+    });
+
+    const isEnIntervaloTemporal = @Convert.ToInt32(ViewBag.isEnIntervaloTemporal);
+
+</script>
+<style>
+    .ms-choice {
+        background-color: transparent !important;
+    }
+</style>
+
+<input type="hidden" id="hdd-maximo-dias" value="@ViewData["maxdias"]" />
+<input type="hidden" id="hdd-fecha-inicio-oferta" value="@Model.FechaOfertaDesc" />
+
+<div class="content-hijo" id="mainLayout">
+
+    <div id="mensajeRegistro" class="action-message" style="display: none">
+        @if (!string.IsNullOrEmpty(Model.MensajeError))
+        {
+            <span>@Model.MensajeError</span>
+        }
+    </div>
+
+    <div class='' id='mensajeCierreOferta' style="margin-bottom: 5px; margin-top: 10px;display: none; ">
+    </div>
+
+
+    <div class="search-content3">
+        <div style="display:table; height: 55px;">
+            <div id="buscar" style="display:table-row">
+                <div id="fechas-seleccion" style="display: block; width: 304px;">
+                    <div style="display:table">
+                        <div style="display:table-row">
+                            <div class="celda-item" style="display:table-cell;/* width:50px; */">
+                                Fecha Oferta:
+                            </div>
+                            <div class="filtro-contenido" style="display: table-cell; width:100px">
+                                <input type="text" id="dte-subasta-fecha" style="width:94px;" value="@Model.FechaOfertaDesc" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fechas-nuevo" style="display: none; width: 545px;">
+                    <div style="display:table">
+                        <div style="display:table-row">
+                            <div class="celda-item" style="display:table-cell;/* width:50px; */">
+                                Fecha Inicial:
+                            </div>
+                            <div class="filtro-contenido" style="display: table-cell; width:100px">
+                                <input type="text" id="fecha-inicio-select" style="width:88px;" disabled />
+                            </div>
+
+                            <div class="celda-item" style="display:table-cell;/* width:50px; */">
+                                Fecha Final:
+                            </div>
+                            <div class="filtro-contenido" style="display: table-cell; width:100px">
+                                <input type="text" id="fecha-fin-select" style="width:88px;" disabled />
+                            </div>
+
+                            <div class="celda-item" style="display:table-cell;/* width:50px; */">
+                                N° de dias:
+                            </div>
+                            <div class="filtro-contenido" style="display: table-cell; width:100px">
+                                <input type="text" id="txt-num-dias" style="width: 40px;text-align: center;" value="1" disabled />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: table-cell; width: 100%">
+                </div>
+
+                <!-- Barra de herramientas-->
+                <div style="display: table-cell; text-align: right;">
+                    <div style="display: table;" id="barra">
+                        <div style="display:table-row">
+                            <div class="content-action" style="display: none;">
+                                <a href="#" id="btn-subasta-enviar">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/enviar.png"><br>
+                                        <span>Enviar</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @if (ViewBag.isUsuarioCoes == true && ViewBag.isEnIntervaloTemporal == true)
+                            {
+                                <div class="content-action" style="display: none;">
+                                    <a href="#" id="btn-subasta-duplicar">
+                                        <div class="content-item-action " style="width: 67px;">
+                                            <img src="~/Content/Images/duplicate.png"><br>
+                                            <span>Copiar<br />Subir a Bajar </span>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                            else if (ViewBag.isEnIntervaloTemporal == false)
+                            {
+                                <div class="content-action" style="display: none;">
+                                    <a href="#" id="btn-subasta-duplicar">
+                                        <div class="content-item-action " style="width: 67px;">
+                                            <img src="~/Content/Images/duplicate.png"><br>
+                                            <span>Copiar<br />Subir a Bajar </span>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+
+                            <div class="content-action" style="display: none;">
+                                <a href="#" id="btn-subasta-errors">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/errores.png"><br>
+                                        <span>Errores</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="content-action" style="display: table-cell;">
+                                <a href="#" id="btn-subasta-envios">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/envios.png"><br>
+                                        <span>Envíos</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="content-action" style="display: none;">
+                                <a href="#" id="btn-subasta-copiar">
+                                    <div class="content-item-action">
+                                        <img src="~/Content/Images/copiado.png"><br>
+                                        <span>Copiar</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="content-action" style="display: none;">
+                                <a href="#" id="btn-ver-subasta-mantenimiento">
+                                    <div class="content-item-action" style="width: 66px;">
+                                        <img src="~/Content/Images/mantenimiento.png"><br>
+                                        <span>Ver Manttos</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="content-action" style="display: none;">
+                                <a href="#" id="btn-ocultar-subasta-mantenimiento">
+                                    <div class="content-item-action" style="width: 87px;">
+                                        <img src="~/Content/Images/mantenimiento.png"><br>
+                                        <span>Ocultar Manttos</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="content-action" style="display: table-cell;">
+                                <a href="JavaScript:openManual();" id="btn-manual">
+                                    <div class="content-item-action" style="width: 57px;">
+                                        <img src="~/Content/Images/prn-ico-manual.png"><br>
+                                        <span>Manual de Usuario</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="content-action" style="display: table-cell;">
+                                <a href="#" id="btn-mostrar-nota">
+                                    <div class="content-item-action" style="width: 57px;">
+                                        <img src="~/Content/Images/prn-ico-manual.png"><br>
+                                        <span style="font-weight: bold">Nota Importante</span>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div style="clear:both; height: 15px"></div>
+
+    <!--Mantenimientos-->
+    <div id="pnl-subasta-mantenimiento" style="display: none">
+        <div id="tbs-subasta" class="tab-container">
+            <ul class="etabs">
+                <li class="tab"><a href="#tbi-subasta-mantenimiento">Mantenimiento</a></li>
+                <li class="tab"><a href="#tbi-subasta-grafico">Gráfico</a></li>
+            </ul>
+            <div id="tbi-subasta-mantenimiento">
+                <table id="tbl-subasta-mantenimiento" class="handsontable pretty tabla-icono">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>URS</th>
+                            <th>Modo de Operación</th>
+                            <th>Capacidad Máxima para RSF (MW)</th>
+                            <th>Mantenimiento Programado</th>
+                            <th>Intervalo</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="tbi-subasta-grafico">
+                <div id="gfx-subasta-potenciamax" style="width:1024px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div style="clear:both; height: 15px"></div>
+
+    <!--Excel web ofertas-->
+
+    @if (ViewBag.isEnIntervaloTemporal)
+    {
+        <div id="tab-container" class="tab-container">
+            <ul class='etabs'>
+                <li class='tab'><a href="#tabSubir" id="tituloTabSubir">Oferta Simétrica</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="tabSubir">
+                    <div class="content-hijo" style="overflow:auto; background-color:#fff">
+                        <div class="content-tabla" id="excelwebSuministro_1" style="display:block;">
+                            <div class="bodyexcel" id="hst-subasta-ingreso-subir"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div id="tab-container" class="tab-container">
+            <ul class='etabs'>
+                <li class='tab'><a href="#tabSubir" id="tituloTabSubir">Oferta Subir</a></li>
+                <li class='tab'><a href="#tabBajar" id="tituloTabBajar">Oferta Bajar</a></li>
+            </ul>
+            <div class='panel-container'>
+                <div id="tabSubir">
+                    <div class="content-hijo" style="overflow:auto; background-color:#fff">
+                        <div class="content-tabla" id="excelwebSuministro_1" style="display:block;">
+                            <div class="bodyexcel" id="hst-subasta-ingreso-subir"></div>
+                        </div>
+                    </div>
+                </div>
+                <!--<div id="tabs2" style="display: none">-->
+                <div id="tabBajar" style="">
+                    <div class="content-hijo" style="overflow:auto; background-color:#fff">
+                        <div class="content-tabla" id="excelwebSuministro_2" style="display:block;">
+                            <div class="bodyexcel" id="hst-subasta-ingreso-bajar"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    }
+    <div id="pnl-nota" class="tab-container">
+        <span style="font-size: 14px;"><b>Nota Importante: </b></span>
+        <ul style="font-size: 11px">
+            <li>El modelo Yupana calcula la potencia de Reserva Secundaria de Frecuencia (RSF) y Reserva Primaria de Frecuencia (RPF) de los generadores de tal forma que la suma de la RSF y RPF estén dentro de la banda calificada de RSF de los generadores.</li>
+            <li>Para mayores detalles acerca del cálculo de la RSF de cada generador que realiza el modelo Yupana, referirse al manual de metodología del modelo Yupana.</li>
+
+        </ul>
+    </div>
+</div>
+
+<div id="content-leyenda-error" style="display:none">
+    <div id="error-titulo" style="display: none; margin-bottom: 7px; font-size: 13px; font-weight: bold">Leyenda errores</div>
+    <div id="error-no-numerico" style="display: none;">
+        <div style="display: inline-block; width:20px; height:15px; background: red; margin-left: 10px;"></div>
+        <div style="display: inline-block; margin-left: 10px; font-size: 12px; margin-bottom: 2px;"> El dato ingresado no es numérico</div>
+    </div>
+    <div id="error-inf-minimo" style="display: none;">
+        <div style="display: inline-block; width:20px; height:15px; background: orange; margin-left: 10px;"></div>
+        <div style="display: inline-block; margin-left: 10px; font-size: 12px; margin-bottom: 2px;"> El dato ingresado es menor que el límite inferior</div>
+    </div>
+    <div id="error-sup-maximo" style="display: none;">
+        <div style="display: inline-block; width:20px; height:15px; background: yellow; margin-left: 10px;"></div>
+        <div style="display: inline-block; margin-left: 10px; font-size: 12px; margin-bottom: 2px;"> El dato ingresado es mayor que el límite superior</div>
+    </div>
+    <div id="error-vacio" style="display: none;">
+        <div style="display: inline-block; width:20px; height:15px; border: 1px solid gray; margin-left: 10px;"></div>
+        <div style="display: inline-block; margin-left: 10px; font-size: 12px; margin-bottom: 2px;"> Campo(s) vacíos</div>
+    </div>
+</div>
+
+<div id="div-envios-popup" class="general-popup" style="height: auto !important;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="title_tabla_pop_up" style="margin-bottom:20px">Ver Envios</div>
+    <table class="handsontable pretty tabla-icono tbl-envios">
+        <thead>
+            <tr>
+                <th>Fecha Oferta</th>
+                <th>Código</th>
+                <th>Fecha de Envio</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div style="clear:both"></div>
+</div>
+
+<div id="div-copiar-popup" class="general-popup" style="height: auto !important; height:450px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="title_tabla_pop_up" style="margin-bottom:20px">Ver Copiar</div>
+    <input type="text" id="dte-fecha-copiar-popup" class="ui-datapicker" style="width:150px; margin-bottom:15px; margin-left:60px; text-align:center" value="" />
+    <div style="text-align:center; margin-bottom:10px"><span style="color: #245B8C">Elegir una fecha para consulta</span></div>
+    <div id="container" style="height:270px; margin-left:10px"></div>
+    <table class="handsontable pretty tabla-icono tbl-envios">
+        <thead>
+            <tr>
+                <th>Fecha Oferta</th>
+                <th>Código</th>
+                <th>Fecha de Envio</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="div-nuevo-popup" class="general-popup" style="height: auto !important; height:450px">
+    <span class="button b-close"><span>X</span></span>
+
+    <div class='' id='mensajeValOfDiarioYSuOfDefecto' style="margin-bottom: 5px; margin-top: 10px; display: none; width: 231px; padding-left: 34px; text-indent: 0px;">
+    </div>
+
+    <div class="title_tabla_pop_up" style="margin-bottom:20px">Nuevo</div>
+
+    <label style="color: #245B8C;width:200px;margin-right:10px">Fecha Inicial :</label>
+    <input type="text" id="dte-fecha-inicio" style="width: 92px;" value="@Model.FechaOfertaDesc" /> <br /><br />
+    <label style="color: #245B8C;width:200px;margin-right:10px;">Fecha Final   :</label>
+    <input type="text" id="dte-fecha-fin" style="width: 92px;" value="@Model.FechaOfertaDesc" /><br /><br />
+    <label style="color: #245B8C;width:200px;margin-right:10px;">N° de dias   :</label>
+    <input type="text" id="txt-numero-dias" style="width: 40px;" value="1" disabled />
+    <br /><br />
+    <label style="color: #245B8C;font-size:11px">* Considerar para el caso que se oferte un día las fechas<br />   inicial y final deben ser iguales.</label>
+    <br /><br />
+    <input type="button" style="margin-left: 30%; margin-right: 30%; width:40%" id="btn-subasta-crear-nuevo" value="Aceptar" />
+
+</div>
+
+<div id="div-error-popup" class="general-popup" style="height: auto !important;">
+    <span class="button b-close"><span>X</span></span>
+    <div class="title_tabla_pop_up" style="margin-bottom:20px">Mostrar Errores</div>
+    <table class="handsontable pretty tabla-icono tbl-envios">
+        <thead>
+            <tr>
+                <th>Hoja</th>
+                <th>Celda</th>
+                <th>Valor</th>
+                <th>Descripcion Error</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div style="clear:both"></div>
+</div>
+
+<div id="Notificacion-Nota-Importante" class="general-popup">
+    <div class="popup-title"><span>Nota Importante</span></div>
+    <div class="popup-text content-messajes-text" id="mensajeNota"></div>
+    <div class="formulario-boton">
+        <center>
+            <input id="btn-cancelar-mensaje-nota-importante" type="button" value="Cerrar" />
+        </center>
+    </div>
+</div>
+
+<div id="Messages" class="general-popup">
+    <div class="popup-title"><span>Mensaje de Operación</span></div>
+    <div class="popup-text content-messajes-text" id="mensaje"></div>
+    <div class="formulario-boton">
+        <center>
+            <input id="btn-aceptar-mensaje" type="button" value="Aceptar" />
+            <input id="btn-cancelar-mensaje" type="button" value="Cancelar" />
+        </center>
+    </div>
+</div>
+
+<div id="Notificacion-Traslapes" class="general-popup">
+    <div class="popup-title"><span>Traslapes Encontrados</span></div>
+    <div class="popup-text content-messajes-text" id="mensajeTraslapes"></div>
+    <div class="formulario-boton">
+        <center>
+
+            <input id="btn-cancelar-mensaje-traslape" type="button" value="Cerrar" />
+        </center>
+    </div>
+</div>
+
+<div id="Notificacion-Magnitudes" class="general-popup">
+    <div class="popup-title"><span>Validación de Potencia Ofertada</span></div>
+    <div class="popup-text content-messajes-text" id="mensajeMagnitudes"></div>
+    <div class="formulario-boton">
+        <center>
+
+            <input id="btn-cancelar-mensaje-magnitud" type="button" value="Cerrar" />
+        </center>
+    </div>
+</div>
+
+<div id="MessagesClose" class="general-popup">
+    <div class="popup-title"><span>Mensaje de Operación</span></div>
+    <div class="popup-text content-messajes-text">
+
+    </div>
+    <div class="formulario-boton">
+        <input id="btnAceptarMessages" type="button" value="Aceptar" />
+        <input id="btnCancelarMessages" type="button" value="Cancelar" style="display:none;" />
+    </div>
+</div>
+
+<script type="text/javascript" src="~/content/scripts/jquery-ui.min.js"></script>
+<script type="text/javascript" src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script type="text/javascript" src="~/Content/Scripts/handsontable.full.min.js"></script>
+
+<script type="text/javascript" src="~/content/scripts/plupload.full.min.js"></script>
+<script type="text/javascript" src="~/content/Scripts/multiselect.js"></script>
+<script type="text/javascript" src="~/content/Scripts/highcharts.js"></script>
+
+<script type="text/javascript" src="~/Areas/Subastas/Content/Scripts/messaje-operation.js?v=2.0.0"></script>
+<script type="text/javascript" src="~/content/scripts/inputmaskmin.js"></script>
+
+<script type="text/javascript" src="~/areas/subastas/content/scripts/subasta.js?v=2.0.0"></script>

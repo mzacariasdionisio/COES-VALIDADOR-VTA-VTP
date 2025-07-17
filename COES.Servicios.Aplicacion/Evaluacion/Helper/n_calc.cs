@@ -1,0 +1,353 @@
+﻿using COES.Dominio.DTO.Sic;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using NCalc;
+
+namespace COES.Servicios.Aplicacion.Evaluacion.Helper
+{
+    /// <summary>
+    /// Clase para hacer calculos de expresiones
+    /// </summary>
+    public class n_calc
+    {       
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="expresion"></param>
+        /// <param name="parametros"></param>
+        /// <returns></returns>
+        public static double EvaluarExpresion(string expresion, Dictionary<string, object> parametros)
+        {
+            try
+            {
+
+                Expression expression = new Expression(expresion);
+
+                // Asignar los parámetros dinámicamente
+                foreach (var parametro in parametros)
+                {
+                    expression.Parameters[parametro.Key] = parametro.Value;
+                }
+
+
+                // Evaluar la expresión
+                object resultado = expression.Evaluate();
+
+              
+                if (resultado is double)
+                {
+                    return (double)resultado;
+                }
+                else
+                {
+                    return double.NaN;
+                }
+            }
+            catch (Exception ex)
+            {
+
+                return double.NaN;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="registros"></param>
+        public static void EvaluarFormulas(List<EprCalculosDTO> registros)
+        {
+            // Contar el número total de fórmulas que se deben evaluar
+            int cantidadFormulas = registros.Count(r => !string.IsNullOrEmpty(r.Formula));
+            int iteraciones = 0;
+            bool algunaFormulaEvaluada = true;
+                      
+            var dicCeldaPosicionNucleo = new Dictionary<int, object>();
+            var dicCeldaPickUp = new Dictionary<int, object>();
+
+            while (iteraciones < cantidadFormulas && algunaFormulaEvaluada)
+            {
+                algunaFormulaEvaluada = false;
+                iteraciones++;
+
+                // Iterar sobre los registros con fórmulas
+                foreach (var registro in registros.Where(r => !string.IsNullOrEmpty(r.Formula) && r.Valor == null))
+                {
+                    try
+                    {
+                        // Parámetros disponibles para la fórmula
+                        var parametros = new Dictionary<string, object>();
+
+                        foreach (var reg in registros.Where(r => r.TipoDato != "FORMULA_FAMILIA" ||(r.TipoDato == "FORMULA_FAMILIA" && r.Valor!= null)) )
+                        {                           
+                            switch (reg.TipoDato)
+                            {
+                                case "DECIMAL":
+                                    {
+                                        if(reg.Valor != null)
+                                        {
+                                            double valorDouble;
+                                            if (double.TryParse(reg.Valor.ToString(), out valorDouble))
+                                            {
+                                                parametros[reg.Parametro] = valorDouble;
+                                            }
+                                            else
+                                            {
+                                                parametros[reg.Parametro] = double.NaN;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            parametros[reg.Parametro] = double.NaN;
+                                        }
+                                        break;
+                                    }
+                                case "CARACTER":
+                                    {
+                                        if (reg.Valor != null)
+                                        {
+                                            parametros[reg.Parametro] = reg.Valor;
+                                        }
+                                        else
+                                        {
+                                            parametros[reg.Parametro] = string.Empty;
+                                        }
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        parametros[reg.Parametro] = reg.Valor;
+
+                                        break;
+                                    }
+                            }
+                        }
+
+
+                        var formula = new Expression(registro.Formula);
+
+                        // Agregar los parámetros al contexto de NCalc
+                        foreach (var param in parametros)
+                        {
+                            formula.Parameters[param.Key] = param.Value;
+                        }
+
+                        formula.EvaluateFunction += delegate (string name, FunctionArgs args)
+                        {
+                            if (name.ToUpper() == "MINMULTIPLE")
+                            {
+
+                                var listaResultado = args.Parameters.Select(p => p.Evaluate()).ToList();
+                                var sublista = listaResultado
+                                                .OfType<double>()                           
+                                                .Concat(listaResultado.OfType<int>().Select(i => (double)i)) 
+                                                .Where(d => !double.IsNaN(d))               
+                                                .ToList();
+                               
+
+                                if (sublista.Any())
+                                {
+                                    args.Result = sublista.Min(p => Convert.ToDouble(p));
+                                }
+                                else
+                                {
+                                    args.Result = double.NaN;
+                                }
+                                
+                            }
+                            else if (name.ToUpper() == "CELDAPOSICIONNUCLEOTC" && args.Parameters.Length == 1)
+                            {                                
+
+                                    object param = args.Parameters[0].Evaluate();
+
+                                    if (param != null)
+                                    {
+                                        if (!dicCeldaPosicionNucleo.ContainsKey(Convert.ToInt32(param)))
+                                        {
+                                            var res = CalculosAppServicio.EvaluarCeldaPosicionNucleo(Convert.ToInt32(param));
+
+                                            if (res.HasValue)
+                                            {
+                                                args.Result = Convert.ToDouble(res);                                                
+                                                dicCeldaPosicionNucleo.Add(Convert.ToInt32(param), Convert.ToDouble(res));
+                                            }
+                                            else
+                                            {
+                                                args.Result = double.NaN;                                               
+                                                dicCeldaPosicionNucleo.Add(Convert.ToInt32(param), double.NaN);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            args.Result = dicCeldaPosicionNucleo[Convert.ToInt32(param)];
+                                        }
+                                       
+                                    }
+                                    else
+                                    {
+                                        args.Result = double.NaN;                                        
+                                    }                                   
+
+                                    
+                               
+                            }
+                            else if (name.ToUpper() == "CELDAPICKUP" && args.Parameters.Length == 1)
+                            {
+                              
+                                    object param = args.Parameters[0].Evaluate();
+
+                                    if (param != null)
+                                    {
+                                        if (!dicCeldaPickUp.ContainsKey(Convert.ToInt32(param)))
+                                        {
+                                            var res = CalculosAppServicio.EvaluarCeldaPickUp(Convert.ToInt32(param));
+
+                                            if (res.HasValue)
+                                            {
+                                                args.Result = Convert.ToDouble(res);                                                
+                                                dicCeldaPickUp.Add(Convert.ToInt32(param), Convert.ToDouble(res));
+                                            }
+                                            else
+                                            {
+                                                args.Result = double.NaN;                                                
+                                                dicCeldaPickUp.Add(Convert.ToInt32(param), param);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            args.Result = dicCeldaPickUp[Convert.ToInt32(param)];
+                                        }
+                                            
+                                    }
+                                    else
+                                    {
+                                        args.Result = double.NaN;                                       
+                                    }
+                                   
+                                
+                            }
+                            else if (name.ToUpper() == "VALORPROPIEDADEQUIPO" && args.Parameters.Length == 2)
+                            {
+                                object param = args.Parameters[0].Evaluate();
+
+                                if (param != null)
+                                {
+                                    var res = CalculosAppServicio.EvaluarPropiedadEquipo(Convert.ToInt32(args.Parameters[0].Evaluate()), Convert.ToString(args.Parameters[1].Evaluate()));
+
+                                    if (res.HasValue)
+                                    {
+                                        args.Result = Convert.ToDouble(res);
+                                    }
+                                    else
+                                    {                                        
+                                        args.Result = double.NaN;
+                                    }
+                                }
+                                else
+                                {
+                                    args.Result = double.NaN;
+                                }
+                              
+                            }                           
+                            else if (name.ToUpper() == "VALORTENSIONEQUIPO" && args.Parameters.Length == 1)
+                            {
+                                object param = args.Parameters[0].Evaluate();
+
+                                if (param != null)
+                                {
+                                    var res = CalculosAppServicio.EvaluarTensionEquipo(Convert.ToInt32(args.Parameters[0].Evaluate()));
+
+                                    if (res != null)
+                                    {
+                                        args.Result = Convert.ToDouble(res);
+                                    }
+                                    else
+                                    {                                        
+                                        args.Result = double.NaN;
+                                    }
+                                }
+                                else
+                                {
+                                    args.Result = double.NaN;
+                                }
+                                              
+                            }
+                            else if (name.ToUpper() == "MAXMULTIPLE")
+                            {
+
+                                var listaResultado = args.Parameters.Select(p => p.Evaluate()).ToList();
+                                var sublista = listaResultado
+                                                .OfType<double>()
+                                                .Concat(listaResultado.OfType<int>().Select(i => (double)i))
+                                                .Where(d => !double.IsNaN(d))
+                                                .ToList();
+
+
+                                if (sublista.Any())
+                                {
+                                    args.Result = sublista.Max(p => Convert.ToDouble(p));
+                                }
+                                else
+                                {
+                                    args.Result = double.NaN;
+                                }
+
+                            }
+                        };
+
+                        // Evaluar
+                        var resultado = formula.Evaluate();
+
+                        // Si la evaluación fue exitosa
+                        if (resultado != null)
+                        {
+                            bool esDouble = resultado is double && !double.IsNaN((double)resultado);
+                            bool esValorNaN = resultado is double && double.IsNaN((double)resultado);
+                            bool esString = resultado is string;
+                            bool esInt = resultado is int;
+                            bool esDecimal = resultado is decimal;
+                            bool esValorInfinito = false;
+
+                            if (esDouble && ( (double)resultado == double.PositiveInfinity || (double)resultado == double.NegativeInfinity))
+                            {
+                                esValorInfinito = true;
+                            }
+
+                            if ((esDouble && !esValorInfinito) || esString || esInt || esDecimal)
+                            {
+                                registro.Valor = resultado;
+                                registro.Estado = 1;
+                                registro.MensajeError = null;
+                                algunaFormulaEvaluada = true; // Fórmula evaluada correctamente
+
+                            }else if (esValorNaN)
+                            {
+                                registro.Valor = resultado;
+                                registro.MensajeError = "Valor evaluado con datos incompletos.";
+                            }
+                        }
+                    }
+                    catch (DivideByZeroException ex)
+                    {
+                        registro.Estado = 0;
+                        registro.MensajeError = ex.Message;
+                    }                    
+                    catch (Exception ex)
+                    {
+
+                        registro.Estado = 0;
+                        registro.MensajeError = ex.Message;
+                    }
+                }
+            }
+
+            registros.Where(x => !string.IsNullOrEmpty(x.MensajeError))
+             .ToList()
+             .ForEach(x => x.Estado = 0);
+
+            registros.Where(x => string.IsNullOrEmpty(x.MensajeError))
+            .ToList()
+            .ForEach(x => x.Estado = 1);
+        }
+    }
+}

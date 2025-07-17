@@ -1,0 +1,513 @@
+﻿@model COES.MVC.Intranet.Areas.CortoPlazo.Models.ResultadoModel
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<script src="~/Areas/CortoPlazo/Content/Scripts/resultado.js?v=4.0"></script>
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Areas/CortoPlazo/Content/Css/css.css?v=1.18" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+<style>
+    .general-popup iframe {
+        min-width: 920px;
+        min-height: 600px;
+    }
+</style>
+
+<div class="form-title">
+    <div class="content-titulo">Resultados</div>
+    <div class="content-botonera">        
+        
+        @if (Model.OpcionGrabar)
+        {
+            <input type="button" id="btnReprocesar" value="Reprocesar" />
+            <input type="button" id="btnReprocesarMasivo" value="Reprocesar Masivo" />
+        }
+
+         <input type="button" id="btnExportar" value="Exportar" style="display:none"/>
+         <input type="button" id="btnExportarMasivo" value="Exportar Masivo" />
+         <input type="button" id="btnCancelar" value="Cancelar" style="display:none"/>
+    </div>
+</div>
+
+<div class="div-exportar" id="divExportar">
+    <div class="div-exportar-close" onclick="closeExportar();">X</div>
+    <div class="div-exportar-content">
+        <div class="popup-title"><span>Exportar Datos</span></div>
+        <div class="action-exito" id="mensajeExportar">
+            Seleccione el rango de fechas a exportar:
+        </div>
+
+        Seleccione estimador:
+        <select id="cbFuenteEstimador">
+            <option value="T">TNA</option>
+            <option value="P">PSS/ODMS</option>
+
+        </select>
+        <br />
+
+        Fuente Programa / Reprograma:
+
+        <select id="cbFuentePrograma">
+            <option value="N">NCP</option>
+            <option value="Y" selected>YUPANA</option>
+        </select>
+        <br />
+
+        Fecha desde:
+        <input type="text" id="txtExportarDesde" style="width:140px" value="@Model.FechaInicio" />
+
+        Hasta:
+        <input type="text" id="txtExportarHasta" style="width:140px" value="@Model.FechaFin" />
+
+        <br />
+        Versión:  
+        <select id="cbModeloExportar">
+            <option value="2">CMgCP_v2</option>
+            <option value="1">CMgCP_v1</option>
+        </select>
+
+        <div style="display:none">
+            <br />
+            <br />
+            Exportar solo procesos en TR y reprocesos del SCO <input type="checkbox" id="cbExportarWeb" />
+        </div>
+
+        <div class="div-exportar-boton" id="container" style=" margin-top:30px">
+            <input type="button" id="btnOkExportarMasivo" value="Aceptar" />
+        </div>
+
+        <div style="clear:both; height:15px"></div>
+
+        <div class="popup-title"><span>Exportar archivos</span></div>
+        <div style="clear:both; height:15px"></div>
+
+        Fecha de proceso: <input type="text" id="txtFechaDAT" style="width:100px" value="@Model.FechaInicioAnterior" />
+        <select id="cbTipoArchivo" style="width:100px">
+            <option value="0">.DAT y .RAW</option>
+            <option value="1">.DAT</option>
+            <option value="2">.RAW</option>
+            <option value="3">RESULTADO</option>
+            <option value="4">RESULTADO ANALISIS</option>
+            <option value="5">PREPROCESADOR</option>
+        </select>
+        <select id="cbTipoDAT" style="width:250px; display:none">
+            <option value="1">Exportar últimos reprocesos o procesos</option>
+            <option value="2">Exportar solo procesos en TR y reprocesos del SCO</option>
+        </select>
+        <br />
+        Versión:  
+        <select id="cbModeloFile">
+            <option value="2">CMgCP_v2</option>
+            <option value="1">CMgCP_v1</option>
+        </select>
+        <div class="div-exportar-boton" id="container" style=" margin-top:30px">
+            <input type="button" id="btnExportarDAT" value="Exportar Archivos" />
+        </div>
+
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    
+    <div class="action-message" id="mensaje">Seleccione fecha de consulta y un tipo de proceso.</div>
+    
+    <div class="search-content" style="margin-bottom:10px">
+        <table class="content-tabla-search" style="width:auto">
+            <tr>
+                <td>Fecha:</td>
+                <td><input type="text" id="txtFecha" value="@Model.FechaConsulta" style="width:120px" /></td>
+
+                <td style="padding-left: 15px;">Tipo Proceso:</td>
+                <td>
+                    <select id="cbTipoProceso" style="width:220px">
+                        <option value="0">TODOS</option>
+                        <option value="1">Ejecución normal</option>
+                        <option value="2">Con ángulo óptimo</option>
+                        <option value="3">Por transacciones internacionales</option>
+
+                    </select>
+                </td>
+
+                <td style="padding-left: 15px;">
+                    <input type="button" id="btnConsultar" value="Consultar" />
+                </td>
+            </tr>
+            <tr></tr>
+        </table>
+    </div>   
+
+    <table>
+        <tr>
+            <td style="width:420px">
+                <div class="popup-title"><span>Ejecuciones del Proceso</span></div>
+                <div id="listado">
+
+                </div>
+            </td>
+            <td style="width:30px"></td>
+            <td>
+                <div class="popup-title"><span>Resultados</span></div>
+                <div id="resultado">
+                   
+                </div>
+                <div id="folder" style="display:none">
+                    @Html.Action("Index", "BrowserScada", new { area = "filemanager", url = @"Empty", pathAlternativo = Model.PathPrincipal})
+                </div>                
+            </td>
+        </tr>
+    </table>
+</div>
+
+<input type="hidden" id="hfCorrelativo" />
+<input type="hidden" id="hfFechaVigenciaPR07" value="@Model.FechaVigenciaPR07" />
+
+<div id="popupMapa" class="general-popup" style="min-width:920px; min-height:620px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Mapa Costos Marginales</span></div>
+    <div id="contenidoMapa">
+
+    </div>
+</div>
+
+<div id="popupReprocesoMasivo" class="general-popup" style="min-width:1000px; min-height:40px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Reprocesos masivos de costos marginales</span></div>
+    <div id="mensajeProcesoMasivo" class="action-message">Seleccione el rango de fechas y las horas a reprocesar.</div>
+    <div id="contenidoReprocesoMasivo">
+        <table style="width:100%">
+            <tr>
+                <td valign="top" style="width:35%">
+                    <div class="content-registro">
+                        <table>
+                            <tr>
+                                <td class="registro-label">Desde:</td>
+                                <td class="registro-control"><input type="text" id="txtFechaInicioReproceso" style="width:160px" value="@Model.FechaConsulta" /></td>
+                            </tr>
+                            <tr>
+                                <td class="registro-label">Hasta:</td>
+                                <td class="registro-control"><input type="text" id="txtFechaFinReproceso" style="width:160px" value="@Model.FechaConsulta" /></td>
+                            </tr>
+                            <tr>
+                                <td class="registro-label">Versión:</td>
+                                <td class="registro-control">
+                                    <select id="cbModeloReproceso">
+                                        <option value="2">CMgCP_v2</option>
+                                        <option value="1">CMgCP_v1</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="registro-label">Tipo Ejecución:</td>
+                                <td class="registro-control" style="padding-right:20px">
+                                    <input type="radio" name="TipoEjecucion" value="1" checked="checked" />Modificación de parámetros <br />
+                                    <input type="radio" name="TipoEjecucion" value="2" />Reproceso actual
+                                </td>
+                            </tr>
+
+                        </table>
+                        <div style="clear:both; height:20px"></div>
+                        <div style="width:70px; margin:auto">
+                            <input type="button" value="Aceptar" id="btnOpenTipoReproceso" />
+                        </div>
+
+                    </div>
+                </td>
+                <td valign="top" style="width:2%"></td>
+                <td valign="top" style="width:63%">
+                    <div id="cntNuevoReproceso" style="display:none">
+                        <div id="cntResultadoReproceso"></div>
+                        <div style="clear:both;height:20px"></div>
+                        <div style="width:180px; margin:auto">
+                            <input type="button" id="btnOkReprocesarCambio" value="Reprocesar" />
+                            <input type="button" id="btnCancelarReprocesarCambio" value="Cancelar" />
+                        </div>
+                    </div>
+                    <div id="cntReprocesoActual" style="display:none">
+                        <table class="pretty tabla-icono" id="tableHorasReproceso">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input type="checkbox" id="cbSelectAll" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    </th>
+                                    <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hora &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                <tr><td><input type="checkbox" value="00:30" checked="checked" /></td><td>00:30</td></tr>
+                                <tr><td><input type="checkbox" value="01:00" checked="checked" /></td><td>01:00</td></tr>
+                                <tr><td><input type="checkbox" value="01:30" checked="checked" /></td><td>01:30</td></tr>
+                                <tr><td><input type="checkbox" value="02:00" checked="checked" /></td><td>02:00</td></tr>
+                                <tr><td><input type="checkbox" value="02:30" checked="checked" /></td><td>02:30</td></tr>
+                                <tr><td><input type="checkbox" value="03:00" checked="checked" /></td><td>03:00</td></tr>
+                                <tr><td><input type="checkbox" value="03:30" checked="checked" /></td><td>03:30</td></tr>
+                                <tr><td><input type="checkbox" value="04:00" checked="checked" /></td><td>04:00</td></tr>
+                                <tr><td><input type="checkbox" value="04:30" checked="checked" /></td><td>04:30</td></tr>
+                                <tr><td><input type="checkbox" value="05:00" checked="checked" /></td><td>05:00</td></tr>
+                                <tr><td><input type="checkbox" value="05:30" checked="checked" /></td><td>05:30</td></tr>
+                                <tr><td><input type="checkbox" value="06:00" checked="checked" /></td><td>06:00</td></tr>
+                                <tr><td><input type="checkbox" value="06:30" checked="checked" /></td><td>06:30</td></tr>
+                                <tr><td><input type="checkbox" value="07:00" checked="checked" /></td><td>07:00</td></tr>
+                                <tr><td><input type="checkbox" value="07:30" checked="checked" /></td><td>07:30</td></tr>
+                                <tr><td><input type="checkbox" value="08:00" checked="checked" /></td><td>08:00</td></tr>
+                                <tr><td><input type="checkbox" value="08:30" checked="checked" /></td><td>08:30</td></tr>
+                                <tr><td><input type="checkbox" value="09:00" checked="checked" /></td><td>09:00</td></tr>
+                                <tr><td><input type="checkbox" value="09:30" checked="checked" /></td><td>09:30</td></tr>
+                                <tr><td><input type="checkbox" value="10:00" checked="checked" /></td><td>10:00</td></tr>
+                                <tr><td><input type="checkbox" value="10:30" checked="checked" /></td><td>10:30</td></tr>
+                                <tr><td><input type="checkbox" value="11:00" checked="checked" /></td><td>11:00</td></tr>
+                                <tr><td><input type="checkbox" value="11:30" checked="checked" /></td><td>11:30</td></tr>
+                                <tr><td><input type="checkbox" value="12:00" checked="checked" /></td><td>12:00</td></tr>
+                                <tr><td><input type="checkbox" value="12:30" checked="checked" /></td><td>12:30</td></tr>
+                                <tr><td><input type="checkbox" value="13:00" checked="checked" /></td><td>13:00</td></tr>
+                                <tr><td><input type="checkbox" value="13:30" checked="checked" /></td><td>13:30</td></tr>
+                                <tr><td><input type="checkbox" value="14:00" checked="checked" /></td><td>14:00</td></tr>
+                                <tr><td><input type="checkbox" value="14:30" checked="checked" /></td><td>14:30</td></tr>
+                                <tr><td><input type="checkbox" value="15:00" checked="checked" /></td><td>15:00</td></tr>
+                                <tr><td><input type="checkbox" value="15:30" checked="checked" /></td><td>15:30</td></tr>
+                                <tr><td><input type="checkbox" value="16:00" checked="checked" /></td><td>16:00</td></tr>
+                                <tr><td><input type="checkbox" value="16:30" checked="checked" /></td><td>16:30</td></tr>
+                                <tr><td><input type="checkbox" value="17:00" checked="checked" /></td><td>17:00</td></tr>
+                                <tr><td><input type="checkbox" value="17:30" checked="checked" /></td><td>17:30</td></tr>
+                                <tr><td><input type="checkbox" value="18:00" checked="checked" /></td><td>18:00</td></tr>
+                                <tr><td><input type="checkbox" value="18:30" checked="checked" /></td><td>18:30</td></tr>
+                                <tr><td><input type="checkbox" value="19:00" checked="checked" /></td><td>19:00</td></tr>
+                                <tr><td><input type="checkbox" value="19:30" checked="checked" /></td><td>19:30</td></tr>
+                                <tr><td><input type="checkbox" value="20:00" checked="checked" /></td><td>20:00</td></tr>
+                                <tr><td><input type="checkbox" value="20:30" checked="checked" /></td><td>20:30</td></tr>
+                                <tr><td><input type="checkbox" value="21:00" checked="checked" /></td><td>21:00</td></tr>
+                                <tr><td><input type="checkbox" value="21:30" checked="checked" /></td><td>21:30</td></tr>
+                                <tr><td><input type="checkbox" value="22:00" checked="checked" /></td><td>22:00</td></tr>
+                                <tr><td><input type="checkbox" value="22:30" checked="checked" /></td><td>22:30</td></tr>
+                                <tr><td><input type="checkbox" value="23:00" checked="checked" /></td><td>23:00</td></tr>
+                                <tr><td><input type="checkbox" value="23:30" checked="checked" /></td><td>23:30</td></tr>
+                                <tr><td><input type="checkbox" value="23:59" checked="checked" /></td><td>23:59</td></tr>
+                            </tbody>
+                        </table>
+                        <input type="hidden" id="hfListadoHoras" />
+
+                        <div style="width:100px; margin:auto">
+                            <input type="button" id="btnOkReprocesarMasivo" value="Aceptar" />
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" id="hfNombreArchivoReproceso" />
+        <input type="hidden" id="hfIdReproceso" />      
+        <input type="button" id="btnSelectRawReproceso" value="Seleccionar" style="display:none" />
+    </div>
+</div>
+
+<div id="popupReprocesar" class="general-popup" style="min-width:400px; min-height:40px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Reprocesar Costos Marginales</span></div>
+
+    <div id="mensajeProceso" class="action-message">Selecione hora de reproceso</div>
+    <div id="contenidoReproceso">                
+        <div class="content-registro">
+            <table style="width:100%">
+                <tr>
+                    <td class="registro-label">Hora del Proceso:</td>
+                    <td class="registro-control">
+                        <select id="cbHora">
+                            <option value="">-SELECCIONE-</option>
+                            <option value="00:30">00:30</option>
+                            <option value="01:00">01:00</option>
+                            <option value="01:30">01:30</option>
+                            <option value="02:00">02:00</option>
+                            <option value="02:30">02:30</option>
+                            <option value="03:00">03:00</option>
+                            <option value="03:30">03:30</option>
+                            <option value="04:00">04:00</option>
+                            <option value="04:30">04:30</option>
+                            <option value="05:00">05:00</option>
+                            <option value="05:30">05:30</option>
+                            <option value="06:00">06:00</option>
+                            <option value="06:30">06:30</option>
+                            <option value="07:00">07:00</option>
+                            <option value="07:30">07:30</option>
+                            <option value="08:00">08:00</option>
+                            <option value="08:30">08:30</option>
+                            <option value="09:00">09:00</option>
+                            <option value="09:30">09:30</option>
+                            <option value="10:00">10:00</option>
+                            <option value="10:30">10:30</option>
+                            <option value="11:00">11:00</option>
+                            <option value="11:30">11:30</option>
+                            <option value="12:00">12:00</option>
+                            <option value="12:30">12:30</option>
+                            <option value="13:00">13:00</option>
+                            <option value="13:30">13:30</option>
+                            <option value="14:00">14:00</option>
+                            <option value="14:30">14:30</option>
+                            <option value="15:00">15:00</option>
+                            <option value="15:30">15:30</option>
+                            <option value="16:00">16:00</option>
+                            <option value="16:30">16:30</option>
+                            <option value="17:00">17:00</option>
+                            <option value="17:30">17:30</option>
+                            <option value="18:00">18:00</option>
+                            <option value="18:30">18:30</option>
+                            <option value="19:00">19:00</option>
+                            <option value="19:30">19:30</option>
+                            <option value="20:00">20:00</option>
+                            <option value="20:30">20:30</option>
+                            <option value="21:00">21:00</option>
+                            <option value="21:30">21:30</option>
+                            <option value="22:00">22:00</option>
+                            <option value="22:30">22:30</option>
+                            <option value="23:00">23:00</option>
+                            <option value="23:30">23:30</option>
+                            <option value="23:59">23:59</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="registro-label">Mostrar resultados en Web</td>
+                    <td class="registro-control">
+                        <input type="checkbox" id="cbMostrarEnWeb" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="registro-label">Fuente Programa / Reprograma</td>
+                    <td class="registro-control">
+                        <select id="cbFuentePDO">
+                            @*<option value="N">NCP</option>*@
+                            <option value="Y">YUPANA</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr style="display:none" id="trOpcionNCP">
+                    <td class="registro-label">Utilizar archivos NCP modificados:</td>
+                    <td class="registro-control">
+                        <input type="checkbox" id="cbIndicadorNCP" />
+                    </td>
+                </tr>
+                <tr style="display:none" id="trRutaNCP">
+                    <td class="registro-label">Folder NCP modificados:</td>
+                    <td class="registro-control">
+                        <input type="text" id="txtRutaNCP" />
+                    </td>
+                </tr>
+                <tr style="display:none" id="trEscenario">
+                    <td class="registro-label">Seleccione escenario</td>
+                    <td class="registro-control">
+                        <select id="cbTopologia"></select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="registro-label">Utilizar EMS:</td>
+                    <td class="registro-control">
+                        <select id="cbEMS">
+                            <option value="T">TNA</option>
+                            <option value="P">PSS/ODMS</option>
+
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="registro-label">Reemplazar archivo .raw:</td>
+                    <td class="registro-control">
+                        <input type="checkbox" id="cbIndicadorRaw" />
+                    </td>
+                </tr>
+                <tr style="display:none" id="trArchivoRaw">
+                    <td class="registro-label">Seleccione archivo:</td>
+                    <td class="registro-control">
+
+                        <div id="container" style="width:1px; height:1px">
+                        </div>
+                        <input type="button" id="btnSelectFile" value="Seleccionar" />
+
+                        <div id="progreso"></div>
+                        <div id="fileInfo"></div>
+
+                        <script type="text/javascript">
+
+                            var uploader = new plupload.Uploader({
+                                runtimes: 'html5,flash,silverlight,html4',
+                                browse_button: 'btnSelectFile',
+                                container: document.getElementById('container'),
+                                url: siteRoot + 'cortoplazo/resultado/upload',
+                                flash_swf_url: '~/Content/Scripts/Moxie.swf',
+                                silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+                                multi_selection: false,
+                                filters: {
+                                    max_file_size: '2mb',
+                                    mime_types: [
+                                        { title: "Archivos PSSE .raw", extensions: "raw" }
+                                    ]
+                                },
+                                init: {
+                                    PostInit: function () {
+                                        document.getElementById('btnReprocesarConFile').onclick = function () {
+                                            if (uploader.files.length > 0) {
+                                                uploader.start();
+                                            }
+                                            else
+                                                loadValidacionFile("Seleccione archivo.");
+                                            return false;
+                                        };
+
+                                    },
+                                    FilesAdded: function (up, files) {
+                                        if (uploader.files.length == 2) {
+                                            uploader.removeFile(uploader.files[0]);
+                                        }
+                                        plupload.each(files, function (file) {
+                                            loadInfoFile(file.name, plupload.formatSize(file.size));
+                                        });
+                                        up.refresh();
+
+                                        uploader.settings.multipart_params = {
+                                            "tipoEMS": $('#cbEMS').val(),
+
+                                        }
+                                    },
+                                    UploadProgress: function (up, file) {
+                                        mostrarProgreso(file.percent);
+                                    },
+                                    UploadComplete: function (up, file) {
+                                        procesarArchivo();
+                                    },
+                                    Error: function (up, err) {
+                                        loadValidacionFile(err.code + "-" + err.message);
+                                    }
+                                }
+                            });
+
+                            uploader.init();
+
+                        </script>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td class="registro-label">Versión:</td>
+                    <td class="registro-control">
+                        <select id="cbModelo">
+                            <option value="2">CMgCP_v2</option>
+                            <option value="1">CMgCP_v1</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+        <div style="width:70px; margin:auto; margin-top:10px">
+            <input type="button" id="btnAceptarReproceso" value="Aceptar" />
+            <input type="button" id="btnReprocesarConFile" value="Aceptar" style="display:none" />
+        </div>
+        </div>
+</div>
+
+
+

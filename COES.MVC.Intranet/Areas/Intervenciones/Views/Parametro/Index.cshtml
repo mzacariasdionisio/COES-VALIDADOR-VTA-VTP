@@ -1,0 +1,345 @@
+﻿@model COES.MVC.Intranet.Areas.Intervenciones.Models.Intervencion
+
+@{
+    ViewBag.Title = "Configuración de Parámetros";
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+
+}
+<style>
+    .Selected {
+        background-color: #ffd800;
+    }
+</style>
+
+<link href="~/Content/Css/form.css" rel="stylesheet" />
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Content/Css/popup.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/jquery-ui-autocomplete.js"></script>
+<script src="~/Content/Scripts/jquery.select-to-autocomplete.min.js"></script>
+<script src="~/Content/Scripts/jquery.mask.js"></script>
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Content/Scripts/moment.js"></script>
+
+<script src="~/Areas/Intervenciones/Content/Scripts/parametro/configuracion.js?v=9.0.1"></script>
+
+<style>
+    #tbDocumentLibrary {
+        height: auto;
+    }
+
+    #browserDocument {
+        height: 500px;
+        width: auto;
+        overflow-y: scroll;
+    }
+
+    .content-hijo .search-content table tr td {
+        vertical-align: middle;
+    }
+</style>
+
+<div class="form-title">
+    <div class="content-titulo">
+        Configuración de Parámetros
+    </div>
+    <div class="content-botonera">
+        @if (Model.TienePermisoDTI)
+        {
+            <input type="button" id="btnCargarArchivo" value="Cargar archivos" />
+        }
+    </div>
+</div>
+
+<div class="content-hijo">
+
+    <div id="tab-container" class="tab-container" style="min-height:700px">
+        <ul class='etabs'>
+            <li class='tab'><a href="#Proceso">Notificación Programado no ejecutado</a></li>
+            <li class='tab'><a href="#PorcentajeSimilitud">Porcentaje de similitud</a></li>
+            <li class='tab'><a href="#Plazo">Plazo de Carga de datos</a></li>
+            <li class='tab'><a href="#PlazoReversion">Plazo de Reversión</a></li>
+            <li class='tab'><a href="#AprobacionAuto">Aprobación Automática PDI PSI</a></li>
+            <li class='tab'><a href="#fileServerInter">FileServer</a></li>
+        </ul>
+
+        <div id="Proceso" class="panel-container">
+            <div style="padding-top:20px;">
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Alerta al agente que el mantenimiento programado no se ha registrado como ejecutado </span></div>
+                <div style="clear:both; height:5px;"></div>
+                <div class='action-informe' id='PProceso' style="margin-bottom:5px; margin-top:0; "></div>
+
+                <div class="search-content">
+                    <div>
+                        <label>Hora de Ejecución: </label>
+                        <input type="text" id="txtHoraEjecucion" value="@Model.HoraEjecucion" /> (hh:mm)
+                    </div>
+                    <div><input type="button" value="Guardar" id="btnGuardarHoraE" name="btnGuardarHoraE" /></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="PorcentajeSimilitud" class="panel-container">
+            <div style="padding-top:20px;">
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Configuración de Porcentaje de similitud</span></div>
+                <div style="clear:both; height:5px;"></div>
+                <div class='action-informe' id='PPorcentaje' style="margin-bottom:5px; margin-top:0; "></div>
+
+                <div class="search-content">
+                    <div>
+                        <label>Valor: </label>
+                        <input type="number" id="txtValorPorcentaje"  style="width: 60px" value="@Model.ParametroPlazo.ValorPorcentaje"/> (%)
+                    </div>
+                    <div><input type="button" value="Guardar" id="btnGuardarPorcentaje" name="" style="margin-top: 10px;" /></div>
+
+                    <div style="margin-top: 30px; margin-bottom: 10px;">
+
+                        <table style="width: auto;">
+                            <tr>
+                                <td class="tbform-label" style=" padding: 5px; vertical-align: middle;text-align: left"> Usuario modificación: </td>
+
+                                <td id="txtPorcentajeUsuarioModif" style="vertical-align: middle">
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td class="tbform-label" style=" padding: 5px; vertical-align: middle;text-align: left">Fecha modificación:</td>
+                                <td id="txtPorcentajeFechaModif" style="vertical-align: middle">
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="Plazo" class="panel-container">
+            <div style="padding-top:20px;">
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Configuración de Hora Límite de carga de información de los agentes</span></div>
+                <div style="clear:both; height:5px;"></div>
+                <div class='action-informe' id='divCargaDatos' style="margin-bottom:5px; margin-top:0; "></div>
+
+                Ir a la interfaz de Creación de formatos, buscar el formato <b>@Model.FormatoEjecExtranet.Formatcodi</b> - <b>@Model.FormatoEjecExtranet.Formatnombre</b> y editar el registro.
+            </div>
+        </div>
+
+        <div id="PlazoReversion" class="panel-container">
+            <div style="padding-top:20px;">
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Configuración de Fecha Límite después de habilitar la Reversión</span></div>
+                <div style="clear:both; height:5px;"></div>
+
+                <form id="frmFormato" class="form-search" method="post" action="">
+                    <table class="content-tabla" id="confPlazo" style="width:auto">
+
+                        <tr>
+                            <td>
+                                <div>
+                                    <table>
+                                        <tr>
+                                            <td width="130px" class="tbform-label" style="vertical-align: middle">Tipo programación:</td>
+                                            <td>
+                                                <select id="cboTipoProgramacion" style="width: 229px;">
+                                                    <option value="0">-- Seleccionar --</option>
+                                                    @foreach (var item in Model.ListaTiposProgramacion)
+                                                    {
+                                                        var selected = Model.IdTipoProgramacion == item.Evenclasecodi ? "selected" : "";
+                                                        <option value="@item.Evenclasecodi">@item.Evenclasedesc</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <div class="search-content" style="background-color: #acfdb9 !important; width: 330px;">
+                                    <table>
+                                        <tr>
+                                            <td colspan="4" id="tituloPlazo">Plazo en Reversión</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Días:</td>
+                                            <td>
+                                                <input type="number" style="width: 40px; text-align: right;" id="DiaPlazo" name="DiaPlazo" value="" />
+                                            </td>
+                                            <td>Horas:</td>
+                                            <td>
+                                                <input type="time" class="without_ampm" id="txtMinPlazo" name="txtMinPlazo" data-mask="00:00" data-mask-selectonfocus="true" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <input id="btnEliminarRevertidos" type="button" value="Eliminar Revertidos" style="float: right;">
+
+                    <p class="leyenda" style="padding-right: 95px;"> <b>(*)</b> los cálculos de plazos se obtendrán tomando en cuenta la ultima fecha de aprobación del programa. </p>
+
+                    <div style="clear:both; height:10px"></div>
+                    <table style="width:200px;">
+                        <tr>
+                            <td>
+                                <input id="btnGuardar" type="button" value="Grabar">
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+
+                <div style="clear:both; height:5px"></div>
+                <div style="margin-top: 50px; margin-bottom: 10px;">
+
+                    <h2>Vista Previa</h2>
+                    <table style="width: auto;">
+                        <tr>
+                            <td style=" padding: 5px; vertical-align: middle;text-align: left"> Fecha y Hora de aprobación: </td>
+                            <td colspan="5">
+                                <input type="text" id="txtFechaConsulta" value="@Model.ParametroPlazo.FechaConsulta" style="width: 130px;" class="filtro-contenido" />
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <td style=" padding: 5px; width: 143px; color: red; font-weight: bold;vertical-align: middle">
+                                Fecha en Reversión (plazo permitido):
+                            </td>
+                            <td style="vertical-align: middle">
+                                desde
+                                <span id="txtFechaPlazo1"></span>
+                                hasta
+                                <span id="txtFechaPlazo2"></span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+
+                    <table style="width: auto;">
+                        <tr>
+                            <td class="tbform-label" style=" padding: 5px; vertical-align: middle;text-align: left"> Usuario modificación: </td>
+
+                            <td id="txtUsuarioModifReversion" style="vertical-align: middle">
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <td class="tbform-label" style=" padding: 5px; vertical-align: middle;text-align: left">Fecha modificación:</td>
+                            <td id="txtFechaModifReversion" style="vertical-align: middle">
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="AprobacionAuto" class="panel-container">
+            <div style="padding-top:20px;">
+                <div class="formato-titulo popup-title" style="color: #278CCC; margin-bottom:0px;"><span>Configuración de aprobación automática</span></div>
+                <div style="clear:both; height:5px;"></div>
+                <div class='action-informe' id='PAprobacion' style="margin-bottom:5px; margin-top:0; "></div>
+
+                <div class="search-content">
+                    <div>
+                        <table>
+                            <tr>
+                                <td width="130px" class="tbform-label" style="vertical-align: middle">Tipo programación:</td>
+                                <td>
+                                    <select id="cboTipoProgramAprobacion" style="width: 229px;">
+                                        <option value="0">-- Seleccionar --</option>
+                                        @foreach (var item in Model.ListaTipProgramFiltro)
+                                        {
+                                            var selected = Model.IdTipoProgramacion == item.Evenclasecodi ? "selected" : "";
+                                            <option value="@item.Evenclasecodi">@item.Evenclasedesc</option>
+                                        }
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="clear:both; height:10px"></div>
+
+                        <div>
+                            <table>
+                                <tr id="filaDia" hidden>
+                                    <td width="130px" class="tbform-label" style="vertical-align: middle"> Día:</td>
+                                    <td>
+                                        <select id="cbDia">
+                                            <option value="1">LUNES</option>
+                                            <option value="2">MARTES</option>
+                                            <option value="3">MIERCOLES</option>
+                                            <option value="4">JUEVES</option>
+                                            <option value="5">VIERNES</option>
+                                            <option value="6">SÁBADO</option>
+                                            <option value="0">DOMINGO</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="130px" class="tbform-label" style="vertical-align: middle"> Hora de Ejecución:</td>
+                                    <td>
+                                        <input type="text" id="txtHoraEjecucionAprobacion" value="" /> (hh:mm)
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div><input type="button" value="Guardar" id="btnGuardarAprobacion" name="" /></div>
+
+                    <div style="margin-top: 30px; margin-bottom: 10px;">
+
+                        <table style="width: auto;">
+                            <tr>
+                                <td class="tbform-label" style=" padding: 5px; vertical-align: middle;text-align: left"> Usuario modificación: </td>
+
+                                <td id="txtUsuarioAprobModif" style="vertical-align: middle">
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td class="tbform-label" style=" padding: 5px; vertical-align: middle;text-align: left">Fecha modificación:</td>
+                                <td id="txtFechaAprobModif" style="vertical-align: middle">
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="fileServerInter" class="panel-container">
+            <div>
+                Ubicación del FileServer para el aplicativo Intervenciones <input type="text" value="@Model.PathAplicativo" disabled style="width: 500px; " /><br />
+
+                <input type="hidden" id="subcarpetasIntervenciones" value="@Model.Resultado" />
+
+                <table style="padding-top:20px;">
+                    <tr>
+                        <td style="width:350px">
+                            <div class="popup-title"><span>Subcarpetas de Intervenciones</span></div>
+                            <div id="listado">
+
+                            </div>
+                        </td>
+                        <td style="width:30px"></td>
+                        <td>
+                            <div class="popup-title"><span>Archivos</span></div>
+                            <div id="resultado">
+
+                            </div>
+                            <div id="folder" style="display:none;">
+                                @Html.Action("Index", "Browser", new { area = "filemanager", url = @"Empty", pathAlternativo = Model.PathPrincipal })
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+
+    </div>
+</div>

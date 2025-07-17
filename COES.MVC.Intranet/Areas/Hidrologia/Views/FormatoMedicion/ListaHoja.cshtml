@@ -1,0 +1,150 @@
+﻿@model COES.MVC.Intranet.Areas.Hidrologia.Models.FormatoHidrologiaModel
+<script src="~/Areas/Hidrologia/Content/Scripts/jquery.dataTables.rowReordering.js"></script>
+<script src="~/Areas/Hidrologia/Content/Scripts/jqueryui.js"></script>
+<script type="text/javascript">
+    var hoja = 0;
+
+    $(document).ready(function () {
+        $("#idLecturas").val($('#hfLectura').val());
+
+        //$('#idEmpresas').change(function () {
+
+        //    mostrarListaPto($('#idEmpresas').val(), $('#hfFormato').val());
+        //});
+        $('select.empresa').on('change', function (e) {
+            e.preventDefault();
+            $('#barra').css('display', 'block');
+            var hoja = $(this).attr('id').slice(-1);
+            mostrarListaPto($(this).val(), $('#hfFormato').val(),hoja);
+        });
+        var nEditing = null;
+
+        $('a.nuevopto').on('click', function (e) {
+            e.preventDefault();
+            var hoja = $(this).attr('id').slice(-1);
+            var empresa = $('#idempresa' + hoja).val();
+            nuevoPto(empresa, $('#hfFormato').val(), hoja);
+        });
+
+        $('a.nuevohead').on('click', function (e) {
+            e.preventDefault();
+            var hoja = $(this).attr('id').slice(-1);
+            var empresa = $('#idempresa' + hoja).val();
+            nuevoTitulo(empresa, $('#hfFormato').val(), hoja);
+        });
+
+        $('a.deletehead').on('click', function (e) {
+            e.preventDefault();
+            var hoja = $(this).attr('id').slice(-1);
+            var empresa = $('#idempresa' + hoja).val();
+            eliminarTitulo(empresa, $('#hfFormato').val(), hoja);
+        });
+        
+
+    });
+
+    $(function () {
+        $('#tab-container').easytabs({
+            animate: false
+        });
+    });
+
+
+</script>
+
+<div style="clear:both; height:15px"></div>
+<input type="hidden" id="hfFormato" value ="@Model.FormatoCodigo"/>
+
+<div id="tab-container" class='tab-container'">
+    <ul class='etabs'>
+        @foreach(var reg in Model.ListaFormatoHojas)
+        {
+            var id = "#Hoja" + reg.Hojanumero;
+            <li class='tab'><a href= "@id" >Hoja @reg.Hojanumero</a></li>
+        }
+         <li class='tab'><a href= "#agregar" >Agregar</a></li>
+    </ul>
+<div class='panel-container'>
+@foreach (var item in Model.ListaFormatoHojas)
+  {
+      var idempresa = "idempresa" + item.Hojanumero.ToString();
+      var idpto = "idpto" + item.Hojanumero.ToString();
+      var idhead = "idhead" + item.Hojanumero.ToString();
+      var idHeadDelete = "idHeadDelete" + item.Hojanumero.ToString();
+      var id = "Hoja" + item.Hojanumero.ToString();           
+ <div id="@id">
+
+<table style="width:100%">
+    <tr>
+         <td style="vertical-align:top; width:25%" >
+            <table class="content-tabla-search" style="width:auto">
+                <tr >
+                    <td  class="tbform-label">Titulo:</td>
+                    <td class="tbform-control">
+                         <input type="Text"  maxlength="90" id="txtTitulo" name="idTitulo" value="@item.Hojatitulo" onkeydown="return validarLetras(event)"/>
+                    </td>
+                </tr>
+                <tr >
+                    <td class="tbform-label">Lectura:</td>
+                    <td class="tbform-control">
+                        <select id="idLecturas">
+                            @foreach (var reg in Model.ListaLectura)
+                            { 
+                                <option value="@reg.Lectcodi">@reg.Lectnomb</option>
+                            }
+                        </select>
+                        <input type="hidden" id="hfLectura" value ="@item.Lectcodi"/>
+                    </td>
+                </tr>
+                <tr>
+
+                </tr>
+                <tr>
+                    <td>
+                        <div id="listhead"></div>
+                    </td>
+                </tr>
+            </table>
+         </td>
+    </tr>
+    <tr>
+
+    </tr>
+    <tr>
+         <td style="vertical-align:top; width:60%">
+            <p>Detalles de Puntos de Medición</p>
+            <table>
+                <tr>
+                    <td>
+                        Empresa:
+                        <select id="@idempresa" class ="empresa">
+                            <option value="0"> [Seleccionar Empresa]</option>
+                            @foreach(var reg in Model.ListaEmpresa)
+                            {
+                                <option value="@reg.EMPRCODI"> @reg.EMPRNOMB</option>
+                            }
+                        </select>
+                        <div id="barra" style="display:none">
+                            <p>@*<a href="#" id="@idhead" class="nuevohead">Agregar Titulo</a> | <a href="#" id="@idHeadDelete" class="deletehead">Eliminar Titulo</a> |*@ <a id="@idpto" href="#" class="nuevopto">Agregar Pto de Medición</a></p>
+
+                        </div>
+                    </td>
+                   
+                </tr>
+                <tr>
+                    <td>
+                        <div id="listpto"></div>
+                    </td>
+                </tr>
+           </table>         
+         </td>
+    </tr>
+</table>
+
+</div>
+  }
+    <div id="agregar">
+
+    </div>
+</div>
+</div>

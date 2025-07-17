@@ -1,0 +1,178 @@
+﻿@model COES.MVC.Extranet.Areas.Campanias.Models.CampaniasModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script src="~/Areas/Campanias/Content/Scripts/plantransmision.js"></script>
+<link href="~/Areas/Campanias/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Content/Scripts/Handson/moment.js"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js"></script>
+<link href="~/Content/Css/handsontable.full.min.css" rel="stylesheet" />
+
+
+<div class="form-title_intranet">
+    <div class="content-titulo">Información Plan de Transmisión</div>
+    <div class="content-botonera" style="display: flex; align-items: center; justify-content: flex-end; height: auto; gap: 10px;">
+        <a href="@Url.Content("~/Documentos/Manual_Usuario_Extranet_v1.0.pdf")" target="_blank" style="text-decoration: none; margin-top: 7px; margin-right: 20px;">
+            <div style="text-align: center; line-height: 15px; font-size: 12px;">
+                <img src="~/Content/Images/prn-ico-manual.png" style="height: 25px;"><br>
+                <span style="color: #278CCC; margin-left: 7px;">Manual de Usuario</span>
+            </div>
+        </a>
+    </div>
+</div> 
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+    <div class="search-content">
+        <table class="table-search" style="width:auto">
+            <tr>
+                <td>Empresa:</td>
+                <td>
+                    <select style="width: 185px" id="empresaSelect" style="width:220px">
+                        <option value="">Todos</option>
+                    </select>
+                </td>
+                <td>Plan transmisión:</td>
+                <td>
+                    <select style="width: 185px" id="periodoSelect" style="width:220px">
+                    </select>
+                </td>
+                <td>
+                    <label style="display:block; width:220px">
+                        <input type="checkbox" id="cbSelectEnviovigente" value="1" />
+                        Envios vigentes
+                    </label>
+                </td>
+                <td><input class="btnForms" type="button" id="btnConsultar" value="Consultar" /></td>
+            </tr>
+            <tr>
+                <td>Estado:</td>
+                <td colspan="4">
+                    <select id="cbEstado" name="Idestado" style="width:220px">
+                        <option value="T">Todos</option>
+                    </select>
+                    <input type="hidden" id="hfEstado" name="estado" />
+                </td>
+                <td>
+                    <input type="button" class="btnForms" id="btnNuevoPlanTransmision" value="Nuevo" />
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="content-tabla">
+        <div class="table-list" id="listado"></div>
+    </div>
+
+    <div id="popupCrearPlanTransmision" class="general-popup" style="width:320px;top:0px">
+        <div>
+            <span class="button b-close">
+                <span>X</span>
+            </span>
+        </div>
+        <div class="popup-text">
+            <form id="frmCrearPlanTransmision">
+                <p>
+                    Vas a crear un nuevo plan de transmisión.
+                    ¿ Seguro que quiere continuar ?
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center">
+                    <input type="submit" id="btnAceptarCrearPlan" value="Aceptar" style="margin-top: 15px;">
+                    <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupCrearPlanTransmision')">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="popupEliminarPlan" class="general-popup" style="width:320px;top:0px">
+        <div>
+            <span class="button b-close">
+                <span>X</span>
+            </span>
+        </div>
+        <div class="popup-text">
+            <form>
+                <p>
+                    La eliminación del plan es irreversible.
+                    ¿ Seguro que quiere continuar ?
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center">
+                    <input type="button" id="btnEliminar" value="Eliminar" style="margin-top: 15px;" onclick="cargarEliminarPlanTrans()">
+                    <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupEliminarPlan')">
+                </div>
+            </form>
+        </div>
+    </div>
+
+     <div id="popupNuevaVersionEnvio" class="general-popup" style="width:320px;top:0px">
+        <div>
+            <span class="button b-close">
+                <span>X</span>
+            </span>
+        </div>
+        <div class="popup-text">
+            <form>
+                <p>
+                    ¿Está seguro de generar un nuevo registro a partir del registro seleccionado?
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center">
+                    <input type="button" id="btnNuevaVersion" value="Generar" style="margin-top: 15px;" onclick="nuevaVersionEnvio()">
+                    <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('popupNuevaVersionEnvio')">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="popupBienvenida" class="general-popup" style="width:320px;top:0px">
+        <div>
+            <span class="button b-close">
+                <span>X</span>
+            </span>
+        </div>
+        <div class="popup-text">
+            <form>
+                <p>
+                    Bienvenido/a al Módulo de Registro de Información del Plan de Transmisión.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center">
+                    <input type="button" id="btnGrabar" value="Aceptar" style="margin-top: 15px;" onclick="popupClose('popupBienvenida')">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="enviarPlanTransmision" class="general-popup" style="width:320px;top:0px">
+        <div>
+            <span class="button b-close">
+                <span>X</span>
+            </span>
+        </div>
+        <div class="popup-text">
+            <form>
+                <p>
+                    ¿ Estas seguro de realizar el envio ?
+                </p>
+                <p>
+                    Tenga presente que una vez realizada esta acción ya no podrá modificar el contenido de ninguno de los proyectos
+                </p>
+                <table style="width:100%">
+                    <tr>
+                        <td>Comentarios</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <textarea style="width:100%" id="txtComentarioA" name="txtComentarioA"></textarea>
+                        </td>
+                    </tr>
+                </table>
+                <div style="display: flex; gap: 10px; justify-content: center">
+                    <input type="button" id="btnEliminar" value="Aceptar" style="margin-top: 15px;" onclick="enviarProyectos()">
+                    <input type="button" id="btnCancelar" value="Cancelar" style="margin-top: 15px;" onclick="popupClose('enviarPlanTransmision')">
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+</div>

@@ -1,0 +1,126 @@
+﻿@model COES.MVC.Intranet.Areas.YupanaContinuo.Models.SimulacionModel
+@{
+    ViewBag.Title = "Árbol de Simulación";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Areas/YupanaContinuo/Content/Scripts/highcharts.js?v=1.0.5"></script>
+<script src="~/Areas/YupanaContinuo/Content/Scripts/sankey.js?v=1.0.5"></script>
+<script src="~/Areas/YupanaContinuo/Content/Scripts/organization.js?v=1.0.5"></script>
+<script src="~/Areas/YupanaContinuo/Content/Scripts/exporting.js?v=1.0.5"></script>
+
+<link href="~/Areas/YupanaContinuo/Content/Css/css.css?v=1.0.5" rel="stylesheet" />
+<script src="~/Areas/YupanaContinuo/Content/Scripts/simulacion.js?v=1.1.7"></script>
+
+<input type="hidden" id="hfFecha" value="@Model.Fecha" />
+<input type="hidden" id="hfFlagUltimoTag" value="" />
+<input type="hidden" id="hfCodigoArbolMostrado" value="" />
+
+<div class="form-title">
+    <div class="content-titulo">Árbol de Simulación - Yupana Continuo</div>
+
+    <div class="content-botonera" id="container">
+        @if (Model.TienePermisoAdmin)
+        {
+            <input type="button" id="btnRecalcular" value="Recalcular" />
+            <input type="button" id="btnFinalizarEjec" value="Finalizar ejecución" />
+        }
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+
+    <div class="action-message" id="mensaje_simulacion" style="margin-top:0; margin-bottom:11px; display: none"> </div>
+
+    <div class="search-content">
+        <table>
+            <tr>
+                <td style="vertical-align: middle;">
+                    <table class="content-tabla-search tabla_filtro_ho" style="width:auto">
+                        <tr>
+                            <td class="tbform-label">Fecha:</td>
+                            <td>
+                                <input type="text" id="txtFecha" name="Fecha" value="@Model.Fecha" style="width: 94px;" />
+                            </td>
+
+                            <td class="tbform-label" style="padding-left: 15px;">PDO / RDO:</td>
+                            <td>
+                                <select id="cbIdentificador" style="width: 137px;">
+
+                                    @if (Model.ListaTopologia.Count > 0)
+                                    {
+                                        foreach (var item in Model.ListaTopologia)
+                                        {
+                                            var selected = item.Topcodi == Model.CodigoTopologiaMostrado ? " selected" : "";
+                                            <option value="@item.Topcodi" @selected>@item.Identificador</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="0">--  Seleccione  --</option>
+                                    }
+
+                                </select>
+                            </td>
+
+                            <td class="tbform-label" style="padding-left: 15px;">Tag Yupana Continuo:</td>
+                            <td>
+                                <select id="cbTag" style="width: 270px; ">
+                                    @if (Model.ListaTag.Count > 0)
+                                    {
+                                        foreach (var tag in Model.ListaTag)
+                                        {
+                                            var selected = tag.Cparbcodi == Model.CodigoArbolMostrado ? " selected" : "";
+                                            <option value="@tag.Cparbcodi" @selected>@tag.Cparbtag</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="0">--  Seleccione Tag  --</option>
+                                    }
+
+                                </select>
+                            </td>
+
+                            <td style="">
+                                <input type="button" id="btnConsultar" value="Consultar" />
+                                <input type="button" id="btnDescargarTag" value="Descargar Tag" />
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="content-tabla" id="excelwebCH" style="padding-top: 10px;">
+        <div id="tab-container" class='tab-container'>
+            <div id="mensaje_nota" style="display: none;">
+                <p>
+                    <strong>NOTA:</strong>
+                    <ul>
+                        <li id="nota_guardar">Si el escenario converge, para <b>guardar la información de un escenario</b> hacer click en el escenario (cuadro) y seleccionar el botón <strong>"Guardar"</strong>.</li>
+                        <li>Si el escenario converge o diverge, para <b>descargar los archivos de salida de un escenario</b> hacer click en el escenario (cuadro) y seleccionar el botón <strong>"Descargar"</strong>.</li>
+                        <li>Para <b>descargar los archivos de salida de todos los escenarios</b> hacer click en  el botón <strong>"Descargar Tag"</strong>.</li>
+                    </ul>
+                </p>
+            </div>
+            <div class='panel-container'>
+
+                <div id="container_arbol"></div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="botonera" class="general-popup" style="z-index:9999999998;">
+    <div> <span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Acciones del Escenario</span></div>
+    <div class="popup-text" style="margin-top:5px">
+        <div id="idBotonera">
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,317 @@
+﻿@model COES.MVC.Intranet.Areas.Equipamiento.Models.DetalleEquipoModel
+
+<script>
+    $(function () {
+
+
+        $('#txtEquifechiniopcom').Zebra_DatePicker({});
+        $('#txtEquifechfinopcom').Zebra_DatePicker({});
+        $('#cbFamiliaNuevoEquipo').change(function () {
+            var famcodi = parseInt($('#cbFamiliaNuevoEquipo').val()) || 0;
+            $(".tr_grupo_despacho").hide();
+            if (famcodi == 38 || famcodi == 2 || famcodi == 36 || famcodi == 3
+                || famcodi == 39 || famcodi == 4 || famcodi == 37 || famcodi == 5) {
+                $('#cbEquiposPadres').show();
+                $('#cbEquiposPadresCuenca').hide();
+                $(".tr_grupo_despacho").show();
+            } else if (famcodi == 42 || famcodi == 19) {
+                $('#cbEquiposPadres').hide();
+                $('#cbEquiposPadresCuenca').show();
+                cargarEquiposHidroPadres();
+            } else {
+                $('#cbEquiposPadres').show();
+                $('#cbEquiposPadresCuenca').hide();
+            }
+
+            cargarUbicaciones();
+            return false;
+        });
+        $('#cbEmpresasNuevoEquipo').change(function () {
+            $("#cbOperadoresNuevoEquipo").val($('#cbEmpresasNuevoEquipo').val());
+            var famcodi = $('#cbFamiliaNuevoEquipo').val();
+            if (famcodi == 4 || famcodi == 19) {
+                cargarEquiposHidroPadresEdit();
+            }
+            else {
+                cargarEquiposPadres();
+            }
+            return false;
+        });
+        $('#cbAreaEquipoNuevo').change(function () {
+            var famcodi = $('#cbFamiliaNuevoEquipo').val();
+            if (famcodi == 4 || famcodi == 19) {
+                cargarEquiposHidroPadresEdit();
+            }
+            else {
+                cargarEquiposPadres();
+            }
+            return false;
+        });
+        $('#btnGuardar').click(function () {
+            guardarEquipo();
+        });
+
+        $('#btnActualizarListadoPrGrupo').click(function () {
+            cargarGrupoDespachoEdit();
+        });
+        $('#btnIrListadoGrupo').click(function () {
+            irListadoGrupo();
+        });
+     });
+    cargarUbicaciones = function () {
+        $.ajax({
+            type: 'POST',
+            url: controlador + '/CargarAreas',
+            dataType: 'json',
+            data: { iFamilia: $('#cbFamiliaNuevoEquipo').val() },
+            cache: false,
+            success: function (aData) {
+                $('#cbAreaEquipoNuevo').get(0).options.length = 0;
+                //$('#cbAreaEquipoNuevo').get(0).options[0] = new Option("TODOS", "-2");
+                $.each(aData, function (i, item) {
+                    $('#cbAreaEquipoNuevo').get(0).options[$('#cbAreaEquipoNuevo').get(0).options.length] = new Option(item.Text, item.Value);
+                });
+            },
+            error: function () {
+                mostrarError();
+            }
+        });
+    };
+    cargarEquiposPadres = function () {
+        var tipo = $('#cbFamiliaNuevoEquipo').val();
+        $.ajax({
+            type: 'POST',
+            url: controlador + '/CargarEquiposPadres',
+            dataType: 'json',
+            data: {
+                iEmpresa: $('#cbEmpresasNuevoEquipo').val(),
+                iArea: $('#cbAreaEquipoNuevo').val()
+            },
+            cache: false,
+            success: function (aData) {
+                $('#cbEquiposPadres').get(0).options.length = 0;
+                if (tipo == 6 || tipo == 16 || tipo == 24 || tipo == 26 || tipo == 27 || tipo == 28 || tipo == 10 || tipo == 47 || tipo == 9) {
+                    $('#cbEquiposPadres').get(0).options[0] = new Option("", "0");
+                }
+                $.each(aData, function (i, item) {
+                    $('#cbEquiposPadres').get(0).options[$('#cbEquiposPadres').get(0).options.length] = new Option(item.Text, item.Value);
+                });
+            },
+            error: function () {
+                mostrarError();
+            }
+        });
+    };
+    cargarEquiposHidroPadresEdit = function () {
+        $.ajax({
+            type: 'POST',
+            url: controlador + '/CargarEquiposPadresHidro',
+            dataType: 'json',
+            cache: false,
+            success: function (aData) {
+                $('#cbEquiposPadres').get(0).options.length = 0;
+                $('#cbEquiposPadres').get(0).options[0] = new Option("", "0");
+                $.each(aData, function (i, item) {
+                    $('#cbEquiposPadres').get(0).options[$('#cbEquiposPadres').get(0).options.length] = new Option(item.Text, item.Value);
+                });
+
+            },
+            error: function () {
+                mostrarError();
+            }
+        });
+    };
+
+    cargarGrupoDespachoEdit = function () {
+        $.ajax({
+            type: 'POST',
+            url: controlador + '/CargarListadoGrupoDespacho',
+            dataType: 'json',
+            cache: false,
+            success: function (aData) {
+                $('#cbGrupoDespacho').get(0).options.length = 0;
+                $.each(aData, function (i, item) {
+                    $('#cbGrupoDespacho').get(0).options[$('#cbGrupoDespacho').get(0).options.length] = new Option(item.Text, item.Value);
+                });
+                $('#cbGrupoDespacho').val($('#hdnGrupocodi').val());
+            },
+            error: function (err) {
+                mostrarError();
+            }
+        });
+    };
+    irListadoGrupo = function () {
+        var url = siteRoot + 'Migraciones/Parametro/' + "Index";
+        window.open(url, '_blank').focus();
+    };
+    cargarEquiposHidroPadres = function () {
+        $.ajax({
+            type: 'POST',
+            url: controlador + '/CargarEquiposPadresHidro',
+            dataType: 'json',
+            cache: false,
+            success: function (aData) {
+                $('#cbEquiposPadresCuenca').get(0).options.length = 0;
+                $('#cbEquiposPadresCuenca').get(0).options[0] = new Option("", "0");
+                $.each(aData, function (i, item) {
+                    $('#cbEquiposPadresCuenca').get(0).options[$('#cbEquiposPadresCuenca').get(0).options.length] = new Option(item.Text, item.Value);
+                });
+
+            },
+            error: function () {
+                mostrarError();
+            }
+        });
+    };
+</script>
+<div class='panel-container'>
+    @using (Html.BeginForm("GuardarEquipo", "Equipo", FormMethod.Post, new { @class = "form-search", name = "frmNewEquipo", id = "frmNewEquipo" }))
+    {
+        <table class="table-form-vertical2 content-tabla-search" style="width: 800px">
+            <tr>
+                <td class="tbform-label">Código:</td>
+                <td class="tbform-control">
+                    @Model.Equicodi
+                </td>
+                <td class="tbform-label">Nombre:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtEquinomb" name="Equinomb" style="width: 240px" maxlength="40" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Abreviatura:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtEquiabrev" name="Equiabrev" style="width: 240px" maxlength="20" />
+                </td>
+                <td class="tbform-label">Abreviatura 2:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtEquiabrev2" name="Equiabrev2" style="width: 240px" maxlength="15" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Empresa:</td>
+                <td class="tbform-control">
+                    <select id="cbEmpresasNuevoEquipo" name="Emprcodi" style="width: 245px">
+                        @foreach (var item in Model.ListaEmpresa)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+                <td class="tbform-label">Tipo equipo:</td>
+                <td class="tbform-control">
+                    <select id="cbFamiliaNuevoEquipo" name="Famcodi" style="width: 245px">
+                        @foreach (var item in Model.ListaTipoEquipo)
+                        {
+                            <option value="@item.Famcodi">@item.Famnomb</option>
+                        }
+                    </select>
+                </td>
+
+            </tr>
+            <tr>
+                <td class="tbform-label">Ubicación:</td>
+                <td class="tbform-control">
+                    <select id="cbAreaEquipoNuevo" name="Areacodi" style="width: 245px">
+                        @foreach (var item in Model.ListaUbicaciones)
+                        {
+                            <option value="@item.Areacodi">@item.Areanomb</option>
+                        }
+                    </select>
+                </td>
+                <td class="tbform-label">Código único:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtEcodigo" name="Ecodigo" style="width: 240px" maxlength="20" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Es componente:</td>
+                <td class="tbform-control">
+                    <select id="cbEquiposPadres" name="Equipadre" style="width: 245px">
+                        <option value="0"> </option>
+                        @foreach (var item in Model.ListaEquipos)
+                        {
+
+                            <option value="@item.Equicodi">@item.Equinomb @item.Equiabrev</option>
+                        }
+                    </select>
+
+                    <select id="cbEquiposPadresCuenca" name="Equipadre2" style="display: none; width: 245px">
+                        <option value="0" selected> Seleccione</option>
+
+
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="tbform-label">Tensión:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtEquitension" name="Equitension" style="width: 240px" maxlength="10" />
+                </td>
+                <td class="tbform-label">Proc. de Maniobra:</td>
+                <td class="tbform-control">
+                    <select id="cbManiobras" name="EquiManiobra" style="width: 245px">
+                        @foreach (var item in Model.ListaProcManiobras)
+                        {
+                            <option value="@item.Valor">@item.Descripcion</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="tbform-label">Código Osinergmin:</td>
+                <td class="tbform-control">
+                    <input type="text" id="txtOsigrupocodi" name="Osinergcodi" style="width: 240px" maxlength="6" />
+                </td>
+                <td class="tbform-label">Estado:</td>
+                <td class="tbform-control">
+                    <select id="cbEstadoNuevoEquipo" name="Equiestado" style="width: 245px">
+                        @foreach (var item in Model.ListaEstados)
+                        {
+                            <option value="@item.EstadoCodigo">@item.EstadoDescripcion</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="tbform-label">Operador:</td>
+                <td class="tbform-control">
+                    <select id="cbOperadoresNuevoEquipo" name="Operadoremprcodi" style="width: 245px">
+                        @foreach (var item in Model.ListaOperadores)
+                        {
+                            <option value="@item.Emprcodi">@item.Emprnomb</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+
+            <tr class="tr_grupo_despacho" style="display: none">
+                <td class="tbform-label">Grupo de despacho (*):</td>
+                <td class="tbform-control">
+                    <select id="cbGrupoDespacho" name="Grupocodi" style="width: 245px">
+                        @foreach (var item in Model.ListaGrupo)
+                        {
+                            <option value="@item.Grupocodi">@item.Gruponomb</option>
+                        }
+                    </select>
+                    <a href="#" id="btnActualizarListadoPrGrupo">
+                        <img src="~/Content/Images/Copiado.png" />
+                    </a>
+                </td>
+                <td colspan="2">
+                    <input type="button" id="btnIrListadoGrupo" value="Ir a Creación de Grupos">
+                </td>
+            </tr>
+            <tr class="tr_grupo_despacho" style="display: none">
+                <td colspan="4" style="color: black; font-weight: normal;">
+                    (*) Grupos de despacho (GRUPO HIDRAULICO o GRUPO TERMICO)
+                </td>
+            </tr>
+        </table>
+    }
+</div>
+<div style="clear:both; width:100px; text-align:center; margin:auto; margin-top:20px">
+    <input type="button" value="Guardar" id="btnGuardar" />
+</div>

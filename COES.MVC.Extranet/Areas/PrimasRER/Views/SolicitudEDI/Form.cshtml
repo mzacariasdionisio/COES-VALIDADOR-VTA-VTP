@@ -1,0 +1,234 @@
+﻿@model COES.MVC.Extranet.Areas.PrimasRER.Models.PrimasRERModel
+@{
+    ViewBag.Title = "Form";
+    string sTitulo = ViewData["sTitulo"].ToString();
+    string sAccion = ViewData["sAccion"].ToString();
+    string sSelected = "";
+    object atributosFecha = null;
+    object atributosHora = null;
+    string sMaxSizeSustento = Convert.ToString(TempData["sMaxSizeSustento"]);
+    if (Model.EntidadSolicitudEDI.Rersedcodi != 0)
+    {
+        atributosFecha = new { @readonly = "readonly" };
+        atributosHora = new { @readonly = "readonly" };
+    }
+    else
+    {
+        atributosFecha = new { @class = "txtFecha" };
+        atributosHora = new { @class = "txtHora", placeholder = "hh:mm", autocomplete = "off" };
+    }
+}
+
+<link href="~/Areas/PrimasRER/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script>
+    window.rutaPlantilla1 = '@Url.Content("~/Areas/PrimasRER/Content/Plantillas/Informe de solicitud de EDI 1.docx")';
+    window.rutaPlantilla2 = '@Url.Content("~/Areas/PrimasRER/Content/Plantillas/Informe de solicitud de EDI (Ejemplo) 1.docx")';
+</script>
+
+<script src="~/Areas/PrimasRER/Content/Scripts/solicitudEDIform.js?v=1.1"></script>
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+
+@using (Html.BeginForm("Save", "SolicitudEDI", FormMethod.Post, new { id = "frmFormulario", @class = "cmxform", enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="ast" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+        <div class="form-title" style="height: 35px;">
+            <div class="content-titulo" style="margin-left: 20px;">@sTitulo</div>
+            <div class="content-botonera">
+                @if (Model.bGrabar)
+                {
+                    <input type="submit" value="@sAccion" alt="@sAccion" title="@sAccion" />
+                }
+                <input type="button" value="Retornar" onclick="location.href='@Url.Action("Index", "SolicitudEDI")'" alt="Retornar" title="Retornar" />
+            </div>
+        </div>
+        <hr style="border: 1px solid #2980b9; margin: 0 10px 0 10px;">
+        <div class="content-hijo" style="overflow:auto; background-color:#fff">
+            @Html.HiddenFor(model => model.EntidadSolicitudEDI.Rersedcodi)
+            @Html.HiddenFor(model => model.EntidadSolicitudEDI.Emprcodi)
+            @Html.HiddenFor(model => model.EntidadSolicitudEDI.Ipericodi)
+            @Html.HiddenFor(model => model.iperimes)
+            @Html.HiddenFor(model => model.iperianio)
+            @Html.HiddenFor(model => model.EntidadSolicitudEDI.Rersedsustento)
+
+            @Html.HiddenFor(model => model.jsonListaEnergiaUnidad)
+            <input id="archivoSustento" type="file" name="ArchivoSustento" style="display:none" />
+
+            <div id="mensaje" style="margin:0; margin-bottom:10px">
+                @if (Model.sMensajeError != "" && Model.sMensajeError != null)
+                {
+                    <script>mostrarError("@Html.Raw(@Model.sMensajeError)");</script>
+                }
+            </div>
+            <table cellspacing="2" cellpadding="5" style="width: 700px;">
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.EntidadSolicitudEDI.Rercencodi, "Central") (*):</div></td>
+                    <td>
+                        <div class="editor-field">
+                            @if (Model.EntidadSolicitudEDI.Rersedcodi == 0)
+                            {
+                                <select id="EntidadSolicitudEDI_Rercencodi" name="EntidadSolicitudEDI.Rercencodi">
+                                    @foreach (var item in Model.ListaCentral)
+                                    {
+                                        sSelected = "";
+                                        if (@item.Rercencodi == Model.EntidadCentralRER.Rercencodi)
+                                        { sSelected = "selected"; }
+                                        <option value="@item.Rercencodi" @sSelected>@item.Equinomb</option>
+                                    }
+                                </select>
+                            }
+                            else
+                            {
+                                @Html.HiddenFor(model => model.EntidadSolicitudEDI.Rercencodi)
+                                <input type="text" id="EntidadSolicitudEDI_Equinomb" readonly name="EntidadSolicitudEDI.Equinomb" value="@Model.EntidadCentralRER.Equinomb" />
+                            }
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="width: 190px;"><div class="editor-label">@Html.LabelFor(model => model.Fechainicio, "Fecha y hora de inicio") (*):</div></td>
+                    <td style="width: 230px;"><div class="editor-field">@Html.TextBoxFor(model => model.Fechainicio, "{0:dd/MM/yyyy}", atributosFecha)@Html.ValidationMessageFor(model => model.Fechainicio)</div></td>
+                    <td><div class="editor-field">@Html.TextBoxFor(model => model.Horainicio, "{0:HH:mm}", atributosHora)@Html.ValidationMessageFor(model => model.Horainicio)</div></td>
+                </tr>
+
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.Fechafin, "Fecha y hora de fin") (*):</div></td>
+                    <td><div class="editor-field">@Html.TextBoxFor(model => model.Fechafin, "{0:dd/MM/yyyy}", atributosFecha)@Html.ValidationMessageFor(model => model.Fechafin)</div></td>
+                    <td><div class="editor-field">@Html.TextBoxFor(model => model.Horafin, "{0:HH:mm}", atributosHora)@Html.ValidationMessageFor(model => model.Horafin)</div></td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.EntidadSolicitudEDI.Reroricodi, "Origen") (*):</div></td>
+                    <td colspan="2">
+                        <div class="editor-field">
+                            <select id="EntidadSolicitudEDI_Reroricodi" name="EntidadSolicitudEDI.Reroricodi" style="width: 468px;">
+                                @foreach (var item in Model.ListaOrigen)
+                                {
+                                    sSelected = "";
+                                    if (@item.Reroricodi == Model.EntidadOrigen.Reroricodi)
+                                    { sSelected = "selected"; }
+                                    <option value="@item.Reroricodi" @sSelected>@item.Reroridesc</option>
+                                }
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">@Html.LabelFor(model => model.EntidadSolicitudEDI.Rerseddesc, "Detalle (*):")</div></td>
+                    <td colspan="2"><div class="editor-field">@Html.TextAreaFor(model => model.EntidadSolicitudEDI.Rerseddesc, new { maxLength = 300, cols = 80, rows = 4, style = "background-color: #f8f8f8; border: 1px solid #cbd3cf; border-radius: 5px; color: #4876aa; font: 12px arial,sans-serif; text-indent: 8px; width: 462px;" })</div></td>
+                </tr>
+            </table>
+
+            <table cellspacing="2" cellpadding="5">
+                <tr>
+                    <td style=""><h1>Valor de EDI</h1></td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">Ingreso de registros en MWh (*)</div></td>
+                    <td style="padding-left: 45px; text-align: center;">
+                        <div class="editor-field">
+                            <img src="~/Content/Images/ExportExcel.png" id="descargarFormato" class="img_event" height="40" />
+                        </div>
+                        Descargar <br> formato
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="editor-field">
+                            <img src="~/Content/Images/bajar.png" id="importarFormato" class="img_event" height="40" />
+                        </div>
+                        Cargar <br> formato
+                    </td>
+                    <td style="padding-left: 30px;"><div class="editor-label">Total EDI en MWh:</div></td>
+                    <td><div>@Html.TextBoxFor(model => model.EntidadSolicitudEDI.Rersedtotenergia, "", new { @class = "inputEnergiaUnidadTotal", @readonly = "readonly" })</div></td>
+                </tr>
+                <tr>
+                    <td><div class="editor-label">Cargar sustento (*) <br> (archivo en cualquier formato)</div></td>
+                    <td style="padding-left: 45px; text-align: center;">
+                        <div class="editor-field">
+                            <span id="descargarDosArchivos" style="display: inline-block; text-align: center; cursor: pointer;">
+                                <img src="~/Content/Images/doc.png" alt="Descargar Formatos" height="40" class="img_event" /><br />
+                                <span style="text-align: center;">
+                                    Descargar <br />formato informe
+                                </span>
+                            </span>
+                        </div>
+                    </td>
+
+
+
+
+                    <td style="padding-left: 45px; text-align: center;"><div class="editor-field"><img id="importarSustento" class="img_event" src="~/Content/Images/bajar.png" height="40" /></div>Importar <br> sustento e informe</td>
+
+                    <td style="text-align: center;"><div class="editor-field"><img id="descargarSustento" class="img_event" src="~/Content/Images/bajar.png" height="40" /></div>Descargar <br> sustento e informe</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td style="width:150px;">&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                </tr>
+
+                <tr><td colspan="3">Nota(*): Información obligatoria</td></tr>
+            </table>
+
+        </div>
+    </div>
+}
+
+<script src="~/Content/Scripts/jquery.validate.js"></script>
+<script>
+    var iMaxSizeSustento = '@sMaxSizeSustento';
+
+    function FormatFecha(sFecha) {   //DD/MM/AAAA
+        if (sFecha == "") return false;
+        var sDia = sFecha.substring(0, 2);
+        var sMes = sFecha.substring(3, 5);
+        var sAnio = sFecha.substring(6, 10);
+        return new Date(sAnio, sMes, sDia);
+    }
+
+    jQuery.validator.addMethod("MasGrandeQue", function (value, element, params) {
+        if (FormatFecha(value)) {
+            //Si la fechafinal no es nulo compara
+            return FormatFecha(value) >= FormatFecha($(params).val());
+        }
+        //caso contrario si la fechafinal es vacia, devuelve true
+        return !isNaN(value);
+    }, '<br>Debe ser mayor o igual que la fecha de inicio.');
+
+    $("#frmFormulario").validate({
+        lang: 'es',
+        rules: {
+            "EntidadSolicitudEDI.Rercencodi": {
+                required: true
+            },
+            "EntidadSolicitudEDI.Reroricodi": {
+                required: true
+            },
+            Fechainicio: {
+                required: true,
+            },
+            Fechafin: {
+                MasGrandeQue: "#Fechainicio",
+                required: true,
+            },
+            Horainicio: {
+                required: true,
+            },
+            Horafin: {
+                required: true,
+            },
+            "EntidadSolicitudEDI.Rerseddesc": {
+                required: true
+            }
+        }
+    });
+</script>
+

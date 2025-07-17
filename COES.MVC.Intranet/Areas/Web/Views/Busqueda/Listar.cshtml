@@ -1,0 +1,105 @@
+﻿@model IEnumerable<COES.Dominio.DTO.Busqueda.WbBusquedasDTO>
+@{
+    var resultadosOrdenados = Model.OrderByDescending(x => x.score);
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<script src="~/Areas/Web/Content/Scripts/busquedaListado.js"></script>
+
+<table border="0" class="pretty tabla-icono" id="tabla">
+    <thead>
+        <tr>
+            <th>Puntuación</th>
+            <th>Nombre</th>
+            <th>Ruta al archivo</th>
+            <th>Palabras clave</th>
+            <th>Conceptos clave</th>
+            <th>Frase hallada</th>
+            <th>Recomendar</th>
+            <th>Relacionados</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (resultadosOrdenados.Any())
+        {
+            foreach (var item in resultadosOrdenados)
+            {
+                <tr>
+                    <td>@item.score</td>
+                    <td>@item.NombreArchivoConExtension</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.RutaSharePointOnline))
+                        {
+                            <a href="@item.RutaSharePointOnline" target="_blank" rel="noopener noreferrer"
+                               onclick="guardarRegistro(event, @Html.Raw(System.Text.Json.JsonSerializer.Serialize(item)), @ViewBag.idBusqueda)">
+                                Abrir archivo
+                            </a>
+                        }
+                        else
+                        {
+                            <span>No disponible</span>
+                        }
+                    </td>
+                    <td class="editable-cell" data-rowkey="@item.RowKey">
+                        <span class="display-value">@item.PalabrasClave</span>
+                        <input type="text" class="edit-input d-none" value="@item.PalabrasClave" style="width:90%;">
+                        <i class="fas fa-edit edit-icon" title="Editar"></i>
+                        <i class="fas fa-save save-icon d-none" title="Guardar"></i>
+                    </td>
+                    <td>@item.Keyconcepts</td>
+                    <td>@Html.Raw(item.highlights.Replace("\n\n", "<br/>"))</td>
+                    <td>
+                        <i class="fas fa-star vote-star" data-item='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(item))' data-extra='@ViewBag.idBusqueda'></i>
+                    </td>
+                    <td>
+                        <i class="fas fa-solid fa-minus icono-verificacion" style="font-size: 15px;" data-item='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(item))' data-extra='@ViewBag.idBusqueda'></i>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (resultadosOrdenados.Any())
+{
+    <div class="table-container" id="table-container">
+        <table class="content-tabla-search" style="display: flex; justify-content: center;">
+            <tr>
+                <td class="registro-label" style="text-align: end; width:auto; ">¿Estos documentos están relacionados entre sí?</td>
+                <td class="registro-control" style="text-align: start; width: auto">
+                    <div class="option-container">
+                        <input type="radio" id="option1" name="selection" class="selectionRelacionados" data-extra="@ViewBag.idBusqueda" value="true">
+                        <label for="option1">Sí</label>
+                    </div>
+                    <div class="option-container">
+                        <input type="radio" id="option2" name="selection" class="selectionRelacionados" data-extra="@ViewBag.idBusqueda" value="false">
+                        <label for="option2">No</label>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" style="text-align: center;">
+                    <button class="btn-calificar" data-extra="@ViewBag.idBusqueda" data-calificacion="Muy útiles">Muy útiles</button>
+                    <button class="btn-calificar" data-extra="@ViewBag.idBusqueda" data-calificacion="Útiles">Útiles</button>
+                    @*<button class="btn-calificar" data-extra="@ViewBag.idBusqueda" data-calificacion="Medianamente útiles">Medianamente útiles</button>*@
+                    <button class="btn-calificar" data-extra="@ViewBag.idBusqueda" data-calificacion="Poco útiles">Poco útiles</button>
+                    <button class="btn-calificar" data-extra="@ViewBag.idBusqueda" data-calificacion="No útiles">No útiles</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+}

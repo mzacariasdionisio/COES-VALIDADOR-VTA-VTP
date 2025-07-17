@@ -1,0 +1,324 @@
+﻿@{
+    ViewBag.Title = "Transferencias - Cálculo de Valorización";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var BARRCODI = (IEnumerable<SelectListItem>)TempData["BARRCODI"];
+    var EMPRCODI = (COES.MVC.Intranet.Areas.Transferencias.Models.EmpresaModel)TempData["EMPRCODI"];
+    var PERICODI = (IEnumerable<SelectListItem>)TempData["PERICODI"];
+    var PERIANIOMES = (IEnumerable<SelectListItem>)TempData["PERIANIOMES"];
+    var TIPOEMPRCODIGO = (IEnumerable<SelectListItem>)TempData["Tipoemprcodigo"];
+    var INDGRABAR = (System.Boolean)TempData["INDGRABAR"];
+    var MIGRACODI = (IEnumerable<SelectListItem>)TempData["MIGRACODI"];
+    string sSelected = "";
+}
+<script src="~/Areas/Transferencias/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Areas/Transferencias/Content/Css/tabs.css" rel="stylesheet" />
+<link href="~/Areas/Transferencias/Content/Css/Transferencia.css" rel="stylesheet" />
+<script src="~/Areas/Transferencias/Content/Scripts/load.js"></script>
+<script src="~/Areas/Transferencias/Content/Scripts/valortransferencia.js?v=3.3"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<div class="ast">
+    <div class="form-title">
+        <div class="content-titulo">Cálculo de Valorización</div>
+        <div class="content-botonera"></div>
+    </div>
+
+    <div class="content-hijo" style="padding-top:8px">
+        <div id="tab-container" class='tab-container'>
+            <ul class='etabs'>
+                <li class='tab'><a href="#paso1">Procesar Valorización</a></li>
+                <li class='tab'><a href="#paso2">Entregas y Retiros de Energía Valorizados</a></li>
+                <li class='tab'><a href="#paso3">Determinación de saldos de transferencias</a></li>
+                <li class='tab'><a href="#paso4">Reporte mesual</a></li>
+                <li class='tab'><a href="#paso5">Reportes comparativos</a></li>
+                <li class='tab'><a href="#paso6">Migrar saldos</a></li>
+            </ul>
+
+            <div class='panel-container'>
+                <div id="paso1">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="6"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para procesar la Valorización de transferencia</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PERICODI3", @PERICODI, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td><div class="editor-label">Version</div></td>
+                                <td><div class="editor-field"><select id="Version" style="width:100px;"></select></div></td>
+                                <td>
+                                    <div id="divOpcionCarga">
+
+                                        @if (INDGRABAR)
+                                        {
+                                            <table cellpadding="0" cellspacing="0" border="0">
+                                                <tr>
+                                                    <td><input type="button" value="Procesar" id="Procesar" alt="Procesar valorización" title="Procesar valorización" /></td>
+                                                    <td><input type="button" value="Borrar Val" id="Borrar" alt="Eliminar proceso" title="Eliminar proceso de Valorización" /></td>
+                                                </tr>
+                                            </table>
+                                        }
+
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="paso2">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Filtros de búsqueda</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td><div class="editor-field">@Html.DropDownList("PERICODI", @PERICODI, "--Seleccione--")</div></td>
+                                <td><div class="editor-label">Version </div></td>
+                                <td><div class="editor-field"><select id="VersionC" style="width:100px;"></select></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Tipo Empresa</div></td>
+                                <td><div class="editor-field">@Html.DropDownList("TIPOEMPRCODI", @TIPOEMPRCODIGO, "--Seleccione--")</div></td>
+                                <td><div class="editor-label">Empresa</div></td>
+                                <td>
+                                    <select id="EMPRCODI" multiple="multiple">
+                                        @foreach (var item in @EMPRCODI.ListaEmpresas)
+                                        {
+                                            <option value="@item.EmprCodi">@item.EmprNombre </option>
+                                        }
+                                    </select>
+                                    <input type="hidden" id="hcbEMPRCODI" />
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Barra de transferencia</div></td>
+                                <td><div class="editor-field">@Html.DropDownList("BARRCODI", @BARRCODI, "--Seleccione--")</div></td>
+                                <td>
+                                    <div class="editor-label">Entrega / Retiro </div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.RadioButton("FLAG", "T", true) Todos
+                                        @Html.RadioButton("FLAG", "E", false) Entrega
+                                        @Html.RadioButton("FLAG", "R", false) Retiro
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align:center;">
+                                    <div class="busqueda-item">
+                                        <input type="button" value="Refrescar" onclick="location.href='@Url.Action("Index", "valortransferencia")'" alt="Refrescar" title="Refrescar" />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input type="button" id="btnBuscar" value="Consultar" />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input type="button" id="btnExportarEntregasRetirosEnergiaValorizados" value="Exportar información" />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input type="button" id="btnExportarEntregasRetirosEnergiaValorizados15min" value="Exportar información  15min" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="listado" id="listado">
+                    </div>
+                </div>
+
+                <div id="paso3">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="5"><div class="editor-label" style="color:#FFFFFF;"><b>Filtros de búsqueda</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PERICODI2", @PERICODI, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td><div class="editor-label">Version </div></td>
+                                <td>
+                                    <div class="editor-field"><select id="VersionA" style="width:100px;"></select></div>
+                                </td>
+                                <td colspan="2">
+                                    <div>
+                                        <input type="button" id="btnBuscar2" value="Listar" />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input type="button" id="btnExportarDeterminacionSaldosTransferencias" value="Exportar información" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="listado" id="listado2">
+                    </div>
+                </div>
+
+                <div id="paso4">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="5"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para exportar la información deseada</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PERICODI4", @PERICODI, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td><div class="editor-label">Versión </div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        <select id="VersionB" style="width:100px;"></select>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="THCabecera">
+                                <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Lista de descargas disponibles</b></div></td>
+                                <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Excel</b></div></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">Pagos por Transferencias de Energía Activa:</td>
+                                <td colspan="2">
+                                    <a href="#" id="btnExportarPagosTransferenciasEnergíaActiva" title="Descargar los Pagos por Transferencias de Energía Activa en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a>
+                                    <a href="#" id="btnExportarPagosTransferenciasEnergíaActivaPrint" title="Descargar los Pagos por Transferencias de Energía Activa en formato Impresión"><img src="~/Areas/TransfPotencia/Content/Images/envios.png" /></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">Entregas y Retiros de Energía Valorizados:</td>
+                                <td colspan="2"><a href="#" id="btnExportarEntregasRetirosEnergia" title="Descargar las Entregas y Retiros de Energía Valorizados en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">Desviaciones de Retiros:</td>
+                                <td colspan="2"><a href="#" id="btnExportarDesviacionRetiros" title="Descargar la Desviaciones de Retiros en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                            </tr>
+                            @*ASSETEC 20190104*@
+                            <tr>
+                                <td colspan="2">Desviaciones de Entregas:</td>
+                                <td colspan="2"><a href="#" id="btnExportarDesviacionEntregas" title="Descargar la Desviaciones de Entregas en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="paso5">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="5"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para exportar la información deseada</b></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Periodo Inicio</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PERICODI5", @PERIANIOMES, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="editor-label">Periodo Final</div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        @Html.DropDownList("PERICODI6", @PERIANIOMES, "--Seleccione--")
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><div class="editor-label">Información</div></td>
+                                <td>
+                                    <div class="editor-field">
+                                        <label><input type="radio" name="rdbtipo" id="rdbtipo" value="T" checked />TODOS</label>
+                                        <label><input type="radio" name="rdbtipo" id="rdbtipo" value="E" />ENTREGAS</label>
+                                        <label><input type="radio" name="rdbtipo" id="rdbtipo" value="R" />RETIROS</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="editor-label">Código</div>
+                                </td>
+                                <td>
+                                    <div class="editor-field">
+                                        <input type="text" name="txtcodigo" id="txtcodigo" value="" />
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="THCabecera">
+                                <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Lista de descargas disponibles</b></div></td>
+                                <td colspan="2"><div class="editor-label" style="color:#FFFFFF;"><b>Excel</b></div></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">Histórico de Entregas y Retiros:</td>
+                                <td colspan="2"><a href="#" id="btnExportarHistoricoEntregasRetiros" title="Descargar los Histórico de Entregas y Retiros en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">Histórico [15min.] por Código Entrega/Retiro:</td>
+                                <td colspan="2"><a href="#" id="btnExportarHistorico15minCodigoEntregaRetiro" title="Descargar los Histórico [15min.] por Código Entrega/Retiro en formato Excel"><img src="~/Areas/TransfPotencia/Content/Images/excel.gif" /></a></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="paso6">
+                    <div class="content-busqueda" style="border-style: double; border-width: 1px; border-color: #2980B9; border-radius: 5px;">
+                        <table border="1" cellpadding="5" cellspacing="2">
+                            <tr class="THCabecera">
+                                <td colspan="4"><div class="editor-label" style="color:#FFFFFF;"><b>Seleccionar los filtros para procesar la migración de informión del calculo de VTEA</b></div></td>
+                            </tr>
+                            <tr>
+                                <td style="width:150px;">Mes de Valorización:</td>
+                                <td style="width:100px;">
+                                    <div class="editor-field">
+                                        @Html.DropDownList("pericodiSaldo", @PERICODI, "--Seleccione--")
+                                    </div>
+                                </td>
+                                <td style="width:50px;">Versión:</td>
+                                <td style="width:200px; height:40px;">
+                                    <div class="editor-field">
+                                        <select id="recpotcodiSaldo" style="width:100px;"></select>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:150px;">Migración:</td>
+                                <td colspan="2" style="height:40px;">
+                                    <div class="editor-field">
+                                        @Html.DropDownList("migracodi", @MIGRACODI, "--Seleccione--", new { style = "width: 500px;" })
+                                    </div>
+                                </td>
+                                <td style="width:200px; height:40px;">
+                                    @if (INDGRABAR)
+                                    {
+                                        <table cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td><input type="button" value="Migrar Saldo" id="btnMigrarSaldo" alt="Procesar migración de saldos" title="Procesar migración de saldos" /></td>
+                                                <td><input type="button" value="Migrar Información VTEA" id="btnMigrarVTEA" alt="Procesar migración de informción de valorización" title="Procesar migración de informción de valorización" /></td>
+                                            </tr>
+                                        </table>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="editor-field" style="color:#ff0000;">
+                                        La información que se va a procesar, sólo corresponde al periodo, revisión y proceso de migración seleccionado.<br />
+                                        <b>Migrar saldos:</b> permite que los saldos del periodo/revisión de la <b>[empresa origen] => (se asigne ahora a la) [empresa destino]</b>. Luego debe volver a ejecutar el cálculo de VTEA, estos saldos serán tomados en cuenta en el proceso.<br />
+                                        <b>Migrar información VTEA:</b> permite que la información que sirve de base para el cálculo de VTEA en el periodo/revisión, de la <b>[empresa origen] => (se asigne ahora a la) [empresa destino]</b>. Luego debe volver a ejecutar el cálculo de VTEA (verificar la información en INGRESO DE DATOS [Ingreso por potencia, Factor de proporción, etc.]), la información reportada pertenecerá a la empresa destino.
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

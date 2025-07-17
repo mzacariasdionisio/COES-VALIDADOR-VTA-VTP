@@ -1,0 +1,118 @@
+﻿@model COES.MVC.Publico.Areas.DemandaBarras.Models.ConsultaModel
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script src="~/Areas/DemandaBarras/Content/Scripts/consulta.js?v=1.5"></script>
+<script src="~/Content/Scripts/multiselect.js?v=1.5"></script>
+<script src="~/Content/Scripts/handsontable.full.min.js?v=1.5"></script>
+<link href="~/Content/Css/multiselect.css?v=1.5" rel="stylesheet" />
+<link href="~/Content/Css/handsontable.css?v=1.5" rel="stylesheet" />
+<div class="page-banner">
+
+    @{
+        var titulo = (Model.Tipo == 2) ? "Empresas de Distribución" : "Usuarios Libres";
+        var claseDistribuicion = (Model.Tipo == 2) ? "sidebar-nav--link-active" : "";
+        var claseUsuarioLibre = (Model.Tipo == 4) ? "sidebar-nav--link-active" : "";
+    }
+</div>
+<div class="main-banner" style="margin-top: -15px; background-image: url(../../Content/Images/Banners/Informes.jpg) ">
+</div>
+<div style="clear:both"></div>
+
+<div class="content-area">
+    <div class="container">
+        <div class="row">
+            <div class="col col-md-3 order-1 order-md-0">
+                <nav class="sidebar">
+                    <ul class="sidebar-nav list-unstyled">
+                        <li class="sidebar-nav--item">
+                            <a href="~/DemandaBarras/consulta/index?tipo=2" onclick="CambiarMenu('Distribuidores')" id="menuDistribuidores" class="sidebar-nav--link @claseDistribuicion">Distribuidores</a>
+                        </li>
+                        <li class="sidebar-nav--item">
+                            <a href="~/DemandaBarras/consulta/index?tipo=4" onclick="CambiarMenu('UsuariosLibres')" id="menuUsuariosLibres" class="sidebar-nav--link @claseUsuarioLibre">Usuarios Libres</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="col col-md-9 mb-md-4">
+                <div class="coes-box mb-3" style="overflow: inherit; ">
+                    <div class="coes-box--header coes-box--header--center-aligned">
+                        <h3 class="coes-box--title">@titulo</h3>
+                    </div>
+                    <div class="coes-box--content container">
+                        <div class="coes-filters d-flex">
+                            <form action="" class="w-100">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap flex-lg-nowrap">
+                                    <div class="coes-form-item">
+                                        <label class="d-block" for="">Desde</label>
+                                        <input type="date" class="coes-form-item--date" id="txtFechaInicio" value="@Model.FechaInicio">
+                                    </div>
+                                    <div class="coes-form-item">
+                                        <label class="d-block" for="">Hasta</label>
+                                        <input type="date" id="txtFechaFin" value="@Model.FechaFin" class="coes-form-item--date">
+                                    </div>
+                                    <div class="coes-form-item">
+                                        <label class="d-block" for="cbEmpresas">Empresa</label>
+                                        <select id="cbEmpresas" class="multiselect" name="filter-1" multiple="multiple">
+                                            @foreach (var item in Model.ListaEmpresas)
+                                            {
+                                                <option value="@item.Emprcodi">@item.Emprnomb</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="coes-form-item coes-radio-group">
+                                        <div class="coes-form-item d-flex justify-content-between align-items-center">
+                                            <label for="radio-1" class="d-inline">Histórica diaria</label>
+                                            <input type="radio" name="rbTipoDemanda" id="rbHistoricaDiaria" value="103" checked="checked">
+                                        </div>
+
+                                        <div class="coes-form-item d-flex justify-content-between align-items-center">
+                                            <label for="radio-2" class="d-inline">Prevista diaria</label>
+                                            <input type="radio" id="rbPrevistaDiaria" value="110" name="rbTipoDemanda">
+                                        </div>
+
+                                        <div class="coes-form-item d-flex justify-content-between align-items-center">
+                                            <label for="radio-3" class="d-inline">Prevista semanal</label>
+                                            <input type="radio" id="rbPrevistaSemanal" value="102" name="rbTipoDemanda">
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="coes-filters d-flex mt-2">
+                    <div class="w-100">
+                        <div class="d-flex justify-content-between align-items-end flex-wrap flex-lg-nowrap same-height-button-group">
+                            <div class="coes-form-item">
+                                <input type="button" id="btnConsultar" class="coes-form-item--submit" value="Consultar">
+                            </div>
+                            <div class="coes-form-item">
+                                <input type="button" id="btnExportar" class="coes-form-item--submit" value="Exportar">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="">
+                    <div id="textoMensaje"></div>
+                    <div class="content-tabla" id="detalleFormato" style="margin:15px">
+                    </div>
+                </div>
+
+                <input type="hidden" id="hfHistoricoDesde" value="@Model.HistoricoDesde" />
+                <input type="hidden" id="hfHistoricoHasta" value="@Model.HistoricoHasta" />
+                <input type="hidden" id="hfDiarioDesde" value="@Model.DiarioDesde" />
+                <input type="hidden" id="hfDiariopHasta" value="@Model.DiarioHasta" />
+                <input type="hidden" id="hfSemanalDesde" value="@Model.SemanalDesde" />
+                <input type="hidden" id="hfSemanalHasta" value="@Model.SemanalHasta" />
+                <input type="hidden" id="hfTipoEmpresa" value="@Model.Tipo" />
+                <input type="hidden" id="hfEmpresa" />
+
+            </div><!-- /.col-9 -->
+
+        </div><!-- /.row -->
+    </div><!-- /.container-->
+</div><!-- /.content-area -->

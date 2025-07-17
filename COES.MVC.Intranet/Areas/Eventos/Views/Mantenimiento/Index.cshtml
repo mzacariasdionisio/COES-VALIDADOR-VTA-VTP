@@ -1,0 +1,153 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.BusquedaMantenimientoModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+<script src="~/Areas/Eventos/Content/Scripts/mantenimiento.js?v=1.0.6"></script>
+<link href="~/Areas/Eventos/Content/Css/css.css" rel="stylesheet" />
+<script src="~/Content/Scripts/highcharts.js"></script>
+<script src="~/Content/Scripts/multiselect.js"></script>
+<link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<script src="~/Content/Scripts/highcharts-3d.js"></script>
+<script src="~/Content/Scripts/jquery.format.js"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Mantenimientos</div>
+
+    <div class="content-botonera" style="display: flex; align-items: center; gap: 8px; margin-top: 11px;">
+        <input type="button" id="btnFmtCruzado" value="Formato Cruzado" />
+        <input type="button" id="btnBuscar" value="Ver Reporte" />
+        <input type="button" id="btnExpotar" value="Exportar Reporte" />
+        <input type="button" id="btnGrafico" value="Ver Gráfico" />
+
+        <a href="#" id="btnManualUsuario" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; font-size: 12px; line-height: 14px;">
+            <img src="~/Content/Images/prn-ico-manual.png" style="height: 25px; margin-left: 17px;"> 
+            <span style="color: #278CCC;">Manual de Usuario</span>
+        </a>
+    </div>
+</div>
+
+<div class="content-hijo" id="mainLayout">
+    <div id="mensaje"></div>
+    <div>
+        <div id="mensajePrincipal" class="action-message" style="display: block; margin: 0; margin-bottom: 10px; ">
+
+            <ul>
+                <li>La consulta y/o exportación podría tardar si existen muchos registros para el filtro seleccionado.</li>
+                <li>La consulta web solo permite filtrar hasta tres meses y máximo 3000 registros.</li>
+                <li>La exportación Excel solo permite filtrar hasta un año.</li>
+            </ul>
+        </div>
+    </div>
+    <div class="search-content">
+        <table class="content-tabla" style="width:auto">
+            <tr>
+                <td>Fecha desde:</td>
+                <td><input type="text" id="FechaDesde" name="FechaInicio" value="@Model.FechaInicio" /></td>
+
+                <td>Fecha hasta:</td>
+                <td><input type="text" id="FechaHasta" name="FechaFin" value="@Model.FechaFin" /></td>
+
+                <td>Indisponibilidad:</td>
+                <td>
+                    <select id="cbIndispo" name="Indispo" style="width:190px">
+                        <option value="-1">--TODOS--</option>
+                        <option value="F">F/S</option>
+                        <option value="E">E/S</option>
+                    </select>
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr>
+                <td>Mantenimiento:</td>
+                <td>
+                    <select id="cbTipoMantenimiento" name="IdTipoMantenimiento" multiple="multiple" style="width:250px;">
+                        @foreach (var item in Model.ListaTipoMantenimiento)
+                        {
+                            <option value="@item.Evenclasecodi">@item.Evenclasedesc @item.Evenclaseabrev</option>
+                        }
+                    </select>
+                </td>
+
+                <td>Tipo de Mantenimiento:</td>
+                <td>
+                    <select id="cbTipoMantto" name="IdTipoMantto" multiple="multiple">
+                        @foreach (var item in Model.ListaTipoEvento)
+                        {
+                            <option value="@item.Tipoevencodi">@item.Tipoevendesc</option>
+                        }
+                    </select>
+                </td>
+
+                <td>Con Interrupción:</td>
+                <td>
+                    <select id="cbInterrupcion" name="IndInterrupcion" style="width:250px">
+                        <option value="-1">--TODOS--</option>
+                        <option value="S">SI</option>
+                        <option value="N">NO</option>
+                    </select>
+                </td>
+
+
+                <td></td>
+                <td></td>
+            </tr>
+
+            <tr>
+
+                <td>Tipo de Empresa:</td>
+                <td>
+                    <select id="cbTipoEmpresa" name="IdTipoEmpresa" multiple="multiple">
+                        @foreach (var item in Model.ListaTipoEmpresas)
+                        {
+                            <option value="@item.Tipoemprcodi">@item.Tipoemprdesc</option>
+                        }
+                    </select>
+                </td>
+
+                <td>Empresa:</td>
+                <td>
+                    <div id="empresas"></div>
+                </td>
+
+                <td>Tipo de Equipo:</td>
+                <td>
+                    <select id="cbFamilia" name="IdFamilia" multiple="multiple">
+                        @foreach (var item in Model.ListaFamilias)
+                        {
+                            <option value="@item.FAMCODI">@item.FAMNOMB</option>
+                        }
+                    </select>
+                </td>
+
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+        <input type="hidden" id="hfNroPagina" name="NroPagina" value="1" />
+        <input type="hidden" id="hfEmpresa" />
+        <input type="hidden" id="hfTipoMantenimiento" />
+        <input type="hidden" id="hfTipoEmpresa" />
+        <input type="hidden" id="hfTipoEquipo" />
+        <input type="hidden" id="hfTipoMantto" />
+    </div>
+
+
+    <div class="content-tabla">
+        <div class="tabla-header">
+            <div class="table-paginado" id="paginado"></div>
+        </div>
+        <div class="table-list" id="listado"></div>
+    </div>
+
+    <div style="clear:both; height:30px"></div>
+
+</div>

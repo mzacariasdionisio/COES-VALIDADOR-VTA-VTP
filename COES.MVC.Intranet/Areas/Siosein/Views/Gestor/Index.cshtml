@@ -1,0 +1,186 @@
+﻿@model COES.MVC.Intranet.Areas.Siosein.Models.GestorModel
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    @{
+        ViewBag.Title = "Index";
+        var urlt = Request.Url.AbsoluteUri.Replace(Request.Url.AbsolutePath, "/");
+        Layout = "~/Views/Shared/_Layout.cshtml";
+        string espaciador = "/";
+
+        string color = "green";
+
+        string espacio = " ";
+        string guion = " - ";
+    }
+
+    <link href="~/Content/Css/multiselect.css" rel="stylesheet" />
+    <link href="~/Content/Css/Gestor/font-awesome/font-awesome.css" rel="stylesheet" />
+    <link href="~/Areas/Siosein/Content/Css/css.css" rel="stylesheet" />
+    <link href="~/Content/Css/Gestor/gestor.css?v=2.3" rel="stylesheet" />
+    <link href="~/Content/Scripts/Gestor/Toastr/toastr.css" rel="stylesheet" />
+    <script src="~/Content/Scripts/Gestor/Toastr/toastr.min.js"></script>
+    <link href="~/Content/Scripts/Gestor/Summernote/summernote-bs3.css" rel="stylesheet" />
+    <link href="~/Content/Scripts/Gestor/Summernote/summernote.css" rel="stylesheet" />
+    <script src="~/Content/Scripts/Gestor/Summernote/summernote.js"></script>
+    <script src="~/Content/Scripts/Gestor/Summernote/summernote-es-ES.js"></script>
+    <script src="~/Content/Scripts/Gestor/Bootstrap/bootstrap.js"></script>
+  
+    <script src="~/Areas/Siosein/Content/Scripts/plugins/iCheck/icheck.min.js"></script>
+    <script src="~/Areas/Siosein/Content/Scripts/gestorSiosein.js?v=2.1"></script>
+    <script>
+        $(document).ready(function () {
+
+            var controlador = siteRoot + 'Siosein/Gestor/';
+            var f = new Date();
+            
+            var periodo ='01' + "/" + (f.getMonth() +1) + "/" + f.getFullYear();
+
+            /*var periodo = "";*/
+
+            $('#FchPeriodoIni').Zebra_DatePicker({
+                direction: -1,
+                format: 'm/Y'
+            });
+
+            $.ajax({
+                type: 'POST',
+                url: controlador + "ListaLog",
+                data: {
+                    id: 1
+                },
+                success: function (evt) {
+                    $('#footer-log').html(evt);
+                },
+                error: function (ex) {
+                    alert("Ha ocurrido un error");
+                }
+            });
+
+
+
+            $.ajax({
+                type: 'POST',
+                url: controlador + "ListaCarpetas",
+                data: {
+                    id: 1,
+                    periodo: periodo
+                },
+                success: function (evt) {
+                    $('#ListaCarpertaUser').html(evt);
+
+                },
+                error: function (ex) {
+                    alert("Ha ocurrido un error");
+                }
+            });
+
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": false,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "3000",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            }
+
+            $('.menuList').click(function () {
+                $('.active').removeClass('active');
+                $(this).addClass('active');
+            });
+
+        });
+
+    </script>
+
+
+
+</head>
+<body>
+    <div class="form-title">
+        <div class="content-titulo">Gestor Sio Sein</div>
+    </div>
+
+    <div class="content-hijo" id="mainLayout">
+
+        <div class="search-content" style="margin-bottom:10px">
+            <table class="content-tabla-search" style="width:auto">
+                <tr>
+                    <td>Periodo:</td>
+                    <td>
+                        <input type="text" id="FchPeriodoIni" value="@Model.FechaFiltro" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="content-tabla">
+            <div style="clear:both; height:5px"></div>
+            <div class="col-lg-2" style="border:1px solid #e7eaec;">
+                <div style="margin-top: 1rem;">
+                    <input type="button" id="btnNuevo" value="Redactar Correo" style="margin-left: 0px;" />
+                </div>
+                <div>
+                    <h3>MENSAJES</h3>
+                    <ul style="padding: 15px;list-style-type:circle;">
+                        <li><a href="JavaScript:ListarRecibidos();"> <i class="fa fa-inbox " style="color:#2980B9;"></i> Bandeja de Entrada <span class="label label-warning pull-right"></span> </a></li>
+                        <li><a href="JavaScript:ListarEnviados();"> <i class="fa fa-envelope-o" style="color:#2980B9;"></i> Bandeja de Salida</a></li>
+                        <li><a href="JavaScript:ListarEliminados();"> <i class="fa fa-trash-o" style="color:#2980B9;"></i> Eliminados</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>CARPETAS</h3>
+                    <a href="JavaScript:AgregarCarpeta(1);"><i class="fa fa-plus-square" style="color:#2980B9;"></i> Nueva Carpeta</a>
+                    <div id="ListaCarpertaUser"></div>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="col-lg-12" id="contenido" style="border:1px solid #e7eaec;">
+
+                </div>
+                <div class="col-lg-12" id="footer-log" style="border:1px solid #e7eaec; ">
+
+                </div>
+            </div>
+        </div>
+        <div style="clear:both; height:30px"></div>
+    </div>
+
+    <div id="AgregarCarpeta">
+        <span class="button b-close"><span>X</span></span>
+        <div class="popup-title"><span>Nueva Carpeta</span></div>
+        <div class="table-list" id="detalleCarpeta">
+            <table class="table-form-vertical">
+                <tr>
+                    <td>Nombre de Carpeta:</td>
+                    <td>
+                        <input id="txtNombreCarperta" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="margin:0 auto">
+                        <div style="margin:0 auto">
+                            <input type="button" id="idAgregarCarpeta" value="Agregar" />
+                            <input type="button" id="idCancelarCarpeta" value="Cancelar" />
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <input type="hidden" id="hfcategoriaActual" value="0" />
+    <input type="hidden" id="hfcarpetaActual" value="1" />
+
+</body>
+</html>

@@ -1,0 +1,558 @@
+﻿@model COES.MVC.Intranet.Areas.Eventos.Models.RegistroModel
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link href="~/Areas/Eventos/Content/Css/css.css?v=1" rel="stylesheet" />
+<script src="~/Content/Scripts/inputmaskmin.js"></script>
+<script src="~/Areas/Eventos/Content/Scripts/final.js?v=7.18"></script>
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<div class="form-title">
+    <div class="content-titulo">Registro de Eventos</div>
+    <div class="content-botonera">        
+        <table cellpadding="0" cellspacing="0" style="margin-top:12px; width:auto">
+            <tr style="line-height:10px">
+                @if (Model.IndicadorGrabar) { 
+                    <td><input type="button" id="btnGrabar" value="Grabar" /></td>
+                    <td><input type="button" id="btnConvertir" value="Convertir en bitácora" /></td>
+                    <td><input type="button" id="btnCancelar" value="Ir al listado" /></td>
+                }
+                else { 
+                    <td><input type="button" id="btnCancelar" value="Ir al listado" /></td>
+                }
+                
+                @if (Model.IndicadorInforme && false) { 
+                    <td><input type="button" id="btnInforme" value="Informe" /></td>
+                }
+                
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="content-hijo">
+
+     <div id="tab-container" class='tab-container'>
+        <ul class='etabs'>
+            <li class='tab'><a href="#paso1">Datos del Evento</a></li>
+            <li class='tab'><a href="#paso2">Interrupciones</a></li>              
+        </ul>
+        <div class='panel-container'>
+            <div id="paso1">
+               
+                <div class="action-message" id="mensaje">Complete los datos del evento y presione "Grabar"</div>
+                <div class="formula-subtitulo">Datos del evento</div>
+
+                <form id="formEvento" name="formEvento">
+                    <table>
+                        <tr>
+                            <td style="width:54%">
+                                <div class="content-registro">
+                                    <table>
+                                        <tr>
+                                            <td class="registro-label">Tipo de Evento:</td>
+                                            <td class="registro-control">
+                                                <select id="cbTipoEvento" name="IdTipoEvento">
+                                                    <option value="">-SELECCIONE-</option>
+                                                    @foreach (var item in Model.ListaTipoEvento)
+                                                    {
+                                                        <option value="@item.Tipoevencodi">@item.Tipoevendesc</option>
+                                                    }
+                                                </select>
+                                                <input type="hidden" id="hfTipoEvento" value="@Model.IdTipoEvento" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Hora inicial</td>
+                                            <td class="registro-control">
+                                                <input type="text" id="txtHoraInicial" name="HoraInicial" value="@Model.HoraInicial" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Hora final</td>
+                                            <td class="registro-control">
+                                                <input type="text" id="txtHoraFinal" name="HoraFinal" value="@Model.HoraFinal" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Descripción(Resúmen)</td>
+                                            <td class="registro-control">
+                                                <textarea id="txtDescripcion" maxlength="250" name="Descripcion" class="areaevento">@Model.Entidad.Evenasunto</textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Detalle adicional:</td>
+                                            <td class="registro-control">
+                                                <textarea id="txtDetalleAdicional" maxlength="4000" name="Detalle" class="areaevento">@Model.Entidad.Evendesc</textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Comentarios Internos</td>
+                                            <td class="registro-control">
+                                                <textarea id="txtComentarioInterno" maxlength="4000" name="Comentarios" class="areaevento">@Model.Entidad.Evencomentarios</textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Equipos</td>
+                                            <td class="registro-control">
+                                                <table cellpadding="0" cellspacing="0" style="width:auto">
+                                                    <tr style="line-height:20px">
+                                                        <td>
+                                                            @if (Model.IndicadorGrabar) {
+                                                                <input type="button" value="Seleccionar" id="btnBuscarEquipo" />
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <div class="formula-subtitulo" style="margin-top:25px">Equipos involucrados</div>
+
+                                <div id="equiposInvolucrados">
+                                    <table class="tabla-formulario" id="tablaEquipo">
+                                        <thead>
+                                            <tr>
+                                                <th>Empresa</th>
+                                                <th>Ubicación</th>
+                                                <th>Tipo</th>
+                                                <th>Central</th>
+                                                <th>Equipo</th>
+                                                <th>Nivel Tensión</th>
+                                                <th>Quitar</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.ListaEquipo)
+                                            {
+                                                <tr>
+                                                    <td>@item.EMPRNOMB</td>
+                                                    <td>@item.TAREAABREV @item.AREANOMB</td>
+                                                    <td>@item.FAMABREV</td>
+                                                    <td>@item.DESCENTRAL</td>
+                                                    <td>@item.Equiabrev</td>
+                                                    <td>@item.Equitension</td>
+                                                    <td style="text-align:center">
+                                                        <input type="hidden" id="hfEquipoItem" value="@item.Equicodi" />                                                       
+                                                        <img src="~/Content/Images/btn-cancel.png" alt="" onclick="$(this).parent().parent().remove();" style="cursor:pointer" />                                         
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                    <input type="hidden" id="hfListaEquipos" name="IdsEquipos" />
+                                </div>
+
+                            </td>
+                            <td style="width:4%"></td>
+                            <td style="width:42%">
+                                <div class="content-registro">
+                                    <table>
+                                        <tr>
+                                            <td class="registro-label" style="width:230px">Causa</td>
+                                            <td class="registro-control">
+                                                <select id="cbSubCausaEvento" name="IdSubCausaEvento">
+                                                    <option value="">-SELECCIONE-</option>
+                                                    @foreach (var item in Model.ListaSubCausaEvento)
+                                                    {
+                                                        <option value="@item.Subcausacodi">@item.Subcausadesc</option>
+                                                    }
+                                                </select>
+                                                <input type="hidden" id="hfSubCausaEvento" value="@Model.Entidad.Subcausacodi" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Tipo de Falla</td>
+                                            <td class="registro-control">
+                                                <select id="cbTipoFalla" name="TipoFalla">
+                                                    <option value="">-NINGUNO-</option>
+                                                    <option value="M">Monofásica</option>
+                                                    <option value="B">Bifásica</option>
+                                                    <option value="T">Trifásica</option>
+                                                    <option value="R">Recierre monofásico</option>
+                                                    <option value="0">Otros</option>
+                                                </select>
+                                                <input type="hidden" id="hfTipoFalla" value="@Model.Entidad.Eventipofalla" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Fases</td>
+                                            <td class="registro-control">
+                                                <select id="cbFases" name="Fases">
+                                                    <option value="">-NINGUNA-</option>
+                                                    <option value="R">R</option>
+                                                    <option value="S">S</option>
+                                                    <option value="T">T</option>
+                                                    <option value="RT">RT</option>
+                                                    <option value="RS">RS</option>
+                                                    <option value="TS">TS</option>
+                                                    <option value="RG">R-G</option>
+                                                    <option value="SG">S-G</option>
+                                                    <option value="TG">T-G</option>
+                                                    <option value="RTG">RT-G</option>
+                                                    <option value="RSG">RS-G</option>
+                                                    <option value="TSG">TS-G</option>
+                                                    <option value="R">RST</option>
+                                                </select>
+                                                <input type="hidden" id="hfFases" value="@Model.Entidad.Eventipofallafase" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Provoca interrup.</td>
+                                            <td class="registro-control">
+                                                <input type="checkbox" id="cbProvovaInterrupcion" />
+                                                <input type="hidden" id="hfProvocaInterrupcion" name="ProvocaInterrupcion" value="@Model.Entidad.Eveninterrup" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">MW Interr/Descargado</td>
+                                            <td class="registro-control">
+                                                <input type="text" id="txtMWInterrumpido" name="MWInterrumpidos" value="@Model.Entidad.Evenmwindisp" onkeypress="return validarNumero(this,event)" />
+                                            </td>
+                                        </tr>
+
+                                        <!--Nuevos campos agregados-->
+                                        <tr>
+                                            <td class="registro-label">Desconecta generación</td>
+                                            <td class="registro-control">
+                                                <input type="checkbox" id="cbDesconectaGeneracion" />
+                                                <input type="hidden" id="hfDesconectaGeneracion" name="DeconectaGeneracion" value="@Model.Entidad.Evengendescon" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Generación desconectada</td>
+                                            <td class="registro-control">
+                                                <input type="text" id="txtMWGeneracionDesconectada" name="MWGeneracionDesconectada" value="@Model.Entidad.Evenmwgendescon" onkeypress="return validarNumero(this,event)" />
+                                            </td>
+                                        </tr>
+                                        <!--Fin nuevos campos agregados-->
+
+                                        <tr>
+                                            <td class="registro-label">Tensión Falla</td>
+                                            <td class="registro-control">
+                                                <input type="text" id="txtTensionFalla" name="TensionFalla" value="@Model.Entidad.Eventension" onkeypress="return validarNumero(this,event)" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label">Aréa Operativa</td>
+                                            <td class="registro-control">
+                                                <select id="cbAreaOperativa" name="AreaOperativa">
+                                                    <option value="G">Generación</option>
+                                                    <option value="T">Transmisión</option>
+                                                    <option value="D">Distribución</option>
+                                                    <option value="C">Cliente Libre</option>
+                                                </select>
+                                                <input type="hidden" id="hfAreaOperativa" value="@Model.Entidad.Evenaopera" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div style="clear:both; height:20px"></div>
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" id="cbMensajeSMS" /> Mensaje SMS
+                                            <input type="hidden" id="hfMensajeSMS" name="MensajeSMS" value="@Model.Entidad.Smsenviar" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" id="cbRelevante" />Relevante (Informe GART)
+                                            @{
+                                                var relevante = Model.Entidad.Evenrelevante;
+                                                var indRelevante = "N";
+                                                if (relevante == 1)
+                                                {
+                                                    indRelevante = "S";
+                                                }
+                                            }
+                                            <input type="hidden" id="hfRelevante" name="Relevante" value="@indRelevante" />
+                                            <input type="hidden" id="hfAnalisisFalla" name="CTAnalisis" value="@Model.Entidad.Evenctaf" />
+                                        </td>
+                                    </tr>
+
+                                    @*<tr>
+                                        <td>
+                                            <input type="checkbox" id="cbAnalisisFalla" />C.T. Análisis de Fallas
+                                            <input type="hidden" id="hfAnalisisFalla" name="CTAnalisis" value="@Model.Entidad.Evenctaf" />
+                                        </td>
+                                    </tr>*@
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" id="cbInformeFalla" />Informe de Fallas
+                                            <input type="hidden" id="hfInformeFalla" name="InformeFalla" value="@Model.Entidad.Eveninffalla" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" id="cbInformeFalla2" />Informe de fallas N2
+                                            <input type="hidden" id="hfInformeFalla2" name="InformeFalla2" value="@Model.Entidad.Eveninffallan2" />
+                                        </td>
+                                    </tr>
+                                    @if (Model.IndicadorGrabarAseg)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" id="cbAsegOperacion" />Aseguramiento de la Operación
+                                                <input type="hidden" id="hfAsegOperacion" name="EvenAsegOperacion" value="@Model.Entidad.Evenasegoperacion" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </table>
+                                <br />
+                                <input type="hidden" name="EvenInfCodi" value="@Model.EvenInfCodi" />
+                                <input type="hidden" name="EvenInfn2Codi" value="@Model.EvenInfn2Codi" />
+                                <input type="hidden" name="EvenInfn2Codi" value="@Model.EvenInfn2Codi" />
+                                <div id="contedor-ampliacion" class="content-registro" aria-describedby="mydesc">
+                                    <table aria-describedby="Fallas">
+                                        <tr>
+                                            <th scope="col"></th>
+                                            <th scope="col"></th>
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label" style="width:230px">Ampliar plazo de IPI para agentes</td>
+                                            <td class="registro-control">
+                                                Días:
+                                                <input class="control-dias" style="width:50px" type="number" id="amplicacionIpiDias" name="DiaIpiAmpliacion" value="@Model.DiaIpiAmpliacion" min="0"/>
+
+                                                Horas:
+                                                <input type="time" class="without_ampm" id="ampliacionIpiHorario" name="HorarioIpiAmpliacion" data-mask="00:00" data-mask-selectonfocus="true" value="@Model.HorarioIpiAmpliacion" />
+
+                                            </td>
+
+                                        </tr>
+                                        <tr>
+                                            <td class="registro-label" style="width:230px">Ampliar plazo de IF para agentes</td>
+                                            <td class="registro-control">
+                                                Días:
+                                                <input class="control-dias" style="width:50px" type="number" id="amplicacionIfDias" name="DiaIfAmpliacion" value="@Model.DiaIfAmpliacion" min="0"/>
+
+                                                Horas:
+                                                <input type="time" class="without_ampm" id="ampliacionIfHorario" name="HorarioIfAmpliacion" data-mask="00:00" data-mask-selectonfocus="true" value="@Model.HorarioIfAmpliacion" />
+
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div style="clear:both; height:20px"></div>
+
+                                @{
+                                    string indRemitenteCorreo = (Model.IndRemitenteCorreo == "S") ? "" : "style=display:none";
+
+                                }
+
+                                <table @indRemitenteCorreo>
+                                    <tr>
+                                        <td>Nombre de remitente correo electrónico:</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <input type="text" id="txtRemitenteCorreo" name="RemitenteCorreo" maxlength="100" value="@Model.RemitenteCorreo" style="width:300px" />
+                                            <input type="hidden" id="hfIndRemitenteCorreo" value="@Model.IndRemitenteCorreo" />
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <div style="clear:both; height:20px"></div>
+
+                                @{
+                                    string indAdicional = (Model.IndicadorAdicional) ? "" : "style=display:none";
+                                }
+
+                                <div class="content-registro" @indAdicional>
+                                    <table>
+                                        <tr>
+                                            <td class="registro-label" style="width:230px">Tipo de Registro</td>
+                                            <td class="registro-control">
+                                                <select id="cbTipoRegistro" name="TipoRegistro">
+                                                    <option value="">-Seleccione-</option>
+                                                    <option value="D">Mala calidad de suministro</option>
+                                                    <option value="C">Mala calidad de producto</option>
+                                                </select>
+                                                <input type="hidden" id="hfTipoRegistro" value="@Model.TipoRegistro" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <div style="clear:both; height:15px"></div>
+                                    <div id="tablaDesconexion" style="width:auto; display:none">
+                                        <table class="tabla-formulario">
+                                            <thead>
+                                                <tr>
+                                                    <th>Descripción</th>
+                                                    <th>Seleccionar</th>
+                                                    <th>Magnitud (MW)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Interrupción total</td>
+                                                    <td style="text-align:center">
+                                                        <input type="checkbox" id="cbInterrupcionTotal" />
+                                                        <input type="hidden" id="hfInterrupcionTotal" name="DesconexionInterrupcion" value="@Model.DesconexionInterrupcion" />
+                                                    </td>
+                                                    <td style="text-align:center">
+                                                        <input type="text" id="txtInterrupcionTotal" name="ValDesconexionInterrupcion" style="width:70px" value="@Model.ValDesconexionInterrupcion" onkeypress="return validarNumero(this,event)" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Disminución de carga</td>
+                                                    <td style="text-align:center">
+                                                        <input type="checkbox" id="cbDisminucionCarga" />
+                                                        <input type="hidden" id="hfDisminucionCarga" name="DesconexionDisminucion" value="@Model.DesconexionDisminucion" />
+                                                    </td>
+                                                    <td style="text-align:center">
+                                                        <input type="text" id="txtDisminucionCarga" style="width:70px" name="ValDesconexionDisminucion" value="@Model.ValDesconexionDisminucion" onkeypress="return validarNumero(this,event)" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Rechazo manual</td>
+                                                    <td style="text-align:center">
+                                                        <input type="checkbox" id="cbRechazoManual" />
+                                                        <input type="hidden" id="hfRechazoManual" name="DesconexionManual" value="@Model.DesconexionManual" />
+                                                    </td>
+                                                    <td style="text-align:center">
+                                                        <input type="text" id="txtRechazoManual" style="width:70px" name="ValDesconexionManual" value="@Model.ValDesconexionManual" onkeypress="return validarNumero(this,event)" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Rechazo automático</td>
+                                                    <td style="text-align:center">
+                                                        <input type="checkbox" id="cbRechazoAutomatico" />
+                                                        <input type="hidden" id="hfRechazoAutomatico" name="DesconexionAutomatico" value="@Model.DesconexionAutomatico" />
+                                                    </td>
+                                                    <td style="text-align:center">
+                                                        <input type="text" id="txtRechazoAutomatico" style="width:70px" name="ValDesconexionAutomatico" value="@Model.ValDesconexionAutomatico" onkeypress="return validarNumero(this,event)" />
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div style="clear:both; height:15px"></div>
+                                    <table id="tablaMalaCalidad" style="display:none">
+                                        <tr style="line-height:20px">
+                                            <td>Tensión</td>
+                                            <td>
+                                                <input type="radio" id="rbCalidadTension" value="T" name="MalaCalidad" />
+                                            </td>
+                                            <td>Frecuencia</td>
+                                            <td>
+                                                <input type="radio" id="rbCalidadFrecuencia" value="F" name="MalaCalidad" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <input type="hidden" id="hfMalaCalidad" name="TipoMalaCalidad" value="@Model.TipoMalaCalidad" />
+                                </div>
+
+                                <div style="clear:both; height:10px"></div>
+
+                                @if (Model.IndAuditoria == "S")
+                                {
+                                    <div class="content-registro">
+                                        <div class="formula-subtitulo">Auditoría</div>
+                                        <table>
+                                            <tr>
+                                                <td class="registro-label" style="width:230px">Última actualización</td>
+                                                <td class="registro-control">
+                                                    @Model.Entidad.Lastuser
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="registro-label" style="width:230px">Última actualización</td>
+                                                <td class="registro-control">
+                                                    @if (Model.Entidad.Lastdate != null)
+                                                    {
+                                                        var fecha = ((DateTime)Model.Entidad.Lastdate).ToString("dd/MM/yyyy HH:mm");
+                                                        <span>@fecha</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <a href="JavaScript:verHistorioAuditoria();">Ver histórico</a>
+                                    </div>
+                                }
+
+                            </td>
+                        </tr>
+                    </table>
+                    <input type="hidden" id="hfCodigoEvento" name="IdEvento" value="@Model.Entidad.Evencodi" />
+                </form>
+                <br />
+                <br />
+                <br />
+            </div>
+            <div id="paso2">
+                <h2>Interrupciones</h2>
+
+                <div style="clear:both; float:right; margin-bottom:10px; text-align:right">
+                   <table cellpadding="0" cellspacing="0" border="0" style="width:auto">
+                       <tr>
+                          
+                           @if (Model.IndicadorGrabar)
+                           {
+                            <td>
+                                <input type="button" id="btnAddInterrupcion" value="Agregar" />
+                                <input type="button" id="btnExportarInterrupcion" value="Exportar" />
+                            </td>
+                           }
+                           @if (Model.IndicadorImportar && false)
+                           {
+                               <td>
+                                   <input type="button" id="btnImportarInforme" value="Importar desde informe" title="Importar interrupciones desde el reporte consolidado final" />
+                               </td>
+                           }
+                       </tr>          
+                    </table>
+                </div>
+                <div id="contenedorInterrupcion">
+
+                </div>
+                <div style="clear:both; height:20px"></div>
+                <div id="contenedorImportacion">
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+</div>
+
+<div id="busquedaEquipo" style="display:none">
+</div>
+
+<div id="popupInterrupcion" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>    
+    <div class="popup-text">        
+        <div id="cntInterrupcion"></div>                
+        <div style="clear:both; width:140px; margin:auto; text-align:center; margin-top:20px;">
+
+        @if (Model.IndicadorGrabar) { 
+            <input type="button" id="btnGrabarInterrupcion" value="Grabar" />
+        }
+
+            <input type="button" id="btnCancelarInterrupcion" value="Cancelar" />
+        </div>
+    </div>
+</div>
+
+<div id="popupInforme" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div id="contenedorInforme">
+
+    </div>
+</div>
+
+<div id="popupAuditoria" class="general-popup">
+    <div><span class="button b-close"><span>X</span></span></div>
+    <div class="popup-title"><span>Detalle auditoría</span></div>
+    <div class="popup-text" id="detalleAuditoria">
+
+    </div>
+</div>
+
+
+

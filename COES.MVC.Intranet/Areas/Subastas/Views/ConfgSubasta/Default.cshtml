@@ -1,0 +1,209 @@
+﻿@model COES.MVC.Intranet.Areas.Subastas.Models.ProcesoModel
+
+@if (Model.Resultado == "-1")
+{
+    <input type="hidden" id="hdResultado_SUB" value="@Model.Resultado" />
+    <input type="hidden" id="hdMensaje_SUB" value="@Model.Mensaje" />
+    <input type="hidden" id="hdDetalle_SUB" value="@Model.Detalle" />
+
+    <h2>@Model.Mensaje</h2>
+
+    return;
+}
+
+@{
+    Layout = "~/Views/Shared/_LayoutAlter.cshtml";
+}
+
+<script src="~/Content/Scripts/jquery.easytabs.min.js"></script>
+<link href="~/Content/Css/tabs.css" rel="stylesheet" />
+
+<script src="~/Content/Scripts/messaje-operation.js"></script>
+
+<link href="~/Areas/Subastas/Content/Css/css.css?v=1.10.7" rel="stylesheet" />
+<script src="~/Areas/Subastas/Content/Scripts/smaconfgsubasta.js?v=1.10.8"></script>
+
+<div id="tab-container" class='tab-container' style=" padding: 10px;">
+    <ul class='etabs'>
+        <li class='tab'><a href="#vistaSubasta">Subastas</a></li>
+        <li class='tab'><a href="#vistaOfertaDefecto">Ofertas por defecto</a></li>
+    </ul>
+    <div class='panel-container'>
+
+        <div id="vistaSubasta">
+
+            <div class="form-title">
+                <div class="content-titulo">Configuración de Subasta</div>
+                <div class="content-botonera" style="margin-left:auto">
+                    @if (Model.TienePermiso)
+                    {
+                        <input type="button" value="Agregar" id="Enviar" name="Enviar" />
+                    }
+                </div>
+            </div>
+
+            <div class="tools-content content-hijo" style="width:420px;">
+
+                <div class="field-group search-content">
+                    <div style="margin-bottom: 4px;">
+                        <label style="width:130px;float:left;">Hora de Inicio:</label>
+                        <select id="hor-subasta-hora-inicio" style="width:94px;">
+                            <option>@ViewData["inicio"]</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 4px;">
+                        <label style="width:130px;float:left;">Hora de Fin:</label>
+                        <select id="hor-subasta-hora-fin" style="width:94px;">
+                            <option>@ViewData["fin"]</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 4px;">
+                        <label style="width:130px;float:left;">Hora Desencriptación:</label>
+                        <select id="hor-subasta-hora-envio" style="width:94px;">
+                            <option>@ViewData["ncp"]</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 4px;">
+                        <label style="width:130px;float:left;">Max. dias de Oferta:</label>
+                        <select id="maximo-dias-oferta" style="width:94px;">
+                            <option>@ViewData["maxdias"]</option>
+                        </select>
+                    </div>
+                    <div style="clear:both"></div>
+                </div>
+
+                <div class="content-hijo content-frame" style="padding: 0px; margin-top: 10px; min-height: 0px;">
+                    <div class="field-group" style="width:50%">
+                        <div class="field-wrap">
+                            <div style="height:auto ; height:350px; width:600px; overflow-y:auto">
+                                <table class="pretty tabla-formulario">
+                                    <thead>
+                                        <tr>
+                                            <th>Max. Dias<br />de Oferta</th>
+                                            <th>Hora Inicio</th>
+                                            <th>Hora Fin</th>
+                                            <th>Hora Desencriptación</th>
+                                            <th>Fecha última <br />Modificación</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.ListProceso)
+                                        {
+                                            <tr>
+                                                <td>@item.Papomaxdiasoferta</td>
+                                                <td>@item.Papohorainicio</td>
+                                                <td>@item.Papohorafin</td>
+                                                <td>@item.Papohoraenvioncp</td>
+                                                <td>@item.PapofeccreacionDesc</td>
+                                                <td>@(@item.Papoestado == "A" ? "Vigente" : "Inactivo")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div></div>
+            </div>
+
+        </div>
+
+        <div id="vistaOfertaDefecto">
+
+            <div class="form-title">
+                <div class="content-titulo">Configuración de ampliación de plazo de Ofertas por defecto</div>
+                <div class="content-botonera" style="margin-left:auto">
+                    @if (Model.TienePermiso)
+                    {
+                        <input type="button" id="btnNuevoAmpliacion" value="Nuevo">
+                    }
+                </div>
+            </div>
+
+            <div class="content-tabla" style=" margin-top: 20px;">
+                <div class="table-list" id="div_listado_ampliacion"></div>
+                <div style="clear:both; margin-bottom:40px"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="ele-popup" class="general-popup">
+    <span class="button b-close"><span>X</span></span>
+    <div id="ele-popup-content">
+    </div>
+</div>
+<div id="MessagesClose" class="general-popup">
+    <div class="popup-title"><span>Mensaje de Operación</span></div>
+    <div class="popup-text content-messajes-text">
+
+    </div>
+    <div class="formulario-boton">
+        <input id="btnAceptarMessages" type="button" value="Aceptar" />
+        <input id="btnCancelarMessages" type="button" value="Cancelar" style="display:none;" />
+    </div>
+</div>
+
+<div id="popupAmpliacion" class="general-popup" style="width: 450px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Ampliación de plazo de Ofertas por defecto</span></div>
+    <div class="panel-container">
+
+        <!--Formulario-->
+        <div>
+            <input type="hidden" id="hfSmaapcodi" value="0" />
+
+            <table style=" margin-top: 15px;">
+                <tbody>
+                    <tr>
+                        <td class="tbform-label" style="">Mes:</td>
+                        <td class="tbform-control" style="vertical-align: top;" id="td_mes_proceso">
+                            <input type="hidden" id="hfMesProcesoSig" value="@Model.FechaMesSig" />
+                            <input type="hidden" id="hfMesProcesoActual" value="@Model.FechaMesActual" />
+                            <input type="text" id="txtMesProceso" value="@Model.FechaMesSig" style="width: 92px;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="">Plazo por defecto:</td>
+                        <td class="tbform-control" style="vertical-align: top;">
+                            <span id="txtDiaDefecto" style="padding-left: 11px;"></span>
+                        </td>
+                        <td>
+                            <span id="txtHoraDefecto"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="">Nuevo plazo:</td>
+                        <td class="tbform-control" style="vertical-align: top;">
+                            <input type="text" id="txtNuevoPlazo" value="" style="width: 92px;" />
+                        </td>
+                        <td>
+                            <span id="txtHoraDefecto2"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tbform-label" style="">Estado:</td>
+                        <td class="tbform-control" style="">
+                            <select id="cbEstadoAmpliacion" style="width: 100px;">
+                                <option value="A">Activo</option>
+                                <option value="I">Inactivo</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td class="tbform-control" style="padding-top: 15px;">
+                            <input id="btnGuardarAmpliacion" type="button" value="Grabar">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="clear:both; height:20px"></div>
+        </div>
+
+    </div>
+</div>

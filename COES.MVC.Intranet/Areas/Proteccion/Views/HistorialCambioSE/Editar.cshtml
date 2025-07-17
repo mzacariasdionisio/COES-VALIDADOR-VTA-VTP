@@ -1,0 +1,166 @@
+﻿@model COES.MVC.Intranet.Areas.Proteccion.Models.HistorialCambioSEEditarModel
+<link href="~/Areas/Proteccion/Content/Css/popup.css" rel="stylesheet" />
+<script src="~/Content/Scripts/plupload.full.min.js"></script>
+<script>
+    $(function () {
+
+        $('#btnGrabar').click(function () {
+            guardar();
+        });
+    });
+</script>
+<div class="form-title_intranet">
+    <div class="content-titulo"></div>
+    <div class="content-botonera" id="container">
+   
+    </div>
+</div>
+<div id="popupFormatoEnviadoOk" style="min-height:100px">
+    <span class="button b-close"><span>X</span></span>
+    <div class="popup-title"><span>Formato enviado exitosamente!</span></div>
+    <div style="text-align:center; margin:auto;">
+        <div style="clear:both; height:10px"></div>
+        <div>
+            <input type="button" id="btnAceptarOK" value="Aceptar" />
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var fullDate = new Date();
+    var twoDigitMonth = ((fullDate.getMonth().length) == 1) ? '0' + (fullDate.getMonth() + 1) : (fullDate.getMonth() + 1);
+    var sFecha = fullDate.getFullYear().toString() + twoDigitMonth.toString() + fullDate.getDate().toString() + fullDate.getHours().toString() + fullDate.getMinutes().toString() + fullDate.getSeconds().toString();
+    var uploaderP1 = new plupload.Uploader({
+        runtimes: 'html5,flash,silverlight,html4',
+        browse_button: 'btnUpload',
+        container: document.getElementById('container'),
+        multipart_params: {
+            "epsubecodi": $('#epsubecodi').val(),
+        },
+        url: siteRoot + 'proteccion/HistorialCambioSE/Upload',
+        flash_swf_url: '~/Content/Scripts/Moxie.swf',
+        silverlight_xap_url: '~/Content/Scripts/Moxie.xap',
+        multi_selection: false,
+        filters: {
+            max_file_size: '30mb',
+            mime_types: [
+                { title: "Archivos Zip .zip", extensions: "zip" },
+                { title: "Archivos Pdf .pdf", extensions: "pdf" },
+                { title: "Archivos Rar .rar", extensions: "rar" },
+                { title: "Archivos Excel .xlsx", extensions: "xlsx" },
+                { title: "Archivos Excel .xls", extensions: "xls" },
+                { title: "Archivos Word .docx", extensions: "docx" },
+                { title: "Archivos Word .doc", extensions: "doc" },
+                { title: "Archivos Imagen .jpg", extensions: "jpg" },
+                { title: "Archivos Imagen .gif", extensions: "gif" }
+            ]
+        },
+
+        init: {
+            PostInit: function () {
+                document.getElementById('btnCargar').onclick = function () {
+                    if (uploaderP1.files.length > 0) {
+                        uploaderP1.start();
+                    }
+                    else
+                        loadValidacionFile("Seleccione archivo.");
+                    return false;
+                };
+            },
+            FilesAdded: function (up, files) {
+                if (uploaderP1.files.length == 2) {
+                    uploaderP1.removeFile(uploaderP1.files[0]);
+                }
+                plupload.each(files, function (file) {
+                    $('#epsubememoriacalculo').val(file.name);
+
+
+                });
+                up.refresh();
+            },
+            UploadProgress: function (up, file) {
+            },
+
+            UploadComplete: function (up, file) {
+            },
+            Error: function (up, err) {
+                alert("Ocurrió un error al cargar el archivo")
+                loadValidacionFile(err.code + "-" + err.message);
+            }
+        }
+    });
+    uploaderP1.init();
+
+    uploaderP1.bind('FileUploaded', function (up, file, response) {
+        // La respuesta del servidor está en response.response
+        console.log("bind", response)
+        var serverResponse = JSON.parse(response.response);
+   
+        if (serverResponse.estado == 1) {
+            $("#hdnCargado").val(1);
+            $('#epsubememoriacalculo').val(serverResponse.nombreArchivoTexto);
+            $('#hdnEpsubememoriacalculo').val(serverResponse.nombreArchivo);
+            alert("Archivo subido con éxito.");
+        } else {
+            $("#hdnCargado").val(0);
+            alert("Error al subir el archivo");
+        }
+    });
+</script>
+<div class="panel-container">
+    <input type="hidden" name="hdnCargado" id="hdnCargado" value="0" />
+    <input type="hidden" name="hdnEpsubememoriacalculo" id="hdnEpsubememoriacalculo" value="@Model.epsubememoriacalculo" />
+    @using (Html.BeginForm("Editar", "HistorialCambioSE", FormMethod.Post, new { @name = "frmEditar", id = "frmEditar" }))
+    {
+        @Html.HiddenFor(m => m.epsubecodi)
+        @Html.HiddenFor(m => m.accion)
+
+
+        <div class="search-content" style="margin-bottom:0px; padding:15px">
+            <table style="width:100%;margin-right: auto" class="table-form-show">
+                <tr>
+                    <th style="width:30%"></th>
+                    <th style="width:70%"></th>
+                </tr>
+                <tr>
+                    <td class="tbform-label ">Subestación(*):</td>
+                    <td class="control-no-padding">
+                        @(Html.DropDownList("areacodi", new SelectList(Model.listaSubestacion, "Areacodi", "Areanomb", Model.epsubecodi),"SELECCIONAR", new { style = "width: 100%;" }))
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label ">Proyecto(*):</td>
+                    <td class="control-no-padding">
+                        @(Html.DropDownList("epproycodi", new SelectList(Model.listaProyecto, "Epproycodi", "Epproynomb", Model.epproycodi), "SELECCIONAR", new { style = "width: 100%;" }))
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="tbform-label">Motivo(*):</td>
+                    <td class="control-no-padding">
+                        <textarea type="text" id="epsubemotivo" name="epsubemotivo" rows="5" style="background-color: #fff; width:100%" maxlength="1000">@Model.epsubemotivo</textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label">Fecha(*):</td>
+                    <td class="control-no-padding">
+                        <input type="text" id="epsubefecha" name="epsubefecha" value="@Model.epsubefecha" style="width:250px" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="tbform-label"> Memoria de Cálculo(*)</td>
+                    <td>
+                        <div class="container">
+                            <input type="text" id="epsubememoriacalculo" value="@Model.epsubememoriacalculoTexto" style="width:250px" readonly="readonly" />
+                            <input id="btnUpload" value="Seleccionar Archivo" type="button">
+                            <input id="btnCargar" value="Cargar" type="button">
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <br />
+        <input id="btnGrabar" value="Grabar" type="button">
+    }
+</div>
+

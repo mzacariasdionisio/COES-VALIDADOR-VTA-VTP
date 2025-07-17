@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ecancodi), 0) + 1 from eq_equicanal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eq_equicanal(
+      ecancodi,
+      canalcodi,
+      equicodi,
+      tipoinfocodi,
+      ecanestado,
+      ecanfactor,
+      ecanusucreacion,
+      ecanfecmodificacion,
+      ecanusumodificacion,
+      ecanfeccreacion,
+      areacode
+      )
+      values(
+      :ecancodi,
+      :canalcodi,
+      :equicodi,
+      :tipoinfocodi,
+      :ecanestado,
+      :ecanfactor,
+      :ecanusucreacion,
+      :ecanfecmodificacion,
+      :ecanusumodificacion,
+      :ecanfeccreacion,
+      :areacode
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eq_equicanal
+      set
+      canalcodi = :canalcodi,
+      equicodi = :equicodi,
+      tipoinfocodi = :tipoinfocodi,
+      ecanestado = :ecanestado,
+      ecanfactor = :ecanfactor,
+      ecanusucreacion = :ecanusucreacion,
+      ecanfecmodificacion = :ecanfecmodificacion,
+      ecanusumodificacion = :ecanusumodificacion,
+      ecanfeccreacion = :ecanfeccreacion,
+      areacode = :areacode
+      where
+      ecancodi = :ecancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from eq_equicanal
+      where
+      canalcodi = :canalcodi
+      and equicodi = :equicodi
+      and tipoinfocodi = :tipoinfocodi
+      and areacode = :areacode
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update AUD_EQ_EQUICANAL
+			set
+			USERAUDITORIA = :ecanusumodificacion
+			where
+			canalcodi = :canalcodi
+			and equicodi = :equicodi
+			and tipoinfocodi = :tipoinfocodi
+			and areacode = :areacode
+			and ACTIONAUDITORIA = 'DELETE'
+		</query>
+	</Sql>
+	
+
+	<Sql>
+    <key>GetById</key>
+    <query>
+      select
+      eqcanal.*,
+      emp.emprcodi,emp.emprnomb,eq.equipadre,eqp.equinomb as central, coalesce(eq.equinomb, eq.equiabrev) as equinomb, eq.famcodi, fam.famnomb, fam.famabrev,
+      canal.CANALNOMB, canal.canaliccp, canal.canalunidad, canal.canalpointtype, canal.CANALABREV,
+      zona.ZONACODI, zona.ZONANOMB, zona.ZONAABREV ,
+      emp7.emprcodi tremprcodi, emp7.EMPRENOMB tremprnomb,emp7.EMPRABREV trEMPRABREV,
+      info.TIPOINFOABREV
+      from eq_equicanal eqcanal
+      inner join eq_equipo eq on eq.equicodi = eqcanal.equicodi
+      inner join eq_equipo eqp on eqp.EQUICODI = coalesce(eq.EQUIPADRE, -1)
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi
+      left join TR_CANAL_SP7 canal on canal.canalcodi = eqcanal.canalcodi
+      left join TR_ZONA_SP7 zona on zona.ZONACODI = canal.ZONACODI
+      left join TR_EMPRESA_SP7 emp7 on emp7.EMPRCODI = zona.EMPRCODI
+      inner join SI_TIPOINFORMACION info on info.TIPOINFOCODI = eqcanal.TIPOINFOCODI
+      where
+      eqcanal.canalcodi = :canalcodi
+      and eqcanal.equicodi = :equicodi
+      and eqcanal.tipoinfocodi = :tipoinfocodi
+      and eqcanal.areacode = :areacode
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      eq_equicanal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      eq_equicanal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarEquivalencia</key>
+    <query>
+      select
+      eqcanal.*,
+      emp.emprcodi,emp.emprnomb,eq.equipadre,eqp.equinomb as central, eq.equicodi,coalesce(eq.equiabrev, eq.equinomb) as equinomb, eq.famcodi, fam.famnomb, fam.famabrev,
+      info.TIPOINFOABREV, fa.areaabrev,
+      tar.tareaabrev || ' ' || ar.areanomb as areadesc
+      from eq_equicanal eqcanal
+      inner join eq_equipo eq on eq.equicodi = eqcanal.equicodi
+      inner join eq_equipo eqp on eqp.EQUICODI = coalesce(eq.EQUIPADRE, -1)
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi
+      inner join SI_TIPOINFORMACION info on info.TIPOINFOCODI = eqcanal.TIPOINFOCODI
+      inner join fw_area fa on fa.areacode = eqcanal.areacode
+      left join eq_area ar on ar.areacodi = eq.areacodi
+      left join EQ_TIPOAREA tar on tar.TAREACODI = ar.tareacodi
+      where ('-1' = '{0}' or eqcanal.areacode in ({0}))
+      and ('-1' = '{1}' or emp.emprcodi in ({1}))
+      and ('-1' = '{2}' or eq.famcodi in ({2}))
+      and ('-1' = '{3}' or eqcanal.tipoinfocodi in ({3}))
+      order by emp.emprnomb ,fam.famnomb, coalesce(eq.equinomb, eq.equiabrev) ,eqcanal.TIPOINFOCODI
+    </query>
+  </Sql>
+
+</Sqls>

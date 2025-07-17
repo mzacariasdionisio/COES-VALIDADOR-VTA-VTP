@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into pr_cvariables(
+           repcodi,
+           grupocodi,
+           cvc,
+           cvnc,
+           fpmin,
+           fpmed,
+           fpmax,
+           ccomb,
+           pe,
+           eficbtukwh,
+           eficterm,
+           escecodi,
+           cec_si,
+           rend_si
+       )
+       values(
+           :repcodi,
+           :grupocodi,
+           :cvc,
+           :cvnc,
+           :fpmin,
+           :fpmed,
+           :fpmax,
+           :ccomb,
+           :pe,
+           :eficbtukwh,
+           :eficterm,
+           :escecodi,
+           :cec_si,
+           :rend_si
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update pr_cvariables
+       set
+           grupocodi = :grupocodi,
+           cvc = :cvc,
+           cvnc = :cvnc,
+           fpmin = :fpmin,
+           fpmed = :fpmed,
+           fpmax = :fpmax,
+           ccomb = :ccomb,
+           pe = :pe,
+           eficbtukwh = :eficbtukwh,
+           eficterm = :eficterm,
+           escecodi = :escecodi,
+           cec_si = :cec_si,
+           rend_si = :rend_si
+       where
+       repcodi = :repcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from pr_cvariables
+       where repcodi = :repcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           *
+       from
+           pr_cvariables
+           where repcodi = :repcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      pr_cvariables
+      where repcodi = :repcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           repcodi,
+           *
+       from
+           pr_cvariables
+           order by repcodi desc
+    </query>
+  </Sql>
+  <Sql>
+    <key>CostosVariablesPorRepCV</key>
+    <query>
+		SELECT emp.emprcodi, emp.emprnomb, gr.grupocodi, GR.GRUPOTIPO, GR.GRUPONOMB, GR.GRUPOABREV, ES.ESCENOMB, CV.PE, CV.EFICBTUKWH, CV.EFICTERM , CV.CCOMB, CV.CVC, CV.CVNC, CV.FPMAX, CV.FPMED, CV.FPMIN, CV.CEC_SI, CV.REND_SI
+		, CVARTRAMO1, CVARCINCREM1, CVARTRAMO2, CVARCINCREM2, CVARTRAMO3, CVARCINCREM3
+		, GR.TIPOGENERRER, GR.GRUPOTIPOCOGEN
+		, CVARPE1, CVARPE2, CVARPE3, CVARPE4
+		, fenergnomb
+		FROM PR_CVARIABLES CV
+		inner join PR_GRUPO GR on  CV.GRUPOCODI = GR.GRUPOCODI
+		inner join PR_ESCENARIO ES on CV.ESCECODI = ES.ESCECODI
+		inner join si_fuenteenergia FE on GR.fenergcodi = FE.fenergcodi
+		left join si_empresa emp on emp.emprcodi =  (case when coalesce(CV.EMPRCODI, -1) > 0 then CV.EMPRCODI else GR.emprcodi end)
+		WHERE REPCODI = {0}
+		ORDER BY ES.ESCECODI, GR.GRUPONOMB
+	</query>
+  </Sql>
+  
+  <Sql>
+    <key>ObtenerCVariablePorRepcodiYCatecodi</key>
+    <query>
+      SELECT PR.OSINERGCODI,
+      PR.GRUPONOMB,
+      PR.FENERGCODI,
+      F.FENERGNOMB,
+      F.OSINERGCODI OSINERGCODIFE,
+      pr.repfecha,
+      PCV.*,
+      PCV.CVNC + PCV.CVC AS CV,
+      pr.REPTIPO
+      FROM   PR_CVARIABLES PCV
+      inner join  pr_repcv pr  on PCV.repcodi=pr.repcodi
+      INNER JOIN PR_GRUPO PR ON PR.GRUPOCODI = PCV.GRUPOCODI
+      INNER JOIN SI_FUENTEENERGIA  F ON F.FENERGCODI=PR.FENERGCODI
+      WHERE  PR.GRUPOCODI > 0
+      AND PCV.REPCODI in ({0})
+      AND (PR.CATECODI = {1} OR '-1'='{1}')
+      AND (F.FENERGCODI = {2} OR '-1'='{2}')
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>EliminarCostosVariablesPorRepCv</key>
+    <query>
+      DELETE FROM PR_CVARIABLES WHERE REPCODI={0}
+    </query>
+  </Sql>
+
+  <!--INICIO MonitoreoMME-->
+
+  <Sql>
+    <key>ListCostoVariablesxRangoFecha</key>
+    <query>
+      select  distinct se.emprcodi,se.emprnomb,(pc.cvc+pc.cvnc) Cvc_1 ,  pc.*,pr.repfecha, pg.gruponomb  
+      from pr_cvariables pc
+      inner join  pr_repcv pr  on pc.repcodi=pr.repcodi
+      inner join  pr_grupo pg on pg.grupocodi=pc.grupocodi
+      inner join  si_empresa se on se.emprcodi=(case when coalesce(pc.EMPRCODI, -1) > 0 then pc.EMPRCODI else pg.emprcodi end)
+      where
+      pr.repfecha between to_date('{0}','DD-MM-YY') and to_date('{1}','DD-MM-YY')
+      order by emprnomb
+    </query>
+  </Sql>
+
+  <!--FIN MonitoreoMME-->
+</Sqls>

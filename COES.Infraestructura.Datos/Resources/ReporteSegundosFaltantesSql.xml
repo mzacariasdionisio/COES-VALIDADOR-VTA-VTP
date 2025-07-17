@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+  <Sql>
+    <key>GetReporteSegundosFaltantes</key>
+    <query>
+      select FECHAHORA, GPSCODI, COUNT(*) as num from(
+      select *
+      from
+      (
+      (
+      SELECT
+      to_char(lectura.FECHAHORA, 'DD/MM/YYYY') AS FECHAHORA,
+      lectura.GPSCODI as gpscodi,
+      NVL(H0,0) AS H0,
+      NVL(H1,0) AS H1,
+      NVL(H2,0) AS H2,
+      NVL(H3,0) AS H3,
+      NVL(H4,0) AS H4,
+      NVL(H5,0) AS H5,
+      NVL(H6,0) AS H6,
+      NVL(H7,0) AS H7,
+      NVL(H8,0) AS H8,
+      NVL(H9,0) AS H9,
+      NVL(H10,0) AS H10,
+      NVL(H11,0) AS H11,
+      NVL(H12,0) AS H12,
+      NVL(H13,0) AS H13,
+      NVL(H14,0) AS H14,
+      NVL(H15,0) AS H15,
+      NVL(H16,0) AS H16,
+      NVL(H17,0) AS H17,
+      NVL(H18,0) AS H18,
+      NVL(H19,0) AS H19,
+      NVL(H20,0) AS H20,
+      NVL(H21,0) AS H21,
+      NVL(H22,0) AS H22,
+      NVL(H23,0) AS H23,
+      NVL(H24,0) AS H24,
+      NVL(H25,0) AS H25,
+      NVL(H26,0) AS H26,
+      NVL(H27,0) AS H27,
+      NVL(H28,0) AS H28,
+      NVL(H29,0) AS H29,
+      NVL(H30,0) AS H30,
+      NVL(H31,0) AS H31,
+      NVL(H32,0) AS H32,
+      NVL(H33,0) AS H33,
+      NVL(H34,0) AS H34,
+      NVL(H35,0) AS H35,
+      NVL(H36,0) AS H36,
+      NVL(H37,0) AS H37,
+      NVL(H38,0) AS H38,
+      NVL(H39,0) AS H39,
+      NVL(H40,0) AS H40,
+      NVL(H41,0) AS H41,
+      NVL(H42,0) AS H42,
+      NVL(H43,0) AS H43,
+      NVL(H44,0) AS H44,
+      NVL(H45,0) AS H45,
+      NVL(H46,0) AS H46,
+      NVL(H47,0) AS H47,
+      NVL(H48,0) AS H48,
+      NVL(H49,0) AS H49,
+      NVL(H50,0) AS H50,
+      NVL(H51,0) AS H51,
+      NVL(H52,0) AS H52,
+      NVL(H53,0) AS H53,
+      NVL(H54,0) AS H54,
+      NVL(H55,0) AS H55,
+      NVL(H56,0) AS H56,
+      NVL(H57,0) AS H57,
+      NVL(H58,0) AS H58,
+      NVL(H59,0) AS H59
+      FROM sic.F_LECTURA lectura
+      left join sic.ME_GPS gps
+      on gps.gpscodi=lectura.gpscodi
+      WHERE
+      lectura.FECHAHORA BETWEEN to_date('{0} 00:00:00', 'DD/MM/YYYY HH24:MI:SS')
+      AND to_date('{1} 23:59:59', 'DD/MM/YYYY HH24:MI:SS')
+      AND ({2} = 0 or lectura.GPSCODI={2})
+      and (nvl('{3}','X')='X' or gps.GPSOFICIAL='{3}')
+      ORDER BY lectura.FECHAHORA
+      )
+      unpivot
+      (
+      value
+      for COLUMN_H in
+      (H0,H1,H2,H3,H4,H5,H6,H7,H8,H9,H10,
+      H11,H12,H13,H14, h15,H16,H17,H18,H19,H20,
+      H21,H22,H23,H24,H25,H26,H27,H28,H29,H30,
+      H31,H32,H33,H34,H35,H36,H37,H38,H39,H40,
+      H41,H42,H43,H44,H45,H46,H47,H48,H49,H50,
+      H51,H52,H53,H54,H55,H56,H57,H58,H59)
+      ))
+      ) A where NVL(a.value,0)= 0 GROUP BY FECHAHORA, GPSCODI
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetReporteTotalSegundosFaltantes</key>
+    <query>
+      select sum(nvl(l.NUM,0)) NUM, to_char(l.fechahora,'DD/MM/YYYY') as FECHAHORA,
+      l.GPSCODI GPSCODI from sic.me_gps gps left join sic.f_lectura l on
+      l.GPSCODI=gps.gpscodi where
+      l.FECHAHORA BETWEEN to_date('{0} 00:00:00', 'DD/MM/YYYY HH24:MI:SS')
+      AND to_date('{1} 23:59:59', 'DD/MM/YYYY HH24:MI:SS')
+      AND ({2} = 0 or gps.GPSCODI={2})
+      and (nvl('{3}','X')='X' or gps.GPSOFICIAL='{3}')
+      group by to_char(l.fechahora,'DD/MM/YYYY'), l.GPSCODI
+    </query>
+  </Sql>
+
+
+</Sqls>

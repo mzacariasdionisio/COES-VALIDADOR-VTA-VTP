@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(audicodi), 0) + 1 from aud_auditoria
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into aud_auditoria(
+      audicodi,
+      tabcdestadocodi,
+      audinombre,
+      audiobjetivo,
+      audifechainicio,
+      audifechafin,
+      audiactivo,
+      audihistorico,
+      audiusucreacion,
+      audifeccreacion,
+      audiusumodificacion,
+      audifecmodificacion,
+      audicodigo,
+      audialcance
+      )
+      values(
+      :audicodi,
+      :tabcdestadocodi,
+      :audinombre,
+      :audiobjetivo,
+      :audifechainicio,
+      :audifechafin,
+      :audiactivo,
+      :audihistorico,
+      :audiusucreacion,
+      :audifeccreacion,
+      :audiusumodificacion,
+      :audifecmodificacion,
+      :audicodigo,
+      :audialcance
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update aud_auditoria
+      set
+      tabcdestadocodi = :tabcdestadocodi,
+      audinombre = :audinombre,
+      audiobjetivo = :audiobjetivo,
+      audifechainicio = :audifechainicio,
+      audifechafin = :audifechafin,
+      audiusumodificacion = :audiusumodificacion,
+      audifecmodificacion = :audifecmodificacion,
+      audialcance = :audialcance
+      where
+      audicodi = :audicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update aud_auditoria
+      set audiactivo = '0', audihistorico = '1',
+      audiusumodificacion = :audiusumodificacion,
+      audifecmodificacion = :audifecmodificacion
+      where
+      audicodi = :audicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select distinct
+      a.audicodi,
+      a.tabcdestadocodi,
+      a.audicodigo,
+      a.audinombre,
+      a.audiobjetivo,
+      a.audifechainicio,
+      a.audifechafin,
+      a.audiactivo,
+      a.audihistorico,
+      a.audiusucreacion,
+      a.audifeccreacion,
+      a.audiusumodificacion,
+      a.audifecmodificacion,
+      tmp.audipsplanificado,
+      aap.audppcodi,
+      nvl(p.AREACODI, pp.AREACODI) AREACODI,
+      nvl(ap.AUDPCODI, tmp.audpcodi) AUDPCODI,
+      nvl(ap.PLANCODI, tmp.plancodi) PLANCODI,
+      a.audialcance,
+      ar.areaabrev
+      from
+      aud_auditoria a
+      left join aud_auditoriaproceso aap on a.audicodi = aap.audicodi and aap.AUDIPACTIVO = '1'
+      left join AUD_AUDPLANIFICADA_PROCESO app on app.AUDPPCODI = aap.AUDPPCODI and app.AUDPPACTIVO = '1'
+      left join AUD_AUDITORIAPLANIFICADA aup on aup.AUDPCODI = app.AUDPCODI and aup.AUDPDACTIVO = '1'
+      left join AUD_PLANAUDITORIA pau on pau.PLANCODI = aup.PLANCODI and pau.PLANACTIVO = '1'
+      left join AUD_AUDITORIAPLANIFICADA ap on ap.AUDPCODI = app.AUDPCODI and ap.AUDPDACTIVO = '1'
+      left join AUD_PROCESO p on  p.proccodi =  app.proccodi and p.PROCACTIVO = '1'
+      left join AUD_PROCESO pp on  aap.proccodi =  pp.proccodi and pp.PROCACTIVO = '1'
+      left join (select app.audpcodi, ap.plancodi, aap.audicodi, aap.audipsplanificado, aap.AUDIPACTIVO from aud_auditoriaproceso aap
+      left join AUD_AUDPLANIFICADA_PROCESO app on app.AUDPPCODI = aap.AUDPPCODI and app.AUDPPACTIVO = '1'
+      left join AUD_AUDITORIAPLANIFICADA ap on ap.AUDPCODI = app.AUDPCODI and ap.AUDPDACTIVO = '1'
+      where aap.audipsplanificado = 1) tmp on tmp.audicodi = a.audicodi and tmp.AUDIPACTIVO = '1'
+      left join si_area ar on ar.areacodi = nvl(p.AREACODI, pp.AREACODI)
+      where
+      a.audicodi = :audicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      audicodi,
+      tabcdestadocodi,
+      audicodigo,
+      audinombre,
+      audiobjetivo,
+      audifechainicio,
+      audifechafin,
+      audiactivo,
+      audihistorico,
+      audiusucreacion,
+      audifeccreacion,
+      audiusumodificacion,
+      audifecmodificacion
+      from
+      aud_auditoria
+      where audiactivo = '1'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from (
+      select
+      audicodi,
+      tabcdestadocodi,
+      audicodigo,
+      audinombre,
+      audiobjetivo,
+      audifechainicio,
+      audifechafin,
+      audiactivo,
+      audihistorico,
+      audiusucreacion,
+      audifeccreacion,
+      audiusumodificacion,
+      audifecmodificacion,
+      estadoDescripcion,
+      (row_number() over (order by audicodi desc)) as r from (select distinct
+      a.audicodi,
+      a.tabcdestadocodi,
+      a.audicodigo,
+      a.audinombre,
+      a.audiobjetivo,
+      a.audifechainicio,
+      a.audifechafin,
+      a.audiactivo,
+      a.audihistorico,
+      a.audiusucreacion,
+      a.audifeccreacion,
+      a.audiusumodificacion,
+      a.audifecmodificacion,
+      tmp.audipsplanificado audipsplanificado,
+      0 AREACODI,
+      nvl(ap.AUDPCODI, tmp.audpcodi) AUDPCODI,
+      nvl(ap.PLANCODI, tmp.plancodi) PLANCODI,
+      a.audialcance,
+      d.tabcddescripcion estadoDescripcion
+      from
+      aud_auditoria a
+      left join aud_auditoriaproceso aap on a.audicodi = aap.audicodi and aap.AUDIPACTIVO = '1'
+      left join AUD_AUDPLANIFICADA_PROCESO app on app.AUDPPCODI = aap.AUDPPCODI and app.AUDPPACTIVO = '1'
+      left join AUD_AUDITORIAPLANIFICADA aup on aup.AUDPCODI = app.AUDPCODI and aup.AUDPDACTIVO = '1'
+      left join AUD_PLANAUDITORIA pau on pau.PLANCODI = aup.PLANCODI and pau.PLANACTIVO = '1'
+      left join AUD_AUDITORIAPLANIFICADA ap on ap.AUDPCODI = app.AUDPCODI and ap.AUDPDACTIVO = '1'
+      left join AUD_PROCESO p on  p.proccodi =  app.proccodi and p.PROCACTIVO = '1'
+      left join AUD_PROCESO pp on  aap.proccodi =  pp.proccodi and pp.PROCACTIVO = '1'
+      left join (select app.audpcodi, ap.plancodi, aap.audicodi, aap.audipsplanificado from aud_auditoriaproceso aap
+      left join AUD_AUDPLANIFICADA_PROCESO app on app.AUDPPCODI = aap.AUDPPCODI and app.AUDPPACTIVO = '1'
+      left join AUD_AUDITORIAPLANIFICADA ap on ap.AUDPCODI = app.AUDPCODI and ap.AUDPDACTIVO = '1'
+      where aap.audipsplanificado = 1 and aap.AUDIPACTIVO = '1') tmp on tmp.audicodi = a.audicodi
+      left join aud_tablacodigo_detalle d on d.tabcdcodi = a.tabcdestadocodi
+
+      where
+      a.audiactivo = '1' and
+      (a.tabcdestadocodi= {0} or {0} = 0) and
+      (pau.PLANANOVIGENCIA = {1} or {1} = 0) and
+      (a.audinombre like '%{2}%' or '{2}' = '')))
+      where (r >= ((({3}-1) * {4}) + 1) and r &lt; (({3} * {4}) + 1 )) or ({3} = -1 and {4} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNroRegistroBusqueda</key>
+    <query>
+      select
+      count(distinct a.audicodi) as contador
+      from
+      aud_auditoria a
+      left join aud_auditoriaproceso aap on a.audicodi = aap.audicodi and aap.AUDIPACTIVO = '1'
+      left join AUD_AUDPLANIFICADA_PROCESO app on aap.AUDPPCODI = app.AUDPPCODI and app.AUDPPACTIVO = '1'
+      left join AUD_AUDITORIAPLANIFICADA ap on app.AUDPCODI = ap.AUDPCODI and ap.AUDPDACTIVO = '1'
+      left join AUD_PLANAUDITORIA p on ap.PLANCODI = p.PLANCODI and p.PLANACTIVO = '1'
+      where
+      (a.audiactivo = '{0}' or '{0}' = '-1') and
+      (p.PLANANOVIGENCIA = {1} or {1} = 0) and
+      (a.audinombre like '%{2}%' or '{2}' = '')
+      order by a.audicodi desc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>MostrarAnios</key>
+    <query>
+      select distinct(extract(year from audifechainicio)) anio
+      from aud_auditoria
+        where audiactivo = 1
+        order by anio asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>MostrarAuditoriasEjecutar</key>
+    <query>
+      select
+      a.audicodi,
+      a.tabcdestadocodi,
+      a.audicodigo,
+      a.audinombre,
+      a.audiobjetivo,
+      a.audifechainicio,
+      a.audifechafin,
+      a.audiactivo,
+      a.audihistorico,
+      a.audiusucreacion,
+      a.audifeccreacion,
+      a.audiusumodificacion,
+      a.audifecmodificacion,
+      (select tabcddescripcion from aud_tablacodigo_detalle where tabcdcodi = a.tabcdestadocodi) estadoDescripcion
+      from aud_auditoria a
+      where (a.tabcdestadocodi = '{0}' or '{0}' = '0')
+      and ('{1}' = '0' or extract(year from a.audifechainicio) = '{1}')
+      and (upper(a.audinombre) like upper('%{2}%') or '{2}' = '')
+      and a.audiactivo = '1'
+      order by a.audicodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>VerResultados</key>
+    <query>
+      select
+      p.procdescripcion,
+      td.tabcddescripcion,
+      td.tabcdcodi,
+      h.progahdescripcion,
+      e.elemdescripcion,
+      e.elemcodigo,
+      h.PROGAHACCIONMEJORA
+      from sic.aud_auditoria a
+      inner join sic.aud_programaauditoria pa on a.audicodi = pa.audicodi
+      inner join sic.aud_progaudi_elemento pe on pa.progacodi = pe.progacodi
+      inner join sic.aud_progaudi_hallazgos h on pe.progaecodi = h.progaecodi
+      inner join sic.aud_elemento e on e.elemcodi = pe.elemcodi
+      inner join sic.aud_proceso p on e.proccodi = p.proccodi
+      inner join sic.aud_tablacodigo_detalle td on td.tabcdcodi = h.tabcdcoditipohallazgo
+      where a.audiactivo = '1' and h.TABCDCODITIPOHALLAZGO != 44
+      and a.audicodi = {0}
+    </query>
+  </Sql>  
+
+  <Sql>
+    <key>ObtenerNroRegistroBusquedaResultados</key>
+    <query>
+      select
+      count(distinct a.audicodi) as contador
+      from sic.aud_auditoria a
+      inner join sic.aud_programaauditoria pa on a.audicodi = pa.audicodi
+      inner join sic.aud_progaudi_elemento pe on pa.progacodi = pe.progacodi
+      inner join sic.aud_progaudi_hallazgos h on pe.progaecodi = h.progaecodi
+      inner join sic.aud_elemento e on e.elemcodi = pe.elemcodi
+      inner join sic.aud_proceso p on e.proccodi = p.proccodi
+      inner join sic.aud_tablacodigo_detalle td on td.tabcdcodi = h.tabcdcoditipohallazgo
+      where a.audiactivo = '1' and h.TABCDCODITIPOHALLAZGO != 44
+      and a.audicodi = {0}
+    </query>
+  </Sql>
+
+</Sqls>

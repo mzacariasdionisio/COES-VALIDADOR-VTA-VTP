@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(vcrofecodi), 0) + 1 from vcr_oferta
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vcr_oferta(
+      vcrofecodi,
+      vcrecacodi,
+      emprcodi,
+      usercode,
+      vcrofecodigoenv,
+      vcrofefecha,
+      vcrofehorinicio,
+      vcrofehorfinal,
+      grupocodi,
+      gruponomb,
+      vcrofemodoperacion,
+      vcrofepotofertada,
+      vcrofeprecio,
+      vcrofeusucreacion,
+      vcrofefeccreacion,
+      vcrofetipocarga
+      )
+      values(
+      :vcrofecodi,
+      :vcrecacodi,
+      :emprcodi,
+      :usercode,
+      :vcrofecodigoenv,
+      :vcrofefecha,
+      :vcrofehorinicio,
+      :vcrofehorfinal,
+      :grupocodi,
+      :gruponomb,
+      :vcrofemodoperacion,
+      :vcrofepotofertada,
+      :vcrofeprecio,
+      :vcrofeusucreacion,
+      :vcrofefeccreacion,
+      :vcrofetipocarga
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vcr_oferta
+      set
+      vcrecacodi = :vcrecacodi,
+      emprcodi = :emprcodi,
+      usercode = :usercode,
+      vcrofecodigoenv = :vcrofecodigoenv,
+      vcrofefecha = :vcrofefecha,
+      vcrofehorinicio = :vcrofehorinicio,
+      vcrofehorfinal = :vcrofehorfinal,
+      grupocodi = :grupocodi,
+      gruponomb = :gruponomb,
+      vcrofemodoperacion = :vcrofemodoperacion,
+      vcrofepotofertada = :vcrofepotofertada,
+      vcrofeprecio = :vcrofeprecio,
+      vcrofeusucreacion = :vcrofeusucreacion,
+      vcrofefeccreacion = :vcrofefeccreacion,
+      vcrofetipocarga = :vcrofetipocarga
+      where
+      vcrofecodi = :vcrofecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vcr_oferta where vcrecacodi = :vcrecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select * from vcr_oferta
+       where vcrofecodi = :vcrofecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select * from vcr_oferta
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select * from vcr_oferta
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdMaxDia</key>
+    <query>
+      select * from vcr_oferta
+      where vcrecacodi = :vcrecacodi and vcrofefecha = :vcrofefecha
+      order by vcrofeprecio desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdMaxDiaGrupoCodi</key>
+    <query>
+      select * from vcr_oferta
+      where vcrecacodi = :vcrecacodi and grupocodi = :grupocodi and vcrofefecha = :vcrofefecha
+      order by vcrofeprecio desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdMaxDiaUrs</key>
+    <query>
+      select oft.* from vcr_oferta oft
+      where oft.vcrecacodi = :vcrecacodi and oft.vcrofefecha = :vcrofefecha
+      and oft.grupocodi in (select ra.grupocodi from vcr_reservasign ra
+      where ra.vcrecacodi = oft.vcrecacodi and ra.vcrasgfecha = oft.vcrofefecha
+      and ra.grupocodi not in (select pb.grupocodi from vcr_provisionbase pb
+      where oft.vcrofefecha between vcrpbperiodoini and vcrpbperiodofin
+      and ra.VCRASGRESERVASIGN &lt;= nvl(pb.VCRPBPOTENCIABF,0))
+      )
+      order by oft.vcrofeprecio desc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByIdMaxMes</key>
+    <query>
+      select * from vcr_oferta
+      where vcrecacodi = :vcrecacodi and to_char(vcrofefecha, 'YYYYMM') = to_char(:vcrofefecha, 'YYYYMM')
+      order by vcrofeprecio desc
+    </query>
+  </Sql>
+  <!--SENTENCIAS PARA LA TABLA FW_USER-->
+  <Sql>
+    <key>GetByFwUserByNombre</key>
+    <query>
+      select usercode, username from fw_user
+      where trim(username) = trim(:username)
+    </query>
+  </Sql>
+
+  <!--ASSETEC 20190115-->
+  <Sql>
+    <key>ListSinDuplicados</key>
+    <query>
+      <!--select  grupocodi, gruponomb, vcrofefecha, emprcodi, usercode, vcrofecodigoenv,vcrofehorinicio, vcrofehorfinal, vcrofetipocarga
+      from vcr_oferta where vcrecacodi = :vcrecacodi
+      group by  grupocodi, gruponomb, vcrofefecha, emprcodi, usercode, vcrofecodigoenv, vcrofehorinicio, vcrofehorfinal, vcrofetipocarga
+      order by grupocodi, vcrofefecha, vcrofecodigoenv, vcrofetipocarga desc-->
+      select  vcrofetipocarga, grupocodi, gruponomb, vcrofefecha, emprcodi, usercode, vcrofecodigoenv,vcrofehorinicio, vcrofehorfinal
+      from vcr_oferta where vcrecacodi = :vcrecacodi
+      group by  vcrofetipocarga, grupocodi, gruponomb, vcrofefecha, emprcodi, usercode, vcrofecodigoenv, vcrofehorinicio, vcrofehorfinal
+      order by vcrofetipocarga, grupocodi, vcrofefecha, vcrofecodigoenv desc
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByCriteriaVcrOferta</key>
+    <query>
+      select * from vcr_oferta
+      where vcrecacodi = :vcrecacodi and grupocodi = :grupocodi and vcrofefecha = :vcrofefecha and vcrofecodigoenv = :vcrofecodigoenv and vcrofehorinicio = :vcrofehorinicio and vcrofetipocarga = :vcrofetipocarga
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetOfertaMaxDiaGrupoCodiHiHf</key>
+    <query>
+		select nvl(max(vcrofeprecio), 0) as vcrofeprecio from vcr_oferta
+		where vcrecacodi = :vcrecacodi and grupocodi = :grupocodi and vcrofefecha = :vcrofefecha and vcrofetipocarga = :vcrofetipocarga and
+		(:vcrofehorinicio between vcrofehorinicio and vcrofehorfinal) and
+		(:vcrofehorfinal between vcrofehorinicio and vcrofehorfinal)
+	</query>
+  </Sql>
+    <Sql>
+	    <key>GetOfertaMaxDiaGrupoCodiHiHf2020</key>
+	    <query>
+		    select nvl(max(vcrofeprecio), 0) as vcrofeprecio from vcr_oferta
+		    where vcrecacodi = :vcrecacodi and grupocodi = :grupocodi and vcrofefecha = :vcrofefecha and vcrofetipocarga = :vcrofetipocarga and
+		    (    (:vcrofehorinicio &gt;= vcrofehorinicio and :vcrofehorinicio &lt;= vcrofehorfinal)
+		    or (:vcrofehorfinal &gt;= vcrofehorinicio and :vcrofehorfinal &lt;= vcrofehorfinal)
+		    or (:vcrofehorinicio &lt;= vcrofehorinicio and :vcrofehorfinal &gt;= vcrofehorfinal)
+		    )
+	    </query>
+    </Sql>
+</Sqls>

@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(garacodi), 0) + 1 from gmm_garantia
+    </query>
+  </Sql>
+  <Sql>
+    <key>Save</key>
+    <query>
+      INSERT INTO gmm_garantia (
+      garacodi,
+      garafecinicio,
+      garafecfin,
+      garamontogarantia,
+      garaarchivo,
+      garaestado,
+      garausucreacion,
+      garafeccreacion,
+      garausumodificacion,
+      garafecmodificacion,
+      tcercodi,
+      tmodcodi,
+      empgcodi
+      ) VALUES (
+      :garacodi,
+      to_date(:garafecinicio,'yyyy-mm-dd'),
+      to_date(:garafecfin,'yyyy-mm-dd'),
+      :garamontogarantia,
+      :garaarchivo,
+      :garaestado,
+      :garausucreacion,
+      sysdate, -- fecha actua l
+      null, -- :garausumodificacion,
+      null, -- :garafecmodificacion,
+      :tcercodi,
+      :tmodcodi,
+      :empgcodi
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>Update</key>
+    <query>
+      UPDATE gmm_garantia
+      SET
+      garafecinicio =   to_date(:garafecinicio,'yyyy-mm-dd'),
+      garafecfin = to_date(:garafecfin,'yyyy-mm-dd'),
+      garamontogarantia = :garamontogarantia,
+      garaarchivo = :garaarchivo,
+      tcercodi = :tcercodi,
+      tmodcodi = :tmodcodi,
+      garaestado =  :garaestado,
+      garausumodificacion =:garausumodificacion,
+      garafecmodificacion = sysdate
+      WHERE
+      garacodi =:garacodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+      UPDATE gmm_garantia
+      SET
+        garaestado = '0',
+        garausumodificacion =:garausumodificacion,
+        garafecmodificacion = sysdate
+      WHERE
+      garacodi =:garacodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByEmpgcodi</key>
+    <query>
+      select * from gmm_garantia where empgcodi = {0} and garaestado='1'
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListadoProcesamiento</key>
+    <query>
+      select
+      pericodi,
+      perimsjpaso1 as mensaje1,
+      perimsjpaso2 as mensaje2,
+      perimsjpaso3 as mensaje3,
+      (select DCALVALOR from gmm_datcalculo where PERICODI = per.PERICODI
+      and TINSCODI = 'TCAMBIO') as TCAMBIO,
+      (select DCALVALOR from gmm_datcalculo where PERICODI = per.PERICODI
+      and TINSCODI = 'SSCC') as SSCC,
+      (select DCALVALOR from gmm_datcalculo where PERICODI = per.PERICODI
+      and TINSCODI = 'MRESERVA') as MRESERVA,
+      (select DCALVALOR from gmm_datcalculo where PERICODI = per.PERICODI
+      and TINSCODI = 'TINFLEX') as TINFLEX,
+      (select DCALVALOR from gmm_datcalculo where PERICODI = per.PERICODI
+      and TINSCODI = 'TEXCESO') as TEXCESO
+      from gmm_periodo per
+      where perianio = {0} AND perimes = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListadoProcesamientoParticipante</key>
+    <query>
+      select
+      per.pericodi,
+      ge.empgcodi,
+      se.emprcodi,
+      se.emprnomb AS EMPRESA,
+      per.perimsjpaso1 as mensaje1,
+      per.perimsjpaso2 as mensaje2,
+      per.perimsjpaso3 as mensaje3,
+      dat1.DCALVALOR as TCAMBIO,
+      dat2.DCALVALOR AS SSCC,
+      dat3.DCALVALOR as MRESERVA,
+      dat4.DCALVALOR as TINFLEX,
+      dat5.DCALVALOR as TEXCESO
+      from gmm_periodo per
+      LEFT JOIN gmm_datcalculo dat1 ON (dat1.PERICODI = per.PERICODI  and dat1.TINSCODI = 'TCAMBIO'  and dat1.DATCALESTADO = '1')
+      LEFT JOIN gmm_datcalculo dat2 ON (dat2.PERICODI = per.PERICODI   and dat2.TINSCODI = 'SSCC' and dat2.DATCALESTADO ='1')
+      LEFT JOIN gmm_datcalculo dat3 ON (dat3.PERICODI = per.PERICODI  and dat3.TINSCODI = 'MRESERVA' and dat3.DATCALESTADO = '1')
+      LEFT JOIN gmm_datcalculo dat4 ON (dat4.PERICODI = per.PERICODI  and dat4.TINSCODI = 'TINFLEX' and dat4.DATCALESTADO='1')
+      LEFT JOIN gmm_datcalculo dat5 ON (dat5.PERICODI = per.PERICODI and dat5.TINSCODI = 'TEXCESO'  and dat5.DATCALESTADO='1')
+      INNER JOIN gmm_empresa ge on (dat2.empgcodi= ge.empgcodi and dat3.empgcodi= ge.empgcodi and dat4.empgcodi= ge.empgcodi and dat5.empgcodi= ge.empgcodi)
+      INNER JOIN SI_EMPRESA se on (ge.emprcodi = se.emprcodi)
+      where perianio = {0} AND perimes = {1}
+    </query>
+  </Sql>
+</Sqls>

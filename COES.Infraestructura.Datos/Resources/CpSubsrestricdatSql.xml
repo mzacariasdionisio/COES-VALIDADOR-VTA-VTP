@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cp_subrestricdat(
+      topcodi,
+      srestcodi,
+      srestdvalor1,
+      srestdvalor2,
+      srestdvalor3,
+      srestdvalor4,
+      srestdactivo,
+      srestdopcion,
+      srestfecha,
+      recurcodi
+      )
+      values(
+      :topcodi,
+      :srestriccodi,
+      :valor1,
+      :valor2,
+      :valor3,
+      :valor4,
+      :activo,
+      :opcion,
+      :srestfecha,
+      :recurcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cp_subrestricdat
+      set
+      srestdvalor1 = :valor1,
+      srestdvalor2 = :valor2,
+      srestdvalor3 = :valor3,
+      srestdvalor4 = :valor4,
+      srestdactivo = :activo,
+      srestdopcion = :opcion,
+      srestfecha = :srestfecha
+      where
+      topcodi = :topcodi and
+      srestcodi = :srestriccodi and
+      recurcodi = :recurcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from cp_subrestricdat
+      where
+      topcodi = :topcodi and
+      srestcodi = :srestriccodi and
+      recurcodi = :recurcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById2</key>
+    <query>
+      select sres.* from cp_subrestricdat sres
+      inner join cp_terminal term on term.termcodi = sres.termcodi and term.topcodi = {0}
+      inner join cp_subrestriccion res on res.srestcodi = sres.srestcodi
+      where
+      sres.topcodi = {0} and
+      res.restriccodi = {1} and
+      term.recurcodi = {2}
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select sres.* from cp_subrestricdat sres
+      where
+      sres.topcodi = {0} and
+      sres.srestcodi = {1} and
+      sres.recurcodi = {2}
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      a.*,
+      r.catcodi,r.recurconsideragams
+      from
+      cp_subrestricdat a
+      inner join cp_recurso r on r.recurcodi = a.recurcodi
+      where a.topcodi = {0} and r.topcodi = {0} and recurestado = 1
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select *
+      from
+      cp_subrestricdat
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListTerminal</key>
+    <query>
+      select rec.RECURCODI RecursoID,term.topcodi,TERM.TERMCODI,{1} SRESTCODI , RECURCODISICOES RecursoIDSicoes,
+      TERMCODISICOES TerminalIDSicoes,RECURNOMBRE RecursoNombre,0 srestdvalor1,0 srestdvalor2,0 srestdvalor3,0 srestdvalor4,0 srestdopcion,0 srestdactivo,sysdate srestfecha
+      from cp_recurso rec
+      inner join cp_terminal term on rec.recurcodi = term.recurcodi
+      where rec.topcodi = {0} and term.topcodi ={0} and term.ttermcodi = {2} and rec.recurestado = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListRecursoEnRestriccion</key>
+    <query>
+      select DISTINCT rec.RECURCODI RecursoID, res.SRESTCODI ,res.srestdvalor1,res.srestdvalor2,res.srestdvalor3,res.srestdvalor4,sysdate srestfecha,
+      res.srestdactivo,res.srestdopcion,RES.topcodi,
+      RECURCODISICOES RecursoIDSicoes, TERMCODISICOES TerminalIDSicoes,RECURNOMBRE RecursoNombre
+      from cp_recurso rec
+      inner join cp_terminal term on rec.recurcodi = term.recurcodi
+      inner join cp_subrestricdat res on term.termcodi = res.termcodi
+      inner join cp_subrestriccion s on s.srestcodi = res.srestcodi
+      where rec.topcodi = {0} and term.topcodi = {0}
+      and res.topcodi = {0} and s.restcodi = {1}
+      and term.ttermcodi = {2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListRecursoEnSubRestriccion</key>
+    <query>
+      select DISTINCT rec.RECURCODI , res.SRESTCODI,res.srestdvalor1,res.srestdvalor2,res.srestdvalor3,res.srestdvalor4,sysdate srestfecha,
+      res.srestdactivo,res.srestdopcion,RES.TOPCODI,
+      RECURCODISICOES RecursoIDSicoes, RECURNOMBRE RecursoNombre,rec.recurconsideragams
+      from cp_recurso rec
+      inner join cp_subrestricdat res on res.recurcodi = rec.recurcodi
+      where rec.topcodi = {0}  and res.topcodi = {0} and res.srestcodi = {1}
+      Order by rec.recurcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListRecursoLeftOutSubRestriccion</key>
+    <query>
+      select DISTINCT rec.RECURCODI,  res.srestcodi,res.srestdvalor1,res.srestdvalor2,res.srestdvalor3,res.srestdvalor4,sysdate srestfecha,
+      res.srestdactivo,res.srestdopcion,REC.TOPCODI,
+      RECURCODISICOES RecursoIDSicoes,RECURNOMBRE RecursoNombre,rec.recurconsideragams
+      from cp_recurso rec
+      left outer join cp_subrestricdat res on rec.recurcodi = res.recurcodi and res.topcodi = {0} and res.srestcodi = {1}
+      where rec.topcodi = {0} and rec.catcodi = {2}  and rec.recurestado = 1
+
+      order by recurcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListadeEquiposEnRestriccion</key>
+    <query>
+      select DISTINCT rec.RECURCODI,SRESTCODI,RES.TOPCODI,RECURCODISICOES RecursoIDSicoes,cp.Catnombre,
+      RECURNOMBRE RecursoNombre,0 srestdvalor1,0 srestdvalor2,0 srestdvalor3,0 srestdvalor4,0 srestdopcion,0 srestdactivo ,sysdate srestfecha,rec.recurconsideragams
+      from cp_recurso rec
+      inner join cp_categoria cp on cp.catcodi = rec.catcodi
+      inner join cp_medicion48 res on rec.recurcodi = res.recurcodi and res.topcodi = {0} and res.srestcodi = {1}
+      where rec.topcodi = {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ObtenerListadeEquiposEnRestriccion01</key>
+    <query>
+      select DISTINCT rec.RECURCODI RecursoID, SRESTCODI,TERM.TERMCODI ,srestdvalor1,srestdvalor2,srestdvalor3,srestdvalor4,srestdactivo,srestdopcion,RES.TOPCODI,sysdate srestfecha,
+      RECURCODISICOES RecursoIDSicoes,RECURNOMBRE RecursoNombre,rec.recurconsideragams
+      from cp_recurso rec
+      inner join cp_terminal term on rec.recurcodi = term.recurcodi
+      inner join cp_subrestricdat res on term.termcodi = res.termcodi and res.topcodi = {0} and res.srestcodi = {1}
+      where rec.topcodi = {0} and term.topcodi = {0} and term.ttermcodi = {2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListadeSubRestriccionCategoria</key>
+    <query>
+      select sres.* from cp_subrestricdat sres
+      inner join cp_recurso rec on rec.recurcodi = sres.recurcodi and  rec.topcodi = {0}
+      where sres.topcodi = {0} and rec.catcodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CopiarDatosEscenario</key>
+    <query>
+      insert into cp_subrestricdat (topcodi, srestcodi, srestdvalor1, srestdvalor2, srestdvalor3, srestdvalor4, srestdactivo, srestdopcion, recurcodi,srestfecha )
+      select  {0}, srestcodi, srestdvalor1, srestdvalor2, srestdvalor3, srestdvalor4, srestdactivo, srestdopcion, recurcodi,srestfecha from  cp_subrestricdat where topcodi = {1} and
+      recurcodi not in {2} and recurcodi in ( select recurcodi from cp_recurso where topcodi = {0} and recurestado = 1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteEscenario</key>
+    <query>
+      delete from cp_subrestricdat
+      where
+      topcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaRestriccionXTipoCategoria</key>
+    <query>
+      select m.* from cp_subrestricdat m
+      inner join cp_recurso r on r.recurcodi = m.recurcodi and r.topcodi = {0}
+      inner join cp_categoria c on c.catcodi = r.catcodi
+      where m.topcodi = {0} and c.cattipo = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearCopia</key>
+    <query>
+      insert into cp_subrestricdat (topcodi, srestcodi, srestdvalor1, srestdvalor2, srestdvalor3, srestdvalor4, srestdactivo, srestdopcion, recurcodi,srestfecha )
+      select  {1}, srestcodi, srestdvalor1, srestdvalor2, srestdvalor3, srestdvalor4, srestdactivo, srestdopcion, s.recurcodi,srestfecha from  cp_subrestricdat s
+      inner join cp_recurso r on r.recurcodi = s.recurcodi and r.topcodi = {0}
+      where s.topcodi = {0} and r.recurorigen = 0
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarDatosRestriccion</key>
+    <query>
+      select * from cp_subrestricdat sdat
+      inner join cp_subrestriccion s on s.srestcodi = sdat.srestcodi
+      where sdat.topcodi = {0} and  s.restriccodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteFecha</key>
+    <query>
+      delete from cp_subrestricdat
+      where
+      topcodi = :topcodi and
+      srestcodi = :srestriccodi and
+      recurcodi = :recurcodi and
+      srestfecha = :srestfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteAllRecurcodi</key>
+    <query>
+      delete from cp_subrestricdat
+      where
+      topcodi = :topcodi and
+      srestcodi = :srestriccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteAllRestriccion</key>
+    <query>
+      delete from cp_subrestricdat
+      where topcodi = {0} and srestcodi in (select srestcodi from cp_subrestriccion where restriccodi = {1})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarDatosSubRestriccion</key>
+    <query>
+      select rec.recurconsideragams,sdat.* from cp_subrestricdat sdat
+      inner join cp_recurso rec on rec.recurcodi = sdat.recurcodi and rec.topcodi = {0}
+      where sdat.topcodi = {0} and  sdat.srestcodi = {1} and rec.recurestado = 1
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListadeSubRestriccionCategoria</key>
+    <query>
+      select sres.* from cp_subrestricdat sres
+      inner join cp_recurso rec on rec.recurcodi = sres.recurcodi and  rec.topcodi = {0}
+      where sres.topcodi = {0} and rec.catcodi = {1}  and rec.recurestado = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListRecursoEnSubRestriccion</key>
+    <query>
+      select DISTINCT rec.RECURCODI , res.SRESTCODI,res.srestdvalor1,res.srestdvalor2,res.srestdvalor3,res.srestdvalor4,sysdate srestfecha,
+      res.srestdactivo,res.srestdopcion,RES.TOPCODI,
+      RECURCODISICOES RecursoIDSicoes, RECURNOMBRE RecursoNombre,rec.recurconsideragams
+      from cp_recurso rec
+      inner join cp_subrestricdat res on res.recurcodi = rec.recurcodi
+      where rec.topcodi = {0}  and res.topcodi = {0} and res.srestcodi = {1}  and rec.recurestado = 1
+      Order by rec.recurcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarDatosSubRestriccion</key>
+    <query>
+      select rec.recurconsideragams,sdat.* from cp_subrestricdat sdat
+      inner join cp_recurso rec on rec.recurcodi = sdat.recurcodi and rec.topcodi = {0}
+      where sdat.topcodi = {0} and  sdat.srestcodi = {1} and rec.recurestado = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearCopia</key>
+    <query>
+      insert into cp_subrestricdat (topcodi, srestcodi, srestdvalor1, srestdvalor2, srestdvalor3, srestdvalor4, srestdactivo, srestdopcion, recurcodi,srestfecha )
+      select  {1}, srestcodi, srestdvalor1, srestdvalor2, srestdvalor3, srestdvalor4, srestdactivo, srestdopcion, s.recurcodi,srestfecha from  cp_subrestricdat s
+      inner join cp_recurso r on r.recurcodi = s.recurcodi and r.topcodi = {0}
+      where s.topcodi = {0} and r.recurorigen = 0
+
+    </query>
+  </Sql>
+  
+</Sqls>

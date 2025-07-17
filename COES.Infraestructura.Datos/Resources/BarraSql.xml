@@ -1,0 +1,395 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+
+  <Sql>
+    <key>GetById</key>
+    <query>select * from trn_barra where barrcodi = :barrcodi</query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_barra
+      (
+      barrcodi, barrnombre, barrtension, barrpuntosuministrorer, barrbarrabgr, barrestado,
+      barrflagbarratransferencia, areacodi, barrbarratransferencia, barrflagdesbalance, barrusername, barrfecins,barrfactorperdida, osinergcodi
+      )
+      values
+      (
+      :barrcodi, :barrnombre, :barrtension, :barrpuntosuministrorer,
+      :barrbarrabgr, :barrestado, :barrflagbarratransferencia, :areacodi, :barrbarratransferencia, :barrflagdesbalance, :barrusername, :barrfecins,:barrfactorperdida, :osinergcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update trn_barra
+      set
+      barrnombre = :barrnombre,
+      barrtension = :barrtension,
+      barrpuntosuministrorer = :barrpuntosuministrorer,
+      barrbarrabgr = :barrbarrabgr,
+      barrestado = :barrestado,
+      barrflagbarratransferencia= :barrflagbarratransferencia,
+      areacodi=:areacodi,
+      barrbarratransferencia= :barrbarratransferencia,
+      barrflagdesbalance = :barrflagdesbalance,
+      barrfecact = :barrfecact,
+      barrfactorperdida = :barrfactorperdida,
+      osinergcodi = :osinergcodi
+      where
+      barrcodi = :barrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_barra where barrcodi = :barrcodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update aud_trn_barra
+			set USERAUDITORIA = :barrusername
+			where
+			barrcodi = :barrcodi
+			and ACTIONAUDITORIA = 'DELETE'
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from trn_barra order by barrnombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListVista</key>
+    <query>
+      select b.*, a.areanomb from trn_barra b left join vw_eq_area a on b.areacodi = a.areacodi order by b.barrnombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaBarraTransferencia</key>
+    <query>
+      select * from trn_barra where barrflagbarratransferencia = 'SI'
+      and barrestado = 'ACT'
+      order by barrbarratransferencia asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaBarraSuministro</key>
+    <query>
+      select * from trn_barra where barrflagbarratransferencia = 'NO'
+      and barrestado = 'ACT'
+      order by barrbarratransferencia asc
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ListaBarrasActivas</key>
+		<query>
+			select * from trn_barra where barrestado = 'ACT' order by barrbarratransferencia asc
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>ListBarrasTransferenciaByReporte</key>
+    <query>
+      select * from trn_barra Where barrbarrabgr = 'SI' order by barrbarratransferencia asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from trn_barra
+      where (barrnombre like '%{0}%' or '-1' = '{0}')
+      and (barrcodi in ({1}) or '-1' = '{1}')
+      order by barrnombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(barrcodi), 0) + 1 from trn_barra
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaInterCodEnt</key>
+    <query>
+      select * from trn_barra where barrcodi in (select barrcodi from trn_codigo_entrega) order by barrbarratransferencia, barrnombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaInterCodInfoBase</key>
+    <query>
+      select * from trn_barra where barrcodi in (select barrcodi from trn_codigo_infobase) order by barrbarratransferencia, barrnombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaInterCoReSo</key>
+    <query>
+      select * from trn_barra where barrcodi in (select barrcodi from trn_codigo_retiro_solicitud) order by barrbarratransferencia, barrnombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaInterCoReSoByEmpr</key>
+    <query>
+      select * from trn_barra where barrcodi in (select barrcodi from trn_codigo_retiro_solicitud where genemprcodi=:genemprcodi and cliemprcodi=:cliemprcodi ) order by barrbarratransferencia, barrnombre asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListaBarraRetirosEmpresa</key>
+    <query>
+      SELECT DISTINCT  BAR.*
+      FROM trn_trans_retiro                  RET
+      INNER JOIN TRN_PERIODO                  PER
+      ON RET.PERICODI=PER.PERICODI
+      INNER JOIN SI_EMPRESA                   EMPR
+      ON RET.CLIEMPRCODI=EMPR.EMPRCODI
+      INNER JOIN TRN_CODIGO_RETIRO_SOLICITUD  SOL
+      ON RET.TRETCODIGO=SOL.CORESOCODIGO
+      INNER JOIN TRN_BARRA                    BAR
+      ON RET.BARRCODI=BAR.BARRCODI
+      WHERE  (RET.GENEMPRCODI =:genemprcodi AND RET.CLIEMPRCODI=:cliemprcodi)
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListaBarraEntregaEmpresa</key>
+    <query>
+      SELECT  DISTINCT  BAR.*
+      FROM trn_trans_entrega       TRT
+      INNER JOIN TRN_BARRA          BAR
+      ON TRT.BARRCODI=BAR.BARRCODI
+      WHERE  (TRT.EMPRCODI=:genemprcodi )
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListaBarraEmpresaValorizados</key>
+    <query>
+      SELECT DISTINCT BAR.*
+      FROM trn_valor_trans VTR
+      INNER JOIN TRN_BARRA BAR
+      ON VTR.BARRCODI=BAR.BARRCODI
+      WHERE VTRANFLAG=:flag
+      AND VTR.EMPRCODI=:genemprcodi
+      AND PERICODI=:pericodi
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListaInterCoReGeByEmpr</key>
+    <query>
+      select * from trn_barra where barrcodi in (select sdt.barrcodisum
+      from trn_codigo_retiro_solicitud rsl
+      inner join vtp_codigo_retiro_sol_det sdt
+      on rsl.coresocodi=sdt.coresocodi
+      where genemprcodi=:genemprcodi and cliemprcodi=:cliemprcodi
+      ) order by barrbarratransferencia, barrnombre asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarTodasLasBarras</key>
+    <query>
+      SELECT DISTINCT BAR.*
+      FROM trn_codigo_retiro_solicitud SOL
+      INNER JOIN vtp_codigo_retiro_sol_det SOLDET
+      ON SOL.coresocodi=SOLDET.coresocodi
+      INNER JOIN TRN_BARRA BAR
+      ON BAR.BARRCODI=SOL.BARRCODI
+      OR BAR.BARRCODI=SOLDET.BARRCODISUM
+      where genemprcodi=:genemprcodi and cliemprcodi=:cliemprcodi
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListaInterCoReSoDt</key>
+    <query>
+      SELECT
+      *
+      FROM TRN_BARRA
+      WHERE BARRCODI IN(SELECT BARRCODISUM
+      FROM VTP_CODIGO_RETIRO_SOL_DET
+      WHERE (BARRCODITRA=:barrcoditra OR :barrcoditra is null))
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarBarrasSuministrosRelacionada</key>
+    <query>
+      SELECT  *
+      FROM VTP_BARRA_RELACION VBR
+      INNER JOIN TRN_BARRA    TNB
+      ON VBR.BARRCODISUM=TNB.BARRCODI
+      WHERE BARRCODITRA=:barrcoditra
+      AND bareestado='ACT'
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListaInterCoReSC</key>
+    <query>
+      select * from trn_barra where barrcodi in (select barrcodi from trn_codigo_retiro_sincontrato) order by barrbarratransferencia, barrnombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaInterValorTrans</key>
+    <query>
+      select * from trn_barra where barrcodi in (select barrcodi from trn_valor_trans) order by barrbarratransferencia, barrnombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByBarra</key>
+    <query>select * from trn_barra where trim(barrnombre) = trim(:barrnombre)</query>
+  </Sql>
+
+  <Sql>
+    <key>ListarBarraReporteDTR</key>
+    <query>
+      select barra as barrcodi, nombre as barrbarratransferencia
+      from dtr_barratrans order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerBarraDTR</key>
+    <query>
+      select barra as barrcodi, nombre as barrbarratransferencia
+      from dtr_barratrans
+      where barra = :barracodi
+    </query>
+  </Sql>
+
+  <!-- Inicio de Agregado - Sistema Compensaciones -->
+  <Sql>
+    <key>ListByBarraCompensacion</key>
+    <query>
+      SELECT BARRCODI,BARRBARRATRANSFERENCIA
+      FROM TRN_BARRA
+      WHERE BARRFLAGBARRACOMPENSA='SI'
+      ORDER BY 2
+    </query>
+  </Sql>
+  <!-- Fin de Agregado - Sistema de Compensaciones -->
+
+  <!--INICIO SIOSEIN-->
+  <Sql>
+    <key>GetListaBarraArea</key>
+    <query>
+      select a.*, b.areanomb from TRN_BARRA a
+      inner join eq_area b ON b.areacodi = a.areacodi
+      where (a.barrcodi IN ({0}) OR '{0}' = '-1') and a.barrestado = 'ACT'
+      and a.barrflagbarratransferencia = 'SI' and a.barrtension is not null
+    </query>
+  </Sql>
+  <!--FIN SIOSEIN-->
+
+  <!--INICIO MonitoreoMME-->
+  <Sql>
+    <key>ListarGrupoBarraEjec</key>
+    <query>
+      select distinct  se.emprcodi, se.emprnomb,gr.grupocodi, gr.gruponomb, gr.grupopadre, ba.barrcodi , ba.barrnombre
+      from trn_codigo_entrega CE
+      inner join eq_equipo eq on eq.equipadre = ce.equicodi or eq.equicodi = ce.equicodi
+      inner join pr_grupo gr on eq.grupocodi= gr.grupocodi
+      inner join si_empresa se on se.emprcodi=gr.emprcodi
+      inner join trn_barra ba on ba.barrcodi = ce.barrcodi
+      where
+      (eq.famcodi = 2 OR eq.famcodi = 3 OR eq.famcodi = 36 OR eq.famcodi = 38)
+      and codentestado='ACT' and ba.barrcodi &lt;>76 and gr.grupocodi>0
+      order by se.emprnomb,gr.grupocodi
+    </query>
+  </Sql>
+  <!--FIN MonitoreoMME-->
+
+  <!--INICIO siosein2-->
+  <Sql>
+    <key>ListaCentralxBarra</key>
+    <query>
+      select distinct se.emprnomb,  se.emprcodi, gr.gruponomb,gr.grupocodi, ba.barrcodi,ba.barrnombre, CM.equicodi
+      from   trn_barra ba
+      inner join
+      (
+      select  distinct  barrcodi,equicodi
+      from trn_codigo_entrega   where codentestado='ACT' and barrcodi &lt;> 76
+      order by 1
+      ) CM
+      on  ba.barrcodi = CM.barrcodi
+      inner join eq_equipo eq on eq.equipadre = CM.equicodi AND eq.equiestado='A' AND eq.famcodi in (2, 3, 36, 38)
+      inner join pr_grupo gr on eq.grupocodi = gr.grupocodi
+      inner join si_empresa se on se.emprcodi = gr.emprcodi
+      where gr.grupocodi > 0
+      order by 1,3,5
+    </query>
+  </Sql>
+  <!--FIN siosein2-->
+
+  <!--INICIO SIOSEIN-PRIE-2021-->
+  <Sql>
+	<key>GetBarraAreaByOsinerming</key>
+	<query>
+		select a.osinergcodi, a.barrcodi, a.barrnombre, a.barrtension, b.areacodi, b.areanomb from TRN_BARRA a
+		inner join eq_area b ON b.areacodi = a.areacodi
+		where (a.osinergcodi='{0}' OR '{0}'='-1') and a.barrestado = 'ACT'
+		and a.barrflagbarratransferencia = 'SI' and a.barrtension is not null
+	</query>
+  </Sql>
+  <!--FIN SIOSEIN-PRIE-2021-->
+  
+  <!--INICIO CU04.ASSETEC.CPPA-2024-->
+  <Sql>
+    <key>FiltroBarrasTransIntegrantes</key>
+    <query>
+      select distinct
+      tab1.barrcodi,
+      tab2.barrbarratransferencia,
+      '[' || tab1.barrcodi || '] ' || tab2.barrbarratransferencia ||
+      CASE
+      WHEN tab2.barrestado = 'INA' THEN ' [' || 'B' || ']'
+      ELSE ''
+      END AS barrnombreconcatenado
+      from
+      cpa_central tab1 join trn_barra tab2
+      on tab1.barrcodi = tab2.barrcodi
+      where tab1.cparcodi = {0}
+      order by
+      tab2.barrbarratransferencia  asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaBarrasTransFormato</key>
+    <query>
+      select
+      barrcodi,
+      '[' || barrcodi || '] ' || barrbarratransferencia ||
+      CASE
+      WHEN barrestado = 'INA' THEN ' [' || 'B' || ']'
+      ELSE ''
+      END AS barrnombreconcatenado
+      from trn_barra where barrflagbarratransferencia = 'SI'
+      and barrestado = 'ACT'
+      order by barrbarratransferencia asc
+    </query>
+  </Sql>
+  <!--FIN CU04.ASSETEC.CPPA-2024-->
+  
+</Sqls>

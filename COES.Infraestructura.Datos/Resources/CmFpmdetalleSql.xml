@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(cmfpmdcodi), 0) + 1 from cm_fpmdetalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cm_fpmdetalle(
+           cmfpmdcodi,
+           cmfpmcodi,
+           barrcodi,
+           cmfpmdbase,
+           cmfpmdmedia,
+           cmfpmdpunta
+       )
+       values(
+           :cmfpmdcodi,
+           :cmfpmcodi,
+           :barrcodi,
+           :cmfpmdbase,
+           :cmfpmdmedia,
+           :cmfpmdpunta
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cm_fpmdetalle
+       set
+           cmfpmcodi = :cmfpmcodi,
+           barrcodi = :barrcodi,
+           cmfpmdbase = :cmfpmdbase,
+           cmfpmdmedia = :cmfpmdmedia,
+           cmfpmdpunta = :cmfpmdpunta
+       where
+           cmfpmdcodi = :cmfpmdcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		delete from cm_fpmdetalle
+		where
+		cmfpmcodi in (select cab.cmfpmcodi from cm_factorperdida cab where cab.cmfpmfecha = to_date('{0}', 'YYYY-MM-DD'))
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           cmfpmdcodi,
+           cmfpmcodi,
+           barrcodi,
+           cmfpmdbase,
+           cmfpmdmedia,
+           cmfpmdpunta
+       from
+           cm_fpmdetalle
+       where
+           cmfpmdcodi = :cmfpmdcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           cmfpmdcodi,
+           cmfpmcodi,
+           barrcodi,
+           cmfpmdbase,
+           cmfpmdmedia,
+           cmfpmdpunta
+       from
+           cm_fpmdetalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		cmfpmdcodi,
+		cmfpmcodi,
+		barrcodi,
+		cmfpmdbase,
+		cmfpmdmedia,
+		cmfpmdpunta
+		from
+		cm_fpmdetalle
+		where
+		cmfpmcodi = {0}
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerPorFecha</key>
+		<query>
+			select
+			dat.cmfpmdcodi,
+			dat.cmfpmcodi,
+			dat.barrcodi,
+			dat.cmfpmdbase,
+			dat.cmfpmdmedia,
+			dat.cmfpmdpunta,
+			maximo.fechamax
+			from
+			cm_fpmdetalle dat
+			inner join cm_factorperdida cab on dat.cmfpmcodi = cab.cmfpmcodi
+			inner join (
+			select max(cm.cmfpmfecha) as fechamax from cm_factorperdida cm
+			inner join cm_fpmdetalle det on cm.cmfpmcodi = det.cmfpmcodi
+			where cm.cmfpmfecha &lt;= to_date('{0}', 'YYYY-MM-DD')
+			--group by cm.cmfpmcodi
+			) maximo
+			on cab.cmfpmfecha = maximo.fechamax
+
+		</query>
+	</Sql>
+	
+</Sqls>

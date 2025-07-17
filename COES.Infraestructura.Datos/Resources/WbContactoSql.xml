@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(contaccodi), 0) + 1 from wb_contacto
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into wb_contacto(
+      contaccodi,
+      contacnombre,
+      contacapellido,
+      contacemail,
+      contaccargo,
+      contacempresa,
+      contactelefono,
+      contacmovil,
+      contaccomentario,
+      contacarea,
+      contacestado,
+      emprcodi,
+      contacfecregistro,
+      contacdoc
+      )
+      values(
+      :contaccodi,
+      :contacnombre,
+      :contacapellido,
+      :contacemail,
+      :contaccargo,
+      :contacempresa,
+      :contactelefono,
+      :contacmovil,
+      :contaccomentario,
+      :contacarea,
+      :contacestado,
+      :emprcodi,
+      :contacfecregistro,
+      :contacdoc
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update wb_contacto
+      set
+      contacnombre = :contacnombre,
+      contacapellido = :contacapellido,
+      contacemail = :contacemail,
+      contaccargo = :contaccargo,
+      contacempresa = :contacempresa,
+      contactelefono = :contactelefono,
+      contacmovil = :contacmovil,
+      contaccomentario = :contaccomentario,
+      contacarea = :contacarea,
+      contacestado = :contacestado,
+      emprcodi = :emprcodi,
+      contacfecregistro = :contacfecregistro,
+      contacdoc =: contacdoc
+      where
+      contaccodi = :contaccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       update wb_contacto
+       set contacestado = 'E'
+       where
+           contaccodi = :contaccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+		select
+		tabla.contaccodi,
+		rtrim(ltrim(tabla.contacnombre)) as contacnombre,
+		rtrim(ltrim(tabla.contacapellido)) as contacapellido,
+		rtrim(ltrim(tabla.contacemail)) as contacemail,
+		rtrim(ltrim(tabla.contaccargo)) as contaccargo,
+		tabla.contacempresa,
+		rtrim(ltrim(tabla.contactelefono)) as contactelefono,
+		rtrim(ltrim(tabla.contacmovil)) as contacmovil,
+		tabla.contaccomentario,
+		rtrim(ltrim(tabla.contacarea)) as contacarea,
+		tabla.contacestado,
+		tabla.userreplegal,
+		tabla.usercontacto,
+		tabla.emprcodi,
+		tabla.contacdoc,
+		tabla.CONTACFECREGISTRO,
+		tabla.fuente,
+		empresa.emprnomb,
+		empresa.emprdire,
+		case empresa.emprcoes when 'S' then 'SI' else 'NO' end as emprcoes,
+		tipoempresa.tipoemprdesc
+		from (
+
+		select
+		contacto.contaccodi,
+		contacto.contacnombre,
+		contacto.contacapellido,
+		contacto.contacemail,
+		contacto.contaccargo,
+		contacto.contacempresa,
+		contacto.contactelefono,
+		contacto.contacmovil,
+		contacto.contaccomentario,
+		contacto.contacarea,
+		contacto.contacestado,
+		'' as userreplegal,
+		'' as usercontacto,
+		contacto.emprcodi,
+		contacto.contacdoc,
+		contacto.CONTACFECREGISTRO,
+		'P' as fuente
+		from
+		wb_contacto contacto
+		where contacto.contacestado != 'E' and contacto.contaccodi = {0}
+
+		union all
+
+		select
+		contacto.contaccodi,
+		contacto.contacnombre,
+		contacto.contacapellido,
+		contacto.contacemail,
+		contacto.contaccargo,
+		contacto.contacempresa,
+		contacto.contactelefono,
+		contacto.contacmovil,
+		contacto.contaccomentario,
+		contacto.contacarea,
+		contacto.contacestado,
+		'' as userreplegal,
+		'' as usercontacto,
+		contacto.emprcodi,
+		contacto.contacdoc,
+		contacto.contacfecregistro,
+		'C' as fuente
+		from
+		wb_contacto contacto
+		where contacto.contacestado != 'E' and contacto.contaccodi = {0}
+
+		union all
+
+		select
+		contacto.contaccodi,
+		contacto.contacnombre,
+		contacto.contacapellido,
+		contacto.contacemail,
+		contacto.contaccargo,
+		contacto.contacempresa,
+		contacto.contactelefono,
+		contacto.contacmovil,
+		contacto.contaccomentario,
+		contacto.contacarea,
+		contacto.contacestado,
+		'' as userreplegal,
+		'' as usercontacto,
+		contacto.emprcodi,
+		contacto.contacdoc,
+		contacto.contacfecregistro,
+		'O' as fuente
+		from
+		wb_contacto contacto
+		where contacto.contacestado != 'E' and contacto.contaccodi = {0}
+
+		union all
+
+		select
+		usuario.usercode as contaccodi,
+		usuario.username as contacnombre,
+		'' as contacapellido,
+		usuario.useremail as contacemail,
+		usuario.usercargo as contaccargo,
+		'' as contacempresa,
+		usuario.usertlf as contactelefono,
+		'' as contacmovil,
+		usuario.motivocontacto as contaccomentario,
+		usuario.arealaboral as contacarea,
+		'A' as contacestado,
+		'' as userreplegal,
+		'' as usercontacto,
+		usuario.emprcodi,
+		null as contacdoc,
+		null as CONTACFECREGISTRO,
+		'E' as fuente
+		from fw_user usuario
+		where usuario.userstate = 'A' and usuario.emprcodi > 1
+		and usuario.usercode = {0}
+		union all
+		select
+		rpte.rptecodi as contaccodi,
+		trim(rpte.rptenombres) as contacnombre,
+		trim(rpte.rpteapellidos) as contacapellido,
+		trim(rpte.rptecorreoelectronico) as contacemail,
+		rpte.rptecargoempresa as contaccargo,
+		'' as contacempresa,
+		rpte.rptetelefono as contactelefono,
+		rpte.rptetelfmovil as contacmovil,
+		'' as contaccomentario,
+		'' as contacarea,
+		'' as contacestado,
+		case rpte.rptetipo
+		when 'C' then 'Persona de Contacto'
+		when 'L' then
+		case rpte.rptetiprepresentantelegal when 'A' then 'Rpte. Legal Alterno' when 'T' then 'Rpte. Legal Titular' else '' end
+		else ''
+		end as userreplegal,
+		'' as usercontacto,
+		rpte.emprcodi as emprcodi,
+		null as contacdoc,
+		null as CONTACFECREGISTRO,
+		'R' as fuente
+		from si_representante rpte
+		inner join si_empresa ereg on rpte.emprcodi = ereg.emprcodi
+		inner join si_tipo_comportamiento tcom on ereg.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+		where rpte.rptebaja = 'N' and ereg.EMPRESTREGINT = 'A' and ereg.emprestado = 'A' and ereg.emprcoes = 'S' and
+		rpte.rptecodi = {0}
+		) tabla
+		inner join si_empresa empresa on tabla.emprcodi = empresa.emprcodi
+		inner join si_tipoempresa tipoempresa on empresa.tipoemprcodi = tipoempresa.tipoemprcodi
+		where
+		tabla.contaccodi = {0} and
+		tabla.fuente = '{1}'
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      contaccodi,
+      contacnombre,
+      contacapellido,
+      contacemail,
+      contaccargo,
+      contacempresa,
+      contactelefono,
+      contacmovil,
+      contaccomentario,
+      contacarea,
+      contacestado,
+      emprcodi,
+      contacfecregistro,
+      contacdoc
+      from
+      wb_contacto
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select * from (
+		select
+		contacto.contaccodi,
+		contacto.contacnombre,
+		contacto.contacapellido,
+		contacto.contacemail,
+		contacto.contaccargo,
+		contacto.contacempresa,
+		contacto.contactelefono,
+		contacto.contacmovil,
+		contacto.contaccomentario,
+		contacto.contacarea,
+		contacto.contacestado,
+		'' as userreplegal,
+		'' as usercontacto,
+		contacto.emprcodi,
+		contacto.contacdoc,
+		contacto.CONTACFECREGISTRO,
+		'P' as fuente,
+		case emp.emprcoes when 'S' then 'SI' else 'NO' end as emprcoes,
+		emp.emprnomb,
+		emp.emprdire,
+		'' as emprnombrecomercial
+		from
+		wb_contacto contacto inner join si_empresa emp on contacto.emprcodi = emp.emprcodi
+		where contacto.contacestado != 'E' and emp.emprestado = 'A' and
+		(emp.tipoemprcodi = '{0}' or '{0}' = '-1')
+
+		union all
+
+		select
+		distinct(contacto.contaccodi),
+		contacto.contacnombre,
+		contacto.contacapellido,
+		contacto.contacemail,
+		contacto.contaccargo,
+		contacto.contacempresa,
+		contacto.contactelefono,
+		contacto.contacmovil,
+		contacto.contaccomentario,
+		contacto.contacarea,
+		contacto.contacestado,
+		'' as userreplegal,
+		'' as usercontacto,
+		contacto.emprcodi,
+		contacto.contacdoc,
+		contacto.CONTACFECREGISTRO,
+		'C' as fuente,
+		case emp.emprcoes when 'S' then 'SI' else 'NO' end as emprcoes,
+		emp.emprnomb,
+		emp.emprdire,
+		'' as emprnombrecomercial
+		from
+		wb_contacto contacto inner join si_empresa emp on contacto.emprcodi = emp.emprcodi
+		inner join wb_comite_contacto comico on contacto.contaccodi = comico.contaccodi
+		left join wb_comite_lista lista on lista.comitecodi = comico.comitecodi
+		where contacto.contacestado != 'E' and emp.emprestado = 'A' and
+		(emp.tipoemprcodi = '{0}' or '{0}' = '-1')
+		and
+		(comico.comitecodi = '{3}' or '{3}' = '-1')
+		and
+		(lista.comitelistacodi = '{5}' or '{5}' = '-1')
+
+		union all
+
+		select
+		distinct(contacto.contaccodi),
+		contacto.contacnombre,
+		contacto.contacapellido,
+		contacto.contacemail,
+		contacto.contaccargo,
+		contacto.contacempresa,
+		contacto.contactelefono,
+		contacto.contacmovil,
+		contacto.contaccomentario,
+		contacto.contacarea,
+		contacto.contacestado,
+		'' as userreplegal,
+		'' as usercontacto,
+		contacto.emprcodi,
+		contacto.contacdoc,
+		contacto.CONTACFECREGISTRO,
+		'O' as fuente,
+		case emp.emprcoes when 'S' then 'SI' else 'NO' end as emprcoes,
+		emp.emprnomb,
+		emp.emprdire,
+		'' as emprnombrecomercial
+		from
+		wb_contacto contacto inner join si_empresa emp on contacto.emprcodi = emp.emprcodi
+		inner join wb_proceso_contacto comico on contacto.contaccodi = comico.contaccodi
+		where contacto.contacestado != 'E' and emp.emprestado = 'A' and
+		(emp.tipoemprcodi = '{0}' or '{0}' = '-1')
+		and
+		(comico.procesocodi = '{4}' or '{4}' = '-1')
+
+		union all
+
+		select
+		usuario.usercode as contaccodi,
+		usuario.username as contacnombre,
+		'' as contacapellido,
+		usuario.useremail as contacemail,
+		usuario.usercargo as contaccargo,
+		'' as contacempresa,
+		usuario.usertlf as contactelefono,
+		usuario.usermovil as contacmovil,
+		usuario.motivocontacto as contaccomentario,
+		usuario.arealaboral as contacarea,
+		'A' as contacestado,
+		'' as userreplegal,
+		'' as usercontacto,
+		usuario.emprcodi,
+		null as contacdoc,
+		null as contacfecregistro,
+		'E' as fuente,
+		case emp.emprcoes when 'S' then 'SI' else 'NO' end as emprcoes,
+		emp.emprnomb,
+		emp.emprdire,
+		'' as emprnombrecomercial
+		from fw_user usuario inner join si_empresa emp on usuario.emprcodi = emp.emprcodi
+		where usuario.userstate = 'A' and usuario.emprcodi > 1  and emp.emprestado = 'A' and
+		(emp.tipoemprcodi = '{0}' or '{0}' = '-1')
+
+		union all
+
+		select
+		rpte.rptecodi as contaccodi,
+		trim(rpte.rptenombres) as contacnombre,
+		trim(rpte.rpteapellidos) as contacapellido,
+		trim(rpte.rptecorreoelectronico) as contacemail,
+		rpte.rptecargoempresa as contaccargo,
+		'' as contacempresa,
+		rpte.rptetelefono as contactelefono,
+		rpte.rptetelfmovil as contacmovil,
+		'' as contaccomentario,
+		'' as contacarea,
+		'' as contacestado,
+		case rpte.rptetipo
+		when 'C' then 'Persona de Contacto'
+		when 'L' then
+		case rpte.rptetiprepresentantelegal when 'A' then 'Rpte. Legal Alterno' when 'T' then 'Rpte. Legal Titular' else '' end
+		else ''
+		end as userreplegal,
+		'' as usercontacto,
+		rpte.emprcodi as emprcodi,
+		null as contacdoc,
+		null as contacfecregistro,
+		'R' as fuente,
+		case ereg.emprcoes when 'S' then 'SI' else 'NO' end as emprcoes,
+		ereg.emprrazsocial as emprnomb,
+		ereg.emprdomiciliolegal as emprdire,
+		ereg.emprnombrecomercial
+		from si_representante rpte
+		inner join si_empresa ereg on rpte.emprcodi = ereg.emprcodi
+		inner join si_tipo_comportamiento tcom on ereg.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+		where rpte.rptebaja = 'N' and ereg.EMPRESTREGINT = 'A' and ereg.emprestado = 'A' and ereg.emprcoes = 'S' and
+		(tcom.tipoemprcodi = '{0}' or '{0}' = '-1')
+		) tabla
+		where
+		(tabla.emprcodi = '{1}' or '{1}' = '-1' ) and
+		(tabla.fuente = '{2}' or '{2}' = '-1')
+		order by tabla.emprnomb, tabla.contacnombre, tabla.contacapellido
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresasContacto</key>
+    <query>
+      select distinct empresa.emprcodi, empresa.emprnomb from (
+      select
+      tabla.contaccodi,
+      rtrim(ltrim(tabla.contacnombre)) as contacnombre,
+      rtrim(ltrim(tabla.contacapellido)) as contacapellido,
+      rtrim(ltrim(tabla.contacemail)) as contacemail,
+      rtrim(ltrim(tabla.contaccargo)) as contaccargo,
+      tabla.contacempresa,
+      rtrim(ltrim(tabla.contactelefono)) as contactelefono,
+      rtrim(ltrim(tabla.contacmovil)) as contacmovil,
+      tabla.contaccomentario,
+      rtrim(ltrim(tabla.contacarea)) as contacarea,
+      tabla.contacestado,
+      tabla.userreplegal,
+      tabla.usercontacto,
+      tabla.emprcodi,
+      tabla.fuente,
+      case empresa.emprcoes when 'S' then 'SI' else 'NO' end as emprcoes,
+      empresa.emprnomb, empresa.emprdire from (     
+          
+      select
+      usuario.usercode as contaccodi,
+      trim(usuario.username) as contacnombre,
+      trim(usuario.userapellido) as contacapellido,
+      trim(usuario.usermail) as contacemail,
+      usuario.usercargo as contaccargo,
+      '' as contacempresa,
+      usuario.usertlf as contactelefono,
+      '' as contacmovil,
+      '' as contaccomentario,
+      '' as contacarea,
+      '' as contacestado,
+      decode(usuario.userreplegal,'S','SI','NO') as userreplegal,
+      decode(usuario.usercontacto,'S','SI','NO') as  usercontacto,
+      integ.emprecodi as emprcodi,
+      'R' as fuente
+      from wb_user usuario inner join si_registro_integ integ on usuario.regempcodi = integ.regempcodi
+      where
+      ((trim(usuario.userreplegal) = 'S' ) or (trim(usuario.usercontacto) = 'S' ))
+      and usuario.userestado = 'A'
+      and integ.regempfecacep is not null
+      and integ.regempeliminado = 'N'
+      and integ.regvalidado = 'S'
+      and integ.regvalidadoelim = 'N'
+      ) tabla
+      inner join si_empresa empresa on tabla.emprcodi = empresa.emprcodi
+      where
+      ('-1' = '-1') and
+      ('-1' = '-1' ) and
+      ('-1' = '-1')
+      order by empresa.emprnomb, tabla.contacnombre, tabla.contacapellido) contacto inner join si_empresa empresa
+      on contacto.emprcodi = empresa.emprcodi
+      where empresa.emprestado = 'A'
+    </query>
+  </Sql>
+  
+</Sqls>

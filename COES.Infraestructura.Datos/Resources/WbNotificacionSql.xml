@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(NOTICODI), 0) + 1 from APM_NOTIFICACION
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into APM_NOTIFICACION(
+      NOTICODI,
+      NOTITITULO,
+      NOTIDESCRIPCION,
+      NOTIEJECUCION,
+      NOTIUSUCREACION,
+      NOTIFECCREACION,
+      NOTIACTIVO,
+      NOTISTATUS
+      )
+      values(
+      :NOTICODI,
+      :NOTITITULO,
+      :NOTIDESCRIPCION,
+      :NOTIEJECUCION,
+      :NOTIUSUCREACION,
+      sysdate,
+      1,
+      0
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update APM_NOTIFICACION
+      set
+      NOTITITULO = :NOTITITULO,
+      NOTIDESCRIPCION = :NOTIDESCRIPCION,
+      NOTIEJECUCION = :NOTIEJECUCION,
+      NOTISTATUS = 0,
+      NOTIFECMODIFICACION = sysdate,
+      NOTIUSUMODIFICACION = :NOTIUSUMODIFICACION
+      where
+      NOTICODI = :NOTICODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update APM_NOTIFICACION
+      set NOTIACTIVO = 0
+      where
+      NOTICODI = :NOTICODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      NOTICODI,
+      NOTITITULO,
+      NOTIDESCRIPCION,
+      NOTIEJECUCION,
+      NOTISTATUS
+      from
+      APM_NOTIFICACION
+      where
+      NOTICODI = :NOTICODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      NOTICODI,
+      NOTITITULO,
+      NOTIDESCRIPCION,
+      NOTIEJECUCION,
+      NOTISTATUS
+      from
+      APM_NOTIFICACION
+      where
+      NOTIACTIVO = 1 and  NOTISTATUS = 0
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      NOTICODI,
+      NOTITITULO,
+      NOTIDESCRIPCION,
+      NOTIEJECUCION,
+      NOTISTATUS
+      from
+      APM_NOTIFICACION
+      where
+      ( (NOTITITULO like '%{0}%'   or NOTIDESCRIPCION like '%{0}%') or '{0}' = '')
+      AND ( (NOTIEJECUCION >= to_date('{1} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') ) or '{1}' = ' ' )
+      AND ( (NOTIEJECUCION  &lt;= to_date('{2} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') ) or '{2}' = ' ' )
+      and NOTIACTIVO = 1
+      order by NOTIFECCREACION desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CambiarEstadoNotificacion</key>
+    <query>
+      update APM_NOTIFICACION
+      set NOTISTATUS = 1
+      where
+      NOTICODI = :NOTICODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerTipoNotificacionEventos</key>
+    <query>
+      select
+      subcausa.subcausacodi as tiponoticodi,
+      subcausa.subcausadesc as tiponotidesc
+      from
+      eve_subcausaevento subcausa  inner join
+      eve_tipoxsubcausa tipoxsubcausa on subcausa.subcausacodi = tipoxsubcausa.subcausacodi
+      where
+      tipoxsubcausa.tipoevencodi = 4 or tipoxsubcausa.tipoevencodi = -1 and subcausa.subcausacodi > 0
+      order by 2 asc
+    </query>
+  </Sql>
+
+</Sqls>

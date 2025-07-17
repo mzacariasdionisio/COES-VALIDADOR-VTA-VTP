@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(subcausacodi), 0) + 1 from eve_subcausaevento
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into eve_subcausaevento(
+          subcausacodi,
+          causaevencodi,
+          subcausadesc,
+          subcausaabrev
+
+      )
+      values(
+          :subcausacodi,
+          :causaevencodi,
+          :subcausadesc,
+          :subcausaabrev
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update eve_subcausaevento
+       set
+           subcausadesc = :subcausadesc,
+           subcausaabrev = :subcausaabrev,
+           causaevencodi = :causaevencodi
+       where
+           subcausacodi = :subcausacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from eve_subcausaevento
+       where
+           subcausacodi = :subcausacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      subcausadesc,
+      subcausaabrev,
+      subcausacodi,
+      causaevencodi
+      from
+      eve_subcausaevento
+      where
+      subcausacodi = :subcausacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           subcausadesc,
+           subcausaabrev,
+           subcausacodi,
+           causaevencodi
+       from
+           eve_subcausaevento
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+        subcausa.subcausadesc,
+        subcausa.subcausaabrev,
+        subcausa.subcausacodi,
+        subcausa.causaevencodi
+      from
+        eve_subcausaevento subcausa  inner join 
+        eve_tipoxsubcausa tipoxsubcausa on subcausa.subcausacodi = tipoxsubcausa.subcausacodi
+      where 
+        tipoxsubcausa.tipoevencodi = :tipoevencodi or tipoxsubcausa.tipoevencodi = -1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPorCausa</key>
+    <query>
+      select * from eve_subcausaevento
+      where causaevencodi = :causaevencodi
+      order by subcausadesc asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPorCausaEvento</key>
+    <query>
+      select
+      SUBCAUSACODI,
+      SUBCAUSADESC,
+      SUBCAUSAABREV
+      from
+      eve_subcausaevento
+      where
+      CAUSAEVENCODI = :causaevencodi
+      order by SUBCAUSADESC
+    </query>
+  </Sql>
+
+  <!-- Inicio de Agregado - Sistema Compensaciones -->
+  <Sql>
+    <key>ListTipoOperacion</key>
+    <query>
+      SELECT SUBCAUSACODI, SUBCAUSADESC FROM EVE_SUBCAUSAEVENTO
+      WHERE SUBCAUSACODI IN (SELECT SUBCAUSACODI FROM VCE_HORA_OPERACION) ORDER BY SUBCAUSADESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetSubCausaCodi</key>
+    <query>
+      SELECT SUBCAUSACODI FROM EVE_SUBCAUSAEVENTO WHERE UPPER(TRIM(SUBCAUSADESC)) = UPPER(TRIM('{0}'))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListSubCausaEvento</key>
+    <query>
+      SELECT SUBCAUSACODI,SUBCAUSADESC FROM EVE_SUBCAUSAEVENTO
+      WHERE SUBCAUSACODI IN (SELECT SUBCAUSACODI FROM VCE_COMP_REGULAR_DET WHERE PECACODI = {0})
+      AND SUBCAUSACODI != 106
+      AND SUBCAUSACODI != 122
+      ORDER BY SUBCAUSADESC
+    </query>
+  </Sql>
+<!-- Fin de Agregado - Sistema de Compensaciones-->
+
+  <!--INICIO PR5-->
+  <Sql>
+    <key>ObtenerXCausaXCmg</key>
+    <query>
+      select * from eve_subcausaevento
+      where causaevencodi = :causaevencodi and
+      subcausacmg = :subcausacmg
+      order by subcausadesc asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerXCausaXID</key>
+    <query>
+      select * from eve_subcausaevento
+      where subcausacodi = :subcausacodi
+    </query>
+  </Sql>
+  <!--FIN PR5-->
+
+  <Sql>
+    <key>ListarTipoOperacionHO</key>
+    <query>
+      select * from eve_subcausaevento subcausa where (subcausa.causaevencodi = 100
+      and upper(subcausa.subcausadesc) not like 'EVENTO%') or subcausacodi = -1
+      order by subcausa.SUBCAUSACODI
+    </query>
+  </Sql>
+
+  <!--INICIO INTERVENCIONES-->
+  <Sql>
+    <key>ListarComboCausasMantenimiento</key>
+    <query>
+      SELECT
+      SUBCAUSACODI,
+      SUBCAUSADESC
+      FROM
+      EVE_SUBCAUSAEVENTO
+      WHERE
+      SUBCAUSACODI NOT IN (0)
+      ORDER BY
+      SUBCAUSACODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarComboCausasConsulta</key>
+    <query>
+      SELECT
+      SUBCAUSACODI,
+      SUBCAUSADESC
+      FROM
+      EVE_SUBCAUSAEVENTO
+      WHERE
+      SUBCAUSACODI NOT IN (0)
+      ORDER BY
+      SUBCAUSACODI
+    </query>
+  </Sql>
+  <!--FIN INTERVENCIONES-->
+  
+  <Sql>
+    <key>ObtenerSubcausaEventoByAreausuaria</key>
+    <query>
+      select * from 
+      (
+            select
+            eve.SUBCAUSACODI,
+            eve.SUBCAUSADESC,
+            config.total,
+            config2.total total_Activo
+            from  eve_subcausaevento eve
+            left join
+            (
+                    select subcausacodi, count(*) total
+                    from eve_area_subcausaevento
+                    where areacode = {1}              
+                    group by subcausacodi
+            )config on config.subcausacodi = eve.subcausacodi
+             left join
+            (
+                    select subcausacodi, count(*) total
+                    from eve_area_subcausaevento
+                    where areacode = {1} and ARSCAUACTIVO = 1
+                    group by subcausacodi
+            )config2 on config2.subcausacodi = eve.subcausacodi           
+            where
+            CAUSAEVENCODI = {0}
+            order by SUBCAUSADESC      
+      )
+      where total is null or (total >0 and total_Activo >0)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCodByAbrev</key>
+    <query>
+      select
+      CAUSAEVENCODI
+      from
+      eve_subcausaevento
+      where
+      SUBCAUSAABREV = '{0}'
+    </query>
+  </Sql>
+
+  <!--INICIO PRONOSTICO-->
+  <Sql>
+    <key>UpdateBy</key>
+    <query>
+      update eve_subcausaevento
+      set
+      subcausadesc = :subcausadesc,
+      subcausaabrev = :subcausaabrev
+      where
+      subcausacodi = :subcausacodi and causaevencodi = :causaevencodi
+    </query>
+  </Sql>
+
+  <!--FIN PRONOSTICO-->
+
+  <!--INICIO SIOSEIN-->
+  <Sql>
+    <key>GetListByIds</key>
+    <query>
+      select
+      subcausadesc,
+      subcausaabrev,
+      subcausacodi,
+      causaevencodi
+      from
+      eve_subcausaevento
+      where
+      subcausacodi in ({0})
+    </query>
+  </Sql>
+  <!--FIN SIOSEIN-->
+
+</Sqls>

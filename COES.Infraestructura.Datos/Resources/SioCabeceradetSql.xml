@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(cabpricodi), 0) + 1 from sio_cabeceradet
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into sio_cabeceradet(
+      cabpricodi,
+      tpriecodi,
+      cabpriperiodo,
+      cabpriusucreacion,
+      cabprifeccreacion,
+      cabpriversion,
+      cabpritieneregistros
+      )
+      values(
+      :cabpricodi,
+      :tpriecodi,
+      :cabpriperiodo,
+      :cabpriusuario,
+      :cabprifeccreacion,
+      :cabpriversion,
+      :cabpritieneregistros
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update sio_cabeceradet
+      set
+      tpriecodi = :tpriecodi,
+      cabpriperiodo = :cabpriperiodo,
+      cabpriusucreacion = :cabpriusuario,
+      cabprifeccreacion = :cabprifeccreacion
+      where
+      cabpricodi = :cabpricodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from sio_cabeceradet
+      where
+      cabpricodi = :cabpricodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from sio_cabeceradet where cabpricodi = :cabpricodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from sio_cabeceradet
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from sio_cabeceradet
+      where cabpriperiodo = to_date('{0}','YYYY-MM-DD')
+      and (tpriecodi in ({1}) or '-1' = '{1}')
+      and CABPRIVERSION > 0
+      order by cabpricodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaPeriodo</key>
+    <query>
+      select * from (
+          select c.*,
+          (row_number() over (PARTITION BY c.tpriecodi order by c.tpriecodi asc, c.CABPRICODI desc)) as r
+          from sio_cabeceradet c
+          where c.cabpriperiodo = to_date('{0}','YYYY-MM-DD') and c.CABPRIVERSION > 0
+      )where  r = 1
+    </query>
+  </Sql>
+  
+  <!--INICIO SIOSEIN-->
+  <Sql>
+    <key>ObtenerUltNroVersion</key>
+    <query>
+      select max(CABPRIVERSION) from sio_cabeceradet where cabpriperiodo = to_date('{0}','YYYY-MM-DD') and tpriecodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerUltVersion</key>
+    <query>
+      select * from    (select * from sio_cabeceradet where cabpriperiodo = to_date('{0}','YYYY-MM-DD') and tpriecodi = {1}  and cabpriversion is not null
+      order by cabpriversion desc)   where ROWNUM =1
+    </query>
+  </Sql>
+  <!--FIN SIOSEIN-->
+</Sqls>

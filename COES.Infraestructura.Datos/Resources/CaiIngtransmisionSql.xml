@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(caitrcodi), 0) + 1 from cai_ingtransmision
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cai_ingtransmision(
+      caitrcodi,
+      caiajcodi,
+      caitrcalidadinfo,
+      emprcodi,
+      ptomedicodi,
+      caitrmes,
+      caitringreso,
+      caitrtipoinfo,
+      caitrusucreacion,
+      caitrfeccreacion
+      )
+      values(
+      :caitrcodi,
+      :caiajcodi,
+      :caitrcalidadinfo,
+      :emprcodi,
+      :ptomedicodi,
+      :caitrmes,
+      :caitringreso,
+      :caitrtipoinfo,
+      :caitrusucreacion,
+      :caitrfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cai_ingtransmision
+      set
+      caiajcodi = :caiajcodi,
+      caitrcalidadinfo = :caitrcalidadinfo,
+      emprcodi = :emprcodi,
+      ptomedicodi = :ptomedicodi,
+      caitrmes = :caitrmes,
+      caitringreso = :caitringreso,
+      caitrtipoinfo = :caitrtipoinfo,
+      caitrusucreacion = :caitrusucreacion,
+      caitrfeccreacion = :caitrfeccreacion
+      where
+      caitrcodi = :caitrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cai_ingtransmision
+       where caiajcodi = :caiajcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select * from cai_ingtransmision where caitrcodi = :caitrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from cai_ingtransmision
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from cai_ingtransmision
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveAsSelectMeMedicion1</key>
+    <query>
+      insert into cai_ingtransmision(caitrcodi, caiajcodi, caitrcalidadinfo,
+      emprcodi, ptomedicodi, caitrmes, caitringreso,
+      caitrtipoinfo, caitrusucreacion, caitrfeccreacion)
+      select rownum + {0} as caitrcodi, {1} as caiajcodi, '{2}' as caitrcalidadinfo,
+      pto.emprcodi, me.ptomedicodi,  to_char(me.medifecha, 'YYYYMM') as caitrmes, NVL(h1,0) as caitringreso,
+      '{3}' as caitrtipoinfo, '{4}' as caitrusucreacion, sysdate as caitrfeccreacion
+      from me_medicion1 me
+      inner join me_hojaptomed hp on hp.ptomedicodi = me.ptomedicodi and hp.tipoinfocodi = me.tipoinfocodi and hp.tptomedicodi = -1
+      inner join me_formato fh on fh.formatcodi = hp.formatcodi and fh.lectcodi = me.lectcodi
+      inner join me_ptomedicion pto on pto.ptomedicodi = hp.ptomedicodi
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      where hp.formatcodi = {5} and me.lectcodi = {6} and
+      medifecha BETWEEN TO_DATE('{7}', 'YYYY-MM-DD') AND TO_DATE('{8}', 'YYYY-MM-DD')
+      order by me.ptomedicodi asc, me.medifecha desc
+    </query>
+  </Sql>
+</Sqls>

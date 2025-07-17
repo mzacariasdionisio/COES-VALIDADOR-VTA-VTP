@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(audipcodi), 0) + 1 from aud_auditoriaproceso
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into aud_auditoriaproceso(
+      audipcodi,
+      audipsplanificado,
+      audipactivo,
+      audiphistorico,
+      audipusucreacion,
+      audipfeccreacion,
+      audipusumodificacion,
+      audipfecmodificacion,
+      audicodi,
+      audppcodi,
+      proccodi
+      )
+      values(
+      :audipcodi,
+      :audipsplanificado,
+      :audipactivo,
+      :audiphistorico,
+      :audipusucreacion,
+      :audipfeccreacion,
+      :audipusumodificacion,
+      :audipfecmodificacion,
+      :audicodi,
+      :audppcodi,
+      :proccodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update aud_auditoriaproceso
+      set
+      audipsplanificado = :audipsplanificado,
+      audipactivo = :audipactivo,
+      audiphistorico = :audiphistorico,
+      audipusucreacion = :audipusucreacion,
+      audipfeccreacion = :audipfeccreacion,
+      audipusumodificacion = :audipusumodificacion,
+      audipfecmodificacion = :audipfecmodificacion,
+      audicodi = :audicodi,
+      audppcodi = :audppcodi,
+      proccodi = :proccodi
+      where
+      audipcodi = :audipcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update aud_auditoriaproceso
+      set audipactivo = '0', audiphistorico = '1',
+      audipusumodificacion = :audipusumodificacion,
+      audipfecmodificacion = :audipfecmodificacion
+      where
+      audipcodi = :audipcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteAllAudAuditoriaelemento</key>
+    <query>
+      update aud_auditoriaproceso
+      set audipactivo = '0', audiphistorico = '1',
+      audipusumodificacion = :audipusumodificacion,
+      audipfecmodificacion = :audipfecmodificacion
+      where
+      audicodi = :audicodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      audipsplanificado,
+      audipactivo,
+      audiphistorico,
+      audipusucreacion,
+      audipfeccreacion,
+      audipusumodificacion,
+      audipfecmodificacion,
+      audipcodi,
+      audicodi,
+      audppcodi
+      from
+      aud_auditoriaproceso
+      where
+      audipcodi = :audipcodi
+    </query>
+  </Sql>
+  
+   <Sql>
+    <key>GetByAudppcodi</key>
+    <query>
+      select
+      audipsplanificado,
+      audipactivo,
+      audiphistorico,
+      audipusucreacion,
+      audipfeccreacion,
+      audipusumodificacion,
+      audipfecmodificacion,
+      audipcodi,
+      audicodi,
+      audppcodi
+      from
+      aud_auditoriaproceso
+      where
+      {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      ap.audipsplanificado,
+      ap.audipactivo,
+      ap.audiphistorico,
+      ap.audipusucreacion,
+      ap.audipfeccreacion,
+      ap.audipusumodificacion,
+      ap.audipfecmodificacion,
+      ap.audipcodi,
+      ap.audicodi,
+      ap.audppcodi,
+      aap.proccodi,
+      p.areacodi
+      from
+      aud_auditoriaproceso ap
+      inner join aud_audplanificada_proceso aap on aap.audppcodi = ap.audppcodi and aap.AUDPPACTIVO = '1'
+      inner join aud_proceso p on p.proccodi = aap.proccodi and p.PROCACTIVO = '1'
+      where aap.audpcodi = :audpcodi and ap.AUDIPACTIVO = '1'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select distinct
+      ae.audicodi,
+      nvl(app.PROCCODI, ae.PROCCODI) PROCCODI,
+      p.PROCDESCRIPCION,
+      p.AREACODI
+      from
+      aud_auditoriaproceso ae
+      left join AUD_AUDPLANIFICADA_PROCESO app on app.AUDPPCODI = ae.AUDPPCODI
+      left join AUD_PROCESO p on p.PROCCODI = nvl(app.PROCCODI, ae.PROCCODI)
+      where audicodi = :audicodi and ae.audipactivo = '1'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByAuditoriaElementoPorTipo</key>
+    <query>
+      select
+      ae.audipsplanificado,
+      ae.audipactivo,
+      ae.audiphistorico,
+      ae.audipusucreacion,
+      ae.audipfeccreacion,
+      ae.audipusumodificacion,
+      ae.audipfecmodificacion,
+      ae.audipcodi,
+      ae.audicodi,
+      ae.audppcodi
+      from
+      aud_auditoriaproceso ae
+      where audicodi = {0} and e.TABCDCODITIPOELEMENTO = {1}
+    </query>
+  </Sql>
+</Sqls>

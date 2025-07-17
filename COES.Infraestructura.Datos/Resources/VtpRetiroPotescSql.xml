@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(rpsccodi), 0) + 1 from vtp_retiro_potesc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_retiro_potesc(rpsccodi, pericodi, recpotcodi, emprcodi, barrcodi,
+      rpsctipousuario, rpsccalidad, rpscprecioppb, rpscpreciopote, rpscpoteegreso,
+      rpscpeajeunitario, barrcodifco, rpscpoteactiva, rpscpotereactiva, rpscusucreacion,
+      rpscfeccreacion, rpscusumodificacion, rpscfecmodificacion
+      )
+      values(:rpsccodi, :pericodi, :recpotcodi, :emprcodi, :barrcodi,
+      :rpsctipousuario, :rpsccalidad, :rpscprecioppb, :rpscpreciopote, :rpscpoteegreso,
+      :rpscpeajeunitario, :barrcodifco, :rpscpoteactiva, :rpscpotereactiva, :rpscusucreacion,
+      :rpscfeccreacion, :rpscusumodificacion, :rpscfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_retiro_potesc
+      set
+      emprcodi = :emprcodi,
+      barrcodi = :barrcodi,
+      rpsctipousuario = :rpsctipousuario,
+      rpsccalidad = :rpsccalidad,
+      rpscprecioppb = :rpscprecioppb,
+      rpscpreciopote = :rpscpreciopote,
+      rpscpoteegreso = :rpscpoteegreso,
+      rpscpeajeunitario = :rpscpeajeunitario,
+      barrcodifco = :barrcodifco,
+      rpscpoteactiva = :rpscpoteactiva,
+      rpscpotereactiva = :rpscpotereactiva,
+      rpscusumodificacion = :rpscusumodificacion,
+      rpscfecmodificacion = :rpscfecmodificacion
+      where
+      rpsccodi = :rpsccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_retiro_potesc where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select rpsccodi, pericodi, recpotcodi, emprcodi, barrcodi,
+      rpsctipousuario, rpsccalidad, rpscprecioppb, rpscpreciopote, rpscpoteegreso,
+      rpscpeajeunitario, barrcodifco, rpscpoteactiva, rpscpotereactiva, rpscusucreacion,
+      rpscfeccreacion, rpscusumodificacion, rpscfecmodificacion
+      from vtp_retiro_potesc
+      where rpsccodi = :rpsccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select rpsccodi, pericodi, recpotcodi, emprcodi, barrcodi,
+      rpsctipousuario, rpsccalidad, rpscprecioppb, rpscpreciopote, rpscpoteegreso,
+      rpscpeajeunitario, barrcodifco, rpscpoteactiva, rpscpotereactiva, rpscusucreacion,
+      rpscfeccreacion, rpscusumodificacion, rpscfecmodificacion
+      from vtp_retiro_potesc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select rpsccodi, pericodi, recpotcodi, emprcodi, barrcodi,
+      rpsctipousuario, rpsccalidad, rpscprecioppb, rpscpreciopote, rpscpoteegreso,
+      rpscpeajeunitario, barrcodifco, rpscpoteactiva, rpscpotereactiva, rpscusucreacion,
+      rpscfeccreacion, rpscusumodificacion, rpscfecmodificacion
+      from vtp_retiro_potesc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListView</key>
+    <query>
+		select --(select emprnomb from vw_trn_empresa_str e where rpsc.emprcodi = e.emprcodi) as emprnomb,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = rpsc.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = rpsc.emprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = rpsc.pericodi and recacodi = rpsc.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = rpsc.emprcodi) end as emprnomb,
+		(select barrnombre from trn_barra b where rpsc.barrcodi = b.barrcodi) as barrnombre,
+		(select barrnombre from trn_barra b where rpsc.barrcodifco = b.barrcodi) as barrnombrefco, rpsc.*
+		from vtp_retiro_potesc rpsc
+		where pericodi = :pericodi
+		and recpotcodi = :recpotcodi
+		order by 1, 2
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListByEmpresa</key>
+    <query>
+      select (select emprnomb from vw_trn_empresa_str e where rpsc.emprcodi = e.emprcodi) as emprnomb, 
+      rpsc.emprcodi, sum(rpscpreciopote * rpscpoteegreso) as rpscpoteegreso
+      from vtp_retiro_potesc rpsc
+      where pericodi = :pericodi
+      and recpotcodi = :recpotcodi
+      group by rpsc.emprcodi
+      order by 1
+    </query>
+  </Sql>
+</Sqls>

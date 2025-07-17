@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(inarchcodi), 0) + 1 from in_archivo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into in_archivo(
+      inarchcodi,
+      inarchnombreoriginal,
+      inarchnombrefisico,
+      inarchorden,
+      inarchestado,
+      inarchtipo
+      )
+      values(
+      :inarchcodi,
+      :inarchnombreoriginal,
+      :inarchnombrefisico,
+      :inarchorden,
+      :inarchestado,
+      :inarchtipo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update in_archivo
+      set
+      inarchnombreoriginal = :inarchnombreoriginal,
+      inarchnombrefisico = :inarchnombrefisico,
+      inarchorden = :inarchorden,
+      inarchestado = :inarchestado,
+      inarchtipo =:inarchtipo
+      where
+      inarchcodi = :inarchcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from in_archivo
+      where
+      inarchcodi = :inarchcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      where
+      inarchcodi = :inarchcodi
+      from
+      in_archivo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      in_archivo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      a.*,
+      r.infmmcodi,
+      m.infvercodi,
+      m.infmmhoja,
+      emp.Emprnomb,
+      emp.emprcodi,
+      ar.Areanomb,
+      coalesce(eq.equiabrev, eq.equinomb) Equiabrev,
+      eq.equicodi
+      from
+      in_archivo a
+      inner join in_factor_rel_mmayor_archivo r on a.inarchcodi = r.inarchcodi
+      inner join in_factor_version_mmayor m on r.infmmcodi = m.infmmcodi
+      inner join si_empresa emp on emp.emprcodi = m.emprcodi
+      inner join eq_equipo eq on eq.equicodi = m.equicodi
+      inner join eq_area ar on ar.areacodi = eq.areacodi
+      where m.infvercodi = {0}
+      and ('-1' = '{1}' or m.infmmhoja in ({1}) )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByIntervencion</key>
+    <query>
+      select
+      a.*,
+      r.intercodi
+      from
+      in_archivo a
+      inner join in_intervencion_rel_archivo r on a.inarchcodi = r.inarchcodi
+      where r.intercodi in ({0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByMensaje</key>
+    <query>
+      select
+      a.*,
+      r.msgcodi
+      from
+      in_archivo a
+      inner join in_mensaje_rel_archivo r on a.inarchcodi = r.inarchcodi
+      where r.msgcodi in ({0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListBySustento</key>
+    <query>
+      select
+      a.*,
+      r.instdcodi,
+      d.Instcodi
+      from
+      in_archivo a
+      inner join in_sustento_det_rel_archivo r on a.inarchcodi = r.inarchcodi
+      inner join IN_SUSTENTO_DET d on d.instdcodi = r.instdcodi
+      where d.instcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarArchivoSinFormato</key>
+    <query>
+      select
+      a.*,
+      r.intercodi,
+      i.Progrcodi,
+      i.Intercarpetafiles
+      from
+      in_archivo a
+      inner join in_intervencion_rel_archivo r on a.inarchcodi = r.inarchcodi
+      inner join in_intervencion i on i.intercodi = r.intercodi
+      where a.inarchtipo = {0} and a.inarchnombrefisico not like '{1}%'
+    </query>
+  </Sql>
+
+</Sqls>

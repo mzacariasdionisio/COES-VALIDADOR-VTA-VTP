@@ -1,0 +1,461 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(agrupcodi), 0) + 1 from prn_agrupacion
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      agrupcodi,      
+      ptogrpcodi,
+      ptomedicodi,
+      agrupfactor,
+      agrupfechaini,
+      agrupfechafin
+      from
+      prn_agrupacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into prn_agrupacion(
+      agrupcodi,      
+      ptogrpcodi,
+      ptomedicodi,
+      agrupfactor,
+      agrupfechaini,
+      agrupfechafin
+      )
+      values(
+      :agrupcodi,      
+      :ptogrpcodi,
+      :ptomedicodi,
+      :agrupfactor,
+      :agrupfechaini,
+      :agrupfechafin
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListById</key>
+    <query>
+      select
+      agr.agrupcodi,
+      agr.ptogrpcodi,
+      agr.ptomedicodi,
+      (area.areanomb || '-' || eq.equinomb || '(' || pto.ptomedicodi || ')') ptomedidesc,
+      agr.agrupfactor,
+      agr.agrupfechaini,
+      agr.agrupfechafin
+      from
+      prn_agrupacion agr
+      join me_ptomedicion pto on agr.ptomedicodi = pto.ptomedicodi
+      join eq_equipo eq on pto.equicodi = eq.equicodi
+      join eq_area area on eq.areacodi = area.areacodi
+      where
+      agr.ptogrpcodi = :ptogrpcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListMeAgrupacion</key>
+    <query>
+      select
+      pto.ptomedicodi, pto.ptomedidesc,
+      area.areacodi, area.areanomb,
+      emp.emprcodi, emp.emprnomb,
+      ptogrp.ptogrpcodi, ptogrp.ptogrppronostico, ptogrp.ptogrpfechaini, ptogrp.ptogrpfechafin
+      from
+      me_ptomedicion pto
+      join prn_puntoagrupacion ptogrp on pto.ptomedicodi = ptogrp.ptomedicodi
+        and (to_date(ptogrp.ptogrpfechafin, 'dd/MM/yyyy') = to_date('31-DEC-99', 'dd/MM/yyyy'))
+      join eq_area area on pto.equicodi = area.areacodi
+      join si_empresa emp on pto.emprcodi = emp.emprcodi
+      where
+      pto.origlectcodi = 33 and
+      pto.ptomediestado = 'A'
+      order by pto.ptomedidesc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListAgrupacionesActivas</key>
+    <query>
+      select
+      sq.ptomedicodi,
+      sq.ptomedidesc,
+      sq.ptogrpcodi,
+      sq.ptogrppronostico,
+      spto.ptomedicodi PTOGRPHIJOCODI,
+      spto.ptomedidesc PTOGRPHIJODESC
+      from
+      (
+          select distinct
+          area.areacodi,
+          area.areanomb,
+          pto.ptomedicodi,
+          pto.ptomedidesc,
+          ptogrp.ptogrpcodi,
+          ptogrp.ptogrppronostico
+          from
+          me_ptomedicion pto
+          join eq_area area on pto.equicodi = area.areacodi
+          join prn_puntoagrupacion ptogrp on pto.ptomedicodi = ptogrp.ptomedicodi
+          and (pto.ptomediestado = 'A')
+          and (pto.origlectcodi = 33)
+          and (ptogrp.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+          join prn_agrupacion grp on ptogrp.ptogrpcodi = grp.ptogrpcodi
+          join me_ptomedicion spto on grp.ptomedicodi = spto.ptomedicodi
+          join si_empresa emp on spto.emprcodi = emp.emprcodi
+          where
+          (area.areacodi in ({0}) or '0' = '{0}') and
+          (pto.ptomedicodi in ({1}) or '0' = '{1}') and
+          (emp.emprcodi in ({2}) or '0' = '{2}') and
+          ptogrp.ptogrppronostico = {3}
+      ) sq
+      join prn_agrupacion agr on sq.ptogrpcodi = agr.ptogrpcodi
+      join me_ptomedicion spto on agr.ptomedicodi = spto.ptomedicodi
+      order by sq.ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPuntosPR03</key>
+    <query>
+      select distinct
+      pto.ptomedicodi,
+      pto.ptomedidesc || ' (' || pto.ptomedicodi || ')' PTOMEDIDESC,
+      area.areacodi, area.areanomb,
+      emp.emprcodi, emp.emprnomb
+      from
+      eq_propequi pe
+      join eq_equipo eq on pe.equicodi = eq.equicodi
+      and (pe.propcodi = 1064)
+      and (fechapropequi = (select max(fechapropequi) from eq_propequi where propcodi = 1064 and equicodi = eq.equicodi))
+      join eq_familia fam on eq.famcodi = fam.famcodi
+      join eq_area area on eq.areacodi = area.areacodi
+      join eq_tipoarea tarea on area.tareacodi = tarea.tareacodi
+      join si_empresa emp on eq.emprcodi = emp.emprcodi
+      join si_tipoempresa te on emp.tipoemprcodi = te.tipoemprcodi
+      join me_ptomedicion pto on eq.equicodi = pto.equicodi
+      and (pto.origlectcodi = 6)
+      where
+      (pe.valor = '{0}' or '0' = '{0}') and
+      (te.tipoemprcodi in ({1}) or '0' = '{1}') and
+      (area.areacodi in ({2}) or '0' = '{2}') and
+      (emp.emprcodi in ({3}) or '0' = '{3}') and
+      (pto.ptomedicodi in ({4}) or '0' = '{4}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListUbicacionesPR03</key>
+    <query>
+      select distinct
+      area.areacodi,
+      tarea.tareaabrev || area.areanomb areanomb
+      from
+      eq_propequi pe
+      join eq_equipo eq on pe.equicodi = eq.equicodi
+      and (pe.propcodi = 1064)
+      and (fechapropequi = (select max(fechapropequi) from eq_propequi where propcodi = 1064 and equicodi = eq.equicodi))
+      join eq_familia fam on eq.famcodi = fam.famcodi
+      join eq_area area on eq.areacodi = area.areacodi
+      join eq_tipoarea tarea on area.tareacodi = tarea.tareacodi
+      join si_empresa emp on eq.emprcodi = emp.emprcodi
+      join si_tipoempresa te on emp.tipoemprcodi = te.tipoemprcodi
+      join me_ptomedicion pto on eq.equicodi = pto.equicodi
+      and (pto.origlectcodi = 6)
+      where
+      (pe.valor = '{0}' or '0' = '{0}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresasPR03</key>
+    <query>
+      select distinct
+      emp.emprcodi, emp.emprnomb
+      from
+      eq_propequi pe
+      join eq_equipo eq on pe.equicodi = eq.equicodi
+      and (pe.propcodi = 1064)
+      and (fechapropequi = (select max(fechapropequi) from eq_propequi where propcodi = 1064 and equicodi = eq.equicodi))
+      join eq_familia fam on eq.famcodi = fam.famcodi
+      join eq_area area on eq.areacodi = area.areacodi
+      join eq_tipoarea tarea on area.tareacodi = tarea.tareacodi
+      join si_empresa emp on eq.emprcodi = emp.emprcodi
+      join si_tipoempresa te on emp.tipoemprcodi = te.tipoemprcodi
+      join me_ptomedicion pto on eq.equicodi = pto.equicodi
+      and (pto.origlectcodi = 6)
+      where
+      (te.tipoemprcodi in ({0}) or '0' = '{0}') and
+      (emp.emprcodi in ({1}) or '0' = '{1}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPuntosSeleccionados</key>
+    <query>
+      select
+      agr.ptomedicodi,
+      agr.agrupfactor,
+      spto.ptomedidesc
+      from
+      prn_agrupacion agr
+      join prn_puntoagrupacion ptoagr on agr.ptogrpcodi = ptoagr.ptogrpcodi
+      and (ptoagr.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+      join me_ptomedicion pto on ptoagr.ptomedicodi = pto.ptomedicodi
+      and (pto.ptomediestado = 'A')
+      join me_ptomedicion spto on agr.ptomedicodi = spto.ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetAgrupacion</key>
+    <query>
+      select
+      ptoagr.ptomedicodi,
+      pto.ptomedidesc,
+      ptoagr.ptogrppronostico,
+      pto.equicodi
+      from
+      prn_puntoagrupacion ptoagr
+      join me_ptomedicion pto on ptoagr.ptomedicodi = pto.ptomedicodi
+      and (ptoagr.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+      where
+      ptoagr.ptomedicodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetDetalleAgrupacion</key>
+    <query>
+      select
+      agr.ptomedicodi,
+      pto.ptomedidesc,
+      agr.agrupfactor,
+      emp.emprcodi, emp.emprnomb
+      from
+      prn_puntoagrupacion ptoagr
+      join prn_agrupacion agr on ptoagr.ptogrpcodi = agr.ptogrpcodi
+      and (ptoagr.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+      join me_ptomedicion pto on agr.ptomedicodi = pto.ptomedicodi
+      join si_empresa emp on pto.emprcodi = emp.emprcodi
+      where
+      ptoagr.ptomedicodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetMaxIdPuntoAgrupacion</key>
+    <query>
+      select nvl(max(ptogrpcodi), 0) + 1 from prn_puntoagrupacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SavePuntoAgrupacion</key>
+    <query>
+      insert into prn_puntoagrupacion(
+      ptogrpcodi,
+      ptomedicodi,
+      ptogrppronostico,
+      ptogrpfechaini,
+      ptogrpfechafin,
+      ptogrpusumodificacion
+      )
+      values(
+      :ptogrpcodi,
+      :ptomedicodi,
+      :ptogrppronostico,
+      :ptogrpfechaini,
+      :ptogrpfechafin,
+      :ptogrpusumodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CerrarPuntoAgrupacion</key>
+    <query>
+      update prn_puntoagrupacion
+      set
+      ptogrpfechafin = :ptogrpfechafin
+      where
+      ptogrpcodi = :ptogrpcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListByIdPuntoAgrupacion</key>
+    <query>
+      select
+      ptogrpcodi,
+      ptomedicodi,
+      ptogrpfechaini,
+      ptogrpfechafin,
+      ptogrppronostico,
+      ptogrpusumodificacion
+      from
+      prn_puntoagrupacion
+      where
+      ptomedicodi = :ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPtosAgrupadosParaProdem</key>
+    <query>
+      select
+      agr.*
+      from
+      prn_agrupacion agr
+      join prn_puntoagrupacion ptoagr on agr.ptogrpcodi = ptoagr.ptogrpcodi
+      join me_ptomedicion pto on ptoagr.ptomedicodi = pto.ptomedicodi
+      and (pto.ptomediestado = 'A')
+      where
+      ptoagr.ptogrppronostico = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarNombreAgrupacion</key>
+    <query>
+      select
+      1 valido
+      from
+      me_ptomedicion
+      where
+      origlectcodi = 33 and
+      ptomediestado = 'A' and
+      ptomedidesc = :ptomedidesc
+    </query>
+  </Sql>
+
+  <!--Lista de las agrupaciones de puntos de medición-->
+  <!--
+  {0} : Origlectcodi - Origen de lectura de una agrupación PRODEM
+  {1} : Origlectcodi2 - Origen de lectura de un punto de medición PRODEM
+  {2} : Lectcodi - Lectura de una medición enviada por un agente
+  {3} : Tipoinfocodi - Tipo de información de un punto de medición PRODEM
+  {4} : Medifecha - Fecha de envio de una medición
+  {5} : Prnm48tipo - Tipo de información correspondiente a la "Depuración manual" y "Depuración automática"
+  {6} : Areacodi - Filtro de busqueda por área operativa
+  {7} : Emprcodi - Filtro de busqueda por empresa
+  {8} : Ptomedicodi - Filtro de busqueda por agrupación
+  {9} : Ptogrppronostico - Filtro de busqueda por "Pertenece al pronóstico"
+  {10} : Prnm48tipo2 - Tipo de información correspondiente a la "Depuración manual de una agrupación"
+  -->
+  <Sql>
+    <key>ListDemandaAgrupada</key>
+    <query>
+      select *
+      from (
+      select
+      pto.ptomedicodi, pto.ptomedidesc,
+      1 PRNM48TIPO,
+      area.areacodi, area.areanomb,
+      emp.emprcodi, emp.emprnomb,
+      ptogrp.ptogrppronostico,
+      grp.ptomedicodi PTOGRPHIJOCODI,
+      pto2.ptomedibarranomb || nvl2(pto2.ptomedidesc, (' - ' || pto2.ptomedidesc), null) PTOGRPHIJODESC,
+      nvl(dt.meditotal, 0) MEDITOTAL, nvl(dt.tipoemprcodi, 0) TIPOEMPRCODI, nvl(dt.prnmestado, 0) PRNMESTADO
+      from
+      me_ptomedicion pto
+      join eq_area area on pto.equicodi = area.areacodi
+      join si_empresa emp on pto.emprcodi = emp.emprcodi
+      join prn_puntoagrupacion ptogrp on pto.ptomedicodi = ptogrp.ptomedicodi
+      and (pto.origlectcodi = {0} and pto.ptomediestado = 'A')
+      and (ptogrp.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+      join prn_agrupacion grp on ptogrp.ptogrpcodi = grp.ptogrpcodi
+      join me_ptomedicion pto2 on grp.ptomedicodi = pto2.ptomedicodi
+      left join (
+          select
+          ptomedicodi, 
+          medifecha,
+          tipoemprcodi,
+          count(prnm48tipo) PRNMESTADO,
+          nvl(sum(meditotal), 0) MEDITOTAL
+          from
+          (
+              select
+              m48.ptomedicodi,
+              m48.medifecha,
+              m48.lectcodi PRNM48TIPO,
+              emp.tipoemprcodi,
+              H1 + H2 + H3 + H4 + H5 + H6 + H7 + H8 + H9 + H10 +
+              H11 + H12 + H13 + H14 + H15 + H16 + H17 + H18 + H19 + H20 +
+              H21 + H22 + H23 + H24 + H25 + H26 + H27 + H28 + H29 + H30 +
+              H31 + H32 + H33 + H34 + H35 + H36 + H37 + H38 + H39 + H40 +
+              H41 + H42 + H43 + H44 + H45 + H46 + H47 + H48 as MEDITOTAL
+              from
+              me_medicion48 m48
+              join me_ptomedicion pto on m48.ptomedicodi = pto.ptomedicodi
+              and (pto.origlectcodi = {1})
+              join si_empresa emp on pto.emprcodi = emp.emprcodi
+              where
+              m48.lectcodi = {2} and
+              m48.tipoinfocodi = {3} and
+              m48.medifecha = to_date('{4}', 'DD/MM/YYYY')
+              union all
+              select
+              m48.ptomedicodi,
+              m48.medifecha,
+              m48.prnm48tipo,
+              emp.tipoemprcodi,
+              meditotal
+              from
+              prn_medicion48 m48
+              join me_ptomedicion pto on m48.ptomedicodi = pto.ptomedicodi
+              and (pto.origlectcodi = {1})
+              join si_empresa emp on pto.emprcodi = emp.emprcodi
+              where
+              m48.prnm48tipo in ({5}) and
+              m48.medifecha = to_date('{4}', 'DD/MM/YYYY')
+          ) group by ptomedicodi, medifecha, tipoemprcodi
+      ) dt on pto2.ptomedicodi = dt.ptomedicodi
+      where
+      (area.areacodi in ({6}) or '0' = '{6}') and
+      (emp.emprcodi in ({7}) or '0' = '{7}') and
+      (pto.ptomedicodi in ({8}) or '0' = '{8}') and
+      ptogrp.ptogrppronostico = {9}
+      union all
+      select
+      pto.ptomedicodi, pto.ptomedidesc,
+      m48.prnm48tipo,
+      area.areacodi, area.areanomb,
+      emp.emprcodi, emp.emprnomb,
+      ptogrp.ptogrppronostico,
+      -1 PTOGRPHIJOCODI,
+      null PTOGRPHIJODESC,
+      m48.meditotal,
+      -1 TIPOEMPRCODI,
+      -1 PRNMESTADO
+      from
+      me_ptomedicion pto
+      join eq_area area on pto.equicodi = area.areacodi
+      join si_empresa emp on pto.emprcodi = emp.emprcodi
+      join prn_puntoagrupacion ptogrp on pto.ptomedicodi = ptogrp.ptomedicodi
+      and (pto.origlectcodi = {0} and pto.ptomediestado = 'A')
+      and (ptogrp.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+      join prn_medicion48 m48 on pto.ptomedicodi = m48.ptomedicodi
+      and (m48.prnm48tipo = {10} and m48.medifecha = to_date('{4}', 'DD/MM/YYYY'))
+      where
+      (area.areacodi in ({6}) or '0' = '{6}') and
+      (emp.emprcodi in ({7}) or '0' = '{7}') and
+      (pto.ptomedicodi in ({8}) or '0' = '{8}') and
+      ptogrp.ptogrppronostico = {9}
+      ) order by ptomedidesc
+    </query>
+  </Sql>
+
+</Sqls>

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(facuticodi), 0) + 1 from co_factor_utilizacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into co_factor_utilizacion(
+		facuticodi,
+		prodiacodi,
+		facutibeta,
+		facutialfa,
+		facutiperiodo,
+		facutiusucreacion,
+		facutifeccreacion,
+    facutiusumodificacion,
+		facutifecmodificacion
+		)
+		values(
+		:facuticodi,
+		:prodiacodi,
+		:facutibeta,
+		:facutialfa,
+		:facutiperiodo,
+		:facutiusucreacion,
+		:facutifeccreacion,
+    :facutiusumodificacion,
+		:facutifecmodificacion
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+		update co_factor_utilizacion
+		set
+		prodiacodi = :prodiacodi,
+		facutibeta = :facutibeta,
+		facutialfa = :facutialfa,
+		facutiperiodo = :facutiperiodo,
+		facutiusucreacion = :facutiusucreacion,
+		facutifeccreacion = :facutifeccreacion,
+    facutiusumodificacion = :facutiusumodificacion,
+		facutifecmodificacion = :facutifecmodificacion
+		where
+		facuticodi = :facuticodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		delete from co_factor_utilizacion
+		where
+		prodiacodi = :facuticodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           facutibeta,
+           facutiusucreacion,
+           facutifeccreacion,
+           facutiusumodificacion,
+           facutifecmodificacion,
+           facuticodi,
+           prodiacodi,
+           facutiperiodo,
+           facutialfa
+       from
+           co_factor_utilizacion
+       where
+           facuticodi = :facuticodi
+       
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           facutibeta,
+           facutiusucreacion,
+           facutifeccreacion,
+           facutiusumodificacion,
+           facutifecmodificacion,
+           facuticodi,
+           prodiacodi,
+           facutiperiodo,
+           facutialfa
+       from
+           co_factor_utilizacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		facutibeta,
+		facutiusucreacion,
+		facutifeccreacion,
+    facutiusumodificacion,
+    facutifecmodificacion,
+		facuticodi,
+		prodiacodi,
+		facutiperiodo,
+		facutialfa
+		from
+		co_factor_utilizacion
+		where
+		prodiacodi = {0}
+		order by facutiperiodo asc
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerReporte</key>
+		<query>
+			select
+			proceso.prodiafecha,
+			periodo.perprgvalor,
+			factor.*
+			from co_factor_utilizacion factor
+			inner join co_proceso_diario proceso on factor.prodiacodi = proceso.prodiacodi
+			inner join co_periodo_prog periodo on proceso.perprgcodi = periodo.perprgcodi
+			where proceso.prodiatipo = 'M' and proceso.copercodi = {0} and proceso.covercodi = {1}
+			and (proceso.prodiafecha >= to_date('{2}', 'YYYY-MM-DD') and proceso.prodiafecha &lt;= to_date('{3}', 'YYYY-MM-DD') )
+			order by 1, 2, factor.facutiperiodo
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerReporteDiario</key>
+		<query>
+			select
+			proceso.prodiafecha,
+			periodo.perprgvalor,
+			factor.*
+			from co_factor_utilizacion factor
+			inner join co_proceso_diario proceso on factor.prodiacodi = proceso.prodiacodi
+			inner join co_periodo_prog periodo on proceso.perprgcodi = periodo.perprgcodi
+			where proceso.prodiatipo = 'D'
+			and (proceso.prodiafecha >= to_date('{0}', 'YYYY-MM-DD') and proceso.prodiafecha &lt;= to_date('{1}', 'YYYY-MM-DD') )
+			order by 1, 2, factor.facutiperiodo
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>EliminarFactoresUtilizacion</key>
+    <query>
+      delete from co_factor_utilizacion
+      where
+      prodiacodi in ({0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteResultados</key>
+    <query>
+      SELECT
+      proceso.prodiafecha,
+      periodo.perprgvalor,
+      factor.*
+      FROM co_factor_utilizacion factor
+      INNER JOIN co_proceso_diario proceso ON factor.prodiacodi = proceso.prodiacodi
+      INNER JOIN co_periodo_prog periodo ON proceso.perprgcodi = periodo.perprgcodi
+      WHERE proceso.prodiatipo = 'D' AND proceso.prodiacodi = {0} ORDER BY 1, 2, factor.facutiperiodo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByProdiacodiYPeriodo</key>
+    <query>
+      SELECT * FROM co_factor_utilizacion
+      WHERE prodiacodi = {0} AND facutiperiodo = {1}
+    </query>
+  </Sql>
+  
+</Sqls>

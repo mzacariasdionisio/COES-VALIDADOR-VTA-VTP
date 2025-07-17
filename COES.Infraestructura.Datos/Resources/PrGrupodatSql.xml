@@ -1,0 +1,729 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into pr_grupodat(
+      fechadat,
+      concepcodi,
+      grupocodi,
+      lastuser,
+      formuladat,
+      deleted,
+      fechaact,
+      gdatcomentario,
+      gdatsustento,
+      gdatcheckcero
+      )
+      values(
+      :fechadat,
+      :concepcodi,
+      :grupocodi,
+      :lastuser,
+      :formuladat,
+      :deleted,
+      :fechaact,
+      :gdatcomentario,
+      :gdatsustento,
+      :gdatcheckcero
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update pr_grupodat
+      set
+      lastuser = :lastuser,
+      formuladat = :formuladat,
+      fechaact = :fechaact,
+      deleted = :deleted2,
+      gdatcomentario =:gdatcomentario,
+      gdatsustento = :gdatsustento,
+      gdatcheckcero = :gdatcheckcero
+      where
+      fechadat = :fechadat and
+      concepcodi = :concepcodi and
+      grupocodi = :grupocodi and
+      deleted = :deleted
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      pr_grupodat
+      where
+      fechadat = :fechadat and
+      concepcodi = :concepcodi and
+      grupocodi = :grupocodi and
+      deleted = :deleted
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      pr_grupodat
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarParametro</key>
+    <query>
+      update pr_grupodat
+      set
+      formuladat = :formuladat,
+      lastuser = :lastuser,
+      fechaact = sysdate
+      where
+      grupocodi = :grupocodi and
+      concepcodi = :concepcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      pr_grupodat
+      where concepcodi = {0}
+      order by grupocodi,fechadat
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlValoresModoOperacionGrupoDat</key>
+    <query>
+      select distinct gd.concepcodi,fn_sdatoactualconcepto(gd.grupocodi,gd.concepcodi) valor ,c.concepunid
+      from pr_grupodat gd
+      inner join pr_concepto c on gd.concepcodi=c.concepcodi
+      where gd.grupocodi=:grupocodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlHistoricoValores</key>
+    <query>
+      select c.concepabrev,c.concepdesc , c.conceppadre, gd.*
+      from pr_grupodat gd
+      inner join pr_concepto c on gd.concepcodi=c.concepcodi
+      where c.concepcodi in ({0}) and ('-1' = {1} or grupocodi={1} ) order by fechadat desc
+    </query>
+  </Sql>
+
+  <!-- INICIO - COSTO OPORTUNIDAD -->
+  <Sql>
+    <key>ParametrosURSporGrupo</key>
+    <query>
+      select distinct gd.concepcodi,fn_sdato_fecha_concepto(gd.grupocodi,gd.concepcodi,TO_DATE('{0}','YYYY-MM-DD')) valor ,c.concepunid,c.concepdesc
+      from pr_grupodat gd
+      inner join pr_concepto c on gd.concepcodi=c.concepcodi
+      where c.concepcodi in (14,16,236,237,253) and gd.grupocodi= {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ParametrosURSporGrupoHidro</key>
+    <query>
+      select distinct gd.concepcodi,fn_sdato_fecha_concepto(gd.grupocodi,gd.concepcodi,TO_DATE('{0}','YYYY-MM-DD')) valor ,c.concepunid,c.concepdesc
+      from pr_grupodat gd
+      inner join pr_concepto c on gd.concepcodi=c.concepcodi
+      where c.concepcodi in (246,247,251,252,254) and gd.grupocodi= {1}
+    </query>
+  </Sql>
+  <!-- FIN - COSTO OPORTUNIDAD -->
+
+  <Sql>
+    <key>ParametrosGeneralesURS</key>
+    <query>
+      select distinct gd.concepcodi,fn_sdatoactualconcepto(gd.grupocodi,gd.concepcodi) valor ,c.concepunid,c.concepdesc
+      from pr_grupodat gd
+      inner join pr_concepto c on gd.concepcodi=c.concepcodi
+      where c.concepcodi in (1,238,239) and gd.grupocodi= 0
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerParametroPorCentral</key>
+    <query>
+      select gr.grupocodi,cnp.concepcodi,cnp.concepabrev,dat.formuladat,cnp.concepunid,dat.fechadat
+      from pr_grupodat dat, pr_concepto cnp, pr_grupo gr,
+      (select grupocodi,concepcodi, max(fechadat) as fechamax from pr_grupodat where deleted = 0 and
+      grupocodi in ({0})
+      and fechadat &lt;= sysdate
+      group by grupocodi,concepcodi) vi where dat.deleted = 0 and
+      dat.grupocodi = vi.grupocodi
+      and dat.concepcodi= vi.concepcodi and dat.fechadat=vi.fechamax and cnp.concepcodi=dat.concepcodi and gr.grupocodi = vi.grupocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerParametroPorConcepto</key>
+    <query>
+      select gr.grupocodi,cnp.concepcodi,cnp.concepabrev,dat.formuladat,cnp.concepunid,dat.fechadat
+      from pr_grupodat dat, pr_concepto cnp, pr_grupo gr,
+      (select grupocodi,concepcodi, max(fechadat) as fechamax from pr_grupodat where deleted = 0 and
+      grupocodi = 0
+      and fechadat &lt;= sysdate
+      group by grupocodi,concepcodi) vi where dat.deleted = 0 and  cnp.concepcodi in ({0}) and
+      dat.grupocodi = vi.grupocodi
+      and dat.concepcodi= vi.concepcodi and dat.fechadat=vi.fechamax and cnp.concepcodi=dat.concepcodi and gr.grupocodi = vi.grupocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerParametroCurvaConsumo</key>
+    <query>
+      select distinct eq.equicodi, gr.grupocodi, gr.gruponomb, cnp.concepcodi,cnp.concepabrev,dat.formuladat,cnp.concepunid,dat.fechadat, gr.emprcodi, gr.curvcodi
+      from pr_grupodat dat, pr_concepto cnp, pr_grupo gr, eq_equipo eq,
+      (select grupocodi,concepcodi, max(fechadat) as fechamax from pr_grupodat where deleted = 0
+      and fechadat &lt;= to_date('{1}','YYYY-MM-DD')
+      group by grupocodi,concepcodi) vi where dat.deleted = 0 and  cnp.concepcodi in (243,14,175,176,177,178,179,180,181,182,183, 503, 190, 285, 286, 516,517,518,519,520, 707, 708,709) and
+      dat.grupocodi = vi.grupocodi and eq.grupocodi = gr.grupopadre
+      and dat.concepcodi= vi.concepcodi and dat.fechadat=vi.fechamax and cnp.concepcodi=dat.concepcodi and gr.grupocodi = vi.grupocodi
+      and gr.catecodi = 2
+      --and gr.grupoactivo = 'S'
+      and (gr.emprcodi in ({0}) or '{0}' = '-1')
+      --and (gr.grupocodi = {1} or '{1}' = '-1')
+      order by 1 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerParametroGeneral</key>
+    <query>
+      select cnp.concepdesc,cnp.concepabrev,cnp.conceporden, dat.concepcodi,cnp.concepunid, dat.formuladat,
+      dat.fechadat, dat.lastuser
+      from pr_grupodat dat, pr_concepto cnp,
+      (select concepcodi, max(fechadat) as fechamax from pr_grupodat where deleted = 0 and
+      grupocodi =0 and fechadat &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI')
+      group by concepcodi) vi where dat.deleted = 0 and
+      dat.grupocodi=0 and dat.concepcodi= vi.concepcodi and dat.fechadat=vi.fechamax and cnp.concepcodi=dat.concepcodi order by conceporden
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerParametroModoOperacion</key>
+    <query>
+      select cnp.concepdesc,cnp.concepabrev,cnp.conceporden, dat.concepcodi,cnp.concepunid, dat.formuladat,
+      dat.fechadat, gr.grupocodi, gr.catecodi, dat.lastuser
+      from pr_grupodat dat, pr_concepto cnp, pr_grupo gr,
+      (select grupocodi,concepcodi, max(fechadat) as fechamax from pr_grupodat where deleted = 0 and
+      grupocodi in ({0})
+      and fechadat &lt;= to_date('{1}', 'YYYY-MM-DD HH24:MI')
+      group by grupocodi,concepcodi) vi where dat.deleted = 0 and
+      dat.grupocodi = vi.grupocodi
+      and dat.concepcodi= vi.concepcodi and dat.fechadat=vi.fechamax and cnp.concepcodi=dat.concepcodi and
+      gr.grupocodi = vi.grupocodi  order by conceporden
+    </query>
+  </Sql>
+  <!-- Inicio de Agregado - Sistema Compensaciones -->
+  <Sql>
+    <key>ListaModosOperacion</key>
+    <query>
+      SELECT GRUPOCODI, GRUPONOMB
+      FROM PR_GRUPO
+      WHERE CATECODI = 2 AND GRUPOACTIVO ='S'
+      AND GRUPOCODI NOT IN (SELECT GRUPOCODI FROM VCE_PTOMED_MODOPE WHERE PECACODI = {1} AND PTOMEDICODI = {0} AND PMEMOPESTREGISTRO='1')
+      ORDER BY 2
+    </query>
+  </Sql>
+
+  <!-- Inicio de cambios -->
+  <Sql>
+    <key>ListaCentral</key>
+    <query>
+      SELECT EQUICODI AS GRUPOCODI,
+      (CASE WHEN EQUIESTADO = 'A' THEN EQUINOMB ELSE RTRIM(EQUINOMB) || ' [' || EQUIESTADO || ']'END) AS GRUPONOMB
+      FROM EQ_EQUIPO
+      WHERE FAMCODI IN (4,5) AND EMPRCODI = {0}
+      ORDER BY 2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaGrupo</key>
+    <query>
+      SELECT EQ.GRUPOCODI, GG.GRUPONOMB, GG.GRUPOABREV
+      FROM
+      (SELECT DISTINCT (CASE WHEN GRUPOCODI IS NULL THEN  -1 ELSE GRUPOCODI END) AS GRUPOCODI
+      FROM EQ_EQUIPO
+      WHERE EMPRCODI = {0}  AND FAMCODI IN (2,3) AND EQUIPADRE = {1}
+      ) EQ
+      INNER JOIN PR_GRUPO GG ON GG.GRUPOCODI = EQ.GRUPOCODI
+      ORDER BY 2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaModo</key>
+    <query>
+      SELECT MO.GRUPOCODI, MO.GRUPONOMB, MO.GRUPOABREV
+      FROM PR_GRUPO MO
+      WHERE MO.CATECODI = 2  AND MO.GRUPOPADRE = {1}
+      ORDER BY MO.GRUPOPADRE
+    </query>
+  </Sql>
+  <!-- Fin de cambios-->
+
+  <Sql>
+    <key>ListaCabecera</key>
+    <query>
+      SELECT GRUPONOMB FROM PR_GRUPO
+      WHERE GRUPOCODI IN (SELECT GRUPOCODI FROM VCE_HORA_OPERACION WHERE PECACODI = {0})
+      ORDER BY GRUPONOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaCabeceraBody</key>
+    <query>
+      SELECT GRUPOCODI FROM PR_GRUPO
+      WHERE GRUPOCODI IN (SELECT GRUPOCODI FROM VCE_HORA_OPERACION WHERE PECACODI = {0})
+      ORDER BY GRUPONOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetGrupoCodi</key>
+    <query>
+      SELECT GRUPOCODI FROM PR_GRUPO WHERE GRUPOACTIVO = 'S' AND CATECODI = 2 AND UPPER(TRIM(GRUPONOMB)) = UPPER(TRIM('{0}'))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaModoOperacion</key>
+    <query>
+      select
+      grupocodi,
+      gruponomb,
+      catecodi
+      from pr_grupo
+      where grupoactivo = 'S'
+      {0}
+      order by gruponomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerParametroPorModoOperacionPorFecha</key>
+    <query>
+      SELECT GR.GRUPOCODIBASE AS GRUPOCODI,CNP.CONCEPCODI,TRIM(CNP.CONCEPABREV) AS CONCEPABREV,NVL(DAT.FORMULADAT,'0') AS FORMULADAT,CNP.CONCEPUNID,DAT.FECHADAT
+      FROM PR_GRUPODAT DAT, PR_CONCEPTO CNP, (SELECT GRUPOCODI,GRUPONOMB,CATECODI,GH.GRUPOCODI AS GRUPOCODIBASE FROM PR_GRUPO GH WHERE GRUPOCODI in ({0})
+      UNION
+      SELECT GP.GRUPOCODI,GP.GRUPONOMB,GP.CATECODI,GH.GRUPOCODI AS GRUPOCODIBASE FROM PR_GRUPO GH JOIN PR_GRUPO GP ON GH.GRUPOPADRE = GP.GRUPOCODI WHERE GH.GRUPOCODI in ({0})
+      UNION
+      SELECT GA.GRUPOCODI,GA.GRUPONOMB,GA.CATECODI,GH.GRUPOCODI AS GRUPOCODIBASE FROM PR_GRUPO GH JOIN PR_GRUPO GP ON GH.GRUPOPADRE = GP.GRUPOCODI JOIN PR_GRUPO GA ON GP.GRUPOPADRE = GA.GRUPOCODI WHERE GH.GRUPOCODI in ({0})
+      ) GR,
+      (SELECT GRUPOCODI,CONCEPCODI, MAX(FECHADAT) AS FECHAMAX FROM PR_GRUPODAT WHERE DELETED = 0
+      AND FECHADAT &lt;= TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      GROUP BY GRUPOCODI,CONCEPCODI) VI WHERE DAT.DELETED = 0 AND
+      DAT.GRUPOCODI = VI.GRUPOCODI
+      AND DAT.CONCEPCODI= VI.CONCEPCODI AND DAT.FECHADAT=VI.FECHAMAX AND CNP.CONCEPCODI=DAT.CONCEPCODI AND GR.GRUPOCODI = VI.GRUPOCODI
+      AND CNP.CONCEPABREV IS NOT NULL
+    </query>
+  </Sql>
+
+  <!--Fin de Agregado - Sistema de Compensaciones -->
+
+  <Sql>
+    <key>ValorModoOperacion</key>
+    <query>
+      SELECT NVL(MAX(FN_SDATO_CONCEPTO_FECHA({0},{1},TO_DATE('{2}','YYYY-MM-DD'))),0) AS Formuladat
+      FROM DUAL
+    </query>
+  </Sql>
+
+  <!--region NotificacionesCambiosEquipamiento-->
+  <Sql>
+    <key>ConceptosModificados</key>
+    <query>
+      select
+      con.concepdesc,
+      gp.gruponomb,
+      gd.*,
+      emp.emprnomb,gp.GRUPOESTADO
+      from pr_grupodat gd inner join pr_concepto con on gd.concepcodi = con.concepcodi
+      inner join pr_grupo gp on gd.grupocodi = gp.grupocodi
+      left join si_empresa emp on emp.emprcodi = gp.emprcodi
+      where gd.fechaact > = to_date('{0}', 'DD-MM-YYYY HH24:MI')  and gd.fechaact &lt;= to_date('{1}', 'DD-MM-YYYY HH24:MI')
+    </query>
+  </Sql>
+  <!--region NotificacionesCambiosEquipamiento -->
+
+  <!--region Curva Consumo-->
+
+  <Sql>
+    <key>ObtenerParametroCurvaConsumoporGrupoCodi</key>
+    <query>
+      select distinct gr.grupocodi, gr.gruponomb, cnp.concepcodi, cnp.concepabrev,dat.formuladat,cnp.concepunid,dat.fechadat,dat.fechaact, dat.lastuser
+      from pr_grupodat dat, pr_concepto cnp, pr_grupo gr  where cnp.concepcodi = 243
+      and cnp.concepcodi=dat.concepcodi   and dat.grupocodi=gr.grupocodi and dat.formuladat &lt;&gt; '0'
+      and gr.catecodi = 2  and gr.grupoactivo = 'S'
+      and (gr.grupocodi = {0})
+      order by dat.fechaact desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerParametroCurvaConsumoporFecha</key>
+    <query>
+      select distinct gr.grupocodi, gr.gruponomb, cnp.concepcodi,cnp.concepabrev,dat.formuladat,cnp.concepunid,dat.fechadat, emp.EMPRNOMB, gr.grupocodincp
+      from pr_grupodat dat, pr_concepto cnp, pr_grupo gr inner join si_empresa emp on gr.emprcodi = emp.emprcodi,
+      (select grupocodi,concepcodi, max(fechadat) as fechamax from pr_grupodat where deleted = 0
+      and fechadat &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI')
+		group by grupocodi,concepcodi) vi where dat.deleted = 0 and  cnp.concepcodi in (243,14,175,176,177,178,179,180,181,182,183,708,709, 503) and
+		dat.grupocodi = vi.grupocodi
+		and dat.concepcodi= vi.concepcodi and dat.fechadat=vi.fechamax and cnp.concepcodi=dat.concepcodi and gr.grupocodi = vi.grupocodi
+		and gr.catecodi = 2
+		and gr.grupoactivo = 'S'
+		order by 1 asc
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerBuscaIDCurvaPrincipal</key>
+    <query>
+      select curvgrupocodiprincipal from pr_curva cr where cr.curvcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerFechaEdicionCurva</key>
+    <query>
+		select to_char(max(fechadat), 'DD/MM/YYYY') as fecha from pr_grupodat
+		where concepcodi in (14, 175, 176, 177, 178, 179, 180, 181, 182, 183,708,709) and grupocodi = :grupocodi
+	</query>
+  </Sql>
+
+  <!--region Curva Consumo -->
+
+  <!--INICIO MigracionSGOCOES-GrupoB-->
+
+  <Sql>
+    <key>ParametrosActualizadosPorFecha2</key>
+    <query>
+      SELECT
+      GRP.GRUPONOMB,
+      DAT.GRUPOCODI,
+      CNP.CONCEPDESC,
+      CNP.CONCEPABREV,
+      CNP.CONCEPUNID,
+      DAT.CONCEPCODI,
+      DAT.FORMULADAT,
+      DAT.FECHADAT,
+      DAT.LASTUSER
+      FROM
+      PR_GRUPO GRP,
+      PR_GRUPODAT DAT,
+      PR_CONCEPTO CNP,
+      ( SELECT GRUPOCODI,CONCEPCODI, MAX(FECHADAT) AS FECHAMAX FROM PR_GRUPODAT WHERE DELETED = 0 AND trunc(FECHADAT) = TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') GROUP BY GRUPOCODI,CONCEPCODI ) VI
+      WHERE
+      DAT.DELETED=0
+      AND DAT.GRUPOCODI = VI.GRUPOCODI
+      AND DAT.CONCEPCODI = VI.CONCEPCODI
+      AND DAT.FECHADAT = VI.FECHAMAX
+      AND CNP.CONCEPCODI = DAT.CONCEPCODI
+      AND DAT.GRUPOCODI = GRP.GRUPOCODI
+      ORDER BY GRUPOCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ReporteControlCambios</key>
+    <query>
+      select * from
+      (
+            --ultimos cambios
+            select dat_1.* from
+            (
+            select dat.*, gr.catecodi, cnp.CONCEPDESC, cnp.CONCEPABREV, gr.gruponomb, ROW_NUMBER() OVER(PARTITION BY dat.concepcodi,dat.grupocodi  ORDER BY dat.concepcodi,dat.grupocodi,dat.fechaact DESC) AS CAMBIO
+            from pr_grupodat dat 
+            inner join pr_concepto cnp on dat.concepcodi = cnp.concepcodi
+            inner join pr_grupo gr on gr.grupocodi = dat.grupocodi
+            where dat.deleted = 0 and trunc(dat.fechaact) &lt;= to_date('{0}', 'YYYY-MM-DD') and dat.grupocodi != 0
+            order by dat.fechaact desc, dat.concepcodi, dat.grupocodi
+            )dat_1
+            where dat_1.CAMBIO =1 and trunc(dat_1.fechaact) = to_date('{0}', 'YYYY-MM-DD')
+
+            union
+
+            --penultimos cambios
+            select dat_2.* from
+            (
+            select dat.*, gr.catecodi, cnp.CONCEPDESC, cnp.CONCEPABREV, gr.gruponomb, ROW_NUMBER() OVER(PARTITION BY dat.concepcodi,dat.grupocodi  ORDER BY dat.concepcodi,dat.grupocodi,dat.fechaact DESC) AS CAMBIO
+            from pr_grupodat dat 
+            inner join pr_concepto cnp on dat.concepcodi = cnp.concepcodi
+            inner join pr_grupo gr on gr.grupocodi = dat.grupocodi
+            where dat.deleted = 0 and trunc(dat.fechaact) &lt;= to_date('{0}', 'YYYY-MM-DD') and dat.grupocodi != 0
+            order by dat.fechaact desc, dat.concepcodi, dat.grupocodi
+            )dat_2
+            inner join
+            (
+                  select concepcodi, grupocodi from
+                  (
+                  select dat.*, ROW_NUMBER() OVER(PARTITION BY dat.concepcodi,dat.grupocodi  ORDER BY dat.concepcodi,dat.grupocodi,dat.fechaact DESC) AS NUM
+                  from pr_grupodat dat where dat.deleted = 0 and trunc(dat.fechaact) = to_date('{0}', 'YYYY-MM-DD') and dat.grupocodi != 0
+                  order by dat.fechaact desc, dat.concepcodi, dat.grupocodi
+                  ) where num=1
+            )dat_3 on dat_2.grupocodi = dat_3.grupocodi and dat_2.concepcodi = dat_3.concepcodi and dat_2.CAMBIO = 2
+            where trunc(dat_2.fechaact) &lt; to_date('{0}', 'YYYY-MM-DD') 
+      )
+      order by concepcodi, grupocodi, fechaact desc
+    </query>
+  </Sql>
+
+  <!--FIN MigracionSGOCOES-GrupoB-->
+  <Sql>
+    <key>ListaBarraModoOperacion</key>
+    <query>
+      select gd.fechadat,br.barrbarratransferencia,gd.lastuser,gd.fechaact,gd.formuladat
+      from pr_grupodat gd left join trn_barra br on gd.formuladat = br.barrcodi
+      where gd.concepcodi = 262 and gd.grupocodi = {0}
+    </query>
+  </Sql>
+
+
+  <!--region inicio CSOCOES func A-->
+  <Sql>
+    <key>ObtenerListaConfigScoSinac</key>
+    <query>
+      select * from (
+      SELECT
+      DAT.FECHADAT,
+      DAT.GRUPOCODI,
+      gr.gruponomb,
+      DAT.CONCEPCODI,
+      DAT.FORMULADAT,
+      DAT.DELETED,
+      CASE DAT.CONCEPCODI WHEN 256 THEN 'Gen MW : Canales SCADA' WHEN 257 THEN 'Gen MVAR : Canales SCADA' ELSE '' END AS CONCEPDESC,
+      (row_number() over (order by DAT.GRUPOCODI asc)) as r
+      FROM PR_GRUPO GR, PR_GRUPODAT DAT,
+      (SELECT GRUPOCODI, CONCEPCODI , MAX(FECHADAT) AS FECHAMAX FROM PR_GRUPODAT WHERE DELETED = 0 AND
+      (CONCEPCODI=101 OR CONCEPCODI=102 ) AND FECHADAT &lt;=  TO_DATE('{0}','YYYY-MM-DD HH24:MI:SS')  GROUP BY GRUPOCODI, CONCEPCODI) VI
+      WHERE (GR.CATECODI=3 OR CATECODI=5) AND GR.GRUPOCODI = DAT.GRUPOCODI AND
+      DAT.GRUPOCODI = VI.GRUPOCODI AND DAT.CONCEPCODI = VI.CONCEPCODI AND DAT.FECHADAT = VI.FECHAMAX ORDER BY DAT.GRUPOCODI
+      )
+      where (r >= ((({1}-1) * {2}) + 1) and r &lt; (({1} * {2}) + 1 )) or ({1} = -1 and {2} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListaConfigScoSinac</key>
+    <query>
+      select count(*) FROM PR_GRUPO GR, PR_GRUPODAT DAT,
+      (SELECT GRUPOCODI, CONCEPCODI , MAX(FECHADAT) AS FECHAMAX FROM PR_GRUPODAT WHERE DELETED = 0 AND
+      (CONCEPCODI=256 OR CONCEPCODI=257 ) AND FECHADAT &lt;=  TO_DATE('{0}','YYYY-MM-DD HH24:MI:SS')  GROUP BY GRUPOCODI, CONCEPCODI) VI
+      WHERE (GR.CATECODI=3 OR CATECODI=5) AND GR.GRUPOCODI = DAT.GRUPOCODI AND
+      DAT.GRUPOCODI = VI.GRUPOCODI AND DAT.CONCEPCODI = VI.CONCEPCODI AND DAT.FECHADAT = VI.FECHAMAX ORDER BY DAT.GRUPOCODI
+    </query>
+  </Sql>
+
+  <!--region fin CSOCOES func A-->
+
+  <!--FIT Aplicativo VTD-->
+
+  <Sql>
+    <key>ObtenerParametroValorizacion</key>
+    <query>
+      SELECT Formuladat from
+      (select formuladat
+      from pr_grupodat a
+      where a.deleted = 0 and
+      a.grupocodi = {0} and
+      a.concepcodi = {1} and
+      fechadat &lt;= TO_DATE('{2}','YYYY-MM-DD')
+      order by fechadat desc)
+      where rownum=1
+    </query>
+  </Sql>
+
+  <!-- Fin-->
+
+  <!--INICIO numerales datos base -->
+  <Sql>
+    <key>ListaFechasDatosBase_5_5_x</key>
+    <query>
+      Select fechadat from pr_grupodat t where concepcodi = {0}
+      and fechadat &lt;= to_date('{1}','DD-MM-YYYY')
+      order by fechadat desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaDatosBase_5_5_n</key>
+    <query>
+      Select fechadat, formuladat,deleted
+      from pr_grupodat t
+      where concepcodi = {0}
+      and fechadat between to_date('{1}', 'DD-MM-YYYY') and
+      to_date('{2} 23:59:59', 'DD-MM-YYYY HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaDatosBase_5_5_2</key>
+    <query>
+      SELECT FORMULADAT, TO_CHAR(FECHADAT, 'DD') AS DIA, FECHADAT ,deleted
+      FROM PR_GRUPODAT T
+      WHERE CONCEPCODI = 1
+      and fechadat between to_date('{0}', 'DD-MM-YYYY') and
+      to_date('{1} 23:59:59', 'DD-MM-YYYY HH24:MI:SS')
+      ORDER BY FECHADAT ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaDatosBase_5_6_4</key>
+    <query>
+      select G.GRUPONOMB,T.fechadat, T.grupocodi, trim(T.formuladat) as formula
+      from pr_grupodat t,PR_GRUPO g
+      where concepcodi = 14
+      AND G.GRUPOCODI = T.GRUPOCODI
+      order by T.grupocodi, fechadat
+    </query>
+  </Sql>
+
+  <!--FIN numerales datos base -->
+
+  <!--INICIO SIOSEIN 2-->
+  <Sql>
+    <key>GetByCriteriaConceptoFecha</key>
+    <query>
+      select
+      *
+      from
+      pr_grupodat
+      where concepcodi in({0})
+      and fechadat between to_date('{1}','YYYY-MM-DD') and to_date('{2} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and DELETED = 0
+      order by grupocodi,fechadat
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerTodoParametroModoOperacion</key>
+    <query>
+      SELECT
+      cnp.concepabrev,
+      cnp.conceporden,
+      dat.concepcodi,
+      cnp.concepunid,
+      dat.formuladat,
+      dat.fechadat,
+      dat.grupocodi
+      FROM   pr_grupodat dat
+      inner join pr_concepto cnp
+      ON cnp.concepcodi = dat.concepcodi
+      WHERE  deleted = 0
+      AND grupocodi IN ({0})
+      AND fechadat &lt;= To_date('{1} 00:00', 'YYYY-MM-DD HH24:MI')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerTodoParametroGeneral</key>
+    <query>
+      SELECT cnp.concepabrev,
+      cnp.conceporden,
+      dat.concepcodi,
+      cnp.concepunid,
+      dat.formuladat,
+      dat.fechadat
+      FROM   pr_grupodat dat
+      inner join pr_concepto cnp
+      ON cnp.concepcodi = dat.concepcodi
+      WHERE  dat.deleted = 0
+      AND dat.grupocodi = 0
+      AND fechadat &lt;= To_date('{0} 00:00', 'YYYY-MM-DD HH24:MI')
+    </query>
+  </Sql>
+
+  <!-- FIN SIOSEIN 2-->
+
+  <!--INICIO SUBASTAS-->
+  <Sql>
+    <key>ParametrosConfiguracionPorFecha</key>
+    <query>
+      select * from
+      (
+        SELECT 
+        CNP.CONCEPDESC,
+        CNP.CONCEPABREV,
+        CNP.CONCEPTIPO,
+        CNP.CONCEPUNID,
+        cnp.CONCEPNOMBFICHA, cnp.conceporden, cnp.CONCEPFICHATEC, cnp.CONCEPPROPEQ, CNP.concepocultocomentario,
+        gr.catecodi,
+        gr.GRUPONOMB,
+        DAT.*,
+        row_number() over (partition by dat.GRUPOCODI,dat.concepcodi order by dat.GRUPOCODI,dat.concepcodi,DELETED, FECHADAT desc) as num
+        FROM PR_GRUPODAT DAT
+        inner join PR_CONCEPTO CNP on cnp.concepcodi = dat.concepcodi
+        inner join pr_grupo gr on gr.grupocodi = dat.grupocodi
+        where FECHADAT &lt;= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') AND DELETED = 0
+        and (DAT.CONCEPCODI in ({2}) or '-1' = '{2}')
+        and (dat.GRUPOCODI in ({1}) or '-1' = '{1}')
+      )
+
+      where num = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>BuscarEliminados</key>
+    <query>
+      select
+      *
+      from
+      pr_grupodat
+      where
+      fechadat = :fechadat and
+      concepcodi = :concepcodi and
+      grupocodi = :grupocodi
+    </query>
+  </Sql>
+
+  <!-- FIN SUBASTAS-->
+
+  <!--Ficha técnica inicio-->
+  <Sql>
+    <key>ListarGrupoConValorModificado</key>
+    <query>
+      SELECT * FROM
+      (
+          select
+          dat.grupocodi,
+          pr.grupoESTADO,
+          pr.gruponomb,
+          emp.emprcodi,
+          EMP.EMPRNOMB,
+          ar.areanomb,
+          pr.catecodi,
+          dat.fechadat,
+          ROW_NUMBER() OVER(PARTITION BY dat.grupocodi,dat.fechadat ORDER BY dat.grupocodi,dat.fechadat DESC) AS NUM
+          from pr_grupodat dat
+          inner join pr_concepto cnp on cnp.concepcodi = dat.concepcodi
+          inner join pr_grupo pr on pr.grupocodi = dat.grupocodi
+          INNER JOIN EQ_AREA ar on ar.areacodi = pr.areacodi
+          INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = pr.EMPRCODI
+          where dat.fechadat BETWEEN to_date('{0}','YYYY-MM-DD') AND  to_date('{1}','YYYY-MM-DD')
+          AND dat.deleted = 0
+          and dat.concepcodi in ({2})
+          and cnp.catecodi in ({3})
+          AND pr.grupoESTADO &lt;> 'X'
+          group by dat.grupocodi,pr.grupoESTADO,pr.gruponomb,emp.emprcodi,EMP.EMPRNOMB,ar.areanomb,pr.catecodi,dat.fechadat
+      )
+      WHERE NUM = 1
+    </query>
+  </Sql>
+  <!--Ficha técnica fin-->
+
+</Sqls>

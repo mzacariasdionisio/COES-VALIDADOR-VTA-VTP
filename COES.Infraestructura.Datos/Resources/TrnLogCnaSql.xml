@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(logcnacodi), 0) + 1 from trn_log_cna
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_log_cna(
+      logcnacodi,
+      emprcodi,
+      fechaproceso
+      )
+      values(
+      :logcnacodi,
+      :emprcodi,
+      :fechaproceso
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      lg.logcnacodi,
+      lg.emprcodi,
+      emp.emprrazsocial,
+      (select count(*) from trn_consumo_noautorizado where emprcodi = lg.emprcodi and to_date(lastdate) = to_date(lg.fechaproceso)) cantcna,
+      lg.fechaproceso
+      from trn_log_cna lg
+      inner join si_empresa emp
+      on lg.emprcodi = emp.emprcodi
+      where lg.fechaproceso >=  to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and lg.fechaproceso &lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+</Sqls>  

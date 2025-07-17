@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(ptomedicodi), 0) + 1 from wb_generacionrer
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into wb_generacionrer(
+      ptomedicodi,
+      estado,
+      userupdate,
+      usercreate,
+      fecupdate,
+      feccreate,
+      genrermax,
+      genrermin
+      )
+      values(
+      :ptomedicodi,
+      :estado,
+      :userupdate,
+      :usercreate,
+      :fecupdate,
+      :feccreate,
+      :genrermax,
+      :genrermin
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update wb_generacionrer
+      set
+      estado = :estado,
+      userupdate = :userupdate,
+      usercreate = :usercreate,
+      fecupdate = :fecupdate,
+      feccreate = :feccreate,
+      genrermax = :genrermax,
+      genrermin = :genrermin
+      where
+      ptomedicodi = :ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update wb_generacionrer
+      set
+        estado = 'I',
+        userupdate = :userupdate,
+        fecupdate = :fecupdate
+      where
+        ptomedicodi = :ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      ptomedicodi,
+      estado,
+      userupdate,
+      usercreate,
+      fecupdate,
+      feccreate,
+      genrermax,
+      genrermin
+      where
+      ptomedicodi = :ptomedicodi
+      from
+      wb_generacionrer
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      ptomedicodi,
+      estado,
+      userupdate,
+      usercreate,
+      fecupdate,
+      feccreate,
+      genrermax,
+      genrermin
+      from
+      wb_generacionrer
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      rer.ptomedicodi,
+      case rer.estado when 'A' then 'Activo' else '' end as estado,
+      rer.userupdate,
+      rer.usercreate,
+      rer.fecupdate,
+      rer.feccreate,
+      rer.genrermax,
+      rer.genrermin,
+      emp.emprnomb,
+      emp.emprcodi,
+      case eq.equipadre when -1 then eq.equinomb when 0 then eq.equinomb
+      else (select e.equinomb from eq_equipo e where e.equicodi = eq.equipadre) end as central,
+      case eq.equipadre when -1 then '' when 0 then '' else eq.equinomb end as equinomb,
+      case eq.equipadre when -1 then 'Por central' when 0 then 'Por central' else 'Por unidad' end as indicador
+      from
+      wb_generacionrer rer
+      inner join me_ptomedicion pto on rer.ptomedicodi = pto.ptomedicodi
+      inner join si_empresa emp on pto.emprcodi = emp.emprcodi
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      where rer.estado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresas</key>
+    <query>
+      select distinct emp.emprnomb, emp.emprcodi from me_ptomedicion pto inner join si_empresa emp
+      on pto.emprcodi = emp.emprcodi
+      inner join pr_grupo gp on pto.grupocodi = gp.grupocodi
+      where pto.origlectcodi = 15 and gp.tipogrupocodi = 2
+      order by 1 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCentrales</key>
+    <query>
+      select distinct eq.equinomb, pto.ptomedicodi
+      from me_ptomedicion pto inner join eq_equipo eq on
+      pto.equicodi = eq.equicodi
+      inner join pr_grupo gp on pto.grupocodi = gp.grupocodi
+      where pto.origlectcodi = 15 and gp.tipogrupocodi = 2 and
+      eq.famcodi in (4,5,37,39) and pto.emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerUnidades</key>
+    <query>
+      select distinct eq.equinomb, pto.ptomedicodi
+      from me_ptomedicion pto inner join eq_equipo eq on
+      pto.equicodi = eq.equicodi
+      inner join pr_grupo gp on pto.grupocodi = gp.grupocodi
+      where pto.origlectcodi = 15 and gp.tipogrupocodi = 2 and
+      eq.equipadre = (select p.equicodi  from me_ptomedicion p where p.ptomedicodi = :ptomedicodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarExistencia</key>
+    <query>
+      select count(*) as contador from wb_generacionrer where ptomedicodi = :ptomedicodi and estado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarExistenciaUnidad</key>
+    <query>
+      select count(*) from wb_generacionrer rer
+      inner join me_ptomedicion pto on rer.ptomedicodi = pto.ptomedicodi
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      where eq.equipadre = (select p.equicodi  from me_ptomedicion p where p.ptomedicodi = :ptomedicodi) and rer.estado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarExistenciaGeneral</key>
+    <query>
+      select count(*) as contador from wb_generacionrer where ptomedicodi = :ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntoFormato</key>
+    <query>
+      select
+      rer.ptomedicodi,
+      case rer.estado when 'A' then 'Activo' else '' end as estado,
+      rer.userupdate,
+      rer.usercreate,
+      rer.fecupdate,
+      rer.feccreate,
+      rer.genrermax,
+      rer.genrermin,
+      emp.emprnomb,
+      emp.emprcodi,
+      --inicio centralcodi
+      case eq.famcodi
+      when 4 then eq.equicodi
+      else eq.equipadre end as centralcodi,
+      --fin centralcodi
+      --inicio central
+      case eq.famcodi
+      when 4 then eq.equinomb
+      else (
+      case eq.equipadre when -1 then eq.equinomb when 0 then eq.equinomb
+      else (select e.equinomb from eq_equipo e where e.equicodi = eq.equipadre) end) end as central,
+      --fincentral
+      -- inicio equinomb
+      case eq.famcodi
+      when 4 then eq.equinomb
+      else
+      (
+      case eq.equipadre when -1 then '' when 0 then '' else eq.equinomb end) end as equinomb,
+      -- fin equinomb
+      --inicio indicador
+      case eq.famcodi
+      when 4 then 'S'
+      else
+      (
+      case eq.equipadre when -1 then 'S' when 0 then 'S' else 'N' end) end  as indicador,
+      --finindicador
+      --inicio ptodespacho
+      case eq.famcodi
+      when 4 then
+      (select ptod.ptomedicodi from me_ptomedicion ptod where ptod.equicodi = eq.equicodi and origlectcodi = 2)
+      else
+      (
+      case eq.equipadre
+      when -1 then (select ptod.ptomedicodi from me_ptomedicion ptod where ptod.equicodi = eq.equicodi and ptod.origlectcodi = 2)
+      when 0 then (select ptod.ptomedicodi from me_ptomedicion ptod where ptod.equicodi = eq.equicodi and ptod.origlectcodi = 2)
+      else (select ptod.ptomedicodi from me_ptomedicion ptod where ptod.equicodi = eq.equipadre and ptod.origlectcodi = 2) end ) end
+      as ptodespacho
+      -- fin ptodespacho
+      from
+      wb_generacionrer rer
+      inner join me_ptomedicion pto on rer.ptomedicodi = pto.ptomedicodi
+      inner join si_empresa emp on pto.emprcodi = emp.emprcodi
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      where (pto.emprcodi = :emprcodi or :emprcodi = 0) and rer.estado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresaUsuario</key>
+    <query>
+      select empresas from fw_user where lower(userlogin) = lower('{0}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GrabarConfiguracion</key>
+    <query>
+      update wb_generacionrer
+      set 
+      genrermin = :genrermin,
+      genrermax = :genrermax,
+      userupdate = :userupdate,
+      fecupdate = sysdate
+      where ptomedicodi = :ptomedicodi
+    </query>
+  </Sql>
+  
+</Sqls>

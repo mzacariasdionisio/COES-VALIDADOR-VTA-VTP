@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into vce_log_carga_det(
+           crlcdnroregistros,
+           crlcdusuimport,
+           crlcdhoraimport,
+           crlcccodi
+       )
+       values(
+           :crlcdnroregistros,
+           :crlcdusuimport,
+           :crlcdhoraimport,
+           :crlcccodi
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update vce_log_carga_det
+       set
+           crlcdnroregistros = :crlcdnroregistros,
+           crlcdusuimport = :crlcdusuimport
+       where
+           crlcdhoraimport = :crlcdhoraimport and
+           crlcccodi = :crlcccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from vce_log_carga_det
+       where
+           crlcdhoraimport = :crlcdhoraimport and
+           crlcccodi = :crlcccodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>DeleteDetPeri</key>
+		<query>
+			delete from vce_log_carga_det
+			where crlcccodi in (select crlcccodi from vce_log_carga_cab where pecacodi = :pecacodi)
+		</query>
+	</Sql>
+
+	<Sql>
+    <key>GetById</key>
+    <query>
+       select
+           crlcdnroregistros,
+           crlcdusuimport,
+           crlcdhoraimport,
+           crlcccodi
+       from
+           vce_log_carga_det
+       where
+           crlcdhoraimport = :crlcdhoraimport and
+           crlcccodi = :crlcccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           crlcdnroregistros,
+           crlcdusuimport,
+           crlcdhoraimport,
+           crlcccodi
+       from
+           vce_log_carga_det
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           crlcdnroregistros,
+           crlcdusuimport,
+           crlcdhoraimport,
+           crlcccodi
+       from
+           vce_log_carga_det
+    </query>
+  </Sql>
+  
+  <!--NETC-->
+
+  <Sql>
+    <key>ListDetalle</key>
+    <query>
+      SELECT LCC.*
+      ,FA.FECULTACTUALIZACION
+      ,LCD.CRLCDHORAIMPORT,LCD.CRLCDUSUIMPORT,NVL(FA.CANTIDAD,LCD.CRLCDNROREGISTROS) AS CRLCDNROREGISTROS
+      FROM VCE_LOG_CARGA_CAB LCC
+      LEFT JOIN (SELECT L.* FROM VCE_LOG_CARGA_DET L JOIN (SELECT CRLCCCODI,MAX(CRLCDHORAIMPORT) AS CRLCDHORAIMPORT FROM VCE_LOG_CARGA_DET GROUP BY CRLCCCODI) R ON L.CRLCCCODI = R.CRLCCCODI AND L.CRLCDHORAIMPORT=R.CRLCDHORAIMPORT) LCD ON LCC.CRLCCCODI = LCD.CRLCCCODI
+      LEFT JOIN (SELECT 1 AS ORDEN, MAX(ENVIOFECHA) AS FECULTACTUALIZACION,NULL AS CANTIDAD FROM ME_ENVIO WHERE FORMATCODI = 1 AND TO_CHAR(ENVIOFECHAPERIODO,'YYYYMM') = (SELECT PERIANIOMES FROM TRN_PERIODO PE JOIN VCE_PERIODO_CALCULO PC ON PE.PERICODI = PC.PERICODI WHERE pecacodi = {0})
+      UNION
+      SELECT 2, MAX(COSMARFECINS),COUNT(*) AS CANTIDAD FROM TRN_COSTO_MARGINAL CM JOIN VCE_PERIODO_CALCULO PE ON CM.pericodi = PE.pericodi  AND CM.COSMARVERSION = PE.PECAVERSIONVTEA WHERE PE.pecacodi = {0}
+      UNION
+      SELECT 3, MAX(LASTDATE),NULL AS CANTIDAD FROM EVE_HORAOPERACION WHERE TO_CHAR(HOPHORINI,'YYYYMM') = (SELECT PERIANIOMES FROM TRN_PERIODO PE JOIN VCE_PERIODO_CALCULO PC ON PE.PERICODI = PC.PERICODI WHERE pecacodi = {0})
+      UNION
+      SELECT 4, MAX(FECHAACT),NULL AS CANTIDAD FROM PR_GRUPODAT  WHERE TO_CHAR(FECHADAT,'YYYYMM') = (SELECT PERIANIOMES FROM TRN_PERIODO PE JOIN VCE_PERIODO_CALCULO PC ON PE.PERICODI = PC.PERICODI WHERE pecacodi = {0})
+      ) FA ON LCC.CRLCCORDEN = FA.ORDEN
+      WHERE pecacodi = {0}
+      ORDER BY LCC.CRLCCORDEN
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveDetalle</key>
+    <query>
+      INSERT INTO VCE_LOG_CARGA_DET(CRLCCCODI, CRLCDHORAIMPORT, CRLCDUSUIMPORT, CRLCDNROREGISTROS)
+      VALUES ({0}, SYSDATE, '{1}', (SELECT COUNT(*) FROM {2} WHERE pecacodi = {3}))
+    </query>
+  </Sql>
+  
+</Sqls>

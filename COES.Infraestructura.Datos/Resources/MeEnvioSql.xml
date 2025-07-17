@@ -1,0 +1,1062 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into me_envio(
+      enviocodi,
+      enviofecha,
+      estenvcodi,
+      archcodi,
+      envioplazo,
+      enviousuario,
+      lastuser,
+      lastdate,
+      emprcodi,
+      enviofechaperiodo,
+      enviofechaini,
+      enviofechafin,
+      formatcodi,
+      cfgenvcodi,
+      modcodi,
+      fdatcodi,
+      envionumbloques,
+      envioorigen,
+      enviofechaplazoini,
+      enviofechaplazofin,
+      enviodesc,
+      enviobloquehora
+      )
+      values(
+      :enviocodi,
+      :enviofecha,
+      :estenvcodi,
+      :archcodi,
+      :envioplazo,
+      :enviousuario,
+      :lastuser,
+      :lastdate,
+      :emprcodi,
+      :enviofechaperiodo,
+      :enviofechaini,
+      :enviofechafin,
+      :formatcodi,
+      :cfgenvcodi,
+      :modcodi,
+      :fdatcodi,
+      :envionumbloques,
+      :envioorigen,
+      :enviofechaplazoini,
+      :enviofechaplazofin,
+      :enviodesc,
+      :enviobloquehora
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update me_envio
+      set
+      estenvcodi = {1},
+      cfgenvcodi = {2}
+      where
+      enviocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update1</key>
+    <query>
+      update me_envio
+      set
+      estenvcodi = {1}
+      where
+      enviocodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Update2</key>
+    <query>
+      update me_envio
+      set
+      estenvcodi = {1},
+      Lastdate = to_date('{2}','YYYY-MM-DD HH24:MI:SS')
+      where
+      enviocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update3</key>
+    <query>
+      update me_envio
+      set
+      ENVIODESC = '{1}'
+      where
+      enviocodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from me_envio
+      where
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(enviocodi), 0) + 1 from me_envio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      me_envio
+      where
+      enviocodi = :enviocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      me_envio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      me_envio
+      where
+      emprcodi = {0} and formatcodi = {1} and enviofechaperiodo = to_date('{2}','YYYY-MM-DD') AND estenvcodi = 3
+      order by enviocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaRango</key>
+    <query>
+      select
+      *
+      from
+      me_envio
+      where
+      (emprcodi = {0}  or ('{0}' ='-1')) and (formatcodi = {1}  or ('{1}' ='-1')) and enviofechaperiodo >= to_date('{2}','YYYY-MM-DD') and enviofechaperiodo &lt;= to_date('{3}','YYYY-MM-DD') AND estenvcodi = 3
+      order by enviocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaMultiple</key>
+    <query>
+      select * from (
+      select env.*,f.formatnombre,l.lectnomb,emp.emprnomb,emp.emprruc,us.username,us.usertlf,est.estenvnombre,f.formatperiodo,
+      (row_number() over (order by env.enviocodi asc)) as r
+      from  me_envio env
+      inner join me_formato f on f.formatcodi = env.formatcodi
+      inner join me_lectura l on  l.lectcodi = f.lectcodi
+      inner join si_empresa emp on emp.emprcodi = env.emprcodi
+      inner join fw_user us on us.userlogin = env.enviousuario
+      inner join me_estadoenvio est on est.estenvcodi = env.estenvcodi
+      where
+      ( env.emprcodi in ({0}) or ('{0}' = '-1') )and
+      ( l.lectcodi in ({1}) or ('{1}' = '-1') ) and
+      ( f.formatcodi in ({2}) or ('{2}' = '-1') ) and
+      ( env.estenvcodi in ({3}) or ('{3}' = '-1') ) and
+      env.ENVIOFECHAPERIODO >= to_date('{4}','YYYY-MM-DD') and
+      env.ENVIOFECHAPERIODO &lt;= to_date('{5} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      order by env.enviofecha
+      )
+      where r >= ((({6}-1) * {7}) + 1) and r &lt; (({6} * {7}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaMultipleXLS</key>
+    <query>
+      select
+      env.*,f.formatnombre,l.lectnomb,emp.emprnomb,emp.emprruc,us.username,us.usertlf,est.estenvnombre,f.formatperiodo
+      from  me_envio env
+      inner join me_formato f on f.formatcodi = env.formatcodi
+      inner join me_lectura l on  l.lectcodi = f.lectcodi
+      inner join si_empresa emp on emp.emprcodi = env.emprcodi
+      LEFT join fw_user us on us.userlogin = env.enviousuario
+      inner join me_estadoenvio est on est.estenvcodi = env.estenvcodi
+      where
+      ( env.emprcodi in ({0}) or ('{0}' = '-1') )and
+      ( l.lectcodi in ({1}) or ('{1}' = '-1') ) and
+      ( f.formatcodi in ({2}) or ('{2}' = '-1') ) and
+      ( env.estenvcodi in ({3}) or ('{3}' = '-1') ) and
+      env.ENVIOFECHAPERIODO >= to_date('{4}','YYYY-MM-DD') and
+      env.ENVIOFECHAPERIODO &lt;= to_date('{5} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      order by env.enviofecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalListaMultiple</key>
+    <query>
+      select
+      count(*) total
+      from
+      me_envio env
+      inner join me_formato f on f.formatcodi = env.formatcodi
+      inner join me_lectura l on  l.lectcodi = f.lectcodi
+      inner join si_empresa emp on emp.emprcodi = env.emprcodi
+      inner join fw_user us on us.userlogin = env.enviousuario
+      inner join me_estadoenvio est on est.estenvcodi = env.estenvcodi
+      where
+      ( env.emprcodi in ({0}) or ('{0}' = '-1') )and
+      ( l.lectcodi in ({1}) or ('{1}' = '-1') ) and
+      ( f.formatcodi in ({2}) or ('{2}' = '-1') ) and
+      ( env.estenvcodi in ({3}) or ('{3}' = '-1') ) and
+      env.ENVIOFECHAPERIODO >= to_date('{4}','YYYY-MM-DD') and
+      env.ENVIOFECHAPERIODO &lt;= to_date('{5} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteEnvioCumplimiento</key>
+    <query>
+      select envio.*, estado.estenvnombre,
+      empresa.emprnomb from me_envio envio inner join me_estadoenvio estado
+      on envio.estenvcodi = estado.estenvcodi
+      inner join si_empresa empresa on envio.emprcodi = empresa.emprcodi
+      where envio.formatcodi = {0} and
+      (empresa.emprcodi in ({1}) or '{1}' = '-1') and
+      envio.enviofechaperiodo >= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and
+      envio.enviofechaperiodo &lt;= to_date('{3} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByMaxEnvioFormato</key>
+    <query>
+      select max(enviocodi) from me_envio env
+      where env.formatcodi = {0} and env.Emprcodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaRangoFecha</key>
+    <query>
+      select
+      *
+      from
+      me_envio
+      where
+      emprcodi = {0} and formatcodi = {1} and enviofechaperiodo >= to_date('{2}','YYYY-MM-DD')
+      and  enviofechaperiodo &lt;= to_date('{3}','YYYY-MM-DD') AND estenvcodi = 3
+      order by enviocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteCumplimiento</key>
+    <query>
+      select en.*,f.formatperiodo,emp.emprnomb from me_envio en
+      inner join (select enviofechaperiodo,emprcodi, max(enviofecha) fmax from me_envio where formatcodi = {0}
+      and enviofechaperiodo >= to_date('{1}','YYYY-MM-DD') AND enviofechaperiodo &lt;= to_date('{2}','YYYY-MM-DD')
+      and estenvcodi = 3 and (emprcodi in ({3}) or '{3}' = '-1')
+      group by enviofechaperiodo,emprcodi ) querymax on querymax.enviofechaperiodo = en.enviofechaperiodo
+      and querymax.fmax = en.enviofecha  and querymax.emprcodi = en.emprcodi
+      inner join me_formato f on f.formatcodi = en.formatcodi
+      left join si_empresa emp on emp.emprcodi = en.emprcodi
+      where
+      en.formatcodi = {0}
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteCumplimientoXBloqueHorario</key>
+    <query>
+      select * from
+      (
+        select en.*,f.formatperiodo,emp.emprnomb ,
+        ROW_NUMBER() OVER(PARTITION BY en.formatcodi,en.emprcodi,EN.enviofechaperiodo,en.enviobloquehora
+                    ORDER BY en.formatcodi,en.emprcodi,EN.enviofechaperiodo,en.enviobloquehora,en.enviofecha desc, en.enviocodi desc) AS NUM_VIEW
+        from me_envio en
+        inner join me_formato f on f.formatcodi = en.formatcodi
+        left join si_empresa emp on emp.emprcodi = en.emprcodi
+        where
+        en.formatcodi in ({0}) AND enviofechaperiodo >= to_date('{1}','YYYY-MM-DD') AND enviofechaperiodo &lt;= to_date('{2}','YYYY-MM-DD')
+        and estenvcodi = 3 and (en.emprcodi in ({3}) or '{3}' = '-1')
+      )
+      where NUM_VIEW = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByMaxEnvioFormatoPeriodo</key>
+    <query>
+      select max(enviocodi) from me_envio env
+      where env.formatcodi = {0} and env.Emprcodi = {1} and
+      enviofechaperiodo = to_date('{2}','YYYY-MM-DD') and env.estenvcodi = 3
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListaEnvioActual</key>
+    <query>
+      SELECT enact.ENVIOCODI AS ENVIOCODI_ACT
+      , enant.ENVIOCODI AS ENVIOCODI_ANT
+      , enact.ENVIOFECHAPERIODO AS ENVIOFECHAPERIODO_ACT
+      , enant.ENVIOFECHAPERIODO AS ENVIOFECHAPERIODO_ANT
+      , envio.ENVIOFECHAINI AS ENVIOFECHAINI_ACT
+      , envio.ENVIOFECHAFIN AS ENVIOFECHAFIN_ACT
+      , envia.ENVIOFECHAINI AS ENVIOFECHAINI_ANT
+      , envia.ENVIOFECHAFIN AS ENVIOFECHAFIN_ANT
+      FROM (SELECT envi.EMPRCODI
+      , envi.ENVIOFECHAPERIODO
+      , MAX(envi.ENVIOCODI) AS ENVIOCODI
+      FROM ME_ENVIO envi
+      GROUP BY envi.EMPRCODI, envi.ENVIOFECHAPERIODO) enact
+      INNER JOIN ME_ENVIO envio ON (enact.ENVIOCODI = envio.ENVIOCODI)
+      LEFT JOIN (SELECT envi.EMPRCODI
+      , envi.ENVIOFECHAPERIODO
+      , MAX(envi.ENVIOCODI) AS ENVIOCODI
+      FROM ME_ENVIO envi
+      GROUP BY envi.EMPRCODI, envi.ENVIOFECHAPERIODO
+      ) enant ON (enact.EMPRCODI = enant.EMPRCODI
+      AND TRUNC(TRUNC(enact.ENVIOFECHAPERIODO, 'mm') - 1, 'mm') = TRUNC(enant.ENVIOFECHAPERIODO, 'mm')
+      )
+      LEFT JOIN ME_ENVIO envia ON (enant.ENVIOCODI = envia.ENVIOCODI)
+      WHERE enact.EMPRCODI = {0}
+      AND TRUNC(enact.ENVIOFECHAPERIODO, 'mm') = TO_DATE('{1}', 'dd/mm/yyyy')
+      ORDER BY enact.ENVIOCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListaPeriodoReporte</key>
+    <query>
+      SELECT DISTINCT
+      TO_DATE(TO_CHAR(TRUNC(TO_DATE(td.FECHA_FINAL + 1 - ROWNUM), 'MM'), 'dd/mm/yyyy'), 'dd/mm/yyyy') AS INI_REMISION
+      , TO_CHAR(TO_DATE(td.FECHA_FINAL + 1 - ROWNUM), 'MM YYYY') AS PERIODO
+      FROM ALL_OBJECTS,
+      (SELECT TO_DATE('{0}', 'dd/mm/yyyy') FECHA_INICIAL
+      , ADD_MONTHS(SYSDATE, -1) FECHA_FINAL
+      FROM DUAL) td
+      WHERE TRUNC(td.FECHA_FINAL + 1 - ROWNUM, 'MM') >= TRUNC(td.FECHA_INICIAL,'MM')
+      ORDER BY 1 DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListReporteCumplimiento</key>
+    <query>
+      SELECT NOMBRE_EMPRESA,RUC_EMPRESA,EMPRFECINGRESO, EQUIABREV
+      {7}
+      FROM (
+      SELECT ROWNUM AS ITEM,
+      inte.*
+      FROM
+      (SELECT pees.PERIODO AS PERIODO ,
+      (
+      CASE
+      WHEN TRUNC(ulenv.ENVIOFECHA_MAX) BETWEEN pees.INI_REMISION AND pees.FIN_REMISION
+      THEN '1'
+      WHEN TRUNC(ulenv.ENVIOFECHA_MAX) > pees.FIN_REMISION
+      THEN '2'
+      WHEN pees.INI_REMISION > TRUNC(ulenv.ENVIOFECHA_MAX)
+      THEN '3'
+      WHEN ulenv.ENVIOFECHA_MAX IS NULL
+      THEN '4'
+      ELSE '5'
+      END)                 AS CUMPLIMIENTO ,
+      tiem.TIPOEMPRDESC    AS TIPO_EMPRESA ,
+      empr.EMPRRUC         AS RUC_EMPRESA ,
+      NVL(empr.EMPRRAZSOCIAL, ' - SIN RAZON SOCIAL - ') AS NOMBRE_EMPRESA ,
+      empr.EMPRFECINGRESO as EMPRFECINGRESO,
+	  equi.EQUIABREV AS EQUIABREV,
+      ulenv.ENVIOCODI_CONT AS NRO_ENVIOS ,
+      ulenv.ENVIOFECHA_MIN AS FECHA_PRIMER_ENVIO ,
+      ulenv.ENVIOFECHA_MAX AS FECHA_ULTIMO_ENVIO ,
+      pees.INI_REMISION ,
+      pees.FIN_REMISION ,
+      pees.INI_PERIODO
+      FROM SI_EMPRESA empr
+      INNER JOIN SI_TIPOEMPRESA tiem
+      ON (empr.TIPOEMPRCODI = tiem.TIPOEMPRCODI)
+      INNER JOIN ME_FORMATO form
+      ON (1 = 1)
+	  LEFT JOIN EQ_EQUIPO equi ON empr.EMPRCODI = equi.EMPRCODI
+      INNER JOIN
+      (
+      SELECT TO_CHAR(P.FECHA_PERIODO,'MM YYYY') AS PERIODO, P.FECHA_PERIODO AS INI_PERIODO
+      ,ADD_MONTHS(P.FECHA_PERIODO,F.FORMATMESPLAZO)+F.FORMATDIAPLAZO+F.FORMATMINPLAZO/(24*60) AS INI_REMISION
+      ,ADD_MONTHS(P.FECHA_PERIODO,F.FORMATMESFINPLAZO)+F.FORMATDIAFINPLAZO+F.FORMATMINFINPLAZO/(24*60) AS FIN_REMISION
+      FROM ME_FORMATO F ,(SELECT ADD_MONTHS(TO_DATE('{3}','DD/MM/YYYY'),ROWNUM-1) AS FECHA_PERIODO
+      FROM DUAL
+      CONNECT BY LEVEL &#60;= (SELECT MONTHS_BETWEEN(TO_DATE('{4}','DD/MM/YYYY'), TO_DATE('{3}','DD/MM/YYYY')) FROM DUAL) + 1
+      )  P
+      WHERE F.FORMATCODI = {0}
+      ORDER BY 1 DESC
+      ) pees
+      ON (1 = 1)
+      LEFT JOIN
+      (SELECT enul.FORMATCODI ,
+      enul.EMPRCODI ,
+      enul.ENVIOCODI_MAX ,
+      enul.ENVIOCODI_CONT ,
+      enpri.ENVIOFECHA AS ENVIOFECHA_MIN ,
+      enuld.ENVIOFECHA AS ENVIOFECHA_MAX ,
+      enuld.ENVIOFECHAPERIODO
+      FROM
+      (SELECT envi.FORMATCODI ,
+      envi.EMPRCODI ,
+      envi.ENVIOFECHAPERIODO ,
+      MIN(envi.ENVIOCODI)   AS ENVIOCODI_MIN ,
+      MAX(envi.ENVIOCODI)   AS ENVIOCODI_MAX ,
+      COUNT(envi.ENVIOCODI) AS ENVIOCODI_CONT
+      FROM ME_ENVIO envi
+      WHERE envi.FORMATCODI = {0}
+      GROUP BY envi.FORMATCODI ,
+      envi.EMPRCODI ,
+      envi.ENVIOFECHAPERIODO
+      ) enul
+      INNER JOIN ME_ENVIO enpri
+      ON (enul.ENVIOCODI_MIN = enpri.ENVIOCODI)
+      INNER JOIN ME_ENVIO enuld
+      ON (enul.ENVIOCODI_MAX      = enuld.ENVIOCODI)
+      ) ulenv ON (form.FORMATCODI = ulenv.FORMATCODI
+      AND empr.EMPRCODI             = ulenv.EMPRCODI
+      AND pees.INI_PERIODO          = ulenv.ENVIOFECHAPERIODO)
+      WHERE empr.TIPOEMPRCODI      IN (2, 4)
+      AND form.FORMATCODI           = {0}
+      {1}
+      {2}
+      AND TRUNC(pees.INI_PERIODO) BETWEEN TO_DATE('{3}', 'dd/mm/yyyy')
+      AND TO_DATE('{4}', 'dd/mm/yyyy')
+      AND empr.EMPRRAZSOCIAL IS NOT NULL
+      AND empr.EMPRESTADO = 'A'
+	  {6}
+	  {8}
+      ORDER BY pees.INI_REMISION DESC,
+      3,
+      tiem.TIPOEMPRDESC,
+      empr.EMPRNOMB
+      ) inte {5}
+
+      )
+
+      GROUP BY RUC_EMPRESA,NOMBRE_EMPRESA,EMPRFECINGRESO, EQUIABREV
+      ORDER BY 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEnvioXModulo</key>
+    <query>
+      SELECT ENV.* FROM ME_ENVIO ENV
+      where env.enviocodi in(
+      SELECT max(env2.enviocodi) FROM ME_ENVIO ENV2
+      INNER JOIN SI_MODULOFUENTEDATOS MF ON MF.FDATCODI = ENV2.FDATCODI
+      WHERE ENV2.ENVIOFECHAPERIODO = TO_DATE('{1}','YYYY-MM-DD') AND MF.MODCODI = {0} and env2.emprcodi = {2}
+      group by ENV2.FDATCODI
+      )
+
+      UNION
+
+      SELECT ENV.* FROM ME_ENVIO ENV
+      where env.enviocodi in(
+      SELECT max(env2.enviocodi) FROM ME_ENVIO ENV2
+      INNER JOIN ME_FORMATO F ON F.FORMATCODI = ENV2.FORMATCODI
+      WHERE ENV2.ENVIOFECHAPERIODO = TO_DATE('{1}','YYYY-MM-DD') AND F.MODCODI = {0} and env2.emprcodi = {2}
+      group by ENV2.FORMATCODI
+      )
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListaReporteCumplimientoDeExtranetHidrologia</key>
+    <query>
+      select
+      ar.AREACODE,ar.AREANAME,emp.emprcodi,emp.EMPRNOMB,l.LECTCODI,l.LECTNOMB,l.LECTNRO,l.LECTPERIODO,l.LECTTIPO
+      ,fr.FORMATCODI,fr.FORMATNOMBRE,fr.FORMATPERIODO,fr.FORMATRESOLUCION,fr.FORMATHORIZONTE,fr.FORMATDIAPLAZO,FR.FORMATMINPLAZO
+      ,fr.Formatmesplazo,fr.Formatmesfinplazo,fr.Formatdiafinfueraplazo,fr.Formatminfinfueraplazo,fr.Formatdiafinplazo,fr.Formatminfinplazo,fr.Formatmesfinfueraplazo ,fr.formatcheckplazopunto
+      ,HP.PTOMEDICODI --,HP.HOJACODI --,eq.EQUICODI, eq.equinomb
+      ,eq.EQUICODI, eq.equinomb
+      ,hp.tipoinfocodi,ti.TIPOINFOABREV --tpmed.tptomedicodi,tpmed.tptomedinomb,eq.famcodi
+      , pto.PTOMEDIBARRANOMB, pto.PTOMEDIDESC
+      ,en.ENVIOCODI,en.ENVIOFECHA,en.ENVIOPLAZO,en.ENVIOFECHAPERIODO,en.ENVIOFECHAINI,en.ENVIOFECHAFIN
+      from  me_lectura    l
+      inner join me_formato fr on l.lectcodi = fr.lectcodi
+      inner join fw_area ar on ar.areacode = fr.areacode
+      inner join me_hojaptomed HP on hp.formatcodi = fr.formatcodi
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+      inner join me_tipoptomedicion tpmed on tpmed.tptomedicodi = pto.tptomedicodi
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi
+
+      inner join (
+      SELECT h.formatcodi,emprcodi FROM me_hojaptomed h inner join ME_ptomedicion pmd on pmd.ptomedicodi = h.ptomedicodi
+      where ('-1' = '{1}' or emprcodi in ({1}) )
+      group by h.formatcodi,emprcodi
+      ) formemp on formemp.formatcodi = fr.formatcodi and formemp.emprcodi=eq.emprcodi
+
+      left join  (
+        select * from
+        (
+          select  en.*, ROW_NUMBER() OVER(PARTITION BY emprcodi,formatcodi,enviofechaperiodo  ORDER BY emprcodi,formatcodi,enviofechaperiodo,enviocodi DESC) AS NUM
+          from me_envio en
+          where enviofechaperiodo >= to_date('{2}','YYYY-MM-DD') AND enviofechaperiodo &lt;= to_date('{3}','YYYY-MM-DD')
+          and estenvcodi = 3 and ('-1' = '{1}' or emprcodi in ({1}) )
+        )where num = 1
+      )en on en.formatcodi = fr.formatcodi and en.emprcodi = emp.emprcodi
+
+      where
+      ar.areacode in ({0})
+      and l.origlectcodi = 16
+      and fr.modcodi = 3
+      and ('-1' = '{1}' or emp.emprcodi in ({1}) )
+      ORDER BY ar.areacode,L.LECTperiodo,fr.FORMATCODI,hp.hptoorden,en.enviofechaperiodo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdEmpresaFormato</key>
+    <query>
+      select
+      me.*, SE.EMPRNOMB, MF.FORMATNOMBRE
+      from
+      me_envio me, SI_EMPRESA se, ME_FORMATO mf
+      where
+      ME.EMPRCODI = SE.EMPRCODI and
+      ME.FORMATCODI = MF.FORMATCODI and
+      enviocodi = :enviocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListValidacionPMPO</key>
+    <query>
+           select distinct me.enviocodi, mf.formatnombre, se.emprnomb, me.enviofechaperiodo, me.enviofecha
+      ,
+      me.envioplazo,
+      (select count(*) from me_mensaje msj where msj.msjestado = 'P' and msj.emprcodi = se.emprcodi and to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(msj.msjfecperiodo,'yyyy-mm') and upper(msjusucreacion)  in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = 1 )) as mensajespendientes,
+      (select count(*) from me_mensaje msj where msj.msjestado = 'P' and msj.emprcodi = se.emprcodi and to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(msj.msjfecperiodo,'yyyy-mm') and upper(msjusucreacion)  in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = me.emprcodi )) as mensajespendientesCOES,
+      mf.formatcodi, se.emprcodi,  (select va.validcomentario from me_validacion va where va.emprcodi = me.emprcodi and va.formatcodi = me.formatcodi and rownum = 1 ) as ComentarioOSINERGMIN,'' as ENVIOUSUARIO,0 as IndDerivacion,'' as VALIDCOMENTARIO
+      from
+      me_envio me
+      inner join me_formato mf on mf.formatcodi = me.formatcodi
+      inner join si_empresa se on se.emprcodi = me.emprcodi
+      where me.ENVIOCODI = (
+      select max(ENVIOCODI) from me_envio where emprcodi = me.emprcodi and formatcodi = me.formatcodi
+      AND upper(ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = {4} )
+      ) and
+      me.emprcodi = decode({0}, 0, me.emprcodi , {0}) and
+      upper(me.ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = {4} ) and
+      mf.formatcodi in ({1}) and
+      to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(to_date('{2}','yyyy-mm'),'yyyy-mm') and
+      me.envioplazo = decode('{3}','0', me.envioplazo, '{3}')
+      order by se.emprnomb 
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListReporteCumplimientoPMPO</key>
+    <query>
+      select distinct me.enviocodi, mf.formatnombre, se.emprnomb, me.enviofechaperiodo, me.enviofecha
+
+      , me.envioplazo
+      , (select count(*) from me_mensaje msj where msj.msjestado = 'P' and msj.emprcodi = se.emprcodi and to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(msj.msjfecperiodo,'yyyy-mm') and upper(msjusucreacion)  in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = 1 )) as mensajespendientes,
+      (select count(*) from me_mensaje msj where msj.msjestado = 'P' and msj.emprcodi = se.emprcodi and to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(msj.msjfecperiodo,'yyyy-mm')) as mensajespendientesCOES,
+      mf.formatcodi, se.emprcodi,
+      ( select nvl(MV.VALIDCOMENTARIO,'  ') from ME_VALIDACION mv where MV.EMPRCODI = ME.EMPRCODI and MV.formatcodi = mf.formatcodi and mv.VALIDESTADO=1 and to_char(VALIDFECHAPERIODO, 'yyyy-mm') = to_char(TO_DATE('{2}', 'yyyy-mm'), 'yyyy-mm')
+      and
+      MV.VALIDCODI =(SELECT max(mv1.validcodi) from ME_VALIDACION mv1
+      where MV1.EMPRCODI = ME.EMPRCODI and MV1.formatcodi = mf.formatcodi and mv1.VALIDESTADO=1 and to_char(mv1.VALIDFECHAPERIODO, 'yyyy-mm') = to_char(TO_DATE('{2}', 'yyyy-mm'), 'yyyy-mm'))
+
+      ) as VALIDCOMENTARIO,
+      0 as IndDerivacion,
+      '' as ENVIOUSUARIO
+      from
+      me_envio me
+      inner join me_formato mf on mf.formatcodi = me.formatcodi
+      inner join si_empresa se on se.emprcodi = me.emprcodi
+      where me.ENVIOCODI = (
+      select max(ENVIOCODI) from me_envio where emprcodi = me.emprcodi and formatcodi = me.formatcodi
+      AND upper(ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = {4} )
+      ) and
+      me.emprcodi = decode({0}, 0, me.emprcodi , {0}) and
+      upper(me.ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = {4} ) and
+      mf.formatcodi in ({1}) and
+      to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(to_date('{2}','yyyy-mm'),'yyyy-mm') and
+      me.envioplazo = decode('{3}','0', me.envioplazo, '{3}')
+      order by me.enviocodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresasValidacion</key>
+    <query>
+      select -1 as enviocodi, mf.formatnombre, se.emprnomb, sysdate as enviofechaperiodo, sysdate as enviofecha,
+       'F'  as envioplazo,
+      0 as mensajespendientes, 0 as mensajespendientesCOES,
+      mf.formatcodi, se.emprcodi,  '' as VALIDCOMENTARIO,'' as ENVIOUSUARIO,0 as IndDerivacion
+      from me_formato mf, si_empresa se, me_ptomedicion pto, me_hojaptomed mhp, me_hoja mh
+      where
+      pto.emprcodi = se.emprcodi and
+      mhp.ptomedicodi = pto.ptomedicodi and
+      mh.hojacodi = mhp.hojacodi and
+      mf.formatcodi = mh.formatcodi and
+      mf.formatcodi in ({0})  and
+      pto.emprcodi not in (select emprcodi from me_envio me where to_char(me.enviofechaperiodo,'yyyy-mm') = '{1}') and
+      pto.emprcodi = decode({2}, 0, pto.emprcodi , {2})
+      group by mf.formatnombre, se.emprnomb,mf.formatcodi, se.emprcodi
+      order by se.emprnomb
+    
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListReporteAgentePMPO</key>
+    <query>
+ with ListAgentes as
+      (
+      select distinct me.enviocodi,mf.formatnombre, se.emprnomb, me.enviofechaperiodo, me.enviofecha, me.envioplazo, (select count(*) from me_mensaje msj where msj.msjestado = 'P' and msj.emprcodi = se.emprcodi and to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(msj.msjfecperiodo,'yyyy-mm') and msjusucreacion  in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = 1 )) as mensajespendientes,
+      (select count(*) from me_mensaje msj where msj.msjestado = 'P' and msj.emprcodi = se.emprcodi and to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(msj.msjfecperiodo,'yyyy-mm') and msjusucreacion  in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = me.emprcodi ))  as mensajespendientesCOES,
+      me.emprcodi, mf.formatcodi,  '' as VALIDCOMENTARIO
+      from
+      me_envio me
+      inner join me_formato mf on mf.formatcodi = me.formatcodi
+      inner join si_empresa se on se.emprcodi = me.emprcodi
+      where 
+	  me.ENVIOCODI = (
+      select max(enviocodi) from me_envio where emprcodi = me.emprcodi and formatcodi = me.formatcodi
+      AND upper(ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = decode({4}, 0, FU.EMPRCODI , {4}) and FU.EMPRCODI not in (1)  )
+      ) and
+      me.emprcodi = decode({0}, 0, me.emprcodi ,{0}) and
+      upper(me.ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = decode({4}, 0, FU.EMPRCODI , {4}) and FU.EMPRCODI not in (1) ) and
+      mf.formatcodi in ({1}) and
+      to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(to_date('{2}','yyyy-mm'),'yyyy-mm') and
+      me.envioplazo = decode('{3}','0', me.envioplazo, '{3}')
+
+      union
+
+      select * from (
+      select 0 as enviocodi, mf.formatnombre, se.emprnomb,null as enviofechaperiodo, null as enviofecha, null as envioplazo, 0 as mensajespendientes, 0 as mensajespendientesCOES, se.emprcodi, mf.formatcodi,'' as VALIDCOMENTARIO
+      from me_formato mf, si_empresa se, me_ptomedicion pto, me_hojaptomed mhp, me_hoja mh
+      where
+      pto.emprcodi = se.emprcodi and
+      mhp.ptomedicodi = pto.ptomedicodi and
+      mh.hojacodi = mhp.hojacodi and
+      mf.formatcodi = mh.formatcodi and
+      mf.formatcodi in  ({1})  and
+      pto.emprcodi not in (select me.EMPRCODI from me_envio me
+      inner join me_formato mf2 on mf2.formatcodi = me.formatcodi
+      where to_char(me.enviofechaperiodo,'yyyy-mm') = '{2}' and mf2.formatcodi in ({1})
+      )
+      and
+      pto.emprcodi = decode({0}, 0, pto.emprcodi , {0})
+      group by mf.formatnombre, se.emprnomb,mf.formatcodi, se.emprcodi
+      )
+      where
+      emprcodi = decode({0}, 0, emprcodi , {0}) and
+      emprcodi||formatcodi not in (select me.emprcodi||me.formatcodi from
+      me_envio me
+      inner join me_formato mf on mf.formatcodi = me.formatcodi
+      inner join si_empresa se on se.emprcodi = me.emprcodi
+      where me.ENVIOCODI = (
+      select max(enviocodi) from me_envio where emprcodi = me.emprcodi and formatcodi = me.formatcodi
+      AND upper(ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = decode({4}, 0, FU.EMPRCODI , {4}) and FU.EMPRCODI not in (1)  )
+      ) and
+      me.emprcodi = decode({0}, 0, me.emprcodi ,{0}) and
+      upper(me.ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = decode({4}, 0, FU.EMPRCODI , {4}) and FU.EMPRCODI not in (1) ) and
+      mf.formatcodi in ({1}) and
+      to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(to_date('{2}','yyyy-mm'),'yyyy-mm') and
+      me.envioplazo = decode('{3}','0', me.envioplazo, '{3}') )
+      )
+      select enviocodi,FORMATNOMBRE,emprnomb,enviofechaperiodo,enviofecha,envioplazo,mensajespendientes,mensajespendientesCOES,emprcodi,FORMATCODI,VALIDCOMENTARIO,
+      (
+      select count(distinct se2.emprnomb)
+      from
+      me_envio me2
+      inner join me_formato mf2 on mf2.formatcodi = me2.formatcodi
+      inner join si_empresa se2 on se2.emprcodi = me2.emprcodi
+      where me2.ENVIOCODI = (
+      select max(ENVIOCODI) from me_envio where emprcodi = me2.emprcodi and formatcodi = me2.formatcodi
+      AND upper(ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = 1 )
+      ) and
+      me2.emprcodi = agt.emprcodi and
+      upper(me2.ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = 1 ) and
+      mf2.formatcodi in ({1}) and
+      to_char(me2.enviofechaperiodo,'yyyy-mm') = to_char(to_date('{2}','yyyy-mm'),'yyyy-mm') and
+      me2.envioplazo = decode('{3}','0', me2.envioplazo, '{3}')
+      ) as IndDerivacion,
+      (
+      select me3.enviousuario
+      from me_envio me3
+      where me3.enviocodi =(
+      select max(enviocodi)
+      from
+      me_envio me2
+      inner join me_formato mf2 on mf2.formatcodi = me2.formatcodi
+      inner join si_empresa se2 on se2.emprcodi = me2.emprcodi
+      where me2.ENVIOCODI = (
+      select max(ENVIOCODI) from me_envio where emprcodi = me2.emprcodi and formatcodi = me2.formatcodi
+      AND upper(ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = 1 )
+      ) and
+      me2.emprcodi = agt.emprcodi and
+      upper(me2.ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = 1 ) and
+      mf2.formatcodi in ({1}) and
+      to_char(me2.enviofechaperiodo,'yyyy-mm') = to_char(to_date('{2}','yyyy-mm'),'yyyy-mm') and
+      me2.envioplazo = decode('{3}','0', me2.envioplazo, '{3}')
+      ) ) as ENVIOUSUARIO
+      from ListAgentes agt
+      union
+      (select
+      me.enviocodi ,
+      MF.FORMATNOMBRE, em.emprnomb,me.enviofechaperiodo,me.enviofecha,me.envioplazo,0 as mensajespendientes,0 as mensajespendientesCOES,pm.emprcodi, MF.FORMATCODI,  '' as VALIDCOMENTARIO
+      , 1 as INDDERIVACION, me.enviousuario as INDusuario
+      from me_ptomedicion pm,si_empresa em, me_envio me,ME_FORMATO mf, me_hojaptomed hpm
+      where
+      hpm.ptomedicodi =pm.ptomedicodi and
+      pm.emprcodi = em.emprcodi and
+      HPM.FORMATCODI = MF.FORMATCODI and
+      MF.FORMATCODI=ME.FORMATCODI AND
+      em.emprcodi=ME.EMPRCODI and
+      me.enviocodi=(select max(enviocodi) FROM ME_ENVIO where emprcodi=me.emprcodi and formatcodi=ME.FORMATCODI AND upper(ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = 1 )
+      ) AND
+      hpm.formatcodi in ({1}) and
+      
+      me.emprcodi = decode({3}, 0, me.emprcodi , {3}) and
+      upper(me.ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = 1 ) and    
+      to_char(me.enviofechaperiodo,'yyyy-mm') = to_char(to_date('{2}','yyyy-mm'),'yyyy-mm') and
+      me.envioplazo = decode('{3}','0', me.envioplazo, '{3}')
+      
+      group by me.enviocodi, pm.emprcodi,em.emprnomb, MF.FORMATNOMBRE, MF.FORMATCODI, ME.ENVIOUSUARIO
+      ,me.enviofechaperiodo,  me.enviofecha,me.envioplazo
+      )
+      order by 1 desc
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaPMPO</key>
+    <query>
+      select
+      *
+      from
+      me_envio
+      where
+      emprcodi = {0} and formatcodi = {1} and enviofechaperiodo = to_date('{2}','YYYY-MM-DD')
+      and  enviofechaini = to_date('{3}','YYYY-MM-DD') 
+      order by enviocodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ValidarEnvio</key>
+    <query>
+      select distinct emprcodi, formatcodi, enviofechaperiodo, envioorigen
+      from me_envio
+      where emprcodi = {0} and
+      formatcodi = {1} and
+      to_char(enviofechaperiodo, 'yyyy-mm') = to_char(to_date('{2}', 'yyyy-mm'), 'yyyy-mm')
+    </query>
+  </Sql>
+
+    <Sql>
+	    <key>GetByCriteriaPMPOEnvio</key>
+	    <query>
+		    select *
+		    from me_envio
+		    where emprcodi = {0} and
+		    formatcodi = {1} and
+		    to_char(enviofechaperiodo, 'yyyy-mm') = to_char(to_date('{2}', 'yyyy-mm-dd'), 'yyyy-mm')
+	    </query>
+    </Sql>
+
+  <Sql>
+    <key>SaveDuplicate</key>
+    <query>
+      insert into me_envio (
+      enviocodi,
+      enviofecha,
+      estenvcodi,
+      envioplazo,
+      enviousuario,
+      emprcodi,
+      enviofechaperiodo,
+      formatcodi,
+      enviofechaini,
+      enviofechafin,
+      modcodi,
+      lastuser,
+      lastdate,
+      envionumbloques,
+      envioorigen,
+      enviofechaplazoini,
+      enviofechaplazofin)
+      select
+      {0},
+      enviofecha,
+      estenvcodi,
+      envioplazo,
+      '{1}',
+      emprcodi,
+      enviofechaperiodo,
+      formatcodi,
+      enviofechaini,
+      enviofechafin,
+      modcodi,
+      '{1}',
+      sysdate,
+      envionumbloques,
+      {2},
+      enviofechaplazoini,
+      enviofechaplazofin
+      from me_envio
+      where enviocodi = {2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaAreaCode</key>
+    <query>
+      select
+      m.*, e.emprnomb, o.formatnombre
+      from
+      me_envio m, si_empresa e, me_formato o
+      where
+      m.emprcodi = e.emprcodi and
+      m.formatcodi = o.formatcodi and
+      m.emprcodi = {0} and m.formatcodi = {1} and
+      to_char(m.enviofechaperiodo,'YYYY-MM') = to_char(to_date('{2}','YYYY-MM'),'YYYY-MM') and
+     envioorigen= 0 and
+      upper(M.ENVIOUSUARIO) in ( SELECT distinct upper(USERLOGIN) FROM FW_USER FU WHERE FU.EMPRCODI = {3} )
+      order by m.enviocodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarEnvioInformacion</key>
+    <query>
+      select count(*) from me_envio
+      where enviofechaperiodo = to_date('{0}','YYYY-MM')
+      and emprcodi = (select emprcodi from fw_user where userlogin = '{1}')
+    </query>
+  </Sql>
+
+  <!--INICIO SIOSEIN2 - NUMERALES-->
+  <Sql>
+    <key>ListaMeEnvioByFdat</key>
+    <query>
+      select * from me_envio
+      where fdatcodi = {0} and enviofechaperiodo = to_date('{1}','YYYY-MM-DD')
+    </query>
+  </Sql>
+  <!--FIN SIOSEIN2 - NUMERALES-->
+  <!-- ASSETEC NUEVOS QUERYS PARA CUBRIR LOS REQUERIMIENTOS DEL SISTEMA DE INTERVENCIONES-->
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <!--QUERY PARA ELIMINAR   ME_ENVIO FISICAMENTE BASADO EN  ID-->
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <Sql>
+    <key>EliminarEnvioFisicoPorId</key>
+    <query>
+      delete
+      from me_envio m
+      where
+      m.enviocodi = :enviocodi
+    </query>
+  </Sql>
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+
+  <!--INICIO Aplicativo Extranet CTAF-->
+
+  <Sql>
+    <key>ObtenerEnvioInterrupSuministro</key>
+    <query>
+      select distinct me.* from me_envio me
+      inner join af_interrup_suministro its on its.enviocodi=me.enviocodi
+      where its.afecodi={0} and me.emprcodi={1} and me.fdatcodi={2}
+    </query>
+  </Sql>
+
+  <!--FIN Aplicativo Extranet CTAF-->
+
+  <!--INICIO Mejoras RDO-->
+  <Sql>
+    <key>SaveHorario</key>
+    <query>
+      insert into ME_ENVIO_HORARIO(
+      enviocodi,
+      horariocodi
+      )
+      values(
+      {0},
+      {1}
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByCriteriaCaudalVolumen</key>
+    <query>
+      select
+      *
+      from
+      me_envio
+      where
+      formatcodi = {0} and enviofechaperiodo = to_date('{1}','YYYY-MM-DD') AND estenvcodi = 3
+      order by enviocodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>ObtenerEnvioCumplimiento</key>
+    <query>
+      SELECT *   FROM
+      (
+      SELECT EMP.EMPRCODI, EMP.EMPRNOMB,  ENV.HORARIOCODI
+      FROM (
+      SELECT DISTINCT WVPT.EMPRCODI, EMP.EMPRNOMB FROM EQ_EQUIPO EQ
+      INNER JOIN ME_PTOMEDICION PTO ON PTO.EQUICODI = EQ.EQUICODI
+      INNER JOIN ME_HOJAPTOMED HP ON HP.PTOMEDICODI = PTO.PTOMEDICODI
+      INNER JOIN SI_HISEMPPTO_DATA WVPT ON WVPT.PTOMEDICODI = PTO.PTOMEDICODI
+      INNER JOIN ME_FORMATO F ON F.FORMATCODI = HP.FORMATCODI
+      INNER JOIN ME_LECTURA L ON L.LECTCODI = F.LECTCODI
+      INNER JOIN SI_EMPRESA EMP ON WVPT.EMPRCODI = EMP.EMPRCODI
+      WHERE HP.FORMATCODI = {0}) EMP
+      LEFT JOIN (SELECT DISTINCT E.EMPRCODI, TO_CHAR('H' || TO_CHAR(H.HORARIOCODI)) HORARIOCODI
+      FROM ME_ENVIO E INNER JOIN ME_ENVIO_HORARIO H ON H.ENVIOCODI = E.ENVIOCODI
+      WHERE E.FORMATCODI = {0} AND TO_DATE(E.ENVIOFECHAPERIODO,'DD/MM/YY') = TO_DATE('{1}','DD/MM/YY')
+      AND E.ENVIOPLAZO = 'P' AND E.ENVIOCODI IN (SELECT MAX(ME.ENVIOCODI) FROM ME_ENVIO ME
+      WHERE ME.FORMATCODI = {0} AND TO_DATE(ME.ENVIOFECHAPERIODO,'DD/MM/YY') = TO_DATE('{1}','DD/MM/YY') AND ME.EMPRCODI = E.EMPRCODI)) ENV
+      ON EMP.EMPRCODI = ENV.EMPRCODI
+      )
+      PIVOT
+      (
+      COUNT(HORARIOCODI)
+      FOR   (HORARIOCODI) IN ( 'H3','H6', 'H9','H12','H15' ,'H18', 'H21', 'H00' )
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByCriteriaxHorario</key>
+    <query>
+      SELECT
+      *
+      FROM
+      ME_ENVIO E
+      LEFT JOIN ME_ENVIO_HORARIO H
+      ON E.ENVIOCODI = H.ENVIOCODI
+      WHERE
+      E.EMPRCODI = {0} AND E.FORMATCODI = {1} AND E.ENVIOFECHAPERIODO = TO_DATE('{2}','YYYY-MM-DD')
+      AND E.ESTENVCODI = 3 AND (H.HORARIOCODI = {3} OR {3} = -1)
+      ORDER BY E.ENVIOCODI
+    </query>
+  </Sql>
+  <!--FIN Mejoras RDO-->
+  <!--INICIO Mejoras RDO-II-->
+  <Sql>
+    <key>GetByCriteriaMeEnviosUltimoEjecutado</key>
+    <query>
+      SELECT
+      *
+      FROM
+      ME_ENVIO E
+      INNER JOIN ME_ENVIO_HORARIO H
+      ON E.ENVIOCODI = H.ENVIOCODI
+      WHERE
+      E.EMPRCODI = {0} AND E.FORMATCODI = {1} AND E.ENVIOFECHAPERIODO = TO_DATE('{2}','YYYY-MM-DD')
+      AND E.ESTENVCODI = 3
+      AND E.ENVIOCODI = (SELECT MAX(SME.ENVIOCODI) FROM ME_MEDICION_EJECUTADOS48 SME
+      WHERE SME.EMPRCODI = {0}
+      AND SME.LECTCODI = (SELECT LECTCODI FROM ME_FORMATO WHERE FORMATCODI = {1})
+      AND SME.MEDIFECHA = TO_DATE('{2}','YYYY-MM-DD'))
+      AND (H.HORARIOCODI = {3})
+      ORDER BY E.ENVIOCODI
+    </query>
+  </Sql>
+  <!--FIN Mejoras RDO-->
+
+	<Sql>
+		<key>ListaEnviosPorEvento</key>
+		<query>
+			select
+			em.EMPRCODI,
+			em.EMPRNOMB,
+			ev.EVENINI,
+			ev.EVENASUNTO,
+			en.ENVIOCODI,
+			ev.EVENCODI,
+			CASE WHEN(RTRIM(LTRIM((en.ENVIOPLAZO))) ='P') THEN 'En Plazo'
+			WHEN(RTRIM(LTRIM((en.ENVIOPLAZO))) ='F') THEN 'Fuera de plazo'  END ENVIOPLAZO
+			from (select * from eve_evento where  to_char(EVENINI,'MM/YYYY' ) = '{0}' )ev
+			inner join me_envio_eve_evento env on env.EVENCODI	= ev.EVENCODI
+			inner join me_envio en on en.ENVIOCODI = env.ENVIOCODI
+			inner join si_empresa em on em.EMPRCODI = en.EMPRCODI
+			where env.ENVETAPAINFORME = '{1}'
+			and ev.EVENINFFALLA = '{2}' and ev.EVENINFFALLAN2 = '{3}'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListaInformeEnvios</key>
+		<query>
+			select  
+			    en.ENVIOFECHA ,
+			    env.ENV_EVENCODI,
+			    en.ENVIOUSUARIO,
+			    em.EMPRNOMB,
+			    case when env.ENVETAPAINFORME = '1' THEN 'IPI'
+			    when env.ENVETAPAINFORME = '2' THEN 'IF' end TIPOINFORME,
+			    sco.EVEINFRUTAARCHIVO
+			from (select * from eve_evento where  evencodi = {0})ev
+			    inner join me_envio_eve_evento env on env.EVENCODI	= ev.EVENCODI
+			    inner join me_envio en on en.ENVIOCODI = env.ENVIOCODI
+			    inner join eve_informes_sco sco on sco.ENV_EVENCODI = env.ENV_EVENCODI
+			    inner join si_empresa em on em.EMPRCODI = en.EMPRCODI
+			order by en.ENVIOFECHA ASC
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListaInformeEnviosLog</key>
+		<query>
+			select
+			env.ENV_EVENCODI,
+			ev.EVENINI,
+			ev.EVENASUNTO,
+			en.ENVIOFECHA ,
+			en.ENVIOUSUARIO,
+			em.EMPRNOMB,
+			case when env.ENVETAPAINFORME = '1' THEN 'IPI'
+			when env.ENVETAPAINFORME = '2' THEN 'IF' end TIPOINFORME,
+			sco.EVEINFRUTAARCHIVO
+			from  (select *
+			from  me_envio
+			where to_date(enviofecha,'DD/MM/YY')>= to_date('{0}','DD/MM/YY')
+			and to_date(enviofecha,'DD/MM/YY') &lt;= to_date('{1}','DD/MM/YY')) en
+			inner join me_envio_eve_evento env on env.enviocodi	= en.enviocodi
+			inner join eve_evento ev on ev.evencodi = env.evencodi
+			inner join eve_informes_sco sco on sco.ENV_EVENCODI = env.ENV_EVENCODI
+			inner join si_empresa em on em.EMPRCODI = en.EMPRCODI
+			where ev.EVENINFFALLA='{2}' and ev.EVENINFFALLAN2	= '{3}'
+			order by en.ENVIOFECHA ASC
+		</query>
+	</Sql>
+	
+</Sqls>

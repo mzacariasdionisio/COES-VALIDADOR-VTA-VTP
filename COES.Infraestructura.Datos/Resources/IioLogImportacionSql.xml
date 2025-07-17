@@ -1,0 +1,359 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--
+// =======================================================================================
+//
+// (c) COES Sinac. Todos los derechos reservados. 
+//
+// Autor: Henry Manuel Díaz Tuesta
+// Acronimo: HDT
+// Requerimiento: alpha
+//
+// Fecha creacion: 10/04/2017
+// Descripcion: Archivo para la atencion del requerimiento.
+//
+// Historial de cambios:
+// 
+// Correlativo	Fecha		Requerimiento		Comentario
+//
+// =======================================================================================
+-->
+<Sqls>
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select ulogcodi, psiclicodi, ulogusucreacion, ulogfeccreacion, ulogproceso, ulogtablaafectada, ulognroregistrosafectados, ulogmensaje
+      from iio_log_importacion
+      where ulogcodi = :ulogcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ulogcodi), 0) + 1 as correlativo
+      from iio_log_importacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select ulogcodi, psiclicodi, ulogusucreacion, ulogfeccreacion, ulogproceso, ulogtablaafectada, ulognroregistrosafectados, ulogmensaje
+      from iio_log_importacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into iio_log_importacion(ulogcodi,
+      psiclicodi,
+      ulogusucreacion,
+      ulogfeccreacion,
+      ulogproceso,
+      ulogtablaafectada,
+      ulognroregistrosafectados,
+      ulogmensaje,
+      rcimcodi,
+      ulogtablacoes,
+      ulogidregistrocoes,
+      ulogtipoincidencia)
+      values (:ulogcodi,
+      :psiclicodi,
+      :ulogusucreacion,
+      :ulogfeccreacion,
+      :ulogproceso,
+      :ulogtablaafectada,
+      :ulognroregistrosafectados,
+      :ulogmensaje,
+      :rcimcodi,
+      :ulogtablacoes,
+      :ulogidregistrocoes,
+      :ulogtipoincidencia)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DuplicadosConfiguracionCOES</key>
+    <query>
+      SELECT 'Existen '  || count(*)   ||' registros duplicados con el código '   || osinergcodi   ||' en la tabla de Equipos' as mensaje
+      FROM eq_equipo
+      WHERE famcodi = 45
+      AND osinergcodi IS NOT NULL
+      AND equiestado IN ('A', 'B')
+      GROUP BY osinergcodi
+      HAVING COUNT(*) > 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>IncidentesSinPuntoMedicionCOES</key>
+    <query>
+      select distinct 'No se encontró el Punto de Medición para el cliente: ' || sumucodi as mensaje
+      from iio_tmp_consumo
+      where ptomedicodi is null
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByRcimcodi</key>
+    <query>
+      delete from iio_log_importacion where rcimcodi = :rcimcodi and psiclicodi = :psiclicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetIncidenciasImportacion</key>
+    <query>
+      select ulogcodi,
+      psiclicodi,
+      ulogusucreacion,
+      ulogfeccreacion,
+      ulogproceso,
+      ulogtablaafectada,
+      ulognroregistrosafectados,
+      ulogmensaje,
+      rcimcodi
+      from iio_log_importacion
+      where rcimcodi = :rcimcodi
+    </query>
+  </Sql>
+
+  <!-- alpha.HDT - 26/04/2017: Cambio para atender el requerimiento -->
+  <Sql>
+    <key>ReporteTabla04</key>
+    <query>
+      SELECT SUMI.EMPRCODI AS IDSUMINISTRADOR,
+      SUMI.EMPRCODOSINERGMIN AS CODSUMINISTRADORSICLI,
+      SUMI.EMPRNOMB AS SUMINISTRADORSICLI,
+      EMCL.EMPRRUC AS RUC,
+      EMCL.EMPRNOMB AS USUARIOLIBRE,
+      EQ.OSINERGCODI AS CODSUMINISTRO,
+      PTO.PTOMEDIELENOMB NOMBREPTOMEDICION,
+      ME.MEDIFECHA AS FECHAMEDICION,
+      H1, H2, H3, H4, H5, H6, H7, H8, H9, H10, H11, H12, H13, H14, H15, H16, H17, H18, H19, H20, H21, H22, H23, H24,
+      H25, H26, H27, H28, H29, H30, H31, H32, H33, H34, H35, H36, H37, H38, H39, H40, H41, H42, H43, H44, H45, H46, H47, H48,
+      H49, H50, H51, H52, H53, H54, H55, H56, H57, H58, H59, H60, H61, H62, H63, H64, H65, H66, H67, H68, H69, H70, H71, H72,
+      H73, H74, H75, H76, H77, H78, H79, H80, H81, H82, H83, H84, H85, H86, H87, H88, H89, H90, H91, H92, H93, H94, H95, H96
+      ,CASE WHEN SO.ULSUMICODCIIU IS NOT NULL THEN SO.ULSUMICODCIIU||':'||CIIU.CIIUNOMBRE END AS CIIU
+      FROM ME_MEDICION96 ME
+      JOIN ME_PTOMEDICION PTO ON ME.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN EQ_EQUIPO EQ ON PTO.EQUICODI = EQ.EQUICODI
+      JOIN SI_EMPRESA EMCL ON EQ.EMPRCODI = EMCL.EMPRCODI
+      
+      JOIN SI_EMPRESA SUMI ON PTO.EMPRCODI = SUMI.EMPRCODI
+      LEFT JOIN VW_SUMIN_OSIG_USUARIO_LIBRE SO ON EQ.EQUICODI = SO.EQUICODI AND SUMI.EMPRCODOSINERGMIN =SO.ULSUMICODEMPRESA
+      LEFT JOIN SI_CIIU CIIU ON SO.ULSUMICODCIIU = CIIU.CIIUCODIGO
+      WHERE ME.LECTCODI = 53
+      AND TO_CHAR(ME.MEDIFECHA,'YYYYMM') = '{0}'
+      AND {1}
+      ORDER BY SUMI.EMPRNOMB, EMCL.EMPRNOMB, PTO.PTOMEDIELENOMB, ME.MEDIFECHA
+    </query>
+  </Sql>
+
+  <!-- alpha.HDT - 26/04/2017: Cambio para atender el requerimiento -->
+  <Sql>
+    <key>ReporteTabla05</key>
+    <query>
+      SELECT EM.EMPRCODI AS IDSUMINISTRADOR,
+      EM.EMPRCODOSINERGMIN AS CODSUMINISTRADORSICLI,
+      EM.EMPRNOMB AS SUMINISTRADORSICLI,
+      EMCL.EMPRRUC AS RUC,
+      EMCL.EMPRNOMB AS USUARIOLIBRE,
+      EQ.OSINERGCODI AS CODUSUARIOLIBRE,
+      BR.BARRNOMBRE AS BARRASUMINISTRO,
+      FA.UFACIDAREADEMANDA AS AREADEMANDA,
+      FA.UFACPAGAVAD AS PAGAVAD,
+      FA.UFACCONSENERGACTVHPPS AS CONSUMOENERGIAHP,
+      FA.UFACCONSENERGACTVFPPS AS CONSUMOENERGIAHFP,
+      FA.UFACMAXDEMHPPS AS MAXIMADEMANDAHP,
+      FA.UFACMAXDEMFPPS AS MAXIMADEMANDAHFP
+      FROM IIO_FACTURA FA
+      LEFT JOIN EQ_EQUIPO EQ ON FA.EQUICODI = EQ.EQUICODI
+      LEFT JOIN SI_EMPRESA EM ON FA.EMPRCODI = EM.EMPRCODI
+      LEFT JOIN SI_EMPRESA EMCL ON EQ.EMPRCODI = EMCL.EMPRCODI
+      LEFT JOIN PR_BARRA BR ON FA.UFACCODPUNTOSUMINISTRO = BR.BARRCODI
+      WHERE FA.UFACMESFACTURADO = '{0}'
+      AND {1}
+      ORDER BY EM.EMPRNOMB, EMCL.EMPRNOMB
+    </query>
+  </Sql>
+  
+  <!-- alpha.HDT - 12/07/2017: Cambio para atender el requerimiento -->
+  <Sql>
+    <key>GetIncidenciasImportacionSuministro</key>
+    <query>
+      select ulogcodi,
+      psiclicodi,
+      ulogusucreacion,
+      ulogfeccreacion,
+      ulogproceso,
+      ulogtablaafectada,
+      ulognroregistrosafectados,
+      ulogmensaje,
+      rcimcodi,
+      ulogtablacoes,
+      ulogidregistrocoes,
+      ulogtipoincidencia
+      from iio_log_importacion
+      where psiclicodi = {0}
+      --and ulogtablaafectada in ({1})
+      and rcimcodi in ({1})
+      and ulogtipoincidencia = 1
+    </query>
+  </Sql>
+
+  <!-- alpha.HDT - 22/07/2017: Cambio para atender el requerimiento -->
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from iio_log_importacion where ulogcodi = :ulogcodi
+    </query>
+  </Sql>
+
+  <!--Inicio - Assetec - Demanda PO - 24052023-->
+  <Sql>
+    <key>ListaMedidorDemandaSicli</key>
+    <query>
+      SELECT SUMI.EMPRCODI AS IDSUMINISTRADOR,
+      SUMI.EMPRCODOSINERGMIN AS CODSUMINISTRADORSICLI,
+      SUMI.EMPRNOMB AS SUMINISTRADORSICLI,
+      EMCL.EMPRRUC AS RUC,
+      EMCL.EMPRNOMB AS USUARIOLIBRE,
+      EQ.OSINERGCODI AS CODSUMINISTRO,
+      PTO.PTOMEDIELENOMB NOMBREPTOMEDICION,
+	  PTO.PTOMEDICODI,
+      ME.MEDIFECHA AS FECHAMEDICION,
+      (H1 + H2 + H3 + H4 + H5 + H6 + H7 + H8 + H9 + H10 + 
+       H11 + H12 + H13 + H14 + H15 + H16 + H17 + H18 + H19 + H20 + 
+       H21 + H22 + H23 + H24 + H25 + H26 + H27 + H28 + H29 + H30 + 
+       H31 + H32 + H33 + H34 + H35 + H36 + H37 + H38 + H39 + H40 + 
+       H41 + H42 + H43 + H44 + H45 + H46 + H47 + H48 + H49 + H50 +
+       H51 + H52 + H53 + H54 + H55 + H56 + H57 + H58 + H59 + H60 + 
+       H61 + H62 + H63 + H64 + H65 + H66 + H67 + H68 + H69 + H70 + 
+       H71 + H72 + H73 + H74 + H75 + H76 + H77 + H78 + H79 + H80 + 
+       H81 + H82 + H83 + H84 + H85 + H86 + H87 + H88 + H89 + H90 + 
+       H91 + H92 + H93 + H94 + H95 + H96) AS MEDITOTAL,
+      H1, H2, H3, H4, H5, H6, H7, H8, H9, H10, H11, H12, H13, H14, H15, H16, H17, H18, H19, H20, H21, H22, H23, H24,
+      H25, H26, H27, H28, H29, H30, H31, H32, H33, H34, H35, H36, H37, H38, H39, H40, H41, H42, H43, H44, H45, H46, H47, H48,
+      H49, H50, H51, H52, H53, H54, H55, H56, H57, H58, H59, H60, H61, H62, H63, H64, H65, H66, H67, H68, H69, H70, H71, H72,
+      H73, H74, H75, H76, H77, H78, H79, H80, H81, H82, H83, H84, H85, H86, H87, H88, H89, H90, H91, H92, H93, H94, H95, H96
+      ,CASE WHEN SO.ULSUMICODCIIU IS NOT NULL THEN SO.ULSUMICODCIIU||':'||CIIU.CIIUNOMBRE END AS CIIU
+      FROM ME_MEDICION96 ME
+      JOIN ME_PTOMEDICION PTO ON ME.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN EQ_EQUIPO EQ ON PTO.EQUICODI = EQ.EQUICODI
+      JOIN SI_EMPRESA EMCL ON EQ.EMPRCODI = EMCL.EMPRCODI
+
+      JOIN SI_EMPRESA SUMI ON PTO.EMPRCODI = SUMI.EMPRCODI
+      LEFT JOIN VW_SUMIN_OSIG_USUARIO_LIBRE SO ON EQ.EQUICODI = SO.EQUICODI AND SUMI.EMPRCODOSINERGMIN =SO.ULSUMICODEMPRESA
+      LEFT JOIN SI_CIIU CIIU ON SO.ULSUMICODCIIU = CIIU.CIIUCODIGO
+      WHERE ME.LECTCODI = 53
+      AND ME.MEDIFECHA BETWEEN TO_DATE('{1}','dd/MM/yyyy') and TO_DATE('{2}','dd/MM/yyyy')
+      AND PTO.PTOMEDICODI IN ({0})
+      ORDER BY SUMI.EMPRNOMB, EMCL.EMPRNOMB, PTO.PTOMEDIELENOMB, ME.MEDIFECHA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListGroupByMonthYear</key>
+    <query>
+      select
+      ME.MEDIFECHA AS FECHAMEDICION,
+      SUM(H1) AS H1,SUM(H2) AS H2,SUM(H3) AS H3,SUM(H4) AS H4,SUM(H5) AS H5,
+      SUM(H6) AS H6,SUM(H7) AS H7,SUM(H8) AS H8,SUM(H9) AS H9,SUM(H10) AS H10,
+      SUM(H11) AS H11,SUM(H12) AS H12,SUM(H13) AS H13,SUM(H14) AS H14,SUM(H15) AS H15,
+      SUM(H16) AS H16,SUM(H17) AS H17,SUM(H18) AS H18,SUM(H19) AS H19,SUM(H20) AS H20,
+      SUM(H21) AS H21,SUM(H22) AS H22,SUM(H23) AS H23,SUM(H24) AS H24,SUM(H25) AS H25,
+      SUM(H26) AS H26,SUM(H27) AS H27,SUM(H28) AS H28,SUM(H29) AS H29,SUM(H30) AS H30,
+      SUM(H31) AS H31,SUM(H32) AS H32,SUM(H33) AS H33,SUM(H34) AS H34,SUM(H35) AS H35,
+      SUM(H36) AS H36,SUM(H37) AS H37,SUM(H38) AS H38,SUM(H39) AS H39,SUM(H40) AS H40,
+      SUM(H41) AS H41,SUM(H42) AS H42,SUM(H43) AS H43,SUM(H44) AS H44,SUM(H45) AS H45,
+      SUM(H46) AS H46,SUM(H47) AS H47,SUM(H48) AS H48,SUM(H49) AS H49,SUM(H50) AS H50,
+      SUM(H51) AS H51,SUM(H52) AS H52,SUM(H53) AS H53,SUM(H54) AS H54,SUM(H55) AS H55,
+      SUM(H56) AS H56,SUM(H57) AS H57,SUM(H58) AS H58,SUM(H59) AS H59,SUM(H60) AS H60,
+      SUM(H61) AS H61,SUM(H62) AS H62,SUM(H63) AS H63,SUM(H64) AS H64,SUM(H65) AS H65,
+      SUM(H66) AS H66,SUM(H67) AS H67,SUM(H68) AS H68,SUM(H69) AS H69,SUM(H70) AS H70,
+      SUM(H71) AS H71,SUM(H72) AS H72,SUM(H73) AS H73,SUM(H74) AS H74,SUM(H75) AS H75,
+      SUM(H76) AS H76,SUM(H77) AS H77,SUM(H78) AS H78,SUM(H79) AS H79,SUM(H80) AS H80,
+      SUM(H81) AS H81,SUM(H82) AS H82,SUM(H83) AS H83,SUM(H84) AS H84,SUM(H85) AS H85,
+      SUM(H86) AS H86,SUM(H87) AS H87,SUM(H88) AS H88,SUM(H89) AS H89,SUM(H90) AS H90,
+      SUM(H91) AS H91,SUM(H92) AS H92,SUM(H93) AS H93,SUM(H94) AS H94,SUM(H95) AS H95,
+      SUM(H96) AS H96
+      FROM ME_MEDICION96 ME
+      JOIN ME_PTOMEDICION PTO ON ME.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN EQ_EQUIPO EQ ON PTO.EQUICODI = EQ.EQUICODI
+      JOIN SI_EMPRESA EMCL ON EQ.EMPRCODI = EMCL.EMPRCODI
+      JOIN SI_EMPRESA SUMI ON PTO.EMPRCODI = SUMI.EMPRCODI
+      LEFT JOIN VW_SUMIN_OSIG_USUARIO_LIBRE SO ON EQ.EQUICODI = SO.EQUICODI AND SUMI.EMPRCODOSINERGMIN =SO.ULSUMICODEMPRESA
+      LEFT JOIN SI_CIIU CIIU ON SO.ULSUMICODCIIU = CIIU.CIIUCODIGO
+      WHERE ME.LECTCODI = 53
+      AND TO_CHAR(ME.MEDIFECHA, 'yyyy') = '{0}' and TO_CHAR(ME.MEDIFECHA, 'MM') in ({1})
+      AND PTO.PTOMEDICODI IN ({2})
+      GROUP BY ME.MEDIFECHA
+      ORDER BY ME.MEDIFECHA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListDatosSICLI</key>
+    <query>
+      select
+      ME.Ptomedicodi,
+      ME.MEDIFECHA AS FECHAMEDICION,
+      H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+      H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+      H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+      H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+      H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+      H51, H52, H53, H54, H55, H56, H57, H58, H59, H60,
+      H61, H62, H63, H64, H65, H66, H67, H68, H69, H70,
+      H71, H72, H73, H74, H75, H76, H77, H78, H79, H80,
+      H81, H82, H83, H84, H85, H86, H87, H88, H89, H90,
+      H91, H92, H93, H94, H95, H96
+      FROM ME_MEDICION96 ME
+      JOIN ME_PTOMEDICION PTO ON ME.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN EQ_EQUIPO EQ ON PTO.EQUICODI = EQ.EQUICODI
+      JOIN SI_EMPRESA EMCL ON EQ.EMPRCODI = EMCL.EMPRCODI
+      JOIN SI_EMPRESA SUMI ON PTO.EMPRCODI = SUMI.EMPRCODI
+      LEFT JOIN VW_SUMIN_OSIG_USUARIO_LIBRE SO ON EQ.EQUICODI = SO.EQUICODI AND SUMI.EMPRCODOSINERGMIN =SO.ULSUMICODEMPRESA
+      LEFT JOIN SI_CIIU CIIU ON SO.ULSUMICODCIIU = CIIU.CIIUCODIGO
+      WHERE ME.LECTCODI = 53
+      AND TO_CHAR(ME.MEDIFECHA, 'yyyy') = '{0}' and TO_CHAR(ME.MEDIFECHA, 'MM') in ({1})
+      AND PTO.PTOMEDICODI IN ({2})
+      ORDER BY ME.MEDIFECHA
+    </query>
+  </Sql>
+
+  
+  <Sql>
+    <key>ListSicliByDateRange</key>
+    <query>
+      select
+      ME.Ptomedicodi,
+      ME.MEDIFECHA AS FECHAMEDICION,
+      H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+      H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+      H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+      H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+      H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+      H51, H52, H53, H54, H55, H56, H57, H58, H59, H60,
+      H61, H62, H63, H64, H65, H66, H67, H68, H69, H70,
+      H71, H72, H73, H74, H75, H76, H77, H78, H79, H80,
+      H81, H82, H83, H84, H85, H86, H87, H88, H89, H90,
+      H91, H92, H93, H94, H95, H96
+      FROM ME_MEDICION96 ME
+      JOIN ME_PTOMEDICION PTO ON ME.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN EQ_EQUIPO EQ ON PTO.EQUICODI = EQ.EQUICODI
+      JOIN SI_EMPRESA EMCL ON EQ.EMPRCODI = EMCL.EMPRCODI
+      JOIN SI_EMPRESA SUMI ON PTO.EMPRCODI = SUMI.EMPRCODI
+      LEFT JOIN VW_SUMIN_OSIG_USUARIO_LIBRE SO ON EQ.EQUICODI = SO.EQUICODI AND SUMI.EMPRCODOSINERGMIN =SO.ULSUMICODEMPRESA
+      LEFT JOIN SI_CIIU CIIU ON SO.ULSUMICODCIIU = CIIU.CIIUCODIGO
+      WHERE ME.LECTCODI = 53
+      AND  ME.MEDIFECHA BETWEEN TO_DATE('{1}', 'dd/MM/yyyy') and TO_DATE('{2}', 'dd/MM/yyyy')
+      AND PTO.PTOMEDICODI IN ({0})
+      ORDER BY ME.MEDIFECHA
+    </query>
+  </Sql>
+  <!--Fin - Assetec - Demanda PO - 24052023-->
+  
+</Sqls>

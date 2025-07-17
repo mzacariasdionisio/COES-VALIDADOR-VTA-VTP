@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(dpriecodi), 0) + 1 from sio_datoprie
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into sio_datoprie(
+      dpriecodi,
+      dprievalor,
+      dprieperiodo,
+      dpriefechadia,
+      equicodi,
+      grupocodi,
+      barrcodi,
+      emprcodi,
+      emprcodi2,
+      ptomedicodi,
+      dprieusucreacion,
+      dpriefeccreacion,
+      cabpricodi
+      )
+      values(
+      :dpriecodi,
+      :dprievalor,
+      :dprieperiodo,
+      :dpriefechadia,
+      :equicodi,
+      :grupocodi,
+      :barrcodi,
+      :emprcodi,
+      :emprcodi2,
+      :ptomedicodi,
+      :dprieusuario,
+      :dpriefecha,
+      :cabpricodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update sio_datoprie
+      set
+      dprievalor = :dprievalor,
+      dprieperiodo = :dprieperiodo,
+      dpriefechadia = :dpriefechadia,
+      equicodi = :equicodi,
+      grupocodi = :grupocodi,
+      barrcodi = :barrcodi,
+      emprcodi = :emprcodi,
+      emprcodi2 = :emprcodi2,
+      dprieusucreacion = :dprieusuario,
+      dpriefeccreacion = :dpriefecha,
+      cabpricodi = :cabpricodi
+      where
+      dpriecodi = :dpriecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from sio_datoprie
+      where
+      dpriecodi = :dpriecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from sio_datoprie where dpriecodi = :dpriecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from sio_datoprie
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from sio_datoprie
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarDataPorCodigoCabecera</key>
+    <query>
+      SELECT COUNT(*) AS COUNT
+      FROM SIO_DATOPRIE WHERE CABPRICODI = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>BorrarDataPorCodigoCabecera</key>
+    <query>
+      DELETE FROM SIO_DATOPRIE WHERE CABPRICODI = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCabpricodi</key>
+    <query>
+      select * from sio_datoprie where (equicodi in ({0}) or '{0}' = '-1') and cabpricodi in ({1})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByFechaFamilia</key>
+    <query>
+      select * from sio_datoprie where
+      grupocodi = {0}
+      and dprieperiodo >= to_date('{1}','YYYY-MM-DD HH24:MI:SS')
+      and dprieperiodo&lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaDifusionEnergPrie</key>
+    <query>
+      select tg.TGENERCODI, tg.TGENERNOMB, eq.equinomb, emp.emprcodi, emp.EMPRNOMB,fe.FENERGNOMB,fe.FENERGCODI  ,dp.DPRIEPERIODO, dp.DPRIEFECHADIA, dp.equicodi, dp.DPRIEVALOR
+      from sio_datoprie dp
+      inner join ME_PTOMEDICION pto on dp.EQUICODI = pto.PTOMEDICODI
+      inner join eq_equipo eq on pto.EQUICODI = eq.equicodi
+      inner join si_empresa emp on eq.emprcodi = emp.emprcodi
+      inner join PR_GRUPO gr on eq.grupocodi = gr.grupocodi
+      inner join si_fuenteenergia fe on gr.FENERGCODI = fe.FENERGCODI
+      inner join SI_TIPOGENERACION tg on fe.TGENERCODI = tg.TGENERCODI
+
+      where eq.equicodi in (
+      SELECT EQ.equicodi FROM EQ_EQUIPO EQ INNER JOIN PR_GRUPO GR ON EQ.GRUPOCODI = GR.GRUPOCODI INNER JOIN PR_TIPOGRUPO TP ON GR.TIPOGRUPOCODI = TP.TIPOGRUPOCODI
+      WHERE FAMCODI IN({2}) AND EQ.EQUIESTADO ='A'
+      )
+      and dp.grupocodi = {0}
+      and dp.DPRIEPERIODO >= to_date('{1}','YYYY-MM-DD HH24:MI:SS')
+      and dp.DPRIEPERIODO &lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      order by eq.EQUINOMB asc, dp.DPRIEFECHADIA asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaDifusionEnergPrieByFiltro</key>
+    <query>
+      select tg.TGENERCODI, tg.TGENERNOMB, eq.equinomb, emp.emprcodi, emp.EMPRNOMB,fe.FENERGNOMB,fe.FENERGCODI  ,dp.DPRIEPERIODO, dp.DPRIEFECHADIA, dp.equicodi, dp.DPRIEVALOR
+      from sio_datoprie dp
+      inner join ME_PTOMEDICION pto on dp.EQUICODI = pto.PTOMEDICODI
+      inner join eq_equipo eq on pto.EQUICODI = eq.equicodi
+      inner join si_empresa emp on eq.emprcodi = emp.emprcodi
+      inner join PR_GRUPO gr on eq.grupocodi = gr.grupocodi
+      inner join si_fuenteenergia fe on gr.FENERGCODI = fe.FENERGCODI
+      inner join SI_TIPOGENERACION tg on fe.TGENERCODI = tg.TGENERCODI
+
+      where eq.equicodi in (
+      SELECT EQ.equicodi FROM EQ_EQUIPO EQ INNER JOIN PR_GRUPO GR ON EQ.GRUPOCODI = GR.GRUPOCODI INNER JOIN PR_TIPOGRUPO TP ON GR.TIPOGRUPOCODI = TP.TIPOGRUPOCODI
+      WHERE FAMCODI IN({2}) AND EQ.EQUIESTADO ='A'
+      )
+
+      and ('0'='{3}' or emp.EMPRCODI in ({3}))
+      and ('0'='{4}' or tg.TGENERCODI in ({4}))
+      and ('0'='{5}' or fe.FENERGCODI in ({5}))
+
+      and dp.grupocodi = {0}
+      and dp.DPRIEPERIODO >= to_date('{1}','YYYY-MM-DD HH24:MI:SS')
+      and dp.DPRIEPERIODO &lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      order by eq.EQUINOMB asc, dp.DPRIEFECHADIA asc
+    </query>
+  </Sql>
+
+
+
+  <Sql>
+    <key>GetByLectPtomedFechaOrden</key>
+    <query>
+      select tg.TGENERCODI, tg.TGENERNOMB, eq.equinomb, emp.emprcodi, emp.EMPRNOMB,fe.FENERGNOMB,fe.FENERGCODI  ,dp.DPRIEPERIODO, dp.DPRIEFECHADIA,pto.ORDEN, dp.equicodi, dp.DPRIEVALOR
+      from sio_datoprie dp
+      inner join ME_PTOMEDICION pto on dp.EQUICODI = pto.PTOMEDICODI
+      inner join eq_equipo eq on pto.EQUICODI = eq.equicodi
+      inner join si_empresa emp on eq.emprcodi = emp.emprcodi
+      inner join PR_GRUPO gr on eq.grupocodi = gr.grupocodi
+      inner join si_fuenteenergia fe on gr.FENERGCODI = fe.FENERGCODI
+      inner join SI_TIPOGENERACION tg on fe.TGENERCODI = tg.TGENERCODI
+
+      where
+      /* ('0'='{2}' or emp.EMPRCODI in ({2}))
+      and */
+      ('0' in ({3}) or pto.OSICODI in ({3}))
+      and ('0'='{4}' or pto.ORDEN in({4}))
+      and dp.grupocodi = {0}
+      and dp.DPRIEPERIODO >= to_date('{1}','YYYY-MM-DD HH24:MI:SS')
+      and dp.DPRIEPERIODO &lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      order by dp.equicodi asc, dp.DPRIEFECHADIA asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaDifusionCostoMarginal</key>
+    <query>
+      select DAT.DPRIECODI, DAT.DPRIEVALOR, DAT.DPRIEPERIODO, DAT.DPRIEFECHADIA, DAT.EQUICODI, DAT.GRUPOCODI, DAT.DPRIEFECCREACION DPRIEFECHA, DAT.CABPRICODI, AR.AREACODI, AR.AREANOMB, TB.BARRTENSION
+      from SIO_DATOPRIE DAT
+      INNER JOIN TRN_BARRA TB ON DAT.EQUICODI = TB.BARRCODI
+      INNER JOIN EQ_AREA AR ON TB.AREACODI = AR.AREACODI
+
+      WHERE
+
+      DAT.CABPRICODI IN ({0})
+      AND (TB.BARRCODI IN ({3}) or '{3}' = '-1')
+      AND (TB.BARRTENSION IN ({4}) or '{3}' = '-1')
+      AND (AR.AREACODI IN ({5}) or '{3}' = '-1')
+
+      AND DAT.DPRIEPERIODO = to_date('{1}','YYYY-MM-DD HH24:MI:SS')
+      AND DAT.DPRIEPERIODO &lt;= to_date('{2}','YYYY-MM-DD HH24:MI:SS')
+      order by DAT.EQUICODI asc, DAT.DPRIEFECHADIA asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCostoVariableByFiltro</key>
+    <query>
+      select pg.GRUPOCODI ,pg.gruponomb,fe.FENERGCODI,fe.FENERGNOMB, dp.DPRIECODI,
+      dp.DPRIEVALOR, dp.DPRIEPERIODO, dp.DPRIEFECHADIA, dp.CABPRICODI
+
+      from SIO_DATOPRIE dp
+      INNER JOIN PR_GRUPO pg ON SUBSTR(dp.DPRIEVALOR,4,5) = pg.OSINERGCODI
+      INNER JOIN SI_FUENTEENERGIA fe on SUBSTR(dp.DPRIEVALOR,0,2) = fe.OSINERGCODI
+      WHERE
+      dp.DPRIEPERIODO = TO_DATE('{1}', 'YYYY-MM-DD')
+      AND ('{2}' = '-1' or fe.fenergcodi in ({2}))
+      AND ('{3}' = '-1' or pg.GRUPOCODI in ({3}))
+      AND dp.CABPRICODI IN ({0})
+      order by pg.gruponomb asc, dp.DPRIEFECHADIA asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetListaByCabpricodi</key>
+    <query>
+      select EMP.EMPRAMBITO ,DAT.*
+      from SIO_DATOPRIE DAT
+      INNER JOIN SI_EMPRESA EMP ON DAT.EQUICODI = EMP.EMPRCODI
+      where (DAT.equicodi in ({0}) or '{0}' = '-1') and DAT.cabpricodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetDifusionTransfPotencia</key>
+    <query>
+      select EMPR.EMPRAMBITO, EMP.EMPRAMBITO  as emprambitoc, DAT.*
+      from SIO_DATOPRIE DAT
+      INNER JOIN SI_EMPRESA EMPR ON DAT.GRUPOCODI = EMPR.EMPRCODI
+      INNER JOIN SI_EMPRESA EMP ON DAT.EQUICODI = EMP.EMPRCODI
+      where
+      ('{0}' = '-1' or ( DAT.grupocodi in ({0}) or DAT.equicodi in ({0}) ) )
+      and DAT.cabpricodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByPeriodoAndPriecodi</key>
+    <query>
+      DELETE FROM SIO_DATOPRIE WHERE CABPRICODI IN(SELECT CABPRICODI FROM  SIO_CABECERADET   WHERE CABPRIPERIODO = TO_DATE('{0}','YYYY-MM-DD') AND TPRIECODI = {1})
+    </query>
+  </Sql>
+
+  <!--INICIO SIOSEIN-->
+  <Sql>
+    <key>GetSioDatosprieByCriteria</key>
+    <query>
+      select * from sio_datoprie where cabpricodi in ({0}) and (equicodi in ({1}) or '-1' = '{1}')
+      and (grupocodi in({2}) or '-1' = '{2}') and (barrcodi in ({3}) or '-1' = '{3}') and (emprcodi in ({4}) or '-1' = '{4}')
+    </query>
+  </Sql>
+  <!--FIN SIOSEIN-->
+
+  <!-- INICIO SIOSEIN-PRIE-2021 -->
+  <Sql>
+    <key>GetByCabpricodi2</key>
+    <query>
+      select
+      emp.emprcodi, emp.emprnomb,
+      eq.equicodi, eq.equinomb, eq.famcodi, 
+      gp.grupocodi, gp.gruponomb, gp.osinergcodi, 
+      gp.tipogrupocodi, gp.tipogrupocodi, gp.tipogenerrer,
+      tg.tgenercodi, tg.tgenernomb,
+      fe.fenergcodi, fe.fenergnomb,
+      dp.*
+      from
+      sio_datoprie dp
+      inner join eq_equipo eq on dp.equicodi = eq.equicodi
+      inner join si_empresa emp on eq.emprcodi = emp.emprcodi
+      inner join pr_grupo gp on eq.grupocodi = gp.grupocodi
+      inner join si_tipogenerxfam tgfam on eq.famcodi = tgfam.famcodi
+      inner join si_tipogeneracion tg on tgfam.tgenercodi = tg.tgenercodi
+      inner join si_fuenteenergia fe on gp.fenergcodi = fe.fenergcodi
+      where
+      (dp.equicodi in ({0}) or '{0}' = '-1') and dp.cabpricodi in ({1})
+    </query>
+  </Sql>  
+
+    <Sql>
+	    <key>GetReporteRR05ByOsinergcodi</key>
+	    <query>
+			select se.emprcodi, se.emprnomb, 0 as codcentral, '' as central, e.famcodi, f.tgenercodi, tg.tgenernomb,
+			fe.fenergcodi, fe.fenergnomb, e.equicodi, e.equinomb, pg.tipogrupocodi, '' as grupomiembro
+			from eq_equipo e
+			inner join si_empresa se on e.emprcodi = se.emprcodi
+			inner join si_tipogenerxfam f on e.famcodi = f.famcodi
+			inner join si_tipogeneracion tg on f.tgenercodi = tg.tgenercodi
+			inner join si_fuenteenergia fe on f.tgenercodi = fe.tgenercodi
+			inner join pr_grupo pg on se.emprcodi = pg.emprcodi
+			where pg.tipogrupocodi > 0 and e.osinergcodi = '{0}'
+		</query>
+    </Sql>
+
+	<Sql>
+		<key>GetReporteR05MDTByOsinergcodi</key>
+		<query>
+			select pg.tipogrupocodi, fe.fenergcodi, fe.fenergnomb, se.emprcodi, se.emprnomb,
+			ctgdet.ctgdetnomb, ti.tgenercodi, ti.tgenernomb, '' as medifecha, pg.tipogenerrer
+			from eq_equipo e inner join si_empresa se on e.emprcodi = se.emprcodi
+			inner join pr_grupo pg on se.emprcodi = pg.emprcodi
+			inner join si_fuenteenergia fe on fe.fenergcodi = pg.fenergcodi
+			inner join si_tipogeneracion ti on fe.tgenercodi = ti.tgenercodi
+			inner join eq_categoria_equipo ctgequi on ctgequi.equicodi = e.equicodi
+			inner join eq_categoria_det ctgdet on ctgdet.ctgdetcodi = ctgequi.ctgdetcodi
+			where pg.tipogrupocodi > 0
+			and e.osinergcodi = '{0}'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetReporteR05IEyR05MDE</key>
+		<query>
+			select distinct m.medifecha, pto.ptomedicodi, emp.emprcodi, emp.emprnomb
+			from eq_equipo e inner join me_ptomedicion pto on e.equicodi = pto.equicodi
+			inner join si_empresa emp on pto.emprcodi = emp.emprcodi
+			inner join me_medicion96 m on pto.ptomedicodi = m.ptomedicodi
+			where e.osinergcodi = '{0}' and m.medifecha = to_date('{1}','DD/MM/YYYY')
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>ObtenerMeMedicion48</key>
+		<query>
+			select pg.fenergcodi, se.emprcodi, se.emprnomb, pg.gruponomb, e.grupocodi, e.osinergcodi
+			from eq_equipo e
+			inner join pr_grupo pg on e.grupocodi = pg.grupocodi
+			inner join si_empresa se on e.emprcodi = se.emprcodi
+			where e.osinergcodi = '{0}'
+		</query>
+	</Sql>
+	<Sql>
+		<key>ObtenerMeMedicion24</key>
+		<query>
+			select pto.ptomedicodi, pto.tptomedicodi, tm.tptomedinomb, e.equicodi, e.equinomb, pto.osicodi
+			from me_ptomedicion pto
+			inner join eq_equipo e on pto.equicodi = e.equicodi
+			inner join me_tipoptomedicion tm on pto.tptomedicodi = tm.tptomedicodi
+			where (e.equicodi > 0) and (pto.osicodi = '{0}') and (pto.ptomediestado = 'A')
+		</query>
+	</Sql>
+	<Sql>
+		<key>ObtenerMeMedicionxIntervalo</key>
+		<query>
+			select osinergcodi, equinomb, equiabrev, 0 as Medinth1, equicodi
+			from eq_equipo
+			where osinergcodi = '{0}'
+		</query>
+	</Sql>
+    <!--FIN SIOSEIN 2021-->
+
+</Sqls>

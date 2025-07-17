@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(vcrcicodi), 0) + 1 from vcr_cargoincumpl
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vcr_cargoincumpl(
+      vcrcicodi,
+      vcrecacodi,
+      equicodi,
+      vcrcicargoincumplmes,
+      vcrcisaldoanterior,
+      vcrcicargoincumpl,
+      vcrcicarginctransf,
+      vcrcisaldomes,
+      pericodidest,
+      vcrciusucreacion,
+      vcrcifeccreacion,
+      vcrcisaldomesanterior,
+      vcrciincumplsrvrsf,
+      vcrciincent
+      )
+      values(
+      :vcrcicodi,
+      :vcrecacodi,
+      :equicodi,
+      :vcrcicargoincumplmes,
+      :vcrcisaldoanterior,
+      :vcrcicargoincumpl,
+      :vcrcicarginctransf,
+      :vcrcisaldomes,
+      :pericodidest,
+      :vcrciusucreacion,
+      :vcrcifeccreacion,
+      :vcrcisaldomesanterior,
+      :vcrciincumplsrvrsf,
+      :vcrciincent
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vcr_cargoincumpl
+      set
+      vcrcicarginctransf = :vcrcicarginctransf,
+      vcrcisaldomes = :vcrcisaldomes,
+      vcrciincent = :vcrciincent
+      where vcrcicodi = :vcrcicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vcr_cargoincumpl
+      where vcrecacodi = :vcrecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from vcr_cargoincumpl
+      where vcrecacodi = :vcrecacodi and equicodi = :equicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vcr_cargoincumpl where vcrecacodi = :vcrecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from vcr_cargoincumpl
+    </query>
+  </Sql>
+
+  <!--ASSETEC: 202012-->
+  <Sql>
+    <key>ListCargoIncumplGrupoCalculado</key>
+    <query>
+      select mb.emprcodi, (select e.emprnomb from si_empresa e where mb.emprcodi = e.emprcodi) as empresa,
+      vi.equicodicen, (select e.equinomb from eq_equipo e where vi.equicodicen = e.equicodi) as central,
+      vi.equicodiuni as equicodi, (select e.equinomb from eq_equipo e where vi.equicodiuni = e.equicodi) as unidad,
+      CAST((-1 * sum(vi.vcrvincumpli * vcrecaresaprimsig * mb.vcrmebpotenciamedgrp * vcrecacostoprns)) AS NUMERIC(28,10)) as vcrcicargoincumpl,
+      sum((1 - vpr.vcrvprrpns) * vcrmebpresencia) as vcrciincumplsrvrsf, sum(vcrmebpresencia) as pericodidest /*totmebpresencia*/
+      /*, vi.vcrvincumpli, vcrecaresaprimsig, mb.vcrmebpotenciamedgrp, vcrecacostoprns */
+      from vcr_recalculo r, vcr_verincumplim vi, vcr_medborne mb, vcr_verporctreserv vpr
+      where r.vcrecacodi = :vcrecacodi
+      and r.vcrinccodi = vi.vcrinccodi /*and vi.equicodicen = :equicodicen and vi.equicodiuni = :equicodiuni */
+      and r.vcrinccodi = vpr.vcrinccodi and vi.equicodicen = vpr.equicodicen and vi.equicodiuni = vpr.equicodiuni and vi.vcrvinfecha = vpr.vcrvprfecha
+      and r.vcrecacodi = mb.vcrecacodi and vi.equicodicen = mb.equicodicen and vi.equicodiuni = mb.equicodiuni and vi.vcrvinfecha = mb.vcrmebfecha
+      group by mb.emprcodi, vi.equicodicen, vi.equicodiuni
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalMesServicioRSFConsiderados</key>
+    <query>
+      select sum(ci.vcrciincumplsrvrsf) as vcrciincumplsrvrsf
+      from vcr_cargoincumpl ci, vcr_medbornecargoincp mci
+      where ci.vcrecacodi = :vcrecacodi
+      and ci.vcrecacodi = mci.vcrecacodi and ci.equicodi = mci.equicodiuni and mci.vcmbciconsiderar = 'S'
+    </query>
+  </Sql>
+  
+</Sqls>

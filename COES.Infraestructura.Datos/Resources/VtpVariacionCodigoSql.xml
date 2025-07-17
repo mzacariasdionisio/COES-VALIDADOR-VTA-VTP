@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_variacion_codigo(
+      varcodcodi,
+      emprcodi,
+      barrcodi,
+      varcodcodigovtp,
+      varcodporcentaje,
+      varcodusucreacion,
+      varcodfeccreacion,
+      varcodusumodificacion,
+      varcodfecmodificacion,
+      clicodi,
+      varcodestado,
+      varcodtipocomp
+      )
+      values(
+      :varcodcodi,
+      :emprcodi,
+      :barrcodi,
+      :varcodcodigovtp,
+      :varcodporcentaje,
+      :varcodusucreacion,
+      :varcodfeccreacion,
+      :varcodusumodificacion,
+      :varcodfecmodificacion,
+      :clicodi,
+      :varcodestado,
+      :varcodtipocomp
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(varcodcodi), 0) + 1 from vtp_variacion_codigo
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateStatusVariationByCodigoVtp</key>
+    <query>
+      update vtp_variacion_codigo
+      set varcodestado=:varcodestado,
+      varcodusumodificacion=:varcodusumodificacion,
+      varcodfecmodificacion=:varcodfecmodificacion
+      where varcodcodigovtp=:varcodcodigovtp and varcodtipocomp=:varcodtipocomp
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetVariacionCodigoByCodVtp</key>
+    <query>
+      select * from vtp_variacion_codigo
+      where varcodcodigovtp=:varcodcodigovtp and varcodestado='ACT'
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListVariacionCodigoByEmprCodi</key>
+    <query>
+      select * from
+      (select distinct
+      codco.emprcodi as emprcodi
+      ,siemp.emprnomb
+      ,codco.clicodi
+      ,codco.cliente
+      ,codco.barrcodi
+      ,codco.barra
+      ,codco.codcncodivtp
+      ,nvl(varcod.varcodporcentaje,0.00) as varcodporcentaje
+      ,row_number() over (order by siemp.emprnomb asc) as fila
+      ,siemp.emprestado
+      from vtp_codigo_consolidado codco
+      left join vtp_variacion_codigo varcod on varcod.emprcodi=codco.emprcodi AND varcod.clicodi=codco.clicodi AND varcod.barrcodi=codco.barrcodi AND varcod.varcodcodigovtp=codco.codcncodivtp AND varcod.varcodestado!='INA'
+      left join si_empresa siemp on siemp.emprcodi=codco.emprcodi
+      where siemp.emprestado='A' and siemp.emprcodi=:emprcodi
+      and (codco.codcncodivtp like '%'||:codcncodivtp||'%' or :codcncodivtp = '*')
+      union
+      select distinct
+      codco.emprcodi as emprcodi
+      ,trim(siemp.infadinomb) emprnomb
+      ,codco.clicodi
+      ,(select emprnomb from si_empresa where emprcodi = codco.clicodi)cliente
+      ,codco.barrcodi
+      ,codco.barra
+      ,codco.codcncodivtp
+      ,nvl(varcod.varcodporcentaje,0.00) as varcodporcentaje
+      ,row_number() over (order by siemp.infadinomb asc) as fila
+      ,'A' as emprestado
+      from vtp_codigo_consolidado codco
+      left join vtp_variacion_codigo varcod on varcod.emprcodi=codco.emprcodi AND varcod.clicodi=codco.clicodi AND varcod.barrcodi=codco.barrcodi AND varcod.varcodcodigovtp=codco.codcncodivtp AND varcod.varcodestado!='INA'
+      inner join TRN_INFOADICIONAL_det siemp on siemp.infadicodi=codco.emprcodi and siemp.infadiestado = 'I'
+      where siemp.infadicodi= :emprcodi
+      and (codco.codcncodivtp like '%'||:codcncodivtp||'%' or :codcncodivtp = '*')
+      order by 7)
+      where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize)
+      order by 9
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetNroRecordsVariacionCodigoByEmprCodi</key>
+    <query>
+      select count(1) as NroRegistros
+      from
+      (select distinct
+      codco.emprcodi as emprcodi
+      ,siemp.emprnomb
+      ,codco.clicodi
+      ,codco.cliente
+      ,codco.barrcodi
+      ,codco.barra
+      ,codco.codcncodivtp
+      ,nvl(varcod.varcodporcentaje,0.00) as varcodporcentaje
+      ,row_number() over (order by siemp.emprnomb asc) as fila
+      ,siemp.emprestado
+      from vtp_codigo_consolidado codco
+      left join vtp_variacion_codigo varcod on varcod.emprcodi=codco.emprcodi AND varcod.clicodi=codco.clicodi AND varcod.barrcodi=codco.barrcodi AND varcod.varcodcodigovtp=codco.codcncodivtp AND varcod.varcodestado!='INA'
+      left join si_empresa siemp on siemp.emprcodi=codco.emprcodi
+      where siemp.emprestado='A' and siemp.emprcodi=:emprcodi
+      and (codco.codcncodivtp like '%'||:codcncodivtp||'%' or :codcncodivtp = '*')
+      order by 7)
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListVariacionCodigoVTEAByEmprCodi</key>
+    <query>
+      select * from
+      (select distinct
+      codco.genemprcodi as emprcodi
+      ,siemp.emprnomb
+      ,codco.cliemprcodi as clicodi
+      ,(select emprnomb from si_empresa where emprcodi=codco.cliemprcodi) as cliente
+      ,codco.barrcodi
+      ,(select barrnombre from trn_barra where barrcodi=codco.barrcodi) as barra
+      ,codco.coresocodigo as codcncodivtp
+      ,nvl(varcod.varcodporcentaje,0.00) as varcodporcentaje
+      ,row_number() over (order by siemp.emprnomb asc) as fila
+      ,siemp.emprestado
+      from trn_codigo_retiro_solicitud codco
+      left join vtp_variacion_codigo varcod on varcod.emprcodi=codco.genemprcodi AND varcod.clicodi=codco.cliemprcodi AND varcod.barrcodi=codco.barrcodi AND varcod.varcodcodigovtp=codco.coresocodigo AND varcod.varcodestado!='INA'
+      left join si_empresa siemp on siemp.emprcodi=codco.genemprcodi
+      where siemp.emprestado='A' and siemp.emprcodi=:emprcodi
+      and (codco.coresocodigo like '%'||:codcncodivtp||'%' or :codcncodivtp = '*') and codco.coresoobservacion!='SOLBAJAOK' and codco.coresocodigo is not null
+      union
+      select distinct
+      codco.genemprcodi as emprcodi
+      ,trim(infadinomb) emprnomb
+      ,codco.cliemprcodi as clicodi
+      ,(select emprnomb from si_empresa where emprcodi=codco.cliemprcodi) as cliente
+      ,codco.barrcodi
+      ,(select barrnombre from trn_barra where barrcodi=codco.barrcodi) as barra
+      ,codco.coresocodigo as codcncodivtp
+      ,nvl(varcod.varcodporcentaje,0.00) as varcodporcentaje
+      ,row_number() over (order by trninfo.infadinomb asc) as fila
+      ,'A' emprestado
+      from trn_codigo_retiro_solicitud codco
+      left join vtp_variacion_codigo varcod on varcod.emprcodi=codco.genemprcodi AND varcod.clicodi=codco.cliemprcodi AND varcod.barrcodi=codco.barrcodi AND varcod.varcodcodigovtp=codco.coresocodigo AND varcod.varcodestado!='INA'
+      left join TRN_INFOADICIONAL_det trninfo on trninfo.infadicodi=codco.genemprcodi and trninfo.infadiestado = 'I'
+      where trninfo.infadicodi= :emprcodi
+      and (codco.coresocodigo like '%'||:codcncodivtp||'%' or :codcncodivtp = '*') and codco.coresoobservacion!='SOLBAJAOK' and codco.coresocodigo is not null
+      order by 7)
+      where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize)
+      order by 9
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetNroRecordsVariacionCodigoVTEAByEmprCodi</key>
+    <query>
+      select count(1) as NroRegistros
+      from
+      (select distinct
+      codco.genemprcodi as emprcodi
+      ,siemp.emprnomb
+      ,codco.cliemprcodi as clicodi
+      ,(select emprnomb from si_empresa where emprcodi=codco.cliemprcodi) as cliente
+      ,codco.barrcodi
+      ,(select barrnombre from trn_barra where barrcodi=codco.barrcodi) as barra
+      ,codco.coresocodigo as codcncodivtp
+      ,nvl(varcod.varcodporcentaje,0.00) as varcodporcentaje
+      ,row_number() over (order by siemp.emprnomb asc) as fila
+      ,siemp.emprestado
+      from trn_codigo_retiro_solicitud codco
+      left join vtp_variacion_codigo varcod on varcod.emprcodi=codco.genemprcodi AND varcod.clicodi=codco.cliemprcodi AND varcod.barrcodi=codco.barrcodi AND varcod.varcodcodigovtp=codco.coresocodigo AND varcod.varcodestado!='INA'
+      left join si_empresa siemp on siemp.emprcodi=codco.genemprcodi
+      where siemp.emprestado='A' and siemp.emprcodi=:emprcodi
+      and (codco.coresocodigo like '%'||:codcncodivtp||'%' or :codcncodivtp = '*') and codco.coresoobservacion!='SOLBAJAOK' and codco.coresocodigo is not null
+      order by 7)
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListHistoryVariacionCodigoByCodigoVtp</key>
+    <query>
+      select * from (
+      select
+      varcod.varcodcodi,
+      varcod.emprcodi,
+      siemp.emprnomb,
+      siemp1.emprnomb cliente,
+      barr.barrnombre as barra,
+      varcod.varcodcodigovtp,
+      nvl(varcod.varcodporcentaje,0.00) as varcodporcentaje,
+      varcod.varcodestado,
+      varcod.varcodusumodificacion,
+      varcod.varcodfecmodificacion,
+      varcod.varcodfeccreacion
+      from vtp_variacion_codigo varcod
+      inner join si_empresa siemp on siemp.emprcodi=varcod.emprcodi
+      inner join si_empresa siemp1 on siemp1.emprcodi=varcod.clicodi
+      inner join trn_barra barr on barr.barrcodi=varcod.barrcodi
+      where varcod.varcodcodigovtp=:varcodcodigovtp and varcod.varcodtipocomp=:varcodtipocomp
+      union
+      select
+      varcod.varcodcodi,
+      varcod.emprcodi,
+      trim(infadinomb) emprnomb,
+      siemp1.emprnomb cliente,
+      barr.barrnombre as barra,
+      varcod.varcodcodigovtp,
+      nvl(varcod.varcodporcentaje,0.00) as varcodporcentaje,
+      varcod.varcodestado,
+      varcod.varcodusumodificacion,
+      varcod.varcodfecmodificacion,
+      varcod.varcodfeccreacion
+      from vtp_variacion_codigo varcod
+      inner join TRN_INFOADICIONAL_det trninfo on trninfo.infadicodi=varcod.emprcodi and trninfo.infadiestado = 'I'
+      inner join si_empresa siemp1 on siemp1.emprcodi=varcod.clicodi
+      inner join trn_barra barr on barr.barrcodi=varcod.barrcodi
+      where varcod.varcodcodigovtp=:varcodcodigovtp and varcod.varcodtipocomp=:varcodtipocomp
+      )t
+      order by t.varcodestado
+    </query>
+  </Sql>
+</Sqls>

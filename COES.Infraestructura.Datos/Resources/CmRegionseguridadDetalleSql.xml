@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(regdetcodi), 0) + 1 from cm_regionseguridad_detalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cm_regionseguridad_detalle(
+           regdetcodi,
+           regsegcodi,
+           equicodi,
+           regsegusucreacion,
+           regsegfeccreacion
+       )
+       values(
+           :regdetcodi,
+           :regsegcodi,
+           :equicodi,
+           :regsegusucreacion,
+           :regsegfeccreacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cm_regionseguridad_detalle
+       set
+           regsegcodi = :regsegcodi,
+           equicodi = :equicodi,
+           regsegusucreacion = :regsegusucreacion,
+           regsegfeccreacion = :regsegfeccreacion
+       where
+           regdetcodi = :regdetcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from cm_regionseguridad_detalle
+      where
+      regsegcodi = :regsegcodi and
+      equicodi = :equicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           regdetcodi,
+           regsegcodi,
+           equicodi,
+           regsegusucreacion,
+           regsegfeccreacion
+       from
+           cm_regionseguridad_detalle
+       where
+           regdetcodi = :regdetcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      regdetcodi,
+      regsegcodi,
+      equicodi,
+      regsegusucreacion,
+      regsegfeccreacion
+      from
+      cm_regionseguridad_detalle
+      where
+      regsegcodi = :regsegcodi and
+      equicodi = :equicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      det.regdetcodi,
+      det.regsegcodi,
+      det.equicodi,
+      det.regsegusucreacion,
+      det.regsegfeccreacion,
+      'LINEA DE TRANSMISION' as tipoequipo,
+      1 as famcodi,
+      cong.nombretna1 as nombretna
+      from
+      cm_regionseguridad_detalle det inner join eq_equipo eq on det.equicodi = eq.equicodi
+      inner join eq_congestion_config cong on det.equicodi = cong.equicodi
+      where eq.famcodi = 8 and det.regsegcodi = {0}
+      union all
+      select
+      det.regdetcodi,
+      det.regsegcodi,
+      det.equicodi,
+      det.regsegusucreacion,
+      det.regsegfeccreacion,
+      'GENERADOR' as tipoequipo,
+      2 as famcodi,
+      rel.nombretna
+      from
+      cm_regionseguridad_detalle det inner join eq_equipo eq on det.equicodi = eq.equicodi
+      inner join eq_relacion rel on det.equicodi = rel.equicodi
+      where eq.famcodi != 8 and rel.indfuente = 'G' and  det.regsegcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEquipos</key>
+    <query>
+      select * from (
+      select equicodi, nombretna, 1 as tipo from eq_relacion where indfuente = 'G' and estado = 'ACTIVO'
+      and nombretna is not null
+      union all
+      select config.equicodi, nombretna1 as nombretna, 2 as tipo from eq_congestion_config config
+      inner join eq_equipo eq on config.equicodi = eq.equicodi
+      where config.estado = 'ACTIVO' and eq.famcodi = 8 and config.nombretna1 is not null)
+      where tipo = {0}
+      order by 2
+    </query>
+  </Sql>
+  <Sql>
+    <key>ObtenerEquiposLinea</key>
+    <query>
+      select * from (
+      select equicodi, nombretna, 1 as tipo from eq_relacion where indfuente = 'G' and estado = 'ACTIVO'
+      and nombretna is not null and equicodi in (select recurcodisicoes from cp_recurso where topcodi = 0 and CATCODI = 4 and recurfamsic = 2)
+      union all
+      select config.equicodi, nombretna1 as nombretna, 2 as tipo from eq_congestion_config config
+      inner join eq_equipo eq on config.equicodi = eq.equicodi
+      inner join cp_recurso r on r.recurcodisicoes = eq.equicodi and r.topcodi = 0 and catcodi in (8,9,10)
+      where config.estado = 'ACTIVO' and eq.famcodi = 8 and config.nombretna1 is not null)
+      where tipo = {0}
+      order by 2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEquiposCentral</key>
+    <query>
+      select equicodi, equinomb as nombretna, 3 as tipo from eq_equipo where equicodi in (
+      select equipadre from eq_equipo where equicodi in (    select equicodi from (
+      select equicodi, nombretna, 1 as tipo from eq_relacion where indfuente = 'G' and estado = 'ACTIVO'
+      and nombretna is not null
+      union all
+      select config.equicodi, nombretna1 as nombretna, 2 as tipo from eq_congestion_config config
+      inner join eq_equipo eq on config.equicodi = eq.equicodi
+      where config.estado = 'ACTIVO' and eq.famcodi = 8 and config.nombretna1 is not null)
+      where tipo = 1)
+      )
+      and famcodi = 4
+      and equicodi in ( select recurcodisicoes from cp_recurso where topcodi = 0 and CATCODI = 4 and recurfamsic = 1 )
+    </query>
+  </Sql>
+  <Sql>
+    <key>ObtenerModoOperacion</key>
+    <query>
+      select  grupocodi as equicodi, gruponomb as nombretna, 4 as tipo from pr_grupo where grupocodi in (
+      select recurcodisicoes from cp_recurso where topcodi = 0 and CATCODI = 3 and recurestado = 1 and recurcodisicoes > 0
+      )
+    </query>
+  </Sql> 
+</Sqls>

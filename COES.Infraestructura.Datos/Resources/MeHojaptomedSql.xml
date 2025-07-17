@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(hptocodi), 0) + 1 from me_hojaptomed
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxOrder</key>
+    <query>
+      select nvl(max(HPTOORDEN), 0) + 1 from me_hojaptomed hp
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      where
+      HP.formatcodi = {0} and
+      eq.emprcodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into me_hojaptomed(
+      hptocodi,
+      ptomedicodi,
+      HPTOLIMSUP,
+      tipoinfocodi,
+      formatcodi,
+      HPTOLIMINF,
+      lastuser,
+      lastdate,
+      HPTOACTIVO,
+      HPTOORDEN,
+      HPTOSIGNO,
+      HOJACODI,
+      TPTOMEDICODI,
+      HPTOOBSERVACION,
+      Hptoindcheck
+      )
+      values(
+      :hptocodi,
+      :ptomedicodi,
+      :HPTOLIMSUP,
+      :tipoinfocodi,
+      :formatcodi,
+      :HPTOLIMINF,
+      :lastuser,
+      :lastdate,
+      :HPTOACTIVO,
+      :HPTOORDEN,
+      :HPTOSIGNO,
+      :HOJACODI,
+      :TPTOMEDICODI,
+      :HPTOOBSERVACION,
+      :Hptoindcheck
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update me_hojaptomed
+      set
+      HPTOLIMSUP = {1},
+      HPTOLIMINF = {2},
+      lastuser = '{3}',
+      lastdate = to_date('{4}','YYYY-MM-DD HH24:MI:SS'),
+      HPTOACTIVO = {5},
+      HPTOORDEN = {6},
+      tptomedicodi = {7},
+      HPTOOBSERVACION = '{8}',
+      Hptoindcheck = '{9}'
+      where
+      HPTOCODI = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from me_hojaptomed
+      where
+      formatcodi = :formatcodi and
+      tipoinfocodi = :tipoinfocodi and
+      HPTOORDEN = :HPTOORDEN and
+      ptomedicodi = :ptomedicodi and
+      tptomedicodi = :tptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteById</key>
+    <query>
+      delete from me_hojaptomed
+      where
+      HPTOCODI = :HPTOCODI
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>DeleteHoja</key>
+    <query>
+      delete from me_hojaptomed
+      where
+      formatcodi = :formatcodi and
+      tipoinfocodi = :tipoinfocodi and
+      HPTOORDEN = :HPTOORDEN and
+      ptomedicodi = :ptomedicodi and
+      tptomedicodi = :tptomedicodi and
+      hojacodi = :hojacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      HP.*,eq.equinomb,ti.tipoinfoabrev,NVL(emp.emprabrev, ' ') emprabrev,tpto.TPTOMEDINOMB
+      from
+      me_hojaptomed HP
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi
+      where
+      HP.formatcodi = {0} and
+      HP.tipoinfocodi = {1} and
+      HP.ptomedicodi = {2} and
+      HP.HPTOSIGNO = {3} and
+      hp.tptomedicodi = {4}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdHoja</key>
+    <query>
+      select
+      HP.*,eq.equinomb,ti.tipoinfoabrev,
+      nvl(emp.emprabrev,'EMPR') as emprabrev,
+      tpto.TPTOMEDINOMB
+      from
+      me_hojaptomed HP
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      inner join si_empresa emp on emp.emprcodi = pto.emprcodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+      left join eq_equipo eq on eq.equicodi = pto.equicodi
+      where
+      HP.formatcodi = {0} and
+      HP.tipoinfocodi = {1} and
+      HP.ptomedicodi = {2} and
+      HP.HPTOSIGNO = {3} and
+      hp.tptomedicodi = {4} and
+      hp.hojacodi = {5}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select *
+      from
+      me_hojaptomed
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      SELECT rview.* FROM
+      (
+          select
+          hp.PTOMEDICODI,hp.TIPOINFOCODI,hp.FORMATCODI,hp.HPTOSIGNO,hp.HPTOLIMINF,hp.HPTOLIMSUP,hp.HPTOORDEN,hp.LASTUSER,hp.LASTDATE,hp.HOJACODI,hp.HPTOCODI,HP.HPTOOBSERVACION,hp.Hptoindcheck,tpmed.tptomedicodi
+          ,CASE WHEN vwpt.HPTDATPTOESTADO = 'F' THEN 0 ELSE HP.HPTOACTIVO END AS HPTOACTIVO
+          ,pto.equicodi, pto.grupocodi, arel.areapadre, eq.equinomb,gr.gruponomb,ti.tipoinfoabrev,emp.emprcodi,emp.emprabrev,emp.emprnomb,tpmed.TPTOMEDINOMB,eq.famcodi, pto.ptomedibarranomb, pto.ptomedidesc
+          ,vwpt.HPTDATFECHA, vwpt.HPTDATPTOESTADO, ROW_NUMBER() OVER(PARTITION BY HP.HPTOCODI ORDER BY HP.HPTOCODI,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+          from me_hojaptomed HP
+          inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+          inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= to_date('{2}','YYYY-MM-DD') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+          left join eq_equipo eq on pto.equicodi = eq.equicodi
+          left join pr_grupo gr on pto.grupocodi = gr.grupocodi
+		  left join eq_arearel arel on gr.areacodi = arel.areacodi and (arel.areapadre in (2,3,5,6))
+          inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+          inner join me_tipoptomedicion tpmed on tpmed.tptomedicodi = (case when coalesce(hp.tptomedicodi,-1)>0 then hp.tptomedicodi else coalesce(pto.tptomedicodi,-1) end)
+          inner join si_empresa emp on emp.emprcodi = vwpt.emprcodi
+          where (emp.emprcodi = {0} or {0} = -1 )  and hp.formatcodi= {1}
+          order by hp.HPTOORDEN,hp.ptomedicodi,tpmed.TPTOMEDICODI asc
+      )rview
+      WHERE NUM_VIEW = 1 and HPTOACTIVO = 1
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteriaAnterior</key>
+    <query>
+      select HP.*,pto.equicodi,eq.equinomb,ti.tipoinfoabrev,emp.emprabrev,tpmed.tptomedicodi,tpmed.TPTOMEDINOMB,eq.famcodi, pto.ptomedibarranomb,
+      pto.ptomedidesc
+      from me_hojaptomed HP
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+      inner join me_tipoptomedicion tpmed on tpmed.tptomedicodi = pto.tptomedicodi
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi
+      where (eq.emprcodi = {0} or {0} = -1 )  and hp.formatcodi= {1} and  hp.HPTOACTIVO = 1
+      order by hp.HPTOORDEN asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresaFormato</key>
+    <query>
+      select distinct emp.emprcodi, emp.emprnomb from me_hojaptomed hoja
+      inner join me_ptomedicion pto on hoja.ptomedicodi = pto.ptomedicodi
+      inner join si_empresa emp on pto.emprcodi = emp.emprcodi
+      where hoja.formatcodi = :formatcodi
+      order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPtosXFormato</key>
+    <query>
+      select hpto.* from me_hojaptomed hpto
+      inner join me_ptomedicion pto on pto.ptomedicodi = hpto.ptomedicodi
+      inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= sysdate and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+      where hpto.formatcodi = {0} and vwpt.emprcodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetPuntosFormato</key>
+    <query>
+      select hp.*
+      from me_hojaptomed HP
+      inner join me_ptomedicion pto on pto.ptomedicodi = hp.ptomedicodi
+      WHERE (pto.emprcodi = {0} or {0} = -1 )  and hp.formatcodi= {1} and  hp.hptoactivo = 1
+      order by hp.hptoorden asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPtosWithTipoGeneracion</key>
+    <query>
+      select emp.emprcodi, emp.emprnomb,eq.equipadre,eqp.equinomb as central, eq.equicodi,eq.equinomb as equinomb, eq.famcodi,
+      fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, tg.tgenernomb, tg.tgenercodi, hp.*
+      from   me_ptomedicion p
+      inner join  me_hojaptomed hp on  hp.PTOMEDICODI = p.PTOMEDICODI
+      inner join si_empresa emp on emp.EMPRCODI = p.EMPRCODI
+      inner join eq_equipo eq on eq.EQUICODI = p.EQUICODI
+      inner join eq_equipo eqp on eqp.EQUICODI = eq.EQUIPADRE
+      inner join pr_grupo gr on gr.grupocodi = eq.GRUPOCODI
+      inner join si_fuenteenergia fe on fe.FENERGCODI = gr.FENERGCODI
+      inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+      where hp.formatcodi = {0}
+      and ('0'='4' or tg.TGENERCODI  = {1})
+      order by emp.emprnomb,eqp.equinomb,eq.equinomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHojaPtoByFormatoAndEmpresa</key>
+    <query>
+      select tpmed.tptomedicodi, HP.*,pto.equicodi,eq.equinomb,ti.tipoinfoabrev,emp.emprabrev,tpmed.TPTOMEDINOMB,eq.famcodi, pto.ptomedibarranomb, pto.Ptomedielenomb,
+      pto.ptomedidesc, gp.gruponomb, gp.grupocodi,
+      emp.emprnomb, emp.emprcodi,
+      case when eq.famcodi in (4,5,37,39) then eq.equicodi else eqp.equicodi end as equipadre,
+      case when eq.famcodi in (4,5,37,39) then eq.equinomb else eqp.equinomb end as equipopadre,
+      orig.ORIGLECTCODI, orig.ORIGLECTNOMBRE,
+      (select cli.emprnomb from si_empresa cli where cli.emprcodi = pto.clientecodi) as clientenomb,
+      (select barr.barrnombre from trn_barra barr where barr.barrcodi = pto.barrcodi) as barranomb,
+      f.formatnombre
+      from me_hojaptomed HP
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join ME_ORIGENLECTURA orig on orig.ORIGLECTCODI = PTO.ORIGLECTCODI
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+      inner join me_tipoptomedicion tpmed on tpmed.tptomedicodi = (case when coalesce(hp.tptomedicodi,-1)>0 then hp.tptomedicodi else coalesce(pto.tptomedicodi,-1) end)
+      inner join me_formato f on f.formatcodi = hp.formatcodi
+      left join eq_equipo eq on eq.equicodi = pto.equicodi
+      left join eq_equipo eqp on eqp.EQUICODI = coalesce(eq.EQUIPADRE, -1)
+      inner join si_empresa emp on emp.emprcodi = pto.emprcodi
+      left join pr_grupo gp on gp.grupocodi = pto.grupocodi
+      WHERE (emp.emprcodi = {0} or {0} = -1 )  and hp.formatcodi in ({1})
+      order by hp.HPTOORDEN asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHojaPtoByFormatoAndEmpresaHoja</key>
+    <query>
+      select HP.*,pto.equicodi,eq.equinomb,ti.tipoinfoabrev,emp.emprabrev,tpmed.TPTOMEDINOMB,eq.famcodi, pto.ptomedibarranomb,
+      gp.gruponomb,
+      orig.ORIGLECTCODI, orig.ORIGLECTNOMBRE,
+      pto.ptomedidesc
+      from me_hojaptomed HP
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join ME_ORIGENLECTURA orig on orig.ORIGLECTCODI = PTO.ORIGLECTCODI
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+      inner join me_tipoptomedicion tpmed on tpmed.tptomedicodi = hp.tptomedicodi
+      inner join si_empresa emp on emp.emprcodi = pto.emprcodi
+      left join eq_equipo eq on eq.equicodi = pto.equicodi
+      left join pr_grupo gp on gp.grupocodi = pto.grupocodi
+      WHERE (pto.emprcodi = {0} or {0} = -1 )  and hp.formatcodi= {1} and hp.hojacodi = {2}
+      order by hp.HPTOORDEN asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarHojaPtoByFormatoAndEmpresaHojaPR16</key>
+    <query>
+		select HP.*,pto.equicodi,eq.equinomb,ti.tipoinfoabrev,emp.emprabrev,tpmed.TPTOMEDINOMB,eq.famcodi, pto.ptomedibarranomb,
+		gp.gruponomb,
+		orig.ORIGLECTCODI, orig.ORIGLECTNOMBRE,
+		pto.ptomedidesc
+		from me_hojaptomed HP
+		inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+		inner join ME_ORIGENLECTURA orig on orig.ORIGLECTCODI = PTO.ORIGLECTCODI
+		inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+		inner join me_tipoptomedicion tpmed on tpmed.tptomedicodi = hp.tptomedicodi
+		left join eq_equipo eq on eq.equicodi = pto.equicodi
+		inner join si_empresa emp on emp.emprcodi = eq.emprcodi
+		left join pr_grupo gp on gp.grupocodi = pto.grupocodi
+		WHERE (eq.emprcodi = {0} or {0} = -1 )  and hp.formatcodi= {1} and hp.hojacodi = {2}
+		order by hp.HPTOORDEN asc
+	</query>
+  </Sql>
+  
+  <Sql>
+    <key>ListByFormatcodi</key>
+    <query>
+      select
+      fmt.formatnombre,
+      emp.emprnomb,
+      emp.emprcodi,
+      pto.ptomedidesc,
+      PTO.PTOMEDIBARRANOMB,
+      PTO.PTOMEDIELENOMB,
+      PTO.PTOMEDIESTADO,
+      PTO.PTOMEDICALCULADO,
+      hp.*
+      from me_hojaptomed hp
+      inner join me_formato fmt on fmt.formatcodi = hp.formatcodi
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      left join si_empresa emp on emp.emprcodi = pto.emprcodi
+      where hp.formatcodi in ({0})
+    </query>
+  </Sql>
+  
+</Sqls>

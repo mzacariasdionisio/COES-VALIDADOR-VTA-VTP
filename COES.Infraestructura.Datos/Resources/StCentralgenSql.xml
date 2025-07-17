@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(stcntgcodi), 0) + 1 from st_centralgen
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into st_centralgen(
+           stcntgcodi,
+           stgenrcodi,
+           equicodi,
+           barrcodi,
+           stcntgusucreacion,
+           stcntgfeccreacion,
+           stcntgusumodificacion,
+           stcntgfecmodificacion
+       )
+       values(
+           :stcntgcodi,
+           :stgenrcodi,
+           :equicodi,
+           :barrcodi,
+           :stcntgusucreacion,
+           :stcntgfeccreacion,
+           :stcntgusumodificacion,
+           :stcntgfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update st_centralgen
+       set
+           stgenrcodi = :stgenrcodi,
+           equicodi = :equicodi,
+           barrcodi = :barrcodi,
+           stcntgusucreacion = :stcntgusucreacion,
+           stcntgfeccreacion = :stcntgfeccreacion,
+           stcntgusumodificacion = :stcntgusumodificacion,
+           stcntgfecmodificacion = :stcntgfecmodificacion
+       where
+           stcntgcodi = :stcntgcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from st_centralgen
+       where
+           stcntgcodi = :stcntgcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteVersion</key>
+    <query>
+      delete from st_centralgen
+      where stgenrcodi in (select stgenrcodi from
+      st_generador where strecacodi = :strecacodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           stcntgcodi,
+           stgenrcodi,
+           equicodi,
+           barrcodi,
+           stcntgusucreacion,
+           stcntgfeccreacion,
+           stcntgusumodificacion,
+           stcntgfecmodificacion
+       from
+           st_centralgen
+       where
+           stcntgcodi = :stcntgcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select (select e.equinomb from eq_equipo e where st.equicodi = e.equicodi) as equinomb,
+      (select b.barrnombre from trn_barra b where st.barrcodi = b.barrcodi) as barrnomb, st.*
+      from st_centralgen st Where st.stgenrcodi = :stgenrcodi
+      order by 1, 2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select eq.equinomb, cg.*
+      from st_centralgen cg left join st_generador g on cg.stgenrcodi = g.stgenrcodi
+                            left join eq_equipo eq on cg.equicodi = eq.equicodi
+      where g.strecacodi = :recacodi
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCentNomb</key>
+    <query>
+      select eq.equinomb, cg.* 
+      from st_centralgen cg left join st_generador g on cg.stgenrcodi = g.stgenrcodi
+      left join eq_equipo eq on cg.equicodi = eq.equicodi
+      where trim(eq.equinomb) = trim(:equinomb) and g.strecacodi = :strecacodi 
+      order by 1
+    </query>
+  </Sql>
+  
+<Sql>
+    <key>GetByCriteriaReporte</key>
+    <query>
+      <!--select eq.equinomb, em.emprnomb, dg.degeledistancia, en.stenrgrgia, cast((en.stenrgrgia/dg.degeledistancia) as decimal(20,9)) as Gwhz, cm.stcompcodelemento, cg.*
+      from st_centralgen cg, st_generador g, st_distelectrica_genele dg, st_energia en, eq_equipo eq, si_empresa em, st_compensacion cm
+      where cg.stgenrcodi = g.stgenrcodi and cg.equicodi = en.equicodi and cg.stcntgcodi = dg.stcntgcodi and cg.equicodi = eq.equicodi
+      and g.emprcodi = em.emprcodi and dg.stcompcodi = cm.stcompcodi
+      and g.strecacodi = :recacodi
+      order by cm.stcompcodelemento, eq.equinomb, em.emprnomb-->
+      select eq.equinomb, em.emprnomb, dg.degeledistancia, en.stenrgrgia, cast((en.stenrgrgia/dg.degeledistancia) as decimal(20,9)) as Gwhz, cm.stcompcodelemento, cg.*
+      from st_generador g, st_centralgen cg, st_distelectrica_genele dg, st_energia en, eq_equipo eq, si_empresa em, st_compensacion cm
+      where g.strecacodi = :recacodi
+      and cg.stgenrcodi = g.stgenrcodi
+      and cg.stcntgcodi = dg.stcntgcodi and dg.strecacodi = g.strecacodi
+      and cg.equicodi = en.equicodi  and en.strecacodi = g.strecacodi
+      and cg.equicodi = eq.equicodi
+      and g.emprcodi = em.emprcodi and dg.stcompcodi = cm.stcompcodi
+      order by cm.stcompcodelemento, eq.equinomb, em.emprnomb
+    </query>
+  </Sql>
+
+  <!-- SIOSEIN2 -->
+  <Sql>
+    <key>ReporteGeneradoresCompensacion</key>
+    <query>
+      select eq.equinomb, em.emprnomb, dg.degeledistancia, en.stenrgrgia, cm.stcompcodelemento, cg.*
+      from  st_generador g,
+      st_centralgen cg,
+      st_distelectrica_genele dg,
+      st_energia en,
+      eq_equipo eq,
+      si_empresa em,
+      st_compensacion cm
+      where g.strecacodi = {0}
+      and cg.stgenrcodi = g.stgenrcodi
+      and cg.stcntgcodi = dg.stcntgcodi and dg.strecacodi = g.strecacodi
+      and cg.equicodi = en.equicodi  and en.strecacodi = g.strecacodi
+      and cg.equicodi = eq.equicodi
+      and g.emprcodi = em.emprcodi and dg.stcompcodi = cm.stcompcodi
+      and (cm.stcompcodi={1} or {1}=-1)
+    </query>
+  </Sql>
+
+  <!-- END SIOSEIN2 -->
+
+</Sqls>

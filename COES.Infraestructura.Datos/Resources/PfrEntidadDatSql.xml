@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into pfr_entidad_dat(
+      pfrentcodi,
+      pfrcnpcodi,
+      prfdatfechavig,
+      pfrdatdeleted,
+      pfrdatvalor,
+      pfrdatfeccreacion,
+      pfrdatusucreacion,
+      pfrdatfecmodificacion,
+      pfrdatusumodificacion
+      )
+      values(
+      :pfrentcodi,
+      :pfrcnpcodi,
+      :prfdatfechavig,
+      :pfrdatdeleted,
+      :pfrdatvalor,
+      :pfrdatfeccreacion,
+      :pfrdatusucreacion,
+      :pfrdatfecmodificacion,
+      :pfrdatusumodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update pfr_entidad_dat
+      set
+      pfrdatvalor = :pfrdatvalor,
+      pfrdatfeccreacion = :pfrdatfeccreacion,
+      pfrdatusucreacion = :pfrdatusucreacion,
+      pfrdatfecmodificacion = :pfrdatfecmodificacion,
+      pfrdatusumodificacion = :pfrdatusumodificacion,
+      pfrdatdeleted = :pfrdatdeleted2
+      where
+      pfrentcodi = :pfrentcodi and
+      pfrcnpcodi = :pfrcnpcodi and
+      prfdatfechavig = :prfdatfechavig and
+      pfrdatdeleted = :pfrdatdeleted
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      pfr_entidad_dat
+      where
+      pfrentcodi = :pfrentcodi and
+      pfrcnpcodi = :pfrcnpcodi and
+      prfdatfechavig = :prfdatfechavig and
+      pfrdatdeleted = :pfrdatdeleted
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      pfr_entidad_dat
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      ped.*,
+      cnp.PFRCNPNOMB,
+      pe.Pfrcatcodi
+      from pfr_entidad_dat ped
+      inner join pfr_entidad pe on pe. pfrentcodi = ped.pfrentcodi
+      inner join pfr_concepto cnp on cnp.PFRCNPCODI = ped.PFRCNPCODI
+      where (ped.pfrentcodi = {0} or '-1' = '{0}') and ped.pfrcnpcodi = {1}
+      order by ped.prfdatfechavig desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPfrentidadVigente</key>
+    <query>
+      select * from
+      (
+      select
+      ped.*,
+      cnp.PFRCNPNOMB,
+      pe.Pfrcatcodi,
+      row_number() over(partition by ped.pfrentcodi , ped.pfrcnpcodi order by ped.pfrentcodi , ped.pfrcnpcodi, ped.prfdatfechavig desc) as num
+      from pfr_entidad_dat ped
+      inner join pfr_entidad pe on pe. pfrentcodi = ped.pfrentcodi
+      inner join pfr_concepto cnp on cnp.PFRCNPCODI = ped.PFRCNPCODI
+      where
+      ped.pfrdatdeleted = 0 and
+      ('-1' = '{2}' or pe.pfrcatcodi = {2})
+      and ('-1' = '{1}' or pe.pfrentcodi in ({1}))
+      and ped.prfdatfechavig &lt;= to_date('{0} 23:59:59', 'dd/mm/yyyy hh24:mi:ss')) tbl
+      where num = 1
+    </query>
+  </Sql>
+</Sqls>

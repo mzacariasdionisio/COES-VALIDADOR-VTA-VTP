@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(feepeqcodi), 0) + 1 from ft_ext_etempdetpryeq
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ft_ext_etempdetpryeq(
+      feepeqcodi,
+      feeprycodi,
+      equicodi,
+      feepeqflagotraetapa,
+      feepeqflagsistema,
+      feepequsucreacion,
+      feepeqfeccreacion,
+      feepequsumodificacion,
+      feepeqfecmodificacion,
+      grupocodi,
+      feepeqestado
+      )
+      values(
+      :feepeqcodi,
+      :feeprycodi,
+      :equicodi,
+      :feepeqflagotraetapa,
+      :feepeqflagsistema,
+      :feepequsucreacion,
+      :feepeqfeccreacion,
+      :feepequsumodificacion,
+      :feepeqfecmodificacion,
+      :grupocodi,
+      :feepeqestado
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ft_ext_etempdetpryeq
+      set
+      feeprycodi = :feeprycodi,
+      equicodi = :equicodi,
+      feepeqflagotraetapa = :feepeqflagotraetapa,
+      feepeqflagsistema = :feepeqflagsistema,
+      feepequsucreacion = :feepequsucreacion,
+      feepeqfeccreacion = :feepeqfeccreacion,
+      feepequsumodificacion = :feepequsumodificacion,
+      feepeqfecmodificacion = :feepeqfecmodificacion,
+      grupocodi = :grupocodi,
+      feepeqestado = :feepeqestado
+      where
+      feepeqcodi = :feepeqcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ft_ext_etempdetpryeq
+      where
+      feepeqcodi = :feepeqcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_etempdetpryeq
+      where
+      feepeqcodi = :feepeqcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_etempdetpryeq
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_etempdetpryeq
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorRelProyectoEtapaEmpresa</key>
+    <query>
+      select * from ft_ext_etempdetpryeq
+      where
+      (feeprycodi = {0} or '-1' = '{0}')
+      and (feepeqestado =  '{1}' or '-1' = '{1}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByProyectoYEquipo</key>
+    <query>
+      select * from ft_ext_etempdetpryeq
+      where
+      feeprycodi = {0} and
+      equicodi = {1}
+      and (feepeqestado =  '{2}' or '-1' = '{2}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByProyectoYGrupo</key>
+    <query>
+      select * from ft_ext_etempdetpryeq
+      where
+      feeprycodi = {0} and
+      grupocodi = {1}
+      and (feepeqestado =  '{2}' or '-1' = '{2}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByProyectoEquipoEmpresaEtapa</key>
+    <query>
+      select rpq.* from ft_ext_etempdetpryeq rpq
+      inner join ft_ext_etempdetpry rp on rp.feeprycodi = rpq.feeprycodi
+      inner join ft_ext_relempetapa re on re.fetempcodi = rp.fetempcodi
+      where
+      rpq.equicodi = {0} and
+      rp.ftprycodi = {1} and
+      re.emprcodi = {2} and
+      re.ftetcodi = {3}
+      and (rpq.feepeqestado =  '{4}' or '-1' = '{4}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByProyectoGrupoEmpresaEtapa</key>
+    <query>
+      select rpq.* from ft_ext_etempdetpryeq rpq
+      inner join ft_ext_etempdetpry rp on rp.feeprycodi = rpq.feeprycodi
+      inner join ft_ext_relempetapa re on re.fetempcodi = rp.fetempcodi
+      where
+      rpq.grupocodi = {0} and
+      rp.ftprycodi = {1} and
+      re.emprcodi = {2} and
+      re.ftetcodi = {3}
+      and (rpq.feepeqestado =  '{4}' or '-1' = '{4}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarDetallesPorRelEmpresaEtapaProyecto</key>
+    <query>
+      select
+      case when eq.equicodi > 0 then eq.equinomb else gr.gruponomb end as equinomb,
+      emp.emprnomb,
+      emp.emprcodi,
+      eq.famcodi,
+      gr.catecodi,
+      ar.areacodi,
+      ar.areanomb,
+      f.famnomb,
+      c.catenomb,
+      det.*
+      from ft_ext_etempdetpryeq det
+      inner join ft_ext_etempdetpry dp on dp.feeprycodi = det.feeprycodi
+      left join eq_equipo eq on eq.equicodi = det.equicodi
+      left join eq_familia f on f.famcodi = eq.famcodi
+      left join pr_grupo gr on gr.grupocodi = det.grupocodi
+      left join pr_categoria c on c.catecodi = gr.catecodi
+      left join si_empresa emp on emp.emprcodi = (case when eq.equicodi> 0 then eq.emprcodi else gr.emprcodi end)
+      left join eq_area ar on ar.areacodi = (case when eq.equicodi> 0 then eq.areacodi else gr.areacodi end)
+      where (dp.feepryestado = '{0}' or '-1' = '{0}')
+      and (det.feepeqestado =  '{1}' or '-1' = '{1}')
+      and (det.feeprycodi = {2} or '-1' = '{2}')
+    </query>
+  </Sql>
+  
+</Sqls>

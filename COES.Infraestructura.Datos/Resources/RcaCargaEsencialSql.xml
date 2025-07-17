@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(rccarecodi), 0) + 1 from rca_carga_esencial
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into rca_carga_esencial(
+           rccarecodi,
+           emprcodi,
+           equicodi,
+           rccarecarga,
+           rccaredocumento,
+           rccarefecharecepcion,
+           rccareestado,
+           rccarenombarchivo,
+           rccareestregistro,
+           rccareusucreacion,
+           rccarefeccreacion,
+           rccareusumodificacion,
+           rccarefecmodificacion,
+           rccareorigen,
+           rccaretipocarga
+       )
+       values(
+           :rccarecodi,
+           :emprcodi,
+           :equicodi,
+           :rccarecarga,
+           :rccaredocumento,
+           :rccarefecharecepcion,
+           :rccareestado,
+           :rccarenombarchivo,
+           :rccareestregistro,
+           :rccareusucreacion,
+           :rccarefeccreacion,
+           :rccareusumodificacion,
+           :rccarefecmodificacion,
+           :rccareorigen,
+           :rccaretipocarga
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update rca_carga_esencial
+       set
+           emprcodi = :emprcodi,
+           equicodi = :equicodi,
+           rccarecarga = :rccarecarga,
+           rccaredocumento = :rccaredocumento,
+           rccarefecharecepcion = :rccarefecharecepcion,
+           rccareestado = :rccareestado,
+           rccarenombarchivo = :rccarenombarchivo,
+           rccareestregistro = :rccareestregistro,
+           rccareusucreacion = :rccareusucreacion,
+           rccarefeccreacion = :rccarefeccreacion,
+           rccareusumodificacion = :rccareusumodificacion,
+           rccarefecmodificacion = :rccarefecmodificacion,
+           rccaretipocarga = :rccaretipocarga
+       where
+           rccarecodi = :rccarecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update rca_carga_esencial
+      set rccareestregistro = '0'
+      where
+      rccarecodi = :rccarecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           rccarecodi,
+           emprcodi,
+           equicodi,
+           rccarecarga,
+           rccaredocumento,
+           rccarefecharecepcion,
+           rccareestado,
+           rccarenombarchivo,
+           rccareestregistro,
+           rccareusucreacion,
+           rccarefeccreacion,
+           rccareusumodificacion,
+           rccarefecmodificacion
+       from
+           rca_carga_esencial
+       where
+           rccarecodi = :rccarecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      rccarecodi,
+      emprcodi,
+      equicodi,
+      rccarecarga,
+      rccaredocumento,
+      rccarefecharecepcion,
+      rccareestado,
+      rccarenombarchivo,
+      rccareestregistro,
+      rccareusucreacion,
+      rccarefeccreacion,
+      rccareusumodificacion,
+      rccarefecmodificacion
+      from
+      rca_carga_esencial
+      where 
+      rccareestregistro = '1'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           rccarecodi,
+           emprcodi,
+           equicodi,
+           rccarecarga,
+           rccaredocumento,
+           rccarefecharecepcion,
+           rccareestado,
+           rccarenombarchivo,
+           rccareestregistro,
+           rccareusucreacion,
+           rccarefeccreacion,
+           rccareusumodificacion,
+           rccarefecmodificacion
+       from
+           rca_carga_esencial
+    </query>
+  </Sql> 
+  <Sql>
+    <key>ListFiltroPorPuntoMedicion</key>
+    <query>
+      select
+      CAE.rccarecodi,
+      CAE.emprcodi,
+      EMP.emprrazsocial,
+      EMP.tipoemprcodi,
+      CAE.equicodi,
+      EQU.equinomb,
+      EQA.areaabrev,
+      EQA.areanomb,
+      CAE.rccarecarga,
+      CAE.rccaredocumento,
+      CAE.rccarefecharecepcion,
+      CAE.rccareestado,
+      CAE.rccarenombarchivo,
+      CAE.rccareestregistro,
+      CAE.rccareusucreacion,
+      CAE.rccarefeccreacion,
+      CAE.rccareusumodificacion,
+      CAE.rccarefecmodificacion,
+      NVL(CAE.rccaretipocarga, 0) AS rccaretipocarga 
+      from
+      rca_carga_esencial CAE
+      JOIN (SELECT EMPRCODI,NVL(EQUICODI,0)AS EQUICODI,MAX(RCCAREFECHARECEPCION) AS RCCAREFECHARECEPCION FROM RCA_CARGA_ESENCIAL WHERE rccareestregistro= '1' GROUP BY EMPRCODI,EQUICODI) RES
+      ON CAE.EMPRCODI = RES.EMPRCODI AND NVL(CAE.EQUICODI,0) = RES.EQUICODI AND CAE.RCCAREFECHARECEPCION = RES.RCCAREFECHARECEPCION
+      inner join si_empresa EMP on EMP.emprcodi=CAE.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=CAE.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      CAE.rccareestregistro = '1' {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListHistorial</key>
+    <query>
+      select
+      rccarecodi,
+      CAE.emprcodi,
+      EMP.emprrazsocial,
+      EMP.tipoemprcodi,
+      CAE.equicodi,
+      EQU.equinomb,
+      EQA.areaabrev,
+      rccarecarga,
+      rccaredocumento,
+      rccarefecharecepcion,
+      rccareestado,
+      rccarenombarchivo,
+      rccareestregistro,
+      rccareusucreacion,
+      rccarefeccreacion,
+      rccareusumodificacion,
+      rccarefecmodificacion
+      from
+      rca_carga_esencial CAE
+      inner join si_empresa EMP on EMP.emprcodi=CAE.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=CAE.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      rccareestregistro = '1' {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ObtenerPorCodigo</key>
+    <query>
+      select
+      rccarecodi,
+      CAE.emprcodi,
+      EMP.emprrazsocial,
+      EMP.tipoemprcodi,
+      CAE.equicodi,
+      EQU.equinomb,
+      EQA.areaabrev,
+      rccarecarga,
+      rccaredocumento,
+      rccarefecharecepcion,
+      rccareestado,
+      rccarenombarchivo,
+      rccareestregistro,
+      rccareusucreacion,
+      rccarefeccreacion,
+      rccareusumodificacion,
+      rccarefecmodificacion,
+      rccaretipocarga
+      from
+      rca_carga_esencial CAE
+      inner join si_empresa EMP on EMP.emprcodi=CAE.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=CAE.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      rccarecodi = :rccarecodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListFiltroCount</key>
+    <query>
+      select
+          COUNT(*) AS Q_REGISTROS
+      from
+      rca_carga_esencial CAE
+      JOIN (SELECT EMPRCODI,NVL(EQUICODI,0)AS EQUICODI,MAX(RCCAREFECHARECEPCION) AS RCCAREFECHARECEPCION FROM RCA_CARGA_ESENCIAL WHERE rccareestregistro= :rccareestregistro GROUP BY EMPRCODI,EQUICODI) RES
+      ON CAE.EMPRCODI = RES.EMPRCODI AND NVL(CAE.EQUICODI,0) = RES.EQUICODI AND CAE.RCCAREFECHARECEPCION = RES.RCCAREFECHARECEPCION
+      inner join si_empresa EMP on EMP.emprcodi=CAE.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=CAE.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      CAE.rccareestregistro = :rccareestregistro {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListFiltro</key>
+    <query>
+      SELECT ext.* FROM (
+      SELECT ROWNUM as item, QD.*
+      FROM (
+        select
+        CAE.rccarecodi,
+        CAE.emprcodi,
+        EMP.emprrazsocial,
+        EMP.tipoemprcodi,
+        CAE.equicodi,
+        EQU.equinomb,
+        EQA.areaabrev,
+        EQA.areanomb,
+        CAE.rccarecarga,
+        CAE.rccaredocumento,
+        CAE.rccarefecharecepcion,
+        CAE.rccareestado,
+        CAE.rccarenombarchivo,
+        CAE.rccareestregistro,
+        CAE.rccareusucreacion,
+        CAE.rccarefeccreacion,
+        CAE.rccareusumodificacion,
+        CAE.rccarefecmodificacion,
+        CAE.rccaretipocarga
+        from
+        rca_carga_esencial CAE
+        JOIN (SELECT EMPRCODI,NVL(EQUICODI,0)AS EQUICODI,MAX(RCCAREFECHARECEPCION) AS RCCAREFECHARECEPCION FROM RCA_CARGA_ESENCIAL WHERE rccareestregistro= :rccareestregistro GROUP BY EMPRCODI,EQUICODI) RES
+        ON CAE.EMPRCODI = RES.EMPRCODI AND NVL(CAE.EQUICODI,0) = RES.EQUICODI AND CAE.RCCAREFECHARECEPCION = RES.RCCAREFECHARECEPCION
+        inner join si_empresa EMP on EMP.emprcodi=CAE.emprcodi
+        left join eq_equipo EQU on EQU.equicodi=CAE.equicodi
+        left join eq_area EQA on EQA.areacodi=EQU.areacodi
+        where
+        CAE.rccareestregistro = :rccareestregistro {0}
+      )QD
+      WHERE ROWNUM &#60;= {1}
+      ) ext
+      WHERE ext.item >= {2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListFiltroExcel</key>
+    <query>
+      select
+      CAE.rccarecodi,
+      CAE.emprcodi,
+      EMP.emprrazsocial,
+      EMP.tipoemprcodi,
+      CAE.equicodi,
+      EQU.equinomb,
+      EQA.areaabrev,
+      EQA.areanomb,
+      CAE.rccarecarga,
+      CAE.rccaredocumento,
+      CAE.rccarefecharecepcion,
+      CAE.rccareestado,
+      CAE.rccarenombarchivo,
+      CAE.rccareestregistro,
+      CAE.rccareusucreacion,
+      CAE.rccarefeccreacion,
+      CAE.rccareusumodificacion,
+      CAE.rccarefecmodificacion,
+      CAE.rccaretipocarga
+      from
+      rca_carga_esencial CAE
+      JOIN (SELECT EMPRCODI,NVL(EQUICODI,0)AS EQUICODI,MAX(RCCAREFECHARECEPCION) AS RCCAREFECHARECEPCION FROM RCA_CARGA_ESENCIAL WHERE rccareestregistro= :rccareestregistro GROUP BY EMPRCODI,EQUICODI) RES
+      ON CAE.EMPRCODI = RES.EMPRCODI AND NVL(CAE.EQUICODI,0) = RES.EQUICODI AND CAE.RCCAREFECHARECEPCION = RES.RCCAREFECHARECEPCION
+      inner join si_empresa EMP on EMP.emprcodi=CAE.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=CAE.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      CAE.rccareestregistro = :rccareestregistro {0}
+
+    </query>
+  </Sql>
+  
+</Sqls>

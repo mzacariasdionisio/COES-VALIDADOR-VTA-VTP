@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(rsfdetcodi), 0) + 1 from eve_rsfdetalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eve_rsfdetalle(
+      rsfdetcodi,
+      grupocodi,
+      rsfhorcodi,
+      rsfdetvalman,
+      rsfdetvalaut,
+      equicodi,
+      lastuser,
+      lastdate,
+      rsfdetindope,
+      rsfdetsub,
+      rsfdetbaj,
+      rsfdetdesp,
+      rsfdetload,
+      rsfdetmingen,
+      rsfdetmaxgen
+      )
+      values(
+      :rsfdetcodi,
+      :grupocodi,
+      :rsfhorcodi,
+      :rsfdetvalman,
+      :rsfdetvalaut,
+      :equicodi,
+      :lastuser,
+      :lastdate,
+      :rsfdetindope,
+      :rsfdetsub,
+      :rsfdetbaj,
+      :rsfdetdesp,
+      :rsfdetload,
+      :rsfdetmingen,
+      :rsfdetmaxgen
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eve_rsfdetalle
+      set
+      rsfdetdesp = :rsfdetdesp,
+      rsfdetload = :rsfdetload,
+      rsfdetmingen = :rsfdetmingen,
+      rsfdetmaxgen = :rsfdetmaxgen,
+      lastuser = :lastuser,
+      lastdate = :lastdate
+      where
+      rsfhorcodi = :rsfhorcodi and
+      equicodi = :equicodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>Update2</key>
+		<query>
+			update eve_rsfdetalle
+			set
+			lastuser =: lastuser,
+			lastdate =: lastdate,
+			rsfdetindope =: rsfdetindope,
+			rsfdetsub =: rsfdetsub,
+			rsfdetbaj =: rsfdetbaj
+			where
+			rsfhorcodi = :rsfhorcodi and
+			equicodi = :equicodi and
+			grupocodi = :grupocodi			
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from eve_rsfdetalle
+      where
+      rsfhorcodi in (
+        select hora.rsfhorcodi from eve_rsfhora hora where
+        hora.rsfhorfecha = to_date('{0}', 'YYYY-MM-DD')
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      where
+      rsfdetcodi = :rsfdetcodi
+      from
+      eve_rsfdetalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      eve_rsfdetalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      eve_rsfdetalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerConfiguracion</key>
+    <query>
+      select distinct urs.grupocodi,urs.gruponomb as ursnomb,e.emprnomb, e.emprcodi,  gp2.gruponomb, urs.grupotipo,
+      (select equicodi from eq_equipo where grupocodi = gp2.grupocodi) as equicodi
+      from pr_grupo urs
+      inner join pr_grupo mo on mo.grupourspadre=urs.grupocodi
+      inner join(
+          SELECT grupocodi,EMPRCODI FROM
+          (
+              SELECT vwgr.HGRDATFECHA ,gr.GRUPOCODI, gr.gruponomb,vwgr.EMPRCODI
+              , ROW_NUMBER() OVER(PARTITION BY gr.GRUPOCODI ORDER BY gr.GRUPOCODI, vwgr.HGRDATFECHA desc, vwgr.Hgrdatestado desc) AS NUM_VIEW
+              ,vwgr.Hgrdatestado
+              from pr_grupo gr
+              inner join SI_HISEMPGRUPO_DATA vwgr on vwgr.HGRDATFECHA &lt;= TO_DATE('{0}','YYYY-MM-DD') and vwgr.GRUPOCODI = gr.GRUPOCODI
+      )rview
+      WHERE NUM_VIEW = 1
+      )vwgr on vwgr.grupocodi=mo.grupocodi
+      inner join si_empresa e on e.emprcodi=vwgr.emprcodi
+      inner join pr_grupo gp on mo.grupopadre = gp.grupocodi
+      inner join pr_grupo gp2 on gp.grupopadre = gp2.grupocodi
+      where urs.catecodi=12 and mo.grupoactivo='S' and mo.catecodi in (2,9) and urs.grupocodi != 1916
+      order by  urs.grupocodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerDetalleFrecuencia</key>
+    <query>
+      select
+      det.rsfdetcodi,
+      det.grupocodi,
+      det.rsfhorcodi,
+      det.rsfdetvalman,
+      det.rsfdetvalaut,
+      det.equicodi,
+      det.lastuser,
+      det.lastdate,
+      det.rsfdetindope,
+      det.rsfdetsub,
+      det.rsfdetbaj,
+      det.rsfdetdesp,
+      det.rsfdetload,
+      det.rsfdetmingen,
+      det.rsfdetmaxgen,
+      (select equipadre from eq_equipo where equicodi = det.equicodi) equipadre,
+      det.RSFDETSUB,
+      det.RSFDETBAJ
+      from eve_rsfdetalle det inner join eve_rsfhora hora
+      on det.rsfhorcodi = hora.rsfhorcodi
+      where hora.rsfhorfecha = to_date('{0}','YYYY-MM-DD')
+    </query>
+  </Sql>
+  
+  <!--Modificación RSF 05012021-->
+  <Sql>
+    <key>ObtenerDetalleXML</key>
+    <query>
+      select
+      det.rsfdetcodi,
+      det.grupocodi,
+      det.rsfhorcodi,
+      det.rsfdetvalman,
+      det.rsfdetvalaut,
+      det.equicodi,
+      det.lastuser,
+      det.lastdate,
+      det.rsfdetindope,
+      det.rsfdetsub,
+      det.rsfdetbaj,
+      det.rsfdetdesp,
+      det.rsfdetload,
+      det.rsfdetmingen,
+      det.rsfdetmaxgen,
+      (select equipadre from eq_equipo where equicodi = det.equicodi) equipadre
+      from eve_rsfdetalle det inner join
+      (
+      select * from (
+      select * from eve_rsfhora where rsfhorfecha = to_date('{0}', 'YYYY-MM-DD') - 1
+      order by rsfhorinicio desc) where rownum = 1
+      union
+      select * from (
+      select * from eve_rsfhora where rsfhorfecha = to_date('{0}', 'YYYY-MM-DD')
+      )
+      ) hora on det.rsfhorcodi = hora.rsfhorcodi
+    </query>
+  </Sql>
+  
+  <!--Fin - Modificación RSF 05012021-->
+  
+  
+  <Sql>
+  <key>ObtenerConfiguracionCO</key>
+  <query>
+			select distinct urs.grupocodi,urs.gruponomb as ursnomb,e.emprnomb,  gp2.gruponomb, urs.grupotipo,
+			(select equicodi from eq_equipo where grupocodi = gp2.grupocodi) as equicodi
+			from pr_grupo urs
+			inner join pr_grupo mo on mo.grupourspadre=urs.grupocodi
+			inner join si_empresa e on e.emprcodi=mo.emprcodi
+			inner join pr_grupo gp on mo.grupopadre = gp.grupocodi
+			inner join pr_grupo gp2 on gp.grupopadre = gp2.grupocodi
+			where urs.catecodi=12 and mo.grupoactivo='S' and mo.catecodi in (2,9)
+			order by  urs.grupocodi asc
+   </query>
+  </Sql>
+  <Sql>
+    <key>ObtenerUnidadesRSF</key>
+    <query>
+      select det.equicodi,det.equicodi as equipadre, det.rsfdetvalaut, eq.famcodi,det.rsfdetsub,det.rsfdetbaj from
+      eve_rsfhora hora
+      inner join eve_rsfdetalle det
+      on hora.rsfhorcodi = det.rsfhorcodi
+      inner join eq_equipo eq on det.equicodi = eq.equicodi
+      where
+      det.rsfdetvalaut != 0 and
+      hora.rsfhorinicio &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI:SS') and
+      hora.rsfhorfin >= to_date('{0}', 'YYYY-MM-DD HH24:MI:SS')
+      and famcodi in (2, 3)
+      union all
+      select equipo.equicodi, resultado.equicodi as equipadre, resultado.rsfdetvalaut, resultado.famcodi,resultado.rsfdetsub,resultado.rsfdetbaj
+      from eq_equipo equipo inner join (
+      select det.equicodi, eq.equinomb, det.rsfdetvalaut, eq.famcodi,det.rsfdetsub,det.rsfdetbaj from
+      eve_rsfhora hora
+      inner join eve_rsfdetalle det
+      on hora.rsfhorcodi = det.rsfhorcodi
+      inner join eq_equipo eq on det.equicodi = eq.equicodi
+      where
+      (det.rsfdetsub != 0 or
+      det.rsfdetbaj  != 0) and
+      hora.rsfhorinicio &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI:SS') and
+      hora.rsfhorfin >= to_date('{0}', 'YYYY-MM-DD HH24:MI:SS')
+      and famcodi in (4, 5)) resultado
+      on equipo.equipadre = resultado.equicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeletePorId</key>
+    <query>
+      delete from eve_rsfdetalle where rsfhorcodi = {0}
+    </query>
+  </Sql>
+  
+</Sqls>

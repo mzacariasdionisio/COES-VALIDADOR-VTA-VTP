@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+   <Sql>
+		<key>GetMaxId</key>
+		<query>
+			select nvl(max(EPAREACODI), 0) + 1 from epr_area
+		</query>
+   </Sql>
+   <Sql>
+		<key>Update</key>
+		<query>
+			update epr_area set
+			AREACODI = :Areacodi,
+			AREACODIZONA = :Areacodizona,
+			EPAREANOMB = :Epareanomb,
+			EPAREAESTREGISTRO = :Epareaestregistro,
+			EPAREAUSUMODIFICACION = :Epareausumodificacion,
+			EPAREAFECMODIFICACION = sysdate
+			where EPAREACODI = :Epareacodi
+		</query>
+    </Sql>
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update epr_area set
+			EPAREAESTREGISTRO = :Epareaestregistro,
+			EPAREAUSUMODIFICACION = :Epareausumodificacion,
+			EPAREAFECMODIFICACION = sysdate
+			where EPAREACODI = :Epareacodi
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>Save</key>
+		<query>
+			insert into epr_area(
+			EPAREACODI,
+			AREACODI,
+			AREACODIZONA,
+			EPAREANOMB,
+			EPAREAESTREGISTRO,
+			EPAREAUSUCREACION,
+			EPAREAFECCREACION
+			)
+			values(
+			:Epareacodi,
+			:Areacodi,
+			:Areacodizona,
+			:Epareanomb,
+			:Epareaestregistro,
+			:Epareausucreacion,
+			sysdate
+			)
+		</query>
+  </Sql>
+	<Sql>
+		<key>GetById</key>
+		<query>
+			SELECT
+			EPAREACODI,
+			AREACODI,
+			AREACODIZONA,
+			EPAREANOMB,
+			EPAREAESTREGISTRO,
+			EPAREAUSUCREACION,
+			EPAREAFECCREACION,
+			EPAREAUSUMODIFICACION,
+			EPAREAFECMODIFICACION
+			FROM
+			epr_area
+			WHERE EPAREACODI = :Epareacodi
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListSubEstacion</key>
+		<query>
+			SELECT
+			A.AREACODI,TRIM(NVL(EA.EPAREANOMB,A.AREANOMB))||'_'||TA.TAREAABREV AS AREANOMB,
+			Z.AREANOMB AS ZONA,
+			EPAREAFECCREACION,EPAREAFECMODIFICACION
+			FROM EQ_AREA A
+			JOIN EQ_TIPOAREA TA ON A.TAREACODI=TA.TAREACODI
+			JOIN EPR_AREA EA ON A.AREACODI = EA.AREACODI AND EA.EPAREAESTREGISTRO='1'
+			JOIN EQ_AREA Z ON EA.AREACODIZONA = Z.AREACODI
+			WHERE A.TAREACODI IN (1,3,4) AND A.AREAESTADO= 'A'
+			ORDER BY 2
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlCantidadUbicacionSGOCOESEliminar</key>
+		<query>
+			SELECT COUNT(*) AS NRO_EQUIPOS
+			FROM EPR_AREA AP JOIN EQ_AREA A ON AP.AREACODI = A.AREACODI
+			JOIN EQ_EQUIPO E ON A.AREACODI = E.AREACODI
+			JOIN EPR_EQUIPO EP ON E.EQUICODI = EP.EQUICODI AND EP.EPEQUIESTREGISTRO='1'
+			WHERE AP.EPAREACODI = :EPAREACODI
+			AND AP.EPAREAESTREGISTRO='1'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlListAreaxCelda</key>
+		<query>
+			select *
+			from eq_area ea inner join eq_tipoarea et on ea.tareacodi=et.tareacodi
+			where  ea.areaestado='A' and
+			ea.areacodi in (
+			select a.areacodizona
+			from eq_equipo e left join epr_area a on  e.areacodi = a.areacodi and a.epareaestregistro = '1'
+			where equicodi in (:id_celda_1,:id_celda_2)
+			)
+			order by areanomb asc
+		</query>
+	</Sql>
+</Sqls>

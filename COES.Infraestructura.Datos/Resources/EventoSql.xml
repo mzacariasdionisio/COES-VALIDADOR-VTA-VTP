@@ -1,0 +1,2371 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from
+      (
+      select total.*, (row_number() over (order by total.{11} {12})) as r from (
+      select
+      equipo.equiabrev,
+      evento.evencodi,
+      evento.emprcodi,
+      evento.equicodi,
+      evento.tipoevencodi,
+      evento.evenini,
+      evento.evenfin,
+      evento.evenpadre,
+      equipo.famcodi,
+      equipo.areacodi,
+      equipo.equitension,
+      case evento.eveninterrup when 'S' then 'SI' else 'NO' end eveninterrup,
+      (select round(sum(interrminu*interrmw/60), 2) as servida from eve_interrupcion where evencodi = evento.evencodi) as energiainterrumpida,
+      --(select round(sum(interrmw),2) as suma from eve_interrupcion where ((interrnivel is null or interrnivel = 'N')) and evencodi = evento.evencodi) as interrupcionmw,
+      --(select round(sum(interrmw),2) as suma from eve_interrupcion where ((interrnivel  = 'S')) and evencodi = evento.evencodi) as disminucionmw,
+      subcausa.subcausaabrev,
+      evento.subcausacodi,
+      tipoevento.tipoevenabrev,
+      area.areanomb,
+      tipoarea.tareaabrev || ' ' || area.areanomb as areadesc,
+      familia.famabrev,
+      familia.famnomb,
+      tipoarea.tareaabrev,
+      empresa.emprnomb,
+      familia.tareacodi,
+      evento.lastuser,
+      evento.lastdate,
+      evento.evenasunto,
+      evento.evenpreliminar,
+      causa.causaevencodi,
+      causa.causaevenabrev,
+      evento.evenrelevante,
+      evento.eventension,
+      evento.evenmwindisp,
+      evento.evencomentarios,
+      evento.evenmwgendescon,
+      evento.evengendescon,
+      tipo_empresa.tipoemprdesc,
+      reporta.emprabrev,
+      evento.evenaopera--,
+      ,case when afalla.afecodi > 0 then 'EV-'||lpad(afalla.afecorr,3,'0')||'-'||afalla.afeanio else '' end as Codigoctaf
+      ,evento.Evenctaf
+      --(row_number() over (order by evento.evencodi desc)) as r
+      from eve_evento evento
+      inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+      inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+      inner join si_empresa empresa on evento.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+      left join si_empresa reporta on evento.emprcodi = reporta.emprcodi
+      left join af_evento afalla on evento.evencodi = afalla.evencodi
+      where (evento.tipoevencodi = {0} or {0} = 0) and
+      (empresa.emprcodi = {1} or {1} = 0) and
+      (tipo_empresa.tipoemprcodi = {9} or {9} = 0) and
+      (familia.famcodi = {2} or {2} = 0) and
+      (evento.evenpreliminar = '{3}' or ('{3}' = '-1' and evento.evenpreliminar in ('S','N')) or ('{3}'='A' and evento.evenasegoperacion='S') or
+      ({14}=1 and (evento.evenasegoperacion='S' or evento.evenpreliminar = 'A'))
+      ) and
+      (evento.eveninterrup = '{10}' or '{10}' = '-1') and
+      (evento.deleted = 'N') and
+      (evento.evenaopera = '{13}' or '{13}' = '-1') and
+      (( evenini >=  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenini &lt;  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenfin >  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin &lt;=  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenini &lt;  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin >  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+      {8}
+      ) total
+      )
+      where (r >= ((({6}-1) * {7}) + 1) and r &lt; (({6} * {7}) + 1 )) or ({6} = -1 and {7} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlExportarEventos</key>
+    <query>
+      select
+      empresa.emprnomb,
+      tipoarea.tareaabrev,
+      area.areanomb,
+      evento.equicodi,
+      equipo.equiabrev,
+      familia.famcodi,
+      familia.famnomb,
+      familia.famabrev,
+      evento.evenini,
+      evento.evenfin,
+      reporta.emprabrev,
+      evento.evenasunto,
+      evento.evendesc,
+      case evento.eveninterrup when 'S' then 'SI' else 'NO' end eveninterrup,
+      tipoevento.tipoevencodi,
+      tipoevento.tipoevenabrev,
+      subcausa.subcausaabrev,
+      causa.causaevencodi,
+      causa.causaevenabrev,
+      causa.causaevendesc,
+      (select round(sum(interrminu*interrmw/60), 2) as servida from eve_interrupcion where evencodi = evento.evencodi) as energiainterrumpida,
+      (select round(sum(interrmw), 2) as servida from eve_interrupcion where evencodi = evento.evencodi) as mwinterrumpidos,
+      evento.tiporegistro,
+      evento.valtiporegistro,
+      equipo.equitension,
+      tipo_empresa.tipoemprdesc as tipoemprnomb,
+      evento.evenpreliminar,
+      evento.evenmwgendescon,
+      evento.evengendescon,
+      equipo.areacodi,
+      (case when evento.emprcodi is null then 0 else evento.emprcodi end) emprcodi,
+      evento.evencodi,
+      tipoarea.tareaabrev || ' ' || area.areanomb as areadesc,
+      evento.evencomentarios--,
+      --interrupcion.interrupcodi,
+      --interrupcion.interrmanualr,
+      --interrupcion.interrracmf,
+      --interrupcion.interrnivel
+      from eve_evento evento
+      inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+      inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+      inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+      inner join si_empresa empresa on evento.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      left join si_empresa reporta on evento.emprcodi = reporta.emprcodi
+      --left join eve_interrupcion interrupcion on  interrupcion.evencodi=evento.evencodi
+      where ('{0}'='0' or evento.tipoevencodi in ({0}) ) and
+      ('{1}'='0' or empresa.emprcodi in ({1}) ) and
+      (tipo_empresa.tipoemprcodi = {7} or {7} = 0) and
+      ('{2}'='0' or familia.famcodi in ({2}) ) and
+      (evento.evenpreliminar = '{3}' or '{3}' = '-1') and
+      (evento.eveninterrup = '{8}' or '{8}' = '-1') and
+      (evento.evenaopera = '{9}' or '{9}' = '-1') and
+      (evento.deleted = 'N') and
+      (( evenini >=  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenini &lt;  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenfin >  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin &lt;=  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenini &lt;  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin >  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+      {6}
+      order by evento.evencodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ExportarEventosDetallado</key>
+    <query>
+      select
+      empresa.emprnomb,
+      tipoarea.tareaabrev,
+      area.areanomb,
+      evento.equicodi,
+      evenequipo.equicodi equicodiinvolucrado,
+      equipo.equiabrev,
+	  familia.famcodi,
+      familia.famnomb,
+      familia.famabrev,
+      evento.evenini,
+      evento.evenfin,
+      reporta.emprabrev,
+      evento.evenasunto,
+      evento.evendesc,
+      evento.evenmwgendescon,
+      evento.evengendescon,
+      case evento.eveninterrup when 'S' then 'SI' else 'NO' end eveninterrup,
+      tipoevento.tipoevenabrev,
+      causa.causaevenabrev,
+      (select round(sum(interrminu*interrmw/60), 2) as servida from eve_interrupcion where evencodi = evento.evencodi) as energiainterrumpida,
+      evento.tiporegistro,
+      evento.valtiporegistro,
+      equipo.equitension,
+      tipo_empresa.tipoemprdesc as tipoemprnomb,
+      evento.evenpreliminar,
+      case eventipofalla
+      when 'M' then 'Monofásica'
+      when 'B' then 'Bifásica'
+      when 'T' then 'Trifásica'
+      when 'R' then 'Recierre monofásico'
+      when '0' then 'Otros'
+      else '' end as eventipofalla,
+      case eventipofallafase
+      when 'R' then 'R'
+      when 'S' then 'S'
+      when 'T' then 'T'
+      when 'RT' then 'RT'
+      when 'RS' then 'RS'
+      when 'TS' then 'TS'
+      when 'RG' then 'R-G'
+      when 'SG' then 'S-G'
+      when 'TG' then 'T-G'
+      when 'RTG' then 'RT-G'
+      when 'RSG' then 'RS-G'
+      when 'TSG' then 'TS-G'
+      when 'R' then 'RST'
+      else '' end as eventipofallafase,
+      interrupcion.interrmw_de,
+      interrupcion.interrmw_a,
+      interrupcion.interrminu,
+      interrupcion.interrmw,
+      interrupcion.interrdesc,
+      interrupcion.interrupcodi,
+      interrupcion.ptointerrcodi,
+      case interrupcion.interrnivel
+      when 'S' then 'SI'
+      else interrupcion.interrnivel end
+      as interrnivel,
+      case interrupcion.interrracmf
+      when 'S' then 'SI'
+      else interrupcion.interrracmf end
+      as interrracmf,
+      case interrupcion.interrmfetapa
+      when 1 then '1° Etapa'
+      when 2 then '2° Etapa'
+      when 3 then '3° Etapa'
+      when 4 then '4° Etapa'
+      when 5 then '5° Etapa'
+      when 6 then '6° Etapa'
+      when 7 then '7° Etapa'
+      when 8 then '8° Etapa'
+      when 10 then 'df / dt'
+      else '' end
+      as interrmfetapadesc,
+      interrupcion.interrmanualr,
+      punto.ptointerrupnomb,
+      entrega.ptoentrenomb,
+      empresainterrup.emprnomb as clientenomb
+      from eve_evento evento
+      inner join eve_evenequipo evenequipo on evento.evencodi = evenequipo.evencodi
+      inner join eq_equipo equipo on evenequipo.equicodi = equipo.equicodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+      inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+      inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+      inner join si_empresa empresa on evento.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      left join si_empresa reporta on evento.emprcodi = reporta.emprcodi
+      left join  eve_interrupcion interrupcion on evento.evencodi = interrupcion.evencodi
+      left join eve_ptointerrup punto on interrupcion.ptointerrcodi = punto.ptointerrcodi
+      left join eve_ptoentrega entrega on punto.ptoentregacodi = entrega.ptoentregacodi
+      left join si_empresa empresainterrup on entrega.clientecodi = empresainterrup.emprcodi
+      where (evento.tipoevencodi = {0} or {0} = 0) and
+      (empresa.emprcodi = {1} or {1} = 0) and
+      (tipo_empresa.tipoemprcodi = {7} or {7} = 0) and
+      (familia.famcodi = {2} or {2} = 0) and
+      (evento.evenpreliminar = '{3}' or '{3}' = '-1') and
+      (evento.eveninterrup = '{8}' or '{8}' = '-1') and
+      (evento.evenaopera = '{9}' or '{9}' = '-1') and
+      (evento.deleted = 'N') and
+      (( evenini >=  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenini &lt;  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenfin >  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin &lt;=  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenini &lt;  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin >  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+      {6}
+      order by evento.evencodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRecords</key>
+    <query>
+      select
+      count(*)
+      from eve_evento evento
+      inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+      inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+      left join si_empresa reporta on evento.emprcodi = reporta.emprcodi
+      where (evento.tipoevencodi = {0} or {0} = 0) and
+      (empresa.emprcodi = {1} or {1} = 0) and
+      (tipo_empresa.tipoemprcodi = {7} or {7} = 0) and
+      (familia.famcodi = {2} or {2} = 0) and
+      (evento.evenpreliminar = '{3}' or ('{3}' = '-1' and evento.evenpreliminar in ('S','N')) or ('{3}'='A' and evento.evenasegoperacion='S') or
+      ({10}=1 and (evento.evenasegoperacion='S' or evento.evenpreliminar = 'A'))
+      ) and
+      (evento.eveninterrup = '{8}' or '{8}' = '-1') and
+      (evento.evenaopera = '{9}' or '{9}' = '-1') and
+      (evento.deleted = 'N') and
+      (( evenini >=  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenini &lt;  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenfin >  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin &lt;=  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenini &lt;  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin >  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+      {6}
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>SqlEquiposActualizadosIntervenciones</key>
+    <query>
+		select
+		*
+		from (
+		select  equipo.equicodi, empresa.emprcodi,area.areacodi,familia.famcodi, equipo.equiabrev, equipo.equinomb, area.areanomb, tipoarea.tareaabrev, equipo.equitension, equipo.equipot ,empresa.emprnomb, familia.famabrev, pr.grupotipocogen,
+		(row_number() over (order by equipo.equicodi)) as r
+		from eq_equipo equipo
+		inner join eq_area area on equipo.areacodi = area.areacodi
+		inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+		inner join eq_familia familia on equipo.famcodi = familia.famcodi
+		left join pr_grupo pr on pr.grupocodi = equipo.grupocodi
+		inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+		where equipo.emprcodi > 1 and empresa.emprestado = 'A' and equipo.equiestado in ('A','P','F','')
+		and (lower(equipo.equinomb) like lower('%%') or lower(equipo.equiabrev) like lower('%%') or '' = '' )
+		AND CASE
+		WHEN (empresa.tipoemprcodi in (4,2) and equipo.famcodi IN (8, 9, 10, 7,6,1,17,24,47) AND equipo.equitension > 100) THEN 'A'
+		WHEN empresa.tipoemprcodi in (4,2) and equipo.famcodi IN (8, 9, 10, 7,6,1,17,24,47) THEN
+		CASE
+		WHEN equipo.equicodi in (711,11301,1495,11346,1397,10498,10496,10500,11551,12990,8058,330,299) THEN 'A'
+		ELSE 'C'
+		END
+		ELSE 'B'
+		END IN ('A', 'B')
+		order by equipo.equinomb asc
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>SqlBuscarEquipoIntervenciones</key>
+    <query>
+      select
+      *
+      from (
+      select empresa.emprnomb, empresa.emprcodi, area.areacodi, area.areanomb, familia.famcodi, familia.famabrev, equipo.equiabrev, tipoarea.tareaabrev, equipo.equicodi, pr.grupotipocogen,
+      (row_number() over (order by equipo.equicodi)) as r
+      from eq_equipo equipo
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      left join pr_grupo pr on pr.grupocodi = equipo.grupocodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      where equipo.equiestado in ('A','P','F','')
+      and (empresa.emprcodi in ({0}) or '{0}' = '0')
+      and (familia.famcodi in ({1}) or '{1}' = '0')
+      and (area.areacodi = {2} or {2} = 0)
+      and (lower(equipo.equinomb) like lower('%{3}%') or lower(equipo.equiabrev) like lower('%{3}%') or '{3}' = '' )
+      order by equipo.equinomb asc
+      )
+      where (   r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )   )  or ({4} = -1 and {5} = -1)
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>SqlBuscarEquipo</key>
+		<query>
+			select
+			*
+			from (
+			select empresa.emprnomb, empresa.emprcodi, area.areacodi, area.areanomb, familia.famcodi, familia.famabrev, equipo.equiabrev, tipoarea.tareaabrev, equipo.equicodi, equipo.equitension, pr.grupotipocogen,
+			(row_number() over (order by equipo.equicodi)) as r
+			from eq_equipo equipo
+			inner join eq_area area on equipo.areacodi = area.areacodi
+			inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+			inner join eq_familia familia on equipo.famcodi = familia.famcodi
+			left join pr_grupo pr on pr.grupocodi = equipo.grupocodi
+			inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+			where equipo.equiestado in ('A','P','')
+			and (empresa.emprcodi in ({0}) or '{0}' = '0')
+			and (familia.famcodi in ({1}) or '{1}' = '0')
+			and (area.areacodi = {2} or {2} = 0)
+			and (lower(equipo.equinomb) like lower('%{3}%') or lower(equipo.equiabrev) like lower('%{3}%') or '{3}' = '' )
+			order by equipo.equinomb asc
+			)
+			where (   r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )   )  or ({4} = -1 and {5} = -1)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlBuscarEquipoExtranet</key>
+		<query>
+			select
+			*
+			from (
+			select empresa.emprnomb, empresa.emprcodi, area.areacodi, area.areanomb, familia.famcodi, familia.famabrev, equipo.equiabrev, tipoarea.tareaabrev, equipo.equicodi, equipo.equitension, pr.grupotipocogen,
+			(row_number() over (order by equipo.equicodi)) as r
+			from eq_equipo equipo
+			inner join eq_area area on equipo.areacodi = area.areacodi
+			inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+			inner join eq_familia familia on equipo.famcodi = familia.famcodi
+			left join pr_grupo pr on pr.grupocodi = equipo.grupocodi
+			inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+			where equipo.equiestado in ('A','P','')
+			and (empresa.emprcodi in ({0}) or '{0}' = '0')
+			and (familia.famcodi in ({1}) or '{1}' = '0')
+			and (area.areacodi = {2} or {2} = 0)
+			and (lower(equipo.equinomb) like lower('%{3}%') or lower(equipo.equiabrev) like lower('%{3}%') or '{3}' = '' )
+			{6}
+			order by equipo.equinomb asc
+			)
+			where (   r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )   )  or ({4} = -1 and {5} = -1)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlBuscarEquipoNoPermitidos</key>
+		<query>
+			select
+			*
+			from (
+			select empresa.emprnomb, empresa.emprcodi, equipo.equiabrev, equipo.equicodi, equipo.equitension
+			from eq_equipo equipo
+			inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+			where equipo.equiestado in ('A','P','') AND
+			CASE
+			    WHEN (empresa.tipoemprcodi in (4,2) and equipo.famcodi IN (8, 9, 10, 7,6,1,17,24,47) AND equipo.equitension > 100) THEN 'A'
+			    WHEN empresa.tipoemprcodi in (4,2) and equipo.famcodi IN (8, 9, 10, 7,6,1,17,24,47) THEN
+			    CASE
+			    WHEN equipo.equicodi in (711,11301,1495,11346,1397,10498,10496,10500,11551,12990,8058,330,299) THEN 'A'
+			    ELSE 'C'
+			    END
+			    ELSE 'B'
+			END IN ('C')
+			order by equipo.equinomb asc
+			)
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>SqlObtenerNroRegistroEquipo</key>
+    <query>
+		select count(*)
+		from eq_equipo equipo
+		inner join eq_area area on equipo.areacodi = area.areacodi
+		inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+		inner join eq_familia familia on equipo.famcodi = familia.famcodi
+		inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+		where equipo.equiestado in ('A','P','')
+		and (empresa.emprcodi in ({0}) or '{0}' = '0')
+		and (familia.famcodi in ({1}) or '{1}' = '0')
+		and (area.areacodi = {2} or {2} = 0)
+		and (lower(equipo.equinomb) like lower('%{3}%') or lower(equipo.equiabrev) like lower('%{3}%') or '{3}' = '' )
+		order by equipo.equinomb asc
+	</query>
+</Sql>
+
+<Sql>
+	<key>SqlObtenerNroRegistroEquipoExtranet</key>
+	<query>
+		select count(*)
+		from eq_equipo equipo
+		inner join eq_area area on equipo.areacodi = area.areacodi
+		inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+		inner join eq_familia familia on equipo.famcodi = familia.famcodi
+		inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+		where equipo.equiestado in ('A','P','')
+		and (empresa.emprcodi in ({0}) or '{0}' = '0')
+		and (familia.famcodi in ({1}) or '{1}' = '0')
+		and (area.areacodi = {2} or {2} = 0)
+		and (lower(equipo.equinomb) like lower('%{3}%') or lower(equipo.equiabrev) like lower('%{3}%') or '{3}' = '' )
+		{4}
+		order by equipo.equinomb asc
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarInformePerturbacion</key>
+    <query>
+      update eve_evento set evenperturbacion = '{0}' where evencodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlListarFamilias</key>
+    <query>
+      select famcodi, famabrev, famnomb from eq_familia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlListarEmpresas</key>
+    <query>
+      select emprcodi, emprnomb,nvl(emprrazsocial , emprnomb) as razsocial, emprestado, scadacodi
+      from si_empresa where emprsein = 'S'
+      order by emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlListarEmpresasPorTipo</key>
+    <query>
+      select emprcodi, emprnomb
+      from si_empresa where emprsein = 'S' and tipoemprcodi = :tipoemprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerEvento</key>
+    <query>
+      select
+      evento.evencodi,evento.emprcodirespon,evento.equicodi,
+      evento.evenclasecodi,evento.emprcodi,evento.tipoevencodi,
+      evento.evenini,evento.evenmwindisp,evento.evenfin,
+      evento.subcausacodi,evento.evenasunto,evento.evenpadre,
+      evento.eveninterrup,evento.lastuser,evento.lastdate,
+      evento.evenpreini,evento.evenpostfin,evento.evendesc,
+      evento.eventension,evento.evenaopera,evento.evenpreliminar,
+      evento.evenrelevante,evento.evenctaf,evento.eveninffalla,
+      evento.eveninffallan2,evento.deleted,evento.eventipofalla,
+      evento.eventipofallafase,evento.smsenviado,evento.smsenviar,
+      evento.evenactuacion,equipo.equinomb,evento.evencomentarios,
+      evento.evenperturbacion,
+      evento.evenmwgendescon, evento.evengendescon,
+      subcausa.subcausaabrev,
+      tipoevento.tipoevenabrev,
+      causa.causaevenabrev,
+      evento.evendescctaf
+      from eve_evento evento
+      inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+      inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+      inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+      inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+      where evento.evencodi = :evencodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerResumenEvento</key>
+    <query>
+      select
+      evento.evencodi,
+      evento.evenini,
+      empresa.emprnomb,
+      equipo.equinomb,
+      evento.evenasunto,
+      evento.evendesc,
+      evento.tipoevencodi,
+      evento.evenperturbacion
+      from eve_evento evento
+      inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      where evento.evencodi = :evencodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerAreaPorEmpresa</key>
+    <query>
+      select distinct area.areacodi, area.areanomb, tipoarea.tareaabrev from eq_area area
+      inner join eq_equipo equipo on area.areacodi = equipo.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      where (equipo.emprcodi = {0} or {0} = 0)
+      and equipo.equiestado in ('A','P','')
+      and (equipo.famcodi in ({1}) or '{1}' = '0')
+      order by area.areanomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaPortal</key>
+    <query>
+      select
+      *
+      from (
+      select
+      equipo.equiabrev,
+      evento.evencodi,
+      evento.emprcodi,
+      evento.equicodi,
+      evento.tipoevencodi,
+      evento.evenini,
+      evento.evenfin,
+      evento.evenpadre,
+      equipo.famcodi,
+      equipo.areacodi,
+      equipo.equitension,
+      case evento.eveninterrup when 'S' then 'SI' else 'NO' end eveninterrup,
+      subcausa.subcausaabrev,
+      evento.subcausacodi,
+      tipoevento.tipoevenabrev,
+      area.areanomb,
+      '' as areadesc,
+      familia.famabrev,
+      familia.famnomb,
+      tipoarea.tareaabrev,
+      empresa.emprnomb,
+      familia.tareacodi,
+      evento.lastuser,
+      evento.lastdate,
+      evento.evenasunto,
+      evento.evenpreliminar,
+      causa.causaevenabrev,
+      evento.evenrelevante,
+      evento.eventension,
+      evento.evenmwindisp,
+      evento.evencomentarios,
+      evento.evenmwgendescon,
+      evento.evengendescon,
+      tipo_empresa.tipoemprdesc,
+      reporta.emprabrev,
+      (select round(sum(interrminu*interrmw/60), 2) as servida from eve_interrupcion where evencodi = evento.evencodi) as energiainterrumpida,
+      (select round(sum(interrmw),2) as suma from eve_interrupcion where ((interrnivel is null or interrnivel = 'N')) and evencodi = evento.evencodi) as interrupcionmw,
+      (select round(sum(interrmw),2) as suma from eve_interrupcion where ((interrnivel  = 'S')) and evencodi = evento.evencodi) as disminucionmw,
+      evento.evenaopera,
+      (row_number() over (order by evento.evencodi desc)) as r
+      from eve_evento evento
+      inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+      inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+      left join si_empresa reporta on evento.emprcodi = reporta.emprcodi
+      where (evento.tipoevencodi = 5) and
+      (causa.CAUSAEVENCODI = {0} or {0} = 0) and
+      (empresa.emprcodi = {1} or {1} = 0) and
+      (tipo_empresa.tipoemprcodi = {9} or {9} = 0) and
+      (familia.famcodi = {2} or {2} = 0) and
+      (evento.evenpreliminar = '{3}' or '{3}' = '-1') and
+      (evento.eveninterrup = '{10}' or '{10}' = '-1') and
+      (evento.deleted = 'N') and
+      (( evenini >=  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenini &lt;  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenfin >  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin &lt;=  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenini &lt;  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin >  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+      {8}
+      order by evento.evencodi desc
+      )
+      where (r >= ((({6}-1) * {7}) + 1) and r &lt; (({6} * {7}) + 1 )) or ({6} = -1 and {7} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRecordsPortal</key>
+    <query>
+      select
+      count(*)
+      from eve_evento evento
+      inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+      inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+      left join si_empresa reporta on evento.emprcodi = reporta.emprcodi
+      where (evento.tipoevencodi = 5) and
+      (causa.CAUSAEVENCODI = {0} or {0} = 0) and
+      (empresa.emprcodi = {1} or {1} = 0) and
+      (tipo_empresa.tipoemprcodi = {7} or {7} = 0) and
+      (familia.famcodi = {2} or {2} = 0) and
+      (evento.evenpreliminar = '{3}' or '{3}' = '-1') and
+      (evento.evenpreliminar = '{3}' or '{3}' = '-1') and
+      (evento.eveninterrup = '{8}' or '{8}' = '-1') and
+      (evento.deleted = 'N') and
+      (( evenini >=  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenini &lt;  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenfin >  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin &lt;=  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenini &lt;  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin >  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+      {6}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlExportarEventosPortal</key>
+    <query>
+      select
+      empresa.emprnomb,
+      tipoarea.tareaabrev,
+      area.areanomb,
+      equipo.equiabrev,
+      familia.famnomb,
+      evento.evenini,
+      evento.evenfin,
+      evento.evenasunto,
+      causa.causaevenabrev,
+      (select round(sum(interrminu*interrmw/60), 2) as servida from eve_interrupcion where evencodi = evento.evencodi) as energiainterrumpida,
+      (select round(sum(interrmw),2) as suma from eve_interrupcion where ((interrnivel is null or interrnivel = 'N')) and evencodi = evento.evencodi) as interrupcionmw,
+      (select round(sum(interrmw),2) as suma from eve_interrupcion where ((interrnivel  = 'S')) and evencodi = evento.evencodi) as disminucionmw,
+      equipo.equitension,
+      tipo_empresa.tipoemprdesc
+      from eve_evento evento
+      inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+      inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+      inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      left join si_empresa reporta on evento.emprcodi = reporta.emprcodi
+      where (evento.tipoevencodi = 5) and
+      (causa.causaevencodi = {0} or {0} = 0) and
+      (empresa.emprcodi = {1} or {1} = 0) and
+      (tipo_empresa.tipoemprcodi = {7} or {7} = 0) and
+      (familia.famcodi = {2} or {2} = 0) and
+      (evento.evenpreliminar = '{3}' or '{3}' = '-1') and
+      (evento.eveninterrup = '{8}' or '{8}' = '-1') and
+      (evento.deleted = 'N') and
+      (( evenini >=  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenini &lt;  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenfin >  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin &lt;=  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenini &lt;  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin >  TO_DATE('{5} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+      {6}
+      order by evento.evencodi desc
+    </query>
+  </Sql>
+
+  <!-- FIT - SGOCOES func A - INICIO -->
+
+  <Sql>
+    <key>SqlObtenerEmpresaPropietaria</key>
+    <query>
+      select emprcodi,emprnomb from si_empresa where emprcodi>=0 and (tipoemprcodi in(1,2,3) or emprcodi=0) order by emprnomb
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerEmpresasInvolucrada</key>
+    <query>
+      select emprcodi,emprnomb from si_empresa where   (emprcoes='S' and tipoemprcodi in(1,2,3) or emprcodi = 0 or emprcodi = 1) order by emprnomb
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresasRecomendacion</key>
+    <query>
+      select emprcodi,emprnomb from si_empresa where (emprcoes='S' and tipoemprcodi in(1,2,3) or emprcodi=0) order by emprnomb
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresasObservacion</key>
+    <query>
+      select EMPRCODI, EMPRNOMB from si_empresa where emprcodi = -1 union all select EMPRCODI, EMPRNOMB from si_empresa where emprcodi>0 order by 2 asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlBuscarEmpresa</key>
+    <query>SELECT * FROM (select EMPRCODI,EMPRNOMB from si_empresa where (emprcodi>0 or emprcodi = -1) and lower(EMPRNOMB) like lower('%{0}%') order by emprnomb) WHERE ROWNUM &lt;= 10</query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresa</key>
+    <query>select EMPRCODI,EMPRNOMB from si_empresa where (emprcodi>0 or emprcodi = -1) order by emprnomb </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlBuscarEmpresaPropietaria</key>
+    <query>SELECT * FROM (select EMPRCODI,EMPRNOMB from si_empresa where emprcodi>0 and tipoemprcodi in(1,2,3) and lower(EMPRNOMB) like lower('%{0}%') order by emprnomb) WHERE ROWNUM &lt;= 10</query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerTipoEquipo</key>
+    <query>
+      select famcodi,famnomb from eq_familia where famcodi>=0 order by famnomb
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerResponsableEvento</key>
+    <query>
+      select pernomb || ' ' || perapellido AS NOMBRE from si_persona where ((emprcodi=1 AND UPPER(percargo) like '%EVENTO%') OR PERCODI=-1) AND PERESTADO &lt;> 'B' ORDER BY NVL(PERAPELLIDO,' '),pernomb
+    </query>
+  </Sql>
+  <Sql>
+	<key>SqlObtenerReunionResponsable</key>
+	<query>
+    SELECT ER.EVERESPONCODI AS CODIGO,IND.DIRNOMBRE || ' ' || IND.DIRAPELLIDO AS NOMBRE FROM EVE_RESPBLES_PARTIC ER INNER JOIN INT_DIRECTORIO IND ON ER.DIRCODI = IND.DIRCODI WHERE ER.REPESTADO = 'A' ORDER BY ER.EVERESPONCODI
+  </query>
+  </Sql>
+
+
+  <Sql>
+    <key>SqlConsultarAnalisisFallas</key>
+    <query>
+      SELECT A.AFECODI,'EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO CODIGO,B.EVENASUNTO NOMBRE_EVENTO,
+      to_char(NVL((SELECT SUM(INTERRMW)FROM EVE_INTERRUPCION Z WHERE Z.EVENCODI=A.EVENCODI AND COALESCE(INTERRNIVEL,'N')='N'),0),'9999.99') INTERRUMPIDO,
+      TO_CHAR(B.EVENINI,'dd/mm/yyyy hh24:mi') FECHA_EVENTO,
+      decode(TO_CHAR(A.AFEREUFECHAPROG,'dd/mm/yyyy'),TO_CHAR(B.EVENINI,'dd/mm/yyyy'),'',TO_CHAR(A.AFEREUFECHAPROG,'dd/mm/yyyy') || ' '||AFEREUHORAPROG) FECHA_REUNION,
+      decode(TO_CHAR(A.AFEITFECHAELAB,'dd/mm/yyyy'),TO_CHAR(B.EVENINI,'dd/mm/yyyy'),'',TO_CHAR(A.AFEITFECHAELAB,'dd/mm/yyyy')) FECHA_INFORME,
+      decode(TO_CHAR(A.AFEITRDJRFECHARECEP,'dd/mm/yyyy'),TO_CHAR(B.EVENINI,'dd/mm/yyyy'),'',TO_CHAR(A.AFEITRDJRFECHARECEP,'dd/mm/yyyy')) REVISADO_DJR,
+      decode(TO_CHAR(A.AFEITRDOFECHARECEP,'dd/mm/yyyy'),TO_CHAR(B.EVENINI,'dd/mm/yyyy'),'',TO_CHAR(A.AFEITRDOFECHARECEP,'dd/mm/yyyy')) REVISADO_DO,
+      decode(TO_CHAR(A.AFEITPITFFECHA,'dd/mm/yyyy'),TO_CHAR(B.EVENINI,'dd/mm/yyyy'),'',TO_CHAR(A.AFEITPITFFECHA,'dd/mm/yyyy')) PUBLICADO,
+
+      case when A.Afeestado ='A' then 'ANULADO'
+      else
+      case when A.Afeestado ='X' then 'ARCHIVADO'
+      else decode(nvl(A.AFEITPDECISFFECHASIST,''),
+      '',
+      'EN PROCESO',
+
+      decode(a.AFEIMPUGNA,'S',
+      'EN PROCESO',
+
+      decode(a.AFEFZAMAYOR, 'S',
+      'FUERZA MAYOR',
+      'CERRADO')
+      )
+      ) end
+      end as ESTADO,
+
+      decode((select count(*) from af_reclamo Z where Z.tipcodi=17 and Z.afecodi=A.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=11 and Z.afecodi=A.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=10 and Z.afecodi=A.afecodi),0,'','RECONSIDERACIÓN'),'APELACIÓN'),'ARBITRAJE') IMPUG,
+      a.AFERESPONSABLE RESPONSABLE,DECODE(A.AFEESTADO,'A','',decode(nvl(AFEITPDECISFFECHASIST,''),'',DECODE(SIGN(AFEITFECHANOMINAL-sysdate),1,'FALTA '||TRUNC(24*(AFEITFECHANOMINAL-sysdate),1)||' h.','PLAZO VENCIO'),'')) INF_TECNICO, CASE A.AFEFZAMAYOR WHEN 'S' THEN 'FUERZA MAYOR' ELSE '' END AS AFEFZAMAYOR
+      ,a.evencodi
+      FROM AF_EVENTO A, EVE_EVENTO B, SI_EMPRESA C, EQ_EQUIPO D, EQ_FAMILIA E
+      WHERE A.EVENCODI=B.EVENCODI AND B.EQUICODI=D.EQUICODI AND D.EMPRCODI=C.EMPRCODI AND D.FAMCODI=E.FAMCODI
+      and b.deleted = 'N'
+      AND B.EVENINI>=to_date('{0} 00:00:00','dd/mm/yyyy hh24:mi:ss')
+      AND B.EVENINI &lt;= to_date('{1} 23:59:59','dd/mm/yyyy hh24:mi:ss')
+		AND ( '{2}' = 0 or C.EMPRCODI = '{2}' )
+		AND ( '{3}' = 0 or E.FAMCODI= '{3}' )
+		AND ( '{4}' = 'N' or A.AFERMC= '{4}' )
+		AND ( '{5}' = 'N' or A.AFEERACMF= '{5}')
+		AND ( '{6}' = 'N' or A.AFERACMT= '{6}')
+		AND ( '{7}' = 'N' or A.AFEEDAGSF= '{7}')
+		--AND ( '{8}' = 'N' or A.AFEFZAFECHASIST is not null )
+		AND ( '{8}' = 'N' or A.AFEITPDECISFFECHASIST is not null )
+		AND ( '{9}' = 'N' or A.AFEESTADO= '{9}')
+		--AND ( '{10}' = 'N' or decode(nvl(A.AFEITPDECISFFECHASIST,''),'','EN PROCESO',decode(a.AFEIMPUGNA,'S','EN PROCESO','N','CERRADO'))='{10}')
+		AND ( '{10}' = 'N' or (case when A.Afeestado ='A' then 'ANULADO' else case when A.Afeestado ='X' then 'ARCHIVADO' else decode(nvl(A.AFEITPDECISFFECHASIST,''), '', 'EN PROCESO', decode(a.AFEIMPUGNA,'S', 'EN PROCESO', decode(a.AFEFZAMAYOR, 'S', 'FUERZA MAYOR', 'CERRADO'))) end	end)='{10}')
+		AND ( '{11}' = 'N' or decode((select count(*) from af_reclamo Z where Z.tipcodi=17 and Z.afecodi=A.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=11 and Z.afecodi=A.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=10 and Z.afecodi=A.afecodi),0,'','RECONSIDERACIÓN'),'APELACIÓN'),'ARBITRAJE') ='{11}')
+		AND ( '{12}' = '0' or A.AFECODI in (select a.AFECODI from AF_INFEMPINVOL a, af_evento b, eve_evento c where a.afecodi=b.afecodi and b.evencodi=c.evencodi and A.AFIPUBLICA='N' and afiversion='X' and a.emprcodi='{12}'))
+		AND ( '{13}' = 'T' or A.AFECONVTIPOREUNION='{13}')
+		order by AFEANIO||'-'||lpad(AFECORR,3,'0') desc
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerCodigosEventosPorFechaNominal</key>
+    <query>
+      SELECT
+      DISTINCT ('EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO) AS CODIGO
+      FROM
+      AF_EVENTO
+      WHERE
+      TO_CHAR(AFECITFECHANOMINAL,'YYYY-MM-DD') = '{0}'
+      ORDER BY
+      CODIGO
+      DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerCodigosEventosPorFechaReunion</key>
+    <query>
+      SELECT
+      DISTINCT ('EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO) AS CODIGO
+      FROM
+      AF_EVENTO
+      WHERE
+      TO_CHAR(AFEREUFECHAPROG,'YYYY-MM-DD') = '{0}'
+      ORDER BY
+      CODIGO
+      DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerCodigosEventosPorFechaElaboracionInformeTecnico</key>
+    <query>
+      SELECT
+      DISTINCT ('EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO) AS CODIGO
+      FROM
+      AF_EVENTO
+      WHERE
+      TO_CHAR(AFEITDECFECHAELAB,'YYYY-MM-DD') = '{0}'
+      ORDER BY
+      CODIGO
+      DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerCodigosEventosPorFechaNominalSemanal</key>
+    <query>
+      SELECT
+      AFECODI,
+      ('EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO) AS CODIGO,
+      TO_CHAR(AFECITFECHANOMINAL,'DD/MM/YYYY') AS FECHA
+      FROM
+      AF_EVENTO
+      WHERE
+        TO_DATE(AFECITFECHANOMINAL) &gt;= TO_DATE('{0}','YYYY-MM-DD') AND
+        TO_DATE(AFECITFECHANOMINAL) &lt;= TO_DATE('{1}','YYYY-MM-DD')
+      ORDER BY
+        CODIGO
+      DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerCodigosEventosPorFechaReunionSemanal</key>
+    <query>
+      SELECT
+        AFECODI,
+        ('EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO) AS CODIGO,
+        TO_CHAR(AFEREUFECHAPROG,'DD/MM/YYYY') AS FECHA
+      FROM
+        AF_EVENTO
+      WHERE
+        AFEREUFECHAPROG &gt;= TO_DATE('{0}','YYYY-MM-DD') AND
+        AFEREUFECHAPROG &lt;= TO_DATE('{1}','YYYY-MM-DD')
+      ORDER BY
+        CODIGO
+      DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerCodigosEventosPorFechaElaboracionInformeTecnicoSemanal</key>
+    <query>
+      SELECT
+      AFECODI,
+      ('EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO) AS CODIGO,
+      TO_CHAR(AFEITDECFECHAELAB,'DD/MM/YYYY') AS FECHA
+      FROM
+      AF_EVENTO
+      WHERE
+      AFEITDECFECHAELAB &gt;= TO_DATE('{0}','YYYY-MM-DD') AND
+      AFEITDECFECHAELAB &lt;= TO_DATE('{1}','YYYY-MM-DD')
+      ORDER BY
+      CODIGO
+      DESC
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>SqlObtenerAnalisisFalla</key>
+    <query>
+		select
+		AFECODI,EVENCODI,AFEANIO,AFECORR,AFERMC,AFEERACMF,AFERACMT,AFEEDAGSF,AFERESPONSABLE
+		,AFECITFECHANOMINAL,AFECITFECHAELAB,AFEREUFECHANOMINAL
+		,AFEREUFECHAPROG,AFEREUHORAPROG,AFECONVTIPOREUNION
+		,AFERCTAEOBSERVACION
+		,AFEITFECHANOMINAL,AFEITFECHAELAB,AFEITRDJRESTADO,AFEITRDJRFECHAENVIO
+		,AFEITRDJRFECHARECEP,AFEITRDOESTADO
+		,AFEITRDOFECHAENVIO,AFEITRDOFECHARECEP
+		,LASTUSER,LASTDATE,AFEIMPUGNA
+		,AFERCTAEACTAFECHA
+		,AFERCTAEINFORMEFECHA--OK
+		,AFECONVCITACIONFECHA,AFEITPITFFECHASIST
+		,AFEITPDECISFFECHASIST
+		,AFECOMPFECHA,AFECOMPFECHASIST
+		,AFEITDECFECHANOMINAL,AFEITDECFECHAELAB
+		,AFEFZAFECHASIST
+		,AFEFZADECISFECHASIST,AFEITPITFFECHA
+		,AFEEMPRESPNINGUNA,AFEEMPCOMPNINGUNA
+		,AFEESTADO,AFEESTADOMOTIVO,AFEFZAMAYOR
+		,'EV-'||lpad(AFECORR,3,'0')||'-'|| AFEANIO CODIGO
+		,AFSALA, AFEREUHORINI, AFEREUHORFIN
+		,AFELIMATENCOMEN
+		from af_evento where afecodi = '{0}'
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerAnalisisFallaCompleto</key>
+    <query>
+      select
+      af.AFECODI,af.EVENCODI,af.AFEANIO,af.AFECORR,af.AFERMC,af.AFEERACMF,af.AFERACMT,af.AFEEDAGSF
+      ,af.AFECITFECHANOMINAL,af.AFECITFECHAELAB,af.AFEREUFECHANOMINAL
+      ,af.AFEREUFECHAPROG,af.AFEREUHORAPROG,af.AFECONVTIPOREUNION
+      ,eve.evenasunto, 'EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO as CODIGO,TO_CHAR(eve.EVENINI,'dd/mm/yyyy hh24:mi') FECHA_EVENTO,eve.EVENINI
+      from af_evento af inner join eve_evento eve on af.evencodi = eve.evencodi
+      where AFEREUFECHAPROG >= TO_DATE('{0}', 'YYYY-MM-DD') and AFEREUFECHAPROG &lt;= ( LAST_DAY(TO_DATE('{0}','YYYY-MM-DD')))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerAnalisisFallaCompleto2</key>
+    <query>
+      select
+      af.AFECODI,af.EVENCODI,af.AFEANIO,af.AFECORR,af.AFERMC,af.AFEERACMF,af.AFERACMT,af.AFEEDAGSF
+      ,af.AFECITFECHANOMINAL,af.AFECITFECHAELAB,af.AFEREUFECHANOMINAL
+      ,af.AFEREUFECHAPROG,af.AFEREUHORAPROG,af.AFECONVTIPOREUNION
+      ,eve.evenasunto, 'EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO as CODIGO,TO_CHAR(eve.EVENINI,'dd/mm/yyyy hh24:mi') FECHA_EVENTO,eve.EVENINI
+      from af_evento af inner join eve_evento eve on af.evencodi = eve.evencodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerAnalisisFalla2</key>
+    <query>
+      select
+      af.AFECODI,af.EVENCODI,af.AFEANIO,af.AFECORR,af.AFERMC,af.AFEERACMF,af.AFERACMT,af.AFEEDAGSF
+      ,af.AFECITFECHANOMINAL,af.AFECITFECHAELAB,af.AFEREUFECHANOMINAL
+      ,af.AFEREUFECHAPROG,af.AFEREUHORAPROG,af.AFECONVTIPOREUNION
+      ,eve.evenasunto, 'EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO as CODIGO,TO_CHAR(eve.EVENINI,'dd/mm/yyyy hh24:mi') FECHA_EVENTO,eve.EVENINI
+      from af_evento af inner join eve_evento eve on af.evencodi = eve.evencodi
+      where af.AFECODI = '{0}'
+    </query>
+  </Sql>  
+  
+  <Sql>
+    <key>SqlObtenerEquipoPorEvento</key>
+    <query>
+      SELECT B.EQUIABREV, C.AREANOMB, D.EMPRNOMB,
+      NVL((SELECT SUM(INTERRMW)FROM EVE_INTERRUPCION Z WHERE Z.EVENCODI=A.EVENCODI AND INTERRNIVEL='S'),0) DISMINUIDO,
+      NVL((SELECT SUM(INTERRMW)FROM EVE_INTERRUPCION Z WHERE Z.EVENCODI=A.EVENCODI AND COALESCE(INTERRNIVEL,'N')='N'),0) INTERRUMPIDO
+      FROM EVE_EVENTO A, EQ_EQUIPO B, EQ_AREA C, SI_EMPRESA D
+      WHERE A.EQUICODI=B.EQUICODI
+      AND B.AREACODI=C.AREACODI
+      AND B.EMPRCODI=D.EMPRCODI
+      AND EVENCODI= '{0}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerEmpresaInvolucrada</key>
+    <query>
+      select a.EMPRCODI,a.AFIVERSION,B.EMPRNOMB,decode(a.AFIVERSION,'P','PRELIMINAR','F','FINAL','A','AMPLIATORIA','NO DEFINIDO') VERSION,
+      decode(a.AFICUMPLIMIENTO, 'F', 'FUERA DE PLAZO', 'E', 'NO ENVIADO', 'N','NO EXISTEN INFORMES', ' ') CUMPLIMIENTO,
+      NVL(a.AFIEXTENSION,'') as AFIEXTENSION, nvl(a.AFIMENSAJE, '') as AFIMENSAJE ,a.AFIFECHAINF,a.LASTUSER,a.LASTDATE
+      from AF_INFEMPINVOL a, si_empresa b
+      where a.emprcodi=b.emprcodi AND A.AFIPUBLICA='S' and afecodi= '{0}'
+      ORDER BY B.EMPRNOMB,a.AFIVERSION DESC
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresaInvolucradaReunion</key>
+    <query>
+      select a.EMPRCODI,B.EMPRNOMB,a.LASTUSER,a.LASTDATE
+      from AF_INFEMPINVOL a, si_empresa b
+      where a.emprcodi=b.emprcodi AND A.AFIPUBLICA='N' and afecodi='{0}' and afiversion='X'
+      ORDER BY B.EMPRNOMB
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerListaSecuenciaEvento</key>
+    <query>
+      select EVESECUENCIACODI,EVENCODI,EVESFECHA,EVESECHORA,EVESECSECC,EVESECDESCRIPCION,EVESECINCMANIOB,LASTDATE,LASTUSER
+      from EVE_SECUENCIAS WHERE EVENCODI= {0}
+    </query>
+  </Sql>
+  <Sql>
+	<key>SqlObtenerListaReunionResponsable</key>
+	<query>
+    SELECT IND.DIRNOMBRE || ' ' || IND.DIRAPELLIDO AS NOMBRE,
+    EVE.RESEVENCODI, EVE.EVERESPONCODI,
+    EVE.EVENCODI, EVE.EVEPARTICIPANTE,
+    EVE.EMPRCODI, RESP.REPFIRMA REPRUTAFIRMA
+    FROM EVE_RESPBLES_PARTC_EVENTO EVE
+    LEFT JOIN EVE_RESPBLES_PARTIC RESP ON RESP.EVERESPONCODI = EVE.EVERESPONCODI
+    LEFT JOIN int_directorio IND ON RESP.DIRCODI = IND.DIRCODI
+    WHERE EVENCODI = {0}
+  </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresaRecomendacionInformeTecnico</key>
+    <query>
+      select a.EMPRCODI,A.AFRCORR,B.EMPRNOMB,A.AFRRECOMEND,a.LASTUSER,a.LASTDATE,a.AFRREC,a.EVENRCMCTAF,a.AFECODI
+      from AF_RECOMENDACION a, si_empresa b
+      where a.emprcodi=b.emprcodi and afecodi = {0}
+      ORDER BY A.AFRCORR,B.EMPRNOMB,a.LASTDATE
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerEmpresaObservacionInformeTecnico</key>
+    <query>
+      SELECT A.EMPRCODI, A.AFOCORR, B.EMPRNOMB, A.AFOOBSERVAC, A.LASTUSER, A.LASTDATE,
+      A.AFECODI, A.AFOOBS FROM AF_OBSERVACION A, SI_EMPRESA B
+      WHERE A.EMPRCODI = B.EMPRCODI AND A.AFECODI = {0}
+      ORDER BY A.AFOCORR, B.EMPRNOMB, A.LASTDATE
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresaFuerzaMayorInformeTecnico</key>
+    <query>
+      select a.RECLAMOCODI, a.RPTACODI, a.EMPRCODI,B.EMPRNOMB,TO_CHAR(A.AFREMPFECHA,'dd/mm/yyyy') FECHA,A.AFREMPPUBLICALASTUSER LASTUSER,
+      TO_CHAR(A.AFREMPPUBLICALASTDATE,'dd/mm/yyyy hh24:mi:ss') LASTDATE,nvl(TO_CHAR(A.AFRCOESFECHA,'dd/mm/yyyy hh24:mi:ss'),'') FECHA_COES,
+      nvl(A.AFRCOESPUBLICALASTUSER,'') LASTUSER_COES,nvl(TO_CHAR(A.AFRCOESPUBLICALASTDATE,'dd/mm/yyyy hh24:mi:ss'),'') LASTDATE_COES
+      from AF_RECLAMO a, si_empresa b
+      where a.emprcodi=b.emprcodi and afecodi = {0}  AND TIPCODI=  '23'
+      ORDER BY B.EMPRNOMB,A.AFREMPFECHA
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresaResponsableCompensacion</key>
+    <query>
+      select a.EMPRCODI,B.EMPRNOMB,a.LASTUSER,a.LASTDATE,NVL(AFIPORCENTAJE,'') AFIPORCENTAJE, NVL(AFIDECIDE,'') AFIDECIDE, NVL(AFIMENSAJE, '') AFIMENSAJE
+      from AF_INFEMPINVOL a, si_empresa b
+      where a.emprcodi=b.emprcodi AND A.AFIPUBLICA='N' and afecodi = {0} and afiversion='R'
+      ORDER BY a.afidecide,a.afiporcentaje desc, B.EMPRNOMB
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresaCompensadaCompensacion</key>
+    <query>
+      select a.EMPRCODI,B.EMPRNOMB,a.LASTUSER,a.LASTDATE,NVL(AFIPORCENTAJE,'') AFIPORCENTAJE, NVL(AFIDECIDE,'') AFIDECIDE, NVL(AFIMENSAJE, '') AFIMENSAJE
+      from AF_INFEMPINVOL a, si_empresa b
+      where a.emprcodi=b.emprcodi AND A.AFIPUBLICA='N' and afecodi = {0} and afiversion='C'
+      ORDER BY a.afidecide,a.afiporcentaje desc, B.EMPRNOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerReclamoReconsideracionReconsideracion</key>
+    <query>
+      select a.RECLAMOCODI, a.RPTACODI, a.EMPRCODI,B.EMPRNOMB,TO_CHAR(A.AFREMPFECHA,'dd/mm/yyyy') FECHA,A.AFREMPPUBLICALASTUSER LASTUSER,
+      TO_CHAR(A.AFREMPPUBLICALASTDATE,'dd/mm/yyyy hh24:mi:ss') LASTDATE,nvl(TO_CHAR(A.AFRCOESFECHA,'dd/mm/yyyy hh24:mi:ss'),'') FECHA_COES,
+      nvl(A.AFRCOESPUBLICALASTUSER,'') LASTUSER_COES,nvl(TO_CHAR(A.AFRCOESPUBLICALASTDATE,'dd/mm/yyyy hh24:mi:ss'),'') LASTDATE_COES
+      from AF_RECLAMO a, si_empresa b
+      where a.emprcodi=b.emprcodi and afecodi = {0}  AND TIPCODI=  '10'
+      ORDER BY B.EMPRNOMB,A.AFREMPFECHA
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerReclamoApelacionReconsideracion</key>
+    <query>
+      select a.RECLAMOCODI, a.RPTACODI, a.EMPRCODI,B.EMPRNOMB,TO_CHAR(A.AFREMPFECHA,'dd/mm/yyyy') FECHA,A.AFREMPPUBLICALASTUSER LASTUSER,
+      TO_CHAR(A.AFREMPPUBLICALASTDATE,'dd/mm/yyyy hh24:mi:ss') LASTDATE,nvl(TO_CHAR(A.AFRCOESFECHA,'dd/mm/yyyy hh24:mi:ss'),'') FECHA_COES,
+      nvl(A.AFRCOESPUBLICALASTUSER,'') LASTUSER_COES,nvl(TO_CHAR(A.AFRCOESPUBLICALASTDATE,'dd/mm/yyyy hh24:mi:ss'),'') LASTDATE_COES
+      from AF_RECLAMO a, si_empresa b
+      where a.emprcodi=b.emprcodi and afecodi = {0}   AND TIPCODI=  '11'
+      ORDER BY B.EMPRNOMB,A.AFREMPFECHA
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerReclamoArbitrajeReconsideracion</key>
+    <query>
+      select a.RECLAMOCODI, a.RPTACODI, a.EMPRCODI,B.EMPRNOMB,TO_CHAR(A.AFREMPFECHA,'dd/mm/yyyy') FECHA,A.AFREMPPUBLICALASTUSER LASTUSER,
+      TO_CHAR(A.AFREMPPUBLICALASTDATE,'dd/mm/yyyy hh24:mi:ss') LASTDATE,nvl(TO_CHAR(A.AFRCOESFECHA,'dd/mm/yyyy hh24:mi:ss'),'') FECHA_COES,
+      nvl(A.AFRCOESPUBLICALASTUSER,'') LASTUSER_COES,nvl(TO_CHAR(A.AFRCOESPUBLICALASTDATE,'dd/mm/yyyy hh24:mi:ss'),'') LASTDATE_COES
+      from AF_RECLAMO a, si_empresa b
+      where a.emprcodi=b.emprcodi and afecodi = {0}  AND TIPCODI=  '17'
+      ORDER BY B.EMPRNOMB,A.AFREMPFECHA
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlInsertarEmpresaInvolucrada</key>
+    <query>
+      insert into AF_INFEMPINVOL (AFECODI,EMPRCODI,AFIVERSION,AFICUMPLIMIENTO,AFIMENSAJE,AFIEXTENSION,AFIFECHAINF,AFIPUBLICA,LASTUSER,LASTDATE)
+      values ({0},{1},'{2}','{3}','{4}','{5}',TO_DATE('{6}','dd/mm/yyyy'),'{7}','{8}',TO_DATE('{9}','dd/mm/yyyy hh24:mi:ss'))
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlInsertarSecuenciaEvento</key>
+    <query>
+      insert into EVE_SECUENCIAS (EVESECUENCIACODI,EVENCODI,EVESECHORA,EVESECSECC,EVESECDESCRIPCION,EVESECINCMANIOB,LASTDATE,LASTUSER,EVESFECHA)
+      values ({0},{1},'{2}','{3}','{4}',{5},TO_DATE('{6}','dd/mm/yyyy hh24:mi:ss'),'{7}','{8}')
+    </query>
+  </Sql>
+  <Sql>
+	<key>SqlInsertarReunionResponsable</key>
+	<query>
+		insert into EVE_RESPBLES_PARTC_EVENTO (RESEVENCODI,EVERESPONCODI,EVENCODI,EVEPARTICIPANTE, EMPRCODI)
+		values ({0},{1},'{2}','{3}',{4})
+	</query>
+  </Sql>
+  <Sql>
+    <key>SqlEliminarEmpresaInvolucrada</key>
+    <query>
+      delete from AF_INFEMPINVOL where afecodi={0} and emprcodi={1} and afiversion='{2}'
+    </query>
+  </Sql>
+  <Sql>
+  	<key>SqlEliminarSecuenciaEvento</key>
+  	<query>
+		delete from EVE_SECUENCIAS where evencodi={0}
+	</query>
+  </Sql>
+  <Sql>
+    <key>SqlEliminarEmpresaInvolucradaReunion</key>
+    <query>
+      delete from AF_INFEMPINVOL where afecodi={0} and emprcodi={1} and afipublica='N' and afiversion='X'
+    </query>
+  </Sql>
+  <Sql>
+	<key>SqlEliminarReunionResponsable</key>
+	<query>
+		delete from EVE_RESPBLES_PARTC_EVENTO where EVENCODI={0} and RESEVENCODI={1}
+	</query>
+  </Sql>
+  <Sql>
+		<key>SqlEliminarAsistenteResponsable</key>
+		<query>
+			delete from EVE_RESPBLES_PARTC_EVENTO where EVENCODI={0} and EMPRCODI={1}
+		</query>
+  </Sql>
+  <Sql>
+    <key>SqlObservacionConsultar</key>
+    <query>
+      select a.*, b.emprnomb, 'EV-'|| c.afecorr || '-' || c.afeanio as evento from af_observacion a inner join si_empresa b on a.emprcodi = b.emprcodi
+      inner join af_evento c on a.afecodi = c.afecodi
+      where ((b.emprcodi = {0}) or ({0}  = -1)) and a.lastdate >= TO_DATE('{1} 00:00:00','dd/mm/yyyy hh24:mi:ss') and a.lastdate &lt;= TO_DATE('{2} 23:59:59','dd/mm/yyyy hh24:mi:ss')
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlRecomendacionesConsultar</key>
+    <query>
+      SELECT b.afrrec,b.afecodi,'EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO CODIGO, D.EMPRNOMB, NVL(B.AFRRECOMEND,'') RECOMENDACION,
+      decode(B.AFRMEDADOPNIVCUMP,'E','EN PROCESO','P','PARCIAL','C','CUMPLIO','S','SIN CUMPLIR', 'R', 'PENDIENTE DE RESPUESTA','EN PROCESO') ESTADO
+      , NVL(B.AFRMEDADOPMEDIDA,'') RESPUESTA, NVL(AFERCTAEOBSERVACION,'') OBSERVACION, decode(nvl(AFRPUBLICAFECHA,''),'','','Ver') ACCION_FINAL
+      , CASE B.INDIMPORTANTE WHEN 'S' THEN 'SI' ELSE 'NO' END AS INDIMPORTANTE, B.NROREGRESPUESTA,B.EMPRCODI
+      FROM AF_EVENTO A ,AF_RECOMENDACION B, EVE_EVENTO C, SI_EMPRESA D
+      WHERE A.AFECODI=B.AFECODI AND A.EVENCODI=C.EVENCODI AND B.EMPRCODI=D.EMPRCODI
+      AND C.EVENINI>=to_date('{0} 00:00:00','dd/mm/yyyy hh24:mi:ss')
+      AND C.EVENINI &lt;=to_date('{1} 23:59:59','dd/mm/yyyy hh24:mi:ss')
+      AND ({2}=0 or B.EMPRCODI= {2})
+      and ('{3}' = 'T' or NVL(B.AFRMEDADOPNIVCUMP,'E') = '{3}')
+      and ('{4}' = 'T' or INDIMPORTANTE = '{4}')
+      ORDER BY c.evenini,B.AFRCORR,D.EMPRNOMB
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlActualizarFechaConvocatoriaCitacionReunion</key>
+    <query>
+      update AF_EVENTO
+      set AFECONVCITACIONFECHA = {0}
+      where afecodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarFechaActaReunion</key>
+    <query>
+      update AF_EVENTO
+      set AFERCTAEACTAFECHA = {0}
+      where afecodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarFechaInformeCTAFReunion</key>
+    <query>
+      update AF_EVENTO
+      set AFERCTAEINFORMEFECHA = {0}
+      where afecodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlExisteRecomendacionInformeTecnico</key>
+    <query>
+      select count(*) as cuenta from AF_RECOMENDACION where afecodi={0} and emprcodi={1} and afrcorr={1} and AFRRECOMEND='{2}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlExisteEmpresaResponsableCompensacion</key>
+    <query>
+      select count(*) as cuenta from AF_INFEMPINVOL where afecodi={0} and emprcodi={1} and afipublica='N' and afiversion='{2}' and afidecide={3}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlExisteEmpresaCompensadaCompensacion</key>
+    <query>
+      select count(*) as cuenta from AF_INFEMPINVOL where afecodi={0} and emprcodi={1} and afipublica='N' and afiversion='{2}'
+    </query>
+  </Sql>
+	
+  <Sql>
+	<key>SqlExisteReunionResponsable</key>
+	<query>
+		select count(*) as cuenta FROM EVE_RESPBLES_PARTC_EVENTO EVE
+		INNER JOIN EVE_RESPBLES_PARTIC RESP ON RESP.EVERESPONCODI = EVE.EVERESPONCODI
+		INNER JOIN int_directorio IND ON RESP.DIRCODI = IND.DIRCODI
+		WHERE RESP.EVERESPONCODI = '{0}' AND EVENCODI = '{1}'
+	</query>
+  </Sql>
+	<Sql>
+		<key>SqlExisteAsistenteResponsable</key>
+		<query>
+			select count(*) as cuenta FROM EVE_RESPBLES_PARTC_EVENTO EVE
+			INNER JOIN EVE_RESPBLES_PARTIC RESP ON RESP.EVERESPONCODI = EVE.EVERESPONCODI
+			INNER JOIN int_directorio IND ON RESP.DIRCODI = IND.DIRCODI
+			WHERE EMPRCODI = {0} AND EVENCODI = '{1}' AND EVEPARTICIPANTE = '{2}'
+		</query>
+	</Sql>
+  <Sql>
+    <key>SqlObtenerMaxIdRecomendacionInformeTecnico</key>
+    <query>
+      select MAX(AFRREC) from AF_RECOMENDACION
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>SqlObtenerMaxIdReunionResponsable</key>
+		<query>
+      select NVL(MAX(RESEVENCODI), 0) + 1  from EVE_RESPBLES_PARTC_EVENTO
+    </query>
+	</Sql>
+
+	<Sql>
+		<key>SqlObtenerMaxIdSecuenciaEvento</key>
+		<query>
+			select (CASE WHEN(MAX(EVESECUENCIACODI) != 0) THEN MAX(EVESECUENCIACODI) ELSE 0 END)  from EVE_SECUENCIAS
+		</query>
+	</Sql>
+	
+  <Sql>
+    <key>SqlInsertarRecomendacionInformeTecnico</key>
+    <query>
+      insert into AF_RECOMENDACION(AFRREC,AFECODI,EMPRCODI,AFRCORR,AFRRECOMEND,LASTUSER,LASTDATE,IDEQUIPO, IDSUBESTACION) values ({0},{1},{2},{3},'{4}','{5}',TO_DATE('{6}','dd/mm/yyyy hh24:mi:ss'),{7},{8})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlEliminarRecomendacionInformeTecnico</key>
+    <query>
+      delete from AF_RECOMENDACION where afecodi={0} and emprcodi={1} and afrcorr={2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerMaxIdObservacionInformeTecnico</key>
+    <query>
+      select MAX(afoobs) from af_observacion
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlInsertarObservacionInformeTecnico</key>
+    <query>
+      insert into AF_OBSERVACION(AFOOBS,AFECODI,EMPRCODI,AFOCORR,AFOOBSERVAC,LASTUSER,LASTDATE) values({0},{1},{2},{3},'{4}','{5}',TO_DATE('{6}','dd/mm/yyyy hh24:mi:ss'))
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlEliminarObservacionInformeTecnico</key>
+    <query>
+      delete from AF_OBSERVACION where afoobs={0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarPublicacionInformeTecnicoAnualInformeTecnico</key>
+    <query>
+      update AF_EVENTO
+      set AFEITPITFFECHA = {0},AFEITPITFFECHASIST = {1}
+      where afecodi = {2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarPublicacionDesicionEventoInformeTecnico</key>
+    <query>
+      update AF_EVENTO
+      set AFEITPDECISFFECHASIST = {0}
+      where afecodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerMaxIdReclamoInformeTecnico</key>
+    <query>
+      select MAX(RECLAMOCODI) from af_reclamo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerMaxIdReclamoRespuestaInformeTecnico</key>
+    <query>
+      select MAX(rptacodi) from af_reclamo
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlInsertarFuerzaMayorInformeTecnico</key>
+    <query>
+      insert into af_reclamo(RECLAMOCODI, AFECODI,TIPCODI,EMPRCODI,AFREMPFECHA,AFREMPPUBLICALASTUSER,AFREMPPUBLICALASTDATE,AFRCOESFECHA,AFRCOESPUBLICALASTUSER,AFRCOESPUBLICALASTDATE)
+      values ({0},{1},{2},{3},TO_DATE('{4}','dd/mm/yyyy hh24:mi:ss'),'{5}',TO_DATE('{6}','dd/mm/yyyy hh24:mi:ss'),NULL,NULL,NULL)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarFuerzaMayorInformeTecnico</key>
+    <query>
+      update af_reclamo
+      set AFRCOESFECHA={1},AFRCOESPUBLICALASTUSER='{2}',RPTACODI={3},AFRCOESPUBLICALASTDATE= {4}
+      where reclamocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlEliminarFuerzaMayorInformeTecnico</key>
+    <query>
+      delete af_reclamo where RECLAMOCODI = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlInsertarEmpresaResponsableCompensacion</key>
+    <query>
+      insert into AF_INFEMPINVOL (AFECODI,EMPRCODI,AFIVERSION,AFIFECHAINF,AFIPUBLICA,LASTUSER,LASTDATE,AFIPORCENTAJE,AFIDECIDE, AFIMENSAJE)
+      values ({0},{1},'{2}',TO_DATE('{3}','dd/mm/yyyy hh24:mi:ss'),'{4}','{5}',TO_DATE('{6}','dd/mm/yyyy hh24:mi:ss'),'{7}','{8}','{9}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlEliminarEmpresaResponsableCompensacion</key>
+    <query>
+      delete from AF_INFEMPINVOL where afecodi={0} and emprcodi={1} and afipublica='N' and afiversion='{2}' and afidecide= {3}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarInformeCompensaciones</key>
+    <query>
+      update AF_EVENTO
+      set AFECOMPFECHASIST = {0},AFECOMPFECHA = {1}
+      where afecodi = {2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarInformeCompensaciones</key>
+    <query>
+      update AF_EVENTO
+      set AFECOMPFECHASIST = {0},AFECOMPFECHA = {1}
+      where afecodi = {2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlInsertarReclamoRecApe</key>
+    <query>
+      insert into af_reclamo(RECLAMOCODI, AFECODI,TIPCODI,EMPRCODI,AFREMPFECHA,AFREMPPUBLICALASTUSER,AFREMPPUBLICALASTDATE,AFRCOESFECHA,AFRCOESPUBLICALASTUSER,AFRCOESPUBLICALASTDATE)
+      values ({0},{1},{2},{3},TO_DATE('{4}','dd/mm/yyyy'),'{5}',TO_DATE('{6}','dd/mm/yyyy hh24:mi:ss'),null,null,null)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlEliminarReclamoRecApe</key>
+    <query>
+      delete af_reclamo where reclamocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarReclamoRecApe</key>
+    <query>
+      update af_reclamo
+      set AFRCOESFECHA={1},AFRCOESPUBLICALASTUSER='{2}',RPTACODI={3},AFRCOESPUBLICALASTDATE= {4}
+      where reclamocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarEvento</key>
+    <query>
+      update AF_EVENTO
+      set AFECORR='{1}', AFERMC='{2}' , AFEERACMF='{3}',AFERACMT='{4}',AFEEDAGSF='{5}',
+      AFERESPONSABLE = '{6}',AFECITFECHAELAB= TO_DATE('{7}','dd/mm/yyyy'),AFEREUFECHAPROG= TO_DATE('{8}','dd/mm/yyyy'),AFEREUHORAPROG='{9}',AFECONVTIPOREUNION='{10}',
+      AFERCTAEOBSERVACION = '{11}',AFEITFECHAELAB = TO_DATE('{12}','dd/mm/yyyy'),AFEITRDJRFECHAENVIO=TO_DATE('{13}','dd/mm/yyyy'),AFEITRDJRFECHARECEP=TO_DATE('{14}','dd/mm/yyyy'),
+      AFEITRDOFECHAENVIO = TO_DATE('{15}','dd/mm/yyyy'),AFEITRDOFECHARECEP=TO_DATE('{16}','dd/mm/yyyy'),
+      AFEITRDJRESTADO='{17}',AFEITRDOESTADO='{18}',LASTUSER='{19}',LASTDATE=TO_DATE('{20}','dd/mm/yyyy hh24:mi:ss'),
+      AFEIMPUGNA = '{21}',AFEFZAMAYOR='{22}', --AFEITFECHANOMINAL= FN_SI_FECHAPLAZO(AFEREUFECHAPROG, 10, 'N'),
+      AFEITDECFECHANOMINAL=TO_DATE('{23}','dd/mm/yyyy'),AFEITDECFECHAELAB= TO_DATE('{24}','dd/mm/yyyy'),
+      AFEEMPRESPNINGUNA='{25}',AFEEMPCOMPNINGUNA='{26}',AFEESTADO='{27}',AFEESTADOMOTIVO='{28}', AFEITPITFFECHA = TO_DATE('{29}','dd/mm/yyyy')
+      WHERE afecodi={0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerMedidasAdoptadas</key>
+    <query>
+      SELECT a.afeanio, a.afecorr, E.EVENASUNTO, C.EMPRNOMB,C.EMPRCODI,B.AFRRECOMEND,B.AFRPUBLICAFECHA, B.LASTDATE,AFRMEDADOPFECHA,AFRMEDADOPMEDIDA,AFRMEDADOPNIVCUMP,LASTUSERRPTA,LASTDATERPTA, B.INDIMPORTANTE, B.NROREGRESPUESTA
+      FROM AF_EVENTO A, AF_RECOMENDACION B, SI_EMPRESA C, EVE_EVENTO E
+      WHERE A.AFECODI=B.AFECODI AND B.EMPRCODI=C.EMPRCODI AND A.EVENCODI=E.EVENCODI
+      AND AFRREC={0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarRecomendacionMA</key>
+    <query>
+      update AF_RECOMENDACION set
+      INDIMPORTANTE ='{0}',
+      NROREGRESPUESTA = '{1}'
+      where afrrec={2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarRecomendacionMAG</key>
+    <query>
+      update AF_RECOMENDACION set
+      AFRMEDADOPFECHA= TO_DATE('{0}','dd/mm/yyyy') ,
+      AFRMEDADOPMEDIDA='{1}',
+      AFRMEDADOPNIVCUMP='{2}',
+      LASTUSERRPTA='{3}',
+      LASTDATERPTA= TO_DATE('{4}','dd/mm/yyyy hh24:mi:ss')
+      where afrrec={5}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarCartaRecomendacionCOES</key>
+    <query>
+      update AF_RECOMENDACION set
+      lastdate = TO_DATE('{0}','dd/mm/yyyy hh24:mi:ss'),
+      AFRPUBLICAFECHA = TO_DATE('{1}','dd/mm/yyyy hh24:mi:ss'),
+      lastuser = '{2}'
+      where afrrec={3}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlActualizarCartaRespuesta</key>
+    <query>
+      update AF_RECOMENDACION set
+      AFRMEDADOPFECHA = {0},
+      AFRMEDADOPMEDIDA = '{1}',
+      AFRMEDADOPNIVCUMP = '{2}',
+      LASTUSERRPTA = '{3}',
+      LASTDATERPTA = {4}
+      where afrrec={5}
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>SqlObtenerCTAFINFORMEREPORTE</key>
+    <query>
+      select rownum, B.EMPRABREV,'' as nombre,to_char(a.AFIFECHAINF,'dd.mm.yyyy') fecha
+      from AF_INFEMPINVOL a, si_empresa b
+      where a.emprcodi=b.emprcodi AND A.AFIPUBLICA='S' and afecodi={0} and a.afiversion='F'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerSecuenciaEventoREPORTE</key>
+    <query>
+      select TO_CHAR(SEFHORA,'HH24:MI  ') SEFHORA1,'' as d1,SEDESCRIP from IP_secuencia
+      WHERE IPCODI IN
+      (
+      SELECT MAX(D.IPCODI)
+      FROM EVE_EVENTO A, EVE_INFORMEFALLA B, EVE_INFORMEFALLA_VERSION C, IP_SECUENCIA D
+      WHERE A.EVENCODI=B.EVENCODI AND B.EVENINFCODI=C.EVENINFCODI AND C.IPCODI=D.IPCODI
+      AND A.EVENCODI IN
+      (
+      SELECT B.EVENCODI
+      FROM EVE_EVENTO A, AF_EVENTO B
+      WHERE A.EVENCODI=B.EVENCODI
+      AND b.afecodi IN ({0})
+      )
+      GROUP BY A.EVENCODI
+      )
+      ORDER BY SEFHORA
+
+    </query>
+  </Sql>
+
+  <Sql>
+		<key>SqlObtenerSecuenciaEventoREPORTEv2</key>
+		<query>
+			SELECT EVESECHORA, EVESECSECC,EVESECDESCRIPCION from EVE_SECUENCIAS WHERE EVENCODI= {0} AND EVESECINCMANIOB = '1' ORDER BY EVESECHORA
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>SqlObtenerSecuenciaEventoREPORTEv3</key>
+    <query>
+      SELECT EVESECHORA, EVESECSECC,EVESECDESCRIPCION,EVESFECHA from EVE_SECUENCIAS WHERE EVENCODI= {0} ORDER BY EVESFECHA, EVESECHORA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerSenalizacionREPORTE</key>
+    <query>
+      select C.AREANOMB,B.EQUIABREV,A.PRNOMBP,A.PRSENALIZ,A.PSINTERRUPT,A.PRAC
+      from IP_PROTECCION A, EQ_EQUIPO B,EQ_AREA C
+      WHERE A.EQUICODI=B.EQUICODI AND B.AREACODI=C.AREACODI
+      AND IPCODI IN
+      (
+      SELECT MAX(D.IPCODI)
+      FROM EVE_EVENTO A, EVE_INFORMEFALLA B, EVE_INFORMEFALLA_VERSION C, IP_SECUENCIA D
+      WHERE A.EVENCODI=B.EVENCODI AND B.EVENINFCODI=C.EVENINFCODI AND C.IPCODI=D.IPCODI
+      AND A.EVENCODI IN
+      (
+      SELECT B.EVENCODI
+      FROM EVE_EVENTO A, AF_EVENTO B
+      WHERE A.EVENCODI=B.EVENCODI
+      AND b.afecodi IN ({0})
+      )
+      )
+      ORDER BY A.LASTDATE
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerSuministroREPORTE</key>
+    <query>
+      SELECT c.ptointerrupnomb,e.areanomb,TO_CHAR(trunc(a.interrmw,2),'09.9') as interrmw,'' hini,'' hfin, round(a.interrminu,1) as round
+      FROM eve_interrupcion a, eve_ptoentrega b, eve_ptointerrup c, eq_equipo d, eq_area e, si_empresa f, af_evento i
+      WHERE ( a.ptointerrcodi = c.ptointerrcodi ) and ( b.ptoentregacodi = c.ptoentregacodi ) and ( b.equicodi = d.equicodi ) and ( d.areacodi = e.areacodi ) and ( f.emprcodi = b.clientecodi ) and
+      (((a.interrnivel is null AND 'N' = 'N') OR a.interrnivel = 'N') )
+      and i.evencodi=a.evencodi
+      and i.afecodi= {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerEventoCitacion</key>
+    <query>
+      select 'EV-'||lpad(a.AFECORR,3,'0')||'-'||a.AFEANIO CODIGO,to_char(b.evenini,'dd.mm.yyyy hh24:mi') fecha, b.evenasunto,'' empresas,NVL(AFECONVTIPOREUNION,' ') as Tipo
+      from af_evento a, eve_evento b
+      where a.evencodi= b.evencodi
+      and a.afecodi={0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlExisteIEI</key>
+    <query>
+      select count(*) as cuenta from AF_INFEMPINVOL where afecodi={0} and emprcodi={1} and afipublica='S' and afiversion='{2}'
+    </query>
+  </Sql>
+  
+
+<!-- FIT - SGOCOES func A - FIN -->
+
+  <!-- FIT - SGOCOES func A - Soporte -  INI -->
+
+  <Sql>
+    <key>SqlValidaCorrelativo</key>
+    <query>
+      select count(*) as cuenta from AF_EVENTO
+      where 
+      AFEANIO={0} and AFECORR={1}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>SqlValidaRespuestaCOES</key>
+    <query>
+      select count(*) as cuenta from AF_RECLAMO where AFECODI = {0} and  TIPCODI = {1} and RPTACODI = {2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlValidaRespuestaCOES1</key>
+    <query>
+      select count(*) as cuenta from AF_RECLAMO where AFECODI = {0} and  TIPCODI = {1} and RPTACODI = {2} and EMPRCODI = {3}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlInsertarRecomendacionInformeTecnicoMaximoCorrelativo</key>
+    <query>
+      select nvl(MAX(AFRCORR),0) from AF_RECOMENDACION where afecodi={0} and emprcodi={1}
+    </query>
+  </Sql>
+
+  
+    <Sql>
+    <key>SqlEliminarEmpresaCompensadaCompensacion</key>
+    <query>
+      delete from AF_INFEMPINVOL where afecodi={0} and emprcodi={1} and afipublica='N' and afiversion='{2}'      
+    </query>
+  </Sql>
+
+<!-- FIT - SGOCOES func A - Soporte - FIN -->
+
+  <!--SIOSEIN2 INICIO-->
+
+  <Sql>
+    <key>ObtenerEventosFallas</key>
+    <query>
+		select distinct
+		empresa.emprnomb,
+		tipoarea.tareaabrev,
+		area.areanomb,
+		evento.equicodi,
+		equipo.equiabrev,
+		familia.famcodi,
+		familia.famnomb,
+		familia.famabrev,
+		evento.evenini,
+		evento.evenfin,
+		reporta.emprabrev,
+		evento.evenasunto,
+		evento.evendesc,
+		case evento.eveninterrup when 'S' then 'SI' else 'NO' end eveninterrup,
+		evento.tipoevencodi,
+		tipoevento.tipoevenabrev,
+		causa.causaevencodi,
+		causa.causaevenabrev,
+		causa.causaevendesc,
+		(select round(sum(interrminu*interrmw/60),6) as servida from eve_interrupcion where evencodi = evento.evencodi) as energiainterrumpida,
+		(select round(sum(interrmw),6) as servida from eve_interrupcion where evencodi = evento.evencodi) as mwinterrumpidos,
+		evento.tiporegistro,
+		evento.valtiporegistro,
+		equipo.equitension,
+		tipo_empresa.tipoemprdesc as tipoemprnomb,
+		evento.evenpreliminar,
+		evento.evenmwgendescon,
+		evento.evengendescon,
+		equipo.areacodi,
+		(case when evento.emprcodi is null then 0 else evento.emprcodi end) emprcodi,
+		evento.evencodi,
+		tipoarea.tareaabrev || ' ' || area.areanomb as areadesc,
+		evento.evencomentarios
+		from eve_evento evento
+		inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+		inner join eq_familia familia on equipo.famcodi = familia.famcodi
+		inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+		inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+		inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+		inner join si_empresa empresa on evento.emprcodi = empresa.emprcodi
+		inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+		inner join eq_area area on equipo.areacodi = area.areacodi
+		inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+		left join si_empresa reporta on evento.emprcodi = reporta.emprcodi
+		inner join eve_interrupcion interrupcion on  interrupcion.evencodi=evento.evencodi
+		where
+		(evento.evenpreliminar = '{3}' or '{3}' = '-1') and
+		(evento.eveninterrup = '{2}' or '-1' = '-1') and
+		(evento.deleted = 'N') and
+		(( evenini >=  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenini &lt;  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenfin >  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin &lt;=  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenini &lt;  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin >  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+      order by evento.evencodi desc
+    </query>
+  </Sql>
+
+  <!--SIOSEIN2 FIN-->
+
+  <!-- INICIO Extranet CTAF -->
+  <Sql>
+    <key>ListarInterrupcionSuministros</key>
+    <query>
+		SELECT * FROM(
+		SELECT
+		AEV.AFECODI AFECODI,
+		EVE.EVENCODI EVENCODI,
+		EVE.EVENINI,
+		EVE.EVENFIN,
+		EVE.EVENASUNTO,
+		'EV-'||lpad(AEV.AFECORR,3,'0')||'-'||AEV.AFEANIO CODIGO,
+		SIC.FN_MINIFECHACTAF(AEV.AFEANIO	,AEV.AFECORR) NOMBRE_EVENTO,
+		EVE.EVENDESC,
+		to_char(NVL((SELECT SUM(INTERRMW)FROM EVE_INTERRUPCION Z WHERE Z.EVENCODI=AEV.EVENCODI AND COALESCE(INTERRNIVEL,'N')='N'),0),'9999.999') INTERRUMPIDO,
+		--ITR.INTERRRACMF ERACMF,
+		AEV.AFEERACMF ERACMF,
+		EVE.EVENINI FECHA_EVENTO,
+		AEV.AFEFECHAINTERR FECHA_INTERRUPCION,
+		AEV.AFEPLAZOFECHAAMPL,
+		AEV.AFEPLAZOFECHA  PLAZO_ENVIO,
+		case when AEV.AFECODI in (select distinct AFECODI from AF_INTERRUP_SUMINISTRO intsum inner join me_envio env on env.enviocodi = intsum.enviocodi where '-1'='{11}' or env.emprcodi in ({11})) then 'S' else 'N' end as REPORTADO
+		,AEV.AFECORR
+		,AEV.AFEANIO
+		FROM AF_EVENTO AEV
+		INNER JOIN EVE_EVENTO EVE ON AEV.EVENCODI = EVE.EVENCODI
+		INNER JOIN EQ_EQUIPO EQ ON  EQ.EQUICODI = EVE.EQUICODI
+		INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+		INNER JOIN EQ_FAMILIA FAM ON FAM.FAMCODI = EQ.FAMCODI
+
+		WHERE EVE.EVENCTAF = 'S'
+		AND ( '{0}' = 0 or EMP.EMPRCODI = '{0}' )
+		AND ( '{1}' = '0' or AEV.AFECODI in (select a.AFECODI from AF_INFEMPINVOL a, af_evento b, eve_evento c where a.afecodi=b.afecodi and b.evencodi=c.evencodi and A.AFIPUBLICA='N' and afiversion='X' and a.emprcodi='{1}'))
+		AND ( '{2}' = 0 or FAM.FAMCODI= '{2}' )
+		AND ( '{3}' = 'N' or AEV.AFEESTADO= '{3}')
+		AND EVE.EVENINI>=to_date('{4} 00:00:00','dd/mm/yyyy hh24:mi:ss')
+		AND EVE.EVENINI &lt;= to_date('{5} 23:59:59','dd/mm/yyyy hh24:mi:ss')
+		AND ( '{6}' = 'N' or AEV.AFERMC= '{6}' )
+		AND ( '{7}' = 'N' or AEV.AFEERACMF= '{7}')
+		AND ( '{8}' = 'N' or AEV.AFERACMT= '{8}')
+		AND ( '{9}' = 'N' or AEV.AFEEDAGSF= '{9}')
+		AND (  EVE.EVENASUNTO LIKE '%{12}%')
+		order by AFEANIO||'-'||lpad(AFECORR,3,'0') desc)
+		WHERE ( '{10}' = 'T' or REPORTADO = '{10}')
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerInterrupcionSuministro</key>
+    <query>
+		SELECT
+		AEV.AFECODI AFECODI,
+		EVE.EVENCODI EVENCODI,
+		EVE.EVENINI,
+		EVE.EVENFIN,
+		EVE.EVENASUNTO,
+		'EV-'||lpad(AEV.AFECORR,3,'0')||'-'||AEV.AFEANIO CODIGO,
+		EVE.EVENASUNTO NOMBRE_EVENTO,
+		EVE.EVENDESC,
+		to_char(NVL((SELECT SUM(INTERRMW)FROM EVE_INTERRUPCION Z WHERE Z.EVENCODI=AEV.EVENCODI AND COALESCE(INTERRNIVEL,'N')='N'),0),'9999.99') INTERRUMPIDO,
+		--ITR.INTERRRACMF ERACMF,
+		AEV.AFEERACMF ERACMF,
+		EVE.EVENINI FECHA_EVENTO,
+		AEV.AFEFECHAINTERR FECHA_INTERRUPCION,
+		AEV.AFEPLAZOFECHAAMPL,
+		AEV.AFEPLAZOFECHA  PLAZO_ENVIO,
+		AEV.AFECORR,
+		AEV.AFEANIO
+		FROM AF_EVENTO AEV
+		INNER JOIN EVE_EVENTO EVE ON AEV.EVENCODI = EVE.EVENCODI
+		INNER JOIN EQ_EQUIPO EQ ON  EQ.EQUICODI = EVE.EQUICODI
+		INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+		INNER JOIN EQ_FAMILIA FAM ON FAM.FAMCODI = EQ.FAMCODI
+
+		WHERE AEV.AFECODI = {0}
+	</query>
+  </Sql>
+	<Sql>
+		<key>ObtenerInterrupcionCTAF</key>
+		<query>
+			SELECT
+			AEV.AFECODI AFECODI,
+			EVE.EVENCODI EVENCODI,
+			EVE.EVENINI,
+			EVE.EVENFIN,
+			EVE.EVENASUNTO,
+			'EV-'||lpad(AEV.AFECORR,3,'0')||'-'||AEV.AFEANIO CODIGO,
+			EVE.EVENASUNTO NOMBRE_EVENTO,
+			EVE.EVENDESC,
+			to_char(NVL((SELECT SUM(INTERRMW)FROM EVE_INTERRUPCION Z WHERE Z.EVENCODI=AEV.EVENCODI AND COALESCE(INTERRNIVEL,'N')='N'),0),'9999.99') INTERRUMPIDO,
+			--ITR.INTERRRACMF ERACMF,
+			AEV.AFEERACMF ERACMF,
+			EVE.EVENINI FECHA_EVENTO,
+			AEV.AFEFECHAINTERR FECHA_INTERRUPCION,
+			AEV.AFEPLAZOFECHAAMPL,
+			AEV.AFEPLAZOFECHA  PLAZO_ENVIO,
+			AEV.AFECORR,
+			AEV.AFEANIO
+			FROM AF_EVENTO AEV
+			INNER JOIN EVE_EVENTO EVE ON AEV.EVENCODI = EVE.EVENCODI
+			INNER JOIN EQ_EQUIPO EQ ON  EQ.EQUICODI = EVE.EQUICODI
+			INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+			INNER JOIN EQ_FAMILIA FAM ON FAM.FAMCODI = EQ.FAMCODI
+
+			WHERE AEV.AFEANIO = '{0}' AND AEV.AFECORR= '{1}'
+		</query>
+	</Sql>
+  <Sql>
+    <key>ObtenerInterrupcionSuministroByEvencodi</key>
+    <query>
+      SELECT
+      AEV.AFECODI AFECODI,
+      EVE.EVENCODI EVENCODI,
+      EVE.EVENINI,
+      EVE.EVENFIN,
+      EVE.EVENASUNTO,
+      'EV-'||lpad(AEV.AFECORR,3,'0')||'-'||AEV.AFEANIO CODIGO,
+      EVE.EVENASUNTO NOMBRE_EVENTO,
+      EVE.EVENDESC,
+      to_char(NVL((SELECT SUM(INTERRMW)FROM EVE_INTERRUPCION Z WHERE Z.EVENCODI=AEV.EVENCODI AND COALESCE(INTERRNIVEL,'N')='N'),0),'9999.99') INTERRUMPIDO,
+      --ITR.INTERRRACMF ERACMF,
+      AEV.AFEERACMF ERACMF,
+      EVE.EVENINI FECHA_EVENTO,
+      AEV.AFEFECHAINTERR FECHA_INTERRUPCION,
+      AEV.AFEPLAZOFECHAAMPL,
+      AEV.AFEPLAZOFECHA  PLAZO_ENVIO
+
+      FROM AF_EVENTO AEV
+      INNER JOIN EVE_EVENTO EVE ON AEV.EVENCODI = EVE.EVENCODI
+      INNER JOIN EQ_EQUIPO EQ ON  EQ.EQUICODI = EVE.EQUICODI
+      INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+      INNER JOIN EQ_FAMILIA FAM ON FAM.FAMCODI = EQ.FAMCODI
+
+      WHERE EVE.EVENCODI = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EditarAfEvento</key>
+    <query>
+      update AF_EVENTO
+      set
+      AFEFECHAINTERR =:Afefechainterr,
+      AFEPLAZOFECHA =:Afeplazofecha,
+      AFEPLAZOFECHAAMPL = :Afeplazofechaampl,
+      AFEPLAZOUSUMODIFICACION =:Afeplazousumodificacion,
+      AFEPLAZOFECMODIFICACION =:Afeplazofecmodificacion
+      where
+      afecodi =:AFECODI
+    </query>
+  </Sql>
+
+
+	<Sql>
+		<key>EditarEventoAf</key>
+		<query>
+			update EVE_EVENTO
+			set
+			EVENINI = :EVENINI
+			where
+			evencodi = :EVENCODI
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListarInterrupcionPorEventoSCO</key>
+		<query>
+			SELECT
+			AEV.AFECODI ,
+			AEV.EVENCODI,
+			EVE.EVENINI ,
+			AEV.AFEFECHAINTERR ,
+			AEV.AFEERACMF
+			FROM (SELECT * FROM AF_EVENTO WHERE AFEANIO='{0}' AND AFECORR='{1}') AEV
+			INNER JOIN EVE_EVENTO EVE ON AEV.EVENCODI = EVE.EVENCODI
+			INNER JOIN EQ_EQUIPO EQ ON  EQ.EQUICODI = EVE.EQUICODI
+			INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+			INNER JOIN EQ_FAMILIA FAM ON FAM.FAMCODI = EQ.FAMCODI
+		</query>
+	</Sql>
+  <!-- FIN Extranet CTAF -->
+  <!-- IN Mejoras CTAF -->
+  <Sql>
+    <key>SqlLstEventosSco</key>
+    <query>
+		select
+		'FALLA' tipoevenabrev,
+		empresa.emprnomb,
+		tipoarea.tareaabrev || ' ' || area.areanomb as areadesc,
+		familia.famabrev,
+		equipo.equiabrev,
+		evento.evenini,
+		causa.causaevenabrev,
+		subcausa.subcausaabrev,
+		case evento.eveninterrup when 'S' then 'SI' else 'NO' end eveninterrup,
+		evento.evenrelevante,
+		evento.evenasunto,
+		evento.evendesc,
+		evento.evenfin,
+		evento.lastuser,
+		evento.lastdate,
+		evento.evencodi,
+		afalla.afecodi scadacodi,
+		evento.evendescctaf
+		from af_evento afalla
+		inner join eve_evento evento on evento.evencodi = afalla.evencodi
+		inner join eq_equipo equipo on evento.equicodi = equipo.equicodi
+		inner join eq_familia familia on equipo.famcodi = familia.famcodi
+		inner join eve_subcausaevento subcausa on evento.subcausacodi = subcausa.subcausacodi
+		inner join eve_tipoevento tipoevento on evento.tipoevencodi = tipoevento.tipoevencodi
+		inner join si_empresa empresa on evento.emprcodi = empresa.emprcodi
+		inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+		inner join eq_area area on equipo.areacodi = area.areacodi
+		inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+		inner join eve_causaevento causa on subcausa.causaevencodi = causa.causaevencodi
+		left join si_empresa reporta on evento.emprcodi = reporta.emprcodi
+		where afalla.afeanio = {0} and afalla.afecorr = {1}
+	</query>
+  </Sql>
+	<Sql>
+		<key>ListarEventosSCO</key>
+		<query>
+			SELECT
+			EVE.EVENINI ,
+			EVE.EVENASUNTO,
+			AEV.AFECODI,
+			EVE.EVENCODI
+			FROM (SELECT * FROM AF_EVENTO WHERE AFEANIO='{0}' AND AFECORR='{1}') AEV
+			INNER JOIN EVE_EVENTO EVE ON AEV.EVENCODI = EVE.EVENCODI
+			ORDER BY EVE.EVENINI ASC
+		</query>
+	</Sql>
+  <Sql>
+    <key>SqlActualizarCodEvento</key>
+    <query>
+      update AF_EVENTO
+      set AFECORR='{1}'
+      WHERE evencodi={0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlActualizarEventoxAfecodi</key>
+    <query>
+      update AF_EVENTO
+      set AFERMC='{1}', AFEERACMF='{2}',AFERACMT='{3}',AFEEDAGSF='{4}',
+      AFERESPONSABLE = '{5}',AFEESTADO='{6}',AFEESTADOMOTIVO='{7}'
+      WHERE afecodi={0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlActualizarEventoAF</key>
+    <query>
+		update AF_EVENTO
+		set AFECITFECHAELAB= TO_DATE('{1}','dd/mm/yyyy'),AFEREUFECHAPROG= TO_DATE('{2}','dd/mm/yyyy'),AFEREUHORAPROG='{3}',AFECONVTIPOREUNION='{4}',
+		AFERCTAEOBSERVACION = '{5}',AFEITFECHAELAB = TO_DATE('{6}','dd/mm/yyyy'),AFEITRDJRFECHAENVIO=TO_DATE('{7}','dd/mm/yyyy'),AFEITRDJRFECHARECEP=TO_DATE('{8}','dd/mm/yyyy'),
+		AFEITRDOFECHAENVIO = TO_DATE('{9}','dd/mm/yyyy'),AFEITRDOFECHARECEP=TO_DATE('{10}','dd/mm/yyyy'),
+		AFEITRDJRESTADO='{11}',AFEITRDOESTADO='{12}',LASTUSER='{13}',LASTDATE=TO_DATE('{14}','dd/mm/yyyy hh24:mi:ss'),
+		AFEIMPUGNA = '{15}',AFEFZAMAYOR='{16}', AFEITDECFECHANOMINAL=TO_DATE('{17}','dd/mm/yyyy'),AFEITDECFECHAELAB= TO_DATE('{18}','dd/mm/yyyy'),
+		AFEEMPRESPNINGUNA='{19}',AFEEMPCOMPNINGUNA='{20}',AFEITPITFFECHA = TO_DATE('{21}','dd/mm/yyyy'), AFSALA = {22}, AFEREUHORINI = '{23}', AFEREUHORFIN = '{24}', AFELIMATENCOMEN = TO_DATE('{25}','dd/mm/yyyy') 
+		WHERE afecodi={0}
+	</query>
+  </Sql>
+  <Sql>
+    <key>SqlObtieneCantInformesCtaf</key>
+    <query>
+      select count(*) from af_infempinvol
+      where afecodi={0} and emprcodi={1} and afiversion='{2}'
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlListadoEventoDTOAsoCtaf</key>
+    <query>
+      select a.afecodi,'EV-'||lpad(afecorr,3,'0')||'-'||afeanio codigo,b.evenasunto nombre_evento,
+      to_char(nvl((select sum(interrmw)from eve_interrupcion z where z.evencodi=a.evencodi and coalesce(interrnivel,'N')='N'),0),'9999.99') interrumpido,
+      to_char(b.evenini,'dd/mm/yyyy hh24:mi') fecha_evento,
+      decode(to_char(a.afereufechaprog,'dd/mm/yyyy'),to_char(b.evenini,'dd/mm/yyyy'),'',to_char(a.afereufechaprog,'dd/mm/yyyy') || ' '||afereuhoraprog) fecha_reunion,
+      decode(to_char(a.afeitfechaelab,'dd/mm/yyyy'),to_char(b.evenini,'dd/mm/yyyy'),'',to_char(a.afeitfechaelab,'dd/mm/yyyy')) fecha_informe,
+      decode(to_char(a.afeitrdjrfecharecep,'dd/mm/yyyy'),to_char(b.evenini,'dd/mm/yyyy'),'',to_char(a.afeitrdjrfecharecep,'dd/mm/yyyy')) revisado_djr,
+      decode(to_char(a.afeitrdofecharecep,'dd/mm/yyyy'),to_char(b.evenini,'dd/mm/yyyy'),'',to_char(a.afeitrdofecharecep,'dd/mm/yyyy')) revisado_do,
+      decode(to_char(a.afeitpitffecha,'dd/mm/yyyy'),to_char(b.evenini,'dd/mm/yyyy'),'',to_char(a.afeitpitffecha,'dd/mm/yyyy')) publicado,
+      case when a.afeestado ='A' then 'ANULADO'
+      else
+      case when a.afeestado ='X' then 'ARCHIVADO'
+      else decode(nvl(a.afeitpdecisffechasist,''),
+      '',
+      'EN PROCESO',
+      decode(a.afeimpugna,'S',
+      'EN PROCESO',
+      decode(a.afefzamayor, 'S',
+      'FUERZA MAYOR',
+      'CERRADO')
+      )
+      ) end
+      end as estado,
+      decode((select count(*) from af_reclamo z where z.tipcodi=17 and z.afecodi=a.afecodi),0, decode((select count(*) from af_reclamo z where z.tipcodi=11 and z.afecodi=a.afecodi),0, decode((select count(*) from af_reclamo z where z.tipcodi=10 and z.afecodi=a.afecodi),0,'','RECONSIDERACIÓN'),'APELACIÓN'),'ARBITRAJE') impug,
+      a.aferesponsable responsable,decode(a.afeestado,'A','',decode(nvl(afeitpdecisffechasist,''),'',decode(sign(afeitfechanominal-sysdate),1,'FALTA '||trunc(24*(afeitfechanominal-sysdate),1)||' h.','PLAZO VENCIO'),'')) inf_tecnico, case a.afefzamayor when 'S' then 'FUERZA MAYOR' else '' end as afefzamayor
+      ,a.evencodi
+      ,a.afeeracmf
+      from af_evento a, eve_evento b, si_empresa c, eq_equipo d, eq_familia e
+      where a.evencodi=b.evencodi and b.equicodi=d.equicodi and d.emprcodi=c.emprcodi and d.famcodi=e.famcodi
+      and b.evencodi = {0}
+      order by AFEANIO||'-'||lpad(AFECORR,3,'0') desc
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlInterrupcionAsoCtaf</key>
+    <query>
+      select * from(
+      select
+      aev.afecodi afecodi,
+      eve.evencodi evencodi,
+      eve.evenini,
+      eve.evenfin,
+      eve.evenasunto,
+      'EV-'||lpad(aev.afecorr,3,'0')||'-'||aev.afeanio codigo,
+      eve.evenasunto nombre_evento,
+      eve.evendesc,
+      to_char(nvl((select sum(interrmw)from eve_interrupcion z where z.evencodi=aev.evencodi and coalesce(interrnivel,'N')='N'),0),'9999.999') interrumpido,
+      --ITR.INTERRRACMF ERACMF,
+      aev.afeeracmf eracmf,
+      eve.evenini fecha_evento,
+      aev.afefechainterr fecha_interrupcion,
+      aev.afeplazofechaampl,
+      aev.afeplazofecha  plazo_envio,
+      case when aev.afecodi in (select distinct afecodi from af_interrup_suministro intsum inner join me_envio env on env.enviocodi = intsum.enviocodi where '-1'='-1' or env.emprcodi in (-1)) then 'S' else 'N' end as reportado
+      ,aev.afecorr
+      ,aev.afeanio
+      from af_evento aev
+      inner join eve_evento eve on aev.evencodi = eve.evencodi
+      inner join eq_equipo eq on  eq.equicodi = eve.equicodi
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      where eve.evenctaf = 'S'
+      and eve.evencodi = {0}
+      order by afeanio||'-'||lpad(afecorr,3,'0') desc)
+      where ( 'T' = 'T' or reportado = 'T')
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresaInvolucradaxEvencodi</key>
+    <query>
+      select c.afecodi,a.emprcodi,case when a.afiversion = 'P' then 1 else 2 end afiversion,b.emprnomb,decode(a.afiversion,'P','PRELIMINAR','F','FINAL','A','AMPLIATORIA','NO DEFINIDO') version,
+      decode(a.aficumplimiento, 'F', 'Fuera de Plazo', 'E', 'No Enviado', 'N','No Existen Informes', 'P', 'En Plazo') cumplimiento,
+      nvl(a.afiextension,'') as afiextension, nvl(a.afimensaje, '') as afimensaje ,a.afifechainf,a.lastuser,a.lastdate
+      from af_infempinvol a, si_empresa b, af_evento c
+      where a.emprcodi=b.emprcodi  and a.afecodi = c.afecodi and a.afipublica='S' and a.afiversion = 'F' and c.evencodi = {0}
+      order by b.emprnomb,a.afiversion desc
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerAnalisisFallaxEvento</key>
+    <query>
+	  select
+	  af.AFECODI,
+	  af.EVENCODI,
+	  af.AFEANIO,
+	  af.AFECORR,
+	  'EV-'||lpad(af.AFECORR,3,'0')||'-'|| af.AFEANIO CODIGO,
+	  ev.EVENINI,
+	  ev.EVENASUNTO,
+	  empresa.EMPRNOMB,
+	  af.AFSALA,
+	  af.LASTUSER,
+	  af.LASTDATE
+	  from af_evento af
+	  inner join eve_evento ev on af.evencodi = ev.evencodi
+	  left join me_envio_eve_evento env on ev.evencodi = env.evencodi
+	  left join me_envio envio on env.enviocodi = envio.enviocodi
+	  left join si_empresa empresa on envio.emprcodi = empresa.emprcodi
+	  where af.evencodi = {0}
+	</query>
+  </Sql>
+  <Sql>
+    <key>SqlActualizarRecomendacionAO</key>
+    <query>
+      update af_recomendacion
+      set evenrcmctaf = '{1}'
+      where afrrec = {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerEmpresaRecomendacion</key>
+    <query>
+      select
+      afr.afrrec,
+      afr.afecodi,
+      eve.evencodi,
+      afr.afrcorr,
+      afr.emprcodi,
+      afr.afrrecomend,
+      afr.nroregrespuesta,
+      afr.evenrcmctaf,
+      afr.lastdate,
+      eve.evenasunto,
+      afr.idequipo,
+      afr.idsubestacion
+      from af_recomendacion afr
+      inner join af_evento afe on afr.afecodi = afe.afecodi
+      inner join eve_evento eve on afe.evencodi = eve.evencodi
+      where afr.afrrec = {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlActualizarEventoAO</key>
+    <query>
+      update eve_evento
+      set evenrcmctaf = '{1}'
+      where evencodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerDetalleEventosInformeSemanal</key>
+    <query>
+      select EVENCODI, emprnomb, equipo as EQUINOMB, evenini, evendesc, INTERRMW, BAJOMW, evenasunto,
+      causaevendesc as SUBCAUSAABREV, EVENFIN, INTERRMINU, ENERGIA as ENERGIAINTERRUMPIDA, FAMNOMB, areadesc from (
+      SELECT
+      B.EVENCODI AS EVENCODI, B.evenini AS evenini, B.evenfin AS evenfin, si_empresa.emprnomb AS emprnomb,
+      B.evenasunto AS evenasunto, B.evendesc AS evendesc, B.eveninterrup, g.causaevendesc, h.subcausadesc,
+      f.tareaabrev || ' ' || d.areanomb as areadesc,
+      (SELECT ROUND(SUM(interrminu*interrmw/60), 2) as servida FROM eve_interrupcion WHERE EVENCODI=B.EVENCODI)  AS ENERGIA,
+      (SELECT ROUND(SUM(interrmw),2) as suma FROM eve_interrupcion WHERE
+      ((interrnivel Is Null Or interrnivel = 'N')) AND EVENCODI=B.EVENCODI)  AS INTERRMW,
+      (SELECT ROUND(SUM(interrminu),2) as minutos FROM eve_interrupcion WHERE
+      EVENCODI=B.EVENCODI)  AS INTERRMINU,
+      (SELECT ROUND(SUM(interrmw),2) as suma FROM eve_interrupcion WHERE ((interrnivel  = 'S'))
+      AND EVENCODI=B.EVENCODI)  AS BAJOMW,
+      f.tareaabrev||' '||d.areanomb ||' - '||e.famabrev||' '||c.equiabrev equipo, e.famnomb
+      FROM eve_evento B, si_empresa, eq_equipo c, eq_area d, eq_familia e, eq_tipoarea f, eve_causaevento g, eve_subcausaevento h
+      WHERE (b.emprcodi = si_empresa.emprcodi)
+      and c.equicodi=b.equicodi
+      and d.areacodi=c.areacodi
+      and e.famcodi=c.famcodi
+      and f.tareacodi=d.tareacodi
+      and h.causaevencodi = g.causaevencodi
+      and b.subcausacodi = h.subcausacodi
+      and (( evenini >=  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenini &lt;  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenfin >  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin &lt;=  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( evenini &lt;  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and evenfin >  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+      aND b.evenPRELIMINAR='N'
+      and B.eveninterrup = 'S'
+      order by  B.evenini)
+      -- where INTERRMINU is not null or BAJOMW is not null
+    </query>
+  </Sql>
+	
+	<Sql>
+		<key>SqlObtenerListaDirectores</key>
+		<query>
+      SELECT
+      DIRCODI,
+      DIRNOMBRE || ' ' || DIRAPELLIDO AS NOMBRECOMPLETO
+      FROM SIC.INT_DIRECTORIO
+      WHERE AREACODI=11 AND DIRESTADO IN ('A') AND DIRCODI NOT IN (SELECT DIRCODI FROM SIC.EVE_RESPBLES_PARTIC)
+      ORDER BY DIRAPELLIDO
+    </query>
+	</Sql>
+	<Sql>
+		<key>SqlObtenerListaResponsables</key>
+		<query>
+      SELECT RESP.EVERESPONCODI, DIR.DIRCODI,
+      CASE RESP.REPESTADO
+      WHEN 'A' THEN 'ACTIVO'
+      WHEN 'I' THEN 'INACTIVO'
+      END AS ESTADO
+      , RESP.REPRUTAFIRMA,
+      DIR.DIRNOMBRE || ' ' || DIR.DIRAPELLIDO AS NOMBRE_RESPONSABLE,
+      RESP.REPFIRMA
+      FROM SIC.EVE_RESPBLES_PARTIC RESP
+      INNER JOIN SIC.INT_DIRECTORIO DIR ON DIR.DIRCODI = RESP.DIRCODI
+      WHERE (UPPER(DIR.DIRNOMBRE) LIKE ('%' || UPPER('{1}') || '%') OR UPPER(DIR.DIRAPELLIDO) LIKE ('%' || UPPER('{1}') ||'%'))
+      AND (RESP.REPESTADO = '{0}' OR '{0}' = 'T')
+      ORDER BY DIR.DIRAPELLIDO
+    </query>
+	</Sql>
+	<Sql>
+		<key>SqlGuardarNuevoResponsable</key>
+		<query>
+      INSERT INTO SIC.EVE_RESPBLES_PARTIC
+      (EVERESPONCODI,
+      DIRCODI,
+      REPESTADO,
+      REPRUTAFIRMA,
+      REPFIRMA) VALUES
+      ({0},{1},'{2}','{3}', '{4}' )
+    </query>
+	</Sql>
+	<Sql>
+		<key>SqlGuardarEditarResponsable</key>
+		<query>
+			UPDATE SIC.EVE_RESPBLES_PARTIC
+			SET
+			<!--DIRCODI = {1},-->
+      REPESTADO = '{1}',
+      REPRUTAFIRMA = '{2}',
+      REPFIRMA = '{3}'
+      WHERE EVERESPONCODI = {0}
+    </query>
+	</Sql>	
+	<Sql>
+		<key>SqlObtenerMaxIdResponsable</key>
+		<query>
+      SELECT NVL(MAX(EVERESPONCODI), 0) + 1 FROM SIC.EVE_RESPBLES_PARTIC
+    </query>
+	</Sql>
+	<Sql>
+		<key>SqlEliminarResponsable</key>
+		<query>
+			DELETE FROM SIC.EVE_RESPBLES_PARTIC 
+			WHERE EVERESPONCODI = {0}
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlObtenerResponsable</key>
+		<query>
+      SELECT
+      RESP.EVERESPONCODI,
+      DIR.DIRCODI,
+      RESP.REPESTADO,
+      RESP.REPRUTAFIRMA,
+      DIR.DIRNOMBRE || ' ' || DIR.DIRAPELLIDO AS NOMBRE_RESPONSABLE,
+      RESP.REPFIRMA
+      FROM SIC.EVE_RESPBLES_PARTIC RESP
+      INNER JOIN SIC.INT_DIRECTORIO DIR ON DIR.DIRCODI = RESP.DIRCODI
+      WHERE RESP.EVERESPONCODI = {0}
+    </query>
+	</Sql>
+  <Sql>
+    <key>SqlUpdateDesEventoAF</key>
+    <query>
+      UPDATE EVE_EVENTO SET EVENDESCCTAF = '{1}' WHERE EVENCODI = {0}
+    </query>
+  </Sql>
+    <Sql>
+	    <key>SqlObtenerMaxIdSenializacionesProteccion</key>
+	    <query>
+			SELECT TO_NUMBER(CONCAT('0',TO_CHAR(MAX(EVESENIALACODI)))) AS ID
+			FROM EVE_SENIALIZACION
+		</query>
+    </Sql>
+	<Sql>
+		<key>SqlListarSenializacionesProteccion</key>
+		<query>
+      SELECT
+      EVESENIALACODI,
+      EVENCODI,
+      SUBESTACION,
+      EQUIPO,
+      CODIGO,
+      SENIALIZACIONES,
+      INTERRUPTOR,
+      AC,
+      LASTDATE,
+      LASTUSER
+      FROM EVE_SENIALIZACION
+      WHERE  EVENCODI = {0}
+      ORDER BY SUBESTACION
+    </query>
+	</Sql>	
+	<Sql>
+		<key>SqlListarSenializacionesProteccionAgrupado</key>
+		<query>
+      SELECT
+      SUBESTACION,
+      EQUIPO,
+      CODIGO,
+      SENIALIZACIONES,
+      LISTAGG(INTERRUPTOR,'          ') WITHIN GROUP (ORDER BY INTERRUPTOR) AS INTERRUPTOR,
+      LISTAGG(AC,'    ') WITHIN GROUP (ORDER BY AC) AS AC
+      FROM EVE_SENIALIZACION
+      WHERE  EVENCODI = {0}
+      GROUP BY SUBESTACION,EQUIPO,CODIGO,SENIALIZACIONES
+    </query>
+	</Sql>
+	<Sql>
+		<key>SqlGrabarSenializacionesProteccion</key>
+		<query>
+			INSERT INTO
+			EVE_SENIALIZACION
+			(EVESENIALACODI,
+			EVENCODI,
+			SUBESTACION,
+			EQUIPO,
+			CODIGO,
+			SENIALIZACIONES,
+			INTERRUPTOR,
+			AC,
+			LASTDATE,
+			LASTUSER)
+			VALUES
+			({0},{1},'{2}','{3}','{4}','{5}','{6}','{7}',CURRENT_DATE,'{8}')
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlEliminarSenializacionProteccion</key>
+		<query>
+			DELETE
+			FROM EVE_SENIALIZACION
+			WHERE  EVENCODI = {0}
+		</query>
+	</Sql>
+  <Sql>
+    <key>SqlObtenerDirector</key>
+    <query>
+      select
+      dircodi,
+      dirnombre || ' ' || dirapellido as nombrecompleto,
+      dircorreo,
+      direstado
+      from int_directorio where dircodi = {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ConsultarAnalisisFallasxAnio</key>
+    <query>
+      select
+      af.afecodi,
+      'EV-'||lpad(af.afecorr,3,'0')||'-'||af.afeanio codigo,
+      to_char(eve.evenini,'dd/mm/yyyy hh24:mi') fecha_evento,
+      eve.evencodi,
+      AFEREUFECHAPROG,
+      AFEITDECFECHAELAB
+      from af_evento af
+      inner join eve_evento eve on af.evencodi	= eve.evencodi
+      where eve.deleted = 'N'
+      and to_char(eve.evenini,'yyyy') = {0}
+      order by codigo
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlListarAnalisisFallaxEvento</key>
+    <query>
+      select distinct
+      af.AFECODI,
+      af.EVENCODI,
+      af.AFEANIO,
+      af.AFECORR,
+      'EV-'||lpad(af.AFECORR,3,'0')||'-'|| af.AFEANIO CODIGO,
+      ev.EVENINI
+      from af_evento af
+      inner join eve_evento ev on af.evencodi = ev.evencodi
+      left join me_envio_eve_evento env on ev.evencodi = env.evencodi
+      left join me_envio envio on env.enviocodi = envio.enviocodi
+      left join si_empresa empresa on envio.emprcodi = empresa.emprcodi
+      where af.evencodi = {0}
+    </query>
+  </Sql>
+</Sqls>

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+   <Sql>
+		<key>GetMaxId</key>
+		<query>
+			select nvl(max(EPPROYCODI), 0) + 1 from epr_proyecto_acteqp
+		</query>
+   </Sql>
+   <Sql>
+		<key>Update</key>
+		<query>
+			update epr_proyecto_acteqp set
+			EPPROYSGCODI = :Epproysgcodi,
+			EPPROYFLGTIENEEO = :Eppproyflgtieneeo,
+			EMPRCODI = :Emprcodi,
+			EPPROYNEMOTECNICO = :Epproynemotecnico,
+			EPPROYNOMB = :Epproynomb,
+			EPPROYFECREGISTRO = TO_DATE(:Epproyfecregistro, 'DD/MM/YYYY'),
+			EPPROYDESCRIPCION = :Epproydescripcion,
+			EPPROYESTREGISTRO = :Epproyestregistro,
+			EPPROYUSUMODIFICACION = :Eppproyusumodificacion,
+			EPPROYFECMODIFICACION = sysdate
+			where EPPROYCODI = :Epproycodi
+		</query>
+    </Sql>
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update epr_proyecto_acteqp set
+			EPPROYESTREGISTRO = :Epproyestregistro,
+			EPPROYUSUMODIFICACION = :Eppproyusumodificacion,
+			EPPROYFECMODIFICACION = sysdate
+			where EPPROYCODI = :Epproycodi
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>Save</key>
+		<query>
+			insert into epr_proyecto_acteqp(
+			EPPROYCODI,
+			EPPROYSGCODI,
+			EPPROYFLGTIENEEO,
+			EMPRCODI,
+			EPPROYNEMOTECNICO,
+			EPPROYNOMB,
+			EPPROYFECREGISTRO,
+			EPPROYDESCRIPCION,
+			EPPROYESTREGISTRO,
+			EPPROYUSUCREACION,
+			EPPROYFECCREACION
+			)
+			values(
+			:Epproycodi,
+			:Epproysgcodi,
+			:Eppproyflgtieneeo,
+			:Emprcodi,
+			:Epproynemotecnico,
+			:Epproynomb,
+			TO_DATE(:Epproyfecregistro, 'DD/MM/YYYY'),
+			:Epproydescripcion,
+			:Epproyestregistro,
+			:Epproyusucreacion,
+			sysdate
+			)
+		</query>
+  </Sql>
+  <Sql>
+		<key>SqlListarProyecto</key>
+		<query>
+
+			SELECT
+			p.EPPROYCODI,
+			p.EPPROYSGCODI,
+			p.EPPROYFLGTIENEEO,
+			p.EMPRCODI,
+			p.EPPROYNEMOTECNICO,
+			p.EPPROYNOMB,
+			TO_CHAR(p.EPPROYFECREGISTRO, 'DD/MM/YYYY') EPPROYFECREGISTRO,
+			p.EPPROYFECREGISTRO EPPROYFECREGISTRODATE,
+			p.EPPROYDESCRIPCION,
+			p.EPPROYESTREGISTRO,
+			p.EPPROYUSUCREACION,
+			p.EPPROYFECCREACION,
+			p.EPPROYUSUMODIFICACION,
+			p.EPPROYFECMODIFICACION,
+			a.areaabrev AS AREA
+			FROM
+			epr_proyecto_acteqp p
+			LEFT JOIN si_area             a ON p.epproysgcodi = a.areacodi
+			WHERE
+			epproyestregistro = '1'
+			AND ( :Epproysgcodi = 0 OR epproysgcodi = :Epproysgcodi )
+			AND ( upper(epproynomb) LIKE '%' || upper(:Epproynomb) || '%' )
+			AND ( trim(:EPPROYFECREGISTROINI) is null OR p.EPPROYFECREGISTRO >= to_date(:EPPROYFECREGISTROINI,'DD/MM/YYYY'))
+			AND ( trim(:EPPROYFECREGISTROFIN) is null OR trunc(p.EPPROYFECREGISTRO) &lt;= to_date(:EPPROYFECREGISTROFIN,'DD/MM/YYYY'))
+			ORDER BY P.EPPROYFECREGISTRO DESC
+		</query>
+	</Sql>
+
+	
+	<Sql>
+		<key>GetById</key>
+		<query>
+			SELECT
+			EPPROYCODI,
+			EPPROYSGCODI,
+			EPPROYFLGTIENEEO,
+			EMPRCODI,
+			EPPROYNEMOTECNICO,
+			EPPROYNOMB,
+			TO_CHAR(EPPROYFECREGISTRO, 'dd/MM/yyyy') EPPROYFECREGISTRO,
+			EPPROYDESCRIPCION,
+			EPPROYESTREGISTRO,
+			EPPROYUSUCREACION,
+			TO_CHAR(EPPROYFECCREACION, 'dd/MM/yyyy') EPPROYFECCREACION,
+			EPPROYUSUMODIFICACION,
+			TO_CHAR(EPPROYFECMODIFICACION, 'dd/MM/yyyy') EPPROYFECMODIFICACION
+			FROM
+			epr_proyecto_acteqp
+			WHERE EPPROYCODI = :Epproycodi
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListProyectoProyectoActualizacion</key>
+		<query>
+			SELECT
+			P.EPPROYCODI,
+			TRIM(P.EPPROYNEMOTECNICO)||': '||TRIM(P.EPPROYNOMB)||' ('||TRIM(E.EMPRNOMB)||' '||TO_CHAR(P.EPPROYFECREGISTRO,'DD/MM/YYYY')||')' AS EPPROYNOMB,
+			TO_CHAR(P.EPPROYFECREGISTRO, 'dd/MM/yyyy') EPPROYFECREGISTRO
+			FROM EPR_PROYECTO_ACTEQP P LEFT JOIN SI_EMPRESA E ON P.EMPRCODI = E.EMPRCODI
+			WHERE P.EPPROYESTREGISTRO=1
+			AND P.EPPROYFECREGISTRO >= (SELECT NVL(MAX(FECHAPROPEQUI),(SYSDATE- 365)) AS FECHAPROPEQUI
+			FROM EQ_PROPEQUI WHERE EQUICODI = :EQUICODI AND NVL(PROPEQUIDELETED,0)=0
+			)
+			ORDER BY P.EPPROYFECREGISTRO DESC
+
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListMaestroProyecto</key>
+		<query>
+			select p.epproycodi||'='||trim(p.epproynemotecnico)||': '||trim(p.epproynomb)||' ('||trim(e.emprnomb)||' '||to_char(p.epproyfecregistro,'DD/MM/YYYY')||')' as epproydescripcion,p.epproynemotecnico,p.epproynomb,e.emprnomb,to_char(p.epproyfecregistro,'DD/MM/YYYY') as epproyfecregistro
+			from epr_proyecto_acteqp p left join si_empresa e on p.emprcodi=e.emprcodi
+			where p.epproyestregistro='1'
+			order by p.epproyfecregistro desc
+		</query>
+	</Sql>
+	
+<Sql>
+		<key>ValidarProyectoPorRele</key>
+		<query>
+			SELECT 
+			COUNT(DISTINCT EQUICODI) NRO_EQUIPO, 
+			COUNT(*) AS NRO_PROPIEDADES 
+			FROM EQ_PROPEQUI 
+			WHERE EPPROYCODI = :EPPROYCODI 
+			AND PROPEQUIDELETED='0'
+		</query>
+</Sql>
+</Sqls>

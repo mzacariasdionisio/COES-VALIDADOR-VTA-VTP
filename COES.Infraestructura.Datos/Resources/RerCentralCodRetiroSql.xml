@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetById</key>
+    <query>select * from rer_central_codretiro where rerccrcodi = :rerccrcodi</query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into rer_central_codretiro
+      (
+      rerccrcodi, rerpprcodi, rercencodi, coresocodi, rerccrusucreacion, rerccrfeccreacion
+      )
+      values
+      (
+      :rerccrcodi, :rerpprcodi, :rercencodi, :coresocodi, :rerccrusucreacion, :rerccrfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update rer_central_codretiro
+      set
+      rerpprcodi = :rerpprcodi,
+      rercencodi = :rercencodi,
+      coresocodi = :coresocodi,
+      rerccrusucreacion = :rerccrusucreacion,
+      rerccrfeccreacion = :rerccrfeccreacion
+      where
+      rerccrcodi = :rerccrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from rer_central_codretiro where rerccrcodi = :rerccrcodi
+    </query>
+  </Sql>
+	
+  <Sql>
+    <key>DeleteAllByRerpprcodiRercencodi</key>
+    <query>
+		delete from rer_central_codretiro where rerpprcodi = :rerpprcodi and (-2 = :rercencodi or rercencodi = :rercencodi)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from rer_central_codretiro order by rerccrcodi asc
+    </query>
+  </Sql>
+  <Sql>
+	 <key>ListCantidadByRerpprcodi</key>
+	 <query>
+	   select rc.*, c.cantidad, eq.equinomb
+	   from rer_central rc
+	   join (
+	     select rercencodi, count(*) AS cantidad
+		 FROM rer_central_codretiro
+		 where rerpprcodi = :rerpprcodi
+		 GROUP BY rercencodi
+	   ) c ON rc.rercencodi = c.rercencodi
+	   join eq_equipo eq ON rc.equicodi = eq.equicodi
+	   order by rc.rercencodi asc
+	 </query>
+  </Sql>
+	
+  <Sql>
+    <key>ListNombreCodRetiroBarrTransferenciaByRerpprcodiRercencodi</key>
+    <query>
+      select * from rer_central_codretiro order by rerccrcodi asc
+    </query>
+  </Sql>
+	
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from rer_central_codretiro where (rerpprcodi = :rerpprcodi or :rerpprcodi is null)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(rerccrcodi), 0) + 1 from rer_central_codretiro
+    </query>
+  </Sql>
+
+  <!--CU21-->
+  <Sql>
+    <key>ListaCodigoRetiroByEquipo</key>
+    <query>
+      select LISTAGG(coresocodi, ',') within group (order by coresocodi) as equinomb
+      from (
+      select coresocodi
+      from rer_central_codretiro
+      where rercencodi in (
+      select rercencodi
+      from rer_central
+      where rercenestado = 'A' and rerpprcodi = :rerpprcodi and equicodi = :equicodi
+      --and sysdate between rercenfechainicio and rercenfechafin
+      )
+      group by coresocodi
+      )
+    </query>
+  </Sql>
+</Sqls>

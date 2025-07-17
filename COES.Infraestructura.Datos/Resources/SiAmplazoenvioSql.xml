@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(amplzcodi), 0) + 1 from si_amplazoenvio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into si_amplazoenvio(
+      amplzcodi,
+      fdatcodi,
+      emprcodi,
+      amplzfecha,
+      amplzfechaperiodo,
+      amplzusucreacion,
+      amplzfeccreacion
+      )
+      values(
+      :amplzcodi,
+      :fdatcodi,
+      :emprcodi,
+      :amplzfecha,
+      :amplzfechaperiodo,
+      :amplzusucreacion,
+      :amplzfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update si_amplazoenvio
+      set
+      amplzfecha = :amplzfecha,
+      amplzusumodificacion = :amplzusumodificacion,
+      Amplzfecmodificacion = :Amplzfecmodificacion
+      where
+      amplzcodi = :amplzcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      si_amplazoenvio
+      where
+      amplzcodi = :amplzcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      si_amplazoenvio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      si_amplazoenvio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarAmpliacionMultiple</key>
+    <query>
+      select am.*,f.FDATNOMBRE,e.emprnomb from SI_AMPLAZOENVIO am
+      inner join SI_FUENTEDATOS f on f.FDATCODI = am.FDATCODI
+      inner join si_empresa e on e.emprcodi = am.emprcodi
+      where
+      am.AMPLZFECHA >= to_date('{0}','YYYY-MM-DD') and
+      am.AMPLZFECHA &lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and (am.emprcodi in ({2}) or '{2}' = '-1') and (am.FDATCODI in ({3}) or '{3}' = '-1')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdCriteria</key>
+    <query>
+      select am.*,f.FDATNOMBRE,emp.Emprnomb from SI_AMPLAZOENVIO am
+      inner join (
+      select max(AMPLZFECHA) fechamax,AMPLZFECHAPERIODO,emprcodi,fdatcodi
+      from SI_AMPLAZOENVIO
+      where AMPLZFECHAPERIODO =to_date('{0}','YYYY-MM-DD')
+      group by AMPLZFECHAPERIODO, emprcodi, fdatcodi
+      ) fecmax on fecmax.fechamax = am.AMPLZFECHA and fecmax.emprcodi = am.emprcodi and fecmax.FDATCODI = am.FDATCODI
+      inner join SI_FUENTEDATOS f     on f.FDATCODI=am.FDATCODI
+      inner join SI_EMPRESA emp on emp.EMPRCODI=am.EMPRCODI
+      where am.AMPLZFECHAPERIODO = to_date('{0}','YYYY-MM-DD') and am.emprcodi = {1} and am.FDATCODI = {2}
+    </query>
+  </Sql>
+
+</Sqls>

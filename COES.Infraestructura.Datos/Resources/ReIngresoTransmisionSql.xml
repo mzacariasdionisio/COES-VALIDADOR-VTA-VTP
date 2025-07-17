@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+	<Sql>
+		<key>GetMaxId</key>
+		<query>
+			select nvl(max(reingcodi), 0) + 1 from re_ingreso_transmision
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>Save</key>
+		<query>
+			insert into re_ingreso_transmision(
+			reingcodi,
+			repercodi,
+			emprcodi,
+			reingmoneda,
+			reingvalor,
+			reingusucreacion,
+			reingfeccreacion,
+			reingusumodificacion,
+			reingfecmodificacion,
+			reingfuente,
+			reingsustento
+			)
+			values(
+			:reingcodi,
+			:repercodi,
+			:emprcodi,
+			:reingmoneda,
+			:reingvalor,
+			:reingusucreacion,
+			:reingfeccreacion,
+			:reingusumodificacion,
+			:reingfecmodificacion,
+			:reingfuente,
+			:reingsustento
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>Update</key>
+		<query>
+			update re_ingreso_transmision
+			set
+			repercodi = :repercodi,
+			emprcodi = :emprcodi,
+			reingmoneda = :reingmoneda,
+			reingvalor = :reingvalor,
+			reingusumodificacion = :reingusumodificacion,
+			reingfecmodificacion = :reingfecmodificacion,
+			reingfuente = :reingfuente,
+			reingsustento = :reingsustento
+			where
+			reingcodi = :reingcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>Delete</key>
+		<query>
+			delete from re_ingreso_transmision
+			where
+			reingcodi = :reingcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetById</key>
+		<query>
+			select
+			reingcodi,
+			repercodi,
+			emprcodi,
+			reingmoneda,
+			reingvalor,
+			reingusucreacion,
+			reingfeccreacion,
+			reingusumodificacion,
+			reingfecmodificacion,
+			reingfuente,
+			reingsustento
+			from
+			re_ingreso_transmision
+			where
+			reingcodi = :reingcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>List</key>
+		<query>
+			select
+			reingcodi,
+			repercodi,
+			emprcodi,
+			reingmoneda,
+			reingvalor,
+			reingusucreacion,
+			reingfeccreacion,
+			reingusumodificacion,
+			reingfecmodificacion,
+			reingfuente,
+			reingsustento
+			from
+			re_ingreso_transmision
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetByCriteria</key>
+		<query>
+			select
+			ing.reingcodi,
+			ing.repercodi,
+			ing.emprcodi,
+			case ing.reingmoneda when 'S' then 'SOLES' when 'D' then 'DOLARES' else '' end as reingmoneda,
+			ing.reingvalor,
+			ing.reingusucreacion,
+			ing.reingfeccreacion,
+			ing.reingusumodificacion,
+			ing.reingfecmodificacion,
+			ing.reingfuente,
+			ing.reingsustento,
+			emp.emprnomb
+			from
+			re_ingreso_transmision ing
+			inner join si_empresa emp on ing.emprcodi = emp.emprcodi
+			where ing.repercodi = {0}
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerEmpresas</key>
+		<query>
+			select distinct emp.emprcodi, emp.emprnomb, emp.tipoemprcodi
+			from eq_equipo eq inner join si_empresa emp on eq.emprcodi = emp.emprcodi
+			where eq.equiestado = 'A' and emp.emprcodi > 0
+			order by 2 asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerEmpresasSuministradoras</key>
+		<query>
+			select emp.emprcodi, emp.emprnomb from si_empresa emp where emp.emprcodi > 0 and emp.emprestado = 'A'
+			and emp.tipoemprcodi in (2, 3)
+			order by 2 asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerEmpresasSuministradorasTotal</key>
+		<query>
+			select emp.emprcodi, case emp.emprestado when 'A' then emp.emprnomb else trim(emp.emprnomb) || '(BAJA)' end as emprnomb
+			from si_empresa emp where emp.emprcodi > 0 and emp.emprestado in ('A', 'B')
+			and emp.tipoemprcodi in (2, 3)
+			order by 2 asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerSuministradoresPorPeriodo</key>
+		<query>
+
+			select distinct inter.emprcodi, case emp.emprestado when 'A' then emp.emprnomb else trim(emp.emprnomb) || '(BAJA)' end as emprnomb
+			from re_interrupcion_suministro inter
+			inner join si_empresa emp on inter.emprcodi = emp.emprcodi
+			where inter.repercodi = {0} and 'S' = '{1}'
+
+			union all
+
+			select distinct  inter.emprcodi, case emp.emprestado when 'A' then emp.emprnomb else trim(emp.emprnomb) || '(BAJA)' end as emprnomb
+			from re_rechazo_carga inter
+			inner join si_empresa emp on inter.emprcodi = emp.emprcodi
+			where inter.repercodi = {0} and 'R' = '{1}'
+			
+			order by 2 asc
+
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerResponsablesPorPeriodo</key>
+		<query>
+			select distinct det.emprcodi, case emp.emprestado when 'A' then emp.emprnomb else trim(emp.emprnomb) || '(BAJA)' end as emprnomb
+			from
+			re_interrupcion_suministro_det det
+			inner join si_empresa emp on det.emprcodi = emp.emprcodi
+			inner join re_interrupcion_suministro inter on det.reintcodi = det.reintcodi
+			where inter.repercodi = {0} and 'S' = '{1}'
+
+			union all
+
+			select distinct emp.emprcodi, case emp.emprestado when 'A' then emp.emprnomb else trim(emp.emprnomb) || '(BAJA)' end as emprnomb
+			from
+			re_evento_periodo evento
+			inner join si_empresa emp on evento.reeveempr1 = emp.emprcodi
+			inner join re_rechazo_carga inter on evento.reevecodi = inter.reevecodi
+			where inter.repercodi = {0} and 'R' = '{1}'
+
+			union all
+
+			select distinct emp.emprcodi, case emp.emprestado when 'A' then emp.emprnomb else trim(emp.emprnomb) || '(BAJA)' end as emprnomb
+			from
+			re_evento_periodo evento
+			inner join si_empresa emp on evento.reeveempr2 = emp.emprcodi
+			inner join re_rechazo_carga inter on evento.reevecodi = inter.reevecodi
+			where inter.repercodi = {0} and 'R' = '{1}'
+
+			union all
+
+			select distinct emp.emprcodi, case emp.emprestado when 'A' then emp.emprnomb else trim(emp.emprnomb) || '(BAJA)' end as emprnomb
+			from
+			re_evento_periodo evento
+			inner join si_empresa emp on evento.reeveempr3 = emp.emprcodi
+			inner join re_rechazo_carga inter on evento.reevecodi = inter.reevecodi
+			where inter.repercodi = {0} and 'R' = '{1}'
+
+			union all
+
+			select distinct emp.emprcodi, case emp.emprestado when 'A' then emp.emprnomb else trim(emp.emprnomb) || '(BAJA)' end as emprnomb
+			from
+			re_evento_periodo evento
+			inner join si_empresa emp on evento.reeveempr4 = emp.emprcodi
+			inner join re_rechazo_carga inter on evento.reevecodi = inter.reevecodi
+			where inter.repercodi = {0} and 'R' = '{1}'
+
+			union all
+
+			select distinct inter.emprcodi, case emp.emprestado when 'A' then emp.emprnomb else trim(emp.emprnomb) || '(BAJA)' end as emprnomb
+			from
+			re_evento_periodo evento
+			inner join si_empresa emp on evento.reeveempr5 = emp.emprcodi
+			inner join re_rechazo_carga inter on evento.reevecodi = inter.reevecodi
+			where inter.repercodi = {0} and 'R' = '{1}'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerPorEmpresaPeriodo</key>
+		<query>
+			select
+			reingcodi,
+			repercodi,
+			emprcodi,
+			reingmoneda,
+			reingvalor,
+			reingusucreacion,
+			reingfeccreacion,
+			reingusumodificacion,
+			reingfecmodificacion,
+			reingfuente,
+			reingsustento
+			from
+			re_ingreso_transmision
+			where emprcodi = {0} and repercodi = {1}
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ActualizarArchivo</key>
+		<query>
+			update re_ingreso_transmision
+			set			
+			reingsustento = :reingsustento
+			where
+			reingcodi = :reingcodi
+		</query>
+	</Sql>
+
+</Sqls>

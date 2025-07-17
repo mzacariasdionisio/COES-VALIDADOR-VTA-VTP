@@ -1,0 +1,446 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+  <Sql>
+    <key>GetById</key>
+    <query>
+		select cv.idcarga, cv.GPSCODI, cv.TIPOCARGA,
+		cv.emprcodi, cv.central, cv.unidadcodi, cv.fechacargaini, cv.fechacargafin, cv.archivocarga,
+		to_char(cv.fechacreacion,'DD-MM-YYYY HH24:MI:SS') as fechacreacion, cv.usucreacion,
+		emp.EMPRNOMB, equipo.EQUIABREV,
+		gps.NOMBRE as GPSNOMB from sic.F_CARGA_VIRTUAL cv
+		left join SIC.ME_GPS gps on gps.GPSCODI=cv.GPSCODI
+		left join sic.si_empresa emp on cv.EMPRCODI=emp.emprcodi
+		left join sic.me_ptomedicion punto on cv.unidadcodi=punto.PTOMEDICODI
+		left join sic.eq_equipo equipo on punto.equicodi = equipo.equicodi
+		WHERE
+		cv.idcarga=:IDCARGA
+	</query>
+  </Sql>
+  <Sql>
+    <key>GetListaCombobox</key>
+    <query>
+      SELECT PERIDCCODI
+      ,PERIDCNOMBRE
+      FROM TRN_PERIODO_DECLARACION
+      ORDER BY  PERIDCCODI DESC
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(idcarga), 0) + 1 from sic.F_CARGA_VIRTUAL
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaCargaVirtual</key>
+    <query>
+		select cv.idcarga, cv.GPSCODI, cv.TIPOCARGA,
+		cv.emprcodi, cv.central, cv.unidadcodi, to_char(cv.fechacargaini,'DD-MM-YYYY') as fechacargaini,
+		to_char(cv.fechacargafin,'DD-MM-YYYY') as fechacargafin, cv.archivocarga,
+		to_char(cv.fechacreacion,'DD-MM-YYYY HH24:MI:SS') as fechacreacion, cv.usucreacion,
+		emp.EMPRNOMB, equipo.EQUIABREV AS NOMBREUNIDAD,
+		gps.NOMBRE as GPSNOMB from sic.F_CARGA_VIRTUAL cv
+		left join SIC.ME_GPS gps on gps.GPSCODI=cv.GPSCODI
+		left join sic.si_empresa emp on cv.EMPRCODI=emp.emprcodi
+		left join sic.me_ptomedicion punto on cv.unidadcodi=punto.PTOMEDICODI
+		left join sic.eq_equipo equipo on equipo.equicodi=PUNTO.equicodi
+		WHERE
+		cv.fechacreacion BETWEEN to_date('{0} 00:00:00', 'DD/MM/YYYY HH24:MI:SS')
+		AND to_date('{1} 23:59:59', 'DD/MM/YYYY HH24:MI:SS')
+		and ({2}=0 or cv.GPSCODI={2})
+		order by cv.idcarga desc
+	</query>
+  </Sql>
+	
+	<Sql>
+    <key>GetListaLecturaVirtual</key>
+    <query>
+		select lv.idcarga, to_char(lv.fechahora,'DD-MM-YYYY  HH24:MI:SS') as fechahora, lv.frecuencia, lv.tension
+		from sic.f_lectura_virtual lv
+		WHERE
+		lv.idcarga={0}
+		order by lv.fechahora asc
+	</query>
+  </Sql>
+	
+	
+
+  <Sql>
+    <key>GetListaEmpresasCargaVirtual</key>
+    <query>
+      select distinct(vweq.emprcodi) as emprcodi,
+      empresa.emprnomb as emprnomb
+      from sic.SI_HISEMPEQ_DATA vweq left join
+      sic.si_empresa empresa on vweq.emprcodi = empresa.emprcodi
+      where empresa.emprcodi>0
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetListaCentralPorEmpresa</key>
+    <query>
+      select distinct(a.equinomb) from (
+      select servicio.rpfcodi, servicio.ptomedicodi, servicio.indestado, servicio.lastuser,
+      servicio.lastdate, empresa.emprnomb, equipo.equiabrev,
+      (case when equipo.famcodi = 4 then equipo.equinomb
+      when equipo.famcodi = 5  then equipo.equinomb
+      else
+      (select case when x.equicodi = 0 then equipo.equinomb  when x.equicodi > 0 then x.equinomb end
+      from sic.eq_equipo x where x.equicodi = equipo.equipadre)
+      end)
+      as equinomb,
+      equipo.famcodi, equipo.equicodi
+      from sic.wb_serviciorpf servicio
+      inner join sic.me_ptomedicion punto on servicio.ptomedicodi = punto.ptomedicodi
+      inner join sic.eq_equipo equipo on punto.equicodi = equipo.equicodi
+      inner join(
+      SELECT equicodi,EMPRCODI FROM
+      (
+      SELECT vweq.HEQDATFECHA ,eq.EQUICODI, eq.EQUINOMB,vweq.EMPRCODI
+      , ROW_NUMBER() OVER(PARTITION BY eq.EQUICODI
+      ORDER BY eq.EQUICODI, vweq.HEQDATFECHA desc, vweq.HEQDATESTADO desc) AS NUM_VIEW
+      ,vweq.HEQDATESTADO
+      from sic.eq_equipo eq
+      inner join sic.SI_HISEMPEQ_DATA vweq
+      on vweq.EQUICODI = eq.EQUICODI
+      )rview
+      WHERE NUM_VIEW = 1
+      )vweq on vweq.EQUICODI = equipo.EQUICODI
+      inner join sic.si_empresa empresa on vweq.emprcodi = empresa.emprcodi
+      inner join sic.eq_familia familia on equipo.famcodi = familia.famcodi
+      left join sic.eq_equipo padre on equipo.equipadre = padre.equicodi
+      where empresa.emprcodi=:EMPRCODI
+      order by 6 asc, 8 asc, 7 asc
+      ) a order by 1 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaUnidadPorCentralEmpresa</key>
+    <query>
+		select a.EQUICODI, a.EQUIABREV as UNIDADNOMB, A.ptomedicodi as CODUNIDAD from (
+		select servicio.rpfcodi, servicio.ptomedicodi, servicio.indestado, servicio.lastuser,
+		servicio.lastdate, empresa.emprnomb, equipo.equiabrev,
+		(case when equipo.famcodi = 4 then equipo.equinomb
+		when equipo.famcodi = 5  then equipo.equinomb
+		else
+		(select case when x.equicodi = 0 then equipo.equinomb  when x.equicodi > 0 then x.equinomb end
+		from sic.eq_equipo x where x.equicodi = equipo.equipadre)
+		end)
+		as equinomb,
+		equipo.famcodi, equipo.equicodi
+		from sic.wb_serviciorpf servicio
+		inner join sic.me_ptomedicion punto on servicio.ptomedicodi = punto.ptomedicodi
+		inner join sic.eq_equipo equipo on punto.equicodi = equipo.equicodi
+		inner join(
+		SELECT equicodi,EMPRCODI FROM
+		(
+		SELECT vweq.HEQDATFECHA ,eq.EQUICODI, eq.EQUINOMB,vweq.EMPRCODI
+		, ROW_NUMBER() OVER(PARTITION BY eq.EQUICODI
+		ORDER BY eq.EQUICODI, vweq.HEQDATFECHA desc, vweq.HEQDATESTADO desc) AS NUM_VIEW
+		,vweq.HEQDATESTADO
+		from sic.eq_equipo eq
+		inner join sic.SI_HISEMPEQ_DATA vweq
+		on vweq.EQUICODI = eq.EQUICODI
+		)rview
+		WHERE NUM_VIEW = 1
+		)vweq on vweq.EQUICODI = equipo.EQUICODI
+		inner join sic.si_empresa empresa on vweq.emprcodi = empresa.emprcodi
+		inner join sic.eq_familia familia on equipo.famcodi = familia.famcodi
+		left join sic.eq_equipo padre on equipo.equipadre = padre.equicodi
+		where empresa.emprcodi=:EMPRCODI
+		order by 6 asc, 8 asc, 7 asc
+		) a where a.EQUINOMB=:CENTRALNOMB
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarNombreEquipoGPS</key>
+    <query>
+      DECLARE
+      P_NOMBRE  VARCHAR2(50):=:NOMBRE;
+      P_CODI    NUMBER :=:GPSCODI;
+      P_RESULTADO NUMBER:=0;
+      begin
+      select count(*) INTO P_RESULTADO from  sic.me_gps
+      where trim(upper(nombre))=trim(upper(P_NOMBRE)) and gpscodi!=P_CODI 
+      and gpsestado in ('A', 'B');
+      SELECT P_RESULTADO INTO :RESULTADO FROM DUAL;
+      end;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveUpdate</key>
+    <query>
+
+      DECLARE
+      P_IDCARGA NUMBER :=:IDCARGA;
+      P_GPSCODI NUMBER :=:GPSCODI;
+      P_TIPOCARGA  VARCHAR2(50) :=:TIPOCARGA;
+      P_EMPRCODI NUMBER :=:EMPRCODI;
+      P_CENTRAL VARCHAR2(100) :=:CENTRAL;
+      P_UNIDADCODI NUMBER :=:UNIDADCODI;
+      P_FECHACARGA DATE :=:FECHACARGA;
+      P_ARCHIVOCARGA VARCHAR2(100) :=:ARCHIVOCARGA;
+      P_USUCREACION VARCHAR2(20) :=:USUCREACION;
+      P_MENSAJE VARCHAR2(500):=NULL;
+      P_RESULTADO NUMBER:=0;
+
+      BEGIN
+
+      IF P_IDCARGA = 0
+      THEN
+
+      SELECT NVL(MAX(IDCARGA),0) INTO  P_RESULTADO FROM sic.f_carga_virtual;
+
+      INSERT INTO sic.f_carga_virtual
+      (IDCARGA,
+      GPSCODI,
+      TIPOCARGA,
+      EMPRCODI,
+      CENTRAL,
+      UNIDADCODI,
+      FECHACARGA,
+      ARCHIVOCARGA,
+      FECHACREACION,
+      USUCREACION
+      )
+      VALUES(P_RESULTADO +1
+      ,P_GPSCODI
+      ,P_TIPOCARGA
+      ,P_EMPRCODI
+      ,P_CENTRAL
+      ,P_UNIDADCODI
+      ,P_FECHACARGA
+      ,P_ARCHIVOCARGA
+      ,SYSDATE
+      ,P_USUCREACION
+      );
+
+      END IF;
+
+      SELECT P_RESULTADO + 1 INTO :RESULTADO FROM DUAL;
+      END;
+
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into sic.f_carga_virtual(IDCARGA,
+		GPSCODI,
+		TIPOCARGA,
+		EMPRCODI,
+		CENTRAL,
+		UNIDADCODI,
+		FECHACARGAINI,
+		FECHACARGAFIN,
+		ARCHIVOCARGA,
+		FECHACREACION,
+		USUCREACION
+		)
+		values(
+		'{0}',
+		'{1}',
+		'{2}',
+		'{3}',
+		'{4}',
+		'{5}',
+		to_date('{6}','dd/mm/yyyy'),
+		to_date('{7}','dd/mm/yyyy'),
+		'{8}',
+		sysdate,
+		'{9}'
+		)
+	</query>
+  </Sql>
+	
+	<Sql>
+    <key>SaveExterno</key>
+    <query>
+      insert into sic.f_carga_virtual(IDCARGA,
+      GPSCODI,
+      TIPOCARGA,
+      EMPRCODI,
+      CENTRAL,
+      UNIDADCODI,
+      FECHACARGAINI,
+	  FECHACARGAFIN,
+      ARCHIVOCARGA,
+      FECHACREACION,
+      USUCREACION
+      )
+      values(
+      '{0}',
+      '{1}',
+      '{2}',
+      NULL,
+      NULL,
+      NULL,
+      NULL,
+	  NULL,
+      '{3}',
+      sysdate,
+      '{4}'
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveLecturaVirtualAnt</key>
+    <query>
+
+		DECLARE
+		P_IDCARGA NUMBER :=:IDCARGA;
+		P_FECHAHORA DATE :=:FECHAHORA;
+		P_FRECUENCIA NUMBER :=:FRECUENCIA;
+		P_TENSION  NUMBER :=:TENSION;
+
+		P_MENSAJE VARCHAR2(500):=NULL;
+		P_CODMAX NUMBER:=0;
+
+		BEGIN
+
+		INSERT INTO sic.f_lectura_virtual
+		(IDCARGA,
+		FECHAHORA,
+		FRECUENCIA,
+		TENSION
+		)
+		VALUES(P_IDCARGA
+		,to_date(P_FECHAHORA, 'DD/MM/YYYY HH24:MI:SS')
+		,P_FRECUENCIA
+		,P_TENSION);
+
+		SELECT P_MENSAJE INTO :MENSAJE FROM DUAL;
+		END;
+
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>SaveLecturaVirtual</key>
+		<query>INSERT INTO sic.f_lectura_virtual (IDCARGA, FECHAHORA, FRECUENCIA, TENSION ) VALUES({0}, to_date('{1}', 'DD-MM-YYYY HH24:MI:SS'), {2}, {3})</query>
+	</Sql>
+
+	<Sql>
+		<key>SaveLectura</key>
+		<query>
+			MERGE INTO SIC.F_LECTURA dest
+			USING (SELECT to_date('{0}', 'DD/MM/YYYY HH24:MI:SS') AS FECHAHORA, '{1}' AS GPSCODI, '{2}' AS VSF, '{3}' AS MAXIMO, '{4}' AS MINIMO, '{5}' AS VOLTAJE, '{6}' AS NUM, '{7}' AS DESV, '{8}' AS H0, '{9}' AS H1, '{10}' AS H2, '{11}' AS H3, '{12}' AS H4, '{13}' AS H5, '{14}' AS H6, '{15}' AS H7, '{16}' AS H8, '{17}' AS H9, '{18}' AS H10, '{19}' AS H11, '{20}' AS H12, '{21}' AS H13, '{22}' AS H14, '{23}' AS H15, '{24}' AS H16, '{25}' AS H17, '{26}' AS H18, '{27}' AS H19, '{28}' AS H20, '{29}' AS H21, '{30}' AS H22, '{31}' AS H23, '{32}' AS H24, '{33}' AS H25, '{34}' AS H26, '{35}' AS H27, '{36}' AS H28, '{37}' AS H29, '{38}' AS H30, '{39}' AS H31, '{40}' AS H32, '{41}' AS H33, '{42}' AS H34, '{43}' AS H35, '{44}' AS H36, '{45}' AS H37, '{46}' AS H38, '{47}' AS H39, '{48}' AS H40, '{49}' AS H41, '{50}' AS H42, '{51}' AS H43, '{52}' AS H44, '{53}' AS H45, '{54}' AS H46, '{55}' AS H47, '{56}' AS H48, '{57}' AS H49, '{58}' AS H50, '{59}' AS H51, '{60}' AS H52, '{61}' AS H53, '{62}' AS H54, '{63}' AS H55, '{64}' AS H56, '{65}' AS H57, '{66}' AS H58, '{67}' AS H59, '{68}' AS DEVSEC  FROM DUAL) orig
+			on (dest.FECHAHORA = orig.FECHAHORA and dest.GPSCODI = orig.GPSCODI)
+			WHEN MATCHED THEN
+			UPDATE SET
+			dest.VSF=orig.VSF,
+			dest.MAXIMO=orig.MAXIMO,
+			dest.MINIMO=orig.MINIMO,
+			dest.VOLTAJE = orig.VOLTAJE,
+			dest.NUM = orig.NUM,
+			dest.DESV = orig.DESV,
+			dest.H0=orig.H0,
+			dest.H1=orig.H1,
+			dest.H2=orig.H2,
+			dest.H3=orig.H3,
+			dest.H4=orig.H4,
+			dest.H5=orig.H5,
+			dest.H6=orig.H6,
+			dest.H7=orig.H7,
+			dest.H8=orig.H8,
+			dest.H9=orig.H9,
+			dest.H10=orig.H10,
+			dest.H11=orig.H11,
+			dest.H12=orig.H12,
+			dest.H13=orig.H13,
+			dest.H14=orig.H14,
+			dest.H15=orig.H15,
+			dest.H16=orig.H16,
+			dest.H17=orig.H17,
+			dest.H18=orig.H18,
+			dest.H19=orig.H19,
+			dest.H20=orig.H20,
+			dest.H21=orig.H21,
+			dest.H22=orig.H22,
+			dest.H23=orig.H23,
+			dest.H24=orig.H24,
+			dest.H25=orig.H25,
+			dest.H26=orig.H26,
+			dest.H27=orig.H27,
+			dest.H28=orig.H28,
+			dest.H29=orig.H29,
+			dest.H30=orig.H30,
+			dest.H31=orig.H31,
+			dest.H32=orig.H32,
+			dest.H33=orig.H33,
+			dest.H34=orig.H34,
+			dest.H35=orig.H35,
+			dest.H36=orig.H36,
+			dest.H37=orig.H37,
+			dest.H38=orig.H38,
+			dest.H39=orig.H39,
+			dest.H40=orig.H40,
+			dest.H41=orig.H41,
+			dest.H42=orig.H42,
+			dest.H43=orig.H43,
+			dest.H44=orig.H44,
+			dest.H45=orig.H45,
+			dest.H46=orig.H46,
+			dest.H47=orig.H47,
+			dest.H48=orig.H48,
+			dest.H49=orig.H49,
+			dest.H50=orig.H50,
+			dest.H51=orig.H51,
+			dest.H52=orig.H52,
+			dest.H53=orig.H53,
+			dest.H54=orig.H54,
+			dest.H55=orig.H55,
+			dest.H56=orig.H56,
+			dest.H57=orig.H57,
+			dest.H58=orig.H58,
+			dest.H59=orig.H59,
+			dest.DEVSEC=orig.DEVSEC
+			WHEN NOT MATCHED THEN
+			INSERT (FECHAHORA, GPSCODI, VSF, MAXIMO, MINIMO, VOLTAJE, NUM, DESV, H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10, H11, H12, H13, H14, H15, H16, H17, H18, H19, H20, H21, H22, H23, H24, H25, H26, H27, H28, H29, H30, H31, H32, H33, H34, H35, H36, H37, H38, H39, H40, H41, H42, H43, H44, H45, H46, H47, H48, H49, H50, H51, H52, H53, H54, H55, H56, H57, H58, H59, DEVSEC)
+			VALUES (orig.FECHAHORA, orig.GPSCODI, orig.VSF, orig.MAXIMO, orig.MINIMO, orig.VOLTAJE, orig.NUM, orig.DESV, orig.H0, orig.H1, orig.H2, orig.H3, orig.H4, orig.H5, orig.H6, orig.H7, orig.H8, orig.H9, orig.H10, orig.H11, orig.H12, orig.H13, orig.H14, orig.H15, orig.H16, orig.H17, orig.H18, orig.H19, orig.H20, orig.H21, orig.H22, orig.H23, orig.H24, orig.H25, orig.H26, orig.H27, orig.H28, orig.H29, orig.H30, orig.H31, orig.H32, orig.H33, orig.H34, orig.H35, orig.H36, orig.H37, orig.H38, orig.H39, orig.H40, orig.H41, orig.H42, orig.H43, orig.H44, orig.H45, orig.H46, orig.H47, orig.H48, orig.H49, orig.H50, orig.H51, orig.H52, orig.H53, orig.H54, orig.H55, orig.H56, orig.H57, orig.H58, orig.H59, orig.DEVSEC)</query>
+	</Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+
+      DECLARE
+      P_GPSCODI NUMBER :=:GPSCODI;
+      P_GPSESTADO VARCHAR2(1) :=:GPSESTADO;
+      P_GPSUSUCREACION VARCHAR2(20) :=:GPSUSUCREACION;
+      P_MENSAJE VARCHAR2(500):=NULL;
+
+      BEGIN
+
+      UPDATE sic.me_gps
+      SET
+      GPSESTADO=P_GPSESTADO,
+      GPSFECELIMINA=SYSDATE,
+      GPSUSUELIMINA=P_GPSUSUCREACION
+      WHERE GPSCODI=P_GPSCODI;
+
+
+      SELECT P_MENSAJE INTO :MENSAJE FROM DUAL;
+      END;
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetNumRegistrosPorEquipo</key>
+    <query>
+      select count(*) as num_registros from sic.F_LECTURA where GPSCODI={0}
+    </query>
+  </Sql>
+
+
+</Sqls>
+

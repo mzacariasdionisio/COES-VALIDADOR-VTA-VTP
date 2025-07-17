@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(prnredcodi), 0) + 1 from prn_reduccionred
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into prn_reduccionred(
+      prnredcodi,
+      prnvercodi,
+      prnredbarracp,
+      prnredbarrapm,
+      prnredgauss,
+      prnredperdida,
+      prnredfecha,
+      prnredusucreacion,
+      prnredfeccreacion,
+      prnredusumodificacion,
+      prnredfecmodificacion,
+      prnrednombre,
+      prnredtipo
+      )
+      values(
+      :prnredcodi,
+      :prnvercodi,
+      :prnredbarracp,
+      :prnredbarrapm,
+      :prnredgauss,
+      :prnredperdida,
+      :prnredfecha,
+      :prnredusucreacion,
+      :prnredfeccreacion,
+      :prnredusumodificacion,
+      :prnredfecmodificacion,
+      :prnrednombre,
+      :prnredtipo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update prn_reduccionred
+      set
+      prnvercodi = :prnvercodi,
+      prnredbarracp = :prnredbarracp,
+      prnredbarrapm = :prnredbarrapm,
+      prnredgauss = :prnredgauss,
+      prnredperdida = :prnredperdida,
+      prnredfecha = :prnredfecha,
+      prnredusumodificacion = :prnredusumodificacion,
+      prnredfecmodificacion = :prnredfecmodificacion,
+      prnrednombre = :prnrednombre,
+      prnredtipo = :prnredtipo
+      where
+      prnredcodi = :prnredcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListByNombre</key>
+    <query>
+      select distinct prnredbarracp
+      from prn_reduccionred
+    </query>
+  </Sql>
+
+  
+  <Sql>
+    <key>ListByCPNivel</key>
+    <query>
+      select
+      red.prnredcodi,
+      TRIM(red.prnrednombre) Prnrednombre,
+      red.prnredbarracp,
+      TRIM(pra.gruponomb) Nombrecp,
+      red.prnredbarrapm,
+      TRIM(prb.gruponomb) Nombrepm,
+      red.prnredgauss,
+      red.prnredperdida,
+      red.prnredtipo
+      from prn_reduccionred red join pr_grupo pra on red.prnredbarracp = pra.grupocodi
+      join pr_grupo prb on red.prnredbarrapm = prb.grupocodi
+      join prn_version ver on red.prnvercodi = ver.prnvercodi
+      where red.prnvercodi = {0} and (red.prnredtipo in {1}  or '0' in {1})
+      order by red.prnrednombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPuntosAgrupacionesByBarra</key>
+    <query>
+      select
+      ptomedicodi,
+      ptomedibarranomb,
+      ptomedidesc,
+      grupocodibarra,
+      case
+      WHEN origlectcodi = 6 then 'P' || (CASE
+      WHEN ptomedibarranomb is null then ptomedidesc
+      else ptomedibarranomb END)
+      else 'A' || (CASE
+      WHEN ptomedibarranomb is null then ptomedidesc
+      else ptomedibarranomb END)
+      end Nombre
+      from me_ptomedicion where grupocodibarra in ({0})  or '0' in '{0}'
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>DeleteReduccionRed</key>
+    <query>
+      delete from prn_reduccionred
+      where
+      prnredbarrapm = :reduccionred and prnvercodi = :version
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteReduccionRedBarraVersion</key>
+    <query>
+      delete from prn_reduccionred
+      where
+      prnredbarrapm = :barrapm and prnredbarracp = :barracp and prnvercodi = :version
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListSumaBarraGaussPM</key>
+    <query>
+      select prnredbarrapm, sum(prnredgauss) prnredgauss
+      from prn_reduccionred where prnvercodi = {0} and prnredbarrapm in ({1}) group by prnredbarrapm
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetModeloActivo</key>
+    <query>
+      select
+      rr.prnredbarracp, rr.prnredbarrapm,
+      rr.prnredgauss, rr.prnredperdida,
+      pto.ptomedicodi
+      from
+      prn_version vr
+      join prn_reduccionred rr on vr.prnvercodi = rr.prnvercodi
+      and (vr.prnverestado = 'A')
+      join me_ptomedicion pto on rr.prnredbarrapm = pto.grupocodibarra
+      and (pto.ptomediestado = 'A')
+      order by
+      rr.prnredbarracp, rr.prnredbarrapm, pto.ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListBarraCPPorArea</key>
+    <query>
+      select distinct
+      rd.prnredbarracp
+      from
+      prn_reduccionred rd
+      join prn_version vr on rd.prnvercodi = vr.prnvercodi
+      and (vr.prnverestado = 'A')
+      join pr_grupo gr on rd.prnredbarracp = gr.grupocodi
+      join eq_area ar on gr.areacodi = ar.areacodi
+      and (ar.tareacodi = 1)
+      join eq_arearel re on ar.areacodi = re.areacodi
+      where
+      re.areapadre = {0}
+    </query>
+  </Sql>
+</Sqls>

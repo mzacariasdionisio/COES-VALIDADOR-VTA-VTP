@@ -1,0 +1,361 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>VerAtencion</key>
+    <query>
+      select
+      fljdetcodi,
+      fljfechamsg,
+      a.areaabrev as nombareaorig,
+      b.areaabrev as nombareadest,
+      fljmsg,
+      case fljmsgestado when 'P' then 'Pendiente' when 'A' then 'Activo' else '' end as fljmsgestado,
+      p.paramvalue||fljfileruta as filerutax, fljfileruta
+      from doc_flujo_det_msg f , fw_area a, fw_area b,doc_parameter p where fljdetcodi = :fljdetcodi
+      and a.areacode = areaorig and b.areacode = areadest
+      and f.fljmsgestado!='B'
+      and f.fileserver = p.paramcodi
+      order by fljfechamsg desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SeguimientoArea</key>
+    <query>
+      select f.fljcodi,
+      d.fljdetcodi,
+      case  when upper(a.areaabrev) = 'NONE' then 'EMP' else a.areaabrev end as areaabrev ,
+      d.fljcadatencion  as tatdesc,
+      d.fljfechainicio,
+      d.fljfechaatencion,
+      d.fljestado,
+      a.areacode,
+      d.fljpadrecomentario as descripdeleg,
+      case when upper(b.areaabrev) = 'NONE' then 'EMP' else b.areaabrev end as origen,
+      b.areacode as areacodeorig,
+      d.fljfechamax,
+      d.lastuser,
+      d.lastdate,
+      d.areapadre,
+      d.fljpadreleido,
+      d.fljdetnivel,
+      d.fljdetorigen,
+      d.fljdetdestino,
+      d.fljnmsghijo as nmsg,
+      d.fljmaster,
+      d.percodi,
+      d.percodipadre
+      from doc_flujo f, doc_flujo_det d, fw_area a,fw_area b
+      where f.fljcodi = :fljcodi
+      and d.fljcodi = f.fljcodi
+      and d.areacode = a.areacode
+      and d.fljdetnivel >= 0
+      and d.areapadre = b.areacode
+      and d.fljestado not in ('B')
+      and d.percodi = -1
+      and d.fljdetdestino != -1 order by d.fljdetcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SeguimientoEspecialista</key>
+    <query>
+      select
+      f.fljcodi,
+      d.fljdetcodi,
+      case  when upper(a.areaabrev) = 'NONE' then 'EMP' else a.areaabrev end as areaabrev ,
+      u.username as destino,
+      d.fljdetprio as prioridad,
+      d.fljcadatencion as tatdesc,
+      d.fljfechainicio,
+      d.fljfechaatencion,
+      d.fljestado,
+      a.areacode,
+      d.fljpadrecomentario as descripdeleg,
+      b.areaabrev as origen,
+      b.areacode as areacodeorig,
+      d.fljfechamax,
+      d.lastuser,
+      d.lastdate,
+      d.areapadre,
+      d.fljpadreleido,
+      d.fljdetnivel,
+      d.fljdetorigen,
+      d.fljdetdestino,
+      d.fljnmsghijo as nmsg,
+      d.fljmaster,
+      d.percodi,
+      d.percodipadre
+      from doc_flujo f, doc_flujo_det d, fw_area a,fw_area b,fw_user u
+      where f.fljcodi = :fljcodi
+      and d.fljcodi = f.fljcodi and d.areacode = a.areacode and d.fljdetnivel >= 0 and d.areapadre = b.areacode
+      and d.percodi = u.usercode
+      and d.fljdetorigen = :fljdetorigen
+      and d.areapadre = :areapadre
+      and d.fljestado not in ('B','X')
+      and d.percodi > 0
+      and d.fljdetdestino != -1 order by d.fljdetcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>VerSello</key>
+    <query>
+      select
+      d.fljcadatencion,
+      d.areapadre,
+      d.areacode,
+      d.fljpadrecomentario as descripdeleg,
+      d.fljfechamax
+      from doc_flujo f, doc_flujo_det d
+      where f.fljcodi = :fljcodi
+      and d.fljcodi = f.fljcodi
+      and d.fljestado not in ('B')
+      and d.fljdetnivel &lt; 98
+      and d.areapadre is not null
+      order by d.fljdetcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>VerReferenciaDe</key>
+    <query>
+      select
+      f.fljnombre,
+      f.corrnumproc,
+      m.paramvalue || a.fileruta as xfileruta,
+      f.fljnumext,
+      d.fljcodi,
+      d.fljdetcodi as referido,
+      d.tatcodi,
+      d.fljestado,
+      d.fljfechaatencion,
+      f.fljfechaorig
+      from doc_flujo_det d,  doc_flujo f,doc_flujo_files a ,doc_parameter m
+      where d.fljdetcodi in (select r.fljdetcodiref   from doc_flujo_ref_flujo r
+      where r.fljdetcodi in
+      (select m.fljdetcodi from doc_flujo_det m where m.fljcodi = :fljcodi and m.fljdetnivel in (0,99) ))
+      and f.fljcodi = d.fljcodi
+      and f.fljcodi = a.fljcodi
+      and a.fileatrib = 'F'
+      and a.fileserver = m.paramcodi
+      order by f.fljfechaorig desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>VerReferenciaA</key>
+    <query>
+      select
+      f.fljnombre,
+      f.corrnumproc,
+      b.paramvalue || a.fileruta as xfileruta,
+      f.fljnumext,
+      d.fljcodi,
+      d.fljdetcodi as referido,
+      d.tatcodi,
+      d.fljestado,
+      d.fljfechaatencion,
+      f.fljfechaorig
+      from doc_flujo_det d,  doc_flujo f,doc_flujo_files a,doc_parameter b
+      where d.fljdetcodi in (select r.fljdetcodi  from doc_flujo_ref_flujo r
+      where r.fljdetcodiref in (select m.fljdetcodi from doc_flujo_det m where m.fljcodi = :fljcodi and m.fljdetnivel in ( 0,99) ))
+      and f.fljcodi = d.fljcodi
+      and f.fljcodi = a.fljcodi
+      and a.fileatrib = 'F'
+      and a.fileserver = b.paramcodi
+      order by f.fljfechaorig desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>VerMensajes</key>
+    <query>
+      select
+      fljdetcodi,
+      fljfechamsg,
+      areaorig,
+      areadest,
+      fljmsgestado,
+      fljmsg,
+      fljcodimsg,
+      p.paramvalue || fljfileruta as filerutax ,
+      a.areaabrev as nombareaorig,
+      b.areaabrev as nombareadest,
+      f.lastuser,
+      f.fljmsgleido,
+      f.fljfileruta
+      from doc_flujo_det_msg f , fw_area a, fw_area b,doc_parameter p where fljdetcodi = :fljdetcodi
+      and a.areacode = areaorig and b.areacode = areadest
+      and f. fljmsgestado != 'B'
+      and f.fileserver = p.paramcodi
+      order by fljfechamsg desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>VerDocumentos</key>
+    <query>
+      select
+      x.filecodi,
+      y.paramvalue || x.fileruta as xfileruta,
+      x.fljdetcodi,
+      x.fljcodi,
+      x.filecomentario,
+      x.lastuser,
+      x.fileanio,
+      x.lastdate
+      from
+      doc_flujo_files x,doc_parameter y
+      where x.fljcodi = :fljcodi and
+      x.fljdetcodi = :fljdetcodi and
+      x.fileatrib ='F' and x.fileserver = y.paramcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>VerDocumentosV</key>
+    <query>
+      select
+      d.filecodi,
+      d.filecomentario,
+      p.PARAMVALUE || d.fileruta as xfileruta
+      from doc_flujo_files d, doc_parameter p
+      where d.fileserver = p.paramcodi and fljcodi=:fljcodi and fileatrib='C'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerArea</key>
+    <query>
+      select a.areacode,a.areaname from fw_area a where a.areacode = :areacode
+      union
+      select a.areacode,a.areaname from fw_area a where a.areapadre = :areacode
+      order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarAreas</key>
+    <query>
+      select compcode,areacode,areaname,areaabrev from fw_area  where compcode = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>RolesxUsuario</key>
+    <query>
+      select t.docrolcodi from doc_rol_user t where t.usercode = :usercode
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>LeerEtiquetas</key>
+    <query>
+      select etiqcode, etiqnomb
+      from doc_etiquetas
+      where areacode = :areacode and bandejalvl = :bandejalvl and etiqestado = 'A' order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarEtiquetasPorArea</key>
+    <query>
+      select etiqcode, etiqnomb, bandejalvl
+      from doc_etiquetas
+      where areacode = :areacode and etiqestado = 'A' order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>LeerTipoAtencion</key>
+    <query>
+      select tatabrev,tatcodi2 from doc_tipo_atencion where tathabil ='S' order by 1 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>VerificarUserRol</key>
+    <query>
+      select count(*) from doc_rol_user where usercode = :usercode and docrolcodi = :docrolcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerDiasFeriados</key>
+    <query>
+      select * from doc_dia_esp
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>LeerDirectorioRoot</key>
+    <query>
+      select fileruta from doc_flujo_files where fljcodi = :fljcodi and fileatrib = 'D'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>LeerPathArchivo</key>
+    <query>
+      select f.fileruta from doc_flujo_files f where f.filecodi = :filecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarMaestroEmpresas</key>
+    <query>
+      select t.emprcodi,trim(t.emprnomb) as emprnomb,t.tipoemprcodi
+      from si_empresa t order by 2 asc
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarEmpresasNoRI</key>
+    <query>
+      select e.emprcodi,trim(e.emprnomb) as emprnomb, e.tipoemprcodi
+      from si_empresa e
+      where e.emprcodi not in ( select x.emprecodi from si_registro_integ x where x.regempactivo = 'S')
+      and e.tipoemprcodi not in (1,2,3,4, 5)
+      order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarEmpresasRIPorTipo</key>
+    <query>
+      select e.emprcodi,trim(e.emprnomb) as emprnomb ,e.tipoemprcodi from si_registro_integ t,si_empresa e
+      where t.emprecodi = E.Emprcodi and t.regempfecacep is not null and t.regempfecbaja is null
+      and t.REGEMPELIMINADO = 'N'
+      and ( e.tipoemprcodi= {0} or e.emprcodi = 0)
+      union
+      select f.emprcodi,f.emprnomb, {0} from si_empresa f where f.emprcodi =0
+      order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerQueryMigracion</key>
+    <query>
+      select m.*, f.fileruta, extract(month from m.fechaproceso) as mes from doc_migracion m
+      inner join doc_flujo_files f on m.filecodi = f.filecodi
+      where m.anio = {0} and extract(month from m.fecharecepcion) = {1} --and correlativo = '2895'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarDatosMigracion</key>
+    <query>
+      update doc_migracion
+      set rutafile = '{0}',
+      rutacd = '{1}',
+      rutavol = '{2}',
+      tipovol = '{3}'
+      where fljcodi = {4} and fljdetcodi = {5}
+    </query>
+  </Sql>
+
+
+</Sqls>

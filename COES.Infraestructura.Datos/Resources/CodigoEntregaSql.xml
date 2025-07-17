@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+    <Sql>
+    <key>GetById</key>
+    <query>
+      select trn_codigo_entrega.*,
+      vw_eq_central_generacion.equinomb,
+      trn_barra.barrbarratransferencia,
+      vw_si_empresa.emprnomb
+      from trn_codigo_entrega left outer join vw_eq_central_generacion on vw_eq_central_generacion.equicodi = trn_codigo_entrega.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_entrega.barrcodi
+      left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_entrega.emprcodi
+      where (codentcodi = :codentcodi)
+    </query>
+    </Sql>
+    <Sql>
+      <key>Save</key>
+      <query>
+      insert into trn_codigo_entrega
+      ( codentcodi, emprcodi, barrcodi, equicodi, codentcodigo, codentfechainicio, codentfechafin, codentestado, codentusername, codentfecins )
+      values ( :codentcodi, :emprcodi, :barrcodi, :equicodi, :codentcodigo, :codentfechainicio, :codentfechafin, :codentestado, :codentusername, :codentfecins )
+      </query>
+    </Sql>
+ 
+    <Sql>
+      <key>Update</key>
+      <query>
+      update trn_codigo_entrega set
+      emprcodi = :emprcodi,
+      barrcodi = :barrcodi,
+      equicodi = :equicodi,
+      codentcodigo = :codentcodigo,
+      codentfechainicio = :codentfechainicio,
+      codentfechafin = :codentfechafin,
+      codentestado = :codentestado,
+      codentfecact = :codentfecact
+      where codentcodi = :codentcodi
+      </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>delete from trn_codigo_entrega where codentcodi = :codentcodi</query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+      select trn_codigo_entrega.*,
+      vw_eq_central_generacion.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+      from trn_codigo_entrega left outer join vw_eq_central_generacion on vw_eq_central_generacion.equicodi = trn_codigo_entrega.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_entrega.barrcodi
+      left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_entrega.emprcodi
+      order by vw_eq_central_generacion.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+    </query>
+  </Sql>
+   
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from (select trn_codigo_entrega.*,
+      vw_eq_central_generacion.equinomb,
+      trn_barra.barrbarratransferencia,
+      vw_si_empresa.emprnomb,
+      (row_number() over (order by vw_eq_central_generacion.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb)) as r
+      from trn_codigo_entrega left outer join vw_eq_central_generacion on vw_eq_central_generacion.equicodi = trn_codigo_entrega.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_entrega.barrcodi
+      left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_entrega.emprcodi
+      where (vw_si_empresa.emprnomb =:emprnomb  or :emprnomb is null)
+      and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+      and (vw_eq_central_generacion.equinomb =:equinomb or :equinomb is null)
+      and (trn_codigo_entrega.codentfechainicio &gt;=:codentfechainicio or :codentfechainicio is null)
+      and (trn_codigo_entrega.codentfechafin &lt;=:codentfechafin or :codentfechafin is null)
+      and (trn_codigo_entrega.codentestado =:codentestado or :codentestado is null)
+      and (trn_codigo_entrega.codentcodigo like '%'||:codentcodigo||'%' or :codentcodigo is null )
+      order by vw_eq_central_generacion.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+      )
+      where r >= (((:nropagina-1) * :pagesize) + 1) and r &lt; ((:nropagina * :pagesize) + 1 )
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>TotalRecords</key>
+    <query>
+      select count(*) as NroRegistros
+      from trn_codigo_entrega left outer join vw_eq_central_generacion on vw_eq_central_generacion.equicodi = trn_codigo_entrega.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_entrega.barrcodi
+      left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_entrega.emprcodi
+      where (vw_si_empresa.emprnomb =:emprnomb  or :emprnomb is null)
+      and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+      and (vw_eq_central_generacion.equinomb =:equinomb or :equinomb is null)
+      and (trn_codigo_entrega.codentfechainicio &gt;=:codentfechainicio or :codentfechainicio is null)
+      and (trn_codigo_entrega.codentfechafin &lt;=:codentfechafin or :codentfechafin is null)
+      and (trn_codigo_entrega.codentestado =:codentestado or :codentestado is null)
+      and (trn_codigo_entrega.codentcodigo like '%'||:codentcodigo||'%' or :codentcodigo is null )
+    </query>
+  </Sql>
+  
+   <Sql>
+    <key>GetMaxId</key>
+    <query>select nvl(max(codentcodi), 0) + 1 from trn_codigo_entrega</query>
+  </Sql>
+
+  <Sql>
+      <key>GetByCodigoEntregaCodigo</key>
+      <query>
+        select trn_codigo_entrega.*, vw_eq_central_generacion.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+        from trn_codigo_entrega left outer join vw_eq_central_generacion on vw_eq_central_generacion.equicodi = trn_codigo_entrega.equicodi
+        join trn_barra on trn_barra.barrcodi = trn_codigo_entrega.barrcodi
+        join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_entrega.emprcodi
+        where (codentcodigo = :codentcodigo)
+      </query>
+  </Sql>
+  
+  <Sql>
+      <key>GetByCodiEntrEmpresaCodigo</key>
+      <query>
+        select trn_codigo_entrega.*, vw_eq_central_generacion.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+        from trn_codigo_entrega left outer join vw_eq_central_generacion on vw_eq_central_generacion.equicodi = trn_codigo_entrega.equicodi
+        join trn_barra on trn_barra.barrcodi = trn_codigo_entrega.barrcodi
+        join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_entrega.emprcodi
+        where emprcodi = :emprcodi and codentcodigo = :codentcodigo
+      </query>
+  </Sql>
+
+  <Sql>
+    <key>CodigoEntregaVigenteByPeriodo</key>
+    <query>
+      select trn_codigo_entrega.*, vw_eq_central_generacion.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+      from trn_codigo_entrega left outer join vw_eq_central_generacion on vw_eq_central_generacion.equicodi = trn_codigo_entrega.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_entrega.barrcodi
+      join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_entrega.emprcodi
+      and codentcodigo = :codentcodigo
+      and trn_codigo_entrega.codentestado = 'ACT'
+      and NVL(to_char(trn_codigo_entrega.codentfechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :emprcodi)
+      and NVL(to_char(trn_codigo_entrega.codentfechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :emprcodi)
+    </query>
+  </Sql>
+</Sqls>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(reptopcodi), 0) + 1 from re_ptoentrega_periodo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into re_ptoentrega_periodo(
+           reptopcodi,
+           repentcodi,
+           repercodi,
+           reptopusucreacion,
+           reptopfeccreacion,
+           reptopusumodificacion,
+           reptopfecmodificacion
+       )
+       values(
+           :reptopcodi,
+           :repentcodi,
+           :repercodi,
+           :reptopusucreacion,
+           :reptopfeccreacion,
+           :reptopusumodificacion,
+           :reptopfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update re_ptoentrega_periodo
+       set
+           repentcodi = :repentcodi,
+           repercodi = :repercodi,
+           reptopusucreacion = :reptopusucreacion,
+           reptopfeccreacion = :reptopfeccreacion,
+           reptopusumodificacion = :reptopusumodificacion,
+           reptopfecmodificacion = :reptopfecmodificacion
+       where
+           reptopcodi = :reptopcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		delete from re_ptoentrega_periodo
+		where
+		repentcodi = {0} and repercodi = {1}
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           reptopcodi,
+           repentcodi,
+           repercodi,
+           reptopusucreacion,
+           reptopfeccreacion,
+           reptopusumodificacion,
+           reptopfecmodificacion
+       from
+           re_ptoentrega_periodo
+       where
+           reptopcodi = :reptopcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           reptopcodi,
+           repentcodi,
+           repercodi,
+           reptopusucreacion,
+           reptopfeccreacion,
+           reptopusumodificacion,
+           reptopfecmodificacion
+       from
+           re_ptoentrega_periodo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		per.reptopcodi,
+		per.repentcodi,
+		per.repercodi,
+		per.reptopusucreacion,
+		per.reptopfeccreacion,
+		per.reptopusumodificacion,
+		per.reptopfecmodificacion,
+		pto.repentnombre,
+		nt.rentabrev,
+		nt.rentcodi
+		from
+		re_ptoentrega_periodo per
+		inner join re_punto_entrega pto on per.repentcodi = pto.repentcodi
+		inner join re_nivel_tension nt on pto.rentcodi = nt.rentcodi
+		where per.repercodi = {0}
+		order by pto.repentnombre
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerPorPtoEntrega</key>
+		<query>
+			select count(*) from re_ptoentrega_periodo where repentcodi = {0} and repercodi = {1}
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerPtoEntregaUtilizadosPorPeriodo</key>
+		<query>
+			select
+			distinct
+			pto.repentcodi,
+			pto.repentnombre
+			from
+			re_punto_entrega pto
+			inner join re_interrupcion_suministro inter on pto.repentcodi = inter.repentcodi
+			where inter.repercodi = {0} and inter.emprcodi = {1}  and 'S' = '{2}'
+
+			union all
+
+			select
+			distinct
+			pto.repentcodi,
+			pto.repentnombre
+			from
+			re_punto_entrega pto
+			inner join re_rechazo_carga inter on pto.repentcodi = inter.repentcodi
+			where inter.repercodi = {0} and inter.emprcodi = {1}  and 'R' = '{2}'
+
+			order by 2 asc
+		</query>
+	</Sql>
+	
+</Sqls>

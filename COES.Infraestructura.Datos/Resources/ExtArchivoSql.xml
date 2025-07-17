@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into ext_archivo(
+           emprcodi,
+           earcopiado,
+           estenvcodi,
+           earfecha,
+           lastdate,
+           lastuser,
+           earip,
+           usercode,
+           eararchruta,
+           eararchver,
+           eararchtammb,
+           eararchnomb,
+           etacodi,
+           earcodi
+        )
+       values(
+           :emprcodi,
+           :earcopiado,
+           :estenvcodi,
+           :earfecha,
+           :lastdate,
+           :lastuser,
+           :earip,
+           :usercode,
+           :eararchruta,
+           :eararchver,
+           :eararchtammb,
+           :eararchnomb,
+           :etacodi,
+           :earcodi
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update ext_archivo
+       set
+           estenvcodi = :estenvcodi,
+           lastdate = :lastdate
+       where
+           earcodi = :earcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from ext_archivo
+       where
+           earcodi = :earcodi and
+           earcodi = :earcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select maxcount from fw_counter a where tablename = 'EXT_ARCHIVO'
+    </query>
+  </Sql>
+  
+    <Sql>
+    <key>UpdateMaxId</key>
+    <query>
+      update fw_counter set maxcount= {0} where tablename = 'EXT_ARCHIVO'
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           emprcodi,
+           earcopiado,
+           estenvcodi,
+           earfecha,
+           lastdate,
+           lastuser,
+           earip,
+           usercode,
+           eararchruta,
+           eararchver,
+           eararchtammb,
+           eararchnomb,
+           etacodi,
+           earcodi
+
+       from
+           ext_archivo           
+       where
+           earcodi = :earcodi 
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           emprcodi,
+           earcopiado,
+           estenvcodi,
+           earfecha,
+           lastdate,
+           lastuser,
+           earip,
+           usercode,
+           eararchruta,
+           eararchver,
+           eararchtammb,
+           eararchnomb,
+           etacodi,
+           earcodi,
+           emprcodi,
+           earcopiado,
+           estenvcodi,
+           earfecha,
+           lastdate,
+           lastuser,
+           earip,
+           eararchruta,
+           eararchver,
+           eararchtammb,
+           eararchnomb,
+           etacodi,
+           earcodi
+       from
+           ext_archivo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select arch.*,esen.estenvnomb,emp.emprnomb,us.username,us.usertlf,
+      case arch.estenvcodi
+      when 3 then 'Aceptado'
+      when 5 then 'Aceptado'
+      else 'Rechazado' end estado
+      from ext_archivo arch
+      inner join ext_estado_envio esen on esen.estenvcodi = arch.estenvcodi
+      inner join si_empresa emp on emp.emprcodi = arch.emprcodi
+      inner join fw_user us on us.userlogin = arch.lastuser
+      where
+      arch.etacodi = 12 and arch.lastdate >= to_date('{0}','YYYY-MM-DD') AND arch.lastdate
+      &lt;= to_date('{1}','YYYY-MM-DD') and arch.emprcodi = {2} and
+      ( '{3}' = '0' or arch.Estenvcodi in {3})
+      order by arch.earcodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaEnvioPagInterconexion</key>
+    <query>
+      select * from (
+      select arch.*,esen.estenvnomb,emp.emprnomb,us.username,us.usertlf,
+      case arch.estenvcodi 
+      when 3 then 'Aceptado'
+      when 5 then 'Aceptado'
+      else 'Rechazado' end estado,
+      (row_number() over (order by arch.earcodi desc)) as r
+      from ext_archivo arch
+      inner join ext_estado_envio esen on esen.estenvcodi = arch.estenvcodi
+      inner join si_empresa emp on emp.emprcodi = arch.emprcodi
+      inner join fw_user us on us.userlogin = arch.lastuser
+      where
+      arch.etacodi = 12 and arch.lastdate >= to_date('{0}','YYYY-MM-DD') AND arch.lastdate
+      &lt;= to_date('{1}','YYYY-MM-DD') and arch.emprcodi = {2} and
+      ( '{3}' = '0' or arch.Estenvcodi in {3})
+      order by arch.earcodi desc )
+      where r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalEnvioInterconexion</key>
+    <query>
+      select count(*) total
+      from ext_archivo arch
+      inner join ext_estado_envio esen on esen.estenvcodi = arch.estenvcodi
+      inner join si_empresa emp on emp.emprcodi = arch.emprcodi
+      inner join fw_user us on us.userlogin = arch.lastuser
+      where
+      arch.etacodi = 12 and arch.lastdate >= to_date('{0}','YYYY-MM-DD') AND arch.lastdate
+      &lt; to_date('{1}','YYYY-MM-DD') and arch.emprcodi = {2}
+    </query>
+  </Sql>
+</Sqls>

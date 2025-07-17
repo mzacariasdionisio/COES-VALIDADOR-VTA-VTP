@@ -1,0 +1,5094 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+   <Sql>
+		<key>GetMaxId</key>
+		<query>
+			select nvl(max(EPEQUICODI), 0) + 1 from epr_equipo
+		</query>
+   </Sql>
+   <Sql>
+		<key>Update</key>
+		<query>
+			update epr_equipo set
+			EQUICODI = :Equicodi,
+			EPEQUINOMB = :Epequinomb,
+			EPEQUIESTREGISTRO = :Epequiestregistro,
+			EPEQUIUSUMODIFICACION = :Epequiusumodificacion,
+			EPEQUIFECMODIFICACION = sysdate
+			where EPEQUICODI = :Epequicodi
+		</query>
+    </Sql>
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update epr_equipo set
+			EPEQUIESTREGISTRO = :Epequiestregistro,
+			EPEQUIUSUMODIFICACION = :Epequiusumodificacion,
+			EPEQUIFECMODIFICACION = sysdate
+			where EPEQUICODI = :Epequicodi
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>Save</key>
+		<query>
+			insert into epr_equipo(
+			EPEQUICODI,
+			EQUICODI,
+			EPEQUINOMB,
+			EPEQUIESTREGISTRO,
+			EPEQUIUSUCREACION,
+			EPEQUIFECCREACION
+			)
+			values(
+			:Epequicodi,
+			:Equicodi,
+			:Epequinomb,
+			:Epequiestregistro,
+			:Epequiusucreacion,
+			sysdate
+			)
+		</query>
+  </Sql>
+	<Sql>
+		<key>GetById</key>
+		<query>
+			SELECT
+			EPEQUICODI,
+			EQUICODI,
+			EPEQUINOMB,
+			EPEQUIESTREGISTRO,
+			EPEQUIUSUCREACION,
+			EPEQUIFECCREACION,
+			EPEQUIUSUMODIFICACION,
+			EPEQUIFECMODIFICACION,
+			EPEQUIFLAGSEV
+			FROM
+			epr_equipo
+			where EPEQUICODI = :Epequicodi
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListArbol</key>
+		<query>
+			WITH SSEE AS (
+			SELECT -1 AS EQUICODIPADRE,A.AREACODI AS EQUICODI,TRIM(NVL(EA.EPAREANOMB,A.AREANOMB))||'_'||TA.TAREAABREV AS EQUINOMB
+			FROM EQ_AREA A JOIN EPR_AREA EA ON A.AREACODI = EA.AREACODI AND EA.EPAREAESTREGISTRO='1'
+			JOIN EQ_TIPOAREA TA ON A.TAREACODI = TA.TAREACODI
+			WHERE A.ANIVELCODI=0
+			AND (NVL(:AREACODIZONA,0)= 0 OR EA.AREACODIZONA = :AREACODIZONA)
+			AND (TRIM(:UBICACION) IS NULL OR UPPER(NVL(TRIM(EA.EPAREANOMB),A.AREANOMB)) LIKE '%'||UPPER(:UBICACION)||'%')
+			)
+			,CELDAS AS (
+			SELECT A.AREACODI AS EQUICODIPADRE, ER.EQUICODI,NVL(ER.EPEQUINOMB,E.EQUINOMB) AS EQUINOMB
+			FROM EPR_EQUIPO ER JOIN EQ_EQUIPO E ON ER.EQUICODI=E.EQUICODI JOIN EQ_AREA A ON E.AREACODI=A.AREACODI
+			WHERE E.AREACODI>0
+			AND ER.EPEQUIESTREGISTRO='1'
+			AND E.FAMCODI IN (2,3,6)
+			AND E.AREACODI IN (SELECT EQUICODI FROM SSEE)
+			)
+			,
+			RELES AS (
+			SELECT C.EQUICODI AS EQUICODIPADRE,E.EQUICODI,E.EQUINOMB
+			FROM EQ_EQUIPO E JOIN EQ_EQUIREL R ON E.EQUICODI = R.EQUICODI2
+			JOIN EQ_EQUIPO C ON R.EQUICODI1=C.EQUICODI
+			WHERE E.FAMCODI=53
+			AND C.EQUICODI IN (SELECT EQUICODI FROM CELDAS)
+			)
+			,ARBOL AS (
+			SELECT EQUICODIPADRE, EQUICODI,EQUINOMB,1 AS NIVEL FROM SSEE
+			UNION
+			SELECT EQUICODIPADRE, EQUICODI,EQUINOMB,2 AS NIVEL FROM CELDAS
+			UNION
+			SELECT EQUICODIPADRE, EQUICODI,EQUINOMB,3 AS NIVEL FROM RELES
+			)
+			SELECT EQUICODIPADRE,EQUICODI,EQUINOMB,NIVEL  FROM ARBOL
+			WHERE EQUICODI >= 0
+			ORDER BY NIVEL, EQUINOMB
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListCelda</key>
+		<query>
+			SELECT
+			ER.EQUICODI,
+			NVL(ER.EPEQUINOMB,E.EQUINOMB) AS EQUINOMB,
+			E.AREACODI
+			FROM EPR_EQUIPO ER
+			JOIN EQ_EQUIPO E ON ER.EQUICODI=E.EQUICODI
+			WHERE E.AREACODI = :Areacodi
+			AND ER.EPEQUIESTREGISTRO='1'
+			AND E.FAMCODI IN (2,3,6)
+			ORDER BY 2
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListInterruptor</key>
+		<query>
+			SELECT
+			E.EQUICODI,
+			E.EQUINOMB,
+			E.AREACODI
+			FROM EQ_EQUIPO E
+			WHERE E.AREACODI = :Areacodi
+			AND E.FAMCODI = 16
+			ORDER BY E.EQUINOMB
+		</query>
+	</Sql>
+	<Sql>
+		<key>GetIdCelda</key>
+		<query>
+			SELECT
+			ER.EQUICODI,
+			E.EQUINOMB,
+			E.AREACODI
+			FROM EPR_EQUIPO ER
+			JOIN EQ_EQUIPO E ON ER.EQUICODI=E.EQUICODI
+			WHERE E.EQUICODI = :EQUICODI
+			AND ER.EPEQUIESTREGISTRO='1'
+			ORDER BY E.EQUINOMB
+		</query>
+	</Sql>
+	<Sql>
+		<key>SaveRele</key>
+		<query>
+			DECLARE
+			v_id_celda                    NUMBER:= :ID_CELDA;
+			v_id_proyecto                 NUMBER:= :ID_PROYECTO;
+			v_codigo                      VARCHAR2(50) := :CODIGO;
+			v_fecha                       DATE := TO_DATE(:FECHA, 'DD/MM/YYYY');
+			v_id_titular                  NUMBER:= :ID_TITULAR;
+			v_tension                     VARCHAR2(50):= :TENSION;
+			v_id_sistema_rele             VARCHAR2(50):= :ID_SISTEMA_RELE;
+			v_id_marca                    VARCHAR2(50):= :ID_MARCA;
+			v_modelo                      VARCHAR2(50):= :MODELO;
+			v_id_tipo_uso                 VARCHAR2(50):= :ID_TIPO_USO;
+			v_rtc_primario                VARCHAR2(50):= :RTC_PRIMARIO;
+			v_rtc_secundario              VARCHAR2(50):= :RTC_SECUNDARIO;
+			v_rtt_primario                VARCHAR2(50):= :RTT_PRIMARIO;
+			v_rtt_secundario              VARCHAR2(50):= :RTT_SECUNDARIO;
+			v_prot_condinables            VARCHAR2(50):= :PROT_CONDINABLES;
+			v_sincro_check_activo         VARCHAR2(50):= :SINCRO_CHECK_ACTIVO;
+			v_id_interruptor              VARCHAR2(50):= :ID_INTERRUPTOR;
+			v_delta_tension               VARCHAR2(50):= :DELTA_TENSION;
+			v_delta_angulo                VARCHAR2(50):= :DELTA_ANGULO;
+			v_delta_frecuencia            VARCHAR2(50):= :DELTA_FRECUENCIA;
+			v_sobre_c_check_activo        VARCHAR2(50):= :SOBRE_C_CHECK_ACTIVO;
+			v_sobre_c_i                   VARCHAR2(50):= :SOBRE_C_I;
+			v_sobre_t_check_activo        VARCHAR2(50):= :SOBRE_T_CHECK_ACTIVO;
+			v_sobre_t_u                   VARCHAR2(50):= :SOBRE_T_U;
+			v_sobre_t_t                   VARCHAR2(50):= :SOBRE_T_T;
+			v_sobre_t_uu                  VARCHAR2(50):= :SOBRE_T_UU;
+			v_sobre_t_tt                  VARCHAR2(50):= :SOBRE_T_TT;
+			v_pmu_check_activo            VARCHAR2(50):= :PMU_CHECK_ACTIVO;
+			v_pmu_accion                  VARCHAR2(50):= :PMU_ACCION;
+			v_id_interruptor_mando_sincro VARCHAR2(50):= :ID_INTERRUPTOR_MANDO_SINCRO;
+			v_id_mando_sincronizado       VARCHAR2(50):= :ID_MANDO_SINCRONIZADO;
+			v_medida_mitigacion           VARCHAR2(50):= :MEDIDA_MITIGACION;
+			v_rele_tors_impl              VARCHAR2(50):= :RELE_TORS_IMPL;
+			v_rele_pmu_accion             VARCHAR2(50):= :RELE_PMU_ACCION;
+			v_rele_pmu_impl               VARCHAR2(50):= :RELE_PMU_IMPL;
+			v_memoria_calculo			  VARCHAR2(100):= :MEMORIA_CALCULO;
+			v_usuario_auditoria           VARCHAR2(50):= :EPEQUIUSUCREACION;
+
+			v_resultado					  VARCHAR2(1000);
+			BEGIN
+			v_resultado := pkg_protecciones.fn_save_rele(
+			v_id_celda,
+			v_id_proyecto,
+			v_codigo,
+			v_fecha,
+			v_id_titular,
+			v_tension,
+			v_id_sistema_rele,
+			v_id_marca,
+			v_modelo,
+			v_id_tipo_uso,
+			v_rtc_primario,
+			v_rtc_secundario,
+			v_rtt_primario,
+			v_rtt_secundario,
+			v_prot_condinables,
+			v_sincro_check_activo,
+			v_id_interruptor,
+			v_delta_tension,
+			v_delta_angulo,
+			v_delta_frecuencia,
+			v_sobre_c_check_activo,
+			v_sobre_c_i,
+			v_sobre_t_check_activo,
+			v_sobre_t_u,
+			v_sobre_t_t,
+			v_sobre_t_uu,
+			v_sobre_t_tt,
+			v_pmu_check_activo,
+			v_pmu_accion,
+			v_id_interruptor_mando_sincro,
+			v_id_mando_sincronizado,
+			v_medida_mitigacion,
+			v_rele_tors_impl,
+			v_rele_pmu_accion,
+			v_rele_pmu_impl,
+			v_memoria_calculo,
+			v_usuario_auditoria
+			);
+
+			SELECT v_resultado INTO :RESULTADO FROM DUAL;
+
+			END;
+		</query>
+	</Sql>
+	<Sql>
+		<key>UpdateRele</key>
+		<query>
+			DECLARE
+			v_memoria_calculo			  VARCHAR2(100):= :MEMORIA_CALCULO;
+			v_equicodi_rele               NUMBER:= :EQUICODI_RELE;
+			v_id_celda                    NUMBER:= :ID_CELDA;
+			v_id_proyecto                 NUMBER:= :ID_PROYECTO;
+			v_codigo                      VARCHAR2(50) := :CODIGO;
+			v_fecha                       DATE := TO_DATE(:FECHA, 'DD/MM/YYYY');
+			v_id_titular                  NUMBER:= :ID_TITULAR;
+			v_tension                     VARCHAR2(50):= :TENSION;
+			v_id_sistema_rele             VARCHAR2(50):= :ID_SISTEMA_RELE;
+			v_id_marca                    VARCHAR2(50):= :ID_MARCA;
+			v_modelo                      VARCHAR2(50):= :MODELO;
+			v_id_tipo_uso                 VARCHAR2(50):= :ID_TIPO_USO;
+			v_rtc_primario                VARCHAR2(50):= :RTC_PRIMARIO;
+			v_rtc_secundario              VARCHAR2(50):= :RTC_SECUNDARIO;
+			v_rtt_primario                VARCHAR2(50):= :RTT_PRIMARIO;
+			v_rtt_secundario              VARCHAR2(50):= :RTT_SECUNDARIO;
+			v_prot_condinables            VARCHAR2(50):= :PROT_CONDINABLES;
+			v_sincro_check_activo         VARCHAR2(50):= :SINCRO_CHECK_ACTIVO;
+			v_id_interruptor              VARCHAR2(50):= :ID_INTERRUPTOR;
+			v_delta_tension               VARCHAR2(50):= :DELTA_TENSION;
+			v_delta_angulo                VARCHAR2(50):= :DELTA_ANGULO;
+			v_delta_frecuencia            VARCHAR2(50):= :DELTA_FRECUENCIA;
+			v_sobre_c_check_activo        VARCHAR2(50):= :SOBRE_C_CHECK_ACTIVO;
+			v_sobre_c_i                   VARCHAR2(50):= :SOBRE_C_I;
+			v_sobre_t_check_activo        VARCHAR2(50):= :SOBRE_T_CHECK_ACTIVO;
+			v_sobre_t_u                   VARCHAR2(50):= :SOBRE_T_U;
+			v_sobre_t_t                   VARCHAR2(50):= :SOBRE_T_T;
+			v_sobre_t_uu                  VARCHAR2(50):= :SOBRE_T_UU;
+			v_sobre_t_tt                  VARCHAR2(50):= :SOBRE_T_TT;
+			v_pmu_check_activo            VARCHAR2(50):= :PMU_CHECK_ACTIVO;
+			v_pmu_accion                  VARCHAR2(50):= :PMU_ACCION;
+			v_id_interruptor_mando_sincro VARCHAR2(50):= :ID_INTERRUPTOR_MANDO_SINCRO;
+			v_id_mando_sincronizado       VARCHAR2(50):= :ID_MANDO_SINCRONIZADO;
+			v_medida_mitigacion           VARCHAR2(50):= :MEDIDA_MITIGACION;
+			v_rele_tors_impl              VARCHAR2(50):= :RELE_TORS_IMPL;
+			v_rele_pmu_accion             VARCHAR2(50):= :RELE_PMU_ACCION;
+			v_rele_pmu_impl               VARCHAR2(50):= :RELE_PMU_IMPL;
+			v_usuario_auditoria           VARCHAR2(50):= :EPEQUIUSUCREACION;
+
+			v_resultado					  VARCHAR2(1000);
+			BEGIN
+			v_resultado := pkg_protecciones.fn_update_rele(
+			v_equicodi_rele,
+			v_id_celda,
+			v_id_proyecto,
+			v_codigo,
+			v_fecha,
+			v_id_titular,
+			v_tension,
+			v_id_sistema_rele,
+			v_id_marca,
+			v_modelo,
+			v_id_tipo_uso,
+			v_rtc_primario,
+			v_rtc_secundario,
+			v_rtt_primario,
+			v_rtt_secundario,
+			v_prot_condinables,
+			v_sincro_check_activo,
+			v_id_interruptor,
+			v_delta_tension,
+			v_delta_angulo,
+			v_delta_frecuencia,
+			v_sobre_c_check_activo,
+			v_sobre_c_i,
+			v_sobre_t_check_activo,
+			v_sobre_t_u,
+			v_sobre_t_t,
+			v_sobre_t_uu,
+			v_sobre_t_tt,
+			v_pmu_check_activo,
+			v_pmu_accion,
+			v_id_interruptor_mando_sincro,
+			v_id_mando_sincronizado,
+			v_medida_mitigacion,
+			v_rele_tors_impl,
+			v_rele_pmu_accion,
+			v_rele_pmu_impl,
+			v_memoria_calculo,
+			v_usuario_auditoria
+			);
+
+			SELECT v_resultado INTO :RESULTADO FROM DUAL;
+			END;
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListEquipoProtGrilla</key>
+		<query>
+			WITH eq_celda as (SELECT equicodi2 as equicodi,max(equicodi1) as id_celda
+			FROM eq_equirel r
+			WHERE tiporelcodi = 29
+			group by equicodi2
+			)
+			,equipo AS (
+			SELECT eq.*
+			,ec.id_celda AS id_celda
+			,nvl(ep.epequinomb,ce.equinomb) as nomb_celda
+			,nvl(ar.epareanomb,a.areanomb) as nomb_subestacion
+			FROM
+			eq_equipo eq join eq_celda ec on eq.equicodi = ec.equicodi
+			join eq_equipo ce on ec.id_celda = ce.equicodi
+			join epr_equipo ep on ec.id_celda = ep.equicodi and ep.epequiestregistro='1'
+			join epr_area ar on ce.areacodi = ar.areacodi and ar.epareaestregistro='1'
+			join eq_area a on ar.areacodi = a.areacodi
+			WHERE eq.famcodi = 53
+			and (NVL(:ID_AREA,0)=0 OR ar.areacodizona = :ID_AREA)
+			and (trim(:NOMB_SUBESTACION) is null OR upper(a.areanomb) like upper('%'||:NOMB_SUBESTACION||'%') )
+			and (trim(:CELDA) is null or nvl(ep.epequinomb,ce.equinomb) like '%'||upper(:CELDA)||'%')
+			and (trim(:RELE) is null or eq.equinomb like '%'||upper(:RELE)||'%')
+			and (nvl(:NIVEL,0)=0 or case
+			when :NIVEL = 1 and ar.areacodi = :EQUICODI then 1
+			when :NIVEL = 2 and ce.equicodi = :EQUICODI then 1
+			when :NIVEL = 3 and eq.equicodi = :EQUICODI then 1
+			else 0 end = 1)
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN ( 3301 AS tension, 3302 AS modelo, 3303 AS id_marca, 3304 AS estado, 3305 AS id_sistema_rele
+			, 3306 AS id_tipo_uso, 3330 AS memoria_calculo )
+			)
+			)
+			SELECT
+			e.equicodi AS EQUICODI,
+			e.equinomb AS EQUINOMB,
+			e.nomb_subestacion|| '/'|| e.nomb_celda AS CELDA,
+			p.tension AS TENSION,
+			ts.eqcatddescripcion AS SISTEMA,
+			ma.eqcatddescripcion AS MARCA,
+			p.modelo AS MODELO,
+			tu.eqcatddescripcion AS TIPOUSO,
+			es.eqcatddescripcion AS ESTADO,
+			case when id_tipo_uso = '101' then p.memoria_calculo end memoria_calculo
+			FROM
+			eq_propiedad p
+			JOIN equipo                e ON p.equicodi = e.equicodi
+			LEFT JOIN eq_prop_catalogo_data ts ON to_number(p.id_sistema_rele default 0 on conversion error) = ts.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data ma ON to_number(p.id_marca default 0 on conversion error) = ma.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data tu ON to_number(p.id_tipo_uso default 0 on conversion error) = tu.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data es ON to_number(p.estado default 0 on conversion error) = es.eqcatdcodi
+		</query>
+	</Sql>
+	<Sql>
+		<key>ReporteEquipoProtGrilla</key>
+		<query>
+			WITH eq_celda as (SELECT equicodi2 as equicodi,max(equicodi1) as id_celda
+			FROM eq_equirel r
+			WHERE tiporelcodi = 29
+			group by equicodi2
+			)
+			,equipo AS (
+			SELECT eq.*
+			,ec.id_celda AS id_celda
+			,nvl(ep.epequinomb,ce.equinomb) as nomb_celda
+			,nvl(ar.epareanomb,a.areanomb) as nomb_subestacion
+			FROM
+			eq_equipo eq join eq_celda ec on eq.equicodi = ec.equicodi
+			join eq_equipo ce on ec.id_celda = ce.equicodi
+			join epr_equipo ep on ec.id_celda = ep.equicodi and ep.epequiestregistro='1'
+			join epr_area ar on ce.areacodi = ar.areacodi and ar.epareaestregistro='1'
+			join eq_area a on ar.areacodi = a.areacodi
+			WHERE eq.famcodi = 53
+			and (NVL(:ID_AREA,0)=0 OR ar.areacodizona = :ID_AREA)
+			and (trim(:NOMB_SUBESTACION) is null OR upper(a.areanomb) like upper('%'||:NOMB_SUBESTACION||'%') )
+			and (trim(:CELDA) is null or nvl(ep.epequinomb,ce.equinomb) like '%'||upper(:CELDA)||'%')
+			and (trim(:RELE) is null or eq.equinomb like '%'||upper(:RELE)||'%')
+			and (nvl(:NIVEL,0)=0 or case
+			when :NIVEL = 1 and ar.areacodi = :EQUICODI then 1
+			when :NIVEL = 2 and ce.equicodi = :EQUICODI then 1
+			when :NIVEL = 3 and eq.equicodi = :EQUICODI then 1
+			else 0 end = 1)
+			)
+			, proy_creador_rele AS (
+			SELECT
+			p.equicodi
+			,MAX(p.fechapropequi) AS fechapropequi
+			,MAX(pa.epproynemotecnico) AS proyecto
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi and p.propcodi = 3300 AND p.propequideleted=0
+			LEFT JOIN epr_proyecto_acteqp pa on p.epproycodi = pa.epproycodi
+			GROUP BY
+			p.equicodi
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			, ult_fecha_act_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			ult_fecha_prop p
+			GROUP BY
+			p.equicodi
+			)
+			, ult_proy_act_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.epproycodi) AS epproycodi
+			FROM
+			eq_propequi p join ult_fecha_act_equipo ufa on p.equicodi = ufa.equicodi and p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 AS tension,
+			3302 AS modelo,
+			3303 AS id_marca,
+			3304 AS estado,
+			3305 AS id_sistema_rele,
+			3306 AS id_tipo_uso,
+			3307 AS rtc_primario,
+			3308 AS rtc_secundario,
+			3309 AS rtt_primario,
+			3310 AS rtt_secundario,
+			3311 AS prot_condinables,
+			3312 AS sincro_check_activo,
+			3313 AS id_interruptor_,
+			3314 AS delta_tension,
+			3315 AS delta_angulo,
+			3316 AS delta_frecuencia,
+			3317 AS sobre_t_check_activo,
+			3318 AS sobre_t_u,
+			3319 AS sobre_t_t,
+			3320 AS sobre_t_uu,
+			3321 AS sobre_t_tt,
+			3322 AS sobre_c_check_activo,
+			3323 AS sobre_c_i,
+			3324 AS pmu_check_activo,
+			3325 AS pmu_accion_,
+			3326 AS id_mando_sincronizado,
+			3327 AS medida_mitigacion,
+			3328 AS rele_tors_impl,
+			3329 AS rele_pmu_impl,
+			3330 AS memoria_calculo,
+			3300 AS fecha_creacion
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS EQUICODI
+			,e.equinomb AS EQUINOMB
+			,e.nomb_subestacion|| '/'|| e.nomb_celda AS CELDA
+			,p.tension AS TENSION
+			,ts.eqcatddescripcion AS SISTEMA
+			,ma.eqcatddescripcion AS MARCA
+			,p.modelo AS MODELO
+			,tu.eqcatddescripcion AS TIPOUSO
+			,es.eqcatddescripcion AS ESTADO
+
+			,case when id_tipo_uso = '101' then p.rtc_primario end rtc_primario
+			,case when id_tipo_uso = '101' then p.rtc_secundario end rtc_secundario
+			,case when id_tipo_uso = '101' then p.rtt_primario end rtt_primario
+			,case when id_tipo_uso = '101' then p.rtt_secundario end rtt_secundario
+			,case when id_tipo_uso = '101' then p.prot_condinables end prot_condinables
+
+			,case when id_tipo_uso = '101' then decode(upper(p.sincro_check_activo),'S','Si','N','No','') end sincro_check_activo
+			,case when id_tipo_uso = '101' then inte.equinomb end as id_interruptor
+			,case when id_tipo_uso = '101' then p.delta_tension end delta_tension
+			,case when id_tipo_uso = '101' then p.delta_angulo end delta_angulo
+			,case when id_tipo_uso = '101' then p.delta_frecuencia end delta_frecuencia
+			,case when id_tipo_uso = '101' then decode(upper(p.sobre_t_check_activo),'S','Si','N','No','') end sobre_t_check_activo
+			,case when id_tipo_uso = '101' then p.sobre_t_u end sobre_t_u
+			,case when id_tipo_uso = '101' then p.sobre_t_t end sobre_t_t
+			,case when id_tipo_uso = '101' then p.sobre_t_uu end sobre_t_uu
+			,case when id_tipo_uso = '101' then p.sobre_t_tt end sobre_t_tt
+			,case when id_tipo_uso = '101' then decode(upper(p.sobre_c_check_activo),'S','Si','N','No','') end sobre_c_check_activo
+			,case when id_tipo_uso = '101' then p.sobre_c_i end sobre_c_i
+			,case when id_tipo_uso = '101' then decode(upper(p.pmu_check_activo),'S','Si','N','No','') end pmu_check_activo
+			,case when p.id_tipo_uso = '101' then p.pmu_accion_ end as pmu_accion
+			,case when p.id_tipo_uso = '102' then inte.equinomb end as id_interruptor_mando_sincro
+			,case when id_tipo_uso = '102' then ms.eqcatddescripcion end id_mando_sincronizado
+			,case when id_tipo_uso = '103' then p.medida_mitigacion end medida_mitigacion
+			,case when id_tipo_uso = '103' then decode(upper(p.rele_tors_impl),'S','Si','N','No','') end rele_tors_impl
+			,case when id_tipo_uso = '104' then pmu_accion_ end as rele_pmu_accion
+			,case when id_tipo_uso = '104' then decode(upper(p.rele_pmu_impl),'S','Si','N','No','') end rele_pmu_impl
+			,case when id_tipo_uso = '101' then p.memoria_calculo end memoria_calculo
+			,pcr.proyecto as PROYECTO_CREADOR
+			,to_char(pcr.fechapropequi,'DD/MM/YYYY') as fecha_creacionstr
+			,upad.epproynemotecnico as PROYECTO_ACTUALIZADOR
+			,to_char(ufa.fechapropequi,'DD/MM/YYYY') as fecha_modificacionstr
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN proy_creador_rele pcr on p.equicodi = pcr.equicodi
+			LEFT JOIN ult_fecha_act_equipo ufa on p.equicodi = ufa.equicodi
+			LEFT JOIN ult_proy_act_equipo upa on p.equicodi = upa.equicodi
+			LEFT JOIN epr_proyecto_acteqp upad on upa.epproycodi = upad.epproycodi
+			LEFT JOIN eq_prop_catalogo_data ts ON to_number(p.id_sistema_rele default 0 on conversion error) = ts.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data ma ON to_number(p.id_marca default 0 on conversion error) = ma.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data tu ON to_number(p.id_tipo_uso default 0 on conversion error) = tu.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data es ON to_number(p.estado default 0 on conversion error) = es.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data ms ON to_number(p.id_mando_sincronizado default 0 on conversion error) = ms.eqcatdcodi
+			LEFT JOIN eq_equipo inte ON to_number(p.id_interruptor_ default 0 on conversion error) = inte.equicodi
+		</query>
+	</Sql>
+	<Sql>
+		<key>ArchivoZipHistarialCambio</key>
+		<query>
+			WITH eq_celda as (SELECT r.equicodi2 as equicodi,max(r.equicodi1) as id_celda
+			FROM eq_equirel r
+			WHERE r.tiporelcodi = 29
+			group by r.equicodi2
+			)
+			,equipo AS (
+			SELECT eq.*
+			,ec.id_celda AS id_celda
+			,nvl(ep.epequinomb,ce.equinomb) as nomb_celda
+			,nvl(ar.epareanomb,a.areanomb) as nomb_subestacion
+			,ta.tareaabrev as tipo_subestacion
+			,zo.areanomb as zona
+			FROM eq_equipo eq
+			join eq_celda ec on eq.equicodi = ec.equicodi
+			join eq_equipo ce on ec.id_celda = ce.equicodi
+			join epr_equipo ep on ec.id_celda = ep.equicodi and ep.epequiestregistro='1'
+			join epr_area ar on ce.areacodi = ar.areacodi and ar.epareaestregistro='1'
+			join eq_area a on ar.areacodi = a.areacodi
+			join eq_tipoarea ta on a.tareacodi = ta.tareacodi
+			join eq_area zo on ar.areacodizona = zo.areacodi
+			WHERE eq.famcodi = 53
+			AND ( nvl(:id_subestacion, 0) = 0 OR ce.areacodi = :id_subestacion )
+			AND ( nvl(:id_area, 0) = 0 OR ar.areacodizona = :id_area )
+			)
+			,ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p join equipo e on p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE p.propcodi in (3306,3330,3304)
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,propiedad_eq AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3304 AS id_estado,
+			3306 AS id_tipo_uso,
+			3330 AS memoria_calculo
+			)
+			)
+			)
+			,
+			ult_fec_subestacion as (
+			select areacodi,max(epsubefecha) as epsubefecha from epr_subestacion where epsubeestregistro='1' group by areacodi
+			)
+			,mc_subestacion as (
+			select distinct zon.areanomb as zona
+			,nvl(ea.epareanomb,sub.areanomb) as nomb_subestacion
+			,ta.tareaabrev as tipo_subestacion
+			,eps.epsubememoriacalculo as memoria_calculo
+			from ult_fec_subestacion uf
+			join epr_subestacion eps on uf.areacodi = eps.areacodi and uf.epsubefecha = eps.epsubefecha and eps.epsubeestregistro='1'
+			join epr_area ea on eps.areacodi = ea.areacodi
+			join eq_area sub on eps.areacodi = sub.areacodi
+			join eq_tipoarea ta on sub.tareacodi = ta.tareacodi
+			join eq_area zon on ea.areacodizona = zon.areacodi
+			where eps.epsubememoriacalculo is not null and eps.epsubeestregistro='1'
+			AND ( nvl(:id_subestacion, 0) = 0 OR ea.areacodi = :id_subestacion )
+			AND ( nvl(:id_area, 0) = 0 OR ea.areacodizona = :id_area )
+			)
+			SELECT
+			'Zona '||INITCAP(e.zona) as Zona
+			,e.nomb_subestacion|| '_'|| replace(e.tipo_subestacion,'.','') AS Subestacion
+			,e.nomb_celda as Celda
+			,replace(e.tipo_subestacion,'.','')||'_'||e.nomb_subestacion||'_'||e.nomb_celda||'_'||e.equinomb||case when instr(p.memoria_calculo,'.',-1)>0 then substr(p.memoria_calculo,instr(p.memoria_calculo,'.',-1),100)  end
+
+			AS NombreArchivo
+			,case when id_tipo_uso = 101 then p.memoria_calculo end memoria_calculo
+			,'CE' as Tipo
+			FROM propiedad_eq p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			WHERE p.memoria_calculo is not null
+			and p.id_estado in ('11','12')
+			union all
+			SELECT
+			'Zona '||INITCAP(e.zona) as Zona
+			,e.nomb_subestacion|| '_'|| replace(e.tipo_subestacion,'.','') AS Subestacion
+			,'Sobrecorriente' as Celda
+			,'Sobrecorriente_'||e.nomb_subestacion|| '_'|| replace(e.tipo_subestacion,'.','')||case when instr(e.memoria_calculo,'.',-1)>0 then substr(e.memoria_calculo,instr(e.memoria_calculo,'.',-1),100)  end AS NombreArchivo
+			,e.memoria_calculo
+			,'SE' as Tipo
+			FROM mc_subestacion e
+		</query>
+	</Sql>
+	<Sql>
+		<key>ReporteEquipoProtGrillaProyecto</key>
+		<query>
+			WITH ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			WHERE p.epproycodi = :epproycodi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 AS tension,
+			3302 AS modelo,
+			3303 AS id_marca,
+			3304 AS estado,
+			3305 AS id_sistema_rele,
+			3306 AS id_tipo_uso,
+			3307 AS rtc_primario,
+			3308 AS rtc_secundario,
+			3309 AS rtt_primario,
+			3310 AS rtt_secundario,
+			3311 AS prot_condinables,
+			3312 AS sincro_check_activo,
+			3313 AS id_interruptor_,
+			3314 AS delta_tension,
+			3315 AS delta_angulo,
+			3316 AS delta_frecuencia,
+			3317 AS sobre_t_check_activo,
+			3318 AS sobre_t_u,
+			3319 AS sobre_t_t,
+			3320 AS sobre_t_uu,
+			3321 AS sobre_t_tt,
+			3322 AS sobre_c_check_activo,
+			3323 AS sobre_c_i,
+			3324 AS pmu_check_activo,
+			3325 AS pmu_accion_,
+			3326 AS id_mando_sincronizado,
+			3327 AS medida_mitigacion,
+			3328 AS rele_tors_impl,
+			3329 AS rele_pmu_impl,
+			3330 AS memoria_calculo,
+			3300 AS fecha_creacion
+			)
+			)
+			)
+			,eq_celda as (SELECT r.equicodi2 as equicodi,max(r.equicodi1) as id_celda
+			FROM eq_equirel r join eq_propiedad ep on r.equicodi2 = ep.equicodi
+			WHERE r.tiporelcodi = 29
+			group by r.equicodi2
+			)
+			,equipo AS (
+			SELECT eq.*
+			,ec.id_celda AS id_celda
+			,nvl(ep.epequinomb,ce.equinomb) as nomb_celda
+			,nvl(ar.epareanomb,a.areanomb) as nomb_subestacion
+			FROM
+			eq_equipo eq join eq_propiedad ep on eq.equicodi = ep.equicodi
+			join eq_celda ec on eq.equicodi = ec.equicodi
+			join eq_equipo ce on ec.id_celda = ce.equicodi
+			join epr_equipo ep on ec.id_celda = ep.equicodi and ep.epequiestregistro='1'
+			join epr_area ar on ce.areacodi = ar.areacodi and ar.epareaestregistro='1'
+			join eq_area a on ar.areacodi = a.areacodi
+			WHERE eq.famcodi = 53
+			)
+			SELECT
+			e.equicodi AS EQUICODI
+			,e.equinomb AS EQUINOMB
+			,e.nomb_subestacion|| '/'|| e.nomb_celda AS CELDA
+			,p.tension AS TENSION
+			,ts.eqcatddescripcion AS SISTEMA
+			,ma.eqcatddescripcion AS MARCA
+			,p.modelo AS MODELO
+			,tu.eqcatddescripcion AS TIPOUSO
+			,es.eqcatddescripcion AS ESTADO
+
+			,case when id_tipo_uso = '101' then p.rtc_primario end rtc_primario
+			,case when id_tipo_uso = '101' then p.rtc_secundario end rtc_secundario
+			,case when id_tipo_uso = '101' then p.rtt_primario end rtt_primario
+			,case when id_tipo_uso = '101' then p.rtt_secundario end rtt_secundario
+			,case when id_tipo_uso = '101' then p.prot_condinables end prot_condinables
+
+			,case when id_tipo_uso = '101' then decode(upper(p.sincro_check_activo),'S','Si','N','No','') end sincro_check_activo
+			,case when id_tipo_uso = '101' then inte.equinomb end as id_interruptor
+			,case when id_tipo_uso = '101' then p.delta_tension end delta_tension
+			,case when id_tipo_uso = '101' then p.delta_angulo end delta_angulo
+			,case when id_tipo_uso = '101' then p.delta_frecuencia end delta_frecuencia
+			,case when id_tipo_uso = '101' then decode(upper(p.sobre_t_check_activo),'S','Si','N','No','') end sobre_t_check_activo
+			,case when id_tipo_uso = '101' then p.sobre_t_u end sobre_t_u
+			,case when id_tipo_uso = '101' then p.sobre_t_t end sobre_t_t
+			,case when id_tipo_uso = '101' then p.sobre_t_uu end sobre_t_uu
+			,case when id_tipo_uso = '101' then p.sobre_t_tt end sobre_t_tt
+			,case when id_tipo_uso = '101' then decode(upper(p.sobre_c_check_activo),'S','Si','N','No','') end sobre_c_check_activo
+			,case when id_tipo_uso = '101' then p.sobre_c_i end sobre_c_i
+			,case when id_tipo_uso = '101' then decode(upper(p.pmu_check_activo),'S','Si','N','No','') end pmu_check_activo
+			,case when p.id_tipo_uso = '101' then p.pmu_accion_ end as pmu_accion
+			,case when p.id_tipo_uso = '102' then inte.equinomb end as id_interruptor_mando_sincro
+			,case when id_tipo_uso = '102' then ms.eqcatddescripcion end id_mando_sincronizado
+			,case when id_tipo_uso = '103' then p.medida_mitigacion end medida_mitigacion
+			,case when id_tipo_uso = '103' then decode(upper(p.rele_tors_impl),'S','Si','N','No','') end rele_tors_impl
+			,case when id_tipo_uso = '104' then pmu_accion_ end as rele_pmu_accion
+			,case when id_tipo_uso = '104' then decode(upper(p.rele_pmu_impl),'S','Si','N','No','') end rele_pmu_impl
+			,case when id_tipo_uso = '101' then p.memoria_calculo end memoria_calculo
+			,case when p.fecha_creacion is not null then 'CREADO' else 'Actualizado' end as accion
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN eq_prop_catalogo_data ts ON to_number(p.id_sistema_rele default 0 on conversion error) = ts.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data ma ON to_number(p.id_marca default 0 on conversion error) = ma.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data tu ON to_number(p.id_tipo_uso default 0 on conversion error) = tu.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data es ON to_number(p.estado default 0 on conversion error) = es.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data ms ON to_number(p.id_mando_sincronizado default 0 on conversion error) = ms.eqcatdcodi
+			LEFT JOIN eq_equipo inte ON to_number(p.id_interruptor_ default 0 on conversion error) = inte.equicodi
+			ORDER BY 3,2
+		</query>
+	</Sql>
+	<Sql>
+		<key>GetByIdEquipoProtec</key>
+		<query>
+			WITH ult_fecha_prop AS (
+			SELECT equicodi, propcodi,MAX(fechapropequi) AS fechapropequi
+			FROM eq_propequi
+			WHERE equicodi = :v_equicodi
+			AND propequideleted=0
+			GROUP BY equicodi,propcodi
+			)
+			,data_prop AS (
+			SELECT pe.equicodi,pe.propcodi,pe.valor,pe.epproycodi,pe.fechapropequi
+			FROM eq_propequi pe JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			ORDER BY pe.fechapropequi desc,propcodi
+			)
+			,ult_proy_fecha_eq AS (
+			SELECT equicodi,epproycodi,fechapropequi
+			FROM data_prop
+			WHERE rownum&lt;2
+			)
+			,eq_propiedad AS (
+			SELECT *
+			FROM (SELECT equicodi,propcodi,valor
+			FROM data_prop) PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN ( 3301 AS tension, 3302 AS modelo, 3303 AS id_marca, 3304 AS estado, 3305 AS id_sistema_rele
+			, 3306 AS id_tipo_uso, 3307 AS rtc_primario, 3308 AS rtc_secundario, 3309 AS rtt_primario
+			, 3310 AS rtt_secundario, 3311 AS prot_condinables, 3312 AS sincro_check_activo, 3313 AS id_interruptor_
+			, 3314 AS delta_tension, 3315 AS delta_angulo, 3316 AS delta_frecuencia, 3317 AS sobre_t_check_activo
+			, 3318 AS sobre_t_u, 3319 AS sobre_t_t, 3320 AS sobre_t_uu, 3321 AS sobre_t_tt, 3322 AS sobre_c_check_activo
+			, 3323 AS sobre_c_i, 3324 AS pmu_check_activo, 3325 AS pmu_accion_, 3326 AS id_mando_sincronizado
+			, 3327 AS medida_mitigacion, 3328 AS rele_tors_impl, 3329 AS rele_pmu_impl
+			, 3330 AS memoria_calculo
+			)
+			)
+			)
+			SELECT
+			(SELECT MAX(equicodi1) FROM eq_equirel WHERE equicodi2 = p.equicodi AND tiporelcodi = 29) AS id_celda
+			,up.epproycodi as id_proyecto
+			,e.equicodi
+			,e.equinomb AS codigo
+			,up.fechapropequi as fecha
+			,e.emprcodi AS id_titular
+			,p.tension
+			,p.id_sistema_rele
+			,p.id_marca
+			,p.modelo
+			,p.id_tipo_uso
+			,case when p.id_tipo_uso = '101' then p.rtc_primario end as rtc_primario
+			,case when p.id_tipo_uso = '101' then p.rtc_secundario end as rtc_secundario
+			,case when p.id_tipo_uso = '101' then p.rtt_primario end as rtt_primario
+			,case when p.id_tipo_uso = '101' then p.rtt_secundario end as rtt_secundario
+			,case when p.id_tipo_uso = '101' then p.prot_condinables end as prot_condinables
+			,case when p.id_tipo_uso = '101' then p.sincro_check_activo end as sincro_check_activo
+			,case when id_tipo_uso = '101' then id_interruptor_ end as id_interruptor
+			,case when p.id_tipo_uso = '101' then p.delta_tension end as delta_tension
+			,case when p.id_tipo_uso = '101' then p.delta_angulo end as delta_angulo
+			,case when p.id_tipo_uso = '101' then p.delta_frecuencia end as delta_frecuencia
+			,case when p.id_tipo_uso = '101' then p.sobre_c_check_activo end as sobre_c_check_activo
+			,case when p.id_tipo_uso = '101' then p.sobre_c_i end as sobre_c_i
+			,case when p.id_tipo_uso = '101' then p.sobre_t_check_activo end as sobre_t_check_activo
+			,case when p.id_tipo_uso = '101' then p.sobre_t_u end as sobre_t_u
+			,case when p.id_tipo_uso = '101' then p.sobre_t_t end as sobre_t_t
+			,case when p.id_tipo_uso = '101' then p.sobre_t_uu end as sobre_t_uu
+			,case when p.id_tipo_uso = '101' then p.sobre_t_tt end as sobre_t_tt
+			,case when p.id_tipo_uso = '101' then p.pmu_check_activo end as pmu_check_activo
+			,case when p.id_tipo_uso = '101' then p.pmu_accion_ end as pmu_accion
+			,case when p.id_tipo_uso = '102' then p.id_interruptor_ end as id_interruptor_mando_sincro
+			,case when p.id_tipo_uso = '102' then p.id_mando_sincronizado end as id_mando_sincronizado
+			,case when p.id_tipo_uso = '103' then p.medida_mitigacion end as medida_mitigacion
+			,case when p.id_tipo_uso = '103' then p.rele_tors_impl end as rele_tors_impl
+			,case when id_tipo_uso = '104' then pmu_accion_ end as rele_pmu_accion
+			,case when p.id_tipo_uso = '104' then p.rele_pmu_impl end as rele_pmu_impl
+			,p.estado
+			,case when p.id_tipo_uso = '101' then p.memoria_calculo end as memoria_calculo
+			FROM eq_propiedad p JOIN eq_equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN ult_proy_fecha_eq up on e.equicodi = up.equicodi
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListLineaTiempo</key>
+		<query>
+			WITH DATA AS (
+			SELECT FECHAPROPEQUI AS FECHA, EPPROYNEMOTECNICO AS PROYECTONOMB
+			,EPPROYNOMB AS PROYECTODESC
+			,ES.EQCATDABREV AS ESTADO
+			,PP.PROPEQUICOMENTARIO AS MOTIVO
+			FROM EQ_PROPEQUI PP LEFT JOIN EPR_PROYECTO_ACTEQP PR ON PP.EPPROYCODI = PR.EPPROYCODI
+			LEFT JOIN EQ_PROP_CATALOGO_DATA ES ON PP.VALOR = ''||ES.EQCATDCODI
+			WHERE PP.EQUICODI= :equicodi
+			AND PP.PROPCODI= 3304
+			AND PP.VALOR IS NOT NULL
+			AND PP.propequideleted=0
+			UNION
+			SELECT FECHAPROPEQUI AS FECHA, EPPROYNEMOTECNICO AS PROYECTONOMB
+			,EPPROYNOMB AS PROYECTODESC
+			,NULL AS ESTADO
+			,NULL AS MOTIVO
+			FROM EQ_PROPEQUI PP LEFT JOIN EPR_PROYECTO_ACTEQP PR ON PP.EPPROYCODI = PR.EPPROYCODI
+			WHERE PP.EQUICODI= :equicodi
+			AND PP.PROPCODI != 3304
+			AND PP.VALOR IS NOT NULL
+			AND PP.propequideleted=0
+			)
+			,EVENTOS AS (
+			SELECT FECHA,PROYECTONOMB,PROYECTODESC,MIN(NVL(ESTADO,'X')) AS ESTADO
+			,MAX(MOTIVO) AS MOTIVO
+			FROM DATA D
+			GROUP BY FECHA,PROYECTONOMB,PROYECTODESC
+			ORDER BY D.FECHA DESC
+			)
+			,ULT_ACTIVO AS (
+			SELECT MAX(FECHA) AS ULT_FECHA_ACTIVO FROM EVENTOS WHERE ESTADO ='A'
+			)
+			,ULT_EVENTO AS (
+			SELECT ESTADO AS ULT_ESTADO FROM EVENTOS WHERE ESTADO != 'X' AND ROWNUM = 1
+			)
+			,EVENTOS_REV AS (
+			SELECT E.FECHA,E.PROYECTONOMB,E.PROYECTODESC,CASE WHEN ROWNUM =1 THEN U.ULT_ESTADO ELSE E.ESTADO END AS ESTADO
+			,MOTIVO
+			FROM EVENTOS E, ULT_EVENTO U
+			)
+			SELECT TO_CHAR(FECHA,'DD/MM/YYYY') AS FECHA,PROYECTONOMB,PROYECTODESC||CASE WHEN MOTIVO IS NOT NULL THEN '| Motivo: ' END||TRIM(MOTIVO) AS PROYECTODESC
+			,CASE WHEN ULT_ESTADO = 'P' THEN
+			CASE WHEN ESTADO='A' AND FECHA = ULT_FECHA_ACTIVO THEN 'A'
+			WHEN ESTADO != 'A' AND ROWNUM=1 THEN ESTADO
+			ELSE 'X'
+			END
+			WHEN ULT_ESTADO = 'A' THEN
+			CASE WHEN ROWNUM = 1 THEN 'A'
+			ELSE 'X'
+			END
+			WHEN ULT_ESTADO = 'B' THEN
+			CASE WHEN ROWNUM = 1 THEN 'B'
+			ELSE 'X'
+			END
+			END AS ESTADO
+			FROM EVENTOS_REV D,ULT_ACTIVO UA,ULT_EVENTO UE
+			ORDER BY D.FECHA DESC
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListEquipamientoModificado</key>
+		<query>
+			WITH ult_fecha_prop AS (
+			SELECT p.equicodi, p.propcodi,MAX(p.fechapropequi) AS fechapropequi
+			FROM eq_propequi p join eq_equipo e on p.equicodi = e.equicodi AND p.propequideleted=0
+			WHERE p.epproycodi = :epproycodi
+			and e.famcodi = 53
+			GROUP BY p.equicodi,p.propcodi
+			)
+			,data_prop AS (
+			SELECT pe.equicodi,pe.propcodi,pe.valor
+			FROM eq_propequi pe JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			ORDER BY pe.fechapropequi desc,propcodi
+			)
+			,eq_celda as (SELECT equicodi2 as equicodi,max(equicodi1) as id_celda
+			FROM eq_equirel r
+			WHERE tiporelcodi = 29
+			and equicodi2 in (SELECT equicodi from data_prop)
+			group by equicodi2
+			)
+			,eq_propiedad AS (
+			SELECT *
+			FROM data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN ( 3301 AS tension, 3302 AS modelo, 3303 AS id_marca, 3304 AS estado, 3305 AS id_sistema_rele
+			, 3306 AS id_tipo_uso, 3307 AS rtc_primario, 3308 AS rtc_secundario, 3309 AS rtt_primario
+			, 3310 AS rtt_secundario, 3311 AS prot_condinables, 3312 AS sincro_check_activo, 3313 AS id_interruptor_
+			, 3314 AS delta_tension, 3315 AS delta_angulo, 3316 AS delta_frecuencia, 3317 AS sobre_t_check_activo
+			, 3318 AS sobre_t_u, 3319 AS sobre_t_t, 3320 AS sobre_t_uu, 3321 AS sobre_t_tt, 3322 AS sobre_c_check_activo
+			, 3323 AS sobre_c_i, 3324 AS pmu_check_activo, 3325 AS pmu_accion_, 3326 AS id_mando_sincronizado
+			, 3327 AS medida_mitigacion, 3328 AS rele_tors_impl, 3329 AS rele_pmu_impl
+			, 3330 AS memoria_calculo
+			, 3300 AS fecha_creacion
+			)
+			)
+			)
+			SELECT
+			ta.tareaabrev||' '||ar.areanomb as subestacion
+			,cel.equinomb as celda
+			,e.equinomb AS rele
+			,p.tension
+			,sis.eqcatddescripcion as sistema_rele
+			,mar.eqcatddescripcion as marca
+			,p.modelo
+			,tus.eqcatddescripcion as TIPOUSO
+			,est.eqcatddescripcion as estado
+			,case when p.id_tipo_uso  = '101' then p.memoria_calculo end memoria_calculo
+			,case when p.fecha_creacion is not null then 'CREADO' else 'Actualizado' end as accion
+			FROM eq_propiedad p JOIN eq_equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN eq_celda ec on e.equicodi = ec.equicodi
+			LEFT JOIN eq_equipo cel on ec.id_celda = cel.equicodi
+			LEFT JOIN eq_area ar on cel.areacodi = ar.areacodi
+			LEFT JOIN eq_tipoarea ta on ar.tareacodi = ta.tareacodi
+			LEFT JOIN eq_prop_catalogo_data sis on to_number(p.id_sistema_rele default 0 on conversion error) = sis.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data mar on to_number(p.id_marca default 0 on conversion error) = mar.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data tus on to_number(p.id_tipo_uso default 0 on conversion error) = tus.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data est on to_number(p.estado default 0 on conversion error) = est.eqcatdcodi
+			ORDER BY 1,2,3
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlCantidadEquipoSGOCOESEliminar</key>
+		<query>
+			SELECT COUNT(*) AS NRO_EQUIPOS
+			FROM EPR_EQUIPO EP
+			JOIN EQ_EQUIREL REL ON EP.EQUICODI = REL.EQUICODI1
+			AND REL.TIPORELCODI = 29
+			WHERE EP.EPEQUICODI = :EPEQUICODI
+			AND EP.EPEQUIESTREGISTRO = '1'
+		</query>
+	</Sql>
+
+
+
+	<Sql>
+		<key>ListReleSincronismo</key>
+		<query>
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			), equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion,
+			az.areanomb as nomb_area,
+			emp.emprnomb as nomb_empresa,
+			est.eqcatddescripcion AS nomb_estado
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi
+			AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi
+			AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			LEFT JOIN eq_area az ON ar.areacodizona = az.areacodi
+			LEFT JOIN si_empresa emp ON eq.emprcodi = emp.emprcodi
+			LEFT JOIN eq_prop_catalogo_data est ON est.eqcatccodi = 6
+			AND est.eqcatdabrev = eq.equiestado
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN ( 3313 id_interruptor, 3314 delta_tension, 3315 delta_angulo, 3316 delta_frecuencia, 3304 estado, 3306 tipo_uso, 3312 ajuste_sincronismo
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS equinomb,
+			e.nomb_subestacion AS subestacion,
+			e.nomb_celda AS celda,
+			ei.equinomb AS codigo_interruptor,
+			p.delta_tension,
+			p.delta_angulo,
+			p.delta_frecuencia,
+			um.propequiusumodificacion AS usuario_modificacion,
+			TO_CHAR(um.propequifecmodificacion, 'DD/MM/YYYY HH24:MI') AS fecha_modificacion,
+			e.nomb_estado AS estado,
+			e.nomb_area AS area,
+			e.nomb_empresa AS empresa
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN eq_equipo ei ON TO_NUMBER(p.id_interruptor DEFAULT 0 ON CONVERSION ERROR) = ei.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			WHERE
+			p.tipo_uso = '101'
+			AND p.ajuste_sincronismo = 'S'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListBuscarCeldaAcoplamiento</key>
+		<query>
+			SELECT
+			eq.equicodi,
+			zo.areanomb AS areadesc,
+			emp.emprnomb AS empresa,
+			eq.equiabrev AS codigo,
+			ar.areanomb AS ubicacion,
+			eq.equitension,
+			eq.equiestado,
+			est.eqcatddescripcion AS equiestadodesc
+			FROM
+			eq_equipo eq
+			JOIN si_empresa emp ON eq.emprcodi = emp.emprcodi
+			LEFT JOIN eq_area ar ON eq.areacodi = ar.areacodi
+			LEFT JOIN epr_area ap ON eq.areacodi = ap.areacodi
+			LEFT JOIN eq_area zo ON ap.areacodizona = zo.areacodi
+			LEFT JOIN eq_prop_catalogo_data est ON est.eqcatccodi = 6
+			AND est.eqcatdabrev = eq.equiestado
+			WHERE
+			eq.famcodi = 6
+			AND eq.equiestado != 'X'
+			AND upper(eq.equiabrev) LIKE '%ACOP%'
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:ubicacion, 0) = 0
+			OR eq.areacodi = :ubicacion
+			)
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			AND NOT EXISTS (
+			SELECT
+			1
+			FROM
+			epr_equipo ep
+			WHERE
+			ep.equicodi = eq.equicodi
+			AND ep.epequiestregistro = '1'
+			AND ep.epequiflagsev = '1'
+			)
+			ORDER BY
+			eq.equiabrev
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>SqlRegistrarLinea</key>
+		<query>
+			DECLARE
+			v_id_linea									NUMBER:= :ID_LINEA;
+			v_id_proyecto								NUMBER:= :ID_PROYECTO;
+			v_fecha										DATE:= TO_DATE(:FECHA, 'DD/MM/YYYY');
+			v_id_area									VARCHAR2(500):= :ID_AREA;
+			v_capacidad_a								VARCHAR2(500):= :CAPACIDAD_A;
+			v_capacidad_a_coment						VARCHAR2(500):= :CAPACIDAD_A_COMENT;
+			v_capacidad_mva								VARCHAR2(500):= :CAPACIDAD_MVA;
+			v_capacidad_mva_coment						VARCHAR2(500):= :CAPACIDAD_MVA_COMENT;
+			v_id_celda_1								VARCHAR2(500):= :ID_CELDA_1;
+			v_id_celda_2								VARCHAR2(500):= :ID_CELDA_2;
+			v_id_banco_condensador						VARCHAR2(500):= :ID_BANCO_CONDENSADOR;
+			v_capacidad_a_banco_condensador				VARCHAR2(500):= :CAPACIDAD_A_BANCO_CONDENSADOR;
+			v_capacidad_a_banco_condensador_coment		VARCHAR2(500):= :CAPACIDAD_A_BANCO_CONDENSADOR_COMENT;
+			v_capacidad_mvar_banco_condensador			VARCHAR2(500):= :CAPACIDAD_MVAR_BANCO_CONDENSADOR;
+			v_capacidad_mvar_banco_condensador_coment	VARCHAR2(500):= :CAPACIDAD_MVAR_BANCO_CONDENSADOR_COMENT;
+			v_capac_trans_cond_1_porcen					VARCHAR2(500):= :CAPAC_TRANS_COND_1_PORCEN;
+			v_capac_trans_cond_1_porcen_coment			VARCHAR2(500):= :CAPAC_TRANS_COND_1_PORCEN_COMENT;
+			v_capac_trans_cond_1_min					VARCHAR2(500):= :CAPAC_TRANS_COND_1_MIN;
+			v_capac_trans_cond_1_min_coment				VARCHAR2(500):= :CAPAC_TRANS_COND_1_MIN_COMENT;
+			v_capac_trans_corr_1_a						VARCHAR2(500):= :CAPAC_TRANS_CORR_1_A;
+			v_capac_trans_corr_1_a_coment				VARCHAR2(500):= :CAPAC_TRANS_CORR_1_A_COMENT;
+			v_capac_trans_cond_2_porcen					VARCHAR2(500):= :CAPAC_TRANS_COND_2_PORCEN;
+			v_capac_trans_cond_2_porcen_coment			VARCHAR2(500):= :CAPAC_TRANS_COND_2_PORCEN_COMENT;
+			v_capac_trans_cond_2_min					VARCHAR2(500):= :CAPAC_TRANS_COND_2_MIN;
+			v_capac_trans_cond_2_min_coment				VARCHAR2(500):= :CAPAC_TRANS_COND_2_MIN_COMENT;
+			v_capac_trans_corr_2_a						VARCHAR2(500):= :CAPAC_TRANS_CORR_2_A;
+			v_capac_trans_corr_2_a_coment				VARCHAR2(500):= :CAPAC_TRANS_CORR_2_A_COMENT;
+			v_capacidad_transmision_a					VARCHAR2(500):= :CAPACIDAD_TRANSMISION_A;
+			v_capacidad_transmision_a_coment			VARCHAR2(500):= :CAPACIDAD_TRANSMISION_A_COMENT;
+			v_capacidad_transmision_mva					VARCHAR2(500):= :CAPACIDAD_TRANSMISION_MVA;
+			v_capacidad_transmision_mva_coment			VARCHAR2(500):= :CAPACIDAD_TRANSMISION_MVA_COMENT;
+			v_limite_seg_coes							VARCHAR2(500):= :LIMITE_SEG_COES;
+			v_limite_seg_coes_coment					VARCHAR2(500):= :LIMITE_SEG_COES_COMENT;
+			v_factor_limitante_calc						VARCHAR2(500):= :FACTOR_LIMITANTE_CALC;
+			v_factor_limitante_calc_coment				VARCHAR2(500):= :FACTOR_LIMITANTE_CALC_COMENT;
+			v_factor_limitante_final					VARCHAR2(500):= :FACTOR_LIMITANTE_FINAL;
+			v_factor_limitante_final_coment				VARCHAR2(500):= :FACTOR_LIMITANTE_FINAL_COMENT;
+			v_observaciones								VARCHAR2(500):= :OBSERVACIONES;
+			v_usuario_auditoria							VARCHAR2(500):= :USUARIO_AUDITORIA;
+
+			v_resultado						VARCHAR2(4000);
+			BEGIN
+			v_resultado := pkg_protecciones.fn_registrar_linea(
+			v_id_linea,
+			v_id_proyecto,
+			v_fecha,
+			v_id_area,
+			v_capacidad_a,
+			v_capacidad_a_coment,
+			v_capacidad_mva,
+			v_capacidad_mva_coment,
+			v_id_celda_1,
+			v_id_celda_2,
+			v_id_banco_condensador,
+			v_capacidad_a_banco_condensador,
+			v_capacidad_a_banco_condensador_coment,
+			v_capacidad_mvar_banco_condensador,
+			v_capacidad_mvar_banco_condensador_coment,
+			v_capac_trans_cond_1_porcen,
+			v_capac_trans_cond_1_porcen_coment,
+			v_capac_trans_cond_1_min,
+			v_capac_trans_cond_1_min_coment,
+			v_capac_trans_corr_1_a,
+			v_capac_trans_corr_1_a_coment,
+			v_capac_trans_cond_2_porcen,
+			v_capac_trans_cond_2_porcen_coment,
+			v_capac_trans_cond_2_min,
+			v_capac_trans_cond_2_min_coment,
+			v_capac_trans_corr_2_a,
+			v_capac_trans_corr_2_a_coment,
+			v_capacidad_transmision_a,
+			v_capacidad_transmision_a_coment,
+			v_capacidad_transmision_mva,
+			v_capacidad_transmision_mva_coment,
+			v_limite_seg_coes,
+			v_limite_seg_coes_coment,
+			v_factor_limitante_calc,
+			v_factor_limitante_calc_coment,
+			v_factor_limitante_final,
+			v_factor_limitante_final_coment,
+			v_observaciones,
+			v_usuario_auditoria
+			);
+
+			SELECT v_resultado INTO :RESULTADO FROM DUAL;
+			END;
+		</query>
+	</Sql>
+
+	<!--Evaluación GESTPROTEC-->
+	<Sql>
+		<key>ListCeldaEvaluacion</key>
+		<query>
+			select e.EQUICODI
+			,trim(nvl(ap.epareanomb,a.areanomb))||' '||ta.tareaabrev||'\'||trim(nvl(ep.epequinomb,e.equinomb))||'|'||est.eqcatddescripcion as EQUINOMB
+			,trim(nvl(ap.epareanomb,a.areanomb))||' '||ta.tareaabrev as AREANOMB
+			,emp.EMPRNOMB
+			,null as POSICION_NUCLEO_TC
+			,null as PICK_UP
+			from eq_equipo e join epr_equipo ep on e.equicodi = ep.equicodi and ep.epequiestregistro='1'
+			left join epr_area ap on e.areacodi = ap.areacodi and ap.epareaestregistro='1'
+			left join eq_area a on e.areacodi = a.areacodi
+			left join si_empresa emp on e.emprcodi = emp.emprcodi
+			left join eq_tipoarea ta on a.tareacodi = ta.tareacodi
+			left join eq_prop_catalogo_data est on est.eqcatccodi = 6 and est.eqcatdabrev = e.equiestado
+			where e.famcodi = 6
+			and e.equiestado != 'X'
+			and (nvl(:idubicacion,0)=0 or e.areacodi = :idubicacion)
+			order by 2
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListBancoEvaluacion</key>
+		<query>
+			select e.EQUICODI
+			,trim(nvl(ap.epareanomb,a.areanomb))||' '||ta.tareaabrev||'\'||trim(e.equinomb)||'|'||est.eqcatddescripcion as EQUINOMB
+			,trim(nvl(ap.epareanomb,a.areanomb))||' '||ta.tareaabrev as AREANOMB
+			,emp.EMPRNOMB
+			,pkg_protecciones.fn_get_banco_conden_serie_capacidad_a(e.equicodi) as CAPACIDAD_A
+			,pkg_protecciones.fn_get_banco_conden_serie_capacidad_mvar(e.equicodi) as CAPACIDAD_MVAR
+			from eq_equipo e
+			left join epr_area ap on e.areacodi = ap.areacodi and ap.epareaestregistro='1'
+			left join eq_area a on e.areacodi = a.areacodi
+			left join si_empresa emp on e.emprcodi = emp.emprcodi
+			left join eq_tipoarea ta on a.tareacodi = ta.tareacodi
+			left join eq_prop_catalogo_data est on est.eqcatccodi = 6 and est.eqcatdabrev = e.equiestado
+			where e.famcodi = 15
+			and e.equiestado != 'X'
+			order by 2
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListBuscarReactor</key>
+		<query>
+			SELECT
+			eq.equicodi,
+			eq.equiabrev AS codigo,
+			ar.areanomb AS ubicacion,
+			zo.areanomb AS areadesc,
+			emp.emprnomb AS empresa,
+			est.eqcatddescripcion AS equiestadodesc,
+			eq.equiestado
+			FROM
+			eq_equipo eq
+			JOIN si_empresa emp ON eq.emprcodi = emp.emprcodi
+			LEFT JOIN eq_area ar ON eq.areacodi = ar.areacodi
+			LEFT JOIN epr_area ap ON eq.areacodi = ap.areacodi
+			LEFT JOIN eq_area zo ON ap.areacodizona = zo.areacodi
+			LEFT JOIN eq_prop_catalogo_data est ON est.eqcatccodi = 6
+			AND est.eqcatdabrev = eq.equiestado
+			WHERE
+			eq.famcodi = 12
+			AND eq.equiestado != 'X'
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:ubicacion, 0) = 0
+			OR eq.areacodi = :ubicacion
+			)
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			AND NOT EXISTS (
+			SELECT
+			1
+			FROM
+			epr_equipo ep
+			WHERE
+			ep.equicodi = eq.equicodi
+			AND ep.epequiestregistro = '1'
+			)
+			ORDER BY
+			eq.equiabrev
+
+		</query>
+	</Sql>
+
+	<Sql>
+
+		<key>GetIdLineaIncluir</key>
+		<query>
+			WITH ult_fecha_prop AS (
+			SELECT equicodi, propcodi,MAX(fechapropequi) AS fechapropequi
+			FROM eq_propequi
+			WHERE equicodi = :v_equicodi
+			AND propequideleted=0
+			GROUP BY equicodi,propcodi
+			)
+			,data_prop AS (
+			SELECT pe.equicodi,pe.propcodi,pe.valor,pe.propequicomentario
+			,pe.epproycodi,pe.fechapropequi
+			,nvl(pe.propequiusumodificacion,pe.propequiusucreacion) usumodificacion
+			,nvl(pe.propequifecmodificacion,pe.propequifeccreacion) fecmodificacion
+			FROM eq_propequi pe JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			ORDER BY pe.fechapropequi desc,propcodi
+			)
+			,ult_proy_fecha_eq AS (
+			SELECT equicodi,epproycodi,fechapropequi,usumodificacion,fecmodificacion
+			FROM data_prop
+			WHERE rownum=1
+			)
+			,eq_propiedad AS (
+			SELECT *
+			FROM (SELECT equicodi,propcodi,valor,propequicomentario
+			FROM data_prop) PIVOT (
+			MAX(valor),max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+			3351 as id_area
+			,263 as longitud
+			,1852 as tension
+			,699 as capacidad_a
+			,3352 as capacidad_mva
+			,3355 as id_celda_1
+			,3356 as id_celda_2
+			,3357 as id_banco_condensador
+			,3358 as capac_trans_cond_1_porcen
+			,3359 as capac_trans_cond_1_min
+			,3360 as capac_trans_cond_1_a
+			,3361 as capac_trans_cond_2_porcen
+			,3362 as capac_trans_cond_2_min
+			,3363 as capac_trans_cond_2_a
+			,3353 as capacidad_transmision_a
+			,3354 as capacidad_transmision_mva
+			,3364 as limite_seg_coes
+			,3365 as factor_limitante_calc
+			,3366 as factor_limitante_final
+			,3367 as observaciones
+			)
+			)
+			)
+
+			,equipo_banco as (
+			select e.equicodi,e.equinomb,e.equiabrev,e.equitension,e.areacodi,e.emprcodi
+			from eq_equipo e
+			where equicodi in (select to_number(valor default 0 on conversion error) from data_prop where propcodi = 3357)
+			and equicodi!=0
+			)
+			, ult_fecha_prop_banco AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo_banco e ON p.equicodi = e.equicodi AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			,data_prop_banco AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			pe.propequicomentario
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop_banco up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad_banco AS (
+			SELECT
+			*
+			FROM
+			data_prop_banco PIVOT (
+			max(valor),max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+			2172 as capacidad_a
+			,2173 as capacidad_mvar
+			)
+			)
+			)
+
+			SELECT
+			up.epproycodi as id_proyecto
+			,pr.epproynomb as PROYECTONOMB
+			,TO_CHAR(up.fechapropequi, 'DD/MM/YYYY') as FECHA
+			,e.equicodi
+			,e.equiabrev AS codigo
+			,e.areacodi as id_ubicacion
+			,ar.areanomb as ubicacion
+			,e.emprcodi AS ID_TITULAR
+			,em.emprnomb as EMPRNOMB
+			,p.id_area
+			,p.longitud
+			,p.tension
+			,p.capacidad_a
+			,p.capacidad_mva
+			,p.id_celda_1 as ID_CELDA
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(p.id_celda_1) as celda_1_posicion_nucleo_tc
+			,pkg_protecciones.fn_get_celda_pick_up(p.id_celda_1) as celda_1_pick_up
+			,p.id_celda_2
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(p.id_celda_2) as celda_2_posicion_nucleo_tc
+			,pkg_protecciones.fn_get_celda_pick_up(p.id_celda_2) as celda_2_pick_up
+			,p.id_banco_condensador
+			,pkg_protecciones.fn_get_banco_conden_serie_capacidad_a(p.id_banco_condensador) as banco_conden_serie_capacidad_a
+			,pkg_protecciones.fn_get_banco_conden_serie_capacidad_mvar(p.id_banco_condensador) as banco_conden_serie_capacidad_mvar
+			,p.capac_trans_cond_1_porcen
+			,p.capac_trans_cond_1_min
+			,p.capac_trans_cond_1_a
+			,p.capac_trans_cond_2_porcen
+			,p.capac_trans_cond_2_min
+			,p.capac_trans_cond_2_a
+			,p.capacidad_transmision_a
+			,p.capacidad_transmision_mva
+			,p.limite_seg_coes
+			,p.factor_limitante_calc
+			,p.factor_limitante_final
+			,p.observaciones
+			,up.usumodificacion,TO_CHAR(up.fecmodificacion, 'DD/MM/YYYY') as fecmodificacion
+
+			/*NUEVOS CAMPOS*/
+			,pb.capacidad_a as capacidad_a_banco_condensador
+			,pb.capacidad_a_coment as capacidad_a_banco_condensador_coment
+			,pb.capacidad_mvar as capacidad_mvar_banco_condensador
+			,pb.capacidad_mvar_coment as capacidad_mvar_banco_condensador_coment
+			,p.capacidad_a_coment
+			,p.capacidad_mva_coment
+			,p.capac_trans_cond_1_porcen_coment
+			,p.capac_trans_cond_1_min_coment
+			,p.capac_trans_cond_1_a_coment
+			,p.capac_trans_cond_2_porcen_coment
+			,p.capac_trans_cond_2_min_coment
+			,p.capac_trans_cond_2_a_coment
+			,p.capacidad_transmision_a_coment
+			,p.capacidad_transmision_mva_coment
+			,p.limite_seg_coes_coment
+			,p.factor_limitante_calc_coment
+			,p.factor_limitante_final_coment
+
+			FROM eq_propiedad p JOIN eq_equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN ult_proy_fecha_eq up on e.equicodi = up.equicodi
+			LEFT JOIN eq_area ar on e.areacodi= ar.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi= em.emprcodi
+			LEFT JOIN epr_proyecto_acteqp pr on up.epproycodi=pr.epproycodi
+			LEFT JOIN equipo_banco eb ON to_number(p.id_banco_condensador default 0 on conversion error) = eb.equicodi
+			LEFT JOIN eq_propiedad_banco pb on eb.equicodi = pb.equicodi
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListLineaEvaluacionPrincipal</key>
+		<query>
+			WITH equipo AS (
+			SELECT eq.*
+			FROM
+			eq_equipo eq join epr_equipo ep on eq.equicodi = ep.equicodi and ep.epequiestregistro='1'
+			WHERE eq.famcodi = 8
+			AND ( nvl(:equicodi, 0) = 0 OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL OR upper(eq.equiabrev) LIKE '%'|| upper(:codigo)|| '%' )
+			AND ( nvl(:emprcodi, 0) = 0 OR eq.emprcodi = :emprcodi )
+			AND ( TRIM(:equiestado) IS NULL OR eq.equiestado = :equiestado )
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			, ult_fecha_modificacion_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM ult_fecha_prop p
+			GROUP BY
+			p.equicodi
+			)
+			, ult_modificador_equipo AS (
+			SELECT
+			p.equicodi
+			,MAX(nvl(p.propequiusumodificacion,p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_modificacion_equipo e ON p.equicodi = e.equicodi
+			AND p.fechapropequi = e.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			pe.propequicomentario
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			,max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+			3351 as id_area
+			,1852 as tension
+			,699 as capacidad_a
+			,3352 as capacidad_mva
+			,3353 as capacidad_transmision_a
+			,3354 as capacidad_transmision_mva
+			,3355 as id_celda_1
+			,3356 as id_celda_2
+			,3357 as id_banco_condensador
+			,3358 as capac_trans_cond_1_porcen
+			,3359 as capac_trans_cond_1_min
+			,3361 as capac_trans_cond_2_porcen
+			,3362 as capac_trans_cond_2_min
+			,3366 as factor_limitante_final
+
+			)
+			)
+			)
+			SELECT
+			e.equicodi as equicodi
+			,al.areanomb as AREANOMB
+			,em.emprnomb as emprnomb
+			,e.equiabrev as equiabrev
+			,p.tension
+			,ac1.areanomb as subestacion_1
+			,ac2.areanomb as subestacion_2
+			,p.capacidad_transmision_a as capacidad_a
+			,p.capacidad_transmision_mva as capacidad_mva
+			,p.capac_trans_cond_1_porcen
+			,p.capac_trans_cond_1_min
+			,p.capac_trans_cond_2_porcen
+			,p.capac_trans_cond_2_min
+			,p.factor_limitante_final
+			,es.eqcatddescripcion as estado
+			,e.equiestado
+			,uum.propequiusumodificacion as USUARIO_AUDITORIA
+			,TO_CHAR(uum.propequifecmodificacion, 'DD/MM/YYYY HH24:MI') as FECHA_MODIFICACIONSTR
+			-- nuevos campos
+			,p.capacidad_transmision_a_coment
+			,p.capacidad_transmision_mva_coment
+			,p.capac_trans_cond_1_porcen_coment
+			,p.capac_trans_cond_1_min_coment
+			,p.capac_trans_cond_2_porcen_coment
+			,p.capac_trans_cond_2_min_coment
+			,p.factor_limitante_final_coment
+
+			FROM
+			equipo e
+			LEFT JOIN eq_propiedad p ON p.equicodi = e.equicodi
+			LEFT JOIN ult_fecha_modificacion_equipo ufm ON p.equicodi = ufm.equicodi
+			LEFT JOIN ult_modificador_equipo uum ON p.equicodi = uum.equicodi
+			LEFT JOIN eq_area al on to_number(p.id_area default 0 on conversion error) = al.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi = em.emprcodi
+			LEFT JOIN eq_equipo ec1 on to_number(p.id_celda_1 default 0 on conversion error) = ec1.equicodi
+			LEFT JOIN eq_area ac1 on ec1.areacodi= ac1.areacodi
+			LEFT JOIN eq_equipo ec2 on to_number(p.id_celda_2 default 0 on conversion error) = ec2.equicodi
+			LEFT JOIN eq_area ac2 on ec2.areacodi= ac2.areacodi
+			LEFT JOIN eq_prop_catalogo_data es ON eqcatccodi = 6 and e.equiestado = es.eqcatdabrev
+			WHERE 1 = 1
+			AND ( nvl(:id_subestacion_1, 0) = 0 OR ec1.areacodi = :id_subestacion_1 )
+			AND ( nvl(:id_subestacion_2, 0) = 0 OR ec2.areacodi = :id_subestacion_2 )
+			AND ( nvl(:id_area, 0) = 0 OR to_number(p.id_area default 0 on conversion error) = :id_area )
+			AND ( nvl(:tension, 0) = 0 OR to_number(p.tension default 0 on conversion error) = :tension )
+		</query>
+	</Sql>
+	<!--FIN Evaluación GESTPROTEC-->
+	<Sql>
+		<key>ListBuscarTransformador</key>
+		<query>
+			SELECT
+			eq.equicodi,
+			eq.equiabrev AS codigo,
+			ar.areanomb AS ubicacion,
+			fa.famnomb AS tipo,
+			zo.areanomb AS areadesc,
+			emp.emprnomb AS empresa,
+			est.eqcatddescripcion AS equiestadodesc,
+			eq.equiestado
+			FROM
+			eq_equipo eq
+			JOIN si_empresa emp ON eq.emprcodi = emp.emprcodi
+			JOIN eq_familia fa ON eq.famcodi = fa.famcodi
+			LEFT JOIN eq_area ar ON eq.areacodi = ar.areacodi
+			LEFT JOIN epr_area ap ON eq.areacodi = ap.areacodi
+			LEFT JOIN eq_area zo ON ap.areacodizona = zo.areacodi
+			LEFT JOIN eq_prop_catalogo_data est ON est.eqcatccodi = 6
+			AND est.eqcatdabrev = eq.equiestado
+			WHERE eq.famcodi in (9,10,47)
+			AND ( nvl(:tipo, 0) = 0
+			OR eq.famcodi = :tipo )
+			AND eq.equiestado != 'X'
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:ubicacion, 0) = 0
+			OR eq.areacodi = :ubicacion )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			AND NOT EXISTS (
+			SELECT
+			1
+			FROM
+			epr_equipo ep
+			WHERE
+			ep.equicodi = eq.equicodi
+			AND ep.epequiestregistro = '1'
+			)
+			ORDER BY
+			eq.equiabrev
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListTransformadores</key>
+		<query>
+			select
+			famcodi,
+			famabrev,
+			tipoecodi,
+			tareacodi,
+			famnomb,
+			famnumconec,
+			famnombgraf,
+			famestado,
+			usuariocreacion,
+			fechacreacion,
+			usuarioupdate,
+			fechaupdate
+			from
+			eq_familia
+			-- where famestado = 'A' and famcodi in (9,10,47,48)
+			where famestado = 'A' and famcodi in (9,10,47)
+			order by famnomb
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListTransversalConsultarEquipo</key>
+		<query>
+			WITH equipo as (
+			SELECT eq.equicodi
+			,eq.equiabrev as codigo
+			,ar.areanomb as ubicacion
+			,em.emprnomb as empresa
+			,null as area
+			FROM eq_equipo eq
+			LEFT JOIN eq_area ar on eq.areacodi = ar.areacodi
+			LEFT JOIN si_empresa em on eq.emprcodi = em.emprcodi
+			WHERE eq.equicodi = :equicodi
+			)
+			,ult_fecha_prop AS (
+			SELECT p.equicodi, p.propcodi,MAX(fechapropequi) AS fechapropequi
+			FROM eq_propequi p join equipo e on p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			GROUP BY p.equicodi,p.propcodi
+			)
+			,data_prop AS (
+			SELECT pe.equicodi
+			,p.propnomb
+			,pe.valor
+			,pe.propequicomentario
+			,pa.epproynomb as motivo_actualizacion
+			,pe.propcodi
+			,pe.epproycodi
+			,pe.fechapropequi
+			,p.orden
+			FROM eq_propequi pe JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			JOIN eq_propiedad p on pe.propcodi = p.propcodi
+			LEFT JOIN epr_proyecto_acteqp pa on pe.epproycodi = pa.epproycodi
+			WHERE pe.valor is not null
+			AND nvl(pe.propequideleted,0)=0
+			)
+			SELECT e.*
+			,d.propnomb as propiedad
+			,d.valor
+			,d.propequicomentario as comentario
+			,d.motivo_actualizacion
+			FROM equipo e LEFT JOIN data_prop d on e.equicodi = d.equicodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerTransversalHistorialActualizacion</key>
+		<query>
+			SELECT eq.equicodi
+			,eq.equiabrev as codigo
+			,ar.areanomb as ubicacion
+			,em.emprnomb as empresa
+			,null as area
+			FROM eq_equipo eq
+			LEFT JOIN eq_area ar on eq.areacodi = ar.areacodi
+			LEFT JOIN si_empresa em on eq.emprcodi = em.emprcodi
+			WHERE eq.equicodi = :equicodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListTransversalActualizaciones</key>
+		<query>
+			WITH prop_proy as (
+			SELECT
+			epproycodi
+			,max(nvl(propequiusumodificacion,propequiusucreacion)) as usuario
+			,max(nvl(propequifecmodificacion,propequifeccreacion)) as fecha_actualizacion
+			FROM eq_propequi p
+			WHERE p.equicodi = :equicodi
+			AND p.propequideleted=0
+			AND epproycodi is not null
+			AND nvl(propequifecmodificacion,propequifeccreacion) is not null
+			GROUP BY epproycodi
+			ORDER BY 3 desc
+			)
+			SELECT p.epproycodi, trim(p.epproynemotecnico)||':'||trim(p.epproynomb) as motivo
+			,usuario,to_char(fecha_actualizacion,'DD/MM/YYYY HH24:MI') as fecha_actualizacion
+			,to_char(p.epproyfecregistro,'DD/MM/YYYY') as fecha_proyecto
+			FROM prop_proy pp JOIN epr_proyecto_acteqp p on pp.epproycodi = p.epproycodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListTransversalPropiedadesActualizadas</key>
+		<query>
+			with ult_fecha_prop AS (
+			SELECT p.equicodi, p.propcodi,MAX(fechapropequi) AS fechapropequi
+			FROM eq_propequi p
+			WHERE p.equicodi = :equicodi
+			and p.epproycodi = :epproycodi
+			AND p.propequideleted=0
+			GROUP BY p.equicodi,p.propcodi
+			)
+			SELECT pe.equicodi
+			,p.propnomb
+			,pe.valor
+			,pe.propequicomentario
+			,pe.propcodi
+			,pe.fechapropequi
+			,p.orden
+			,to_char(pe.fechapropequi,'DD/MM/YYYY') as fecha_vigencia
+			FROM eq_propequi pe JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			JOIN eq_propiedad p on pe.propcodi = p.propcodi
+			LEFT JOIN epr_proyecto_acteqp pa on pe.epproycodi = pa.epproycodi
+			WHERE pe.valor is not null
+			AND nvl(pe.propequideleted,0)=0
+			ORDER BY p.orden
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlRegistrarReactor</key>
+		<query>
+			DECLARE
+			v_id_reactor						NUMBER:= :ID_REACTOR;
+			v_id_proyecto						NUMBER:= :ID_PROYECTO;
+			v_fecha								DATE:= TO_DATE(:FECHA, 'DD/MM/YYYY');
+			v_id_celda_1						VARCHAR2(500):= :ID_CELDA;
+			v_id_celda_2						VARCHAR2(500):= :ID_CELDA_2;
+			v_capacidad_mvar					VARCHAR2(500):= :CAPACIDAD_MVAR;
+			v_capacidad_a						VARCHAR2(500):= :CAPACIDAD_A;
+			v_capacidad_transmision_a			VARCHAR2(500):= :CAPACIDAD_TRANSMISION_A;
+			v_capacidad_transmision_a_coment    VARCHAR2(500):= :CAPACIDAD_TRANSMISION_A_COMENT;
+			v_capacidad_transmision_mvar		VARCHAR2(500):= :CAPACIDAD_TRANSMISION_MVAR;
+			v_capacidad_transmision_mvar_coment VARCHAR2(500):= :CAPACIDAD_TRANSMISION_MVAR_COMENT;
+			v_factor_limitante_calc				VARCHAR2(500):= :FACTOR_LIMITANTE_CALC;
+			v_factor_limitante_calc_coment		VARCHAR2(500):= :FACTOR_LIMITANTE_CALC_COMENT;
+			v_factor_limitante_final			VARCHAR2(500):= :FACTOR_LIMITANTE_FINAL;
+			v_factor_limitante_final_coment		VARCHAR2(500):= :FACTOR_LIMITANTE_FINAL_COMENT;
+			v_observaciones						VARCHAR2(500):= :OBSERVACIONES;
+			v_usuario_auditoria					VARCHAR2(500):= :USUARIO_AUDITORIA;
+			v_resultado							VARCHAR2(4000);
+			BEGIN
+			v_resultado := pkg_protecciones.fn_registrar_reactor(
+			v_id_reactor,
+			v_id_proyecto,
+			v_fecha,
+			v_id_celda_1,
+			v_id_celda_2,
+			v_capacidad_mvar,
+			v_capacidad_a,
+			v_capacidad_transmision_a,
+			v_capacidad_transmision_a_coment,
+			v_capacidad_transmision_mvar,
+			v_capacidad_transmision_mvar_coment,
+			v_factor_limitante_calc,
+			v_factor_limitante_calc_coment,
+			v_factor_limitante_final,
+			v_factor_limitante_final_coment,
+			v_observaciones,
+			v_usuario_auditoria
+			);
+
+			SELECT v_resultado INTO :RESULTADO FROM DUAL;
+			END;
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlRegistrarTransformador</key>
+		<query>
+			DECLARE
+			v_id_transformador						NUMBER:= :ID_TRANSFORMADOR;
+			v_id_proyecto							NUMBER:= :ID_PROYECTO;
+			v_fecha									DATE:= TO_DATE(:FECHA, 'DD/MM/YYYY');
+			v_d1_id_celda							VARCHAR2(500):= :D1_ID_CELDA;
+			v_d1_capacidad_onan_mva					VARCHAR2(500):= :D1_CAPACIDAD_ONAN_MVA;
+			v_d1_capacidad_onan_mva_coment			VARCHAR2(500):= :D1_CAPACIDAD_ONAN_MVA_COMENT;
+			v_d1_capacidad_onaf_mva					VARCHAR2(500):= :D1_CAPACIDAD_ONAF_MVA;
+			v_d1_capacidad_onaf_mva_coment			VARCHAR2(500):= :D1_CAPACIDAD_ONAF_MVA_COMENT;
+			v_d1_capacidad_mva						VARCHAR2(500):= :D1_CAPACIDAD_MVA;
+			v_d1_capacidad_mva_coment				VARCHAR2(500):= :D1_CAPACIDAD_MVA_COMENT;
+			v_d1_capacidad_a						VARCHAR2(500):= :D1_CAPACIDAD_A;
+			v_d1_capacidad_a_coment					VARCHAR2(500):= :D1_CAPACIDAD_A_COMENT;
+			v_d1_posicion_tc_a						VARCHAR2(500):= :D1_POSICION_TC_A;
+			v_d1_posicion_pick_up_a					VARCHAR2(500):= :D1_POSICION_PICK_UP_A;
+			v_d1_capacidad_transmision_a			VARCHAR2(500):= :D1_CAPACIDAD_TRANSMISION_A;
+			v_d1_capacidad_transmision_a_coment		VARCHAR2(500):= :D1_CAPACIDAD_TRANSMISION_A_COMENT;
+			v_d1_capacidad_transmision_mva			VARCHAR2(500):= :D1_CAPACIDAD_TRANSMISION_MVA;
+			v_d1_capacidad_transmision_mva_coment	VARCHAR2(500):= :D1_CAPACIDAD_TRANSMISION_MVA_COMENT;
+			v_d1_factor_limitante_calc				VARCHAR2(500):= :D1_FACTOR_LIMITANTE_CALC;
+			v_d1_factor_limitante_calc_coment		VARCHAR2(500):= :D1_FACTOR_LIMITANTE_CALC_COMENT;
+			v_d1_factor_limitante_final				VARCHAR2(500):= :D1_FACTOR_LIMITANTE_FINAL;
+			v_d1_factor_limitante_final_coment		VARCHAR2(500):= :D1_FACTOR_LIMITANTE_FINAL_COMENT;
+			v_d2_id_celda							VARCHAR2(500):= :D2_ID_CELDA;
+			v_d2_capacidad_onan_mva					VARCHAR2(500):= :D2_CAPACIDAD_ONAN_MVA;
+			v_d2_capacidad_onan_mva_coment			VARCHAR2(500):= :D2_CAPACIDAD_ONAN_MVA_COMENT;
+			v_d2_capacidad_onaf_mva					VARCHAR2(500):= :D2_CAPACIDAD_ONAF_MVA;
+			v_d2_capacidad_onaf_mva_coment			VARCHAR2(500):= :D2_CAPACIDAD_ONAF_MVA_COMENT;
+			v_d2_capacidad_mva						VARCHAR2(500):= :D2_CAPACIDAD_MVA;
+			v_d2_capacidad_mva_coment				VARCHAR2(500):= :D2_CAPACIDAD_MVA_COMENT;
+			v_d2_capacidad_a						VARCHAR2(500):= :D2_CAPACIDAD_A;
+			v_d2_capacidad_a_coment					VARCHAR2(500):= :D2_CAPACIDAD_A_COMENT;
+			v_d2_posicion_tc_a						VARCHAR2(500):= :D2_POSICION_TC_A;
+			v_d2_posicion_pick_up_a					VARCHAR2(500):= :D2_POSICION_PICK_UP_A;
+			v_d2_capacidad_transmision_a			VARCHAR2(500):= :D2_CAPACIDAD_TRANSMISION_A;
+			v_d2_capacidad_transmision_a_coment		VARCHAR2(500):= :D2_CAPACIDAD_TRANSMISION_A_COMENT;
+			v_d2_capacidad_transmision_mva			VARCHAR2(500):= :D2_CAPACIDAD_TRANSMISION_MVA;
+			v_d2_capacidad_transmision_mva_coment	VARCHAR2(500):= :D2_CAPACIDAD_TRANSMISION_MVA_COMENT;
+			v_d2_factor_limitante_calc				VARCHAR2(500):= :D2_FACTOR_LIMITANTE_CALC;
+			v_d2_factor_limitante_calc_coment		VARCHAR2(500):= :D2_FACTOR_LIMITANTE_CALC_MOMENT;
+			v_d2_factor_limitante_final				VARCHAR2(500):= :D2_FACTOR_LIMITANTE_FINAL;
+			v_d2_factor_limitante_final_coment		VARCHAR2(500):= :D2_FACTOR_LIMITANTE_FINAL_COMENT;
+			v_d3_id_celda							VARCHAR2(500):= :D3_ID_CELDA;
+			v_d3_capacidad_onan_mva					VARCHAR2(500):= :D3_CAPACIDAD_ONAN_MVA;
+			v_d3_capacidad_onan_mva_coment			VARCHAR2(500):= :D3_CAPACIDAD_ONAN_MVA_COMENT;
+			v_d3_capacidad_onaf_mva					VARCHAR2(500):= :D3_CAPACIDAD_ONAF_MVA;
+			v_d3_capacidad_onaf_mva_coment			VARCHAR2(500):= :D3_CAPACIDAD_ONAF_MVA_COMENT;
+			v_d3_capacidad_mva						VARCHAR2(500):= :D3_CAPACIDAD_MVA;
+			v_d3_capacidad_mva_coment				VARCHAR2(500):= :D3_CAPACIDAD_MVA_COMENT;
+			v_d3_capacidad_a						VARCHAR2(500):= :D3_CAPACIDAD_A;
+			v_d3_capacidad_a_coment					VARCHAR2(500):= :D3_CAPACIDAD_A_COMENT;
+			v_d3_posicion_tc_a						VARCHAR2(500):= :D3_POSICION_TC_A;
+			v_d3_posicion_pick_up_a					VARCHAR2(500):= :D3_POSICION_PICK_UP_A;
+			v_d3_capacidad_transmision_a			VARCHAR2(500):= :D3_CAPACIDAD_TRANSMISION_A;
+			v_d3_capacidad_transmision_a_coment		VARCHAR2(500):= :D3_CAPACIDAD_TRANSMISION_A_COMENT;
+			v_d3_capacidad_transmision_mva			VARCHAR2(500):= :D3_CAPACIDAD_TRANSMISION_MVA;
+			v_d3_capacidad_transmision_mva_coment	VARCHAR2(500):= :D3_CAPACIDAD_TRANSMISION_MVA_COMENT;
+			v_d3_factor_limitante_calc				VARCHAR2(500):= :D3_FACTOR_LIMITANTE_CALC;
+			v_d3_factor_limitante_calc_coment		VARCHAR2(500):= :D3_FACTOR_LIMITANTE_CALC_COMENT;
+			v_d3_factor_limitante_final				VARCHAR2(500):= :D3_FACTOR_LIMITANTE_FINAL;
+			v_d3_factor_limitante_final_coment		VARCHAR2(500):= :D3_FACTOR_LIMITANTE_FINAL_COMENT;
+			v_d4_id_celda							VARCHAR2(500):= :D4_ID_CELDA;
+			v_d4_capacidad_onan_mva					VARCHAR2(500):= :D4_CAPACIDAD_ONAN_MVA;
+			v_d4_capacidad_onan_mva_coment			VARCHAR2(500):= :D4_CAPACIDAD_ONAN_MVA_COMENT;
+			v_d4_capacidad_onaf_mva					VARCHAR2(500):= :D4_CAPACIDAD_ONAF_MVA;
+			v_d4_capacidad_onaf_mva_coment			VARCHAR2(500):= :D4_CAPACIDAD_ONAF_MVA_COMENT;
+			v_d4_capacidad_mva						VARCHAR2(500):= :D4_CAPACIDAD_MVA;
+			v_d4_capacidad_mva_coment				VARCHAR2(500):= :D4_CAPACIDAD_MVA_COMENT;
+			v_d4_capacidad_a						VARCHAR2(500):= :D4_CAPACIDAD_A;
+			v_d4_capacidad_a_coment					VARCHAR2(500):= :D4_CAPACIDAD_A_COMENT;
+			v_d4_posicion_tc_a						VARCHAR2(500):= :D4_POSICION_TC_A;
+			v_d4_posicion_pick_up_a					VARCHAR2(500):= :D4_POSICION_PICK_UP_A;
+			v_d4_capacidad_transmision_a			VARCHAR2(500):= :D4_CAPACIDAD_TRANSMISION_A;
+			v_d4_capacidad_transmision_a_coment		VARCHAR2(500):= :D4_CAPACIDAD_TRANSMISION_A_COMENT;
+			v_d4_capacidad_transmision_mva			VARCHAR2(500):= :D4_CAPACIDAD_TRANSMISION_MVA;
+			v_d4_capacidad_transmision_mva_coment	VARCHAR2(500):= :D4_CAPACIDAD_TRANSMISION_MVA_COMENT;
+			v_d4_factor_limitante_calc				VARCHAR2(500):= :D4_FACTOR_LIMITANTE_CALC;
+			v_d4_factor_limitante_calc_coment		VARCHAR2(500):= :D4_FACTOR_LIMITANTE_CALC_COMENT;
+			v_d4_factor_limitante_final				VARCHAR2(500):= :D4_FACTOR_LIMITANTE_FINAL;
+			v_d4_factor_limitante_final_coment		VARCHAR2(500):= :D4_FACTOR_LIMITANTE_FINAL_COMENT;
+			v_observaciones							VARCHAR2(500):= :OBSERVACIONES;
+			v_usuario_auditoria						VARCHAR2(500):= :USUARIO_AUDITORIA;
+
+			v_resultado								VARCHAR2(4000);
+			BEGIN
+			v_resultado := pkg_protecciones.fn_registrar_transformador(
+			v_id_transformador,
+			v_id_proyecto,
+			v_fecha,
+			v_d1_id_celda,
+			v_d1_capacidad_onan_mva,
+			v_d1_capacidad_onan_mva_coment,
+			v_d1_capacidad_onaf_mva,
+			v_d1_capacidad_onaf_mva_coment,
+			v_d1_capacidad_mva,
+			v_d1_capacidad_mva_coment,
+			v_d1_capacidad_a,
+			v_d1_capacidad_a_coment,
+			v_d1_posicion_tc_a,
+			v_d1_posicion_pick_up_a,
+			v_d1_capacidad_transmision_a,
+			v_d1_capacidad_transmision_a_coment,
+			v_d1_capacidad_transmision_mva,
+			v_d1_capacidad_transmision_mva_coment,
+			v_d1_factor_limitante_calc,
+			v_d1_factor_limitante_calc_coment,
+			v_d1_factor_limitante_final,
+			v_d1_factor_limitante_final_coment,
+			v_d2_id_celda,
+			v_d2_capacidad_onan_mva,
+			v_d2_capacidad_onan_mva_coment,
+			v_d2_capacidad_onaf_mva,
+			v_d2_capacidad_onaf_mva_coment,
+			v_d2_capacidad_mva,
+			v_d2_capacidad_mva_coment,
+			v_d2_capacidad_a,
+			v_d2_capacidad_a_coment,
+			v_d2_posicion_tc_a,
+			v_d2_posicion_pick_up_a,
+			v_d2_capacidad_transmision_a,
+			v_d2_capacidad_transmision_a_coment,
+			v_d2_capacidad_transmision_mva,
+			v_d2_capacidad_transmision_mva_coment,
+			v_d2_factor_limitante_calc,
+			v_d2_factor_limitante_calc_coment,
+			v_d2_factor_limitante_final,
+			v_d2_factor_limitante_final_coment,
+			v_d3_id_celda,
+			v_d3_capacidad_onan_mva,
+			v_d3_capacidad_onan_mva_coment,
+			v_d3_capacidad_onaf_mva,
+			v_d3_capacidad_onaf_mva_coment,
+			v_d3_capacidad_mva,
+			v_d3_capacidad_mva_coment,
+			v_d3_capacidad_a,
+			v_d3_capacidad_a_coment,
+			v_d3_posicion_tc_a,
+			v_d3_posicion_pick_up_a,
+			v_d3_capacidad_transmision_a,
+			v_d3_capacidad_transmision_a_coment,
+			v_d3_capacidad_transmision_mva,
+			v_d3_capacidad_transmision_mva_coment,
+			v_d3_factor_limitante_calc,
+			v_d3_factor_limitante_calc_coment,
+			v_d3_factor_limitante_final,
+			v_d3_factor_limitante_final_coment,
+			v_d4_id_celda,
+			v_d4_capacidad_onan_mva,
+			v_d4_capacidad_onan_mva_coment,
+			v_d4_capacidad_onaf_mva,
+			v_d4_capacidad_onaf_mva_coment,
+			v_d4_capacidad_mva,
+			v_d4_capacidad_mva_coment,
+			v_d4_capacidad_a,
+			v_d4_capacidad_a_coment,
+			v_d4_posicion_tc_a,
+			v_d4_posicion_pick_up_a,
+			v_d4_capacidad_transmision_a,
+			v_d4_capacidad_transmision_a_coment,
+			v_d4_capacidad_transmision_mva,
+			v_d4_capacidad_transmision_mva_coment,
+			v_d4_factor_limitante_calc,
+			v_d4_factor_limitante_calc_coment,
+			v_d4_factor_limitante_final,
+			v_d4_factor_limitante_final_coment,
+			v_observaciones,
+			v_usuario_auditoria
+			);
+
+			SELECT v_resultado INTO :RESULTADO FROM DUAL;
+			END;
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlListReactor</key>
+		<query>
+			WITH equipo AS (
+			SELECT eq.*,ap.areacodizona
+			FROM
+			eq_equipo eq inner join epr_equipo ep on eq.equicodi = ep.equicodi and ep.epequiestregistro='1'
+			left join epr_area ap on eq.areacodi = ap.areacodi
+			WHERE eq.famcodi = 12
+			AND ( nvl(:equicodi, 0) = 0 OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL OR upper(eq.equiabrev) LIKE '%'|| upper(:codigo)|| '%' )
+			AND ( nvl(:id_subestacion, 0) = 0 OR eq.areacodi = :id_subestacion )
+			AND ( nvl(:emprcodi, 0) = 0 OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:id_area, 0) = 0 OR ap.areacodizona = :id_area )
+			AND ( TRIM(:equiestado) IS NULL OR eq.equiestado = :equiestado )
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			, ult_fecha_modificacion_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM ult_fecha_prop p
+			GROUP BY
+			p.equicodi
+			)
+			, ult_modificador_equipo AS (
+			SELECT
+			p.equicodi
+			,MAX(nvl(p.propequiusumodificacion,p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_modificacion_equipo e ON p.equicodi = e.equicodi
+			AND p.fechapropequi = e.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			pe.propequicomentario
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			,max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+			241 as tension
+			,3401 as id_celda_1
+			,3402 as id_celda_2
+			,240 as capacidad_mvar
+			,1927 as capacidad_a
+			,3403 as capacidad_transmision_a
+			,3404 as capacidad_transmision_mvar
+			,3405 as factor_limitante_calc
+			,3406 as factor_limitante_final
+			,3407 as observaciones
+			)
+			)
+			)
+			SELECT
+			e.equicodi as codigo_id
+			,e.equiabrev as codigo
+			,a.areanomb as ubicacion
+			,az.areanomb as area
+			,em.emprnomb as empresa
+			,p.tension
+			,p.capacidad_transmision_a as capacidad_a
+			,p.capacidad_transmision_mvar as capacidad_mvar
+			,p.factor_limitante_final
+			,es.eqcatddescripcion as estado
+			,e.equiestado
+			,uum.propequiusumodificacion as actualizado_por
+			,TO_CHAR(uum.propequifecmodificacion, 'DD/MM/YYYY HH24:MI') as actualizado_el
+			-- nuevos campos
+			,p.capacidad_transmision_a_coment as capacidad_a_coment
+			,p.capacidad_transmision_mvar_coment as capacidad_mvar_coment
+			,p.factor_limitante_final_coment
+
+			FROM
+			equipo e
+			LEFT JOIN eq_propiedad p ON p.equicodi = e.equicodi
+			LEFT JOIN ult_fecha_modificacion_equipo ufm ON p.equicodi = ufm.equicodi
+			LEFT JOIN ult_modificador_equipo uum ON p.equicodi = uum.equicodi
+			LEFT JOIN eq_area a on e.areacodi = a.areacodi
+			LEFT JOIN eq_area az on e.areacodizona = az.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi = em.emprcodi
+			LEFT JOIN eq_prop_catalogo_data es ON eqcatccodi = 6 and e.equiestado = es.eqcatdabrev
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlObtenerReactorPorId</key>
+		<query>
+			WITH ult_fecha_prop AS (
+			SELECT equicodi, propcodi,MAX(fechapropequi) AS fechapropequi
+			FROM eq_propequi
+			WHERE equicodi = :v_equicodi
+			AND propequideleted=0
+			GROUP BY equicodi,propcodi
+			)
+			,data_prop AS (
+			SELECT pe.equicodi,pe.propcodi,pe.valor,pe.epproycodi,pe.fechapropequi,pe.propequicomentario,nvl(pe.propequiusumodificacion,pe.propequiusucreacion) usumodificacion,nvl(pe.propequifecmodificacion,pe.propequifeccreacion) fecmodificacion
+			FROM eq_propequi pe JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			ORDER BY pe.fechapropequi desc,propcodi
+			)
+			,ult_proy_fecha_eq AS (
+			SELECT equicodi,epproycodi,fechapropequi,usumodificacion,fecmodificacion
+			FROM data_prop
+			WHERE rownum&lt;2
+			)
+			,eq_propiedad AS (
+			SELECT *
+			FROM (SELECT equicodi,propcodi,valor,propequicomentario
+			FROM data_prop) PIVOT (
+			MAX(valor)
+			,max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+			241 as nivel_tension
+			,3401 as id_celda_1
+			,3402 as id_celda_2
+			,240 as capacidad_mvar
+			,1927 as capacidad_a
+			,3403 as capacidad_transmision_a
+			,3404 as capacidad_transmision_mvar
+			,3405 as factor_limitante_calc
+			,3406 as factor_limitante_final
+			,3407 as observaciones
+			)
+			)
+			)
+			SELECT
+			up.epproycodi as id_proyecto
+			,pr.epproynomb as proyecto
+			,TO_CHAR(up.fechapropequi, 'DD/MM/YYYY') as fecha_actualizacion
+			,e.equicodi
+			,e.equiabrev AS codigo
+			,e.areacodi as id_ubicacion
+			,ar.areanomb as ubicacion
+			,e.emprcodi AS id_empresa
+			,em.emprnomb as empresa
+
+			,p.id_celda_1
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(p.id_celda_1) as celda_1_posicion_nucleo_tc
+			,pkg_protecciones.fn_get_celda_pick_up(p.id_celda_1) as celda_1_pick_up
+			,p.id_celda_2
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(p.id_celda_2) as celda_2_posicion_nucleo_tc
+			,pkg_protecciones.fn_get_celda_pick_up(p.id_celda_2) as celda_2_pick_up
+
+			,p.nivel_tension
+			,p.capacidad_mvar
+			,p.capacidad_a
+			,p.capacidad_transmision_a
+			,p.capacidad_transmision_a_coment
+			,p.capacidad_transmision_mvar
+			,p.capacidad_transmision_mvar_coment
+			,p.factor_limitante_calc
+			,p.factor_limitante_calc_coment
+			,p.factor_limitante_final
+			,p.factor_limitante_final_coment
+			,p.observaciones
+			,up.usumodificacion,TO_CHAR(up.fecmodificacion, 'DD/MM/YYYY') as fecmodificacion
+
+			FROM eq_propiedad p JOIN eq_equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN ult_proy_fecha_eq up on e.equicodi = up.equicodi
+			LEFT JOIN eq_area ar on e.areacodi= ar.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi= em.emprcodi
+			LEFT JOIN epr_proyecto_acteqp pr on up.epproycodi= pr.epproycodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlListCeldaAcoplamiento</key>
+		<query>
+			WITH equipo AS (
+			SELECT eq.*,ap.areacodizona
+			FROM
+			eq_equipo eq join epr_equipo ep on eq.equicodi = ep.equicodi and ep.epequiestregistro='1'
+			left join epr_area ap on eq.areacodi = ap.areacodi
+			WHERE eq.famcodi = 6 and ep.epequiflagsev='1'
+			-- AND upper(eq.equiabrev) LIKE '%ACOP%'
+			AND ( nvl(:equicodi, 0) = 0 OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL OR upper(eq.equiabrev) LIKE '%'|| upper(:codigo)|| '%' )
+			AND ( nvl(:id_subestacion, 0) = 0 OR eq.areacodi = :id_subestacion )
+			AND ( nvl(:emprcodi, 0) = 0 OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:id_area, 0) = 0 OR ap.areacodizona = :id_area )
+			AND ( TRIM(:equiestado) IS NULL OR eq.equiestado = :equiestado )
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			, ult_fecha_modificacion_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM ult_fecha_prop p
+			GROUP BY
+			p.equicodi
+			)
+			, ult_modificador_equipo AS (
+			SELECT
+			p.equicodi
+			,MAX(nvl(p.propequiusumodificacion,p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_modificacion_equipo e ON p.equicodi = e.equicodi
+			AND p.fechapropequi = e.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			pe.propequicomentario
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			,max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+			3411 as id_interruptor
+			,3414 as capacidad_transmision_a
+			,3415 as capacidad_transmision_mva
+			,3416 as factor_limitante_calc
+			,3417 as factor_limitante_final
+			,3418 as observaciones
+			)
+			)
+			)
+			SELECT
+			e.equicodi as codigo_id
+			,e.equiabrev as codigo
+			,az.areanomb as area
+			,em.emprnomb as empresa
+			,a.areanomb as ubicacion
+			,ei.equitension as tension
+			,p.capacidad_transmision_a
+			,p.capacidad_transmision_mva
+			,p.factor_limitante_final
+			,es.eqcatddescripcion as estado
+			,e.equiestado
+			,uum.propequiusumodificacion as actualizado_por
+			,TO_CHAR(uum.propequifecmodificacion, 'DD/MM/YYYY HH24:MI') as actualizado_el
+			--nuevos campos
+			,p.capacidad_transmision_a_coment
+			,p.capacidad_transmision_mva_coment
+			,p.factor_limitante_final_coment
+
+			FROM
+			equipo e
+			LEFT JOIN eq_propiedad p ON p.equicodi = e.equicodi
+			LEFT JOIN ult_fecha_modificacion_equipo ufm ON p.equicodi = ufm.equicodi
+			LEFT JOIN ult_modificador_equipo uum ON p.equicodi = uum.equicodi
+			LEFT JOIN eq_area a on e.areacodi = a.areacodi
+			LEFT JOIN eq_area az on e.areacodizona = az.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi = em.emprcodi
+			LEFT JOIN eq_prop_catalogo_data es ON eqcatccodi = 6 and e.equiestado = es.eqcatdabrev
+			LEFT JOIN eq_equipo ei on to_number(p.id_interruptor default 0 on conversion error) = ei.equicodi
+			WHERE ( nvl(:tension, 0) = 0 OR eI.equitension = :tension )
+		</query>
+	</Sql>
+
+
+	<Sql>
+		<key>SqlObtenerCeldaAcoplamientoPorId</key>
+		<query>
+			WITH ult_fecha_prop AS (
+			SELECT equicodi, propcodi,MAX(fechapropequi) AS fechapropequi
+			FROM eq_propequi
+			WHERE equicodi = :v_equicodi
+			AND propequideleted=0
+			GROUP BY equicodi,propcodi
+			)
+			,data_prop AS (
+			SELECT pe.equicodi,pe.propcodi,pe.valor,pe.epproycodi,pe.fechapropequi,pe.propequicomentario,nvl(pe.propequiusumodificacion,pe.propequiusucreacion) usumodificacion,nvl(pe.propequifecmodificacion,pe.propequifeccreacion) fecmodificacion
+			FROM eq_propequi pe JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			ORDER BY pe.fechapropequi desc,propcodi
+			)
+			,ult_proy_fecha_eq AS (
+			SELECT equicodi,epproycodi,fechapropequi,usumodificacion,fecmodificacion
+			FROM data_prop
+			WHERE rownum = 1
+			)
+			,eq_propiedad AS (
+			SELECT *
+			FROM (SELECT equicodi,propcodi,valor,propequicomentario
+			FROM data_prop) PIVOT (
+			MAX(valor)
+			,max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+			3411 as id_interruptor
+			,3414 as capacidad_transmision_a
+			,3415 as capacidad_transmision_mva
+			,3416 as factor_limitante_calc
+			,3417 as factor_limitante_final
+			,3418 as observaciones
+			)
+			)
+			)
+			,equipo_interruptor as (
+			select e.equicodi,e.equinomb,e.equiabrev,e.equitension,e.areacodi,e.emprcodi
+			from eq_equipo e
+			where equicodi in (select to_number(valor default 0 on conversion error) from data_prop where propcodi = 3411)
+			and equicodi!=0
+			)
+			, ult_fecha_prop_interruptor AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo_interruptor e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			,data_prop_interruptor AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			pe.propequicomentario
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop_interruptor up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad_interruptor AS (
+			SELECT
+			*
+			FROM
+			data_prop_interruptor PIVOT (
+			max(valor),max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+			401 as capacidad_a
+			,3413 as capacidad_mva
+			)
+			)
+			)
+
+			SELECT
+			up.epproycodi as id_proyecto
+			,pr.epproynomb as proyecto
+			,TO_CHAR(up.fechapropequi, 'DD/MM/YYYY') as fecha_actualizacion
+			,e.equicodi
+			,e.equiabrev AS codigo
+			,e.areacodi as id_ubicacion
+			,ar.areanomb as ubicacion
+			,e.emprcodi AS id_empresa
+			,em.emprnomb as empresa
+
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(e.equicodi) as posicion_nucleo_tc
+			,pkg_protecciones.fn_get_celda_pick_up(e.equicodi) as pick_up
+
+			,p.id_interruptor
+			,emi.emprnomb as interruptor_empresa
+			,ei.equitension as interruptor_tension
+			,pi.capacidad_a as interruptor_capacidad_a
+			,pi.capacidad_a_coment as interruptor_capacidad_a_coment
+			,pi.capacidad_mva as interruptor_capacidad_mva
+			,pi.capacidad_mva_coment as interruptor_capacidad_mva_coment
+
+			,p.capacidad_transmision_a
+			,p.capacidad_transmision_a_coment
+			,p.capacidad_transmision_mva
+			,p.capacidad_transmision_mva_coment
+			,p.factor_limitante_calc
+			,p.factor_limitante_calc_coment
+			,p.factor_limitante_final
+			,p.factor_limitante_final_coment
+			,p.observaciones
+			,up.usumodificacion,TO_CHAR(up.fecmodificacion,'DD/MM/YYYY') as fecmodificacion
+			FROM eq_propiedad p JOIN eq_equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN ult_proy_fecha_eq up on e.equicodi = up.equicodi
+			LEFT JOIN eq_area ar on e.areacodi= ar.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi= em.emprcodi
+			LEFT JOIN epr_proyecto_acteqp pr on up.epproycodi= pr.epproycodi
+			LEFT JOIN eq_equipo ei on to_number(p.id_interruptor default 0 on conversion error) = ei.equicodi
+			LEFT JOIN si_empresa emi on ei.emprcodi = emi.emprcodi
+			LEFT JOIN equipo_interruptor ei ON to_number(p.id_interruptor default 0 on conversion error) = ei.equicodi
+			LEFT JOIN eq_propiedad_interruptor pi on ei.equicodi = pi.equicodi
+		</query>
+	</Sql>
+
+
+	<Sql>
+		<key>SqlListReleSobretension</key>
+		<query>
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			)
+			, equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion
+			,az.areanomb as nomb_area
+			,emp.emprnomb as nomb_empresa
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi
+			AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi
+			AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			LEFT JOIN eq_area az ON ar.areacodizona = az.areacodi
+			LEFT JOIN si_empresa emp on eq.emprcodi = emp.emprcodi
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 nivel_tension
+			,3317 ajuste_sobre_tension
+			,3318 sobre_t_u
+			,3319 sobre_t_t
+			,3320 sobre_t_uu
+			,3321 sobre_t_tt
+			,3304 estado
+			,3306 tipo_uso
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS codigo,
+			e.nomb_area as area,
+			e.nomb_empresa as empresa,
+			e.nomb_celda AS celda,
+			p.nivel_tension,
+			p.sobre_t_u,
+			p.sobre_t_t,
+			p.sobre_t_uu,
+			p.sobre_t_tt,
+
+			um.propequiusumodificacion AS usuario_modificacion,
+			TO_CHAR(um.propequifecmodificacion, 'DD/MM/YYYY HH24:MI') AS fecha_modificacion,
+			es.eqcatddescripcion AS estado
+			FROM
+			equipo e 
+			LEFT JOIN eq_propiedad p ON p.equicodi = e.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			LEFT JOIN eq_prop_catalogo_data es ON es.eqcatccodi = 6 AND es.eqcatdabrev = e.equiestado
+			WHERE
+			p.tipo_uso = '101'
+			AND p.ajuste_sobre_tension = 'S'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlListReleMandoSincronizado</key>
+		<query>
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			)
+			, equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion
+			,az.areanomb as nomb_area
+			,emp.emprnomb as nomb_empresa
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi
+			AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi
+			AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			LEFT JOIN eq_area az ON ar.areacodizona = az.areacodi
+			LEFT JOIN si_empresa emp on eq.emprcodi = emp.emprcodi
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 nivel_tension
+			,3313 id_interruptor
+			,3326 mando_sincronizado
+			,3304 estado
+			,3306 tipo_uso
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS codigo,
+			e.nomb_area as area,
+			e.nomb_empresa as empresa,
+			e.nomb_celda AS celda,
+			ei.equinomb AS codigo_interruptor,
+			ms.eqcatddescripcion as mando_sincronizado,
+
+			um.propequiusumodificacion AS usuario_modificacion,
+			TO_CHAR(um.propequifecmodificacion, 'DD/MM/YYYY HH24:MI') AS fecha_modificacion,
+			es.eqcatddescripcion AS estado,
+			e.nomb_subestacion AS subestacion
+			FROM
+			equipo e
+			LEFT JOIN eq_propiedad p ON p.equicodi = e.equicodi
+			LEFT JOIN eq_equipo ei ON TO_NUMBER(p.id_interruptor DEFAULT 0 ON CONVERSION ERROR) = ei.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			LEFT JOIN eq_prop_catalogo_data es ON es.eqcatccodi = 6 AND es.eqcatdabrev = e.equiestado
+			LEFT JOIN eq_prop_catalogo_data ms ON TO_NUMBER(p.mando_sincronizado DEFAULT 0 ON CONVERSION ERROR) = ms.eqcatdcodi
+			WHERE
+			p.tipo_uso = '102'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlListReleTorcional</key>
+		<query>
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			)
+			, equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion
+			,az.areanomb as nomb_area
+			,emp.emprnomb as nomb_empresa
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi
+			AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi
+			AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			LEFT JOIN eq_area az ON ar.areacodizona = az.areacodi
+			LEFT JOIN si_empresa emp on eq.emprcodi = emp.emprcodi
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 nivel_tension
+			,3327 medida_mitigacion
+			,3328 rele_torsional_implementado
+			,3304 estado
+			,3306 tipo_uso
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS codigo,
+			e.nomb_area as area,
+			e.nomb_empresa as empresa,
+			e.nomb_celda AS celda,
+
+			p.medida_mitigacion,
+			case when p.rele_torsional_implementado='S' then 'Si' when p.rele_torsional_implementado='N' then 'No' else '' end as rele_torsional_implementado_dsc,
+
+			um.propequiusumodificacion AS usuario_modificacion,
+			TO_CHAR(um.propequifecmodificacion, 'DD/MM/YYYY HH24:MI') AS fecha_modificacion,
+			es.eqcatddescripcion AS estado
+			FROM
+			equipo e
+			LEFT JOIN eq_propiedad p ON p.equicodi = e.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			LEFT JOIN eq_prop_catalogo_data es ON es.eqcatccodi = 6 AND es.eqcatdabrev = e.equiestado
+			WHERE
+			p.tipo_uso = '103'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlListRelePMU</key>
+		<query>
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			)
+			, equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion
+			,az.areanomb as nomb_area
+			,emp.emprnomb as nomb_empresa
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi
+			AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi
+			AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			LEFT JOIN eq_area az ON ar.areacodizona = az.areacodi
+			LEFT JOIN si_empresa emp on eq.emprcodi = emp.emprcodi
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 nivel_tension
+			,3325 accion
+			,3324 activo_ajuste_pmu
+			,3304 estado
+			,3306 tipo_uso
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS codigo,
+			e.nomb_area as area,
+			e.nomb_empresa as empresa,
+			e.nomb_subestacion AS subestacion,
+
+			p.accion,
+
+			um.propequiusumodificacion AS usuario_modificacion,
+			TO_CHAR(um.propequifecmodificacion, 'DD/MM/YYYY HH24:MI') AS fecha_modificacion,
+			es.eqcatddescripcion AS estado
+			FROM
+			equipo e
+			LEFT JOIN eq_propiedad p ON p.equicodi = e.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			LEFT JOIN eq_prop_catalogo_data es ON es.eqcatccodi = 6 AND es.eqcatdabrev = e.equiestado
+			WHERE
+			(p.tipo_uso = '104' or p.tipo_uso = '101' and p.activo_ajuste_pmu='S')
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlListTransformador</key>
+		<query>
+			WITH equipo AS (
+			SELECT eq.*,ap.areacodizona
+			FROM
+			eq_equipo eq inner join epr_equipo ep on eq.equicodi = ep.equicodi and ep.epequiestregistro='1'
+			left join epr_area ap on eq.areacodi = ap.areacodi
+			WHERE eq.famcodi in (9,10,47)
+			AND ( nvl(:equicodi, 0) = 0 OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL OR upper(eq.equiabrev) LIKE '%'|| upper(:codigo)|| '%' )
+			AND ( nvl(:tipo, 0) = 0 OR eq.famcodi = :tipo )
+			AND ( nvl(:id_subestacion, 0) = 0 OR eq.areacodi = :id_subestacion )
+			AND ( nvl(:emprcodi, 0) = 0 OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:id_area, 0) = 0 OR ap.areacodizona = :id_area )
+			AND ( TRIM(:equiestado) IS NULL OR eq.equiestado = :equiestado )
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			, ult_fecha_modificacion_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM ult_fecha_prop p
+			GROUP BY
+			p.equicodi
+			)
+			, ult_modificador_equipo AS (
+			SELECT
+			p.equicodi
+			,MAX(nvl(p.propequiusumodificacion,p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_modificacion_equipo e ON p.equicodi = e.equicodi
+			AND p.fechapropequi = e.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			pe.propequicomentario
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			,max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+			77 as d2d1_tension
+			,830 as d3d1_tension
+			,1894 as d4d1_tension
+			,75 as d2d2_tension
+			,831 as d3d2_tension
+			,832 as d3d3_tension
+			,1895 as d4d2_tension
+			,1896 as d4d3_tension
+			,1897 as d4d4_tension
+
+			,3422 as d2d1_capacidad_mva
+			,3462 as d3d1_capacidad_mva
+			,3502 as d4d1_capacidad_mva
+			,3442 as d2d2_capacidad_mva
+			,3482 as d3d2_capacidad_mva
+			,828 as d3d3_capacidad_mva
+			,1903 as d4d2_capacidad_mva
+			,1904 as d4d3_capacidad_mva
+			,1905 as d4d4_capacidad_mva
+
+			,2023 as d2d1_capacidad_a
+			,3463 as d3d1_capacidad_a
+			,3503 as d4d1_capacidad_a
+			,3443 as d2d2_capacidad_a
+			,3483 as d3d2_capacidad_a
+			,3503 as d3d3_capacidad_a
+			,3543 as d4d2_capacidad_a
+			,3563 as d4d3_capacidad_a
+			,3583 as d4d4_capacidad_a
+
+			,3427 as d2d1_factor_limitante_final
+			,3467 as d3d1_factor_limitante_final
+			,3507 as d4d1_factor_limitante_final
+			,3447 as d2d2_factor_limitante_final
+			,3487 as d3d2_factor_limitante_final
+			,3507 as d3d3_factor_limitante_final
+			,3547 as d4d2_factor_limitante_final
+			,3567 as d4d3_factor_limitante_final
+			,3587 as d4d4_factor_limitante_final
+
+			)
+			)
+			)
+			,data_final as (
+			SELECT
+			e.equicodi as codigo_id
+			,e.equiabrev as codigo
+			,a.areanomb as ubicacion
+			,az.areanomb as area
+			,em.emprnomb as empresa
+			,e.famcodi
+			/*
+			,case when e.famcodi = 9 then d2d1_tension||'|'||d2d2_tension
+			when e.famcodi = 10 then d3d1_tension||'|'||d3d2_tension||'|'||d3d3_tension
+			when e.famcodi = 47 then d4d1_tension||'|'||d4d2_tension||'|'||d4d3_tension||'|'||d4d4_tension
+			end as tension
+
+			,case when e.famcodi = 9 then d2d1_capacidad_mva||'|'||d2d2_capacidad_mva
+			when e.famcodi = 10 then d3d1_capacidad_mva||'|'||d3d2_capacidad_mva||'|'||d3d3_capacidad_mva
+			when e.famcodi = 47 then d4d1_capacidad_mva||'|'||d4d2_capacidad_mva||'|'||d4d3_capacidad_mva||'|'||d4d4_capacidad_mva
+			end as capacidad_mva
+
+			,case when e.famcodi = 9 then d2d1_capacidad_a||'|'||d2d2_capacidad_a
+			when e.famcodi = 10 then d3d1_capacidad_a||'|'||d3d2_capacidad_a||'|'||d3d3_capacidad_a
+			when e.famcodi = 47 then d4d1_capacidad_a||'|'||d4d2_capacidad_a||'|'||d4d3_capacidad_a||'|'||d4d4_capacidad_a
+			end as capacidad_a
+
+			,case when e.famcodi = 9 then d2d1_factor_limitante_final||'|'||d2d2_factor_limitante_final
+			when e.famcodi = 10 then d3d1_factor_limitante_final||'|'||d3d2_factor_limitante_final||'|'||d3d3_factor_limitante_final
+			when e.famcodi = 47 then d4d1_factor_limitante_final||'|'||d4d2_factor_limitante_final||'|'||d4d3_factor_limitante_final||'|'||d4d4_factor_limitante_final
+			end as factor_limitante_final
+			*/
+			,es.eqcatddescripcion as estado
+			,e.equiestado
+			,uum.propequiusumodificacion as actualizado_por
+			,TO_CHAR(uum.propequifecmodificacion, 'DD/MM/YYYY HH24:MI') as actualizado_el
+			,fa.famnomb as tipo
+			/*
+			,case when e.famcodi = 9 then case when trim(d2d1_capacidad_mva_coment) is not null or trim(d2d2_capacidad_mva_coment) is not null then  d2d1_capacidad_mva_coment||'|'||d2d2_capacidad_mva_coment end
+			when e.famcodi = 10 then case when trim(d3d1_capacidad_mva_coment) is not null or trim(d3d2_capacidad_mva_coment) is not null or trim(d3d3_capacidad_mva_coment) is not null then d3d1_capacidad_mva_coment||'|'||d3d2_capacidad_mva_coment||'|'||d3d3_capacidad_mva_coment end
+			when e.famcodi = 47 then case when trim(d4d1_capacidad_mva_coment) is not null or trim(d4d2_capacidad_mva_coment) is not null or trim(d4d3_capacidad_mva_coment) is not null or trim(d4d4_capacidad_mva_coment) is not null then d4d1_capacidad_mva_coment||'|'||d4d2_capacidad_mva_coment||'|'||d4d3_capacidad_mva_coment||'|'||d4d4_capacidad_mva_coment end
+			end as capacidad_mva_coment
+
+			,case when e.famcodi = 9 then case when trim(d2d1_capacidad_a_coment) is not null or trim(d2d2_capacidad_a_coment) is not null then  d2d1_capacidad_a_coment||'|'||d2d2_capacidad_a_coment end
+			when e.famcodi = 10 then case when trim(d3d1_capacidad_a_coment) is not null or trim(d3d2_capacidad_a_coment) is not null or trim(d3d3_capacidad_a_coment) is not null then d3d1_capacidad_a_coment||'|'||d3d2_capacidad_a_coment||'|'||d3d3_capacidad_a_coment end
+			when e.famcodi = 47 then case when trim(d4d1_capacidad_a_coment) is not null or trim(d4d2_capacidad_a_coment) is not null or trim(d4d3_capacidad_a_coment) is not null or trim(d4d4_capacidad_a_coment) is not null then d4d1_capacidad_a_coment||'|'||d4d2_capacidad_a_coment||'|'||d4d3_capacidad_a_coment||'|'||d4d4_capacidad_a_coment end
+			end as capacidad_a_coment
+
+			,case when e.famcodi = 9 then case when trim(d2d1_factor_limitante_final_coment) is not null or trim(d2d2_factor_limitante_final_coment) is not null then  d2d1_factor_limitante_final_coment||'|'||d2d2_factor_limitante_final_coment end
+			when e.famcodi = 10 then case when trim(d3d1_factor_limitante_final_coment) is not null or trim(d3d2_factor_limitante_final_coment) is not null or trim(d3d3_factor_limitante_final_coment) is not null then d3d1_factor_limitante_final_coment||'|'||d3d2_factor_limitante_final_coment||'|'||d3d3_factor_limitante_final_coment end
+			when e.famcodi = 47 then case when trim(d4d1_factor_limitante_final_coment) is not null or trim(d4d2_factor_limitante_final_coment) is not null or trim(d4d3_factor_limitante_final_coment) is not null or trim(d4d4_factor_limitante_final_coment) is not null then d4d1_factor_limitante_final_coment||'|'||d4d2_factor_limitante_final_coment||'|'||d4d3_factor_limitante_final_coment||'|'||d4d4_factor_limitante_final_coment end
+			end as factor_limitante_final_coment
+			*/
+			-- Nuevos campos
+			,case when e.famcodi = 9 then p.d2d1_tension
+			when e.famcodi = 10 then d3d1_tension
+			when e.famcodi = 47 then d4d1_tension
+			end as d1_tension
+			,case when e.famcodi = 9 then d2d2_tension
+			when e.famcodi = 10 then d3d2_tension
+			when e.famcodi = 47 then d4d2_tension
+			end as d2_tension
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_tension
+			when e.famcodi = 47 then d4d3_tension
+			end as d3_tension
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_tension
+			end as d4_tension
+
+			,case when e.famcodi = 9 then d2d1_tension_coment
+			when e.famcodi = 10 then d3d1_tension_coment
+			when e.famcodi = 47 then d4d1_tension_coment
+			end as d1_tension_coment
+			,case when e.famcodi = 9 then d2d2_tension_coment
+			when e.famcodi = 10 then d3d2_tension_coment
+			when e.famcodi = 47 then d4d2_tension_coment
+			end as d2_tension_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_tension_coment
+			when e.famcodi = 47 then d4d3_tension_coment
+			end as d3_tension_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_tension_coment
+			end as d4_tension_coment
+
+			,case when e.famcodi = 9 then p.d2d1_capacidad_mva
+			when e.famcodi = 10 then d3d1_capacidad_mva
+			when e.famcodi = 47 then d4d1_capacidad_mva
+			end as d1_capacidad_mva
+			,case when e.famcodi = 9 then d2d2_capacidad_mva
+			when e.famcodi = 10 then d3d2_capacidad_mva
+			when e.famcodi = 47 then d4d2_capacidad_mva
+			end as d2_capacidad_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_mva
+			when e.famcodi = 47 then d4d3_capacidad_mva
+			end as d3_capacidad_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_mva
+			end as d4_capacidad_mva
+
+			,case when e.famcodi = 9 then d2d1_capacidad_mva_coment
+			when e.famcodi = 10 then d3d1_capacidad_mva_coment
+			when e.famcodi = 47 then d4d1_capacidad_mva_coment
+			end as d1_capacidad_mva_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_mva_coment
+			when e.famcodi = 10 then d3d2_capacidad_mva_coment
+			when e.famcodi = 47 then d4d2_capacidad_mva_coment
+			end as d2_capacidad_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_mva_coment
+			when e.famcodi = 47 then d4d3_capacidad_mva_coment
+			end as d3_capacidad_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_mva_coment
+			end as d4_capacidad_mva_coment
+
+			,case when e.famcodi = 9 then p.d2d1_capacidad_a
+			when e.famcodi = 10 then d3d1_capacidad_a
+			when e.famcodi = 47 then d4d1_capacidad_a
+			end as d1_capacidad_a
+			,case when e.famcodi = 9 then d2d2_capacidad_a
+			when e.famcodi = 10 then d3d2_capacidad_a
+			when e.famcodi = 47 then d4d2_capacidad_a
+			end as d2_capacidad_a
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_a
+			when e.famcodi = 47 then d4d3_capacidad_a
+			end as d3_capacidad_a
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_a
+			end as d4_capacidad_a
+
+			,case when e.famcodi = 9 then d2d1_capacidad_a_coment
+			when e.famcodi = 10 then d3d1_capacidad_a_coment
+			when e.famcodi = 47 then d4d1_capacidad_a_coment
+			end as d1_capacidad_a_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_a_coment
+			when e.famcodi = 10 then d3d2_capacidad_a_coment
+			when e.famcodi = 47 then d4d2_capacidad_a_coment
+			end as d2_capacidad_a_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_a_coment
+			when e.famcodi = 47 then d4d3_capacidad_a_coment
+			end as d3_capacidad_a_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_a_coment
+			end as d4_capacidad_a_coment
+
+			,case when e.famcodi = 9 then p.d2d1_factor_limitante_final
+			when e.famcodi = 10 then d3d1_factor_limitante_final
+			when e.famcodi = 47 then d4d1_factor_limitante_final
+			end as d1_factor_limitante_final
+			,case when e.famcodi = 9 then d2d2_factor_limitante_final
+			when e.famcodi = 10 then d3d2_factor_limitante_final
+			when e.famcodi = 47 then d4d2_factor_limitante_final
+			end as d2_factor_limitante_final
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_factor_limitante_final
+			when e.famcodi = 47 then d4d3_factor_limitante_final
+			end as d3_factor_limitante_final
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_factor_limitante_final
+			end as d4_factor_limitante_final
+
+			,case when e.famcodi = 9 then d2d1_factor_limitante_final_coment
+			when e.famcodi = 10 then d3d1_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d1_factor_limitante_final_coment
+			end as d1_factor_limitante_final_coment
+			,case when e.famcodi = 9 then d2d2_factor_limitante_final_coment
+			when e.famcodi = 10 then d3d2_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d2_factor_limitante_final_coment
+			end as d2_factor_limitante_final_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d3_factor_limitante_final_coment
+			end as d3_factor_limitante_final_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_factor_limitante_final_coment
+			end as d4_factor_limitante_final_coment
+
+			,case when e.famcodi = 9 then 2
+			when e.famcodi = 10 then 3
+			when e.famcodi = 47 then 4
+			end as cantidad_filas
+			FROM
+			equipo e
+			LEFT JOIN eq_propiedad p ON p.equicodi = e.equicodi
+			LEFT JOIN ult_fecha_modificacion_equipo ufm ON p.equicodi = ufm.equicodi
+			LEFT JOIN ult_modificador_equipo uum ON p.equicodi = uum.equicodi
+			LEFT JOIN eq_area a on e.areacodi = a.areacodi
+			LEFT JOIN eq_area az on e.areacodizona = az.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi = em.emprcodi
+			LEFT JOIN eq_prop_catalogo_data es ON eqcatccodi = 6 and e.equiestado = es.eqcatdabrev
+			LEFT JOIN eq_familia fa ON e.famcodi = fa.famcodi
+			)
+			select * from data_final
+			where ( nvl(:tension, 0) = 0 OR nvl(d1_tension,0) = :tension OR nvl(d2_tension,0) = :tension OR nvl(d3_tension,0) = :tension OR nvl(d4_tension,0) = :tension)
+		</query>
+	</Sql>
+
+
+	<Sql>
+		<key>SqlObtenerTransformadorPorId</key>
+		<query>
+			WITH ult_fecha_prop AS (
+			SELECT equicodi, propcodi,MAX(fechapropequi) AS fechapropequi
+			FROM eq_propequi
+			WHERE equicodi = :v_equicodi
+			AND propequideleted=0
+			GROUP BY equicodi,propcodi
+			)
+			,data_prop AS (
+			SELECT pe.equicodi,pe.propcodi,pe.valor,pe.epproycodi
+			,pe.fechapropequi,pe.propequicomentario
+			,nvl(pe.propequiusumodificacion,pe.propequiusucreacion) usumodificacion
+			,nvl(pe.propequifecmodificacion,pe.propequifeccreacion) fecmodificacion
+			FROM eq_propequi pe JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			ORDER BY pe.fechapropequi desc,propcodi
+			)
+			,ult_proy_fecha_eq AS (
+			SELECT equicodi,epproycodi,fechapropequi,usumodificacion,fecmodificacion
+			FROM data_prop
+			WHERE rownum=1
+			)
+			,eq_propiedad AS (
+			SELECT *
+			FROM (SELECT equicodi,propcodi,valor,propequicomentario
+			FROM data_prop) PIVOT (
+			MAX(valor)
+			,max(propequicomentario) as coment
+			FOR propcodi
+			IN (
+
+			3421 as d2d1_id_celda
+			,3441 as d2d2_id_celda
+			,3461 as d3d1_id_celda
+			,3481 as d3d2_id_celda
+			,3501 as d3d3_id_celda
+			,3521 as d4d1_id_celda
+			,3541 as d4d2_id_celda
+			,3561 as d4d3_id_celda
+			,3581 as d4d4_id_celda
+
+
+			,77 as d2d1_tension
+			,75 as d2d2_tension
+			,830 as d3d1_tension
+
+
+			,831 as d3d2_tension
+			,832 as d3d3_tension
+			,1894 as d4d1_tension
+			,1895 as d4d2_tension
+			,1896 as d4d3_tension
+			,1897 as d4d4_tension
+
+			,72 as d2d1_capacidad_onan_mva
+			,1872 as d2d2_capacidad_onan_mva
+			,821 as d3d1_capacidad_onan_mva
+			,824 as d3d2_capacidad_onan_mva
+			,827 as d3d3_capacidad_onan_mva
+			,1898 as d4d1_capacidad_onan_mva
+			,1899 as d4d2_capacidad_onan_mva
+			,1900 as d4d3_capacidad_onan_mva
+			,1901 as d4d4_capacidad_onan_mva
+
+			,69 as d2d1_capacidad_onaf_mva
+			,74 as d2d2_capacidad_onaf_mva
+			,822 as d3d1_capacidad_onaf_mva
+			,825 as d3d2_capacidad_onaf_mva
+			,828 as d3d3_capacidad_onaf_mva
+			,1902 as d4d1_capacidad_onaf_mva
+			,1903 as d4d2_capacidad_onaf_mva
+			,1904 as d4d3_capacidad_onaf_mva
+			,1905 as d4d4_capacidad_onaf_mva
+
+
+			,3422 as d2d1_capacidad_mva
+			,3442 as d2d2_capacidad_mva
+			,3462 as d3d1_capacidad_mva
+
+
+			,3482 as d3d2_capacidad_mva
+			,3502 as d3d3_capacidad_mva
+			,3522 as d4d1_capacidad_mva
+			,3542 as d4d2_capacidad_mva
+			,3562 as d4d3_capacidad_mva
+			,3582 as d4d4_capacidad_mva
+
+			,3423 as d2d1_capacidad_a
+			,3443 as d2d2_capacidad_a
+			,3463 as d3d1_capacidad_a
+
+
+			,3483 as d3d2_capacidad_a
+			,3503 as d3d3_capacidad_a
+			,3523 as d4d1_capacidad_a
+			,3543 as d4d2_capacidad_a
+			,3563 as d4d3_capacidad_a
+			,3583 as d4d4_capacidad_a
+
+
+			,3425 as d2d1_capacidad_transmision_mva
+			,3445 as d2d2_capacidad_transmision_mva
+			,3465 as d3d1_capacidad_transmision_mva
+			,3485 as d3d2_capacidad_transmision_mva
+			,3505 as d3d3_capacidad_transmision_mva
+			,3525 as d4d1_capacidad_transmision_mva
+			,3545 as d4d2_capacidad_transmision_mva
+			,3565 as d4d3_capacidad_transmision_mva
+			,3585 as d4d4_capacidad_transmision_mva
+
+
+			,3424 as d2d1_capacidad_transmision_a
+			,3444 as d2d2_capacidad_transmision_a
+			,3464 as d3d1_capacidad_transmision_a
+			,3484 as d3d2_capacidad_transmision_a
+			,3504 as d3d3_capacidad_transmision_a
+			,3524 as d4d1_capacidad_transmision_a
+			,3544 as d4d2_capacidad_transmision_a
+			,3564 as d4d3_capacidad_transmision_a
+			,3584 as d4d4_capacidad_transmision_a
+
+
+
+			,3426 as d2d1_factor_limitante_calc
+			,3446 as d2d2_factor_limitante_calc
+			,3466 as d3d1_factor_limitante_calc
+			,3486 as d3d2_factor_limitante_calc
+			,3506 as d3d3_factor_limitante_calc
+			,3526 as d4d1_factor_limitante_calc
+			,3546 as d4d2_factor_limitante_calc
+			,3566 as d4d3_factor_limitante_calc
+			,3586 as d4d4_factor_limitante_calc
+
+			,3427 as d2d1_factor_limitante_final
+			,3447 as d2d2_factor_limitante_final
+			,3467 as d3d1_factor_limitante_final
+
+
+			,3487 as d3d2_factor_limitante_final
+			,3507 as d3d3_factor_limitante_final
+			,3527 as d4d1_factor_limitante_final
+			,3547 as d4d2_factor_limitante_final
+			,3567 as d4d3_factor_limitante_final
+			,3587 as d4d4_factor_limitante_final
+
+			,1022 as d2_observaciones
+			,1024 as d3_observaciones
+			,3588 as d4_observaciones
+
+			)
+			)
+			)
+			SELECT
+			up.epproycodi as id_proyecto
+			,pr.epproynomb as proyecto
+			,TO_CHAR(up.fechapropequi, 'DD/MM/YYYY') as fecha_actualizacion
+			,e.equicodi
+			,e.equiabrev AS codigo
+			,e.areacodi as id_ubicacion
+			,ar.areanomb as ubicacion
+			,e.emprcodi AS id_empresa
+			,em.emprnomb as empresa
+
+			,case when e.famcodi = 9 then d2d1_id_celda
+			when e.famcodi = 10 then d3d1_id_celda
+			when e.famcodi = 47 then d4d1_id_celda
+			end as d1_id_celda
+			,case when e.famcodi = 9 then d2d2_id_celda
+			when e.famcodi = 10 then d3d2_id_celda
+			when e.famcodi = 47 then d4d2_id_celda
+			end as d2_id_celda
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_id_celda
+			when e.famcodi = 47 then d4d3_id_celda
+			end as d3_id_celda
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_id_celda
+			end as d4_id_celda
+
+			,case when e.famcodi = 9 then d2d1_tension
+			when e.famcodi = 10 then d3d1_tension
+			when e.famcodi = 47 then d4d1_tension
+			end as d1_tension
+			,case when e.famcodi = 9 then d2d2_tension
+			when e.famcodi = 10 then d3d2_tension
+			when e.famcodi = 47 then d4d2_tension
+			end as d2_tension
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_tension
+			when e.famcodi = 47 then d4d3_tension
+			end as d3_tension
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_tension
+			end as d4_tension
+
+			,case when e.famcodi = 9 then d2d1_capacidad_onan_mva
+			when e.famcodi = 10 then d3d1_capacidad_onan_mva
+			when e.famcodi = 47 then d4d1_capacidad_onan_mva
+			end as d1_capacidad_onan_mva
+			,case when e.famcodi = 9 then d2d2_capacidad_onan_mva
+			when e.famcodi = 10 then d3d2_capacidad_onan_mva
+			when e.famcodi = 47 then d4d2_capacidad_onan_mva
+			end as d2_capacidad_onan_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_onan_mva
+			when e.famcodi = 47 then d4d3_capacidad_onan_mva
+			end as d3_capacidad_onan_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_onan_mva
+			end as d4_capacidad_onan_mva
+
+			,case when e.famcodi = 9 then d2d1_capacidad_onan_mva_coment
+			when e.famcodi = 10 then d3d1_capacidad_onan_mva_coment
+			when e.famcodi = 47 then d4d1_capacidad_onan_mva_coment
+			end as d1_capacidad_onan_mva_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_onan_mva_coment
+			when e.famcodi = 10 then d3d2_capacidad_onan_mva_coment
+			when e.famcodi = 47 then d4d2_capacidad_onan_mva_coment
+			end as d2_capacidad_onan_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_onan_mva_coment
+			when e.famcodi = 47 then d4d3_capacidad_onan_mva_coment
+			end as d3_capacidad_onan_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_onan_mva_coment
+			end as d4_capacidad_onan_mva_coment
+
+			,case when e.famcodi = 9 then d2d1_capacidad_onaf_mva
+			when e.famcodi = 10 then d3d1_capacidad_onaf_mva
+			when e.famcodi = 47 then d4d1_capacidad_onaf_mva
+			end as d1_capacidad_onaf_mva
+			,case when e.famcodi = 9 then d2d2_capacidad_onaf_mva
+			when e.famcodi = 10 then d3d2_capacidad_onaf_mva
+			when e.famcodi = 47 then d4d2_capacidad_onaf_mva
+			end as d2_capacidad_onaf_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_onaf_mva
+			when e.famcodi = 47 then d4d3_capacidad_onaf_mva
+			end as d3_capacidad_onaf_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_onaf_mva
+			end as d4_capacidad_onaf_mva
+
+			,case when e.famcodi = 9 then d2d1_capacidad_onaf_mva_coment
+			when e.famcodi = 10 then d3d1_capacidad_onaf_mva_coment
+			when e.famcodi = 47 then d4d1_capacidad_onaf_mva_coment
+			end as d1_capacidad_onaf_mva_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_onaf_mva_coment
+			when e.famcodi = 10 then d3d2_capacidad_onaf_mva_coment
+			when e.famcodi = 47 then d4d2_capacidad_onaf_mva_coment
+			end as d2_capacidad_onaf_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_onaf_mva_coment
+			when e.famcodi = 47 then d4d3_capacidad_onaf_mva_coment
+			end as d3_capacidad_onaf_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_onaf_mva_coment
+			end as d4_capacidad_onaf_mva_coment
+
+			,case when e.famcodi = 9 then d2d1_capacidad_mva
+			when e.famcodi = 10 then d3d1_capacidad_mva
+			when e.famcodi = 47 then d4d1_capacidad_mva
+			end as d1_capacidad_mva
+			,case when e.famcodi = 9 then d2d2_capacidad_mva
+			when e.famcodi = 10 then d3d2_capacidad_mva
+			when e.famcodi = 47 then d4d2_capacidad_mva
+			end as d2_capacidad_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_mva
+			when e.famcodi = 47 then d4d3_capacidad_mva
+			end as d3_capacidad_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_mva
+			end as d4_capacidad_mva
+
+			,case when e.famcodi = 9 then d2d1_capacidad_mva_coment
+			when e.famcodi = 10 then d3d1_capacidad_mva_coment
+			when e.famcodi = 47 then d4d1_capacidad_mva_coment
+			end as d1_capacidad_mva_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_mva_coment
+			when e.famcodi = 10 then d3d2_capacidad_mva_coment
+			when e.famcodi = 47 then d4d2_capacidad_mva_coment
+			end as d2_capacidad_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_mva_coment
+			when e.famcodi = 47 then d4d3_capacidad_mva_coment
+			end as d3_capacidad_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_mva_coment
+			end as d4_capacidad_mva_coment
+
+			,case when e.famcodi = 9 then d2d1_capacidad_a
+			when e.famcodi = 10 then d3d1_capacidad_a
+			when e.famcodi = 47 then d4d1_capacidad_a
+			end as d1_capacidad_a
+			,case when e.famcodi = 9 then d2d2_capacidad_a
+			when e.famcodi = 10 then d3d2_capacidad_a
+			when e.famcodi = 47 then d4d2_capacidad_a
+			end as d2_capacidad_a
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_a
+			when e.famcodi = 47 then d4d3_capacidad_a
+			end as d3_capacidad_a
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_a
+			end as d4_capacidad_a
+
+			,case when e.famcodi = 9 then d2d1_capacidad_a_coment
+			when e.famcodi = 10 then d3d1_capacidad_a_coment
+			when e.famcodi = 47 then d4d1_capacidad_a_coment
+			end as d1_capacidad_a_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_a_coment
+			when e.famcodi = 10 then d3d2_capacidad_a_coment
+			when e.famcodi = 47 then d4d2_capacidad_a_coment
+			end as d2_capacidad_a_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_a_coment
+			when e.famcodi = 47 then d4d3_capacidad_a_coment
+			end as d3_capacidad_a_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_a_coment
+			end as d4_capacidad_a_coment
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_mva
+			when e.famcodi = 10 then d3d1_capacidad_transmision_mva
+			when e.famcodi = 47 then d4d1_capacidad_transmision_mva
+			end as d1_capacidad_transmision_mva
+			,case when e.famcodi = 9 then d2d2_capacidad_transmision_mva
+			when e.famcodi = 10 then d3d2_capacidad_transmision_mva
+			when e.famcodi = 47 then d4d2_capacidad_transmision_mva
+			end as d2_capacidad_transmision_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_transmision_mva
+			when e.famcodi = 47 then d4d3_capacidad_transmision_mva
+			end as d3_capacidad_transmision_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_transmision_mva
+			end as d4_capacidad_transmision_mva
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_mva_coment
+			when e.famcodi = 10 then d3d1_capacidad_transmision_mva_coment
+			when e.famcodi = 47 then d4d1_capacidad_transmision_mva_coment
+			end as d1_capacidad_transmision_mva_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_transmision_mva_coment
+			when e.famcodi = 10 then d3d2_capacidad_transmision_mva_coment
+			when e.famcodi = 47 then d4d2_capacidad_transmision_mva_coment
+			end as d2_capacidad_transmision_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_transmision_mva_coment
+			when e.famcodi = 47 then d4d3_capacidad_transmision_mva_coment
+			end as d3_capacidad_transmision_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_transmision_mva_coment
+			end as d4_capacidad_transmision_mva_coment
+
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_a
+			when e.famcodi = 10 then d3d1_capacidad_transmision_a
+			when e.famcodi = 47 then d4d1_capacidad_transmision_a
+			end as d1_capacidad_transmision_a
+			,case when e.famcodi = 9 then d2d2_capacidad_transmision_a
+			when e.famcodi = 10 then d3d2_capacidad_transmision_a
+			when e.famcodi = 47 then d4d2_capacidad_transmision_a
+			end as d2_capacidad_transmision_a
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_transmision_a
+			when e.famcodi = 47 then d4d3_capacidad_transmision_a
+			end as d3_capacidad_transmision_a
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_transmision_a
+			end as d4_capacidad_transmision_a
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_a_coment
+			when e.famcodi = 10 then d3d1_capacidad_transmision_a_coment
+			when e.famcodi = 47 then d4d1_capacidad_transmision_a_coment
+			end as d1_capacidad_transmision_a_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_transmision_a_coment
+			when e.famcodi = 10 then d3d2_capacidad_transmision_a_coment
+			when e.famcodi = 47 then d4d2_capacidad_transmision_a_coment
+			end as d2_capacidad_transmision_a_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_transmision_a_coment
+			when e.famcodi = 47 then d4d3_capacidad_transmision_a_coment
+			end as d3_capacidad_transmision_a_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_transmision_a_coment
+			end as d4_capacidad_transmision_a_coment
+
+			,case when e.famcodi = 9 then d2d1_factor_limitante_calc
+			when e.famcodi = 10 then d3d1_factor_limitante_calc
+			when e.famcodi = 47 then d4d1_factor_limitante_calc
+			end as d1_factor_limitante_calc
+			,case when e.famcodi = 9 then d2d2_factor_limitante_calc
+			when e.famcodi = 10 then d3d2_factor_limitante_calc
+			when e.famcodi = 47 then d4d2_factor_limitante_calc
+			end as d2_factor_limitante_calc
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_factor_limitante_calc
+			when e.famcodi = 47 then d4d3_factor_limitante_calc
+			end as d3_factor_limitante_calc
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_factor_limitante_calc
+			end as d4_factor_limitante_calc
+
+			,case when e.famcodi = 9 then d2d1_factor_limitante_calc_coment
+			when e.famcodi = 10 then d3d1_factor_limitante_calc_coment
+			when e.famcodi = 47 then d4d1_factor_limitante_calc_coment
+			end as d1_factor_limitante_calc_coment
+			,case when e.famcodi = 9 then d2d2_factor_limitante_calc_coment
+			when e.famcodi = 10 then d3d2_factor_limitante_calc_coment
+			when e.famcodi = 47 then d4d2_factor_limitante_calc_coment
+			end as d2_factor_limitante_calc_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_factor_limitante_calc_coment
+			when e.famcodi = 47 then d4d3_factor_limitante_calc_coment
+			end as d3_factor_limitante_calc_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_factor_limitante_calc_coment
+			end as d4_factor_limitante_calc_coment
+
+
+			,case when e.famcodi = 9 then d2d1_factor_limitante_final
+			when e.famcodi = 10 then d3d1_factor_limitante_final
+			when e.famcodi = 47 then d4d1_factor_limitante_final
+			end as d1_factor_limitante_final
+			,case when e.famcodi = 9 then d2d2_factor_limitante_final
+			when e.famcodi = 10 then d3d2_factor_limitante_final
+			when e.famcodi = 47 then d4d2_factor_limitante_final
+			end as d2_factor_limitante_final
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_factor_limitante_final
+			when e.famcodi = 47 then d4d3_factor_limitante_final
+			end as d3_factor_limitante_final
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_factor_limitante_final
+			end as d4_factor_limitante_final
+
+			,case when e.famcodi = 9 then d2d1_factor_limitante_final_coment
+			when e.famcodi = 10 then d3d1_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d1_factor_limitante_final_coment
+			end as d1_factor_limitante_final_coment
+			,case when e.famcodi = 9 then d2d2_factor_limitante_final_coment
+			when e.famcodi = 10 then d3d2_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d2_factor_limitante_final_coment
+			end as d2_factor_limitante_final_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d3_factor_limitante_final_coment
+			end as d3_factor_limitante_final_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_factor_limitante_final_coment
+			end as d4_factor_limitante_final_coment
+
+			,pkg_protecciones.fn_get_celda_pick_up(case when e.famcodi = 9 then d2d1_id_celda
+			when e.famcodi = 10 then d3d1_id_celda
+			when e.famcodi = 47 then d4d1_id_celda
+			end) as d1_pickup
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(case when e.famcodi = 9 then d2d1_id_celda
+			when e.famcodi = 10 then d3d1_id_celda
+			when e.famcodi = 47 then d4d1_id_celda
+			end) as d1_posicionTca
+
+
+			,pkg_protecciones.fn_get_celda_pick_up(case when e.famcodi = 9 then d2d2_id_celda
+			when e.famcodi = 10 then d3d2_id_celda
+			when e.famcodi = 47 then d4d2_id_celda
+			end) as d2_pickup
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(case when e.famcodi = 9 then d2d2_id_celda
+			when e.famcodi = 10 then d3d2_id_celda
+			when e.famcodi = 47 then d4d2_id_celda
+			end) as d2_posicionTca
+
+			,pkg_protecciones.fn_get_celda_pick_up(case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_id_celda
+			when e.famcodi = 47 then d4d3_id_celda
+			end) as d3_pickup
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_id_celda
+			when e.famcodi = 47 then d4d3_id_celda
+			end) as d3_posicionTca
+
+			,pkg_protecciones.fn_get_celda_pick_up(case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_id_celda
+			end) as d4_pickup
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_id_celda
+			end) as d4_posicionTca
+
+			,case when e.famcodi = 9 then d2_observaciones
+			when e.famcodi = 10 then d3_observaciones
+			when e.famcodi = 47 then d4_observaciones
+			end as observaciones
+
+			,up.usumodificacion,TO_CHAR(up.fecmodificacion, 'DD/MM/YYYY') as fecmodificacion
+
+			FROM eq_propiedad p JOIN eq_equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN ult_proy_fecha_eq up on e.equicodi = up.equicodi
+			LEFT JOIN eq_area ar on e.areacodi= ar.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi= em.emprcodi
+			LEFT JOIN epr_proyecto_acteqp pr on up.epproycodi= pr.epproycodi
+		</query>
+	</Sql>
+
+
+	<Sql>
+		<key>SqlRegistrarCeldaAcoplamiento</key>
+		<query>
+			DECLARE
+			v_id_celda                          NUMBER:= :ID_CELDA;
+			v_id_proyecto                       NUMBER:= :ID_PROYECTO;
+			v_fecha                             DATE:= TO_DATE(:FECHA, 'DD/MM/YYYY');
+			v_id_interruptor                    VARCHAR2(500):= :ID_INTERRUPTOR;
+			v_capacidad_a                       VARCHAR2(500):= :CAPACIDAD_A;
+			v_capacidad_a_coment                VARCHAR2(500):= :CAPACIDAD_A_COMENT;
+			v_capacidad_mvar                    VARCHAR2(500):= :CAPACIDAD_MVAR;
+			v_capacidad_mvar_coment             VARCHAR2(500):= :CAPACIDAD_MVAR_COMENT;
+			v_capacidad_transmision_a           VARCHAR2(500):= :CAPACIDAD_TRANSMISION_A;
+			v_capacidad_transmision_a_coment    VARCHAR2(500):= :CAPACIDAD_TRANSMISION_A_COMENT;
+			v_capacidad_transmision_mvar        VARCHAR2(500):= :CAPACIDAD_TRANSMISION_MVAR;
+			v_capacidad_transmision_mvar_coment VARCHAR2(500):= :CAPACIDAD_TRANSMISION_MVAR_COMENT;
+			v_factor_limitante_calc             VARCHAR2(500):= :FACTOR_LIMITANTE_CALC;
+			v_factor_limitante_calc_coment      VARCHAR2(500):= :FACTOR_LIMITANTE_CALC_COMENT;
+			v_factor_limitante_final            VARCHAR2(500):= :FACTOR_LIMITANTE_FINAL;
+			v_factor_limitante_final_coment     VARCHAR2(500):= :FACTOR_LIMITANTE_FINAL_COMENT;
+			v_observaciones                     VARCHAR2(500):= :OBSERVACIONES;
+			v_usuario_auditoria                 VARCHAR2(500):= :USUARIO_AUDITORIA;
+			v_resultado							VARCHAR2(4000);
+			BEGIN
+			v_resultado := pkg_protecciones.fn_registrar_celda_acopla(
+			v_id_celda,
+			v_id_proyecto,
+			v_fecha,
+			v_id_interruptor,
+			v_capacidad_a,
+			v_capacidad_a_coment,
+			v_capacidad_mvar,
+			v_capacidad_mvar_coment,
+			v_capacidad_transmision_a,
+			v_capacidad_transmision_a_coment,
+			v_capacidad_transmision_mvar,
+			v_capacidad_transmision_mvar_coment,
+			v_factor_limitante_calc,
+			v_factor_limitante_calc_coment,
+			v_factor_limitante_final,
+			v_factor_limitante_final_coment,
+			v_observaciones,
+			v_usuario_auditoria
+			);
+
+			SELECT v_resultado INTO :RESULTADO FROM DUAL;
+			END;
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlObtenerEquipoPorId</key>
+		<query>
+			select
+			eq_equipo.equicodi,
+			eq_equipo.emprcodi,
+			eq_equipo.grupocodi,
+			eq_equipo.elecodi,
+			eq_equipo.areacodi,
+			eq_equipo.famcodi,
+			eq_equipo.equiabrev,
+			eq_equipo.equinomb,
+			eq_equipo.equiabrev2,
+			eq_equipo.equitension,
+			eq_equipo.equipadre,
+			eq_equipo.equipot,
+			eq_equipo.lastuser,
+			eq_equipo.lastdate,
+			eq_equipo.ecodigo,
+			eq_equipo.equiestado,
+			eq_equipo.osinergcodi,
+			eq_equipo.osinergcodigen,
+			eq_equipo.operadoremprcodi,
+			eq_equipo.lastcodi,
+			eq_equipo.equifechiniopcom,
+			eq_equipo.equifechfinopcom,
+			emp.emprnomb,
+			fam.famnomb,
+			fam.famabrev,
+			a.areanomb,
+			ta.tareaabrev,
+			eq_equipo.usuarioupdate,
+			eq_equipo.fechaupdate,
+			eq_equipo.equimaniobra
+			from
+			eq_equipo
+			inner join si_empresa emp on emp.emprcodi=eq_equipo.emprcodi
+			inner join eq_familia fam on fam.famcodi=eq_equipo.famcodi
+			inner join eq_area a on a.areacodi=eq_equipo.areacodi
+			inner join eq_tipoarea ta on a.tareacodi = ta.tareacodi
+			where
+			equicodi = :equicodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlObtenerListaInterruptorPorAreacodi</key>
+		<query>
+			WITH equipo AS (
+			SELECT e.*
+			FROM eq_equipo e
+			where e.famcodi = 16
+			and e.areacodi = :areacodi
+			and e.equiestado != 'X'
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			401 as capacidad_a
+			,3413 as capacidad_mva
+			)
+			)
+			)
+			select e.equicodi
+			,trim(nvl(ap.epareanomb,a.areanomb))||'_'||trim(ta.tareaabrev)||'\'||trim(e.equinomb)||'|'||est.eqcatddescripcion as equinomb
+			,ta.tareaabrev||' '||trim(nvl(ap.epareanomb,a.areanomb)) as areanomb
+			,emp.emprnomb
+			,e.equitension tension
+			,p.capacidad_a capacidada
+			,p.capacidad_mva capacidadmva
+			,pkg_protecciones.fn_get_celda_posicion_nucleo_tc(e.equicodi) as posicion_nucleo_tc
+			,pkg_protecciones.fn_get_celda_pick_up(e.equicodi) as pick_up
+			from equipo e left join eq_propiedad p ON p.equicodi = e.equicodi
+			left join epr_area ap on e.areacodi = ap.areacodi and ap.epareaestregistro='1'
+			left join eq_area a on e.areacodi = a.areacodi
+			left join si_empresa emp on e.emprcodi = emp.emprcodi
+			left join eq_tipoarea ta on a.tareacodi = ta.tareacodi
+			left join eq_prop_catalogo_data est on est.eqcatccodi = 6 and est.eqcatdabrev = e.equiestado
+			order by 2
+		</query>
+	</Sql>
+	<Sql>
+		<key>GetDetalleArbolEquipoProteccion</key>
+		<query>
+			WITH eq_celda as (SELECT equicodi2 as equicodi,max(equicodi1) as id_celda
+			FROM eq_equirel r
+			WHERE tiporelcodi = 29
+			AND equicodi2 = :equicodi
+			group by equicodi2
+			)
+			,eq_arbol as (
+			SELECT ec.areacodi as AREACODI,ec.equicodi as CELDA
+			FROM eq_celda ce
+			JOIN eq_equipo ec on ce.id_celda = ec.equicodi
+			JOIN eq_area ar on ec.areacodi = ar.areacodi
+			WHERE :nivel = 3
+			UNION
+			SELECT ec.areacodi as AREACODI,ec.equicodi as CELDA
+			FROM eq_equipo ec
+			JOIN eq_area ar on ec.areacodi = ar.areacodi
+			WHERE ec.equicodi = :equicodi
+			AND :nivel = 2
+			UNION
+			SELECT to_number(:equicodi) as AREACODI,0 as CELDA
+			FROM dual
+			WHERE :nivel = 1
+			)
+			,ult_mc as (
+			SELECT s.areacodi as AREACODI, max(epsubefecha) as epsubefecha
+			FROM epr_subestacion s join eq_arbol a on s.areacodi = a.areacodi
+			WHERE s.epsubeestregistro='1'
+			group by s.areacodi
+			)
+			SELECT a.*,s.epsubememoriacalculo as MEMORIA_CALCULO
+			FROM eq_arbol a
+			LEFT JOIN ult_mc u on a.areacodi = u.areacodi
+			LEFT JOIN epr_subestacion s on u.areacodi = s.areacodi and u.epsubefecha = s.epsubefecha and s.epsubeestregistro='1'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlObtenerCabeceraEquipoPorId</key>
+		<query>
+			select eq.equicodi
+			,case when eq.famcodi=8 then eq.equiabrev else eq.equinomb end as codigo
+			,ae.areanomb as ubicacion
+			,azo.areanomb as area
+			,em.emprnomb as empresa
+			,fa.famnomb as tipo
+			,eq.famcodi as famcodigo
+			,eq.equitension as tension
+			,ae.areacodi as areacodi
+			from eq_equipo eq left join eq_familia fa on eq.famcodi = fa.famcodi
+			left join eq_area ae on eq.areacodi = ae.areacodi
+			left join epr_area epa on ae.areacodi = epa.areacodi and epa.epareaestregistro='1'
+			left join eq_area azo on epa.areacodizona = azo.areacodi
+			left join si_empresa em on eq.emprcodi = em.emprcodi
+			where eq.equicodi = :equicodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlListReporteLimiteCapacidad</key>
+		<query>
+			SELECT
+			EPRTLCCODI,
+			EPRTLCREVISION,
+			EPRTLCDESCRIPCION,
+			to_char(EPRTLCFECEMISION,'DD/MM/YYYY HH24:MI') as EPRTLCFECEMISION,
+			EPRTLCUSUELABORA,
+			EPRTLCUSUREVISA,
+			EPRTLCUSUAPRUEBA,
+			EPRTLCESTREGISTRO,
+			EPRTLCUSUCREACION,
+			EPRTLCFECCREACION,
+			EPRTLCUSUMODIFICACION,
+			EPRTLCFECMODIFICACION,
+			EPRTLCNOARCHIVO
+			FROM
+			SIC.EPR_REP_LIMIT_CAP
+			WHERE EPRTLCESTREGISTRO = '1'
+			AND ( nvl(:revision, 0) = 0 OR EPRTLCREVISION = :revision )
+			AND ( TRIM(:descripcion) IS NULL OR upper(EPRTLCDESCRIPCION) LIKE '%'|| upper(:descripcion)|| '%' )
+			ORDER BY EPRTLCREVISION DESC
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlObtenerReporteLimiteCapacidadPorId</key>
+		<query>
+			SELECT
+			EPRTLCCODI,
+			EPRTLCREVISION,
+			EPRTLCDESCRIPCION,
+			to_char(EPRTLCFECEMISION,'DD/MM/YYYY') as EPRTLCFECEMISION,
+			EPRTLCUSUELABORA,
+			EPRTLCUSUREVISA,
+			EPRTLCUSUAPRUEBA,
+			EPRTLCESTREGISTRO,
+			EPRTLCUSUCREACION,
+			EPRTLCFECCREACION,
+			EPRTLCUSUMODIFICACION,
+			EPRTLCFECMODIFICACION,
+			EPRTLCNOARCHIVO
+			FROM
+			SIC.EPR_REP_LIMIT_CAP
+			WHERE
+			EPRTLCCODI = :codigo
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlObtenerMaxIdReporteLimiteCapacidad</key>
+		<query>
+			SELECT NVL(MAX(EPRTLCCODI), 0) + 1 FROM SIC.EPR_REP_LIMIT_CAP
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlActualizarReporteLimiteCapacidad</key>
+		<query>
+			UPDATE SIC.EPR_REP_LIMIT_CAP SET
+			EPRTLCDESCRIPCION = :EprtlcDescripcion,
+			EPRTLCFECEMISION = TO_DATE(:EprtlcFecemision, 'DD/MM/YYYY HH24:MI'),
+			EPRTLCUSUELABORA = :EprtlcUsuelabora,
+			EPRTLCUSUREVISA = :EprtlcUsurevisa,
+			EPRTLCUSUAPRUEBA = :EprtlcUsuaprueba,
+			EPRTLCUSUMODIFICACION = :EprtlcUsumodificacion,
+			EPRTLCFECMODIFICACION= SYSDATE
+			WHERE EPRTLCCODI = :EprtlcCodi
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlGuardarReporteLimiteCapacidad</key>
+		<query>
+			INSERT INTO SIC.EPR_REP_LIMIT_CAP(
+			EPRTLCCODI,
+			EPRTLCREVISION,
+			EPRTLCDESCRIPCION,
+			EPRTLCFECEMISION,
+			EPRTLCUSUELABORA,
+			EPRTLCUSUREVISA,
+			EPRTLCUSUAPRUEBA,
+			EPRTLCESTREGISTRO,
+			EPRTLCUSUCREACION,
+			EPRTLCFECCREACION
+			)
+			values(
+			:EprtlcCodi,
+			:EprtlcRevision,
+			:EprtlcDescripcion,
+			TO_DATE(:EprtlcFecemision, 'DD/MM/YYYY HH24:MI'),
+			:EprtlcUsuelabora,
+			:EprtlcUsurevisa,
+			:EprtlcUsuaprueba,
+			:EprtlcEstregistro,
+			:EprtlcUsucreacion,
+			SYSDATE
+			)
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlEliminarReporteLimiteCapacidad</key>
+		<query>
+			UPDATE SIC.EPR_REP_LIMIT_CAP SET
+			EPRTLCESTREGISTRO = :EprtlcEstregistro,
+			EPRTLCUSUMODIFICACION = :EprtlcUsumodificacion,
+			EPRTLCFECMODIFICACION= SYSDATE
+			WHERE EPRTLCCODI = :EprtlcCodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListReleSincronismoReporte</key>
+		<query>
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			), equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion,
+			az.areanomb as nomb_zona
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			JOIN eq_area az ON ar.areacodizona = az.areacodi
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN ( 3313 id_interruptor, 3314 delta_tension, 3315 delta_angulo, 3316 delta_frecuencia, 3304 estado, 3306 tipo_uso, 3312 ajuste_sincronismo
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS equinomb,
+			e.nomb_zona as area,
+			emp.emprnomb as empresa,
+			e.nomb_subestacion AS subestacion,
+			e.nomb_celda AS celda,
+			ei.equinomb AS codigo_interruptor,
+			p.delta_tension,
+			p.delta_angulo,
+			p.delta_frecuencia
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN eq_equipo ei ON TO_NUMBER(p.id_interruptor DEFAULT 0 ON CONVERSION ERROR) = ei.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			LEFT JOIN eq_prop_catalogo_data es ON TO_NUMBER(p.estado DEFAULT 0 ON CONVERSION ERROR) = es.eqcatdcodi
+			LEFT JOIN si_empresa emp ON e.emprcodi = emp.emprcodi
+			WHERE
+			p.tipo_uso = '101'
+			AND p.ajuste_sincronismo = 'S'
+			AND e.equiestado='A'
+			ORDER BY  emp.emprnomb,e.nomb_subestacion
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListReleSobretensionReporte</key>
+		<query>
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			), equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion,
+			az.areanomb as nomb_zona
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			JOIN eq_area az ON ar.areacodizona = az.areacodi
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 nivel_tension
+			,3318 sobre_t_u
+			,3319 sobre_t_t
+			,3320 sobre_t_uu
+			,3321 sobre_t_tt
+			,3304 estado
+			,3306 tipo_uso
+			,3317 ajuste_sobretension
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS equinomb,
+			e.nomb_zona as area,
+			emp.emprnomb as empresa,
+			e.nomb_subestacion AS subestacion,
+			e.nomb_celda AS celda
+			,p.nivel_tension
+			,p.sobre_t_u
+			,p.sobre_t_t
+			,p.sobre_t_uu
+			,p.sobre_t_tt
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			LEFT JOIN eq_prop_catalogo_data es ON TO_NUMBER(p.estado DEFAULT 0 ON CONVERSION ERROR) = es.eqcatdcodi
+			LEFT JOIN si_empresa emp ON e.emprcodi = emp.emprcodi
+			WHERE
+			p.tipo_uso = '101'
+			AND p.ajuste_sobretension = 'S'
+			AND e.equiestado='A'
+			ORDER BY  emp.emprnomb,e.nomb_subestacion
+
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListReleMandoSincronizadoReporte</key>
+		<query>
+
+
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			), equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion,
+			az.areanomb as nomb_zona
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			JOIN eq_area az ON ar.areacodizona = az.areacodi
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 nivel_tension
+			,3326 mando_sincronizado
+			,3304 estado
+			,3306 tipo_uso
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS equinomb,
+			e.nomb_zona as area,
+			emp.emprnomb as empresa,
+			e.nomb_subestacion AS subestacion,
+			e.nomb_celda AS celda
+			,ms.eqcatddescripcion as mando_sincronizado
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			LEFT JOIN eq_prop_catalogo_data es ON TO_NUMBER(p.estado DEFAULT 0 ON CONVERSION ERROR) = es.eqcatdcodi
+			LEFT JOIN eq_prop_catalogo_data ms ON TO_NUMBER(p.mando_sincronizado DEFAULT 0 ON CONVERSION ERROR) = ms.eqcatdcodi
+			LEFT JOIN si_empresa emp ON e.emprcodi = emp.emprcodi
+			WHERE
+			p.tipo_uso = '102'
+			AND e.equiestado='A'
+			ORDER BY  emp.emprnomb,e.nomb_subestacion
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListReleTorsionalReporte</key>
+		<query>
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			), equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion,
+			az.areanomb as nomb_zona
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			JOIN eq_area az ON ar.areacodizona = az.areacodi
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 nivel_tension
+			,3327 medida_mitigacion
+			,3328 torsional_implementado
+			,3304 estado
+			,3306 tipo_uso
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS equinomb,
+			e.nomb_zona as area,
+			emp.emprnomb as empresa,
+			e.nomb_subestacion AS subestacion,
+			e.nomb_celda AS celda
+			,p.medida_mitigacion			
+			,case when p.torsional_implementado='S' then 'Si' when p.torsional_implementado='N' then 'No' else '' end as torsional_implementado
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			LEFT JOIN eq_prop_catalogo_data es ON TO_NUMBER(p.estado DEFAULT 0 ON CONVERSION ERROR) = es.eqcatdcodi
+			LEFT JOIN si_empresa emp ON e.emprcodi = emp.emprcodi
+			WHERE
+			p.tipo_uso = '103'
+			AND e.equiestado='A'
+			ORDER BY  emp.emprnomb,e.nomb_subestacion
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListRelePmuReporte</key>
+		<query>
+
+			WITH eq_celda AS (
+			SELECT
+			equicodi2 AS equicodi,
+			MAX(equicodi1) AS id_celda
+			FROM
+			eq_equirel r
+			WHERE
+			tiporelcodi = 29
+			GROUP BY
+			equicodi2
+			), equipo AS (
+			SELECT
+			eq.*,
+			ec.id_celda AS id_celda,
+			nvl(ep.epequinomb, ce.equinomb) AS nomb_celda,
+			nvl(ar.epareanomb, a.areanomb) AS nomb_subestacion,
+			az.areanomb as nomb_zona
+			FROM
+			eq_equipo eq
+			JOIN eq_celda ec ON eq.equicodi = ec.equicodi
+			JOIN eq_equipo ce ON ec.id_celda = ce.equicodi
+			JOIN epr_equipo ep ON ec.id_celda = ep.equicodi AND ep.epequiestregistro = '1'
+			JOIN epr_area ar ON ce.areacodi = ar.areacodi AND ar.epareaestregistro = '1'
+			JOIN eq_area a ON ar.areacodi = a.areacodi
+			JOIN eq_area az ON ar.areacodizona = az.areacodi
+			WHERE
+			eq.famcodi = 53
+			AND ( nvl(:equicodi, 0) = 0
+			OR eq.equicodi = :equicodi )
+			AND ( TRIM(:codigo) IS NULL
+			OR upper(eq.equiabrev) LIKE '%'
+			|| upper(:codigo)
+			|| '%' )
+			AND ( nvl(:subestacioncodi, 0) = 0
+			OR ce.areacodi = :subestacioncodi )
+			AND ( nvl(:equicodicelda, 0) = 0
+			OR ec.id_celda = :equicodicelda )
+			AND ( nvl(:emprcodi, 0) = 0
+			OR eq.emprcodi = :emprcodi )
+			AND ( nvl(:areacodi, 0) = 0
+			OR ar.areacodizona = :areacodi )
+			AND ( TRIM(:equiestado) IS NULL
+			OR eq.equiestado = :equiestado )
+			), ult_fecha_activo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			AND p.propequideleted=0
+			WHERE
+			p.propcodi = 3304
+			AND p.valor = 12
+			GROUP BY
+			p.equicodi
+			), ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi &lt;= ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			), ult_actualizador_prop AS (
+			SELECT
+			p.equicodi,
+			MAX(nvl(p.propequiusumodificacion, p.propequiusucreacion)) AS propequiusumodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			AND p.fechapropequi = ufa.fechapropequi
+			AND p.propequideleted=0
+			GROUP BY
+			p.equicodi
+			), data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			AND pe.propequideleted=0
+			), eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			FOR propcodi
+			IN (
+			3301 nivel_tension
+			,3325 accion
+			,3329 pmu_implementado
+			,3304 estado
+			,3306 tipo_uso
+			,3324 ajuste_pmu
+			)
+			)
+			)
+			SELECT
+			e.equicodi AS equicodi,
+			e.equinomb AS equinomb,
+			e.nomb_zona as area,
+			emp.emprnomb as empresa,
+			e.nomb_subestacion AS subestacion,
+			e.nomb_celda AS celda
+			,p.accion
+			,nvl(p.pmu_implementado,p.ajuste_pmu) as estado
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			LEFT JOIN ult_actualizador_prop um ON p.equicodi = um.equicodi
+			LEFT JOIN ult_fecha_activo ufa ON p.equicodi = ufa.equicodi
+			LEFT JOIN eq_prop_catalogo_data es ON TO_NUMBER(p.estado DEFAULT 0 ON CONVERSION ERROR) = es.eqcatdcodi
+			LEFT JOIN si_empresa emp ON e.emprcodi = emp.emprcodi
+			WHERE
+			((p.tipo_uso = '101' and p.ajuste_pmu='S') or (p.tipo_uso='104'))
+			AND e.equiestado='A'
+			ORDER BY  emp.emprnomb,e.nomb_subestacion
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlExcluirEquipoProtecciones</key>
+		<query>
+			DECLARE
+			v_id_equipo							NUMBER:= :ID_EQUIPO;
+			v_usuario_auditoria					VARCHAR2(50):= :USUARIO_AUDITORIA;
+			v_resultado							VARCHAR2(100);
+			BEGIN
+			v_resultado := pkg_protecciones.fn_excluir_equipo_protecciones(
+			v_id_equipo,
+			v_usuario_auditoria
+			);
+
+			SELECT v_resultado INTO :RESULTADO FROM DUAL;
+			END;
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>SqlAgregarEliminarArchivoReporteLimiteCapacidad</key>
+		<query>
+			UPDATE SIC.EPR_REP_LIMIT_CAP SET
+			EPRTLCNOARCHIVO = :EprtlcNoarchivo,
+			EPRTLCUSUMODIFICACION = :EprtlcUsumodificacion,
+			EPRTLCFECMODIFICACION= SYSDATE
+			WHERE EPRTLCCODI = :EprtlcCodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlObtenerMaxRevision</key>
+		<query>
+			SELECT NVL(MAX(EPRTLCREVISION), 0) + 1 FROM SIC.EPR_REP_LIMIT_CAP
+			WHERE EPRTLCESTREGISTRO = '1'
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlObtenerDatoCelda</key>
+		<query>
+			select pkg_protecciones.fn_get_celda_posicion_nucleo_tc(:equicodi) as POSICION_NUCLEO_TC
+			,pkg_protecciones.fn_get_celda_pick_up(:equicodi) as PICK_UP
+			from dual
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlObtenerFechaReportePorId</key>
+		<query>
+			SELECT
+			TO_CHAR(EPRTLCFECEMISION,'DD/MM/YYYY') AS EPRTLCFECEMISION
+			FROM
+			SIC.EPR_REP_LIMIT_CAP
+			WHERE
+			EPRTLCESTREGISTRO = '1'
+			AND ( nvl(:codigo, 0) = 0 OR EPRTLCCODI != :codigo )
+			ORDER BY EPRTLCCODI DESC
+			FETCH FIRST 1 ROW ONLY
+		</query>
+	</Sql>
+
+</Sqls>

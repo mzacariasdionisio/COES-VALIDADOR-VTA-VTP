@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+
+  <Sql>
+    <key>GetByCodigo</key>
+    <query>
+      select emprcodi, emprnomb, tipoemprcodi, sum(A) as requerido, sum(B) as  informado,sum(C) as infofinal
+      from(
+      select ce.emprcodi,em.emprnomb, em.tipoemprcodi, count(distinct(ce.codentcodigo)) as A,
+      0 as B,0 as C
+      from trn_codigo_entrega ce inner join vw_si_empresa em
+      on ce.emprcodi=em.emprcodi
+      where
+      ce.codentestado = 'ACT'
+      and NVL(to_char(ce.codentfechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      and NVL(to_char(ce.codentfechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      and em.tipoemprcodi=:tipoemprcodi
+      group by ce.emprcodi,em.emprnomb , em.tipoemprcodi
+      UNION
+      select cr.genemprcodi, e.emprnomb, e.tipoemprcodi,  count(distinct(cr.coresocodigo)) as A,
+      0 as B , 0 as C
+      from trn_codigo_retiro_solicitud cr inner join vw_si_empresa e
+      on cr.genemprcodi=e.emprcodi
+      where
+      cr.coresoestado = 'ASI'
+      and NVL(to_char(cr.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      and NVL(to_char(cr.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      and e.tipoemprcodi=:tipoemprcodi
+      group by cr.genemprcodi, e.emprnomb, e.tipoemprcodi
+      union
+      select ce.emprcodi,em.emprnomb, em.tipoemprcodi, 0 as A,
+      count(distinct(te.tentcodigo)) as B,0 as C
+      from trn_codigo_entrega ce inner join vw_si_empresa em
+      on ce.emprcodi=em.emprcodi  left join trn_trans_entrega te
+      on em.emprcodi=te.emprcodi
+      where
+      te.pericodi=:pericodi and
+      em.tipoemprcodi=:tipoemprcodi and
+      te.tentversion =:version
+      group by ce.emprcodi,em.emprnomb , em.tipoemprcodi
+      union
+      select cr.genemprcodi, e.emprnomb, e.tipoemprcodi, 0 as A,
+      count(distinct(tr.tretcodigo)) as B,0 as C
+      from trn_codigo_retiro_solicitud cr inner join vw_si_empresa e
+      on cr.genemprcodi=e.emprcodi  left join trn_trans_retiro tr
+      on e.emprcodi=tr.genemprcodi
+      where
+      tr.pericodi=:pericodi and
+      e.tipoemprcodi=:tipoemprcodi and
+      tr.tretversion =:version
+      group by cr.genemprcodi, e.emprnomb, e.tipoemprcodi
+      union
+      select ce.emprcodi,em.emprnomb, em.tipoemprcodi, 0 as A,
+      0 as B,count(distinct(te.tentcodigo)) as C
+      from trn_codigo_entrega ce inner join vw_si_empresa em
+      on ce.emprcodi=em.emprcodi  left join trn_trans_entrega te
+      on em.emprcodi=te.emprcodi
+      where
+      te.pericodi=:pericodi and te.tenttipoinformacion='FINAL' and
+      em.tipoemprcodi=:tipoemprcodi and
+      te.tentversion =:version
+      group by ce.emprcodi,em.emprnomb , em.tipoemprcodi
+      union
+      select cr.genemprcodi, e.emprnomb, e.tipoemprcodi, 0 as A,
+      0 as B,count(distinct(tr.tretcodigo)) as C
+      from trn_codigo_retiro_solicitud cr inner join vw_si_empresa e
+      on cr.genemprcodi=e.emprcodi  left join trn_trans_retiro tr
+      on e.emprcodi=tr.genemprcodi
+      where
+      tr.pericodi=:pericodi and tr.trettipoinformacion='FINAL' and
+      e.tipoemprcodi=:tipoemprcodi and
+      tr.tretversion =:version
+      group by cr.genemprcodi, e.emprnomb, e.tipoemprcodi
+      )t
+      group by emprcodi, emprnomb, tipoemprcodi
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from vw_trn_ratio_cumplimiento where (emprnomb like '%' + :emprnomb + '%' or :emprnomb is null)
+    </query>
+  </Sql>
+
+</Sqls>

@@ -1,0 +1,641 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(famcodi), 0) + 1 from eq_familia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eq_familia(
+      famcodi,
+      famabrev,
+      tipoecodi,
+      tareacodi,
+      famnomb,
+      famnumconec,
+      famnombgraf,
+      famestado,
+      usuariocreacion,
+      fechacreacion
+      )
+      values(
+      :famcodi,
+      :famabrev,
+      :tipoecodi,
+      :tareacodi,
+      :famnomb,
+      :famnumconec,
+      :famnombgraf,
+      :famestado,
+      :usuariocreacion,
+      sysdate
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eq_familia
+      set
+      famabrev = :famabrev,
+      tipoecodi = :tipoecodi,
+      tareacodi = :tareacodi,
+      famnomb = :famnomb,
+      famnumconec = :famnumconec,
+      famnombgraf = :famnombgraf,
+      famestado= :famestado,
+      usuarioupdate= :usuarioupdate,
+      fechaupdate = sysdate
+      where
+      famcodi = :famcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from eq_familia
+       where
+           famcodi = :famcodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update aud_eq_familia
+			set USERAUDITORIA = :usuarioupdate
+			where
+			famcodi = :famcodi
+			and ACTIONAUDITORIA = 'DELETE'
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      famcodi,
+      famabrev,
+      tipoecodi,
+      tareacodi,
+      famnomb,
+      famnumconec,
+      famnombgraf,
+      famestado,
+      usuariocreacion,
+      fechacreacion,
+      usuarioupdate,
+      fechaupdate
+      from
+      eq_familia
+      where
+      famcodi = :famcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      famcodi,
+      famabrev,
+      tipoecodi,
+      tareacodi,
+      famnomb,
+      famnumconec,
+      famnombgraf,
+      famestado,
+      usuariocreacion,
+      fechacreacion,
+      usuarioupdate,
+      fechaupdate
+      from
+      eq_familia 
+      where famestado = 'A' and famcodi > 0
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      famcodi,
+      famabrev,
+      tipoecodi,
+      tareacodi,
+      famnomb,
+      famnumconec,
+      famnombgraf,
+      famestado,
+      usuariocreacion,
+      fechacreacion,
+      usuarioupdate,
+      fechaupdate
+      from
+      eq_familia
+      where
+      famestado =:famestado or ' '=:famestado
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerFamiliasProcManiobras</key>
+    <query>
+      select famcodi, famabrev, famnomb from eq_familia where famcodi in
+      (
+      select distinct eq.famcodi from eq_equipo eq where eq.equimaniobra = 'S'
+      )
+      order by famabrev asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlListTipoSerie</key>
+    <query>
+      select tiposeriecodi, tiposerienomb from sic.sh_tiposerie
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>SqlListTipoPuntoMedicion</key>
+		<query>
+			select
+			tpto.famcodi,
+			tpto.tptomedinomb,
+			tpto.tptomedicodi,
+			tpto.tipoinfocodi,
+			ti.tipoinfodesc
+			from
+			SIC.me_tipoptomedicion tpto
+			left join sic.SI_TIPOINFORMACION ti
+			on tpto.tipoinfocodi=ti.tipoinfocodi
+			inner join
+			SIC.ME_TIPOPTOXORIGLECT torig on torig.tptomedicodi = tpto.tptomedicodi
+			where
+			( torig.origlectcodi  in (38))
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlInfoPuntoMedicionPorEmpresa</key>
+		<query>
+			select pm.*,
+			tpm.tptomedinomb,
+			eq.EQUINOMB,
+			eqpadre.equinomb as equipadre,
+			emp.EMPRNOMB,
+			preqx.valor as coorx,
+			preqy.valor as coory,
+			preqalt.valor as altitud,
+			preqcap.valor as cap
+			from sic.me_ptomedicion pm
+			left join SIC.ME_TIPOPTOMEDICION tpm
+			on pm.tptomedicodi=tpm.tptomedicodi
+			left join sic.eq_equipo eq
+			on pm.equicodi=eq.equicodi
+			left join sic.eq_equipo eqpadre
+			on eq.equipadre=eqpadre.equicodi
+			left join sic.si_empresa emp
+			on pm.EMPRCODI=emp.EMPRCODI
+			left join SIC.EQ_PROPIEDAD prop_coorx on
+			prop_coorx.famcodi=0 and upper(prop_coorx.propabrev)='COORX'
+			left join SIC.EQ_PROPEQUI preqx on
+			prop_coorx.propcodi=preqx.propcodi
+			and preqx.equicodi=eq.equicodi
+			left join SIC.EQ_PROPIEDAD prop_coory on
+			prop_coory.famcodi=0 and upper(prop_coory.propabrev)='COORY'
+			left join SIC.EQ_PROPEQUI preqy on
+			prop_coory.propcodi=preqy.propcodi
+			and preqy.equicodi=eq.equicodi
+			left join SIC.EQ_PROPIEDAD prop_alt on
+			prop_alt.famcodi=0 and upper(prop_alt.propabrev)='M.S.N.M'
+			left join SIC.EQ_PROPEQUI preqalt on
+			prop_alt.propcodi=preqalt.propcodi
+			and preqalt.equicodi=eq.equicodi
+			left join SIC.EQ_PROPIEDAD prop_cap on
+			prop_cap.famcodi=19 and upper(prop_cap.propabrev)='CAP'
+			left join SIC.EQ_PROPEQUI preqcap on
+			prop_cap.propcodi=preqcap.propcodi
+			and preqcap.equicodi=eq.equicodi
+			where pm.ptomedicodi=:PTOMEDICODI
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SqlListPuntoMedicionPorEmpresa</key>
+		<query>
+			select ptomedicodi, ptomedielenomb, ptomedidesc, ptomedibarranomb from sic.me_ptomedicion
+			where emprcodi=:EMPRCODI and tiposeriecodi=:TIPOSERIECODI and tptomedicodi=:PTOMEDICODI
+			order by ptomedielenomb asc
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>SqlListPuntoMedicionPorCuenca</key>
+    <query>
+		select ptomedicodi, ptomedielenomb, ptomedidesc, ptomedibarranomb
+		from sic.me_ptomedicion pto inner join sic.me_tipoptomedicion tipopto
+		on pto.tptomedicodi = tipopto.tptomedicodi
+		left join sic.eq_equipo eq on pto.equicodi=eq.equicodi
+		left join sic.eq_equipo eqpadre on eq.equipadre=eqpadre.equicodi
+		left join sic.eq_equipo eqcuenca on eqpadre.equipadre=eqcuenca.equicodi
+		where (eqpadre.equicodi=:EQUICODI or eqcuenca.equicodi=:EQUICODI)
+		and tipopto.tptomedicodi = :TipoPtoMediCodi
+		and pto.origlectcodi=38
+		order by ptomedielenomb asc
+	</query>
+  </Sql>
+  <Sql>
+    <key>SqlListPuntoMedicionPorCuencaNaturalEvaporado</key>
+    <query>
+		select ptomedicodi, ptomedielenomb, ptomedidesc, ptomedibarranomb
+		from sic.me_ptomedicion pto inner join sic.me_tipoptomedicion tipopto
+		on pto.tptomedicodi = tipopto.tptomedicodi
+		left join sic.eq_equipo eq on pto.equicodi=eq.equicodi
+		left join sic.eq_equipo eqpadre on eq.equipadre=eqpadre.equicodi
+		left join sic.eq_equipo eqcuenca on eqpadre.equipadre=eqcuenca.equicodi
+		where (eqpadre.equicodi=:EQUICODI or eqcuenca.equicodi=:EQUICODI)
+		and (tipopto.tptomedicodi=8 or tipopto.tptomedicodi=89)
+		and pto.origlectcodi=38
+		order by ptomedielenomb asc
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>SqlListPuntoMedicionPorCuencaNaturalEvaporadoPorTipoPuntoMedicion</key>
+		<query>
+			select ptomedicodi, ptomedielenomb, ptomedidesc, ptomedibarranomb
+			from sic.me_ptomedicion pto inner join sic.me_tipoptomedicion tipopto
+			on pto.tptomedicodi = tipopto.tptomedicodi
+			left join sic.eq_equipo eq on pto.equicodi=eq.equicodi
+			left join sic.eq_equipo eqpadre on eq.equipadre=eqpadre.equicodi
+			left join sic.eq_equipo eqcuenca on eqpadre.equipadre=eqcuenca.equicodi
+			where (eqpadre.equicodi=:EQUICODI or eqcuenca.equicodi=:EQUICODI)
+			and (tipopto.tptomedicodi=:TIPOPUNTOMEDICION)
+			and pto.origlectcodi=38
+			order by ptomedielenomb asc
+		</query>
+	</Sql>
+  
+  <Sql>
+    <key>SqlObtenerGraficoAnual</key>
+    <query>
+		select caudal.ptomedicodi, d.anio, d.m1, d.m2, d.m3, d.m4, d.m5, d.m6, d.m7, d.m8, d.m9, d.m10, d.m11, d.m12
+		from sic.sh_caudal caudal inner join sic.sh_caudal_detalle d
+		on caudal.IDCAUDAL = d.idcaudal
+		WHERE caudal.tiposeriecodi = :TipoSerieCodi
+		AND caudal.tptomedicodi = :TipoPtoMediCodi
+		AND caudal.ptomedicodi = :PtoMediCodi
+		AND d.anio  BETWEEN :AnioInicio AND :AnioFin
+		and caudal.estado = 1
+		and nvl(m1,0)>0
+		and nvl(m2,0)>0
+		and nvl(m3,0)>0
+		and nvl(m4,0)>0
+		and nvl(m5,0)>0
+		and nvl(m6,0)>0
+		and nvl(m7,0)>0
+		and nvl(m8,0)>0
+		and nvl(m9,0)>0
+		and nvl(m10,0)>0
+		and nvl(m11,0)>0
+		and nvl(m12,0)>0
+		order by d.anio ASC
+	</query>
+  </Sql>
+	<Sql>
+		<key>SqlObtenerPuntosCalculados</key>
+		<query>
+			SELECT relptocodi, ptomedicodi1, ptomedicodi2, trptocodi, relptofactor,
+			tipoinfocodi, tptomedicodi, relptotabmed, relptopotencia
+			FROM SIC.ME_RELACIONPTO WHERE PTOMEDICODI1=:PtoMediCodi
+		</query>
+	</Sql>
+  <Sql>
+    <key>SqlObtenerGraficoMensual</key>
+    <query>
+		select caudal.ptomedicodi, d.anio, d.m1, d.m2, d.m3, d.m4, d.m5, d.m6, d.m7, d.m8, d.m9, d.m10, d.m11, d.m12
+		from sic.sh_caudal caudal inner join sic.sh_caudal_detalle d
+		on caudal.IDCAUDAL = d.idcaudal
+		WHERE caudal.tiposeriecodi = :TipoSerieCodi
+		AND caudal.tptomedicodi = :TipoPtoMediCodi
+		AND caudal.ptomedicodi = :PtoMediCodi
+		AND d.anio IN (:AnioInicio, :AnioInicio + 1)
+		and caudal.estado = 1
+		and nvl(m1,0)>0
+		and nvl(m2,0)>0
+		and nvl(m3,0)>0
+		and nvl(m4,0)>0
+		and nvl(m5,0)>0
+		and nvl(m6,0)>0
+		and nvl(m7,0)>0
+		and nvl(m8,0)>0
+		and nvl(m9,0)>0
+		and nvl(m10,0)>0
+		and nvl(m11,0)>0
+		and nvl(m12,0)>0
+		order by d.anio ASC
+	</query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerGraficoTotal</key>
+    <query>
+		select caudal.ptomedicodi, d.anio, d.m1, d.m2, d.m3, d.m4, d.m5, d.m6, d.m7, d.m8, d.m9, d.m10, d.m11, d.m12
+		from sic.sh_caudal caudal inner join sic.sh_caudal_detalle d
+		on caudal.IDCAUDAL = d.idcaudal
+		WHERE caudal.tiposeriecodi = :TipoSerieCodi
+		AND caudal.tptomedicodi = :TipoPtoMediCodi
+		AND caudal.ptomedicodi = :PtoMediCodi
+		AND d.anio BETWEEN 1965 AND :AnioFin
+		and caudal.estado = 1
+		and nvl(m1,0)>0
+		and nvl(m2,0)>0
+		and nvl(m3,0)>0
+		and nvl(m4,0)>0
+		and nvl(m5,0)>0
+		and nvl(m6,0)>0
+		and nvl(m7,0)>0
+		and nvl(m8,0)>0
+		and nvl(m9,0)>0
+		and nvl(m10,0)>0
+		and nvl(m11,0)>0
+		and nvl(m12,0)>0
+		order by d.anio ASC
+	</query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerGraficoTotalNaturalEvaporada</key>
+    <query>
+		select caudal.ptomedicodi, d.anio, d.m1, d.m2, d.m3, d.m4, d.m5, d.m6, d.m7, d.m8, d.m9, d.m10, d.m11, d.m12
+		from sic.sh_caudal caudal inner join sic.sh_caudal_detalle d
+		on caudal.IDCAUDAL = d.idcaudal
+		WHERE caudal.tiposeriecodi = :TipoSerieCodi
+		AND caudal.ptomedicodi = :PtoMediCodi
+		AND d.anio BETWEEN 1965 AND :AnioFin
+		and (caudal.tptomedicodi	= 89 or caudal.tptomedicodi = 8)
+		and caudal.estado = 1
+		and nvl(m1,0)>0
+		and nvl(m2,0)>0
+		and nvl(m3,0)>0
+		and nvl(m4,0)>0
+		and nvl(m5,0)>0
+		and nvl(m6,0)>0
+		and nvl(m7,0)>0
+		and nvl(m8,0)>0
+		and nvl(m9,0)>0
+		and nvl(m10,0)>0
+		and nvl(m11,0)>0
+		and nvl(m12,0)>0
+		order by d.anio ASC
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerGraficoTotalLineaTendencia</key>
+    <query>
+		select caudal.ptomedicodi, d.anio, d.m1, d.m2, d.m3, d.m4, d.m5, d.m6, d.m7, d.m8, d.m9, d.m10, d.m11, d.m12, med.ptomedielenomb
+		from sic.sh_caudal caudal inner join sic.sh_caudal_detalle d
+		on caudal.IDCAUDAL = d.idcaudal
+		and caudal.tptomedicodi = :TipoPtoMediCodi
+		inner join sic.me_ptomedicion med on caudal.ptomedicodi=med.ptomedicodi
+		WHERE caudal.tiposeriecodi = :TipoSerieCodi
+		AND d.anio BETWEEN 1965 AND :AnioFin
+		AND caudal.ptomedicodi in ( {ptomedicodiPlaceholder} )
+		and caudal.estado = 1
+		and nvl(m1,0)>0
+		and nvl(m2,0)>0
+		and nvl(m3,0)>0
+		and nvl(m4,0)>0
+		and nvl(m5,0)>0
+		and nvl(m6,0)>0
+		and nvl(m7,0)>0
+		and nvl(m8,0)>0
+		and nvl(m9,0)>0
+		and nvl(m10,0)>0
+		and nvl(m11,0)>0
+		and nvl(m12,0)>0
+		order by d.anio ASC
+	</query>
+  </Sql>
+  
+  <Sql>
+    <key>SqlObtenerGraficoComparativaVolumen</key>
+    <query>
+		select caudal.ptomedicodi, d.anio, d.m1, d.m2, d.m3, d.m4, d.m5, d.m6, d.m7, d.m8, d.m9, d.m10, d.m11, d.m12
+		from sic.sh_caudal caudal inner join sic.sh_caudal_detalle d
+		on caudal.IDCAUDAL = d.idcaudal
+		WHERE caudal.tiposeriecodi = {0}
+		AND caudal.tptomedicodi = {1}
+		AND caudal.ptomedicodi = {2}
+		AND d.anio in ({3})
+		and caudal.estado = 1
+		and nvl(m1,0)>0
+		and nvl(m2,0)>0
+		and nvl(m3,0)>0
+		and nvl(m4,0)>0
+		and nvl(m5,0)>0
+		and nvl(m6,0)>0
+		and nvl(m7,0)>0
+		and nvl(m8,0)>0
+		and nvl(m9,0)>0
+		and nvl(m10,0)>0
+		and nvl(m11,0)>0
+		and nvl(m12,0)>0
+		order by d.anio ASC
+	</query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerGraficoComparativaNaturalEvaporada</key>
+    <query>
+      select caudal.ptomedicodi, d.anio, d.m1, d.m2, d.m3, d.m4, d.m5, d.m6, d.m7, d.m8, d.m9, d.m10, d.m11, d.m12
+      from sic.sh_caudal caudal inner join sic.sh_caudal_detalle d
+      on caudal.IDCAUDAL = d.idcaudal
+      WHERE caudal.tiposeriecodi = :TipoSerieCodi
+      AND caudal.ptomedicodi = :PtoMediCodi
+      AND d.anio in ( {AnioInicioPlaceholder} )
+      and caudal.estado = 1
+	  order by d.anio ASC
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerGraficoComparativaLineaTendencia</key>
+    <query>
+      select caudal.ptomedicodi, pto.PTOMEDIELENOMB, d.anio, d.m1, d.m2, d.m3, d.m4, d.m5, d.m6, d.m7, d.m8, d.m9, d.m10, d.m11, d.m12
+      from sic.sh_caudal caudal inner join sic.sh_caudal_detalle d
+      on caudal.IDCAUDAL = d.idcaudal
+      inner join SIC.ME_PTOMEDICION	 pto
+      on caudal.ptomedicodi = pto.ptomedicodi
+      AND caudal.tptomedicodi = :TipoPtoMediCodi
+      WHERE caudal.tiposeriecodi = :TipoSerieCodi
+      AND d.anio  BETWEEN :AnioInicio AND :AnioFin
+      AND  caudal.ptomedicodi in ( {ptomedicodiPlaceholder} )
+      and caudal.estado = 1
+	  order by d.anio ASC
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>SqlObtenerPtoMedicionCuenca</key>
+    <query>
+		select pto.ptomedicodi ,eq.EQUINOMB, emp.EMPRNOMB, pto.PTOMEDIELENOMB from sic.me_ptomedicion pto inner join sic.eq_equipo eq
+		on pto.equicodi = eq.equicodi
+		left join sic.eq_equipo eqpadre on eq.equipadre=eqpadre.equicodi
+		left join sic.eq_equipo eqcuenca on eqpadre.equipadre=eqcuenca.equicodi
+		inner join sic.si_empresa emp on eq.EMPRCODI = emp.EMPRCODI
+		where (eqpadre.equicodi=:EQUICODI or eqcuenca.equicodi=:EQUICODI)
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>SqlObtenerPtoMedicionCuencaTipoPuntoMedicion</key>
+		<query>
+			select pto.ptomedicodi ,eq.EQUINOMB, emp.EMPRNOMB, pto.PTOMEDIELENOMB from sic.me_ptomedicion pto inner join sic.eq_equipo eq
+			on pto.equicodi = eq.equicodi
+			left join sic.eq_equipo eqpadre on eq.equipadre=eqpadre.equicodi
+			left join sic.eq_equipo eqcuenca on eqpadre.equipadre=eqcuenca.equicodi
+			inner join sic.si_empresa emp on eq.EMPRCODI = emp.EMPRCODI
+			where (eqpadre.equicodi=:EQUICODI or eqcuenca.equicodi=:EQUICODI)
+			and pto.tptomedicodi = :TIPOPUNTOMEDICION
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>SqlObtenerListaTablaVertical</key>
+		<query>
+			select caudal.ptomedicodi,eq.EQUINOMB,  emp.EMPRNOMB, pto.ptomedielenomb, d.anio, d.m1, d.m2, d.m3, d.m4, d.m5, d.m6, d.m7, d.m8, d.m9, d.m10, d.m11, d.m12, eqpadre.EQUINOMB as CAUDAL
+			from sic.sh_caudal caudal
+			inner join sic.sh_caudal_detalle d on caudal.IDCAUDAL = d.idcaudal
+			inner join sic.me_ptomedicion pto on caudal.ptomedicodi = pto.ptomedicodi
+			inner join sic.si_empresa emp on emp.EMPRCODI = pto.EMPRCODI
+			inner join sic.eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join sic.eq_equipo eqpadre on eq.equipadre=eqpadre.equicodi
+			WHERE caudal.tptomedicodi = :TipoPtoMediCodi
+			AND caudal.tiposeriecodi = :TipoSerieCodi
+			AND d.anio  BETWEEN :AnioInicio AND :AnioFin
+			AND  caudal.ptomedicodi in ( {ptomedicodiPlaceholder} )
+			and caudal.estado = 1 order by caudal.ptomedicodi ASC, d.anio ASC
+		</query>
+	</Sql>
+
+  <!--INICIO PR5-->
+  <Sql>
+    <key>ObtenerFamiliasXEmp</key>
+    <query>
+      select DISTINCT F.famcodi,
+      F.famabrev,
+      F.tipoecodi,
+      F.tareacodi,
+      F.famnomb,
+      F.famnumconec,
+      F.famnombgraf,
+      F.famestado,
+      F.usuariocreacion,
+      F.fechacreacion,
+      F.usuarioupdate,
+      F.fechaupdate
+      from eq_equipo EQ inner join eq_familia F
+      on F.famcodi = EQ.famcodi
+      where EQ.emprcodi in ({0})
+      order by F.famabrev asc
+    </query>
+  </Sql>
+  <!--FIN PR5-->
+
+  <!--INICIO INTERVENCIONES-->
+  <Sql>
+    <key>ListarComboTipoEquiposXUbicaciones</key>
+    <query>
+      select
+      distinct eq.famcodi, fam.famnomb
+      from eq_equipo eq
+      inner join eq_familia fam on (eq.famcodi = fam.famcodi)
+      where
+      eq.areacodi in ({0}) and
+      fam.famestado = 'A'
+      order by
+      fam.famnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarByTareaIds</key>
+    <query>
+      select
+      fam.famcodi, fam.famnomb
+      from eq_familia fam
+      where
+      fam.tareacodi in ({0}) or '{0}' = '0' and
+      fam.famestado = 'A'
+      order by
+      fam.famnomb asc
+    </query>
+  </Sql>
+  <!--FIN INTERVENCIONES-->
+  
+  <!--INICIO MEJORAS IEOD-->
+  <Sql>
+    <key>ListarFamiliaPorOrigenLecturaEquipo</key>
+    <query>
+      select distinct fam.famcodi, fam.famnomb,fam.Famabrev from eq_familia fam
+      inner join eq_equipo eq on eq.famcodi = fam.famcodi
+      inner join me_ptomedicion pto on pto.equicodi = eq.equicodi
+      where pto.origlectcodi = {0} and (eq.emprcodi = {1} or pto.emprcodi = {1}) and pto.ptomediestado &lt;> 'X'
+      order by 2
+    </query>
+  </Sql>
+  <!--FIN MEJORAS IEOD-->
+
+  <!--INICIO FICHA TÉCNICA-->
+  <Sql>
+    <key>ListarFamiliasFT</key>
+    <query>
+      SELECT
+      FAM.FAMCODI,
+      tipoarea.tareaabrev,
+      FAM.FAMNOMB,
+      FAM.FAMABREV,
+      FAM.tareacodi
+      FROM EQ_FAMILIA FAM
+      LEFT join eq_tipoarea tipoarea on FAM.tareacodi = tipoarea.tareacodi
+      WHERE FAMCODI >= 0
+      ORDER BY FAMNOMB
+    </query>
+  </Sql>
+  <!--FIN FICHA TÉCNICA-->
+
+	<!--INICIO GESPROTECT - 20241019-->
+	<Sql>
+		<key>ListFamiliaEquipamientoCOES</key>
+		<query>
+			select
+			famcodi,
+			famabrev,
+			tipoecodi,
+			tareacodi,
+			famnomb,
+			famnumconec,
+			famnombgraf,
+			famestado,
+			usuariocreacion,
+			fechacreacion,
+			usuarioupdate,
+			fechaupdate
+			from
+			eq_familia
+			where famestado = 'A'
+			and famcodi in (2,3,6)
+			order by famnomb asc
+		</query>
+	</Sql>
+
+	<!--FIN GESPROTECT-->
+  
+</Sqls>

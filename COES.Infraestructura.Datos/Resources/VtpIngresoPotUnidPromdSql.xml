@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(inpuprcodi), 0) + 1 from vtp_ingreso_potunid_promd
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into vtp_ingreso_potunid_promd(inpuprcodi, pericodi, recpotcodi, emprcodi,
+           equicodi, inpuprimportepromd, inpuprusucreacion, inpuprfeccreacion, grupocodi,
+           inpuprunidadnomb, Inpuprficticio)
+       values( :inpuprcodi, :pericodi, :recpotcodi, :emprcodi,
+           :equicodi, :inpuprimportepromd, :inpuprusucreacion, :inpuprfeccreacion,
+           :grupocodi, :inpuprunidadnomb, :Inpuprficticio)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update vtp_ingreso_potunid_promd
+       set
+           pericodi = :pericodi,
+           recpotcodi = :recpotcodi,
+           emprcodi = :emprcodi,
+           equicodi = :equicodi,
+           inpuprimportepromd = :inpuprimportepromd,
+           inpuprusucreacion = :inpuprusucreacion,
+           inpuprfeccreacion = :inpuprfeccreacion,
+           grupocodi = :grupocodi,
+           inpuprunidadnomb = :inpuprunidadnomb,
+           Inpuprficticio = :Inpuprficticio           
+       where
+           inpuprcodi = :inpuprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_ingreso_potunid_promd
+      where inpuprcodi = :inpuprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_ingreso_potunid_promd
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select * from vtp_ingreso_potunid_promd
+       where inpuprcodi = :inpuprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vtp_ingreso_potunid_promd
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresa</key>
+    <query>
+      select emprcodi, (select emprnomb from vw_trn_empresa_str e where ip.emprcodi = e.emprcodi) as emprnomb, sum(inpuprimportepromd) as inpuprimportepromd
+      from vtp_ingreso_potunid_promd ip
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+      group by emprcodi
+      order by 2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresaCentral</key>
+    <query>
+		select ipp.emprcodi, --(select emprnomb from vw_trn_empresa_str e where ipp.emprcodi = e.emprcodi) as emprnomb,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = ipp.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = ipp.emprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = ipp.pericodi and recacodi = ipp.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = ipp.emprcodi) end as emprnomb,
+		ipp.equicodi, (select equinomb from vw_eq_central_generacion c where ipp.equicodi = c.equicodi) as equinomb, ipp.inpuprimportepromd
+		from vtp_ingreso_potunid_promd ipp
+		where pericodi = :pericodi and recpotcodi = :recpotcodi
+		order by 2, 4
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresaCentralUnidad</key>
+    <query>
+      select ipp.emprcodi, (select emprnomb from vw_trn_empresa_str e where ipp.emprcodi = e.emprcodi) as emprnomb,
+      ipp.equicodi,ipp.GRUPOCODI,ipp.INPUPRFICTICIO, (case when eq.famcodi in (4,5,37,39) then eq.equinomb else eqp.equinomb end) as equinomb,
+      ipp.inpuprimportepromd, ipp.INPUPRUNIDADNOMB
+      from vtp_ingreso_potunid_promd ipp
+      inner join eq_equipo eq on eq.EQUICODI = ipp.EQUICODI
+      inner join eq_equipo eqp on eqp.EQUICODI = eq.EQUIPADRE
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+      order by 2, 6, 8
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select * from vtp_ingreso_potunid_promd
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetIngresoPotUnidPromdByComparative</key>
+    <query>
+      select
+      prd.inpuprcodi,
+      prd.pericodi,
+      prd.recpotcodi,
+      prd.emprcodi,
+      prd.equicodi,
+      prd.inpuprimportepromd,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb,
+      equi.equinomb
+      from vtp_ingreso_potunid_promd prd
+      inner join vtp_recalculo_potencia recp on prd.recpotcodi=recp.recpotcodi and prd.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=prd.pericodi
+      inner join si_empresa emp on emp.emprcodi=prd.emprcodi
+      inner join eq_equipo equi on equi.equicodi=prd.equicodi
+      inner join si_empresa emp2 on emp2.emprcodi=equi.emprcodi
+      where prd.pericodi>=:periinicio and prd.pericodi &lt;=:perifin
+      and (prd.emprcodi = :emprcodi or :emprcodi = 0)
+      and (prd.equicodi = :equicodi or :equicodi = 0)
+      order by peri.perianio asc, peri.perimes asc, recpotcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetIngresoPotUnidPromdByComparativeUnique</key>
+    <query>
+      select
+      0 as inpuprcodi,
+      0 as pericodi,
+      0 as recpotcodi,
+      prd.emprcodi,
+      prd.equicodi,
+      0 as inpuprimportepromd,
+      '' as recpotnombre,
+      '' as perinombre,
+      0 as perianio,
+      0 as perimes,
+      0 as perianiomes,
+      '' as recanombre,
+      emp.emprnomb,
+      equi.equinomb
+      from vtp_ingreso_potunid_promd prd
+      inner join vtp_recalculo_potencia recp on prd.recpotcodi=recp.recpotcodi and prd.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=prd.pericodi
+      inner join si_empresa emp on emp.emprcodi=prd.emprcodi
+      inner join eq_equipo equi on equi.equicodi=prd.equicodi
+      inner join si_empresa emp2 on emp2.emprcodi=equi.emprcodi
+      where prd.pericodi>=:periinicio and prd.pericodi &lt;=:perifin
+      and (prd.emprcodi = :emprcodi or :emprcodi = 0)
+      and (prd.equicodi = :equicodi or :equicodi = 0)
+      group by
+      prd.emprcodi,
+      prd.equicodi,
+      emp.emprnomb,
+      equi.equinomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetIngresoPotUnidPromdByCompHist</key>
+    <query>
+      select
+      prd.inpuprcodi,
+      prd.pericodi,
+      prd.recpotcodi,
+      prd.emprcodi,
+      prd.equicodi,
+      prd.inpuprimportepromd,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb,
+      equi.equinomb
+      from vtp_ingreso_potunid_promd prd
+      inner join vtp_recalculo_potencia recp on prd.recpotcodi=recp.recpotcodi and prd.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=prd.pericodi
+      inner join si_empresa emp on emp.emprcodi=prd.emprcodi
+      inner join eq_equipo equi on equi.equicodi=prd.equicodi
+      inner join si_empresa emp2 on emp2.emprcodi=equi.emprcodi
+      where ((prd.pericodi=:periinicio and prd.recpotcodi=:recpotinicio)
+      or (prd.pericodi=:perifin and prd.recpotcodi=:recpotfin))
+      and (prd.emprcodi = :emprcodi or :emprcodi = 0)
+      order by peri.perianio asc, peri.perimes asc, recpotcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetIngresoPotUnidPromdByCompHistUnique</key>
+    <query>
+      select
+      0 as inpuprcodi,
+      0 as pericodi,
+      0 as recpotcodi,
+      prd.emprcodi,
+      prd.equicodi,
+      0 as inpuprimportepromd,
+      '' as recpotnombre,
+      '' as perinombre,
+      0 as perianio,
+      0 as perimes,
+      0 as perianiomes,
+      '' as recanombre,
+      emp.emprnomb,
+      equi.equinomb
+      from vtp_ingreso_potunid_promd prd
+      inner join vtp_recalculo_potencia recp on prd.recpotcodi=recp.recpotcodi and prd.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=prd.pericodi
+      inner join si_empresa emp on emp.emprcodi=prd.emprcodi
+      inner join eq_equipo equi on equi.equicodi=prd.equicodi
+      inner join si_empresa emp2 on emp2.emprcodi=equi.emprcodi
+      where ((prd.pericodi=:periinicio and prd.recpotcodi=:recpotinicio)
+      or (prd.pericodi=:perifin and prd.recpotcodi=:recpotfin))
+      and (prd.emprcodi=:emprcodi or :emprcodi=0)
+      group by
+      prd.emprcodi,
+      prd.equicodi,
+      emp.emprnomb,
+      equi.equinomb
+    </query>
+  </Sql>
+  
+  <!--CU21-->
+  <Sql>
+    <key>GetByCentral</key>
+    <query>
+      select sum(inpuprimportepromd) as inpuprimportepromd
+      from (
+        select ip.emprcodi, (select emprnomb from si_empresa s where s.emprcodi = ip.emprcodi) emprnomb,
+        e.equicodi, e.equinomb, ip.inpuprimportepromd
+        from vtp_ingreso_potunid_promd ip, eq_equipo e
+        where ip.pericodi = :pericodi and ip.recpotcodi = :recpotcodi
+        and ip.equicodi in (select equicodi from rer_central_lvtp
+                            where rercencodi in (select rercencodi from rer_central where equicodi = :equicodi and rercenestado = 'A' group by rercencodi)
+                            group by equicodi)
+        and ip.equicodi = e.equicodi
+      ) t
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByCentralSumUnidades</key>
+    <query>
+      select sum(inpuprimportepromd) as inpuprimportepromd
+      from (
+        select ip.emprcodi, (select emprnomb from si_empresa s where s.emprcodi = ip.emprcodi) emprnomb,
+        c.equicodi, c.equinomb, sum(ip.inpuprimportepromd) as inpuprimportepromd
+        from vtp_ingreso_potunid_promd ip, eq_equipo e, eq_equipo c
+        where ip.pericodi = :pericodi and ip.recpotcodi = :recpotcodi
+        and ip.equicodi = e.equicodi and e.equipadre = c.equicodi
+        and e.equipadre in (select equicodi from rer_central_lvtp
+                            where rercencodi in (select rercencodi from rer_central where equicodi = :equicodi and rercenestado = 'A' group by rercencodi)
+                            group by equicodi)
+        group by ip.emprcodi, c.equicodi, c.equinomb
+      ) t
+    </query>
+  </Sql>
+</Sqls>

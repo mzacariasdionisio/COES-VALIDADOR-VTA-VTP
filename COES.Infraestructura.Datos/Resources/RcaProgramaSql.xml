@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(rcprogcodi), 0) + 1 from rca_programa
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      INSERT INTO RCA_PROGRAMA
+      (
+      RCPROGCODI
+      ,RCPROGABREV
+      ,RCHORPCODI     
+      ,RCPROGESTADO
+      ,RCPROGFECINICIO
+      ,RCPROGFECFIN
+      ,RCPROGESTREGISTRO
+      ,RCPROGUSUCREACION
+      ,RCPROGFECCREACION
+      ,RCPROGCODIPADRE
+      )
+      VALUES
+      (
+      :RCPROGCODI
+      , '{0}'
+      , :RCHORPCODI     
+      , :RCPROGESTADO
+      , :RCPROGINICIO
+      , :RCPROGFIN
+      , :RCPROGESTREGISTRO
+      , :RCPROGUSUCREACION
+      , :RCPROGFECCREACION
+      , :RCPROGCODIPADRE
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      UPDATE RCA_PROGRAMA
+      SET
+
+      RCHORPCODI = :RCHORPCODI,
+      RCPROGABREV = '{0}',
+      RCPROGNOMBRE = :RCPROGNOMBRE,
+      RCPROGESTADO = :RCPROGESTADO,
+      RCPROGESTREGISTRO = :RCPROGESTREGISTRO,
+      RCPROGUSUMODIFICACION = :RCPROGUSUMODIFICACION,
+      RCPROGFECMODIFICACION = :RCPROGFECMODIFICACION,
+      RCPROGCODIPADRE = :RCPROGCODIPADRE
+      WHERE
+      RCPROGCODI = :RCPROGCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       update rca_programa
+       set rcprogestregistro = '0',
+           rcprogusumodificacion = '{0}',
+           rcprogfecmodificacion = sysdate
+       where
+           rcprogcodi = :rcprogcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select 
+      rcprogcodi,
+      rcprogabrev,
+      rchorpcodi,
+      rcprognombre,
+      rcprogestregistro,
+      rcprogestado,
+      rcprogusucreacion,
+      rcprogfeccreacion,
+      rcprogusumodificacion,
+      rcprogfecmodificacion,
+      rcprogfecinicio,
+      rcprogfecfin
+      from 
+      rca_programa 
+      where 
+      rcprogcodi = :rcprogcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           rcprogcodi,
+           rchorpcodi,
+           rcprognombre,
+           rcprogabrev,
+           rcprogestregistro,
+           rcprogestado,
+           rcprogusucreacion,
+           rcprogfeccreacion,
+           rcprogusumodificacion,
+           rcprogfecmodificacion,
+           rcprogfecinicio,
+           rcprogfecfin
+       from
+           rca_programa
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           rcprogcodi,
+           rchorpcodi,
+           rcprognombre,
+           rcprogabrev,           
+           rcprogestregistro,
+           rcprogestado,
+           rcprogusucreacion,
+           rcprogfeccreacion,
+           rcprogusumodificacion,
+           rcprogfecmodificacion,
+           rcprogfecinicio,
+           rcprogfecfin
+       from
+           rca_programa
+           {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListProgramaEnvioArchivo</key>
+    <query>
+      SELECT RCPROGCODI,RCPROGABREV AS RCPROGNOMBRE
+      FROM RCA_PROGRAMA
+      WHERE RCPROGCODI IN (
+      SELECT RCPROGCODI FROM RCA_CUADRO_PROG
+      WHERE RCPROGESTREGISTRO='1'
+      AND RCCUADFECHORINICIOEJEC >= :RCCUADFECHORINICIOEJEC
+      )
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListProgramaRechazoCarga</key>
+    <query>
+      SELECT RCPROGCODI,RCPROGABREV AS RCPROGNOMBRE, RCHORPCODI,  RCPROGFECFIN
+      FROM RCA_PROGRAMA
+      WHERE RCPROGESTREGISTRO = '1' AND RCPROGESTADO = '1' {0} ORDER BY RCPROGFECFIN DESC
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListFiltro</key>
+    <query>
+      select
+      rcprogcodi,
+      pro.rchorpcodi,
+      rchorpnombre as rcproghorizonte,
+      rcprognombre,
+      rcprogabrev,
+      case when trunc(rcprogfecfin) >= trunc(sysdate) then '1' else '0' END AS rcprogestado,
+      rcprogfecinicio,
+      rcprogfecfin,
+      (select count(*) from rca_cuadro_prog cprog where cprog.rcprogcodi = pro.rcprogcodi) AS nrocuadros
+      from
+      rca_programa pro join rca_horizonte_prog hor on pro.rchorpcodi=hor.rchorpcodi
+      where rcprogestregistro = '1' {0}
+      order by rcprogfecfin desc
+    </query>
+  </Sql>
+</Sqls>

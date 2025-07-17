@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ftprycodi), 0) + 1 from ft_ext_proyecto
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ft_ext_proyecto(
+      ftprycodi,
+      ftprynombre,
+      ftpryeonombre,
+      ftpryeocodigo,
+      emprcodi,
+      esteocodi,
+      ftpryestado,
+      ftpryusucreacion,
+      ftpryfeccreacion,
+      ftpryusumodificacion,
+      ftpryfecmodificacion
+      )
+      values(
+      :ftprycodi,
+      :ftprynombre,
+      :ftpryeonombre,
+      :ftpryeocodigo,
+      :emprcodi,
+      :esteocodi,
+      :ftpryestado,
+      :ftpryusucreacion,
+      :ftpryfeccreacion,
+      :ftpryusumodificacion,
+      :ftpryfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ft_ext_proyecto
+      set
+      ftprynombre = :ftprynombre,
+      ftpryeonombre = :ftpryeonombre,
+      ftpryeocodigo = :ftpryeocodigo,
+      emprcodi = :emprcodi,
+      esteocodi = :esteocodi,
+      ftpryestado = :ftpryestado,
+      ftpryusucreacion = :ftpryusucreacion,
+      ftpryfeccreacion = :ftpryfeccreacion,
+      ftpryusumodificacion = :ftpryusumodificacion,
+      ftpryfecmodificacion = :ftpryfecmodificacion
+      where
+      ftprycodi = :ftprycodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ft_ext_proyecto
+      where
+      ftprycodi = :ftprycodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      p.*, e.emprnomb
+      from
+      ft_ext_proyecto p
+      inner join si_empresa e on e.emprcodi = p.emprcodi
+      where
+      ftprycodi = :ftprycodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_proyecto
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_proyecto
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorRangoYEmpresa</key>
+    <query>
+      select p.*, e.emprnomb from ft_ext_proyecto p
+      inner join si_empresa e on e.emprcodi = p.emprcodi
+      where
+      ('-1' = '{0}' or p.emprcodi in  ({0})) and      
+      p.ftpryfeccreacion >=  TO_DATE('{1}','DD/MM/YYYY') AND
+      p.ftpryfeccreacion &lt;=  TO_DATE('{2}','DD/MM/YYYY')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarProyectosSinCodigoEOPorAnio</key>
+    <query>
+      select * from FT_EXT_PROYECTO where EXTRACT(YEAR FROM FTPRYFECCREACION) = {0} and ESTEOCODI IS NULL
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorEstado</key>
+    <query>
+      select ep.*, e.emprnomb from FT_EXT_PROYECTO ep
+      inner join SI_EMPRESA e on e.emprcodi = ep.emprcodi
+      where (FTPRYESTADO = '{0}' OR '-1' = '{0}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarGrupo</key>
+    <query>
+      select ep.*, e.emprnomb from FT_EXT_PROYECTO ep
+      inner join SI_EMPRESA e on e.emprcodi = ep.emprcodi
+      where
+      (FTPRYCODI in ({0}))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorEmpresaYEtapa</key>
+    <query>
+      select ftp.*
+      from ft_ext_proyecto ftp
+      where ftprycodi in (
+          select ftprycodi from ft_ext_etempdetpry ep
+          inner join ft_ext_relempetapa re on re.fetempcodi = ep.fetempcodi
+          where
+          re.emprcodi = {0}
+          and re.ftetcodi = {1}
+          and (ep.feepryestado = '{2}' or '-1' = '{2}')
+          and (re.fetempestado = 'A')
+      )
+    </query>
+  </Sql>
+
+</Sqls>

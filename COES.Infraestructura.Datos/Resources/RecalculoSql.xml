@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+<!--ASSETEC 202001-->
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select r.*, p.perinombre from trn_recalculo r left join trn_periodo p on r.pericodi = p.pericodi
+      where r.pericodi = :pericodi and r.recacodi = :recacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_recalculo
+      (
+      pericodi, recacodi, recafechavalorizacion, recafechalimite, recahoralimite, recafechaobservacion,
+      recaestado, recanombre, recadescripcion, recanroinforme, recamasinfo, recausername, recafecins, pericodidestino,
+      recacuadro1, recacuadro2, recanota2, recacuadro3, recacuadro4, recacuadro5
+      )
+      values
+      (
+      :pericodi, :recacodi, :recafechavalorizacion, :recafechalimite, :recahoralimite, :recafechaobservacion,
+      :recaestado, :recanombre, :recadescripcion, :recanroinforme, :recamasinfo, :recausername, :recafecins, :pericodidestino,
+      :recacuadro1, :recacuadro2, :recanota2, :recacuadro3, :recacuadro4, :recacuadro5
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update trn_recalculo
+      set
+      recafechavalorizacion = :recafechavalorizacion,
+      recafechalimite = :recafechalimite,
+      recahoralimite = :recahoralimite,
+      recafechaobservacion = :recafechaobservacion,
+      recaestado = :recaestado,
+      recanombre = :recanombre,
+      recadescripcion = :recadescripcion,
+      recanroinforme = :recanroinforme,
+      recamasinfo = :recamasinfo,
+      recafecact = :recafecact,
+      pericodidestino = :pericodidestino,
+      recacuadro1 = :recacuadro1,
+      recacuadro2 = :recacuadro2,
+      recanota2 = :recanota2,
+      recacuadro3 = :recacuadro3,
+      recacuadro4 = :recacuadro4,
+      recacuadro5 = :recacuadro5
+      where recacodi = :recacodi and pericodi =:pericodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_recalculo where pericodi =:pericodi and recacodi = :recacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select r.*, p.perinombre
+      from trn_recalculo r left join trn_periodo p on r.pericodidestino = p.pericodi
+      Where r.pericodi = :pericodi
+      order by r.recacodi desc
+    </query>
+  </Sql>
+	
+  <!--Inio PrimasRER.2023-->
+  <Sql>
+	<key>ListByAnioMes</key>
+	<query>
+      select r.*, p.perinombre
+      from trn_recalculo r left join trn_periodo p on r.pericodidestino = p.pericodi
+	  Where r.pericodi = (
+         SELECT pericodi
+		 FROM trn_periodo
+		 WHERE perianio = :perianio AND perimes = :perimes
+	  )
+	  and UPPER(recaestado) = 'CERRADO'
+	  order by r.recacodi desc
+	</query>
+  </Sql>
+
+  <Sql>
+	<key>ListVTEAByAnioMes</key>
+	<query>
+	  select r.*, (select p.perinombre from trn_periodo p where p.pericodi = r.pericodi) as perinombre 
+      from trn_recalculo r
+      where r.pericodidestino = (select a.pericodi from trn_periodo a where a.perianio = :perianio and a.perimes = :perimes)
+      and r.recacodi > 1 and r.recaestado = 'Cerrado'
+      order by r.pericodi desc
+	</query>
+	</Sql>
+  <!--Fin PrimasRER.2023-->
+	
+  <Sql>
+    <key>ListEstadoPublicarCerrado</key>
+    <query>
+      select r.*, p.perinombre
+      from trn_recalculo r left join trn_periodo p on r.pericodidestino = p.pericodi
+      Where r.pericodi = :pericodi and  r.recaestado in ('Publicar', 'Cerrado')
+      order by r.recacodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from trn_recalculo
+      where (recanombre like '%' + :recanombre + '%' or :recanombre is null)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(recacodi), 0) + 1 from trn_recalculo where pericodi = :pericodi
+    </query>
+  </Sql>
+
+ <Sql>
+    <key>GetUltimaVersion</key>
+    <query>
+      select max(recacodi) as recacodi from trn_recalculo where pericodi=:pericodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerVersionDTR</key>
+    <query>
+      select nvl(max(version), 0) as version from dtr_mesval where mes = :pericodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListRecalculosTrnCodigoEnviado</key>
+    <query>
+      select r.recacodi, r.recanombre
+      from trn_trans_entrega te left join trn_recalculo r on r.pericodi=te.pericodi and r.recacodi = te.tentversion
+      where te.pericodi = :pericodi and te.emprcodi = :recacodi
+      group by r.recacodi, r.recanombre
+      union
+      select r.recacodi, r.recanombre
+      from trn_trans_retiro tr left join trn_recalculo r on r.pericodi=tr.pericodi and r.recacodi = tr.tretversion
+      where tr.pericodi = :pericodi and tr.genemprcodi = :recacodi
+      group by r.recacodi, r.recanombre
+      order by 1 desc
+    </query>
+  </Sql>
+  <!--ASSETEC 202108 TIEE-->
+  <Sql>
+    <key>ListMaxRecalculoByPeriodo</key>
+    <query>
+      select pericodi, max(recacodi) as recacodi from trn_recalculo where pericodi &gt; 5 and recacodi &gt; 1 group by pericodi order by pericodi
+    </query>
+  </Sql>
+  <!--TRANSFERENCIA DE ENERGIA ACTIVA -> MOVIMIENTO DE SALDOS
+  {0} emprcodiorigen
+  {1} emprcodidestino
+  {2} pericodi
+  {3} recacodi-->
+  <Sql>
+    <key>MigrarSaldosVTEA</key>
+    <query>
+      begin
+      update trn_saldo_recalculo set emprcodi = {1} where pericodi = {2} and recacodi = {3} and emprcodi = {0} ;
+      end;
+    </query>
+  </Sql>
+  <!--TRANSFERENCIA DE ENERGIA ACTIVA -> MIGRACIÓN DE DATOS DE UN CALCULO
+      {0} emprcodiorigen
+      {1} emprcodidestino
+      {2} pericodi
+      {3} recacodi-->
+  <Sql>
+    <key>MigrarCalculoVTEA</key>
+    <query>
+      begin
+      update trn_codigo_entrega set emprcodi = {1} where emprcodi = {0} and codentestado = 'ACT';
+      update trn_codigo_retiro_solicitud set genemprcodi = {1} where genemprcodi = {0} and coresoobservacion = 'SOLBAJANO';
+      update trn_ing_compensacion set emprcodi = {1} where pericodi = {2} and ingcomversion = {3} and emprcodi = {0};
+      update trn_ing_potencia set emprcodi = {1} where pericodi = {2} and ingpotversion = {3} and emprcodi = {0};
+      update trn_envio set emprcodi = {1} where pericodi = {2} and recacodi = {3} and emprcodi = {0};
+      update trn_trans_entrega set emprcodi = {1} where pericodi = {2} and tentversion = {3} and emprcodi = {0};
+      update trn_trans_retiro set genemprcodi = {1} where pericodi = {2} and tretversion = {3} and genemprcodi = {0};
+      update trn_valor_trans set emprcodi = {1} where pericodi = {2} and vtranversion = {3} and emprcodi = {0};
+      update trn_valor_trans_empresa set emprcodi = {1} where pericodi = {2} and vtraneversion = {3} and emprcodi = {0};
+      update trn_valor_total_empresa set emprcodi = {1} where pericodi = {2} and vtotemversion = {3} and emprcodi = {0};
+      update trn_saldo_empresa set emprcodi = {1} where pericodi = {2} and salempversion = {3} and emprcodi = {0};
+      update trn_saldo_recalculo set emprcodi = {1} where pericodi = {2} and recacodi = {3} and emprcodi = {0};
+      update trn_saldo_coresc set emprcodi = {1} where pericodi = {2} and salrscversion = {3} and emprcodi = {0};
+      update trn_empresa_pago set emppagcodemppago = {1} where pericodi = {2} and emppagversion = {3} and emppagcodemppago = {0};
+      end;
+    </query>
+  </Sql>
+</Sqls>

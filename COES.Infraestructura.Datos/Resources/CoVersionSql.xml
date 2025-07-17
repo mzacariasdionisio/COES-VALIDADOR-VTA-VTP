@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(covercodi), 0) + 1 from co_version
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into co_version(
+           covercodi,
+           copercodi,
+           coverdesc,
+           coverfecinicio,
+           coverfecfin,
+           coverestado,
+           covertipo,
+           covebacodi,
+           coverusucreacion,
+           coverfeccreacion,
+           coverusumodificacion,
+           coverfecmodificacion
+       )
+       values(
+           :covercodi,
+           :copercodi,
+           :coverdesc,
+           :coverfecinicio,
+           :coverfecfin,
+           :coverestado,
+           :covertipo,
+           :covebacodi,
+           :coverusucreacion,
+           :coverfeccreacion,
+           :coverusumodificacion,
+           :coverfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update co_version
+       set
+           copercodi = :copercodi,
+           coverdesc = :coverdesc,
+           coverfecinicio = :coverfecinicio,
+           coverfecfin = :coverfecfin,
+           coverestado = :coverestado,
+           covertipo = :covertipo,
+           covebacodi = :covebacodi,
+           coverusucreacion = :coverusucreacion,
+           coverfeccreacion = :coverfeccreacion,
+           coverusumodificacion = :coverusumodificacion,
+           coverfecmodificacion = :coverfecmodificacion
+       where
+           covercodi = :covercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       update co_version
+       set 
+       coverestado = 'E'
+       where
+           covercodi = :covercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           covercodi,
+           copercodi,
+           coverdesc,
+           coverfecinicio,
+           coverfecfin,
+           coverestado,
+           covertipo,
+           covebacodi,
+           coverusucreacion,
+           coverfeccreacion,
+           coverusumodificacion,
+           coverfecmodificacion
+       from
+           co_version
+       where
+           covercodi = :covercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           covercodi,
+           copercodi,
+           coverdesc,
+           coverfecinicio,
+           coverfecfin,
+           coverestado,
+           covertipo,
+           covebacodi,
+           coverusucreacion,
+           coverfeccreacion,
+           coverusumodificacion,
+           coverfecmodificacion
+       from
+           co_version
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           ver.covercodi,
+           ver.copercodi,
+           ver.coverdesc,
+           ver.coverfecinicio,
+           ver.coverfecfin,
+           case ver.coverestado when 'A' then 'Abierto' when 'P' then 'En proceso' when 'C' then 'Cerrado' when 'E' then 'Eliminado' else '' end as coverestado ,
+           ver.covertipo,
+           ver.covebacodi,
+           ver.coverusucreacion,
+           ver.coverfeccreacion,
+           ver.coverusumodificacion,
+           ver.coverfecmodificacion,
+           (select bas.covebadesc from co_versionbase bas where bas.covebacodi = ver.covebacodi) as destipo
+       from  co_version ver    
+       where  copercodi = :copercodi and coverestado != 'E'
+       order by coverfeccreacion desc
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerVersionPorFecha</key>
+		<query>      
+      select tb.* from (
+      select ver.* from co_version ver
+      inner join co_periodo per on ver.copercodi = per.copercodi
+      where
+      per.coperestado = 'A' and per.coperanio = {0} and per.copermes = {1}
+      and ver.coverestado = 'A'
+      order by ver.covercodi desc)  tb
+      inner join co_configuracion_urs c on c.covercodi = tb.covercodi
+      where rownum = 1
+    </query>
+	</Sql>
+
+  <Sql>
+    <key>GetVersionesPorMes</key>
+    <query>
+      select tb.* from (
+      select per.coperestado, ver.* from co_version ver
+      inner join co_periodo per on ver.copercodi = per.copercodi
+      where
+      per.copermes = {0} and per.coperanio = {1}
+      order by ver.covercodi desc)  tb
+
+    </query>
+  </Sql>
+  
+  
+</Sqls>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(pstrnscodi), 0) + 1 from vtp_peaje_saldo_transmision
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_peaje_saldo_transmision(pstrnscodi, pericodi, recpotcodi, emprcodi,
+      pstrnstotalrecaudacion, pstrnstotalpago, pstrnssaldotransmision, pstrnsusucreacion, pstrnsfeccreacion)
+      values(:pstrnscodi, :pericodi, :recpotcodi, :emprcodi,
+      :pstrnstotalrecaudacion, :pstrnstotalpago, :pstrnssaldotransmision, :pstrnsusucreacion, :pstrnsfeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_peaje_saldo_transmision
+      set
+      pericodi = :pericodi,
+      recpotcodi = :recpotcodi,
+      emprcodi = :emprcodi,
+      pstrnstotalrecaudacion = :pstrnstotalrecaudacion,
+      pstrnstotalpago = :pstrnstotalpago,
+      pstrnssaldotransmision = :pstrnssaldotransmision,
+      pstrnsusucreacion = :pstrnsusucreacion,
+      pstrnsfeccreacion = :pstrnsfeccreacion
+      where pstrnscodi = :pstrnscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_peaje_saldo_transmision where pstrnscodi = :pstrnscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_peaje_saldo_transmision where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from vtp_peaje_saldo_transmision where pstrnscodi = :pstrnscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdEmpresa</key>
+    <query>
+      select * from vtp_peaje_saldo_transmision where pericodi = :pericodi and recpotcodi = :recpotcodi and emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vtp_peaje_saldo_transmision
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresaEgreso</key>
+    <query>
+      Select emprcodi, (select emprnomb from vw_si_empresa e where e.emprcodi = t.emprcodi) as emprnomb,
+      (sum(pagegrpagoegreso) - sum(pstrnssaldotransmision)) as pstrnstotalrecaudacion, sum(pstrnssaldotransmision) as pstrnstotalpago, sum(pagegrpagoegreso) as pstrnssaldotransmision
+      From(
+      select pe.emprcodi, pe.pagegrpagoegreso, 0 as pstrnssaldotransmision
+      from vtp_pago_egreso pe
+      where pe.pericodi = :pericodi and pe.recpotcodi = :recpotcodi
+      UNION
+      select st.emprcodi, 0 as pagegrpagoegreso, st.pstrnssaldotransmision
+      from vtp_peaje_saldo_transmision st
+      where st.pericodi = :pericodi and st.recpotcodi = :recpotcodi) t
+      group by emprcodi
+      order by 2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      Select emprcodi, (select emprnomb from vw_si_empresa e where e.emprcodi = t.emprcodi) as emprnomb, 
+      sum(recaudado) as pstrnstotalrecaudacion, sum(pagado) as pstrnstotalpago, sum(recaudado) - sum(pagado) as pstrnssaldotransmision
+      From(
+      select emprcodi, sum(pecarpeajerecaudado) as recaudado, 0 as pagado from vtp_peaje_cargo
+      where pecartransmision = 'SI' and pericodi = :pericodi and recpotcodi = :recpotcodi
+      group by emprcodi
+      UNION
+      select emprcodipeaje as emprcodi, 0 as recaudado, sum(pempagpeajepago) as pagado from vtp_peaje_empresa_pago
+      where pempagtransmision = 'SI' and  pericodi = :pericodi and recpotcodi = :recpotcodi
+      group by emprcodipeaje
+      ) t
+      group by emprcodi
+      order by 2
+    </query>
+  </Sql>
+</Sqls>

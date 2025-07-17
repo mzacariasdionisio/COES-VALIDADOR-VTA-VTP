@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(cparcodi), 0) + 1 from cpa_revision
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into cpa_revision
+		(
+		cparcodi,
+		cpaapcodi,
+		cparrevision,
+		cparcorrelativo,
+		cparestado,
+		cparultimo,
+		cparcmpmpo,
+		cparusucreacion,
+		cparfeccreacion,
+		cparusumodificacion,
+		cparfecmodificacion
+		)
+		values
+		(
+		:cparcodi,
+		:cpaapcodi,
+		:cparrevision,
+		:cparcorrelativo,
+		:cparestado,
+		:cparultimo,
+		:cparcmpmpo,
+		:cparusucreacion,
+		:cparfeccreacion,
+		:cparusumodificacion,
+		:cparfecmodificacion
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+		update cpa_revision
+		set
+		cparcodi = :cparcodi,
+		cpaapcodi = :cpaapcodi,
+		cparrevision = :cparrevision,
+		cparcorrelativo = :cparcorrelativo,
+		cparestado = :cparestado,
+		cparultimo = :cparultimo,
+		cparcmpmpo = :cparcmpmpo,
+		cparusucreacion = :cparusucreacion,
+		cparfeccreacion = :cparfeccreacion,
+		cparusumodificacion = :cparusumodificacion,
+		cparfecmodificacion = :cparfecmodificacion
+		where
+		cparcodi = :cparcodi
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateUltimoByAnioByAjuste</key>
+		<query>
+			update cpa_revision r
+			set
+			r.cparultimo = :cparultimo
+			where
+			r.cpaapcodi in (select
+			    ap.cpaapcodi
+			    from
+			    cpa_ajustepresupuestal ap
+			    where
+			    ap.cpaapanio = :cpaapanio and
+			    ap.cpaapajuste = :cpaapajuste
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>UpdateUltimoByCodi</key>
+		<query>
+			update cpa_revision
+			set
+			cparultimo = :cparultimo
+			where
+			cparcodi = :cparcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>UpdateEstado</key>
+		<query>
+			update cpa_revision 
+			set
+			cparestado = :cparestado,
+			cparusumodificacion = :cparusumodificacion,
+			cparfecmodificacion = :cparfecmodificacion
+			where
+			cparcodi = :cparcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>UpdateEstadoYCMgPMPO</key>
+		<query>
+			update cpa_revision
+			set
+			cparestado = :cparestado,
+			cparcmpmpo = :cparcmpmpo,
+			cparusumodificacion = :cparusumodificacion,
+			cparfecmodificacion = :cparfecmodificacion
+			where
+			cparcodi = :cparcodi
+		</query>
+	</Sql>
+
+	<Sql>
+    <key>Delete</key>
+    <query>
+      delete from cpa_revision where cparcodi = :cparcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      cparcodi,
+      cpaapcodi,
+      cparrevision,
+      cparcorrelativo,
+      cparestado,
+      cparultimo,
+	  cparcmpmpo,
+      cparusucreacion,
+      cparfeccreacion,
+      cparusumodificacion,
+      cparfecmodificacion
+      from
+      cpa_revision
+      order by
+      cparcodi asc
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>GetById</key>
+		<query>
+			select
+			ap.cpaapanio,
+			ap.cpaapajuste,
+			ap.cpaapanioejercicio,
+			r.*
+			from
+			cpa_revision r
+			inner join cpa_ajustepresupuestal ap on ap.cpaapcodi = r.cpaapcodi
+			where
+			cparcodi = :cparcodi
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		ap.cpaapanio,
+		ap.cpaapajuste,
+		ap.cpaapanioejercicio,
+		r.*
+		from
+		cpa_revision r
+		inner join cpa_ajustepresupuestal ap on ap.cpaapcodi = r.cpaapcodi
+		where
+		(-1 = {0} or ap.cpaapanio &gt;= {0}) and
+		(-1 = {1} or ap.cpaapanio &lt;= {1}) and
+		('TODOS' = '{2}' or ap.cpaapajuste = '{2}') and
+		(r.cparestado in ({3}))
+		order by ap.cpaapanio, ap.cpaapajuste, r.cparrevision, r.cparcodi, r.cparcorrelativo
+	</query>
+  </Sql>
+
+</Sqls>
+

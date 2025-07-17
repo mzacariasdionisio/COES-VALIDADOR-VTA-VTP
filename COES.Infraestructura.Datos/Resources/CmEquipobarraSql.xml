@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(cmeqbacodi), 0) + 1 from cm_equipobarra
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cm_equipobarra(
+           cmeqbacodi,
+           configcodi,
+           cmeqbaestado,
+           cmeqbavigencia,
+           cmeqbaexpira,
+           cmeqbausucreacion,
+           cmeqbafeccreacion,
+           cmeqbausumodificacion,
+           cmeqbafecmodificacion
+       )
+       values(
+           :cmeqbacodi,
+           :configcodi,
+           :cmeqbaestado,
+           :cmeqbavigencia,
+           :cmeqbaexpira,
+           :cmeqbausucreacion,
+           :cmeqbafeccreacion,
+           :cmeqbausumodificacion,
+           :cmeqbafecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cm_equipobarra
+       set
+           configcodi = :configcodi,
+           cmeqbaestado = :cmeqbaestado,
+           cmeqbavigencia = :cmeqbavigencia,
+           cmeqbaexpira = :cmeqbaexpira,
+           cmeqbausucreacion = :cmeqbausucreacion,
+           cmeqbafeccreacion = :cmeqbafeccreacion,
+           cmeqbausumodificacion = :cmeqbausumodificacion,
+           cmeqbafecmodificacion = :cmeqbafecmodificacion
+       where
+           cmeqbacodi = :cmeqbacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		update cm_equipobarra
+		set cmeqbaestado = 'E'
+		where
+		cmeqbacodi = :cmeqbacodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           cmeqbacodi,
+           configcodi,
+           cmeqbaestado,
+           cmeqbavigencia,
+           cmeqbaexpira,
+           cmeqbausucreacion,
+           cmeqbafeccreacion,
+           cmeqbausumodificacion,
+           cmeqbafecmodificacion
+       from
+           cm_equipobarra
+       where
+           cmeqbacodi = :cmeqbacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           cmeqbacodi,
+           configcodi,
+           cmeqbaestado,
+           cmeqbavigencia,
+           cmeqbaexpira,
+           cmeqbausucreacion,
+           cmeqbafeccreacion,
+           cmeqbausumodificacion,
+           cmeqbafecmodificacion
+       from
+           cm_equipobarra
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select rel.*, eq.equinomb from cm_equipobarra rel
+		inner join (
+		select cm.configcodi, max(cm.cmeqbavigencia) as fechamax from cm_equipobarra cm
+		where cm.cmeqbavigencia &lt;= to_date('{0}', 'YYYY-MM-DD') and cm.cmeqbaestado = 'A'
+		group by cm.configcodi
+		) maximo on rel.configcodi = maximo.configcodi and rel.cmeqbavigencia = maximo.fechamax
+		inner join eq_congestion_config conf on rel.configcodi = conf.configcodi
+		inner join eq_equipo eq on conf.equicodi = eq.equicodi
+		where rel.cmeqbaestado = 'A'
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerHistorico</key>
+		<query>
+			select rel.*, eq.equinomb from cm_equipobarra rel
+			inner join eq_congestion_config conf on rel.configcodi = conf.configcodi
+			inner join eq_equipo eq on conf.equicodi = eq.equicodi
+			where rel.cmeqbaestado = 'A' and rel.configcodi = {0}
+			order by rel.cmeqbavigencia desc
+		</query>
+	</Sql>
+	
+</Sqls>

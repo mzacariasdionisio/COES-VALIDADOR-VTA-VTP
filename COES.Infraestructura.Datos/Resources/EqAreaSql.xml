@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(areacodi), 0) + 1 from eq_area
+    </query>
+  </Sql>
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eq_area(
+      anivelcodi,
+      areacodi,
+      tareacodi,
+      areaabrev,
+      areanomb,
+      areapadre,
+      areaestado,
+      usuariocreacion,
+      fechacreacion
+      )
+      values(
+      :anivelcodi,
+      :areacodi,
+      :tareacodi,
+      :areaabrev,
+      :areanomb,
+      :areapadre,
+      :areaestado,
+      :usuariocreacion,
+      sysdate
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eq_area
+      set
+      anivelcodi = :anivelcodi,
+      tareacodi = :tareacodi,
+      areaabrev = :areaabrev,
+      areanomb = :areanomb,
+      areapadre = :areapadre,
+      areaestado=:areaestado,
+      usuarioupdate=:usuarioupdate,
+      fechaupdate=SYSDATE
+      where
+      areacodi = :areacodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from eq_area
+       where
+           areacodi = :areacodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update aud_eq_area
+			set USERAUDITORIA = :usuarioupdate
+			where
+			areacodi = :areacodi
+			and ACTIONAUDITORIA = 'DELETE'
+		</query>
+	</Sql>
+	
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      eq_area.anivelcodi,
+      eq_area.areacodi,
+      eq_area.tareacodi,
+      eq_area.areaabrev,
+      eq_area.areanomb,
+      eq_area.areapadre,
+      eq_area.areaestado,
+      eq_area.usuariocreacion,
+      eq_area.fechacreacion,
+      eq_area.usuarioupdate,
+      eq_area.fechaupdate,
+      eq_area.anivelcodi,
+      eq_tipoarea.tareanomb
+      from
+      eq_area inner join eq_tipoarea on eq_area.tareacodi=eq_tipoarea.tareacodi
+      where
+      areacodi = :areacodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      anivelcodi,
+      areacodi,
+      tareacodi,
+      areaabrev,
+      areanomb,
+      areapadre,
+      areaestado,
+      usuariocreacion,
+      fechacreacion,
+      usuarioupdate,
+      fechaupdate,
+      anivelcodi
+      from
+      eq_area
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      areacodi,
+      tareacodi,
+      areaabrev,
+      areanomb,
+      areapadre,
+      areaestado,
+      usuariocreacion,
+      fechacreacion,
+      usuarioupdate,
+      fechaupdate,
+      anivelcodi
+      from
+      eq_area
+    </query>
+  </Sql>
+  <Sql>
+    <key>AreasPorFiltro</key>
+    <query>
+      select * from (
+      select a.areacodi,
+      a.tareacodi,
+      a.areaabrev,
+      a.areanomb,
+      a.areapadre,
+      ta.tareanomb,
+      a.areaestado,
+      a.usuariocreacion,
+      a.fechacreacion,
+      a.usuarioupdate,
+      a.fechaupdate,
+      a.anivelcodi,
+      (row_number() over (order by a.areanomb)) as r
+      from eq_area a
+      inner join eq_tipoarea ta on ta.tareacodi=a.tareacodi
+      where (a.tareacodi={0} or -99={0}) and
+      UPPER(a.areanomb) like '%{1}%' and (a.areaestado='{2}' or ' '='{2}' ))
+      where r >= ((( {3}-1) * {4}) + 1) and r &lt; (( {3} * {4}) + 1 )
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>CantidadAreasPorFiltro</key>
+    <query>
+      select count(*) from eq_area a
+      inner join eq_tipoarea ta on ta.tareacodi=a.tareacodi
+      where
+      ta.anivelcodi=0 and
+      (a.tareacodi = {0} or -99 = {0}) and
+      UPPER(a.areanomb) like '%{1}%' and
+      (a.areaestado='{2}' or ' '='{2}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerAreaPorEmpresa</key>
+    <query>
+      select equipo.areacodi, tipoarea.tareaabrev || ' ' || area.areanomb as areanomb, count(equipo.equicodi) equipos
+      from eq_equipo equipo
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      where area.anivelcodi=0 and equipo.emprcodi = :emprcodi and equipo.areacodi > 0 and equipo.equiestado != 'B'
+      group by equipo.areacodi, tipoarea.tareaabrev || ' ' || area.areanomb
+      order by areanomb
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListSubEstacion</key>
+    <query>
+      select * from eq_area where anivelcodi=0 and tareacodi=1 order by areanomb asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListAreasActivas</key>
+    <query>
+      select * from eq_area where anivelcodi=0 and areaestado= 'A' order by areanomb asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListAreasActivasTipoArea</key>
+    <query>
+      select * from eq_area where anivelcodi=0 and areaestado= 'A' and (tareacodi={0} or -99={0}) order by areanomb asc
+    </query>
+  </Sql>
+
+  <!--INICIO PR5-->
+  <Sql>
+    <key>ListarAreaPorEmpresas</key>
+    <query>
+      select equipo.areacodi, tipoarea.tareaabrev || ' ' || area.areanomb as areanomb , equipo.emprcodi
+      from eq_equipo equipo
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      where area.anivelcodi=0 and ('-1' = '{0}' or equipo.emprcodi in({0})) and ('-1' in ({1}) or equipo.equiestado in ({1}))
+      group by equipo.areacodi, tipoarea.tareaabrev || ' ' || area.areanomb , equipo.emprcodi
+      order by areanomb
+    </query>
+  </Sql>
+  <!--FIN PR5-->
+  
+  <Sql>
+    <key>ListarZonasActivas</key>
+    <query>
+      select *
+      from eq_area inner join eq_areanivel on eq_area.anivelcodi=eq_areanivel.anivelcodi
+      inner join eq_tipoarea on eq_area.tareacodi=eq_tipoarea.tareacodi
+      where  areaestado='A' order by areanomb asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListarZonasxNivel</key>
+    <query>
+      select *
+      from eq_area ea inner join eq_tipoarea et on ea.tareacodi=et.tareacodi
+      where  ea.areaestado='A' and ea.anivelcodi = :anivelcodi order by areanomb asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListSoloAreas</key>
+    <query>
+      select *
+      from eq_area ea inner join eq_tipoarea et on ea.tareacodi=et.tareacodi
+      where ea.areaestado= 'A' order by ea.areanomb asc
+    </query>
+  </Sql>
+
+  <!--INICIO INTERVENCIONES-->
+  <Sql>
+    <key>ListarComboUbicacionesXEmpresa</key>
+    <query>
+     
+      select
+        distinct eq.areacodi,
+        (ta.tareaabrev || ' ' || a.areanomb) areadesc
+      from eq_area a
+        inner join eq_equipo eq on (a.areacodi = eq.areacodi)
+        inner join eq_tipoarea ta  on (a.tareacodi = ta.tareacodi)
+      where
+        (eq.emprcodi in ({0}) or '{0}' = '0') and
+        (eq.areacodi not in (0,-1)) and
+        (eq.equiestado NOT in ('X')) and
+        ta.TAREACODI not in (7)
+      order by
+        (ta.tareaabrev || ' ' || a.areanomb)
+    </query>
+  </Sql>
+  <!--FIN INTERVENCIONES-->
+
+
+  <!--INICIO FICHA TÉCNICA-->
+  <Sql>
+    <key>ListarUbicacionFT</key>
+    <query>
+      SELECT
+      AR.AREACODI,
+      tipoarea.tareaabrev,
+      ar.areanomb,
+      AR.AREAABREV,
+      AR.tareacodi
+      FROM EQ_AREA  AR
+      inner join eq_tipoarea tipoarea on ar.tareacodi = tipoarea.tareacodi
+      WHERE AR.ANIVELCODI >= 0 AND AR.AREAESTADO = 'A'
+      ORDER BY AREANOMB,tareaabrev
+    </query>
+  </Sql>
+  <!--FIN FICHA TÉCNICA-->
+
+  <!--INICIO GESPROTECT - 20241019-->
+	<Sql>
+		<key>ListarUbicacionCOES</key>
+		<query>
+			SELECT
+			a.areacodi,
+			CASE WHEN ea.epareacodi IS NOT NULL THEN 1 ELSE 0 END AS flagenprotec,
+			ar.areanomb   AS zona,
+			ea.epareanomb AS areanombenprotec,
+			t.tareaabrev  AS tareaabrev,
+			a.areanomb,
+			a.areaabrev,
+			ea.epareacodi,
+			a.tareacodi
+			FROM
+			eq_area     a
+			LEFT JOIN eq_tipoarea t ON a.tareacodi = t.tareacodi
+			LEFT JOIN epr_area    ea ON a.areacodi = ea.areacodi AND ea.epareaestregistro = '1'
+			LEFT JOIN eq_area     ar ON ea.areacodizona = ar.areacodi
+			WHERE a.areaestado = 'A'
+			AND a.tareacodi IN (1,3,4)
+			AND ( {0} = 0 OR a.tareacodi = {0} )
+			AND ( '{1}' = '' OR upper(a.areanomb) LIKE '%'||upper('{1}')|| '%' OR upper(a.areaabrev) LIKE '%'|| upper('{1}')|| '%' )
+			AND ( nvl('{2}','N') = 'N' OR ('{2}' = 'S' and ea.epareacodi is null ))
+			ORDER BY 2 desc,6
+		</query>
+	</Sql>
+	
+	<!--FIN GESPROTECT-->
+	
+</Sqls>

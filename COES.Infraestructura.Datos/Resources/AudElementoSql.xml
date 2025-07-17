@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(elemcodi), 0) + 1 from aud_elemento
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into aud_elemento(
+      elemcodi,
+      tabcdcoditipoelemento,
+      proccodi,
+      elemcodigo,
+      elemdescripcion,
+      elemactivo,
+      elemhistorico,
+      elemusucreacion,
+      elemfeccreacion,
+      elemusumodificacion,
+      elemfecmodificacion
+      )
+      values(
+      :elemcodi,
+      :tabcdcoditipoelemento,
+      :proccodi,
+      :elemcodigo,
+      :elemdescripcion,
+      :elemactivo,
+      :elemhistorico,
+      :elemusucreacion,
+      :elemfeccreacion,
+      :elemusumodificacion,
+      :elemfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update aud_elemento
+      set
+      tabcdcoditipoelemento = :tabcdcoditipoelemento,
+      proccodi = :proccodi,
+      elemcodigo = :elemcodigo,
+      elemdescripcion = :elemdescripcion,
+      elemactivo = :elemactivo,
+      elemhistorico = :elemhistorico,
+      elemusumodificacion = :elemusumodificacion,
+      elemfecmodificacion = :elemfecmodificacion
+      where
+      elemcodi = :elemcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update aud_elemento
+      set  elemactivo = '0', elemhistorico = '1',
+      elemusumodificacion = :elemusumodificacion, elemfecmodificacion = :elemfecmodificacion
+      where
+      elemcodi = :elemcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      e.elemcodi,
+      e.tabcdcoditipoelemento,
+      e.proccodi,
+      e.elemcodigo,
+      e.elemdescripcion,
+      e.elemactivo,
+      e.elemhistorico,
+      e.elemusucreacion,
+      e.elemfeccreacion,
+      e.elemusumodificacion,
+      e.elemfecmodificacion,
+      p.areacodi,
+      (select count(*) from aud_progaudi_elemento pe where pe.elemcodi = e.elemcodi and pe.progaeactivo = '1') existeprogaudielemento
+      from
+      aud_elemento e
+      left join aud_proceso p on p.proccodi = e.proccodi
+      where
+      elemcodi = :elemcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      elemcodi,
+      tabcdcoditipoelemento,
+      proccodi,
+      elemcodigo,
+      elemdescripcion,
+      elemactivo,
+      elemhistorico,
+      elemusucreacion,
+      elemfeccreacion,
+      elemusumodificacion,
+      elemfecmodificacion
+      from
+      aud_elemento
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from (select
+      e.elemcodi,
+      e.tabcdcoditipoelemento,
+      e.proccodi,
+      e.elemcodigo,
+      e.elemdescripcion,
+      e.elemactivo,
+      e.elemhistorico,
+      e.elemusucreacion,
+      e.elemfeccreacion,
+      e.elemusumodificacion,
+      e.elemfecmodificacion,
+      p.procdescripcion,
+      d.tabcddescripcion tipoElemento,
+      (row_number() over (order by e.elemcodi desc)) as r
+      from sic.aud_elemento e
+      left join sic.aud_proceso p on p.proccodi = e.proccodi
+      left join sic.aud_tablacodigo_detalle d on d.tabcdcodi = e.tabcdcoditipoelemento
+      where (e.tabcdcoditipoelemento = {0} or {0} = 0)
+      and (e.elemactivo = '{1}' or '{1}' = '-1')  and (p.proccodi = {2} or {2} = 0)
+      and (p.areacodi = '{3}' or '{3}' = 0))
+      where (r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )) or ({4} = -1 and {5} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNroRegistroBusqueda</key>
+    <query>
+      select
+      count(*) as contador
+      from aud_elemento e
+      left join aud_proceso p on p.proccodi = e.proccodi
+      left join aud_tablacodigo_detalle d on d.tabcdcodi = e.tabcdcoditipoelemento
+      where (e.tabcdcoditipoelemento = {0} or {0} = 0)
+      and (e.elemactivo = '{1}' or '{1}' = '-1')  and (p.proccodi = {2} or {2} = 0)
+      and (p.areacodi = '{3}' or '{3}' = 0)
+      order by e.elemcodigo desc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByAreaElemento</key>
+    <query>
+      select
+      distinct
+      a.areacodi,
+      a.areanomb
+      from aud_elemento e
+      inner join aud_proceso p on p.proccodi = e.proccodi
+      inner join si_area a on a.areacodi = p.areacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByProcesoElemento</key>
+    <query>
+      select
+      distinct
+      p.proccodigo,
+      p.procdescripcion
+      from aud_elemento e
+      inner join aud_proceso p on p.proccodi = e.proccodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByProcesoPorElementos</key>
+    <query>
+      select
+      p.proccodigo,
+      p.procdescripcion
+      from aud_elemento e
+      inner join aud_proceso p on p.proccodi = e.proccodi
+      where e.tabcdcoditipoelemento = {0}
+      and p.activo = {1}
+      and p.historico = {2}
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByElementosPorProceso</key>
+    <query>
+      select
+      e.elemcodi,
+      e.tabcdcoditipoelemento,
+      e.proccodi,
+      e.elemcodigo,
+      e.elemdescripcion,
+      e.elemactivo,
+      e.elemhistorico,
+      e.elemusucreacion,
+      e.elemfeccreacion,
+      e.elemusumodificacion,
+      e.elemfecmodificacion,
+      '' AreaCodi,
+      '' AreaNom
+      from aud_elemento e
+      inner join aud_proceso p on p.proccodi = e.proccodi
+      where e.elemactivo = '1' and p.proccodi = {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByElementosPorProcesoAP</key>
+    <query>
+      select
+      e.elemcodi,
+      e.tabcdcoditipoelemento,
+      e.proccodi,
+      e.elemcodigo,
+      e.elemdescripcion,
+      e.elemactivo,
+      e.elemhistorico,
+      e.elemusucreacion,
+      e.elemfeccreacion,
+      e.elemusumodificacion,
+      e.elemfecmodificacion,
+      '' AreaCodi,
+      '' AreaNom,
+      app.audppcodi
+      from aud_auditoriaplanificada ap
+      inner join aud_audplanificada_proceso app on ap.audpcodi = app.audpcodi and app.audppactivo = '1'
+      inner join aud_proceso p on p.proccodi = app.proccodi and p.procactivo = '1'
+      inner join aud_elemento e on e.proccodi = p.proccodi and e.elemactivo = '1'
+      where e.elemactivo = '1' and ap.plancodi = {0} and app.audppcodi in ({1})
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByElementosPorTipo</key>
+    <query>
+      select
+      e.elemcodi,
+      e.tabcdcoditipoelemento,
+      e.proccodi,
+      e.elemcodigo,
+      e.elemdescripcion,
+      e.elemactivo,
+      e.elemhistorico,
+      e.elemusucreacion,
+      e.elemfeccreacion,
+      e.elemusumodificacion,
+      e.elemfecmodificacion,
+      '' AreaCodi,
+      '' AreaNom
+      from aud_elemento e
+      where e.tabcdcoditipoelemento = {0}
+      and e.elemactivo = '1'
+      and e.elemhistorico is null
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByElementosPorProcesoTipo</key>
+    <query>
+      select
+      e.elemcodi,
+      e.tabcdcoditipoelemento,
+      e.proccodi,
+      e.elemcodigo,
+      e.elemdescripcion,
+      e.elemactivo,
+      e.elemhistorico,
+      e.elemusucreacion,
+      e.elemfeccreacion,
+      e.elemusumodificacion,
+      e.elemfecmodificacion,
+      '' AreaCodi,
+      '' AreaNom
+      from aud_elemento e
+      where e.tabcdcoditipoelemento = {0}
+      and e.elemactivo = '1'
+      and e.proccodi in ({1})
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByElementoValidacion</key>
+    <query>
+      select
+      (
+      CASE
+      WHEN (SELECT COUNT(*) FROM AUD_PROGAUDI_ELEMENTO pe where pe.elemcodi = e.elemcodi) > 0
+      THEN 'El elemento seleccionado est&#225; asociado a una Auditoria'
+      ELSE '' END
+      ) ValidacionMensaje
+      from
+      aud_elemento e
+      where e.elemcodi = {0} and e.elemactivo = '1'
+    </query>
+  </Sql>
+</Sqls>

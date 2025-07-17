@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(inpuincodi), 0) + 1 from vtp_ingreso_potunid_intervl
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into vtp_ingreso_potunid_intervl(inpuincodi, pericodi, recpotcodi, emprcodi,
+           equicodi, ipefrcodi, inpuinintervalo, inpuindia, 
+           inpuinimporte, inpuinusucreacion, inpuinfeccreacion, grupocodi, inpuinunidadnomb, inpuinficticio)
+       values( :inpuincodi, :pericodi, :recpotcodi, :emprcodi,
+           :equicodi, :ipefrcodi, :inpuinintervalo, :inpuindia,
+           :inpuinimporte, :inpuinusucreacion, :inpuinfeccreacion,
+           :grupocodi, :inpuinunidadnomb, :inpuinficticio
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update vtp_ingreso_potunid_intervl
+       set
+           pericodi = :pericodi,
+           recpotcodi = :recpotcodi,
+           emprcodi = :emprcodi,
+           equicodi = :equicodi,
+           ipefrcodi = :ipefrcodi,
+           inpuinintervalo = :inpuinintervalo,
+           inpuindia = :inpuindia,
+           inpuinimporte = :inpuinimporte,
+           inpuinusucreacion = :inpuinusucreacion,
+           inpuinfeccreacion = :inpuinfeccreacion,
+           grupocodi = :grupocodi,
+           inpuinunidadnomb = :inpuinunidadnomb,
+           inpuinficticio = :inpuinficticio
+       where
+           inpuincodi = :inpuincodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_ingreso_potunid_intervl
+      where inpuincodi = :inpuincodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_ingreso_potunid_intervl
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select * from vtp_ingreso_potunid_intervl
+       where inpuincodi = :inpuincodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vtp_ingreso_potunid_intervl
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListSumIntervl</key>
+    <query>
+      select emprcodi, equicodi, GRUPOCODI, INPUINUNIDADNOMB, INPUINFICTICIO, (select emprnomb from vw_trn_empresa_str e where ip.emprcodi = e.emprcodi) as emprnomb,
+      (select equinomb from vw_eq_central_generacion eq where ip.equicodi = eq.equicodi) as equinomb,
+      sum(inpuinimporte * inpuindia) as inpuinimporte
+      from vtp_ingreso_potunid_intervl ip
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+      group by emprcodi, equicodi, GRUPOCODI, INPUINUNIDADNOMB, INPUINFICTICIO
+      order by 3, 4
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListSumIntervlEmpresa</key>
+    <query>
+      select ipi.emprcodi, (select emprnomb from vw_trn_empresa_str e where ipi.emprcodi = e.emprcodi) as emprnomb,
+      sum(ipi.inpuinimporte) as inpuinimporte
+      from vtp_ingreso_potunid_intervl ipi
+      where pericodi = :pericodi and recpotcodi = :recpotcodi and emprcodi = :emprcodi and ipefrcodi = :ipefrcodi
+      group by emprcodi
+      order by 2
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select (select emprnomb from vw_trn_empresa_str e where ipi.emprcodi = e.emprcodi) as emprnomb,
+      (select equinomb from vw_eq_central_generacion c where ipi.equicodi = c.equicodi) as equinomb, ipi.*
+      from vtp_ingreso_potunid_intervl ipi
+      where pericodi = :pericodi and recpotcodi = :recpotcodi and emprcodi = :emprcodi and equicodi = :equicodi and ipefrcodi = :ipefrcodi
+      order by 1, 2
+    </query>
+  </Sql>
+</Sqls>

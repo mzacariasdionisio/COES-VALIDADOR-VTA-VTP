@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(riescodi), 0) + 1 from aud_riesgo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into aud_riesgo(
+      riesactivo,
+      rieshistorico,
+      riesusucreacion,
+      riesfeccreacion,
+      riesusumodificacion,
+      riesfecmodificacion,
+      riescodi,
+      proccodi,
+      tabcdcodivaloracioninherente,
+      tabcdcodivaloracionresidual,
+      riescodigo,
+      riesdescripcion
+      )
+      values(
+      :riesactivo,
+      :rieshistorico,
+      :riesusucreacion,
+      :riesfeccreacion,
+      :riesusumodificacion,
+      :riesfecmodificacion,
+      :riescodi,
+      :proccodi,
+      :tabcdcodivaloracioninherente,
+      :tabcdcodivaloracionresidual,
+      :riescodigo,
+      :riesdescripcion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update aud_riesgo
+      set
+      rieshistorico = :rieshistorico,
+      riesusumodificacion = :riesusumodificacion,
+      riesfecmodificacion = :riesfecmodificacion,
+      proccodi = :proccodi,
+      tabcdcodivaloracioninherente = :tabcdcodivaloracioninherente,
+      tabcdcodivaloracionresidual = :tabcdcodivaloracionresidual,
+      riescodigo = :riescodigo,
+      riesdescripcion = :riesdescripcion
+      where
+      riescodi = :riescodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update aud_riesgo
+      set riesactivo = '0', rieshistorico = '1',
+      riesusumodificacion = :riesusumodificacion, riesfecmodificacion = :riesfecmodificacion
+      where
+      riescodi = :riescodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      r.riesactivo,
+      r.rieshistorico,
+      r.riesusucreacion,
+      r.riesfeccreacion,
+      r.riesusumodificacion,
+      r.riesfecmodificacion,
+      r.riescodi,
+      r.proccodi,
+      r.tabcdcodivaloracioninherente,
+      r.tabcdcodivaloracionresidual,
+      r.riescodigo,
+      r.riesdescripcion,
+      p.areacodi
+      from
+      aud_riesgo r
+      left join aud_proceso p on r.proccodi = p.proccodi
+      where
+      riescodi = :riescodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      riesactivo,
+      rieshistorico,
+      riesusucreacion,
+      riesfeccreacion,
+      riesusumodificacion,
+      riesfecmodificacion,
+      riescodi,
+      proccodi,
+      tabcdcodivaloracioninherente,
+      tabcdcodivaloracionresidual,
+      riescodigo,
+      riesdescripcion
+      from
+      aud_riesgo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from (
+      select
+      r.riesactivo,
+      r.rieshistorico,
+      r.riesusucreacion,
+      r.riesfeccreacion,
+      r.riesusumodificacion,
+      r.riesfecmodificacion,
+      r.riescodi,
+      r.proccodi,
+      r.tabcdcodivaloracioninherente,
+      r.tabcdcodivaloracionresidual,
+      r.riescodigo,
+      r.riesdescripcion,
+      d.TABCDDESCRIPCION valoracioninherente,
+      (row_number() over (order by r.riescodi desc)) as r
+      from
+      aud_riesgo r
+      left join AUD_TABLACODIGO_DETALLE d on d.TABCDCODI = r.tabcdcodivaloracioninherente
+      where 
+      (tabcdcodivaloracioninherente = {0} or {0} = 0) and
+      (tabcdcodivaloracionresidual = {1} or {1} = 0) and
+      (riesactivo = {2} or {2} = -1) and
+      (riesdescripcion like '%{3}%' or '{3}' = '')
+      )
+      where (r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )) or ({4} = -1 and {5} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNroRegistroBusqueda</key>
+    <query>
+      select
+      count(*) as contador
+      from
+      aud_riesgo r
+      left join AUD_TABLACODIGO_DETALLE d on d.TABCDCODI = r.tabcdcodivaloracioninherente
+      where rieshistorico is null and
+      (tabcdcodivaloracioninherente = {0} or {0} = 0) and
+      (tabcdcodivaloracionresidual = {1} or {1} = 0) and
+      (riesactivo = {2} or {2} = -1) and
+      (riesdescripcion like '%{3}%' or '{3}' = '')
+      order by r.proccodi desc
+    </query>
+  </Sql>
+</Sqls>

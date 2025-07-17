@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ieventcodi), 0) + 1 from ind_evento
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ind_evento(
+      ieventcodi,
+      ieventtipoindisp,
+      ieventpr,
+      ieventusucreacion,
+      ieventfeccreacion,
+      ieventusumodificacion,
+      ieventfecmodificacion,
+      evencodi,
+      ieventcomentario,
+      ieventestado
+      )
+      values(
+      :ieventcodi,
+      :ieventtipoindisp,
+      :ieventpr,
+      :ieventusucreacion,
+      :ieventfeccreacion,
+      :ieventusumodificacion,
+      :ieventfecmodificacion,
+      :evencodi,
+      :ieventcomentario,
+      :ieventestado
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ind_evento
+      set
+      ieventusumodificacion = :ieventusumodificacion,
+      ieventfecmodificacion = :ieventfecmodificacion,
+      ieventestado = :ieventestado
+      where
+      ieventcodi = :ieventcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ind_evento
+      where
+      ieventcodi = :ieventcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      ind_evento
+      where
+      ieventcodi = :ieventcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      ind_evento
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListHistoricoByEvencodi</key>
+    <query>
+      select
+      *
+      from
+      ind_evento
+      where
+      evencodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      i.*,
+      e.EVENINI,
+      e.evenfin,
+      E.EVENASUNTO,
+      e.equicodi,
+      eq.equiabrev,
+      eq.famcodi,
+      eq.areacodi,
+      eq2.equicodi as equipadre,
+      tipoarea.tareaabrev || ' ' || ar.areanomb as areadesc,
+      f.famabrev,
+      f.famnomb,
+      emp.emprcodi,
+      emp.emprnomb,
+      CLA.EVENCLASECODI,
+      cla.evenclasedesc,
+      CLA.EVENCLASEABREV,
+      gr.GRUPOTIPOCOGEN
+      from ind_evento I
+      inner join eve_evento e on e.evencodi = i.evencodi
+      INNER JOIN EVE_EVENCLASE CLA ON CLA.EVENCLASECODI = 1
+      inner join eq_equipo eq on eq.equicodi = e.equicodi
+      LEFT JOIN EQ_EQUIPO eq2 ON eq2.EQUICODI = (CASE WHEN EQ.FAMCODI in (4,5,37,39) THEN EQ.equicodi ELSE EQ.EQUIPADRE END)
+      left join pr_grupo gr on gr.grupocodi = eq.grupocodi
+      INNER JOIN EQ_AREA AR ON AR.AREACODI = EQ.AREACODI
+      inner join eq_tipoarea tipoarea on ar.tareacodi = tipoarea.tareacodi
+      INNER JOIN EQ_FAMILIA F ON F.FAMCODI = EQ.FAMCODI
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi --(case when coalesce(e.EMPRCODI, -1) > 0 then e.EMPRCODI else eq.emprcodi end)
+      where ieventestado='A' and
+      (cla.EVENCLASECODI in ({4}) or '{4}' = '-1') and
+      (emp.emprcodi in ({2}) or '{2}' = '-1') and
+      (f.famcodi in ({3}) or '{3}' = '-1') and
+      e.evenini >= to_date('{0}','YYYY-MM-DD') AND e.evenfin &lt; to_date('{1}','YYYY-MM-DD')
+    </query>
+  </Sql>
+
+</Sqls>

@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetById</key>
+    <query>select * from rer_central where rercencodi = :rercencodi</query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into RER_CENTRAL
+      (
+      rercencodi, emprcodi, equicodi, famcodi, rercenestado, rercenfechainicio, rercenfechafin, rercenenergadj, rercenprecbase, rerceninflabase, rercendesccontrato, codentcodi, pingnombre, ptomedicodi, rercenusucreacion, rercenfeccreacion, rercenusumodificacion, rercenfecmodificacion
+      )
+      values
+      (
+      :rercencodi, :emprcodi, :equicodi, :famcodi, :rercenestado, :rercenfechainicio, :rercenfechafin, :rercenenergadj, :rercenprecbase, :rerceninflabase, :rercendesccontrato, :codentcodi, :pingnombre, :ptomedicodi, :rercenusucreacion, :rercenfeccreacion, :rercenusumodificacion, :rercenfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update rer_central
+      set
+      emprcodi = :emprcodi,
+      equicodi = :equicodi,
+	    famcodi = :famcodi,
+      rercenestado = :rercenestado,
+      rercenfechainicio = :rercenfechainicio,
+      rercenfechafin = :rercenfechafin,
+      rercenenergadj = :rercenenergadj,
+      rercenprecbase = :rercenprecbase,
+      rerceninflabase = :rerceninflabase,
+      rercendesccontrato = :rercendesccontrato,
+      codentcodi = :codentcodi,
+      pingnombre = :pingnombre,
+      ptomedicodi = :ptomedicodi,
+      rercenusucreacion = :rercenusucreacion,
+      rercenfeccreacion = :rercenfeccreacion,
+      rercenusumodificacion = :rercenusumodificacion,
+      rercenfecmodificacion = :rercenfecmodificacion
+      where
+      rercencodi = :rercencodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from rer_central where rercencodi = :rercencodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from rer_central order by rercencodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+   <key>ListNombreCentralEmpresaBarra</key>
+   <query>
+	   select rc.*, e.equinomb, se.emprnomb, ptomed.ptomedidesc, tcod.codentcodigo, trn_barra.barrbarratransferencia
+	   from rer_central rc
+	   inner join eq_equipo e on rc.equicodi = e.equicodi
+	   inner join si_empresa se ON rc.emprcodi = se.emprcodi
+	   inner join me_ptomedicion ptomed ON rc.ptomedicodi = ptomed.ptomedicodi
+	   inner join trn_codigo_entrega tcod ON rc.codentcodi = tcod.codentcodi
+	   left join trn_barra on trn_barra.barrcodi = tcod.barrcodi
+   </query>
+  </Sql>
+
+  <Sql>
+	<key>ListByFiltros</key>
+	<query>
+		select rc.*, e.equinomb, se.emprnomb, ptomed.ptomedidesc, tcod.codentcodigo, trn_barra.barrbarratransferencia
+		from rer_central rc
+		left join eq_equipo e on rc.equicodi = e.equicodi
+		left join si_empresa se ON rc.emprcodi = se.emprcodi
+		left join me_ptomedicion ptomed ON rc.ptomedicodi = ptomed.ptomedicodi
+		left join trn_codigo_entrega tcod ON rc.codentcodi = tcod.codentcodi
+		left join trn_barra on trn_barra.barrcodi = tcod.barrcodi
+		where (-2 = {0} or rc.emprcodi = {0})
+		and (-2 = {1} or rc.equicodi = {1})
+		and (-2 = {2} or rc.ptomedicodi = {2})
+		and ('{3}' is null or rc.rercenfechainicio >= to_date('{3}', 'DD/MM/YYYY'))
+		and ('{4}' is null or to_date('{4}', 'DD/MM/YYYY') >= rc.rercenfechafin)
+		and ('{5}' is null or '{5}' = rc.rercenestado)
+		and (tcod.codentcodigo like '%'||'{6}'||'%' or '{6}' is null )
+		and (-2 = {7} or trn_barra.barrcodi = {7})
+	</query>
+  </Sql>
+	
+  <Sql>
+    <key>ListByEmprcodi</key>
+    <query>
+      select cen.*, equ.equinomb from rer_central cen 
+	  inner join eq_equipo equ on equ.equicodi = cen.equicodi 
+	  where cen.emprcodi = :emprcodi order by equinomb asc
+    </query>
+  </Sql>
+	
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from rer_central where (rercendesccontrato like '%' || :rercendesccontrato || '%' or :rercendesccontrato is null)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(rercencodi), 0) + 1 from rer_central
+    </query>
+  </Sql>
+
+  <Sql>
+	<key>ListCentralREREmpresas</key>
+	<query>
+	  select distinct rc.emprcodi, se.emprnomb
+	  from rer_central rc
+	  left join si_empresa se on rc.emprcodi = se.emprcodi
+	</query>
+  </Sql>
+
+  <Sql>
+	<key>ListByEquiEmprFecha</key>
+	<query>
+		select rc.*, e.equinomb, se.emprnomb, ptomed.ptomedidesc, tcod.codentcodigo, trn_barra.barrbarratransferencia
+		from rer_central rc
+		left join eq_equipo e on rc.equicodi = e.equicodi
+		left join si_empresa se ON rc.emprcodi = se.emprcodi
+		left join me_ptomedicion ptomed ON rc.ptomedicodi = ptomed.ptomedicodi
+		left join trn_codigo_entrega tcod ON rc.codentcodi = tcod.codentcodi
+		left join trn_barra on trn_barra.barrcodi = tcod.barrcodi
+		where (-2 = {0} or rc.rercencodi not in ({0}))
+		and (-2 = {1} or rc.emprcodi = {1})
+		and (-2 = {2} or rc.equicodi = {2})
+		and(
+		(rc.rercenfechainicio BETWEEN to_date('{3}', 'DD/MM/YYYY') and to_date('{4}', 'DD/MM/YYYY'))
+		or (rc.rercenfechafin BETWEEN to_date('{3}', 'DD/MM/YYYY') and to_date('{4}', 'DD/MM/YYYY'))
+		or ((to_date('{3}', 'DD/MM/YYYY') > rc.rercenfechainicio) and (rc.rercenfechafin > to_date('{4}', 'DD/MM/YYYY')))
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListByFechasEstado</key>
+    <query>
+      select
+      rc.*,
+      e.equinomb, 
+      se.emprnomb
+      from
+      rer_central rc
+      left join eq_equipo e on rc.equicodi = e.equicodi
+      left join si_empresa se on rc.emprcodi = se.emprcodi
+      where
+      (rercenfechainicio &lt;= to_date('{1}','DD/MM/YYYY') and
+      rercenfechafin &gt;= to_date('{0}','DD/MM/YYYY')) and
+      rercenestado = '{2}'
+      order by rc.emprcodi, rc.equicodi, rc.rercenfechainicio, rc.rercenfechafin
+  </query>
+  </Sql>
+
+  <!--CU21-->
+  <Sql>
+    <key>ListCentralByFecha</key>
+    <query>
+      select equicodi, (select equinomb from eq_equipo e where e.equicodi = rer_central.equicodi) as equinomb,
+      codentcodi, (SELECT ce.codentcodigo FROM trn_codigo_entrega ce WHERE ce.codentcodi = rer_central.codentcodi) AS codentcodigo,
+      (select b.barrbarratransferencia from trn_codigo_entrega ce, trn_barra b
+      where ce.codentcodi = rer_central.codentcodi
+      and ce.barrcodi = b.barrcodi) as barrbarratransferencia,
+      emprcodi, (select emprnomb from si_empresa e where e.emprcodi = rer_central.emprcodi) as emprnomb, ptomedicodi, pingnombre, count(*)
+      from rer_central
+      where rercenestado = 'A'
+      and to_date('{0}', 'DD/MM/YYYY') between rercenfechainicio and rercenfechafin
+      group by equicodi, codentcodi, emprcodi, ptomedicodi, pingnombre
+      order by 9 desc, 1, 3
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCodigoEntregaYBarraTransferencia</key>
+    <query>
+      select
+      c.emprcodi,
+      c.equicodi,
+      ce.codentcodigo,
+      b.barrbarratransferencia
+      from
+      rer_central c
+      inner join trn_codigo_entrega ce on ce.codentcodi = c.codentcodi
+      inner join trn_barra b on b.barrcodi = ce.barrcodi
+      group by c.emprcodi, c.equicodi, ce.codentcodigo, b.barrbarratransferencia
+    </query>
+  </Sql>
+  
+  
+  <Sql>
+    <key>ListCentralByIds</key>
+    <query>
+		select * from rer_central
+		where ptomedicodi in ({0})
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListCentralByFechaLVTP</key>
+    <query>
+		select l.equicodi, (select equinomb from eq_equipo e where e.equicodi = l.equicodi) as equinomb,
+		c.codentcodi, (SELECT ce.codentcodigo FROM trn_codigo_entrega ce WHERE ce.codentcodi = c.codentcodi) AS codentcodigo,
+		(select b.barrbarratransferencia from trn_codigo_entrega ce, trn_barra b
+		where ce.codentcodi = c.codentcodi
+		and ce.barrcodi = b.barrcodi) as barrbarratransferencia,
+		c.emprcodi, (select emprnomb from si_empresa e where e.emprcodi = c.emprcodi) as emprnomb, c.ptomedicodi, count(*)
+		from rer_central c, rer_central_lvtp l
+		where c.rercenestado = 'A'
+		and to_date('{0}', 'DD/MM/YYYY') between c.rercenfechainicio and c.rercenfechafin
+		and c.rercencodi = l.rercencodi
+		group by l.equicodi, c.codentcodi, c.emprcodi, c.ptomedicodi
+		order by 9 desc, 1, 3
+	</query>
+  </Sql>
+</Sqls>

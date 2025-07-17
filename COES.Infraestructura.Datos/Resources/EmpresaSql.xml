@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+	<Sql>
+		<key>ActualizarAbreviatura</key>
+		<query>
+			DECLARE
+			P_EMPRCODI  NUMBER:=:EMPRCODI;
+			P_EmprAbrevCodi VARCHAR(10):=:EmprAbrevCodi;
+			P_MENSAJE VARCHAR2(500):=NULL;
+			CANTIDAD NUMBER:=0;
+			BEGIN
+			SELECT  COUNT(1) INTO CANTIDAD FROM si_empresa where UPPER(EmprAbrevCodi)=UPPER(P_EmprAbrevCodi) ;
+			IF CANTIDAD>0
+			THEN
+			SELECT 'La abreviatura ingresada ya existe, por favor ingresar uno nuevo.' INTO P_MENSAJE FROM DUAL;
+			ELSE
+			SELECT NVL((
+			SELECT EMPRCODI FROM trn_infoadicional_det WHERE infadicodi=P_EMPRCODI and infadiestado = 'I'
+			),P_EMPRCODI) INTO P_EMPRCODI  FROM DUAL;
+			UPDATE SI_EMPRESA SET EmprAbrevCodi=P_EmprAbrevCodi WHERE EMPRCODI=P_EMPRCODI;
+			END IF;
+			SELECT P_MENSAJE INTO :MENSAJE FROM DUAL;
+			END;
+		</query>
+	</Sql>
+	<Sql>
+		<key>GetById</key>
+		<query>select * from vw_trn_empresa_str where emprcodi = :emprcodi</query>
+	</Sql>
+
+	<Sql>
+		<key>GetByNombre</key>
+		<query>select * from vw_trn_empresa_str where trim(emprnomb) = trim(:emprnomb)</query>
+	</Sql>
+
+	<Sql>
+		<key>GetByNombreEstado</key>
+		<query>select EMPRCODI,EMPRNOMB,TIPOEMPRCODI from VW_TRN_EMPRESA_STR_ESTADO where trim(emprnomb) = trim(:emprnomb) and pericodi &lt;=:pericodi</query>
+	</Sql>
+
+	<!--ASSETEC 20190111 - listar otros conceptos - antes vw_si_empresa -->
+	<Sql>
+		<key>List</key>
+		<query>
+			select * from vw_trn_empresa_str where emprnomb is not null order by emprnomb asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListGeneradoras</key>
+		<query>
+			select * from vw_trn_empresa_str where (TIPOEMPRCODI in(3) or EMPRCODI in (0)) and emprnomb is not null order by emprnomb asc
+		</query>
+	</Sql>
+
+	<!--ASSETEC 20190111 - listar otros conceptos - antes vw_si_empresa -->
+	<Sql>
+		<key>GetByCriteria</key>
+		<query>
+			select * from vw_trn_empresa_str where emprnomb like '%' + :emprnomb + '%' or :emprnomb is null order by emprnomb asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListEmpresasSTR</key>
+		<query>
+			select * from vw_trn_empresa_str order by emprnomb asc
+		</query>
+	</Sql>
+
+	<!--ASSETEC 20190111 - listar otros conceptos - antes vw_si_empresa -->
+	<Sql>
+		<key>ListaInterCodEnt</key>
+		<query>
+			select * from vw_trn_empresa_str where emprcodi in (select emprcodi from trn_codigo_entrega) order by emprnomb asc
+		</query>
+	</Sql>
+
+
+	<!--ASSETEC 20190111 - listar otros conceptos - antes vw_si_empresa -->
+	<Sql>
+		<key>ListaInterCoReSoGen</key>
+		<query>
+			select * from vw_trn_empresa_str where emprcodi in (select genemprcodi from trn_codigo_retiro_solicitud) order by emprnomb asc
+		</query>
+	</Sql>
+
+	<!--ASSETEC 20190111 - listar otros conceptos - antes vw_si_empresa -->
+	<Sql>
+		<key>ListaInterCoReSoCli</key>
+		<query>
+			select * from vw_trn_empresa_str where emprcodi in (select cliemprcodi from trn_codigo_retiro_solicitud) order by emprnomb asc
+		</query>
+	</Sql>
+	<!-- Lista los clientes asociados a la empresa -->
+	<Sql>
+		<key>ListaInterCoReSoCliPorEmpresa</key>
+		<query>
+			select * from vw_trn_empresa_str where emprcodi in (select cliemprcodi from trn_codigo_retiro_solicitud where genemprcodi=:emprcodi) order by emprnomb asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListaRetiroCliente</key>
+		<query>
+			SELECT DISTINCT   EMPR.EMPRCODI
+			,EMPR.EMPRNOMB
+			FROM trn_trans_retiro                   RET
+			INNER JOIN TRN_PERIODO                  PER
+			ON RET.PERICODI=PER.PERICODI
+			INNER JOIN SI_EMPRESA                EMPR
+			ON RET.CLIEMPRCODI=EMPR.EMPRCODI
+			INNER JOIN TRN_CODIGO_RETIRO_SOLICITUD SOL
+			ON RET.TRETCODIGO=SOL.CORESOCODIGO
+			WHERE  (RET.GENEMPRCODI =:emprcodi)
+			ORDER BY EMPR.EMPRNOMB
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListaInterCoReSC</key>
+		<query>
+			select * from vw_trn_empresa_str where emprcodi in (select cliemprcodi from trn_codigo_retiro_sincontrato) order by emprnomb asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListaInterValorTrans</key>
+		<query>
+			select * from vw_trn_empresa_str where emprcodi in (select emprcodi from trn_valor_total_empresa) order by emprnomb asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListaInterCodInfoBase</key>
+		<query>
+			select * from vw_trn_empresa_str where emprcodi in (select emprcodi from trn_codigo_infobase) order by emprnomb asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListInterCodEntregaRetiro</key>
+		<query>
+      select * from vw_si_empresa
+      where emprcodi in (select emprcodi from trn_codigo_entrega a where a.codentcodigo is not null)
+      or emprcodi in (select cliemprcodi from trn_codigo_retiro_solicitud b where b.coresocodigo is not null)
+      or emprcodi in (select cliemprcodi from trn_codigo_retiro_sincontrato d where d.coresccodigo is not null)
+      union
+      select infadicodi as emprcodi, infadinomb as emprnomb, '' as EMPRRUC, tipoemprcodi from trn_infoadicional_det where infadiestado = 'I'
+    </query>
+	</Sql>
+
+
+	<Sql>
+		<key>ListInterCodEntregaRetiroxPeriodo</key>
+		<query>
+			select e.* from
+			(
+				select distinct emprcodi from trn_trans_entrega where pericodi = :pericodi and tentversion = :version
+				union
+				select distinct genemprcodi as emprcodi from trn_trans_retiro where pericodi = :pericodi and tretversion = :version
+			) v
+			inner join vw_si_empresa e on e.emprcodi = v.emprcodi
+			order by emprnomb
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListEmpresasCombos</key>
+		<query>
+      select * from vw_si_empresa where emprcodi  in (select emprcodi from trn_codigo_entrega a where a.codentcodigo is not null)
+      or emprcodi in (select cliemprcodi from trn_codigo_retiro_solicitud b where b.coresocodigo is not null)
+      or emprcodi in (select emprcodi from trn_codigo_infobase c where c.coinfbcodigo is not null)
+      or emprcodi in (select cliemprcodi from trn_codigo_retiro_sincontrato d where d.coresccodigo is not null)
+      union
+      select infadicodi as emprcodi, infadinomb as emprnomb, '' as EMPRRUC, tipoemprcodi from trn_infoadicional_det where infadiestado = 'I'
+    </query>
+	</Sql>
+
+  <Sql>
+    <key>ListEmpresasCombosActivos</key>
+    <query>
+      select emp.emprcodi, emp.emprnomb, emp.tipoemprcodi from si_empresa emp inner join (
+      select * from vw_si_empresa where emprcodi  in (select emprcodi from trn_codigo_entrega a where a.codentcodigo is not null)
+      or emprcodi in (select cliemprcodi from trn_codigo_retiro_solicitud b where b.coresocodigo is not null)
+      or emprcodi in (select emprcodi from trn_codigo_infobase c where c.coinfbcodigo is not null)
+      or emprcodi in (select cliemprcodi from trn_codigo_retiro_sincontrato d where d.coresccodigo is not null)
+      union
+      select infadicodi as emprcodi, infadinomb as emprnomb, '' as EMPRRUC, tipoemprcodi from trn_infoadicional_det where infadiestado = 'I'
+      ) dat on
+      emp.emprcodi = dat.emprcodi
+      where emp.emprestado = 'A' order by emp.emprnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresasConfPtoMME</key>
+    <query>
+      select distinct emp.emprcodi,
+      emp.emprrazsocial as emprnomb,emp.tipoemprcodi
+      from sic.trn_configuracion_pmme pto inner join si_empresa emp on pto.emprcodi = emp.emprcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByNombreSic</key>
+    <query>select emprcodi,emprnomb,tipoemprcodi from si_empresa where trim(emprrazsocial) = trim(:emprrazsocial)</query>
+  </Sql>
+</Sqls>

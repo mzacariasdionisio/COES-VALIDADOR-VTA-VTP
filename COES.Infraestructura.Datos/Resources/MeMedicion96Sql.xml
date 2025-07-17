@@ -1,0 +1,3649 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+	<Sql>
+		<key>Save</key>
+		<query>
+			insert into me_medicion96(
+			h96,h95,h94, h93,h92,h91,h90,h89,h88,h87,h86,h85,h84,h83,h82,h81,h80,h79,h78,h77,h76,h75,h74,h73,h72,h71,h70,
+			h69,h68,h67,h66,h65,h64,h63,h62,h61,h60,h59,h58,h57,h56,h55,h54,h53,h52,h51,h50,h49,h48,h47,h46,h45,h44,h43,h42,h41,h40,
+			h39,h38,h37,h36,h35,h34,h33,h32,h31,h30,h29,h28,h27,h26,h25,h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13, h12,h11,h10,
+			h9,h8,h7,h6,h5,h4,h3,h2,h1,mediestado,meditotal,ptomedicodi,tipoinfocodi,medifecha,lectcodi,tptomedicodi,emprcodi
+			)
+			values(
+			:h96,
+			:h95,
+			:h94,
+			:h93,
+			:h92,
+			:h91,
+			:h90,
+			:h89,
+			:h88,
+			:h87,
+			:h86,
+			:h85,
+			:h84,
+			:h83,
+			:h82,
+			:h81,
+			:h80,
+			:h79,
+			:h78,
+			:h77,
+			:h76,
+			:h75,
+			:h74,
+			:h73,
+			:h72,
+			:h71,
+			:h70,
+			:h69,
+			:h68,
+			:h67,
+			:h66,
+			:h65,
+			:h64,
+			:h63,
+			:h62,
+			:h61,
+			:h60,
+			:h59,
+			:h58,
+			:h57,
+			:h56,
+			:h55,
+			:h54,
+			:h53,
+			:h52,
+			:h51,
+			:h50,
+			:h49,
+			:h48,
+			:h47,
+			:h46,
+			:h45,
+			:h44,
+			:h43,
+			:h42,
+			:h41,
+			:h40,
+			:h39,
+			:h38,
+			:h37,
+			:h36,
+			:h35,
+			:h34,
+			:h33,
+			:h32,
+			:h31,
+			:h30,
+			:h29,
+			:h28,
+			:h27,
+			:h26,
+			:h25,
+			:h24,
+			:h23,
+			:h22,
+			:h21,
+			:h20,
+			:h19,
+			:h18,
+			:h17,
+			:h16,
+			:h15,
+			:h14,
+			:h13,
+			:h12,
+			:h11,
+			:h10,
+			:h9,
+			:h8,
+			:h7,
+			:h6,
+			:h5,
+			:h4,
+			:h3,
+			:h2,
+			:h1,
+			:mediestado,
+			:meditotal,
+			:ptomedicodi,
+			:tipoinfocodi,
+			:medifecha,
+			:lectcodi,
+			:tptomedicodi,
+			:emprcodi
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ActualizarValor</key>
+		<query>
+			update me_medicion96
+			set h{0} = {1}
+			where lectcodi = {2} and
+			medifecha = to_date('{3}', 'YYYY-MM-DD') and
+			tipoinfocodi = {4} and
+			ptomedicodi = {5}
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerConsultaPorTipoGeneracion</key>
+		<query>
+			select emprcodi2 as EMPRCODI, a.* from (
+			SELECT case when ((GRUPOINTEGRANTE2 = 'N' and flag = 'A' ) or (flag = 'N' )) then 'N' else 'S' end as GRUPOINTEGRANTE
+			,a.*,(row_number() over (order by medifecha, emprnomb, central, equinomb)) as r
+			FROM
+			(
+			SELECT * FROM(
+			select a.* , ROW_NUMBER() OVER(PARTITION BY medifecha,grupocodi,equicodi  ORDER BY medifecha,grupocodi,equicodi,FECHADAT DESC) AS NUM
+			from
+			(
+			select
+			nvl(pdat1.flag,'A') flag,nvl(pdat1.FECHADAT,SYSDATE) FECHADAT,
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE2,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			d.grupocodi,
+			emp.emprnomb, emp.EMPRCODI as emprcodi2,
+			case when eq.famcodi in (4,5,37,39) then eq.equicodi else eqp.equicodi end as equipadre,
+			case when eq.famcodi in (4,5,37,39) then eq.equinomb else eqp.equinomb end as central,
+			eqp.equinomb as central2,
+			eq.equicodi,eq.equinomb as equinomb, eq.famcodi,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, tg.tgenernomb, tg.tgenercodi, me.*
+			from me_medicion96 me
+			inner join  me_ptomedicion p on p.PTOMEDICODI = me.PTOMEDICODI
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end)
+			inner join eq_equipo eq on eq.famcodi  &lt;> {2} and eq.EQUICODI = p.EQUICODI
+			inner join eq_equipo eqp on eqp.EQUICODI = eq.EQUIPADRE
+			inner join pr_grupo d on d.grupocodi = eq.GRUPOCODI
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			left join(
+			SELECT p1.GRUPOCODI, p1.formuladat flag, p1.FECHADAT
+			FROM PR_GRUPODAT p1
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			UNION ALL
+
+			SELECT p1.GRUPOCODI,  (case when pR.GRUPOINTEGRANTE &lt;> '{3}' then 'S' else 'N' end) as flag, to_date('1900-01-01','YYYY-MM-DD')
+			FROM PR_GRUPODAT p1
+			inner join pr_grupo pr on  p1.grupocodi = pr.grupocodi
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			) pdat1 on pdat1.grupocodi = d.grupocodi and pdat1.FECHADAT &lt;= me.medifecha
+
+			where me.LECTCODI = {7} and me.tipoinfocodi = {8} and ('-2' = '{12}' or me.TPTOMEDICODI = {12})
+			and (me.medifecha between to_date('{4}','YYYY-MM-DD') and to_date('{5}','YYYY-MM-DD'))
+			and p.origlectcodi = 1
+			and ('-1'='{6}' or emp.EMPRCODI in ({6}))
+			and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			)a
+			) WHERE NUM = 1
+			)a WHERE (('0'='{0}') --TODOS
+			or ( '1'='{0}' and ((GRUPOINTEGRANTE2 &lt;> '{3}' and flag = 'A') OR ( flag = 'S') )  )  --COES
+			or ('10'='{0}' and ((GRUPOINTEGRANTE2 = '{3}'    and flag = 'A' ) or (flag = 'N' ) )  )  --NO COES
+			or ( '3'='{0}' and TIPOGENERRER = '{9}' ) --GENERACION RER
+			)
+			)a
+			where r >= ((({10}-1) * {11}) + 1) and r &lt; (({10} * {11}) + 1 )
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerConsultaServicioAuxiliar</key>
+		<query>
+			select emprcodi2 as emprcodi, a.* from (
+			SELECT case when ((GRUPOINTEGRANTE2 = 'N' and flag = 'A' ) or (flag = 'N' )) then 'N' else 'S' end as GRUPOINTEGRANTE
+			,a.*,(row_number() over (order by medifecha, emprnomb, central, equinomb)) as r
+			FROM
+			(
+			SELECT * FROM(
+			select a.* , ROW_NUMBER() OVER(PARTITION BY medifecha,grupocodi,equicodi  ORDER BY medifecha,grupocodi,equicodi,FECHADAT DESC) AS NUM
+			from
+			(
+			select
+			nvl(pdat1.flag,'A') flag,nvl(pdat1.FECHADAT,SYSDATE) FECHADAT,
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE2,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			d.grupocodi,
+			emp.emprnomb,emp.EMPRCODI as emprcodi2,
+			(select equicodi2 from eq_equirel where equicodi1 = eq.equicodi and tiporelcodi in (23,20,22,21) and ROWNUM = 1) as equipadre,
+			(select n.equinomb from eq_equipo n where n.equicodi = (select x.equicodi2 from eq_equirel x where x.equicodi1 = eq.equicodi  and tiporelcodi in (23,20,22,21) and ROWNUM = 1)) as central,
+			eq.equicodi,eq.equinomb as equinomb, eq.famcodi,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, tg.tgenernomb, tg.tgenercodi, me.*
+			from me_medicion96 me
+			inner join  me_ptomedicion p on p.PTOMEDICODI = me.PTOMEDICODI
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end)
+			inner join eq_equipo eq on p.equicodi = eq.equicodi
+			inner join eq_equirel ex on eq.equicodi = ex.equicodi1
+			inner join eq_equipo eq1 on ex.equicodi2 = eq1.equicodi
+			inner join pr_grupo d on d.grupocodi = eq1.GRUPOCODI
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			left join(
+			SELECT p1.GRUPOCODI, p1.formuladat flag, p1.FECHADAT
+			FROM PR_GRUPODAT p1
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			UNION ALL
+
+			SELECT p1.GRUPOCODI,  (case when pR.GRUPOINTEGRANTE &lt;> '{3}' then 'S' else 'N' end) as flag, to_date('1900-01-01','YYYY-MM-DD')
+			FROM PR_GRUPODAT p1
+			inner join pr_grupo pr on  p1.grupocodi = pr.grupocodi
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			) pdat1 on pdat1.grupocodi = d.grupocodi and pdat1.FECHADAT &lt;= me.medifecha
+
+			where me.LECTCODI = {7} and me.tipoinfocodi = {8} and ('-2' = '{12}' or me.TPTOMEDICODI = {12})
+			and (me.medifecha between to_date('{4}','YYYY-MM-DD') and to_date('{5}','YYYY-MM-DD'))
+			and p.origlectcodi = 14
+			and p.equicodi in (select equicodi1 from eq_equirel where tiporelcodi in ({1}) or ('{1}' = '-1' and tiporelcodi in (20,21,22,23)))
+			and ('-1'='{6}' or emp.EMPRCODI in ({6}))
+			--and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			)a
+			) WHERE NUM = 1
+			)a WHERE (('0'='{0}') --TODOS
+			or ( '1'='{0}' and ((GRUPOINTEGRANTE2 &lt;> '{3}' and flag = 'A') OR ( flag = 'S') )  )  --COES
+			or ('10'='{0}' and ((GRUPOINTEGRANTE2 = '{3}'    and flag = 'A' ) or (flag = 'N' ) )  )  --NO COES
+			or ( '3'='{0}' and TIPOGENERRER = '{9}' ) --GENERACION RER
+			)
+			)a
+			where r >= ((({10}-1) * {11}) + 1) and r &lt; (({10} * {11}) + 1 )
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerExportacionConsultaMedidores</key>
+		<query>
+			SELECT emprcodi2 as emprcodi, a.*
+			FROM
+			(
+			SELECT case when ((GRUPOINTEGRANTE2 = 'N' and flag = 'A' ) or (flag = 'N' )) then 'N' else 'S' end as GRUPOINTEGRANTE
+			,a.* FROM(
+			select a.* , ROW_NUMBER() OVER(PARTITION BY medifecha,grupocodi,equicodi  ORDER BY medifecha,grupocodi,equicodi,FECHADAT DESC) AS NUM
+			from
+			(
+			select
+			nvl(pdat1.flag,'A') flag,nvl(pdat1.FECHADAT,SYSDATE) FECHADAT,
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE2,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			d.grupocodi,
+			emp.emprnomb, emp.EMPRCODI as emprcodi2,
+			case when eq.famcodi in (4,5,37,39) then eq.equicodi else eqp.equicodi end as equipadre,
+			case when eq.famcodi in (4,5,37,39) then eq.equinomb else eqp.equinomb end as central,
+			eqp.equinomb as central2,
+			eq.equicodi,eq.equinomb as equinomb, eq.famcodi, p.PTOMEDIELENOMB,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, tg.tgenernomb, tg.tgenercodi, me.*
+			from me_medicion96 me
+			inner join  me_ptomedicion p on p.PTOMEDICODI = me.PTOMEDICODI
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end)
+			inner join eq_equipo eq on eq.famcodi  &lt;> {2} and eq.EQUICODI = p.EQUICODI
+			inner join eq_equipo eqp on eqp.EQUICODI = eq.EQUIPADRE
+			inner join pr_grupo d on d.grupocodi = eq.GRUPOCODI
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			left join(
+			SELECT p1.GRUPOCODI, p1.formuladat flag, p1.FECHADAT
+			FROM PR_GRUPODAT p1
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			UNION ALL
+
+			SELECT p1.GRUPOCODI,  (case when pR.GRUPOINTEGRANTE &lt;> '{3}' then 'S' else 'N' end) as flag, to_date('1900-01-01','YYYY-MM-DD')
+			FROM PR_GRUPODAT p1
+			inner join pr_grupo pr on  p1.grupocodi = pr.grupocodi
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			) pdat1 on pdat1.grupocodi = d.grupocodi and pdat1.FECHADAT &lt;= me.medifecha
+
+			where me.LECTCODI = {7} and me.tipoinfocodi = {8} and ('-2' = '{10}' or me.TPTOMEDICODI = {10})
+			and (me.medifecha between to_date('{4}','YYYY-MM-DD') and to_date('{5}','YYYY-MM-DD'))
+			and p.origlectcodi = 1
+			and ('-1'='{6}' or emp.EMPRCODI in ({6}))
+			and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			)a
+			)a WHERE NUM = 1
+			)a WHERE (('0'='{0}') --TODOS
+			or ( '1'='{0}' and ((GRUPOINTEGRANTE2 &lt;> '{3}' and flag = 'A') OR ( flag = 'S') )  )  --COES
+			or ('10'='{0}' and ((GRUPOINTEGRANTE2 = '{3}'    and flag = 'A' ) or (flag = 'N' ) )  )  --NO COES
+			or ( '3'='{0}' and TIPOGENERRER = '{9}' ) --GENERACION RER
+			)
+			order by medifecha, emprnomb, central, equinomb
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerExportacionServiciosAuxiliares</key>
+		<query>
+			select emprcodi2 as EMPRCODI, a.*
+			FROM
+			(
+			SELECT case when ((GRUPOINTEGRANTE2 = 'N' and flag = 'A' ) or (flag = 'N' )) then 'N' else 'S' end as GRUPOINTEGRANTE
+			,a.* FROM(
+			select a.* , ROW_NUMBER() OVER(PARTITION BY medifecha,grupocodi,equicodi  ORDER BY medifecha,grupocodi,equicodi,FECHADAT DESC) AS NUM
+			from
+			(
+			select
+			nvl(pdat1.flag,'A') flag,nvl(pdat1.FECHADAT,SYSDATE) FECHADAT,
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE2,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			d.grupocodi,
+			emp.emprnomb,emp.EMPRCODI as emprcodi2,
+			(select equicodi2 from eq_equirel where equicodi1 = eq.equicodi and ROWNUM=1) as equipadre,
+			(select n.equinomb from eq_equipo n where n.equicodi = (select x.equicodi2 from eq_equirel x where x.equicodi1 = eq.equicodi and ROWNUM=1) and ROWNUM=1) as central,
+			eq.equicodi,eq.equinomb as equinomb, eq.famcodi, p.PTOMEDIELENOMB,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, tg.tgenernomb, tg.tgenercodi, me.*
+			from me_medicion96 me
+			inner join  me_ptomedicion p on p.PTOMEDICODI = me.PTOMEDICODI
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end)
+			inner join eq_equipo eq on p.equicodi = eq.equicodi
+			inner join eq_equirel ex on eq.equicodi = ex.equicodi1
+			inner join eq_equipo eq1 on ex.equicodi2 = eq1.equicodi
+			inner join pr_grupo d on d.grupocodi = eq1.GRUPOCODI
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			left join(
+			SELECT p1.GRUPOCODI, p1.formuladat flag, p1.FECHADAT
+			FROM PR_GRUPODAT p1
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			UNION ALL
+
+			SELECT p1.GRUPOCODI,  (case when pR.GRUPOINTEGRANTE &lt;> '{3}' then 'S' else 'N' end) as flag, to_date('1900-01-01','YYYY-MM-DD')
+			FROM PR_GRUPODAT p1
+			inner join pr_grupo pr on  p1.grupocodi = pr.grupocodi
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			) pdat1 on pdat1.grupocodi = d.grupocodi and pdat1.FECHADAT &lt;= me.medifecha
+
+			where me.LECTCODI = {7} and me.tipoinfocodi = {8} and ('-2' = '{10}' or me.TPTOMEDICODI = {10})
+			and (me.medifecha between to_date('{4}','YYYY-MM-DD') and to_date('{5}','YYYY-MM-DD'))
+			and p.origlectcodi = 14
+			and p.equicodi in (select equicodi1 from eq_equirel where tiporelcodi in ({1}) or ('{1}' = '-1' and tiporelcodi in (20,21,22,23)))
+			and ('-1'='{6}' or emp.EMPRCODI in ({6}))
+			--and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			)a
+			)a WHERE NUM = 1
+			)a WHERE (('0'='{0}') --TODOS
+			or ( '1'='{0}' and ((GRUPOINTEGRANTE2 &lt;> '{3}' and flag = 'A') OR ( flag = 'S') )  )  --COES
+			or ('10'='{0}' and ((GRUPOINTEGRANTE2 = '{3}'    and flag = 'A' ) or (flag = 'N' ) )  )  --NO COES
+			or ( '3'='{0}' and TIPOGENERRER = '{9}' ) --GENERACION RER
+			)
+			order by medifecha, emprnomb, central, equinomb
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>NroRegistrosConsultasTipoGeneracion</key>
+		<query>
+			SELECT count(*)
+			FROM
+			(
+			SELECT a.* FROM(
+			select a.* , ROW_NUMBER() OVER(PARTITION BY medifecha,grupocodi,equicodi  ORDER BY medifecha,grupocodi,equicodi,FECHADAT DESC) AS NUM
+			from
+			(
+			select
+			nvl(pdat1.flag,'A') flag,nvl(pdat1.FECHADAT,SYSDATE) FECHADAT,
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE2,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			d.grupocodi,
+			emp.emprnomb,emp.EMPRCODI as emprcodi2,
+			case when eq.famcodi in (4,5,37,39) then eq.equicodi else eqp.equicodi end as equipadre,
+			case when eq.famcodi in (4,5,37,39) then eq.equinomb else eqp.equinomb end as central,
+			eqp.equinomb as central2,
+			eq.equicodi,eq.equinomb as equinomb, eq.famcodi,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, tg.tgenernomb, tg.tgenercodi, me.*
+			from me_medicion96 me
+			inner join  me_ptomedicion p on p.PTOMEDICODI = me.PTOMEDICODI
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end)
+			inner join eq_equipo eq on eq.famcodi  &lt;> {2} and eq.EQUICODI = p.EQUICODI
+			inner join eq_equipo eqp on eqp.EQUICODI = eq.EQUIPADRE
+			inner join pr_grupo d on d.grupocodi = eq.GRUPOCODI
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			left join(
+			SELECT p1.GRUPOCODI, p1.formuladat flag, p1.FECHADAT
+			FROM PR_GRUPODAT p1
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			UNION ALL
+
+			SELECT p1.GRUPOCODI,  (case when pR.GRUPOINTEGRANTE &lt;> '{3}' then 'S' else 'N' end) as flag, to_date('1900-01-01','YYYY-MM-DD')
+			FROM PR_GRUPODAT p1
+			inner join pr_grupo pr on  p1.grupocodi = pr.grupocodi
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			) pdat1 on pdat1.grupocodi = d.grupocodi and pdat1.FECHADAT &lt;= me.medifecha
+
+			where me.LECTCODI = {7} and me.tipoinfocodi = {8} and ('-2' = '{10}' or me.TPTOMEDICODI = {10})
+			and p.origlectcodi = 1
+			and (me.medifecha between to_date('{4}','YYYY-MM-DD') and to_date('{5}','YYYY-MM-DD'))
+			and ('-1'='{6}' or emp.EMPRCODI in ({6}))
+			and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			)a
+			)a WHERE NUM = 1
+			)a WHERE (('0'='{0}') --TODOS
+			or ( '1'='{0}' and ((GRUPOINTEGRANTE2 &lt;> '{3}' and flag = 'A') OR ( flag = 'S') )  )  --COES
+			or ('10'='{0}' and ((GRUPOINTEGRANTE2 = '{3}'    and flag = 'A' ) or (flag = 'N' ) )  )  --NO COES
+			or ( '3'='{0}' and TIPOGENERRER = '{9}' ) --GENERACION RER
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>NroRegistrosServiciosAuxiliares</key>
+		<query>
+			select count(*) from (
+			SELECT case when ((GRUPOINTEGRANTE2 = 'N' and flag = 'A' ) or (flag = 'N' )) then 'N' else 'S' end as GRUPOINTEGRANTE,
+			emprcodi2 as emprcodi,a.*,(row_number() over (order by medifecha, emprnomb, central, equinomb)) as r
+			FROM
+			(
+			SELECT * FROM(
+			select a.* , ROW_NUMBER() OVER(PARTITION BY medifecha,grupocodi,equicodi  ORDER BY medifecha,grupocodi,equicodi,FECHADAT DESC) AS NUM
+			from
+			(
+			select
+			nvl(pdat1.flag,'A') flag,nvl(pdat1.FECHADAT,SYSDATE) FECHADAT,
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE2,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			d.grupocodi,
+			emp.emprnomb, emp.EMPRCODI as emprcodi2,
+			(select equicodi2 from eq_equirel where equicodi1 = eq.equicodi) as equipadre,
+			(select n.equinomb from eq_equipo n where n.equicodi = (select x.equicodi2 from eq_equirel x where x.equicodi1 = eq.equicodi)) as central,
+			eq.equicodi,eq.equinomb as equinomb, eq.famcodi,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, tg.tgenernomb, tg.tgenercodi, me.*
+			from me_medicion96 me
+			inner join  me_ptomedicion p on p.PTOMEDICODI = me.PTOMEDICODI
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end)
+			inner join eq_equipo eq on p.equicodi = eq.equicodi
+			inner join eq_equirel ex on eq.equicodi = ex.equicodi1
+			inner join eq_equipo eq1 on ex.equicodi2 = eq1.equicodi
+			inner join pr_grupo d on d.grupocodi = eq1.GRUPOCODI
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			left join(
+			SELECT p1.GRUPOCODI, p1.formuladat flag, p1.FECHADAT
+			FROM PR_GRUPODAT p1
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			UNION ALL
+
+			SELECT p1.GRUPOCODI,  (case when pR.GRUPOINTEGRANTE &lt;> '{3}' then 'S' else 'N' end) as flag, to_date('1900-01-01','YYYY-MM-DD')
+			FROM PR_GRUPODAT p1
+			inner join pr_grupo pr on  p1.grupocodi = pr.grupocodi
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			) pdat1 on pdat1.grupocodi = d.grupocodi and pdat1.FECHADAT &lt;= me.medifecha
+
+			where me.LECTCODI = {7} and me.tipoinfocodi = {8} and ('-2' = '{10}' or me.TPTOMEDICODI = {10})
+			and (me.medifecha between to_date('{4}','YYYY-MM-DD') and to_date('{5}','YYYY-MM-DD'))
+			and p.origlectcodi = 14
+			and p.equicodi in (select equicodi1 from eq_equirel where tiporelcodi in ({1}) or ('{1}' = '-1' and tiporelcodi in (20,21,22,23)))
+			and ('-1'='{6}' or emp.EMPRCODI in ({6}))
+			--and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			)a
+			) WHERE NUM = 1
+			)a WHERE (('0'='{0}') --TODOS
+			or ( '1'='{0}' and ((GRUPOINTEGRANTE2 &lt;> '{3}' and flag = 'A') OR ( flag = 'S') )  )  --COES
+			or ('10'='{0}' and ((GRUPOINTEGRANTE2 = '{3}'    and flag = 'A' ) or (flag = 'N' ) )  )  --NO COES
+			or ( '3'='{0}' and TIPOGENERRER = '{9}' ) --GENERACION RER
+			)
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>TotalConsultaMedidores</key>
+		<query>
+			select sum(meditotal) as meditotal,
+			sum(h1) as h1, max(h1) as g1, min(h1) as m1,
+			sum(h2) as h2, max(h2) as g2, min(h2) as m2,
+			sum(h3) as h3, max(h3) as g3, min(h3) as m3,
+			sum(h4) as h4, max(h4) as g4, min(h4) as m4,
+			sum(h5) as h5, max(h5) as g5, min(h5) as m5,
+			sum(h6) as h6, max(h6) as g6, min(h6) as m6,
+			sum(h7) as h7, max(h7) as g7, min(h7) as m7,
+			sum(h8) as h8, max(h8) as g8, min(h8) as m8,
+			sum(h9) as h9, max(h9) as g9, min(h9) as m9,
+			sum(h10) as h10, max(h10) as g10, min(h10) as m10,
+			sum(h11) as h11, max(h11) as g11, min(h11) as m11,
+			sum(h12) as h12, max(h12) as g12, min(h12) as m12,
+			sum(h13) as h13, max(h13) as g13, min(h13) as m13,
+			sum(h14) as h14, max(h14) as g14, min(h14) as m14,
+			sum(h15) as h15, max(h15) as g15, min(h15) as m15,
+			sum(h16) as h16, max(h16) as g16, min(h16) as m16,
+			sum(h17) as h17, max(h17) as g17, min(h17) as m17,
+			sum(h18) as h18, max(h18) as g18, min(h18) as m18,
+			sum(h19) as h19, max(h19) as g19, min(h19) as m19,
+			sum(h20) as h20, max(h20) as g20, min(h20) as m20,
+			sum(h21) as h21, max(h21) as g21, min(h21) as m21,
+			sum(h22) as h22, max(h22) as g22, min(h22) as m22,
+			sum(h23) as h23, max(h23) as g23, min(h23) as m23,
+			sum(h24) as h24, max(h24) as g24, min(h24) as m24,
+			sum(h25) as h25, max(h25) as g25, min(h25) as m25,
+			sum(h26) as h26, max(h26) as g26, min(h26) as m26,
+			sum(h27) as h27, max(h27) as g27, min(h27) as m27,
+			sum(h28) as h28, max(h28) as g28, min(h28) as m28,
+			sum(h29) as h29, max(h29) as g29, min(h29) as m29,
+			sum(h30) as h30, max(h30) as g30, min(h30) as m30,
+			sum(h31) as h31, max(h31) as g31, min(h31) as m31,
+			sum(h32) as h32, max(h32) as g32, min(h32) as m32,
+			sum(h33) as h33, max(h33) as g33, min(h33) as m33,
+			sum(h34) as h34, max(h34) as g34, min(h34) as m34,
+			sum(h35) as h35, max(h35) as g35, min(h35) as m35,
+			sum(h36) as h36, max(h36) as g36, min(h36) as m36,
+			sum(h37) as h37, max(h37) as g37, min(h37) as m37,
+			sum(h38) as h38, max(h38) as g38, min(h38) as m38,
+			sum(h39) as h39, max(h39) as g39, min(h39) as m39,
+			sum(h40) as h40, max(h40) as g40, min(h40) as m40,
+			sum(h41) as h41, max(h41) as g41, min(h41) as m41,
+			sum(h42) as h42, max(h42) as g42, min(h42) as m42,
+			sum(h43) as h43, max(h43) as g43, min(h43) as m43,
+			sum(h44) as h44, max(h44) as g44, min(h44) as m44,
+			sum(h45) as h45, max(h45) as g45, min(h45) as m45,
+			sum(h46) as h46, max(h46) as g46, min(h46) as m46,
+			sum(h47) as h47, max(h47) as g47, min(h47) as m47,
+			sum(h48) as h48, max(h48) as g48, min(h48) as m48,
+			sum(h49) as h49, max(h49) as g49, min(h49) as m49,
+			sum(h50) as h50, max(h50) as g50, min(h50) as m50,
+			sum(h51) as h51, max(h51) as g51, min(h51) as m51,
+			sum(h52) as h52, max(h52) as g52, min(h52) as m52,
+			sum(h53) as h53, max(h53) as g53, min(h53) as m53,
+			sum(h54) as h54, max(h54) as g54, min(h54) as m54,
+			sum(h55) as h55, max(h55) as g55, min(h55) as m55,
+			sum(h56) as h56, max(h56) as g56, min(h56) as m56,
+			sum(h57) as h57, max(h57) as g57, min(h57) as m57,
+			sum(h58) as h58, max(h58) as g58, min(h58) as m58,
+			sum(h59) as h59, max(h59) as g59, min(h59) as m59,
+			sum(h60) as h60, max(h60) as g60, min(h60) as m60,
+			sum(h61) as h61, max(h61) as g61, min(h61) as m61,
+			sum(h62) as h62, max(h62) as g62, min(h62) as m62,
+			sum(h63) as h63, max(h63) as g63, min(h63) as m63,
+			sum(h64) as h64, max(h64) as g64, min(h64) as m64,
+			sum(h65) as h65, max(h65) as g65, min(h65) as m65,
+			sum(h66) as h66, max(h66) as g66, min(h66) as m66,
+			sum(h67) as h67, max(h67) as g67, min(h67) as m67,
+			sum(h68) as h68, max(h68) as g68, min(h68) as m68,
+			sum(h69) as h69, max(h69) as g69, min(h69) as m69,
+			sum(h70) as h70, max(h70) as g70, min(h70) as m70,
+			sum(h71) as h71, max(h71) as g71, min(h71) as m71,
+			sum(h72) as h72, max(h72) as g72, min(h72) as m72,
+			sum(h73) as h73, max(h73) as g73, min(h73) as m73,
+			sum(h74) as h74, max(h74) as g74, min(h74) as m74,
+			sum(h75) as h75, max(h75) as g75, min(h75) as m75,
+			sum(h76) as h76, max(h76) as g76, min(h76) as m76,
+			sum(h77) as h77, max(h77) as g77, min(h77) as m77,
+			sum(h78) as h78, max(h78) as g78, min(h78) as m78,
+			sum(h79) as h79, max(h79) as g79, min(h79) as m79,
+			sum(h80) as h80, max(h80) as g80, min(h80) as m80,
+			sum(h81) as h81, max(h81) as g81, min(h81) as m81,
+			sum(h82) as h82, max(h82) as g82, min(h82) as m82,
+			sum(h83) as h83, max(h83) as g83, min(h83) as m83,
+			sum(h84) as h84, max(h84) as g84, min(h84) as m84,
+			sum(h85) as h85, max(h85) as g85, min(h85) as m85,
+			sum(h86) as h86, max(h86) as g86, min(h86) as m86,
+			sum(h87) as h87, max(h87) as g87, min(h87) as m87,
+			sum(h88) as h88, max(h88) as g88, min(h88) as m88,
+			sum(h89) as h89, max(h89) as g89, min(h89) as m89,
+			sum(h90) as h90, max(h90) as g90, min(h90) as m90,
+			sum(h91) as h91, max(h91) as g91, min(h91) as m91,
+			sum(h92) as h92, max(h92) as g92, min(h92) as m92,
+			sum(h93) as h93, max(h93) as g93, min(h93) as m93,
+			sum(h94) as h94, max(h94) as g94, min(h94) as m94,
+			sum(h95) as h95, max(h95) as g95, min(h95) as m95,
+			sum(h96) as h96, max(h96) as g96, min(h96) as m96
+			from (
+			SELECT * FROM
+			(
+			SELECT * FROM(
+			select a.* , ROW_NUMBER() OVER(PARTITION BY medifecha,grupocodi,equicodi   ORDER BY medifecha,grupocodi,equicodi,FECHADAT DESC) AS NUM
+			from
+			(
+			select
+			nvl(pdat1.flag,'A') flag,nvl(pdat1.FECHADAT,SYSDATE) FECHADAT,
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE2,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			d.grupocodi,c.equicodi,
+			me.medifecha,me.meditotal,
+			me.h1, me.h2, me.h3, me.h4,
+			me.h5, me.h6, me.h7, me.h8,
+			me.h9, me.h10,me.h11,me.h12,
+			me.h13, me.h14, me.h15, me.h16,
+			me.h17, me.h18, me.h19, me.h20,
+			me.h21, me.h22, me.h23, me.h24,
+			me.h25, me.h26, me.h27, me.h28,
+			me.h29, me.h30, me.h31, me.h32,
+			me.h33, me.h34, me.h35, me.h36,
+			me.h37, me.h38, me.h39, me.h40,
+			me.h41, me.h42, me.h43, me.h44,
+			me.h45, me.h46, me.h47, me.h48,
+			me.h49, me.h50, me.h51, me.h52,
+			me.h53, me.h54, me.h55, me.h56,
+			me.h57, me.h58, me.h59, me.h60,
+			me.h61, me.h62, me.h63, me.h64,
+			me.h65, me.h66, me.h67, me.h68,
+			me.h69, me.h70, me.h71, me.h72,
+			me.h73, me.h74, me.h75, me.h76,
+			me.h77, me.h78, me.h79, me.h80,
+			me.h81, me.h82, me.h83, me.h84,
+			me.h85, me.h86, me.h87, me.h88,
+			me.h89, me.h90, me.h91, me.h92,
+			me.h93, me.h94, me.h95, me.h96
+			from me_medicion96 me
+			inner join me_ptomedicion p on  me.ptomedicodi = p.ptomedicodi
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end)
+			inner join eq_equipo c on c.famcodi  &lt;> {2} and  p.equicodi = c.equicodi
+			inner join pr_grupo d on c.grupocodi = d.grupocodi
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			left join(
+			SELECT p1.GRUPOCODI, p1.formuladat flag, p1.FECHADAT
+			FROM PR_GRUPODAT p1
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			UNION ALL
+
+			SELECT p1.GRUPOCODI,  (case when pR.GRUPOINTEGRANTE &lt;> '{3}' then 'S' else 'N' end) as flag, to_date('1900-01-01','YYYY-MM-DD')
+			FROM PR_GRUPODAT p1
+			inner join pr_grupo pr on  p1.grupocodi = pr.grupocodi
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			) pdat1 on pdat1.grupocodi = d.grupocodi and pdat1.FECHADAT &lt;= me.medifecha
+
+			where me.LECTCODI = {7} and me.tipoinfocodi = {8} and ('-2' = '{10}' or me.TPTOMEDICODI = {10})
+			and (me.medifecha between to_date('{4}','YYYY-MM-DD') and to_date('{5}','YYYY-MM-DD'))
+			and p.origlectcodi = 1
+			and ('-1'='{6}' or emp.EMPRCODI in ({6}))
+			and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			)a
+			) WHERE NUM = 1
+			) WHERE (('0'='{0}')  --TODOS
+			or ( '1'='{0}' and ((GRUPOINTEGRANTE2 &lt;> '{3}' and flag = 'A') OR ( flag = 'S') )  )  --COES
+			or ('10'='{0}' and ((GRUPOINTEGRANTE2 = '{3}'    and flag = 'A' ) or (flag = 'N' ) )  )  --NO COES
+			or ( '3'='{0}' and TIPOGENERRER = '{9}' ) --GENERACION RER
+			)
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>TotalServiciosAuxiliares</key>
+		<query>
+			select sum(meditotal) as meditotal,
+			sum(h1) as h1, max(h1) as g1, min(h1) as m1,
+			sum(h2) as h2, max(h2) as g2, min(h2) as m2,
+			sum(h3) as h3, max(h3) as g3, min(h3) as m3,
+			sum(h4) as h4, max(h4) as g4, min(h4) as m4,
+			sum(h5) as h5, max(h5) as g5, min(h5) as m5,
+			sum(h6) as h6, max(h6) as g6, min(h6) as m6,
+			sum(h7) as h7, max(h7) as g7, min(h7) as m7,
+			sum(h8) as h8, max(h8) as g8, min(h8) as m8,
+			sum(h9) as h9, max(h9) as g9, min(h9) as m9,
+			sum(h10) as h10, max(h10) as g10, min(h10) as m10,
+			sum(h11) as h11, max(h11) as g11, min(h11) as m11,
+			sum(h12) as h12, max(h12) as g12, min(h12) as m12,
+			sum(h13) as h13, max(h13) as g13, min(h13) as m13,
+			sum(h14) as h14, max(h14) as g14, min(h14) as m14,
+			sum(h15) as h15, max(h15) as g15, min(h15) as m15,
+			sum(h16) as h16, max(h16) as g16, min(h16) as m16,
+			sum(h17) as h17, max(h17) as g17, min(h17) as m17,
+			sum(h18) as h18, max(h18) as g18, min(h18) as m18,
+			sum(h19) as h19, max(h19) as g19, min(h19) as m19,
+			sum(h20) as h20, max(h20) as g20, min(h20) as m20,
+			sum(h21) as h21, max(h21) as g21, min(h21) as m21,
+			sum(h22) as h22, max(h22) as g22, min(h22) as m22,
+			sum(h23) as h23, max(h23) as g23, min(h23) as m23,
+			sum(h24) as h24, max(h24) as g24, min(h24) as m24,
+			sum(h25) as h25, max(h25) as g25, min(h25) as m25,
+			sum(h26) as h26, max(h26) as g26, min(h26) as m26,
+			sum(h27) as h27, max(h27) as g27, min(h27) as m27,
+			sum(h28) as h28, max(h28) as g28, min(h28) as m28,
+			sum(h29) as h29, max(h29) as g29, min(h29) as m29,
+			sum(h30) as h30, max(h30) as g30, min(h30) as m30,
+			sum(h31) as h31, max(h31) as g31, min(h31) as m31,
+			sum(h32) as h32, max(h32) as g32, min(h32) as m32,
+			sum(h33) as h33, max(h33) as g33, min(h33) as m33,
+			sum(h34) as h34, max(h34) as g34, min(h34) as m34,
+			sum(h35) as h35, max(h35) as g35, min(h35) as m35,
+			sum(h36) as h36, max(h36) as g36, min(h36) as m36,
+			sum(h37) as h37, max(h37) as g37, min(h37) as m37,
+			sum(h38) as h38, max(h38) as g38, min(h38) as m38,
+			sum(h39) as h39, max(h39) as g39, min(h39) as m39,
+			sum(h40) as h40, max(h40) as g40, min(h40) as m40,
+			sum(h41) as h41, max(h41) as g41, min(h41) as m41,
+			sum(h42) as h42, max(h42) as g42, min(h42) as m42,
+			sum(h43) as h43, max(h43) as g43, min(h43) as m43,
+			sum(h44) as h44, max(h44) as g44, min(h44) as m44,
+			sum(h45) as h45, max(h45) as g45, min(h45) as m45,
+			sum(h46) as h46, max(h46) as g46, min(h46) as m46,
+			sum(h47) as h47, max(h47) as g47, min(h47) as m47,
+			sum(h48) as h48, max(h48) as g48, min(h48) as m48,
+			sum(h49) as h49, max(h49) as g49, min(h49) as m49,
+			sum(h50) as h50, max(h50) as g50, min(h50) as m50,
+			sum(h51) as h51, max(h51) as g51, min(h51) as m51,
+			sum(h52) as h52, max(h52) as g52, min(h52) as m52,
+			sum(h53) as h53, max(h53) as g53, min(h53) as m53,
+			sum(h54) as h54, max(h54) as g54, min(h54) as m54,
+			sum(h55) as h55, max(h55) as g55, min(h55) as m55,
+			sum(h56) as h56, max(h56) as g56, min(h56) as m56,
+			sum(h57) as h57, max(h57) as g57, min(h57) as m57,
+			sum(h58) as h58, max(h58) as g58, min(h58) as m58,
+			sum(h59) as h59, max(h59) as g59, min(h59) as m59,
+			sum(h60) as h60, max(h60) as g60, min(h60) as m60,
+			sum(h61) as h61, max(h61) as g61, min(h61) as m61,
+			sum(h62) as h62, max(h62) as g62, min(h62) as m62,
+			sum(h63) as h63, max(h63) as g63, min(h63) as m63,
+			sum(h64) as h64, max(h64) as g64, min(h64) as m64,
+			sum(h65) as h65, max(h65) as g65, min(h65) as m65,
+			sum(h66) as h66, max(h66) as g66, min(h66) as m66,
+			sum(h67) as h67, max(h67) as g67, min(h67) as m67,
+			sum(h68) as h68, max(h68) as g68, min(h68) as m68,
+			sum(h69) as h69, max(h69) as g69, min(h69) as m69,
+			sum(h70) as h70, max(h70) as g70, min(h70) as m70,
+			sum(h71) as h71, max(h71) as g71, min(h71) as m71,
+			sum(h72) as h72, max(h72) as g72, min(h72) as m72,
+			sum(h73) as h73, max(h73) as g73, min(h73) as m73,
+			sum(h74) as h74, max(h74) as g74, min(h74) as m74,
+			sum(h75) as h75, max(h75) as g75, min(h75) as m75,
+			sum(h76) as h76, max(h76) as g76, min(h76) as m76,
+			sum(h77) as h77, max(h77) as g77, min(h77) as m77,
+			sum(h78) as h78, max(h78) as g78, min(h78) as m78,
+			sum(h79) as h79, max(h79) as g79, min(h79) as m79,
+			sum(h80) as h80, max(h80) as g80, min(h80) as m80,
+			sum(h81) as h81, max(h81) as g81, min(h81) as m81,
+			sum(h82) as h82, max(h82) as g82, min(h82) as m82,
+			sum(h83) as h83, max(h83) as g83, min(h83) as m83,
+			sum(h84) as h84, max(h84) as g84, min(h84) as m84,
+			sum(h85) as h85, max(h85) as g85, min(h85) as m85,
+			sum(h86) as h86, max(h86) as g86, min(h86) as m86,
+			sum(h87) as h87, max(h87) as g87, min(h87) as m87,
+			sum(h88) as h88, max(h88) as g88, min(h88) as m88,
+			sum(h89) as h89, max(h89) as g89, min(h89) as m89,
+			sum(h90) as h90, max(h90) as g90, min(h90) as m90,
+			sum(h91) as h91, max(h91) as g91, min(h91) as m91,
+			sum(h92) as h92, max(h92) as g92, min(h92) as m92,
+			sum(h93) as h93, max(h93) as g93, min(h93) as m93,
+			sum(h94) as h94, max(h94) as g94, min(h94) as m94,
+			sum(h95) as h95, max(h95) as g95, min(h95) as m95,
+			sum(h96) as h96, max(h96) as g96, min(h96) as m96
+			from(
+			select *
+			FROM
+			(
+			SELECT * FROM(
+			select a.* , ROW_NUMBER() OVER(PARTITION BY medifecha,grupocodi,equicodi  ORDER BY medifecha,grupocodi,equicodi,FECHADAT DESC) AS NUM
+			from
+			(
+			select
+			nvl(pdat1.flag,'A') flag,nvl(pdat1.FECHADAT,SYSDATE) FECHADAT,
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE2,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			d.grupocodi,
+			emp.emprnomb,
+			(select equicodi2 from eq_equirel where equicodi1 = eq.equicodi) as equipadre,
+			(select n.equinomb from eq_equipo n where n.equicodi = (select x.equicodi2 from eq_equirel x where x.equicodi1 = eq.equicodi)) as central,
+			eq.equicodi,eq.equinomb as equinomb, eq.famcodi,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, tg.tgenernomb, tg.tgenercodi, me.*
+			from me_medicion96 me
+			inner join  me_ptomedicion p on p.PTOMEDICODI = me.PTOMEDICODI
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end)
+			inner join eq_equipo eq on p.equicodi = eq.equicodi
+			inner join eq_equirel ex on eq.equicodi = ex.equicodi1
+			inner join eq_equipo eq1 on ex.equicodi2 = eq1.equicodi
+			inner join pr_grupo d on d.grupocodi = eq1.GRUPOCODI
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			left join(
+			SELECT p1.GRUPOCODI, p1.formuladat flag, p1.FECHADAT
+			FROM PR_GRUPODAT p1
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			UNION ALL
+
+			SELECT p1.GRUPOCODI,  (case when pR.GRUPOINTEGRANTE &lt;> '{3}' then 'S' else 'N' end) as flag, to_date('1900-01-01','YYYY-MM-DD')
+			FROM PR_GRUPODAT p1
+			inner join pr_grupo pr on  p1.grupocodi = pr.grupocodi
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			) pdat1 on pdat1.grupocodi = d.grupocodi and pdat1.FECHADAT &lt;= me.medifecha
+
+			where me.LECTCODI = {7} and me.tipoinfocodi = {8} and ('-2' = '{10}' or me.TPTOMEDICODI = {10})
+			and (me.medifecha between to_date('{4}','YYYY-MM-DD') and to_date('{5}','YYYY-MM-DD'))
+			and p.origlectcodi = 14
+			and p.equicodi in (select equicodi1 from eq_equirel where tiporelcodi in ({1}) or ('{1}' = '-1' and tiporelcodi in (20,21,22,23)))
+			and ('-1'='{6}' or emp.EMPRCODI in ({6}))
+			--and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			)a
+			) WHERE NUM = 1
+			)a WHERE (('0'='{0}') --TODOS
+			or ( '1'='{0}' and ((GRUPOINTEGRANTE2 &lt;> '{3}' and flag = 'A') OR ( flag = 'S') )  )  --COES
+			or ('10'='{0}' and ((GRUPOINTEGRANTE2 = '{3}'    and flag = 'A' ) or (flag = 'N' ) )  )  --NO COES
+			or ( '3'='{0}' and TIPOGENERRER = '{9}' ) --GENERACION RER
+			)
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListarTotalH</key>
+		<query>
+			select TPTOMEDICODI,EMPRCODI,lectcodi,tipoinfocodi,ptomedicodi,meditotal,mediestado,medifecha,
+			sum(h1) h1, sum(h2) h2, sum(h3) h3, sum(h4) h4, sum(h5) h5, sum(h6) h6, sum(h7) h7, sum(h8) h8,sum(h9) h9, sum(h10) h10, sum(h11) h11, sum(h12) h12,sum(h13) h13, sum(h14) h14, sum(h15) h15, sum(h16) h16,sum(h17) h17, sum(h18) h18, sum(h19) h19, sum(h20) h20,
+			sum(h21) h21, sum(h22) h22, sum(h23) h23, sum(h24) h24, sum(h25) h25, sum(h26) h26, sum(h27) h27, sum(h28) h28,sum(h29) h29, sum(h30) h30, sum(h31) h31, sum(h32) h32,sum(h33) h33, sum(h34) h34, sum(h35) h35, sum(h36) h36,sum(h37) h37, sum(h38) h38, sum(h39) h39, sum(h40) h40,
+			sum(h41) h41, sum(h42) h42, sum(h43) h43, sum(h44) h44, sum(h45) h45, sum(h46) h46, sum(h47) h47, sum(h48) h48,sum(h49) h49, sum(h50) h50, sum(h51) h51, sum(h52) h52,sum(h53) h53, sum(h54) h54, sum(h55) h55, sum(h56) h56,sum(h57) h57, sum(h58) h58, sum(h59) h59, sum(h60) h60,
+			sum(h61) h61, sum(h62) h62, sum(h63) h63, sum(h64) h64, sum(h65) h65, sum(h66) h66, sum(h67) h67, sum(h68) h68,sum(h69) h69, sum(h70) h70, sum(h71) h71, sum(h72) h72,sum(h73) h73, sum(h74) h74, sum(h75) h75, sum(h76) h76,sum(h77) h77, sum(h78) h78, sum(h79) h79, sum(h80) h80,
+			sum(h81) h81, sum(h82) h82, sum(h83) h83, sum(h84) h84, sum(h85) h85, sum(h86) h86, sum(h87) h87, sum(h88) h88,sum(h89) h89, sum(h90) h90, sum(h91) h91, sum(h92) h92, sum(h93) h93, sum(h94) h94, sum(h95) h95, sum(h96) h96
+			from
+			(
+			select 0 TPTOMEDICODI, 0 EMPRCODI,0 lectcodi, 0 tipoinfocodi,0 ptomedicodi,0 meditotal ,'A' mediestado,medifecha,
+			sum(h1) h1, sum(h2) h2, sum(h3) h3, sum(h4) h4, sum(h5) h5, sum(h6) h6, sum(h7) h7, sum(h8) h8,sum(h9) h9, sum(h10) h10, sum(h11) h11, sum(h12) h12,sum(h13) h13, sum(h14) h14, sum(h15) h15, sum(h16) h16,sum(h17) h17, sum(h18) h18, sum(h19) h19, sum(h20) h20,
+			sum(h21) h21, sum(h22) h22, sum(h23) h23, sum(h24) h24, sum(h25) h25, sum(h26) h26, sum(h27) h27, sum(h28) h28,sum(h29) h29, sum(h30) h30, sum(h31) h31, sum(h32) h32,sum(h33) h33, sum(h34) h34, sum(h35) h35, sum(h36) h36,sum(h37) h37, sum(h38) h38, sum(h39) h39, sum(h40) h40,
+			sum(h41) h41, sum(h42) h42, sum(h43) h43, sum(h44) h44, sum(h45) h45, sum(h46) h46, sum(h47) h47, sum(h48) h48,sum(h49) h49, sum(h50) h50, sum(h51) h51, sum(h52) h52,sum(h53) h53, sum(h54) h54, sum(h55) h55, sum(h56) h56,sum(h57) h57, sum(h58) h58, sum(h59) h59, sum(h60) h60,
+			sum(h61) h61, sum(h62) h62, sum(h63) h63, sum(h64) h64, sum(h65) h65, sum(h66) h66, sum(h67) h67, sum(h68) h68,sum(h69) h69, sum(h70) h70, sum(h71) h71, sum(h72) h72,sum(h73) h73, sum(h74) h74, sum(h75) h75, sum(h76) h76,sum(h77) h77, sum(h78) h78, sum(h79) h79, sum(h80) h80,
+			sum(h81) h81, sum(h82) h82, sum(h83) h83, sum(h84) h84, sum(h85) h85, sum(h86) h86, sum(h87) h87, sum(h88) h88,sum(h89) h89, sum(h90) h90, sum(h91) h91, sum(h92) h92, sum(h93) h93, sum(h94) h94, sum(h95) h95, sum(h96) h96
+			from
+			me_medicion96 m96
+			inner join me_ptomedicion pto on pto.ptomedicodi = m96.ptomedicodi
+			inner join pr_grupo gr on gr.grupocodi = pto.grupocodi
+			inner join si_fuenteenergia fe on fe.fenergcodi = gr.fenergcodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end)
+			inner join si_tipogeneracion tg on fe.tgenercodi = tg.tgenercodi
+			where medifecha >= to_date('{0}','YYYY-MM-DD') and to_date('{1}','YYYY-MM-DD') >= medifecha
+			and pto.origlectcodi = 1 and m96.tipoinfocodi = 1 and m96.lectcodi = 1
+			and (emp.emprcodi in ({2}) or '{2}' = '-1')
+			and (
+			(gr.tipogrupocodi != 10 and {4} = 1) or
+			(gr.tipogrupocodi = 10 and  {4} = 2 ) or
+			(gr.tipogrupocodi = 2 and {4} = 3 ) or
+			({4} = 0)
+			)
+			and (tg.tgenercodi in ({3}) or '{3}' = '-1')
+			group by 1,2,3,4,5,medifecha
+			UNION
+			select 0 TPTOMEDICODI, 0 EMPRCODI,0 lectcodi,0 tipoinfocodi,0 ptomedicodi,0 meditotal ,'A' mediestado,medifecha,
+			sum( -1 * 4 * h1) h1, sum( -1 * 4 * h2) h2, sum( -1 * 4 * h3) h3, sum( -1 * 4 * h4) h4,sum( -1 * 4 * h5) h5, sum( -1 * 4 * h6) h6, sum( -1 * 4 * h7) h7, sum( -1 * 4 * h8) h8,
+			sum( -1 * 4 * h9) h9, sum( -1 * 4 * h10) h10, sum( -1 * 4 * h11) h11, sum( -1 * 4 * h12) h12,sum( -1 * 4 * h13) h13, sum( -1 * 4 * h14) h14, sum( -1 * 4 * h15) h15, sum( -1 * 4 * h16) h16,
+			sum( -1 * 4 * h17) h17, sum( -1 * 4 * h18) h18, sum( -1 * 4 * h19) h19, sum( -1 * 4 * h20) h20,sum( -1 * 4 * h21) h21, sum( -1 * 4 * h22) h22, sum( -1 * 4 * h23) h23, sum( -1 * 4 * h24) h24,
+			sum( -1 * 4 * h25) h25, sum( -1 * 4 * h26) h26, sum( -1 * 4 * h27) h27, sum( -1 * 4 * h28) h28,sum( -1 * 4 * h29) h29, sum( -1 * 4 * h30) h30, sum( -1 * 4 * h31) h31, sum( -1 * 4 * h32) h32,
+			sum( -1 * 4 * h33) h33, sum( -1 * 4 * h34) h34, sum( -1 * 4 * h35) h35, sum( -1 * 4 * h36) h36,sum( -1 * 4 * h37) h37, sum( -1 * 4 * h38) h38, sum( -1 * 4 * h39) h39, sum( -1 * 4 * h40) h40,
+			sum( -1 * 4 * h41) h41, sum( -1 * 4 * h42) h42, sum( -1 * 4 * h43) h43, sum( -1 * 4 * h44) h44,sum( -1 * 4 * h45) h45, sum( -1 * 4 * h46) h46, sum( -1 * 4 * h47) h47, sum( -1 * 4 * h48) h48,
+			sum( -1 * 4 * h49) h49, sum( -1 * 4 * h50) h50, sum( -1 * 4 * h51) h51, sum( -1 * 4 * h52) h52,sum( -1 * 4 * h53) h53, sum( -1 * 4 * h54) h54, sum( -1 * 4 * h55) h55, sum( -1 * 4 * h56) h56,
+			sum( -1 * 4 * h57) h57, sum( -1 * 4 * h58) h58, sum( -1 * 4 * h59) h59, sum( -1 * 4 * h60) h60,sum( -1 * 4 * h61) h61, sum( -1 * 4 * h62) h62, sum( -1 * 4 * h63) h63, sum( -1 * 4 * h64) h64,
+			sum( -1 * 4 * h65) h65, sum( -1 * 4 * h66) h66, sum( -1 * 4 * h67) h67, sum( -1 * 4 * h68) h68,sum( -1 * 4 * h69) h69, sum( -1 * 4 * h70) h70, sum( -1 * 4 * h71) h71, sum( -1 * 4 * h72) h72,
+			sum( -1 * 4 * h73) h73, sum( -1 * 4 * h74) h74, sum( -1 * 4 * h75) h75, sum( -1 * 4 * h76) h76,sum( -1 * 4 * h77) h77, sum( -1 * 4 * h78) h78, sum( -1 * 4 * h79) h79, sum( -1 * 4 * h80) h80,
+			sum( -1 * 4 * h81) h81, sum( -1 * 4 * h82) h82, sum( -1 * 4 * h83) h83, sum( -1 * 4 * h84) h84,sum( -1 * 4 * h85) h85, sum( -1 * 4 * h86) h86, sum( -1 * 4 * h87) h87, sum( -1 * 4 * h88) h88,
+			sum( -1 * 4 * h89) h89, sum( -1 * 4 * h90) h90, sum( -1 * 4 * h91) h91, sum( -1 * 4 * h92) h92,sum( -1 * 4 * h93) h93, sum( -1 * 4 * h94) h94, sum( -1 * 4 * h95) h95, sum( -1 * 4 * h96) h96
+			from
+			me_medicion96 m96
+			where m96.ptomedicodi = 5020 and m96.medifecha >= to_date('{0}','YYYY-MM-DD') and
+			to_date('{1}','YYYY-MM-DD') >= m96.medifecha and m96.tipoinfocodi = 3 and
+			m96.lectcodi = 1
+			group by 1,2,3,4,5,medifecha
+			)
+			GROUP BY TPTOMEDICODI,EMPRCODI,lectcodi,tipoinfocodi,ptomedicodi,meditotal,mediestado,medifecha
+			ORDER BY MEDIFECHA
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListarDetalle</key>
+		<query>
+			select
+			em.emprcodi, em.emprnomb empresa,eqp.equinomb central,eq.equinomb grupo,tg.tgenernomb,
+			h96,h95,h94, h93,h92,h91,h90,h89,h88,h87,h86,h85,h84,h83,h82,h81,h80,h79,h78,h77,h76,h75,h74,h73,h72,h71,h70,
+			h69,h68,h67,h66,h65,h64,h63,h62,h61,h60,h59,h58,h57,h56,h55,h54,h53,h52,h51,h50,h49,h48,h47,h46,h45,h44,h43,h42,h41,h40,
+			h39,h38,h37,h36,h35,h34,h33,h32,h31,h30,h29,h28,h27,h26,h25,h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13, h12,h11,h10,
+			h9,h8,h7,h6,h5,h4,h3,h2,h1,mediestado,meditotal,m96.ptomedicodi,m96.tipoinfocodi,medifecha medifecha,m96.lectcodi
+			from
+			me_medicion96 m96
+			inner join me_ptomedicion pto on pto.ptomedicodi = m96.ptomedicodi
+			inner join eq_equipo eq on eq.equicodi = pto.equicodi
+			inner join eq_equipo eqp on eqp.equicodi = eq.equipadre
+			inner join si_empresa em on em.emprcodi = (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end)
+			inner join pr_grupo gr on gr.grupocodi = eq.grupocodi
+			inner join si_fuenteenergia fe on fe.fenergcodi = gr.fenergcodi
+			inner join si_tipogeneracion tg on tg.tgenercodi = fe.tgenercodi
+			where m96.medifecha >= to_date('{0}','YYYY-MM-DD')
+			and  to_date('{1}','YYYY-MM-DD') >= m96.medifecha
+			and pto.origlectcodi = 1 and m96.tipoinfocodi = 1 and m96.lectcodi = 1
+			and (em.emprcodi in ({2}) or '{2}' = '-1')
+			and (
+			(gr.tipogrupocodi != 10 and {4} = 1) or
+			(gr.tipogrupocodi = 10 and  {4} = 2 ) or
+			(gr.tipogrupocodi = 2 and {4} = 3 ) or
+			({4} = 0)
+			)
+			and (tg.tgenercodi in ({3}) or '{3}' = '-1')
+
+			union
+			select
+			0 emprcodi,'' empresa,'' central,'' grupo,'' tgenernomb,
+			h96,h95,h94, h93,h92,h91,h90,h89,h88,h87,h86,h85,h84,h83,h82,h81,h80,h79,h78,h77,h76,h75,h74,h73,h72,h71,h70,
+			h69,h68,h67,h66,h65,h64,h63,h62,h61,h60,h59,h58,h57,h56,h55,h54,h53,h52,h51,h50,h49,h48,h47,h46,h45,h44,h43,h42,h41,h40,
+			h39,h38,h37,h36,h35,h34,h33,h32,h31,h30,h29,h28,h27,h26,h25,h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13, h12,h11,h10,
+			h9,h8,h7,h6,h5,h4,h3,h2,h1,mediestado,meditotal,m96.ptomedicodi,m96.tipoinfocodi,medifecha medifecha,m96.lectcodi
+			from
+			me_medicion96 m96
+			where m96.medifecha >= to_date('{0}','YYYY-MM-DD')
+			and  to_date('{1}','YYYY-MM-DD') >= m96.medifecha
+			and  m96.tipoinfocodi = 3 and m96.lectcodi = 1
+			and m96.ptomedicodi = 5020
+			order by
+			empresa,central,grupo,medifecha
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerExportacionMasivaMedidores</key>
+		<query>
+			select emp.emprcodi, me.*, pto.ptomedielenomb, emp.emprnomb
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join pr_grupo pg on pto.grupocodi = pg.grupocodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+			inner join si_fuenteenergia fe on pg.fenergcodi = fe.fenergcodi
+			inner join si_tipogeneracion tg on fe.tgenercodi = tg.tgenercodi
+			where
+			me.tipoinfocodi = {0}
+			and me.lectcodi = 1
+			and pto.origlectcodi = 1
+			and (emp.emprcodi in ({1}) or '{1}' = '-1')
+			and (
+			(pg.tipogrupocodi != 10 and {2} = 1) or
+			(pg.tipogrupocodi = 10 and  {2} = 2 ) or
+			(pg.tipogrupocodi = 2 and {2} = 3 ) or
+			({2} = 0)
+			)
+			and (tg.tgenercodi in ({3}) or '{3}' = '-1')
+			and (me.medifecha >= to_date('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS') and me.medifecha &lt;= to_date('{5} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+			order by me.medifecha asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerExportacionMasivaSSAA</key>
+		<query>
+			select emp.emprcodi, me.*, pto.ptomedielenomb, emp.emprnomb
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join eq_equirel ex on eq.equicodi = ex.equicodi1
+			inner join eq_equipo eq1 on ex.equicodi2 = eq1.equicodi
+			inner join pr_grupo pg on eq1.grupocodi = pg.grupocodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+			where
+			me.tipoinfocodi = {0}
+			and pto.equicodi in (select equicodi1 from eq_equirel where tiporelcodi in ({3}) or ('{3}' = '-1' and tiporelcodi in (20,21,22,23)))
+			and me.lectcodi = 1
+			and pto.origlectcodi = 14
+			and (emp.emprcodi in ({1}) or '{1}' = '-1')
+			and (
+			(pg.tipogrupocodi != 10 and {2} = 1) or
+			(pg.tipogrupocodi = 10 and  {2} = 2 ) or
+			(pg.tipogrupocodi = 2 and {2} = 3 ) or
+			({2} = 0)
+			)
+			and (me.medifecha >= to_date('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS') and me.medifecha &lt;= to_date('{5} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+			order by me.medifecha asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerReporteMedidores</key>
+		<query>
+			select
+			h96,h95,h94, h93,h92,h91,h90,h89,h88,h87,h86,h85,h84,h83,h82,h81,h80,h79,h78,h77,h76,h75,h74,h73,h72,h71,h70,
+			h69,h68,h67,h66,h65,h64,h63,h62,h61,h60,h59,h58,h57,h56,h55,h54,h53,h52,h51,h50,h49,h48,h47,h46,h45,h44,h43,h42,h41,h40,
+			h39,h38,h37,h36,h35,h34,h33,h32,h31,h30,h29,h28,h27,h26,h25,h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13, h12,h11,h10,
+			h9,h8,h7,h6,h5,h4,h3,h2,h1,mediestado,meditotal,me.ptomedicodi,me.tipoinfocodi,medifecha medifecha,me.lectcodi,
+			eq.equipadre, eq.equicodi,
+			(case when eq.famcodi = 4 then eq.equinomb
+			else
+			(select case when x.equicodi = 0 then eq.equinomb  when x.equicodi > 0 then x.equinomb end from eq_equipo x where x.equicodi = eq.equipadre)
+			end)
+			as central,
+			eq.equinomb as equinomb, emp.emprcodi, emp.emprnomb,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, tg.tgenernomb, tg.tgenercodi
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join pr_grupo pg on pto.grupocodi = pg.grupocodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+			inner join si_fuenteenergia fe on pg.fenergcodi = fe.fenergcodi
+			inner join si_tipogeneracion tg on fe.tgenercodi = tg.tgenercodi
+			where
+			me.tipoinfocodi = 1
+			and me.lectcodi = 1
+			and pto.origlectcodi = 1
+			and (emp.emprcodi in ({0}) or '{0}' = '-1')
+			and (
+			(pg.tipogrupocodi != 10 and {1} = 1) or
+			(pg.tipogrupocodi = 10 and  {1} = 2 ) or
+			(pg.tipogrupocodi = 2 and {1} = 3 ) or
+			({1} = 0)
+			)
+			and (fe.fenergcodi in ({2}) or '{2}' = '-1')
+			and (me.medifecha >= to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			and me.medifecha &lt;= to_date('{4} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+
+			--union
+			--select
+			--h96,h95,h94, h93,h92,h91,h90,h89,h88,h87,h86,h85,h84,h83,h82,h81,h80,h79,h78,h77,h76,h75,h74,h73,h72,h71,h70,
+			--h69,h68,h67,h66,h65,h64,h63,h62,h61,h60,h59,h58,h57,h56,h55,h54,h53,h52,h51,h50,h49,h48,h47,h46,h45,h44,h43,h42,h41,h40,
+			--h39,h38,h37,h36,h35,h34,h33,h32,h31,h30,h29,h28,h27,h26,h25,h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13, h12,h11,h10,
+			--h9,h8,h7,h6,h5,h4,h3,h2,h1,mediestado,meditotal,me.ptomedicodi,me.tipoinfocodi,medifecha medifecha,me.lectcodi,
+			--0 equipadre,0 equicodi,'' central,'' equinomb, 0 emprcodi, '' emprnomb,
+			--0 fenergcodi, '' fenergnomb, '' fenergabrev, '' tgenernomb, 0 tgenercodi
+			--from
+			--me_medicion96 me
+			--where
+			--me.tipoinfocodi = 3 and ptomedicodi = 5020 and lectcodi = 1 and me.medifecha >=to_date('{3}','YYYY-MM-DD')
+			--and me.medifecha &lt;= to_date('{4}','YYYY-MM-DD')
+
+			order by medifecha asc
+
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerReporteMedidoresConsolidado</key>
+		<query>
+			select
+			h96,h95,h94, h93,h92,h91,h90,h89,h88,h87,h86,h85,h84,h83,h82,h81,h80,h79,h78,h77,h76,h75,h74,h73,h72,h71,h70,
+			h69,h68,h67,h66,h65,h64,h63,h62,h61,h60,h59,h58,h57,h56,h55,h54,h53,h52,h51,h50,h49,h48,h47,h46,h45,h44,h43,h42,h41,h40,
+			h39,h38,h37,h36,h35,h34,h33,h32,h31,h30,h29,h28,h27,h26,h25,h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13, h12,h11,h10,
+			h9,h8,h7,h6,h5,h4,h3,h2,h1,mediestado,meditotal,me.ptomedicodi,me.tipoinfocodi,medifecha medifecha,me.lectcodi,
+			eq.equipadre, eq.equicodi,
+			(case when eq.famcodi = 4 then eq.equinomb
+			else
+			(select case when x.equicodi = 0 then eq.equinomb  when x.equicodi > 0 then x.equinomb end from eq_equipo x where x.equicodi = eq.equipadre)
+			end)
+			as central,
+			eq.equinomb as equinomb, emp.emprcodi, emp.emprnomb,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, tg.tgenernomb, tg.tgenercodi
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join pr_grupo pg on pto.grupocodi = pg.grupocodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+			inner join si_fuenteenergia fe on pg.fenergcodi = fe.fenergcodi
+			inner join si_tipogeneracion tg on fe.tgenercodi = tg.tgenercodi
+			where
+			me.tipoinfocodi = 1
+			and me.lectcodi = 1
+			and pto.origlectcodi = 1
+			and (emp.emprcodi in ({0}) or '{0}' = '-1')
+			and (
+			(pg.tipogrupocodi != 10 and {1} = 1) or
+			(pg.tipogrupocodi = 10 and  {1} = 2 ) or
+			(pg.tipogrupocodi = 2 and {1} = 3 ) or
+			({1} = 0)
+			)
+			and (fe.fenergcodi in ({2}) or '{2}' = '-1')
+			and (me.medifecha >= to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			and me.medifecha &lt;= to_date('{4} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+
+			union
+			select
+			h96,h95,h94, h93,h92,h91,h90,h89,h88,h87,h86,h85,h84,h83,h82,h81,h80,h79,h78,h77,h76,h75,h74,h73,h72,h71,h70,
+			h69,h68,h67,h66,h65,h64,h63,h62,h61,h60,h59,h58,h57,h56,h55,h54,h53,h52,h51,h50,h49,h48,h47,h46,h45,h44,h43,h42,h41,h40,
+			h39,h38,h37,h36,h35,h34,h33,h32,h31,h30,h29,h28,h27,h26,h25,h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13, h12,h11,h10,
+			h9,h8,h7,h6,h5,h4,h3,h2,h1,mediestado,meditotal,me.ptomedicodi,me.tipoinfocodi,medifecha medifecha,me.lectcodi,
+			0 equipadre,0 equicodi,'' central,'' equinomb, 0 emprcodi, '' emprnomb,
+			0 fenergcodi, '' fenergnomb, '' fenergabrev, '' tgenernomb, 0 tgenercodi
+			from
+			me_medicion96 me
+			where
+			me.tipoinfocodi = 3 and ptomedicodi = 5020 and lectcodi = 1 and me.medifecha >=to_date('{3}','YYYY-MM-DD')
+			and me.medifecha &lt;= to_date('{4}','YYYY-MM-DD')
+
+			order by medifecha asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerDatosReporteMD</key>
+		<query>
+
+			select lectcodi,tipoinfocodi,ptomedicodi,meditotal,mediestado,medifecha,
+			sum(h1) h1, sum(h2) h2, sum(h3) h3, sum(h4) h4, sum(h5) h5, sum(h6) h6, sum(h7) h7, sum(h8) h8,sum(h9) h9, sum(h10) h10, sum(h11) h11, sum(h12) h12,sum(h13) h13, sum(h14) h14, sum(h15) h15, sum(h16) h16,sum(h17) h17, sum(h18) h18, sum(h19) h19, sum(h20) h20,
+			sum(h21) h21, sum(h22) h22, sum(h23) h23, sum(h24) h24, sum(h25) h25, sum(h26) h26, sum(h27) h27, sum(h28) h28,sum(h29) h29, sum(h30) h30, sum(h31) h31, sum(h32) h32,sum(h33) h33, sum(h34) h34, sum(h35) h35, sum(h36) h36,sum(h37) h37, sum(h38) h38, sum(h39) h39, sum(h40) h40,
+			sum(h41) h41, sum(h42) h42, sum(h43) h43, sum(h44) h44, sum(h45) h45, sum(h46) h46, sum(h47) h47, sum(h48) h48,sum(h49) h49, sum(h50) h50, sum(h51) h51, sum(h52) h52,sum(h53) h53, sum(h54) h54, sum(h55) h55, sum(h56) h56,sum(h57) h57, sum(h58) h58, sum(h59) h59, sum(h60) h60,
+			sum(h61) h61, sum(h62) h62, sum(h63) h63, sum(h64) h64, sum(h65) h65, sum(h66) h66, sum(h67) h67, sum(h68) h68,sum(h69) h69, sum(h70) h70, sum(h71) h71, sum(h72) h72,sum(h73) h73, sum(h74) h74, sum(h75) h75, sum(h76) h76,sum(h77) h77, sum(h78) h78, sum(h79) h79, sum(h80) h80,
+			sum(h81) h81, sum(h82) h82, sum(h83) h83, sum(h84) h84, sum(h85) h85, sum(h86) h86, sum(h87) h87, sum(h88) h88,sum(h89) h89, sum(h90) h90, sum(h91) h91, sum(h92) h92, sum(h93) h93, sum(h94) h94, sum(h95) h95, sum(h96) h96
+			from (
+
+			select
+			0 lectcodi,
+			0 Tipoinfocodi,
+			0 Ptomedicodi,
+			0 Meditotal ,
+			0 tptomedicodi,
+			0 emprcodi,
+			'A' Mediestado,
+			medifecha,
+			sum(h1) h1, sum(h2) h2, sum(h3) h3, sum(h4) h4,
+			sum(h5) h5, sum(h6) h6, sum(h7) h7, sum(h8) h8,
+			sum(h9) h9, sum(h10) h10, sum(h11) h11, sum(h12) h12,
+			sum(h13) h13, sum(h14) h14, sum(h15) h15, sum(h16) h16,
+			sum(h17) h17, sum(h18) h18, sum(h19) h19, sum(h20) h20,
+			sum(h21) h21, sum(h22) h22, sum(h23) h23, sum(h24) h24,
+			sum(h25) h25, sum(h26) h26, sum(h27) h27, sum(h28) h28,
+			sum(h29) h29, sum(h30) h30, sum(h31) h31, sum(h32) h32,
+			sum(h33) h33, sum(h34) h34, sum(h35) h35, sum(h36) h36,
+			sum(h37) h37, sum(h38) h38, sum(h39) h39, sum(h40) h40,
+			sum(h41) h41, sum(h42) h42, sum(h43) h43, sum(h44) h44,
+			sum(h45) h45, sum(h46) h46, sum(h47) h47, sum(h48) h48,
+			sum(h49) h49, sum(h50) h50, sum(h51) h51, sum(h52) h52,
+			sum(h53) h53, sum(h54) h54, sum(h55) h55, sum(h56) h56,
+			sum(h57) h57, sum(h58) h58, sum(h59) h59, sum(h60) h60,
+			sum(h61) h61, sum(h62) h62, sum(h63) h63, sum(h64) h64,
+			sum(h65) h65, sum(h66) h66, sum(h67) h67, sum(h68) h68,
+			sum(h69) h69, sum(h70) h70, sum(h71) h71, sum(h72) h72,
+			sum(h73) h73, sum(h74) h74, sum(h75) h75, sum(h76) h76,
+			sum(h77) h77, sum(h78) h78, sum(h79) h79, sum(h80) h80,
+			sum(h81) h81, sum(h82) h82, sum(h83) h83, sum(h84) h84,
+			sum(h85) h85, sum(h86) h86, sum(h87) h87, sum(h88) h88,
+			sum(h89) h89, sum(h90) h90, sum(h91) h91, sum(h92) h92,
+			sum(h93) h93, sum(h94) h94, sum(h95) h95, sum(h96) h96
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join pr_grupo pg on pto.grupocodi = pg.grupocodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+			inner join si_fuenteenergia fe on pg.fenergcodi = fe.fenergcodi
+			inner join si_tipogeneracion tg on fe.tgenercodi = tg.tgenercodi
+			where
+			me.tipoinfocodi = 1
+			and me.lectcodi = 1
+			and pto.origlectcodi = 1
+			and (emp.emprcodi in ({0}) or '{0}' = '-1')
+			and (
+			(pg.tipogrupocodi != 10 and {1} = 1) or
+			(pg.tipogrupocodi = 10 and  {1} = 2 ) or
+			(pg.tipogrupocodi = 2 and {1} = 3 ) or
+			({1} = 0)
+			)
+			and (fe.fenergcodi in ({2}) or '{2}' = '-1')
+			and (me.medifecha >= to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			and me.medifecha &lt;= to_date('{4} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+			group by 1,2,3,4,5,medifecha
+
+			union
+
+			select 0 lectcodi,0 tipoinfocodi,0 ptomedicodi,0 meditotal ,'A' mediestado,medifecha,
+			sum( -1 * 4 * h1) h1, sum( -1 * 4 * h2) h2, sum( -1 * 4 * h3) h3, sum( -1 * 4 * h4) h4,sum( -1 * 4 * h5) h5, sum( -1 * 4 * h6) h6, sum( -1 * 4 * h7) h7, sum( -1 * 4 * h8) h8,
+			sum( -1 * 4 * h9) h9, sum( -1 * 4 * h10) h10, sum( -1 * 4 * h11) h11, sum( -1 * 4 * h12) h12,sum( -1 * 4 * h13) h13, sum( -1 * 4 * h14) h14, sum( -1 * 4 * h15) h15, sum( -1 * 4 * h16) h16,
+			sum( -1 * 4 * h17) h17, sum( -1 * 4 * h18) h18, sum( -1 * 4 * h19) h19, sum( -1 * 4 * h20) h20,sum( -1 * 4 * h21) h21, sum( -1 * 4 * h22) h22, sum( -1 * 4 * h23) h23, sum( -1 * 4 * h24) h24,
+			sum( -1 * 4 * h25) h25, sum( -1 * 4 * h26) h26, sum( -1 * 4 * h27) h27, sum( -1 * 4 * h28) h28,sum( -1 * 4 * h29) h29, sum( -1 * 4 * h30) h30, sum( -1 * 4 * h31) h31, sum( -1 * 4 * h32) h32,
+			sum( -1 * 4 * h33) h33, sum( -1 * 4 * h34) h34, sum( -1 * 4 * h35) h35, sum( -1 * 4 * h36) h36,sum( -1 * 4 * h37) h37, sum( -1 * 4 * h38) h38, sum( -1 * 4 * h39) h39, sum( -1 * 4 * h40) h40,
+			sum( -1 * 4 * h41) h41, sum( -1 * 4 * h42) h42, sum( -1 * 4 * h43) h43, sum( -1 * 4 * h44) h44,sum( -1 * 4 * h45) h45, sum( -1 * 4 * h46) h46, sum( -1 * 4 * h47) h47, sum( -1 * 4 * h48) h48,
+			sum( -1 * 4 * h49) h49, sum( -1 * 4 * h50) h50, sum( -1 * 4 * h51) h51, sum( -1 * 4 * h52) h52,sum( -1 * 4 * h53) h53, sum( -1 * 4 * h54) h54, sum( -1 * 4 * h55) h55, sum( -1 * 4 * h56) h56,
+			sum( -1 * 4 * h57) h57, sum( -1 * 4 * h58) h58, sum( -1 * 4 * h59) h59, sum( -1 * 4 * h60) h60,sum( -1 * 4 * h61) h61, sum( -1 * 4 * h62) h62, sum( -1 * 4 * h63) h63, sum( -1 * 4 * h64) h64,
+			sum( -1 * 4 * h65) h65, sum( -1 * 4 * h66) h66, sum( -1 * 4 * h67) h67, sum( -1 * 4 * h68) h68,sum( -1 * 4 * h69) h69, sum( -1 * 4 * h70) h70, sum( -1 * 4 * h71) h71, sum( -1 * 4 * h72) h72,
+			sum( -1 * 4 * h73) h73, sum( -1 * 4 * h74) h74, sum( -1 * 4 * h75) h75, sum( -1 * 4 * h76) h76,sum( -1 * 4 * h77) h77, sum( -1 * 4 * h78) h78, sum( -1 * 4 * h79) h79, sum( -1 * 4 * h80) h80,
+			sum( -1 * 4 * h81) h81, sum( -1 * 4 * h82) h82, sum( -1 * 4 * h83) h83, sum( -1 * 4 * h84) h84,sum( -1 * 4 * h85) h85, sum( -1 * 4 * h86) h86, sum( -1 * 4 * h87) h87, sum( -1 * 4 * h88) h88,
+			sum( -1 * 4 * h89) h89, sum( -1 * 4 * h90) h90, sum( -1 * 4 * h91) h91, sum( -1 * 4 * h92) h92,sum( -1 * 4 * h93) h93, sum( -1 * 4 * h94) h94, sum( -1 * 4 * h95) h95, sum( -1 * 4 * h96) h96
+			from
+			me_medicion96 m96
+			where m96.ptomedicodi = 5020 and m96.medifecha >= to_date('{3}','YYYY-MM-DD') and
+			to_date('{4}','YYYY-MM-DD') >= m96.medifecha and m96.tipoinfocodi = 3 and
+			m96.lectcodi = 1
+			group by 1,2,3,4,5,medifecha
+			)
+			group by lectcodi,tipoinfocodi,ptomedicodi,meditotal,mediestado,medifecha
+			order by medifecha
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerMDPorRecursoEnergetico</key>
+		<query>
+			select
+			0 lectcodi,
+			0 tipoinfocodi,
+			0 ptomedicodi,
+			0 meditotal ,
+			0 tptomedicodi,
+			0 emprcodi,
+			'A' mediestado,
+			medifecha,
+			fe.fenergcodi,
+			fe.fenergnomb,
+			fe.fenercolor,
+			sum(h1) h1, sum(h2) h2, sum(h3) h3, sum(h4) h4,
+			sum(h5) h5, sum(h6) h6, sum(h7) h7, sum(h8) h8,
+			sum(h9) h9, sum(h10) h10, sum(h11) h11, sum(h12) h12,
+			sum(h13) h13, sum(h14) h14, sum(h15) h15, sum(h16) h16,
+			sum(h17) h17, sum(h18) h18, sum(h19) h19, sum(h20) h20,
+			sum(h21) h21, sum(h22) h22, sum(h23) h23, sum(h24) h24,
+			sum(h25) h25, sum(h26) h26, sum(h27) h27, sum(h28) h28,
+			sum(h29) h29, sum(h30) h30, sum(h31) h31, sum(h32) h32,
+			sum(h33) h33, sum(h34) h34, sum(h35) h35, sum(h36) h36,
+			sum(h37) h37, sum(h38) h38, sum(h39) h39, sum(h40) h40,
+			sum(h41) h41, sum(h42) h42, sum(h43) h43, sum(h44) h44,
+			sum(h45) h45, sum(h46) h46, sum(h47) h47, sum(h48) h48,
+			sum(h49) h49, sum(h50) h50, sum(h51) h51, sum(h52) h52,
+			sum(h53) h53, sum(h54) h54, sum(h55) h55, sum(h56) h56,
+			sum(h57) h57, sum(h58) h58, sum(h59) h59, sum(h60) h60,
+			sum(h61) h61, sum(h62) h62, sum(h63) h63, sum(h64) h64,
+			sum(h65) h65, sum(h66) h66, sum(h67) h67, sum(h68) h68,
+			sum(h69) h69, sum(h70) h70, sum(h71) h71, sum(h72) h72,
+			sum(h73) h73, sum(h74) h74, sum(h75) h75, sum(h76) h76,
+			sum(h77) h77, sum(h78) h78, sum(h79) h79, sum(h80) h80,
+			sum(h81) h81, sum(h82) h82, sum(h83) h83, sum(h84) h84,
+			sum(h85) h85, sum(h86) h86, sum(h87) h87, sum(h88) h88,
+			sum(h89) h89, sum(h90) h90, sum(h91) h91, sum(h92) h92,
+			sum(h93) h93, sum(h94) h94, sum(h95) h95, sum(h96) h96
+			from
+			me_medicion96 m96
+			inner join me_ptomedicion pto on pto.ptomedicodi = m96.ptomedicodi
+			inner join pr_grupo gr on gr.grupocodi = pto.grupocodi
+			inner join si_fuenteenergia fe on fe.fenergcodi = gr.fenergcodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end)
+			inner join si_tipogeneracion tg on fe.tgenercodi = tg.tgenercodi
+			where medifecha >= to_date('{0}','YYYY-MM-DD') and to_date('{1}','YYYY-MM-DD') >= medifecha
+			and pto.origlectcodi = 1 and m96.tipoinfocodi = 1 and m96.lectcodi = 1
+			and (emp.emprcodi in ({2}) or '{2}' = '-1')
+			and (
+			(gr.tipogrupocodi != 10 and {4} = 1) or
+			(gr.tipogrupocodi = 10 and  {4} = 2 ) or
+			(gr.tipogrupocodi = 2 and {4} = 3 ) or
+			({4} = 0)
+			)
+			and (tg.tgenercodi in ({3}) or '{3}' = '-1')
+			group by 1,2,3,4,5,medifecha, fe.fenergcodi, fe.fenergnomb,
+			fe.fenercolor
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerMDPorRecursoEnergeticoRER</key>
+		<query>
+			select
+			0 lectcodi,
+			0 tipoinfocodi,
+			0 ptomedicodi,
+			0 meditotal ,
+			0 tptomedicodi,
+			0 emprcodi,
+			'A' mediestado,
+			medifecha,
+			fe.fenergcodi,
+			fe.fenergnomb,
+			fe.fenercolor,
+			gr.tipogenerrer,
+			sum(h1) h1, sum(h2) h2, sum(h3) h3, sum(h4) h4,
+			sum(h5) h5, sum(h6) h6, sum(h7) h7, sum(h8) h8,
+			sum(h9) h9, sum(h10) h10, sum(h11) h11, sum(h12) h12,
+			sum(h13) h13, sum(h14) h14, sum(h15) h15, sum(h16) h16,
+			sum(h17) h17, sum(h18) h18, sum(h19) h19, sum(h20) h20,
+			sum(h21) h21, sum(h22) h22, sum(h23) h23, sum(h24) h24,
+			sum(h25) h25, sum(h26) h26, sum(h27) h27, sum(h28) h28,
+			sum(h29) h29, sum(h30) h30, sum(h31) h31, sum(h32) h32,
+			sum(h33) h33, sum(h34) h34, sum(h35) h35, sum(h36) h36,
+			sum(h37) h37, sum(h38) h38, sum(h39) h39, sum(h40) h40,
+			sum(h41) h41, sum(h42) h42, sum(h43) h43, sum(h44) h44,
+			sum(h45) h45, sum(h46) h46, sum(h47) h47, sum(h48) h48,
+			sum(h49) h49, sum(h50) h50, sum(h51) h51, sum(h52) h52,
+			sum(h53) h53, sum(h54) h54, sum(h55) h55, sum(h56) h56,
+			sum(h57) h57, sum(h58) h58, sum(h59) h59, sum(h60) h60,
+			sum(h61) h61, sum(h62) h62, sum(h63) h63, sum(h64) h64,
+			sum(h65) h65, sum(h66) h66, sum(h67) h67, sum(h68) h68,
+			sum(h69) h69, sum(h70) h70, sum(h71) h71, sum(h72) h72,
+			sum(h73) h73, sum(h74) h74, sum(h75) h75, sum(h76) h76,
+			sum(h77) h77, sum(h78) h78, sum(h79) h79, sum(h80) h80,
+			sum(h81) h81, sum(h82) h82, sum(h83) h83, sum(h84) h84,
+			sum(h85) h85, sum(h86) h86, sum(h87) h87, sum(h88) h88,
+			sum(h89) h89, sum(h90) h90, sum(h91) h91, sum(h92) h92,
+			sum(h93) h93, sum(h94) h94, sum(h95) h95, sum(h96) h96
+			from
+			me_medicion96 m96
+			inner join me_ptomedicion pto on pto.ptomedicodi = m96.ptomedicodi
+			inner join pr_grupo gr on gr.grupocodi = pto.grupocodi
+			inner join si_fuenteenergia fe on fe.fenergcodi = gr.fenergcodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end)
+			inner join si_tipogeneracion tg on fe.tgenercodi = tg.tgenercodi
+			where medifecha >= to_date('{0}','YYYY-MM-DD') and to_date('{1}','YYYY-MM-DD') >= medifecha
+			and pto.origlectcodi = 1 and m96.tipoinfocodi = 1 and m96.lectcodi = 1
+			and (emp.emprcodi in ({2}) or '{2}' = '-1')
+			and (
+			(gr.tipogrupocodi != 10 and {4} = 1) or
+			(gr.tipogrupocodi = 10 and  {4} = 2 ) or
+			(gr.tipogrupocodi = 2 and {4} = 3 ) or
+			({4} = 0)
+			)
+			and (tg.tgenercodi in ({3}) or '{3}' = '-1')
+			and gr.grupointegrante = 'S'
+			group by 1,2,3,4,5,medifecha, fe.fenergcodi, fe.fenergnomb,
+			fe.fenercolor,gr.tipogenerrer
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerFechaMaximaDemanda</key>
+		<query>
+			select medifecha from (
+			select
+			medifecha,
+			case
+			when
+			(
+			(extract( year from medifecha) = 2015 and extract( month from medifecha) >= 4) or
+			(extract( year from medifecha) = 2016 and extract( month from medifecha) &lt;= 4 ) or
+			(extract( year from medifecha) = 2016 and extract( month from medifecha) >= 7) or
+			(extract( year from medifecha) = 2017 and extract( month from medifecha) &lt;= 4 )
+			)
+			then
+			greatest (sum(h69), sum(h70),
+			sum(h71), sum(h72), sum(h73), sum(h74), sum(h75), sum(h76), sum(h77), sum(h78), sum(h79), sum(h80),
+			sum(h81), sum(h82), sum(h83), sum(h84), sum(h85), sum(h86), sum(h87), sum(h88), sum(h89), sum(h90),
+			sum(h91), sum(h92), sum(h93))
+			else
+			greatest (sum(h1), sum(h2), sum(h3), sum(h4), sum(h5), sum(h6), sum(h7), sum(h8), sum(h9), sum(h10),
+			sum(h11), sum(h12), sum(h13), sum(h14), sum(h15), sum(h16), sum(h17), sum(h18), sum(h19), sum(h20),
+			sum(h21), sum(h22), sum(h23), sum(h24), sum(h25), sum(h26), sum(h27), sum(h28), sum(h29), sum(h30),
+			sum(h31), sum(h32), sum(h33), sum(h34), sum(h35), sum(h36), sum(h37), sum(h38), sum(h39), sum(h40),
+			sum(h41), sum(h42), sum(h43), sum(h44), sum(h45), sum(h46), sum(h47), sum(h48), sum(h49), sum(h50),
+			sum(h51), sum(h52), sum(h53), sum(h54), sum(h55), sum(h56), sum(h57), sum(h58), sum(h59), sum(h60),
+			sum(h61), sum(h62), sum(h63), sum(h64), sum(h65), sum(h66), sum(h67), sum(h68), sum(h69), sum(h70),
+			sum(h71), sum(h72), sum(h73), sum(h74), sum(h75), sum(h76), sum(h77), sum(h78), sum(h79), sum(h80),
+			sum(h81), sum(h82), sum(h83), sum(h84), sum(h85), sum(h86), sum(h87), sum(h88), sum(h89), sum(h90),
+			sum(h91), sum(h92), sum(h93), sum(h94), sum(h95), sum(h96)) end  as maximo
+			from
+			me_medicion96 m96
+			inner join me_ptomedicion pto on pto.ptomedicodi = m96.ptomedicodi
+			inner join pr_grupo gr on gr.grupocodi = pto.grupocodi
+			inner join si_fuenteenergia fe on fe.fenergcodi = gr.fenergcodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end)
+			inner join si_tipogeneracion tg on fe.tgenercodi = tg.tgenercodi
+			where medifecha >= to_date('{0}','YYYY-MM-DD') and to_date('{1}','YYYY-MM-DD') >= medifecha
+			and pto.origlectcodi = 1 and m96.tipoinfocodi = 1 and m96.lectcodi = 1
+			and (emp.emprcodi in ({2}) or '{2}' = '-1')
+			and (
+			(gr.tipogrupocodi != 10 and {4} = 1) or
+			(gr.tipogrupocodi = 10 and  {4} = 2 ) or
+			(gr.tipogrupocodi = 2 and {4} = 3 ) or
+			({4} = 0)
+			)
+			and (tg.tgenercodi in ({3}) or '{3}' = '-1')
+			group by medifecha
+			order by 2 desc
+			)
+			where rownum = 1
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerFechaMinimaDemanda</key>
+		<query>
+			select medifecha from (
+			select
+			medifecha,
+			least (sum(h1), sum(h2), sum(h3), sum(h4), sum(h5), sum(h6), sum(h7), sum(h8), sum(h9), sum(h10),
+			sum(h11), sum(h12), sum(h13), sum(h14), sum(h15), sum(h16), sum(h17), sum(h18), sum(h19), sum(h20),
+			sum(h21), sum(h22), sum(h23), sum(h24), sum(h25), sum(h26), sum(h27), sum(h28), sum(h29), sum(h30),
+			sum(h31), sum(h32), sum(h33), sum(h34), sum(h35), sum(h36), sum(h37), sum(h38), sum(h39), sum(h40),
+			sum(h41), sum(h42), sum(h43), sum(h44), sum(h45), sum(h46), sum(h47), sum(h48), sum(h49), sum(h50),
+			sum(h51), sum(h52), sum(h53), sum(h54), sum(h55), sum(h56), sum(h57), sum(h58), sum(h59), sum(h60),
+			sum(h61), sum(h62), sum(h63), sum(h64), sum(h65), sum(h66), sum(h67), sum(h68), sum(h69), sum(h70),
+			sum(h71), sum(h72), sum(h73), sum(h74), sum(h75), sum(h76), sum(h77), sum(h78), sum(h79), sum(h80),
+			sum(h81), sum(h82), sum(h83), sum(h84), sum(h85), sum(h86), sum(h87), sum(h88), sum(h89), sum(h90),
+			sum(h91), sum(h92), sum(h93), sum(h94), sum(h95), sum(h96)) as minimo
+			from
+			me_medicion96 m96
+			inner join me_ptomedicion pto on pto.ptomedicodi = m96.ptomedicodi
+			inner join pr_grupo gr on gr.grupocodi = pto.grupocodi
+			inner join si_fuenteenergia fe on fe.fenergcodi = gr.fenergcodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end)
+			inner join si_tipogeneracion tg on fe.tgenercodi = tg.tgenercodi
+			where medifecha >= to_date('{0}','YYYY-MM-DD') and to_date('{1}','YYYY-MM-DD') >= medifecha
+			and pto.origlectcodi = 1 and m96.tipoinfocodi = 1 and m96.lectcodi = 1
+			and (emp.emprcodi in ({2}) or '{2}' = '-1')
+			and (
+			(gr.tipogrupocodi != 10 and {4} = 1) or
+			(gr.tipogrupocodi = 10 and  {4} = 2 ) or
+			(gr.tipogrupocodi = 2 and {4} = 3 ) or
+			({4} = 0)
+			)
+			and (tg.tgenercodi in ({3}) or '{3}' = '-1')
+			group by medifecha
+			order by 2 asc
+			)
+			where rownum = 1
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>Delete</key>
+		<query>
+			delete from me_medicion96
+			where
+			ptomedicodi = :ptomedicodi and
+			tipoinfocodi = :tipoinfocodi and
+			medifecha = :medifecha and
+			lectcodi = :lectcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetByCriteria</key>
+		<query>
+			select
+			me.*
+			from
+			me_medicion96 me
+			where
+			me.tipoinfocodi = {0} and ptomedicodi = {1} and lectcodi = {2} and me.medifecha >=to_date('{3}','YYYY-MM-DD')
+			and me.medifecha &lt;= to_date('{4}','YYYY-MM-DD')
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerEnvioPorEmpresa</key>
+		<query>
+			select me.*
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			where
+			me.tipoinfocodi in (1,2)
+			and me.lectcodi = 1
+			and pto.origlectcodi in (1,14)
+			and (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else eq.emprcodi end) = {0}
+			and EXTRACT(YEAR FROM MEDIFECHA) = {1}
+			and EXTRACT(MONTH FROM MEDIFECHA) = {2}
+			order by me.medifecha asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerEnvioInterconexion</key>
+		<query>
+			select me.*,eq.equinomb
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			where
+			me.tipoinfocodi in (3,4,5,9)
+			and me.lectcodi = 1
+			and pto.origlectcodi = 7
+			and (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else eq.emprcodi end) = {0}
+			AND me.MEDIFECHA = to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			order by me.medifecha asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerHistoricoInterconexion</key>
+		<query>
+			select me.*,eq.equinomb, eq.equicodi
+			from me_medicion96 me
+			inner join me_reporptomed rmed on rmed.ptomedicodi = me.ptomedicodi and rmed.tipoinfocodi = me.tipoinfocodi
+			inner join me_reporte rep on rep.reporcodi = rmed.reporcodi and rep.lectcodi = me.lectcodi
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			where
+			rep.reporcodi = {0}
+			AND me.MEDIFECHA >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			AND me.MEDIFECHA &lt;= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			order by me.medifecha, rmed.repptoorden asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>HistoricoPagInterconexion</key>
+		<query>
+			select * from (
+			select
+			me.*,
+			(row_number() over (order by me.medifecha)) as r
+			from me_medicion96 me
+			inner join me_reporptomed rmed on rmed.ptomedicodi = me.ptomedicodi and rmed.tipoinfocodi = me.tipoinfocodi
+			inner join me_reporte rep on rep.reporcodi = rmed.reporcodi and rep.lectcodi = me.lectcodi
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			where
+			rep.reporcodi = {0}
+			AND me.MEDIFECHA >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			AND me.MEDIFECHA &lt;= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			)
+			where r > 4*({3}-1) and r &lt;= 4*{3}
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>TotalHistoricoInterconexion</key>
+		<query>
+			select count(*) total
+			from me_medicion96 me
+			inner join me_reporptomed rmed on rmed.ptomedicodi = me.ptomedicodi and rmed.tipoinfocodi = me.tipoinfocodi
+			inner join me_reporte rep on rep.reporcodi = rmed.reporcodi and rep.lectcodi = me.lectcodi
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			where
+			rep.reporcodi = {0}
+			AND me.MEDIFECHA >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			AND me.MEDIFECHA &lt;= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>DeleteEnvioInterconexion</key>
+		<query>
+			delete from me_medicion96 where lectcodi = 1 and MEDIFECHA = to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+			and ptomedicodi = 5020
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>DeleteEnvioPorEmpresa</key>
+		<query>
+			delete from me_medicion96 where lectcodi = 1 and extract(year from medifecha) = {0}
+			and extract(month from medifecha) = {1} and
+			ptomedicodi in (select a.ptomedicodi from me_ptomedicion a
+			inner join eq_equipo b on a.equicodi = b.equicodi where (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else b.emprcodi end) = {2})
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>DeleteEnvioArchivo</key>
+		<query>
+			delete from me_medicion96 where lectcodi = {0} and medifecha >= to_date('{1}','YYYY-MM-DD') and
+			medifecha &lt;= to_date('{2}','YYYY-MM-DD') and emprcodi = {4} and ptomedicodi in (
+			--Puntos de medición de la empresa segun la fecha de inicio
+			SELECT distinct ptomedicodi FROM
+			(
+			SELECT HP.HPTOCODI,vwpt.HPTDATFECHA ,hp.ptomedicodi, pto.PTOMEDIELENOMB
+			, ROW_NUMBER() OVER(PARTITION BY HP.HPTOCODI ORDER BY HP.HPTOCODI,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+			,vwpt.HPTDATPTOESTADO
+			,CASE WHEN vwpt.HPTDATPTOESTADO = 'F' THEN 0 ELSE HP.HPTOACTIVO END AS HPTOACTIVO
+			from me_hojaptomed HP
+			inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+			inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= TO_DATE('{1}','YYYY-MM-DD') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+			WHERE hp.formatcodi = {3} and vwpt.EMPRCODI = {4}
+			)rview
+			WHERE NUM_VIEW = 1
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>DeleteEnvioArchivo3</key>
+		<query>
+			delete from me_medicion96 where lectcodi = {0} and medifecha >= to_date('{1}','YYYY-MM-DD') and
+			medifecha &lt;= to_date('{2}','YYYY-MM-DD') and ptomedicodi in (
+			--Puntos de medición de la empresa segun la fecha de inicio
+			SELECT distinct ptomedicodi FROM
+			(
+			SELECT HP.HPTOCODI,vwpt.HPTDATFECHA ,hp.ptomedicodi, pto.PTOMEDIELENOMB
+			, ROW_NUMBER() OVER(PARTITION BY HP.HPTOCODI ORDER BY HP.HPTOCODI,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+			,vwpt.HPTDATPTOESTADO
+			,CASE WHEN vwpt.HPTDATPTOESTADO = 'F' THEN 0 ELSE HP.HPTOACTIVO END AS HPTOACTIVO
+			from me_hojaptomed HP
+			inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+			inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= TO_DATE('{5}','YYYY-MM-DD') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+			WHERE hp.formatcodi = {3} and vwpt.EMPRCODI = {4}
+			)rview
+			WHERE NUM_VIEW = 1
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>DeleteFechas</key>
+		<query>
+			delete from me_medicion96
+			where
+			ptomedicodi = :ptomedicodi and
+			tipoinfocodi = :tipoinfocodi and
+			medifecha >= :medifecha and
+			medifecha &lt;= :medifecha and
+			lectcodi = :lectcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ConsolidadoEnvioEmpresa</key>
+		<query>
+			select d.equicodi idCentral,d.equinomb central,c.equinomb GrupSSAA,g.tgenercodi tipoGeneracion,sum(a.meditotal)/4 total
+			from me_medicion96 a,me_ptomedicion b, eq_equipo c, eq_equipo d,pr_grupo e,SI_FUENTEENERGIA f,SI_TIPOGENERACION g
+			where  a.lectcodi = 1 and a.tipoinfocodi = 1 and
+			a.ptomedicodi = b.ptomedicodi and b.origlectcodi = 1 and  b.equicodi = c.equicodi and
+			c.equipadre = d.equicodi and c.grupocodi = e.grupocodi and e.fenergcodi = f.fenergcodi and f.tgenercodi = g.tgenercodi
+			and (case when coalesce(a.EMPRCODI, -1) > 0 then a.EMPRCODI else b.emprcodi end) = {0} and  extract(year from a.medifecha) = {1} and
+			extract(month from a.medifecha) = {2} group by d.equicodi,d.equinomb,c.equinomb,g.tgenercodi
+			union
+			select e.equicodi,e.equinomb,c.equinomb,d.TIPORELCODI,sum(a.meditotal)/4 total
+			from me_medicion96 a,me_ptomedicion b, eq_equipo c, EQ_EQUIREL d,eq_equipo e
+			where  a.lectcodi = 1 and a.tipoinfocodi = 1 and
+			a.ptomedicodi = b.ptomedicodi and b.origlectcodi = 14 and  b.equicodi = c.equicodi and
+			c.equicodi = d.equicodi1 and d.equicodi2 = e.equicodi and (case when coalesce(a.EMPRCODI, -1) > 0 then a.EMPRCODI else b.emprcodi end) = {0} and
+			extract(year from a.medifecha) = {1} and
+			extract(month from a.medifecha) =  {2} group by e.equicodi,e.equinomb,c.equinomb,d.TIPORELCODI
+
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetEnvioArchivo</key>
+		<query>
+			select (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end) as emprcodi, me.* from me_medicion96 me
+			inner join me_hojaptomed hp on hp.ptomedicodi = me.ptomedicodi and hp.tipoinfocodi = me.tipoinfocodi
+			inner join me_formato fh on fh.formatcodi = hp.formatcodi and fh.lectcodi = me.lectcodi
+			inner join me_ptomedicion pto on pto.ptomedicodi = hp.ptomedicodi
+			where hp.formatcodi = {0} and (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end) = {1} and medifecha >= to_date('{2}','YYYY-MM-DD') AND
+			medifecha &lt;= to_date('{3}','YYYY-MM-DD')
+			order by hp.hptoorden asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetEnvioArchivoSinHojaPuntoMed</key>
+		<query>
+			select
+			*
+			from
+			me_medicion96 a,
+			me_ptomedicion b,
+			me_formato c
+			where
+			a.ptomedicodi=b.ptomedicodi and c.lectcodi=a.lectcodi and c.formatcodi={0}
+			and medifecha >= to_date('{1}','YYYY-MM-DD') AND
+			medifecha &lt;= to_date('{2}','YYYY-MM-DD')
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerNroRegistrosMedDistribucion</key>
+		<query>
+			select count(*)
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+			inner join eq_area ar on eq.areacodi = ar.areacodi
+			where
+			me.tipoinfocodi = 1
+			and me.lectcodi = 51
+			and pto.origlectcodi = 6
+			and (emp.emprcodi in ({0}) or '{0}' = '-1')
+			and (me.medifecha >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and me.medifecha &lt;= to_date('{2} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerConsultaMedDistribucion</key>
+		<query>
+			select emprcodi2 as emprcodi, a.* from (
+			select me.*,
+			eq.equinomb,
+			emp.emprnomb, emp.emprcodi as emprcodi2,
+			(select equitension from eq_equipo where equicodi = pto.codref) equitension,
+			ar.areanomb,
+			(    select valor from eq_propequi pe where pe.propcodi = 1064 and pe.equicodi = eq.equicodi
+			and fechapropequi = (select max(fechapropequi)from eq_propequi where propcodi = 1064 and equicodi = eq.equicodi)
+			) areaoperativa,
+			(row_number() over (order by me.medifecha asc, emp.emprnomb asc)) as r
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+			inner join eq_area ar on eq.areacodi = ar.areacodi
+			where
+			me.tipoinfocodi = 1
+			and me.lectcodi = 51
+			and pto.origlectcodi = 6
+			and (emp.emprcodi in ({0}) or '{0}' = '-1')
+			and (me.medifecha >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and me.medifecha &lt;= to_date('{2} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+			)a
+			where r >= ((({3}-1) * {4}) + 1) and r &lt; (({3} * {4}) + 1 )
+			order by medifecha asc, emprnomb asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>TotalConsultaMesDistribucion</key>
+		<query>
+			select
+			sum(meditotal) as meditotal,
+			sum(h1) h1, sum(h2) h2, sum(h3) h3, sum(h4) h4,
+			sum(h5) h5, sum(h6) h6, sum(h7) h7, sum(h8) h8,
+			sum(h9) h9, sum(h10) h10, sum(h11) h11, sum(h12) h12,
+			sum(h13) h13, sum(h14) h14, sum(h15) h15, sum(h16) h16,
+			sum(h17) h17, sum(h18) h18, sum(h19) h19, sum(h20) h20,
+			sum(h21) h21, sum(h22) h22, sum(h23) h23, sum(h24) h24,
+			sum(h25) h25, sum(h26) h26, sum(h27) h27, sum(h28) h28,
+			sum(h29) h29, sum(h30) h30, sum(h31) h31, sum(h32) h32,
+			sum(h33) h33, sum(h34) h34, sum(h35) h35, sum(h36) h36,
+			sum(h37) h37, sum(h38) h38, sum(h39) h39, sum(h40) h40,
+			sum(h41) h41, sum(h42) h42, sum(h43) h43, sum(h44) h44,
+			sum(h45) h45, sum(h46) h46, sum(h47) h47, sum(h48) h48,
+			sum(h49) h49, sum(h50) h50, sum(h51) h51, sum(h52) h52,
+			sum(h53) h53, sum(h54) h54, sum(h55) h55, sum(h56) h56,
+			sum(h57) h57, sum(h58) h58, sum(h59) h59, sum(h60) h60,
+			sum(h61) h61, sum(h62) h62, sum(h63) h63, sum(h64) h64,
+			sum(h65) h65, sum(h66) h66, sum(h67) h67, sum(h68) h68,
+			sum(h69) h69, sum(h70) h70, sum(h71) h71, sum(h72) h72,
+			sum(h73) h73, sum(h74) h74, sum(h75) h75, sum(h76) h76,
+			sum(h77) h77, sum(h78) h78, sum(h79) h79, sum(h80) h80,
+			sum(h81) h81, sum(h82) h82, sum(h83) h83, sum(h84) h84,
+			sum(h85) h85, sum(h86) h86, sum(h87) h87, sum(h88) h88,
+			sum(h89) h89, sum(h90) h90, sum(h91) h91, sum(h92) h92,
+			sum(h93) h93, sum(h94) h94, sum(h95) h95, sum(h96) h96
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+			inner join eq_area ar on eq.areacodi = ar.areacodi
+			where
+			me.tipoinfocodi = 1
+			and me.lectcodi = 51
+			and pto.origlectcodi = 6
+			and (emp.emprcodi in ({0}) or '{0}' = '-1')
+			and (me.medifecha >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and me.medifecha &lt;= to_date('{2} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerExportacionConsultaMedDistribucion</key>
+		<query>
+			select emp.emprcodi,me.*,
+			eq.equinomb,
+			emp.emprnomb,
+			(select equitension from eq_equipo where equicodi = pto.codref) equitension,
+			ar.areanomb,
+			(    select valor from eq_propequi pe where pe.propcodi = 1064 and pe.equicodi = eq.equicodi
+			and fechapropequi = (select max(fechapropequi)from eq_propequi where propcodi = 1064 and equicodi = eq.equicodi)
+			) areaoperativa,
+			(row_number() over (order by me.medifecha asc, emp.emprnomb asc)) as r
+			from me_medicion96 me
+			inner join me_ptomedicion pto on me.ptomedicodi = pto.ptomedicodi
+			inner join eq_equipo eq on pto.equicodi = eq.equicodi
+			inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+			inner join eq_area ar on eq.areacodi = ar.areacodi
+			where
+			me.tipoinfocodi = 1
+			and me.lectcodi = 51
+			and pto.origlectcodi = 6
+			and (emp.emprcodi in ({0}) or '{0}' = '-1')
+			and (me.medifecha >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and me.medifecha &lt;= to_date('{2} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>Update</key>
+		<query>
+			update me_medicion96
+			set
+			meditotal = :meditotal,
+			mediestado = :mediestado,
+			h1 = :h1,
+			h2 = :h2,
+			h3 = :h3,
+			h4 = :h4,
+			h5 = :h5,
+			h6 = :h6,
+			h7 = :h7,
+			h8 = :h8,
+			h9 = :h9,
+			h10 = :h10,
+			h11 = :h11,
+			h12 = :h12,
+			h13 = :h13,
+			h14 = :h14,
+			h15 = :h15,
+			h16 = :h16,
+			h17 = :h17,
+			h18 = :h18,
+			h19 = :h19,
+			h20 = :h20,
+			h21 = :h21,
+			h22 = :h22,
+			h23 = :h23,
+			h24 = :h24,
+			h25 = :h25,
+			h26 = :h26,
+			h27 = :h27,
+			h28 = :h28,
+			h29 = :h29,
+			h30 = :h30,
+			h31 = :h31,
+			h32 = :h32,
+			h33 = :h33,
+			h34 = :h34,
+			h35 = :h35,
+			h36 = :h36,
+			h37 = :h37,
+			h38 = :h38,
+			h39 = :h39,
+			h40 = :h40,
+			h41 = :h41,
+			h42 = :h42,
+			h43 = :h43,
+			h44 = :h44,
+			h45 = :h45,
+			h46 = :h46,
+			h47 = :h47,
+			h48 = :h48,
+			h49 = :h49,
+			h50 = :h50,
+			h51 = :h51,
+			h52 = :h52,
+			h53 = :h53,
+			h54 = :h54,
+			h55 = :h55,
+			h56 = :h56,
+			h57 = :h57,
+			h58 = :h58,
+			h59 = :h59,
+			h60 = :h60,
+			h61 = :h61,
+			h62 = :h62,
+			h63 = :h63,
+			h64 = :h64,
+			h65 = :h65,
+			h66 = :h66,
+			h67 = :h67,
+			h68 = :h68,
+			h69 = :h69,
+			h70 = :h70,
+			h71 = :h71,
+			h72 = :h72,
+			h73 = :h73,
+			h74 = :h74,
+			h75 = :h75,
+			h76 = :h76,
+			h77 = :h77,
+			h78 = :h78,
+			h79 = :h79,
+			h80 = :h80,
+			h81 = :h81,
+			h82 = :h82,
+			h83 = :h83,
+			h84 = :h84,
+			h85 = :h85,
+			h86 = :h86,
+			h87 = :h87,
+			h88 = :h88,
+			h89 = :h89,
+			h90 = :h90,
+			h91 = :h91,
+			h92 = :h92,
+			h93 = :h93,
+			h94 = :h94,
+			h95 = :h95,
+			h96 = :h96
+			where
+			lectcodi = :lectcodi and
+			medifecha = :medifecha and
+			tipoinfocodi = :tipoinfocodi and
+			ptomedicodi = :ptomedicodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetById</key>
+		<query>
+			select
+			*
+			from
+			me_medicion96
+			where
+			lectcodi = :lectcodi and
+			medifecha = :medifecha and
+			tipoinfocodi = :tipoinfocodi and
+			ptomedicodi = :ptomedicodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetByPtoMedicion</key>
+		<query>
+			select
+			*
+			from
+			me_medicion96
+			where
+			ptomedicodi = :ptomedicodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerConsultaWeb</key>
+		<query>
+			select
+			empresa.emprcodi,
+			medicion.*,
+			empresa.emprnomb,
+			tipo.tgenernomb,
+			grupo.gruponomb,
+			case fuente.fenergnomb
+			when 'CARBON' then 'CARBÓN'
+			when 'AGUA' then 'HÍDRICO'
+			when 'BIOGAS' then 'BIOGÁS'
+			when 'EOLICA' then 'EÓLICA'
+			else fuente.fenergnomb end as fenergnomb
+			from me_medicion96 medicion
+			inner join me_ptomedicion punto on medicion.ptomedicodi = punto.ptomedicodi
+			inner join si_empresa empresa on empresa.emprcodi = (case when coalesce(medicion.EMPRCODI, -1) > 0 then medicion.EMPRCODI else punto.emprcodi end)
+			inner join pr_grupo grupo on punto.grupocodi = grupo.grupocodi
+			inner join si_fuenteenergia fuente on grupo.fenergcodi = fuente.fenergcodi
+			inner join si_tipogeneracion tipo on fuente.tgenercodi = tipo.tgenercodi
+			where
+			medicion.medifecha >= to_date('{0}','YYYY-MM-DD') and
+			medicion.medifecha &lt;= to_date('{1}','YYYY-MM-DD') and
+			medicion.lectcodi = 1 and
+			punto.origlectcodi = 1 and
+			medicion.tipoinfocodi = 1 and
+			grupo.tipogrupocodi != 10
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerConsultaWebReporte</key>
+		<query>
+			select
+			medicion.medifecha,
+			empresa.emprcodi,
+			empresa.emprnomb,
+			grupo.grupocodi,
+			grupo.gruponomb,
+			tipo.tgenercodi,
+			tipo.tgenernomb,
+			fuente.fenergcodi,
+			fuente.fenergnomb,
+			round(sum(medicion.meditotal)/4,2) as meditotal
+			from me_medicion96 medicion
+			inner join me_ptomedicion punto on medicion.ptomedicodi = punto.ptomedicodi
+			inner join si_empresa empresa on empresa.emprcodi = (case when coalesce(medicion.EMPRCODI, -1) > 0 then medicion.EMPRCODI else punto.emprcodi end)
+			inner join pr_grupo grupo on punto.grupocodi = grupo.grupocodi
+			inner join si_fuenteenergia fuente on grupo.fenergcodi = fuente.fenergcodi
+			inner join si_tipogeneracion tipo on fuente.tgenercodi = tipo.tgenercodi
+			where
+			medicion.medifecha >= to_date('{0}','YYYY-MM-DD') and
+			medicion.medifecha &lt;= to_date('{1}','YYYY-MM-DD') and
+			medicion.lectcodi = 1 and
+			punto.origlectcodi = 1 and
+			medicion.tipoinfocodi = 1 and
+			grupo.tipogrupocodi != 10
+			group by
+			medicion.medifecha,
+			empresa.emprcodi,
+			empresa.emprnomb,
+			grupo.grupocodi,
+			grupo.gruponomb,
+			tipo.tgenercodi,
+			tipo.tgenernomb,
+			fuente.fenergcodi,
+			fuente.fenergnomb
+			order by
+			medicion.medifecha asc,
+			empresa.emprnomb asc,
+			grupo.gruponomb asc,
+			tipo.tgenernomb asc,
+			fuente.fenergnomb asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>PaginacionInterconexHistorico</key>
+		<query>
+			select
+			distinct medifecha fecha
+			from me_medicion96 me
+			inner join me_reporptomed rmed on rmed.ptomedicodi = me.ptomedicodi and rmed.tipoinfocodi = me.tipoinfocodi
+			inner join me_reporte rep on rep.reporcodi = rmed.reporcodi and rep.lectcodi = me.lectcodi
+			where
+			rep.reporcodi = {0}
+			AND me.MEDIFECHA >= to_date('{1}','YYYY-MM-DD HH24:MI:SS')
+			AND me.MEDIFECHA &lt;= to_date('{2}','YYYY-MM-DD HH24:MI:SS')
+			order by me.MEDIFECHA
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerDatosEjecutado</key>
+		<query>
+			SELECT pg.Gruponomb, pg.Grupocodi,m96.* FROM ME_MEDICION96 m96
+			inner join me_ptomedicion pto on m96.ptomedicodi = pto.ptomedicodi
+			inner join pr_grupo pg on pg.grupocodi = pto.grupocodi
+			WHERE medifecha = to_date('{0}','YYYY-MM-DD') and lectcodi = 1 and m96.tipoinfocodi = 1
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerObservacionesCoherenciaMensual</key>
+		<!--
+	  + Nombre: 
+		  Consulta para las observaciones de coherencia a nivel mensual de la información cargada. 
+	  + Descripción:
+		  En esta consulta se suman los consumos del mes actual y se compara con respecto a la suma de consumos del mes anterior.	
+	  -->
+		<query>
+			SELECT ptme.PTOMEDICODI
+			, ptme.PTOMEDIBARRANOMB
+			, ptme.PTOMEDIELENOMB
+			, enact.ENVIOFECHAPERIODO AS ENVIOFECHAPERIODOACT
+			, enant.ENVIOFECHAPERIODO AS ENVIOFECHAPERIODOANT
+			, meact.MEDITOTAL AS MEDITOTALACT
+			, meant.MEDITOTAL AS MEDITOTALANT
+			, meact.QMED AS QMEDACT
+			, meant.QMED AS QMEDANT
+			, ROUND(
+			(
+			(
+			meact.MEDITOTAL /
+			NULLIF(meant.MEDITOTAL, 0)
+			) - 1
+			) * 100, 2) AS VARMENSUAL
+			, ROUND(
+			(
+			(
+			(meact.MEDITOTAL / NULLIF(meact.QMED, 0)) /
+			NULLIF((meant.MEDITOTAL / NULLIF(meant.QMED, 0)) , 0)
+			) - 1
+			) * 100, 2) AS VARPROMDIARIA
+			FROM ME_ENVIO enact
+			, ME_ENVIO enant
+			, ME_PTOMEDICION ptme
+			, (
+			SELECT medi.PTOMEDICODI
+			, MIN(medi.MEDIFECHA) AS MEDIFECHA_MIN
+			, MAX(medi.MEDIFECHA) AS MEDIFECHA_MAX
+			, SUM(medi.MEDITOTAL) AS MEDITOTAL
+			, COUNT(1) AS QMED
+			FROM ME_MEDICION96 medi
+			WHERE TRUNC(medi.MEDIFECHA) BETWEEN TO_DATE('{0}', 'dd/mm/yyyy')
+			AND TO_DATE('{1}', 'dd/mm/yyyy')
+			GROUP BY medi.PTOMEDICODI) meact
+			, (
+			SELECT medi.PTOMEDICODI
+			, MIN(medi.MEDIFECHA) AS MEDIFECHA_MIN
+			, MAX(medi.MEDIFECHA) AS MEDIFECHA_MAX
+			, SUM(medi.MEDITOTAL) AS MEDITOTAL
+			, COUNT(1) AS QMED
+			FROM ME_MEDICION96 medi
+			WHERE TRUNC(medi.MEDIFECHA) BETWEEN TO_DATE('{2}', 'dd/mm/yyyy')
+			AND TO_DATE('{3}', 'dd/mm/yyyy')
+			GROUP BY medi.PTOMEDICODI) meant
+			WHERE enact.ENVIOCODI = {4}
+			AND enant.ENVIOCODI = {5}
+			AND TRUNC(enact.ENVIOFECHAINI) = TRUNC(meact.MEDIFECHA_MIN)
+			AND TRUNC(enact.ENVIOFECHAFIN) = TRUNC(meact.MEDIFECHA_MAX)
+			AND TRUNC(enant.ENVIOFECHAINI) = TRUNC(meant.MEDIFECHA_MIN)
+			AND TRUNC(enant.ENVIOFECHAFIN) = TRUNC(meant.MEDIFECHA_MAX)
+			AND ptme.PTOMEDICODI = meact.PTOMEDICODI
+			AND ptme.PTOMEDICODI = meant.PTOMEDICODI
+			AND ABS((((meact.MEDITOTAL / NULLIF(meant.MEDITOTAL, 0)) - 1 ) * 100)) >= {6}
+			AND ptme.ORIGLECTCODI = 19
+			ORDER BY ptme.PTOMEDIBARRANOMB
+		</query>
+	</Sql>
+	<Sql>
+		<key>ObtenerObservacionesCoherenciaDiaria</key>
+		<!--
+	  + Nombre: 
+		  Consulta para las observaciones de coherencia a nivel de consumo promedio en el mes. 
+	  + Descripción:
+		  En esta consulta se promedia los consumos del mes actual - Suma de Consumos del mes entre la cantidad de días del mes - y 
+		  se compara la variación con el consumo promedio del mes anterior.		  -->
+		<query>
+			SELECT ptme.PTOMEDICODI
+			, ptme.PTOMEDIBARRANOMB
+			, ptme.PTOMEDIELENOMB
+			, enact.ENVIOFECHAPERIODO AS ENVIOFECHAPERIODOACT
+			, enant.ENVIOFECHAPERIODO AS ENVIOFECHAPERIODOANT
+			, meact.MEDITOTAL AS MEDITOTALACT
+			, meant.MEDITOTAL AS MEDITOTALANT
+			, meact.QMED AS QMEDACT
+			, meant.QMED AS QMEDANT
+			, ROUND((
+			(
+			meact.MEDITOTAL /
+			NULLIF(meant.MEDITOTAL, 0)
+			) - 1
+			) * 100, 2) AS VARMENSUAL
+			, ROUND((
+			(
+			(meact.MEDITOTAL / NULLIF(meact.QMED, 0)) /
+			NULLIF((meant.MEDITOTAL / NULLIF(meant.QMED, 0)) , 0)
+			) - 1
+			) * 100, 2) AS VARPROMDIARIA
+			FROM ME_ENVIO enact
+			, ME_ENVIO enant
+			, ME_PTOMEDICION ptme
+			, (
+			SELECT medi.PTOMEDICODI
+			, MIN(medi.MEDIFECHA) AS MEDIFECHA_MIN
+			, MAX(medi.MEDIFECHA) AS MEDIFECHA_MAX
+			, SUM(medi.MEDITOTAL) AS MEDITOTAL
+			, COUNT(1) AS QMED
+			FROM ME_MEDICION96 medi
+			WHERE TRUNC(medi.MEDIFECHA) BETWEEN TO_DATE('{0}', 'dd/mm/yyyy')
+			AND TO_DATE('{1}', 'dd/mm/yyyy')
+			GROUP BY medi.PTOMEDICODI) meact
+			, (
+			SELECT medi.PTOMEDICODI
+			, MIN(medi.MEDIFECHA) AS MEDIFECHA_MIN
+			, MAX(medi.MEDIFECHA) AS MEDIFECHA_MAX
+			, SUM(medi.MEDITOTAL) AS MEDITOTAL
+			, COUNT(1) AS QMED
+			FROM ME_MEDICION96 medi
+			WHERE TRUNC(medi.MEDIFECHA) BETWEEN TO_DATE('{2}', 'dd/mm/yyyy')
+			AND TO_DATE('{3}', 'dd/mm/yyyy')
+			GROUP BY medi.PTOMEDICODI) meant
+			WHERE enact.ENVIOCODI = {4}
+			AND enant.ENVIOCODI = {5}
+			AND TRUNC(enact.ENVIOFECHAINI) = TRUNC(meact.MEDIFECHA_MIN)
+			AND TRUNC(enact.ENVIOFECHAFIN) = TRUNC(meact.MEDIFECHA_MAX)
+			AND TRUNC(enant.ENVIOFECHAINI) = TRUNC(meant.MEDIFECHA_MIN)
+			AND TRUNC(enant.ENVIOFECHAFIN) = TRUNC(meant.MEDIFECHA_MAX)
+			AND ptme.PTOMEDICODI = meact.PTOMEDICODI
+			AND ptme.PTOMEDICODI = meant.PTOMEDICODI
+			AND ABS((((meact.MEDITOTAL / NULLIF(meact.QMED, 0)) / NULLIF((meant.MEDITOTAL / NULLIF(meant.QMED, 0)) , 0)) - 1) * 100) >= {6}
+			AND ptme.ORIGLECTCODI = 19
+			ORDER BY ptme.PTOMEDIBARRANOMB
+		</query>
+	</Sql>
+
+	<!--pr16.HDT - Inicio 01/04/2018: Cambio para atender el requerimiento.-->
+	<Sql>
+		<key>ListReporteInformacion15min</key>
+		<query>
+			<!--- 	
+	    + Nombre: 
+		    Consulta para obtener la información a nive de detalle de 15 minutos. 
+	    + Descripción:
+		    Esta consulta atiende el requerimiento de información del reporte "Reporte de Información de medidores de energía de Usuarios y Empresas 
+	    de distribución" cuyo objetivo es informar al usuario interno del COES sobre la información cargada con el detalle máximo posible: 15 minutos.
+	    La consulta atiende las opciones para los Usuarios Libres y para las Empresas de Distribución.
+	
+	    + Caso especial:
+		    La consulta debe asegurar que se muestre el detalle de la información por cada mes. En caso la empresa no hubiese remitido información alguna
+	    para un mes determinado se tiene:
+	
+	    a) Para las Empresas de Distribución. 
+	       Se debe buscar la información anterior más reciente remitida por la empresa. 
+	    b) Para los Usuarios Libres:
+	       Se debe buscar la información anterior más reciente obtenida a través del Osinergmin (Proyecto Alpha). 
+    -->
+			SELECT exte.*
+			FROM (SELECT ROWNUM AS ITEM
+			, inte.*
+			FROM (
+			SELECT pees.PERIODO AS PERIODO
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN
+			CASE
+			WHEN tiem.TIPOEMPRCODI = 2 THEN
+			CASE
+			WHEN median.MEDIFECHA IS NULL THEN
+			'[Sin datos PR16]'
+			ELSE
+			'PR16: ' || TO_CHAR(median.MEDIFECHA, 'MM YYYY')
+			END
+			WHEN tiem.TIPOEMPRCODI = 4 THEN
+			CASE
+			WHEN median.MEDIFECHA IS NULL THEN
+			'[Sin datos Sicli ' || pesic.PSICLIANIOMESPERREM || ']'
+			ELSE
+			'Sicli ' || pesic.PSICLIANIOMESPERREM || ': ' || TO_CHAR(median.MEDIFECHA, 'MM YYYY')
+			END
+			ELSE
+			NULL
+			END
+			ELSE
+			pees.PERIODO
+			END AS FUENTE
+			, pees.FECHA_FILA
+			, CASE
+			WHEN ulenv.ENVIOFECHA_MAX BETWEEN pees.INI_REMISION AND pees.FIN_REMISION THEN
+			'1'
+			WHEN ulenv.ENVIOFECHA_MAX > pees.FIN_REMISION THEN
+			'2'
+			WHEN pees.INI_REMISION > ulenv.ENVIOFECHA_MAX THEN
+			'3'
+			WHEN ulenv.ENVIOFECHA_MAX IS NULL THEN
+			'4'
+			ELSE
+			'5'
+			END AS CUMPLIMIENTO
+			, eqp.OSINERGCODI AS CODIGO_CLIENTE
+			, NVL(mrem.EMPRRAZSOCIAL, ' - SIN RAZON SOCIAL - ') AS SUMINISTRADOR
+			, empr.EMPRCODI
+			, empr.EMPRRUC AS RUC_EMPRESA
+			, NVL(empr.EMPRRAZSOCIAL, ' - SIN RAZON SOCIAL - ') AS NOMBRE_EMPRESA
+			,CASE empr.TIPOEMPRCODI
+			WHEN 2 THEN
+			'ED - SEIN'
+			WHEN 4 THEN
+			ara.AREANOMB
+			END AS SUBESTACION
+			, CASE empr.TIPOEMPRCODI
+			WHEN 2 THEN
+			'ED - SEIN'
+			WHEN 4 THEN
+			TRIM(TO_CHAR(eqp.EQUITENSION, '99,999.99'))
+			END AS TENSION
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.MEDIFECHA
+			ELSE medi.MEDIFECHA
+			END AS MEDIFECHA
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.MEDITOTAL
+			ELSE medi.MEDITOTAL
+			END AS MEDITOTAL
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H1
+			ELSE medi.H1
+			END AS H1
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H2
+			ELSE medi.H2
+			END AS H2
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H3
+			ELSE medi.H3
+			END AS H3
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H4
+			ELSE medi.H4
+			END AS H4
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H5
+			ELSE medi.H5
+			END AS H5
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H6
+			ELSE medi.H6
+			END AS H6
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H7
+			ELSE medi.H7
+			END AS H7
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H8
+			ELSE medi.H8
+			END AS H8
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H9
+			ELSE medi.H9
+			END AS H9
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H10
+			ELSE medi.H10
+			END AS H10
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H11
+			ELSE medi.H11
+			END AS H11
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H12
+			ELSE medi.H12
+			END AS H12
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H13
+			ELSE medi.H13
+			END AS H13
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H14
+			ELSE medi.H14
+			END AS H14
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H15
+			ELSE medi.H15
+			END AS H15
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H16
+			ELSE medi.H16
+			END AS H16
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H17
+			ELSE medi.H17
+			END AS H17
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H18
+			ELSE medi.H18
+			END AS H18
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H19
+			ELSE medi.H19
+			END AS H19
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H20
+			ELSE medi.H20
+			END AS H20
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H21
+			ELSE medi.H21
+			END AS H21
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H22
+			ELSE medi.H22
+			END AS H22
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H23
+			ELSE medi.H23
+			END AS H23
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H24
+			ELSE medi.H24
+			END AS H24
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H25
+			ELSE medi.H25
+			END AS H25
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H26
+			ELSE medi.H26
+			END AS H26
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H27
+			ELSE medi.H27
+			END AS H27
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H28
+			ELSE medi.H28
+			END AS H28
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H29
+			ELSE medi.H29
+			END AS H29
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H30
+			ELSE medi.H30
+			END AS H30
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H31
+			ELSE medi.H31
+			END AS H31
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H32
+			ELSE medi.H32
+			END AS H32
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H33
+			ELSE medi.H33
+			END AS H33
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H34
+			ELSE medi.H34
+			END AS H34
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H35
+			ELSE medi.H35
+			END AS H35
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H36
+			ELSE medi.H36
+			END AS H36
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H37
+			ELSE medi.H37
+			END AS H37
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H38
+			ELSE medi.H38
+			END AS H38
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H39
+			ELSE medi.H39
+			END AS H39
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H40
+			ELSE medi.H40
+			END AS H40
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H41
+			ELSE medi.H41
+			END AS H41
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H42
+			ELSE medi.H42
+			END AS H42
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H43
+			ELSE medi.H43
+			END AS H43
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H44
+			ELSE medi.H44
+			END AS H44
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H45
+			ELSE medi.H45
+			END AS H45
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H46
+			ELSE medi.H46
+			END AS H46
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H47
+			ELSE medi.H47
+			END AS H47
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H48
+			ELSE medi.H48
+			END AS H48
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H49
+			ELSE medi.H49
+			END AS H49
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H50
+			ELSE medi.H50
+			END AS H50
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H51
+			ELSE medi.H51
+			END AS H51
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H52
+			ELSE medi.H52
+			END AS H52
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H53
+			ELSE medi.H53
+			END AS H53
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H54
+			ELSE medi.H54
+			END AS H54
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H55
+			ELSE medi.H55
+			END AS H55
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H56
+			ELSE medi.H56
+			END AS H56
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H57
+			ELSE medi.H57
+			END AS H57
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H58
+			ELSE medi.H58
+			END AS H58
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H59
+			ELSE medi.H59
+			END AS H59
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H60
+			ELSE medi.H60
+			END AS H60
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H61
+			ELSE medi.H61
+			END AS H61
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H62
+			ELSE medi.H62
+			END AS H62
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H63
+			ELSE medi.H63
+			END AS H63
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H64
+			ELSE medi.H64
+			END AS H64
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H65
+			ELSE medi.H65
+			END AS H65
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H66
+			ELSE medi.H66
+			END AS H66
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H67
+			ELSE medi.H67
+			END AS H67
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H68
+			ELSE medi.H68
+			END AS H68
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H69
+			ELSE medi.H69
+			END AS H69
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H70
+			ELSE medi.H70
+			END AS H70
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H71
+			ELSE medi.H71
+			END AS H71
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H72
+			ELSE medi.H72
+			END AS H72
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H73
+			ELSE medi.H73
+			END AS H73
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H74
+			ELSE medi.H74
+			END AS H74
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H75
+			ELSE medi.H75
+			END AS H75
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H76
+			ELSE medi.H76
+			END AS H76
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H77
+			ELSE medi.H77
+			END AS H77
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H78
+			ELSE medi.H78
+			END AS H78
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H79
+			ELSE medi.H79
+			END AS H79
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H80
+			ELSE medi.H80
+			END AS H80
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H81
+			ELSE medi.H81
+			END AS H81
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H82
+			ELSE medi.H82
+			END AS H82
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H83
+			ELSE medi.H83
+			END AS H83
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H84
+			ELSE medi.H84
+			END AS H84
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H85
+			ELSE medi.H85
+			END AS H85
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H86
+			ELSE medi.H86
+			END AS H86
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H87
+			ELSE medi.H87
+			END AS H87
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H88
+			ELSE medi.H88
+			END AS H88
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H89
+			ELSE medi.H89
+			END AS H89
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H90
+			ELSE medi.H90
+			END AS H90
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H91
+			ELSE medi.H91
+			END AS H91
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H92
+			ELSE medi.H92
+			END AS H92
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H93
+			ELSE medi.H93
+			END AS H93
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H94
+			ELSE medi.H94
+			END AS H94
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H95
+			ELSE medi.H95
+			END AS H95
+			, CASE
+			WHEN medi.MEDIFECHA IS NULL THEN median.H96
+			ELSE medi.H96
+			END AS H96
+			, ulenv.ENVIOCODI_CONT AS NRO_ENVIOS
+			, ulenv.ENVIOFECHA_MIN AS FECHA_PRIMER_ENVIO
+			, ulenv.ENVIOFECHA_MAX AS FECHA_ULTIMO_ENVIO
+			, pees.INI_REMISION
+			, pees.FIN_REMISION
+			, pees.INI_PERIODO
+			FROM (
+			SELECT TO_CHAR(P.FECHA,'MM YYYY') AS PERIODO, TO_DATE('{1}','DD/MM/YYYY') AS INI_PERIODO
+			,ADD_MONTHS(TO_DATE('{1}','DD/MM/YYYY'),F.FORMATMESPLAZO)+F.FORMATDIAPLAZO+F.FORMATMINPLAZO/(24*60) AS INI_REMISION
+			,ADD_MONTHS(TO_DATE('{1}','DD/MM/YYYY'),F.FORMATMESFINPLAZO)+F.FORMATDIAFINPLAZO+F.FORMATMINFINPLAZO/(24*60) AS FIN_REMISION
+			,P.FECHA AS FECHA_FILA
+			FROM ME_FORMATO F ,(SELECT TO_DATE('{1}','DD/MM/YYYY')+ROWNUM-1 AS FECHA
+			FROM DUAL
+			CONNECT BY LEVEL &#60;= (SELECT LAST_DAY(TO_DATE('{1}','DD/MM/YYYY'))- TO_DATE('{1}','DD/MM/YYYY') FROM DUAL) +1
+			)  P
+			WHERE F.FORMATCODI = {0}
+			ORDER BY 5
+			) pees
+			INNER JOIN ME_FORMATO form ON (form.FORMATCODI = {0})
+			INNER JOIN ME_PTOMEDICION ptme ON (ptme.ORIGLECTCODI = 19)
+			inner join (
+			--Puntos de medicion activos hasta de la Fecha de Inicio
+			SELECT * FROM
+			(
+			SELECT pto .Ptomedicodi, pto.codref, pto.Origlectcodi, pto.Equicodi, pto.Ptomedielenomb, pto.Ptomediestado,empr.emprcodi,empr.emprnomb,
+			vwpt.HPTDATFECHA, vwpt.HPTDATPTOESTADO, ROW_NUMBER() OVER(PARTITION BY pto.PTOMEDICODI,empr.emprcodi ORDER BY pto.PTOMEDICODI,empr.emprcodi,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+			FROM ME_PTOMEDICION pto
+			inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= TO_DATE('{1}', 'dd/mm/yyyy') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+			INNER JOIN SI_EMPRESA empr ON empr.emprcodi = vwpt.emprcodi
+			)empr
+			WHERE NUM_VIEW = 1 and HPTDATPTOESTADO = 'I' and {3} and ORIGLECTCODI = 19
+
+			UNION ALL
+
+			--Puntos de medicion activos despues de la Fecha de Inicio
+			SELECT * FROM
+			(
+			SELECT pto .Ptomedicodi, pto.codref, pto.Origlectcodi, pto.Equicodi, pto.Ptomedielenomb, pto.Ptomediestado,empr.emprcodi,empr.emprnomb,
+			vwpt.HPTDATFECHA, vwpt.HPTDATPTOESTADO, ROW_NUMBER() OVER(PARTITION BY pto.PTOMEDICODI,empr.emprcodi ORDER BY pto.PTOMEDICODI,empr.emprcodi,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+			FROM ME_PTOMEDICION pto
+			inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA > TO_DATE('{1}', 'dd/mm/yyyy') and vwpt.HPTDATFECHA &lt;= (ADD_MONTHS(TO_DATE('{1}', 'dd/mm/yyyy'),1) - 1) and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+			INNER JOIN SI_EMPRESA empr ON empr.emprcodi = vwpt.emprcodi
+			)empr
+			WHERE NUM_VIEW = 1 and HPTDATPTOESTADO = 'I' and {3} and ORIGLECTCODI = 19
+			)vwpt on ptme.ptomedicodi = vwpt.ptomedicodi
+			INNER JOIN SI_EMPRESA empr ON {3} and empr.TIPOEMPRCODI IN (2, 4) and vwpt.emprcodi = empr.emprcodi
+			INNER JOIN SI_TIPOEMPRESA tiem ON (empr.TIPOEMPRCODI = tiem.TIPOEMPRCODI)
+			INNER JOIN (SELECT pesici.PSICLICODI
+			, pesici.PSICLIANIOMESPERREM
+			FROM IIO_PERIODO_SICLI pesici
+			WHERE pesici.PSICLICODI = {2}
+			UNION ALL
+			SELECT 0 PSICLICODI
+			, 'AAAA MM' PSICLIANIOMESPERREM
+			FROM dual dua
+			WHERE 2 = {9}) pesic ON (1 = 1)
+			LEFT JOIN (
+			SELECT r1.PTOMEDICODI
+			, r1.PTOSUFECHAINICIO
+			, r2.PTOSUFECHAINICIO AS PTOSUFECHAFIN
+			, r1.EMPRCODI
+			FROM (SELECT ROWNUM SEC, T.*
+			FROM (SELECT PTOMEDICODI
+			, PTOSUFECHAINICIO
+			, EMPRCODI
+			FROM VW_PTOSUMINISTRADOR
+			ORDER BY 1,2) T) r1
+			LEFT JOIN (SELECT ROWNUM SEC, T.*
+			FROM (SELECT PTOMEDICODI
+			, PTOSUFECHAINICIO
+			, EMPRCODI
+			FROM VW_PTOSUMINISTRADOR
+			ORDER BY 1,2) T) r2 ON (r1.PTOMEDICODI = r2.PTOMEDICODI
+			AND (r1.SEC + 1) = r2.SEC)
+			) mrsu ON (ptme.PTOMEDICODI = mrsu.PTOMEDICODI
+			AND pees.INI_PERIODO >= mrsu.PTOSUFECHAINICIO
+			AND pees.INI_PERIODO &lt; NVL(mrsu.PTOSUFECHAFIN, SYSDATE)
+			)
+			LEFT JOIN SI_EMPRESA mrem ON (mrsu.EMPRCODI = mrem.EMPRCODI)
+			LEFT JOIN (SELECT enul.FORMATCODI
+			, enul.EMPRCODI
+			, enul.ENVIOCODI_MAX
+			, enul.ENVIOCODI_CONT
+			, TRUNC(enpri.ENVIOFECHA) AS ENVIOFECHA_MIN
+			, TRUNC(enuld.ENVIOFECHA) AS ENVIOFECHA_MAX
+			, enuld.ENVIOFECHAPERIODO
+			, enuld.ENVIOFECHAINI
+			, enuld.ENVIOFECHAFIN
+			FROM (SELECT envi.FORMATCODI
+			, envi.EMPRCODI
+			, envi.ENVIOFECHAPERIODO
+			, MIN(envi.ENVIOCODI) AS ENVIOCODI_MIN
+			, MAX(envi.ENVIOCODI) AS ENVIOCODI_MAX
+			, COUNT(envi.ENVIOCODI) AS ENVIOCODI_CONT
+			FROM ME_ENVIO envi
+			WHERE envi.FORMATCODI = {0}
+			GROUP BY envi.FORMATCODI
+			, envi.EMPRCODI
+			, envi.ENVIOFECHAPERIODO) enul
+			INNER JOIN ME_ENVIO enpri ON (enul.ENVIOCODI_MIN = enpri.ENVIOCODI)
+			INNER JOIN ME_ENVIO enuld ON (enul.ENVIOCODI_MAX = enuld.ENVIOCODI)
+			) ulenv ON (form.FORMATCODI = ulenv.FORMATCODI
+			AND empr.EMPRCODI = ulenv.EMPRCODI
+			AND pees.INI_PERIODO = TRUNC(ulenv.ENVIOFECHAPERIODO, 'MM'))
+			LEFT JOIN ME_MEDICION96 medi ON (medi.LECTCODI = {6}
+			AND TRUNC(pees.FECHA_FILA) = TRUNC(medi.MEDIFECHA)
+			AND ptme.PTOMEDICODI = medi.PTOMEDICODI
+			)
+			LEFT JOIN ME_MEDICION96 median ON (median.LECTCODI = CASE
+			WHEN tiem.TIPOEMPRCODI = 2 THEN
+			{6}
+			WHEN tiem.TIPOEMPRCODI = 4 THEN
+			{7}
+			ELSE
+			NULL
+			END
+			AND TRUNC(median.MEDIFECHA) = FN_ME_FECHAMEDSICLI(ptme.PTOMEDICODI
+			, tiem.TIPOEMPRCODI
+			, pees.FECHA_FILA
+			, medi.MEDIFECHA
+			, pesic.PSICLICODI
+			, {7}
+			)
+			AND ptme.PTOMEDICODI = median.PTOMEDICODI
+			)
+			LEFT JOIN EQ_EQUIPO eqp ON (ptme.EQUICODI = eqp.EQUICODI)
+			LEFT JOIN EQ_AREA ara ON (eqp.AREACODI = ara.AREACODI)
+			WHERE {3}
+			{4}
+			AND TRUNC(pees.INI_PERIODO) = TO_DATE('{1}', 'dd/mm/yyyy')
+			AND (
+			EXISTS (
+			SELECT 1
+			FROM ME_MEDICION96 mpr16
+			WHERE mpr16.LECTCODI = {6}
+			AND TRUNC(mpr16.MEDIFECHA) = TRUNC(pees.FECHA_FILA)
+			AND mpr16.PTOMEDICODI = ptme.PTOMEDICODI
+			)
+			OR EXISTS (
+			SELECT 1
+			FROM EQ_EQUIPO eqpsi
+			, IIO_FACTURA factu
+			WHERE eqpsi.EQUICODI = ptme.EQUICODI
+			AND eqpsi.EQUICODI = factu.EQUICODI
+			AND factu.PSICLICODI = pesic.PSICLICODI
+			AND CASE
+			WHEN tiem.TIPOEMPRCODI = 2 THEN
+			0
+			WHEN tiem.TIPOEMPRCODI = 4 THEN
+			1
+			END = 1
+			)
+			)
+			{5}
+			ORDER BY pees.INI_PERIODO
+			, empr.EMPRNOMB
+			, ptme.PTOMEDICODI
+			, pees.FECHA_FILA
+			, medi.MEDIFECHA
+			) inte) exte
+			{8}
+		</query>
+	</Sql>
+	<!--pr16.HDT - Inicio 01/04/2018: Cambio para atender el requerimiento.-->
+	<Sql>
+		<key>ListReporteInformacion15minCount</key>
+		<query>
+			<!--- 	
+	    + Nombre: 
+		    Consulta para obtenerla cantidad de registros en la consulta detalle de 15 minutos. Esto es necesario para la paginación.
+	    + Descripción:
+		    Esta consulta atiende el requerimiento de información del reporte "Reporte de Información de medidores de energía de Usuarios y Empresas 
+	    de distribución" cuyo objetivo es informar al usuario interno del COES sobre la información cargada con el detalle máximo posible: 15 minutos.
+	    La consulta atiende las opciones para los Usuarios Libres y para las Empresas de Distribución.
+	
+	    + Caso especial:
+		    La consulta debe asegurar que se muestre el detalle de la información por cada mes. En caso la empresa no hubiese remitido información alguna
+	    para un mes determinado se tiene:
+	
+	    a) Para las Empresas de Distribución. 
+	       Se debe buscar la información anterior más reciente remitida por la empresa. 
+	    b) Para los Usuarios Libres:
+	       Se debe buscar la información anterior más reciente obtenida a través del Osinergmin (Proyecto Alpha). 
+    -->
+			SELECT count(1) AS Q_REGISTROS
+			FROM (
+			SELECT 1
+			FROM (SELECT TO_CHAR(TO_DATE(td.FECHA_FINAL + 1 - ROWNUM), 'MM YYYY') AS PERIODO
+			, TRUNC(TO_DATE(td.FECHA_FINAL + 1 - ROWNUM), 'MM') AS INI_PERIODO
+			, ADD_MONTHS(TRUNC(TO_DATE(td.FECHA_FINAL + 1 - ROWNUM), 'MM'), 1) AS INI_REMISION
+			, ADD_MONTHS(
+			TO_DATE(
+			(
+			SELECT fori.FORMATDIAPLAZO
+			FROM ME_FORMATO fori
+			WHERE fori.FORMATCODI = {0}
+			) || '/' ||  TO_CHAR(TO_DATE(td.FECHA_FINAL + 1 - ROWNUM), 'mm/yyyy')
+			, 'dd/mm/yyyy')
+			, 1) AS FIN_REMISION
+			, TO_DATE(td.FECHA_FINAL + 1 - ROWNUM) AS FECHA_FILA
+			FROM ALL_OBJECTS
+			, (SELECT TO_DATE('{1}', 'dd/mm/yyyy') AS FECHA_INICIAL
+			, LAST_DAY(TO_DATE('{1}', 'dd/mm/yyyy')) AS FECHA_FINAL
+			FROM DUAL) td
+			WHERE TRUNC(td.FECHA_FINAL + 1 - ROWNUM, 'MM') >= TRUNC(td.FECHA_INICIAL,'MM')
+			ORDER BY 5) pees
+			INNER JOIN ME_FORMATO form ON (form.FORMATCODI = {0})
+			INNER JOIN ME_PTOMEDICION ptme ON (ptme.ORIGLECTCODI = 19)
+			inner join (
+			--Puntos de medicion activos hasta de la Fecha de Inicio
+			SELECT * FROM
+			(
+			SELECT pto .Ptomedicodi, pto.codref, pto.Origlectcodi, pto.Equicodi, pto.Ptomedielenomb, pto.Ptomediestado,empr.emprcodi,empr.emprnomb,
+			vwpt.HPTDATFECHA, vwpt.HPTDATPTOESTADO, ROW_NUMBER() OVER(PARTITION BY pto.PTOMEDICODI,empr.emprcodi ORDER BY pto.PTOMEDICODI,empr.emprcodi,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+			FROM ME_PTOMEDICION pto
+			inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= TO_DATE('{1}', 'dd/mm/yyyy') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+			INNER JOIN SI_EMPRESA empr ON empr.emprcodi = vwpt.emprcodi
+			)empr
+			WHERE NUM_VIEW = 1 and HPTDATPTOESTADO = 'I' and {3} and ORIGLECTCODI = 19
+
+			UNION ALL
+
+			--Puntos de medicion activos despues de la Fecha de Inicio
+			SELECT * FROM
+			(
+			SELECT pto .Ptomedicodi, pto.codref, pto.Origlectcodi, pto.Equicodi, pto.Ptomedielenomb, pto.Ptomediestado,empr.emprcodi,empr.emprnomb,
+			vwpt.HPTDATFECHA, vwpt.HPTDATPTOESTADO, ROW_NUMBER() OVER(PARTITION BY pto.PTOMEDICODI,empr.emprcodi ORDER BY pto.PTOMEDICODI,empr.emprcodi,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+			FROM ME_PTOMEDICION pto
+			inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA > TO_DATE('{1}', 'dd/mm/yyyy') and vwpt.HPTDATFECHA &lt;= (ADD_MONTHS(TO_DATE('{1}', 'dd/mm/yyyy'),1) - 1) and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+			INNER JOIN SI_EMPRESA empr ON empr.emprcodi = vwpt.emprcodi
+			)empr
+			WHERE NUM_VIEW = 1 and HPTDATPTOESTADO = 'I' and {3} and ORIGLECTCODI = 19
+			)vwpt on ptme.ptomedicodi = vwpt.ptomedicodi
+			INNER JOIN SI_EMPRESA empr ON {3} and empr.TIPOEMPRCODI IN (2, 4) and vwpt.emprcodi = empr.emprcodi
+			INNER JOIN SI_TIPOEMPRESA tiem ON (empr.TIPOEMPRCODI = tiem.TIPOEMPRCODI)
+			INNER JOIN (SELECT pesici.PSICLICODI
+			, pesici.PSICLIANIOMESPERREM
+			FROM IIO_PERIODO_SICLI pesici
+			WHERE pesici.PSICLICODI = {2}
+			UNION ALL
+			SELECT 0 PSICLICODI
+			, 'AAAA MM' PSICLIANIOMESPERREM
+			FROM dual dua
+			WHERE 2 = {8}) pesic ON (1 = 1)
+			LEFT JOIN (
+			SELECT r1.PTOMEDICODI
+			, r1.PTOSUFECHAINICIO
+			, r2.PTOSUFECHAINICIO AS PTOSUFECHAFIN
+			, r1.EMPRCODI
+			FROM (SELECT ROWNUM SEC, T.*
+			FROM (SELECT PTOMEDICODI
+			, PTOSUFECHAINICIO
+			, EMPRCODI
+			FROM VW_PTOSUMINISTRADOR
+			ORDER BY 1,2) T) r1
+			LEFT JOIN (SELECT ROWNUM SEC, T.*
+			FROM (SELECT PTOMEDICODI
+			, PTOSUFECHAINICIO
+			, EMPRCODI
+			FROM VW_PTOSUMINISTRADOR
+			ORDER BY 1,2) T) r2 ON (r1.PTOMEDICODI = r2.PTOMEDICODI
+			AND (r1.SEC + 1) = r2.SEC)
+			) mrsu ON (ptme.PTOMEDICODI = mrsu.PTOMEDICODI
+			AND pees.INI_PERIODO >= mrsu.PTOSUFECHAINICIO
+			AND pees.INI_PERIODO &lt; NVL(mrsu.PTOSUFECHAFIN, SYSDATE)
+			)
+			LEFT JOIN SI_EMPRESA mrem ON (mrsu.EMPRCODI = mrem.EMPRCODI)
+			LEFT JOIN (SELECT enul.FORMATCODI
+			, enul.EMPRCODI
+			, enul.ENVIOCODI_MAX
+			, enul.ENVIOCODI_CONT
+			, TRUNC(enpri.ENVIOFECHA) AS ENVIOFECHA_MIN
+			, TRUNC(enuld.ENVIOFECHA) AS ENVIOFECHA_MAX
+			, enuld.ENVIOFECHAPERIODO
+			, enuld.ENVIOFECHAINI
+			, enuld.ENVIOFECHAFIN
+			FROM (SELECT envi.FORMATCODI
+			, envi.EMPRCODI
+			, envi.ENVIOFECHAPERIODO
+			, MIN(envi.ENVIOCODI) AS ENVIOCODI_MIN
+			, MAX(envi.ENVIOCODI) AS ENVIOCODI_MAX
+			, COUNT(envi.ENVIOCODI) AS ENVIOCODI_CONT
+			FROM ME_ENVIO envi
+			WHERE envi.FORMATCODI = {0}
+			GROUP BY envi.FORMATCODI
+			, envi.EMPRCODI
+			, envi.ENVIOFECHAPERIODO) enul
+			INNER JOIN ME_ENVIO enpri ON (enul.ENVIOCODI_MIN = enpri.ENVIOCODI)
+			INNER JOIN ME_ENVIO enuld ON (enul.ENVIOCODI_MAX = enuld.ENVIOCODI)
+			) ulenv ON (form.FORMATCODI = ulenv.FORMATCODI
+			AND empr.EMPRCODI = ulenv.EMPRCODI
+			AND pees.INI_PERIODO = TRUNC(ulenv.ENVIOFECHAPERIODO, 'MM'))
+			LEFT JOIN ME_MEDICION96 medi ON (medi.LECTCODI = {6}
+			AND TRUNC(pees.FECHA_FILA) = TRUNC(medi.MEDIFECHA)
+			AND ptme.PTOMEDICODI = medi.PTOMEDICODI
+			)
+			LEFT JOIN ME_MEDICION96 median ON (median.LECTCODI = CASE
+			WHEN tiem.TIPOEMPRCODI = 2 THEN
+			{6}
+			WHEN tiem.TIPOEMPRCODI = 4 THEN
+			{7}
+			ELSE
+			NULL
+			END
+			AND TRUNC(median.MEDIFECHA) = FN_ME_FECHAMEDSICLI(ptme.PTOMEDICODI
+			, tiem.TIPOEMPRCODI
+			, pees.FECHA_FILA
+			, medi.MEDIFECHA
+			, pesic.PSICLICODI
+			, {7}
+			)
+			AND ptme.PTOMEDICODI = median.PTOMEDICODI
+			)
+			LEFT JOIN EQ_EQUIPO eqp ON (ptme.EQUICODI = eqp.EQUICODI)
+			LEFT JOIN EQ_AREA ara ON (eqp.AREACODI = ara.AREACODI)
+			WHERE {3}
+			{4}
+			AND TRUNC(pees.INI_PERIODO) = TO_DATE('{1}', 'dd/mm/yyyy')
+			AND (
+			EXISTS (
+			SELECT 1
+			FROM ME_MEDICION96 mpr16
+			WHERE mpr16.LECTCODI = {6}
+			AND TRUNC(mpr16.MEDIFECHA) = TRUNC(pees.FECHA_FILA)
+			AND mpr16.PTOMEDICODI = ptme.PTOMEDICODI
+			)
+			OR EXISTS (
+			SELECT 1
+			FROM EQ_EQUIPO eqpsi
+			, IIO_FACTURA factu
+			WHERE eqpsi.EQUICODI = ptme.EQUICODI
+			AND eqpsi.EQUICODI = factu.EQUICODI
+			AND factu.PSICLICODI = pesic.PSICLICODI
+			AND CASE
+			WHEN tiem.TIPOEMPRCODI = 2 THEN
+			0
+			WHEN tiem.TIPOEMPRCODI = 4 THEN
+			1
+			END = 1
+			)
+			)
+			{5}
+			ORDER BY pees.INI_PERIODO
+			, empr.EMPRNOMB
+			, ptme.PTOMEDICODI
+			, pees.FECHA_FILA
+			, medi.MEDIFECHA
+			) inte
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerMedicion96</key>
+		<query>
+			select
+			*
+			from
+			me_medicion96
+			where
+			medifecha between to_date('{0}','YYYY-MM-DD') and to_date('{1}','YYYY-MM-DD')
+			and lectcodi = {2}
+			and tipoinfocodi ={3}
+			and ptomedicodi={4}
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ConsolidadoEnvioByEmpresaAndFormato</key>
+		<query>
+			select * from(
+			select b.ptomedicodi,d.equicodi idCentral,d.equinomb central,c.equinomb GrupSSAA,g.tgenercodi tipoGeneracion, sum(a.meditotal)/4 total
+			from me_medicion96 a
+			inner join me_ptomedicion b on a.ptomedicodi = b.ptomedicodi
+			inner join eq_equipo c on b.equicodi = c.equicodi
+			inner join eq_equipo d on c.equipadre = d.equicodi
+			inner join pr_grupo e on c.grupocodi = e.grupocodi
+			inner join SI_FUENTEENERGIA f on e.fenergcodi = f.fenergcodi
+			inner join SI_TIPOGENERACION g on f.tgenercodi = g.tgenercodi
+			where (case when coalesce(a.EMPRCODI, -1) > 0 then a.EMPRCODI else c.emprcodi end) = {0} and  (a.medifecha >= to_date('{3}','yyyy-MM-dd') and a.medifecha &lt;= to_date('{4}','yyyy-MM-dd'))
+      and a.LECTCODI = {1} and a.tipoinfocodi =  {2}
+      group by b.ptomedicodi,d.equicodi,d.equinomb,c.equinomb,g.tgenercodi
+      union
+
+
+      select b.ptomedicodi,e.equicodi idCentral, e.equinomb central,c.equinomb GrupSSAA,d.TIPORELCODI tipoGeneracion,sum(a.meditotal)/4 total
+      from me_medicion96 a,me_ptomedicion b, eq_equipo c, EQ_EQUIREL d,eq_equipo e
+      where  a.lectcodi = 1 and a.tipoinfocodi = 1 and  a.ptomedicodi = b.ptomedicodi and b.origlectcodi = 14 and  b.equicodi = c.equicodi
+      and  c.equicodi = d.equicodi1 and d.equicodi2 = e.equicodi and c.emprcodi = {0} and  (a.medifecha >= to_date('{3}','yyyy-MM-dd') and a.medifecha &lt;= to_date('{4}','yyyy-MM-dd'))
+      group by b.ptomedicodi, e.equinomb,c.equinomb,d.TIPORELCODI,e.equicodi
+
+      <!--			union
+
+			select b.ptomedicodi,e.equicodi,e.equinomb,c.equinomb,d.TIPORELCODI, sum(a.meditotal)/4 total
+			from me_medicion96 a
+			inner join me_ptomedicion b on a.ptomedicodi = b.ptomedicodi
+			inner join eq_equipo c on  b.equicodi = c.equicodi
+			inner join EQ_EQUIREL d on c.equicodi = d.equicodi1
+			inner join eq_equipo e on d.equicodi2 = e.equicodi
+			where (case when coalesce(a.EMPRCODI, -1) > 0 then a.EMPRCODI else c.emprcodi end) = {0} and  (a.medifecha >= to_date('{3}','yyyy-MM-dd') and a.medifecha &lt;= to_date('{4}','yyyy-MM-dd'))
+			and a.LECTCODI = {1} and a.tipoinfocodi =  {2}
+			group by b.ptomedicodi,e.equicodi,e.equinomb,c.equinomb,d.TIPORELCODI-->
+			)
+			order by tipoGeneracion,ptomedicodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>DeleteEnvioArchivo2</key>
+		<query>
+			delete from me_medicion96 where lectcodi = {0} and Tptomedicodi = {5} and medifecha >= to_date('{1}','YYYY-MM-DD') and
+			medifecha &lt;= to_date('{2}','YYYY-MM-DD') and ptomedicodi in (
+			select distinct hp.ptomedicodi from me_hojaptomed hp
+			inner join me_ptomedicion pto on pto.ptomedicodi = hp.ptomedicodi
+			where hp.formatcodi = {3} and pto.emprcodi = {4}
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetResumenMaximaDemanda</key>
+		<query>
+			select
+			medifecha,
+			sum(h1) h1, sum(h2) h2, sum(h3) h3, sum(h4) h4,
+			sum(h5) h5, sum(h6) h6, sum(h7) h7, sum(h8) h8,
+			sum(h9) h9, sum(h10) h10, sum(h11) h11, sum(h12) h12,
+			sum(h13) h13, sum(h14) h14, sum(h15) h15, sum(h16) h16,
+			sum(h17) h17, sum(h18) h18, sum(h19) h19, sum(h20) h20,
+			sum(h21) h21, sum(h22) h22, sum(h23) h23, sum(h24) h24,
+			sum(h25) h25, sum(h26) h26, sum(h27) h27, sum(h28) h28,
+			sum(h29) h29, sum(h30) h30, sum(h31) h31, sum(h32) h32,
+			sum(h33) h33, sum(h34) h34, sum(h35) h35, sum(h36) h36,
+			sum(h37) h37, sum(h38) h38, sum(h39) h39, sum(h40) h40,
+			sum(h41) h41, sum(h42) h42, sum(h43) h43, sum(h44) h44,
+			sum(h45) h45, sum(h46) h46, sum(h47) h47, sum(h48) h48,
+			sum(h49) h49, sum(h50) h50, sum(h51) h51, sum(h52) h52,
+			sum(h53) h53, sum(h54) h54, sum(h55) h55, sum(h56) h56,
+			sum(h57) h57, sum(h58) h58, sum(h59) h59, sum(h60) h60,
+			sum(h61) h61, sum(h62) h62, sum(h63) h63, sum(h64) h64,
+			sum(h65) h65, sum(h66) h66, sum(h67) h67, sum(h68) h68,
+			sum(h69) h69, sum(h70) h70, sum(h71) h71, sum(h72) h72,
+			sum(h73) h73, sum(h74) h74, sum(h75) h75, sum(h76) h76,
+			sum(h77) h77, sum(h78) h78, sum(h79) h79, sum(h80) h80,
+			sum(h81) h81, sum(h82) h82, sum(h83) h83, sum(h84) h84,
+			sum(h85) h85, sum(h86) h86, sum(h87) h87, sum(h88) h88,
+			sum(h89) h89, sum(h90) h90, sum(h91) h91, sum(h92) h92,
+			sum(h93) h93, sum(h94) h94, sum(h95) h95, sum(h96) h96
+			from (
+			select a.* , ROW_NUMBER() OVER(PARTITION BY medifecha,grupocodi,equicodi   ORDER BY medifecha,grupocodi,equicodi,FECHADAT DESC) AS NUM
+			from
+			(
+			select
+			nvl(pdat1.flag,'A') flag,nvl(pdat1.FECHADAT,SYSDATE) FECHADAT,
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE2,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			d.grupocodi,c.equicodi,
+			me.medifecha,
+			me.h1, me.h2, me.h3, me.h4,
+			me.h5, me.h6, me.h7, me.h8,
+			me.h9, me.h10,me.h11,me.h12,
+			me.h13, me.h14, me.h15, me.h16,
+			me.h17, me.h18, me.h19, me.h20,
+			me.h21, me.h22, me.h23, me.h24,
+			me.h25, me.h26, me.h27, me.h28,
+			me.h29, me.h30, me.h31, me.h32,
+			me.h33, me.h34, me.h35, me.h36,
+			me.h37, me.h38, me.h39, me.h40,
+			me.h41, me.h42, me.h43, me.h44,
+			me.h45, me.h46, me.h47, me.h48,
+			me.h49, me.h50, me.h51, me.h52,
+			me.h53, me.h54, me.h55, me.h56,
+			me.h57, me.h58, me.h59, me.h60,
+			me.h61, me.h62, me.h63, me.h64,
+			me.h65, me.h66, me.h67, me.h68,
+			me.h69, me.h70, me.h71, me.h72,
+			me.h73, me.h74, me.h75, me.h76,
+			me.h77, me.h78, me.h79, me.h80,
+			me.h81, me.h82, me.h83, me.h84,
+			me.h85, me.h86, me.h87, me.h88,
+			me.h89, me.h90, me.h91, me.h92,
+			me.h93, me.h94, me.h95, me.h96
+			from me_medicion96 me
+			inner join me_ptomedicion p on  me.ptomedicodi = p.ptomedicodi
+			inner join eq_equipo c on c.famcodi  &lt;> {2} and  p.equicodi = c.equicodi
+			inner join pr_grupo d on c.grupocodi = d.grupocodi
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			left join(
+			SELECT p1.GRUPOCODI, p1.formuladat flag, p1.FECHADAT
+			FROM PR_GRUPODAT p1
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			UNION ALL
+
+			SELECT p1.GRUPOCODI,  (case when pR.GRUPOINTEGRANTE &lt;> '{3}' then 'S' else 'N' end) as flag, to_date('1900-01-01','YYYY-MM-DD')
+			FROM PR_GRUPODAT p1
+			inner join pr_grupo pr on  p1.grupocodi = pr.grupocodi
+			WHERE p1.concepcodi = 258 and p1.formuladat in ('N','S')  and p1.deleted = 0
+
+			) pdat1 on pdat1.grupocodi = d.grupocodi and pdat1.FECHADAT &lt;= me.medifecha
+
+			where me.LECTCODI = {7} and me.tipoinfocodi = {8}
+			and (me.medifecha between to_date('{4}','YYYY-MM-DD') and to_date('{5}','YYYY-MM-DD'))
+			and p.origlectcodi = 1
+			and ('-1'='{6}' or (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end) in ({6}))
+			and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			order by me.medifecha
+			)a
+			) WHERE NUM = 1
+			and (('0'='{0}')  --TODOS
+			or ( '1'='{0}' and ((GRUPOINTEGRANTE2 &lt;> '{3}' and flag = 'A') OR ( flag = 'S') )  )  --COES
+			or ('10'='{0}' and ((GRUPOINTEGRANTE2 = '{3}'    and flag = 'A' ) or (flag = 'N' ) )  )  --NO COES
+			or ( '3'='{0}' and TIPOGENERRER = '{9}' ) --GENERACION RER
+			)
+			GROUP BY MEDIFECHA
+			order by 1 asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetConsolidadoMaximaDemanda</key>
+		<query>
+			SELECT
+			EMPRCODI2 as EMPRCODI,a.*
+			FROM
+			(
+			select
+			COALESCE(d.GRUPOINTEGRANTE,'N') GRUPOINTEGRANTE,
+			COALESCE(d.TIPOGENERRER,'N') TIPOGENERRER,
+			COALESCE(d.GRUPOTIPOCOGEN,'N') GRUPOTIPOCOGEN,
+			emp.EMPRCODI as EMPRCODI2,
+			d.grupocodi,
+			emp.emprnomb,
+			case when eq.famcodi in (4,5,37,39,49) then eq.equicodi else eqp.equicodi end as equipadre,
+			case when eq.famcodi in (4,5,37,39,49) then eq.equinomb else eqp.equinomb end as central,
+			eqp.equinomb as central2,
+			eq.equicodi,eq.equinomb as equinomb,
+			case when eq.famcodi in (4,5,37,39,49) then d.osinergcodi else eq.osinergcodi end as osinergcodi,
+			eq.famcodi,
+			fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, tg.tgenernomb, tg.tgenercodi, eq.osinergcodigen, me.*
+			from me_medicion96 me
+			inner join  me_ptomedicion p on p.PTOMEDICODI = me.PTOMEDICODI
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else p.emprcodi end)
+			inner join eq_equipo eq on eq.famcodi  &lt;> 40 and eq.EQUICODI = p.EQUICODI
+			inner join eq_equipo eqp on eqp.EQUICODI = coalesce(eq.EQUIPADRE, -1)
+			inner join pr_grupo d on d.grupocodi = (case when coalesce(p.grupocodi,-1)>0 then p.grupocodi else (case when coalesce(eq.GRUPOCODI,-1)>0 then eq.grupocodi else eqp.grupocodi end) end )
+			inner join si_fuenteenergia fe on fe.FENERGCODI = d.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			where me.LECTCODI = {5} and me.tipoinfocodi = {6}
+			and p.origlectcodi = 1
+			and (me.medifecha between to_date('{2}','YYYY-MM-DD') and to_date('{3}','YYYY-MM-DD'))
+			and ('-1'='{4}' or emp.EMPRCODI in ({4}))
+			and ('-1'='{1}' or tg.TGENERCODI  in ({1}))
+			and ('3' &lt;>'{0}' or('3'='{0}' and TIPOGENERRER = 'S'))
+
+			order by emprnomb,central,equinomb
+			)a
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetConsolidadoExcesoPotenReact</key>
+		<query>
+			select
+			(select gruponomb from pr_grupo where grupocodi = hop.grupocodi ) as NOMBGRUPO,
+			hop.HOPCODI,
+			hop.HOPHORINI,
+			hop.Hophorfin,
+			hop.SUBCAUSACODI,
+			tg.tgenernomb,
+			tg.tgenercodi as TGENERCODI,
+			pto.ptomedicodi as PTOMEDICODI,
+			hop.GRUPOCODI as GRUPO,
+			emp.emprcodi,
+			emp.emprnomb as EMPRNOMB,
+			eq.equicodi,
+			eq.EQUINOMB,
+			m.medifecha as PERIODO,
+			m.LECTCODI,
+			m.TIPOINFOCODI,
+			m.h1,m.h2,m.h3,m.h4,m.h5,m.h6,m.h7,m.h8,m.h9,m.h10,
+			m.h11,m.h12,m.h13,m.h14,m.h15,m.h16,m.h17,m.h18,m.h19,m.h20,
+			m.h21,m.h22,m.h23,m.h24,m.h25,m.h26,m.h27,m.h28,m.h29,m.h30,
+			m.h31,m.h32,m.h33,m.h34,m.h35,m.h36,m.h37,m.h38,m.h39,m.h40,
+			m.h41,m.h42,m.h43,m.h44,m.h45,m.h46,m.h47,m.h48,m.h49,m.h50,
+			m.h51,m.h52,m.h53,m.h54,m.h55,m.h56,m.h57,m.h58,m.h59,m.h60,
+			m.h61,m.h62,m.h63,m.h64,m.h65,m.h66,m.h67,m.h68,m.h69,m.h70,
+			m.h71,m.h72,m.h73,m.h74,m.h75,m.h76,m.h77,m.h78,m.h79,m.h80,
+			m.h81,m.h82,m.h83,m.h84,m.h85,m.h86,m.h87,m.h88,m.h89,m.h90,
+			m.h91,m.h92,m.h93,m.h94,m.h95,m.h96,
+			m.TPTOMEDICODI
+			from  eve_horaoperacion hop
+			inner join eve_horaoperacion eh on hop.hopcodi = eh.hopcodipadre
+			inner join me_ptomedicion pto on eh.EQUICODI = pto.EQUICODI and pto.origlectcodi = 1
+			inner join me_medicion96 m on pto.PTOMEDICODI =  m.ptomedicodi
+			inner join si_empresa emp on emp.EMPRCODI = (case when coalesce(m.EMPRCODI, -1) > 0 then m.EMPRCODI else pto.emprcodi end)
+
+			inner join eq_equipo eq on eq.famcodi &lt;> {5} and eq.EQUICODI = eh.EQUICODI
+			inner join eq_equipo eqp on eqp.EQUICODI = eq.EQUIPADRE
+			inner join pr_grupo gr on gr.grupopadre = eq.GRUPOCODI and gr.emprcodi =emp.emprcodi
+			inner join si_fuenteenergia fe on fe.FENERGCODI = gr.FENERGCODI
+			inner join si_tipogeneracion tg on tg.TGENERCODI = fe.TGENERCODI
+
+			where
+			trunc(hop.HOPHORINI) between to_date('{3}','DD/MM/YYYY') and  to_date('{4}','DD/MM/YYYY') and hop.hopestado = 'A'
+			and trunc(eh.HOPHORINI) between to_date('{3}','DD/MM/YYYY') and  to_date('{4}','DD/MM/YYYY') and eh.hopestado = 'A'
+			and (m.medifecha between to_date('{3}','DD/MM/YYYY') and to_date('{4}','DD/MM/YYYY')) and m.TPTOMEDICODI in ({8}) and m.LECTCODI = {6} and m.TIPOINFOCODI = {7}
+			and ('0'='{1}' or tg.TGENERCODI  = {1}) and ('0'='{2}' or emp.emprcodi  = {2})
+			and TRUNC(hop.HOPHORINI) = m.medifecha
+
+			order by  hop.GRUPOCODI, pto.PTOMEDICODI
+		</query>
+	</Sql>
+
+	<!--FIN PR5-->
+
+	<Sql>
+		<key>SaveDemandaMercadoLibre</key>
+		<query>
+			insert into me_medicion96(
+			h96,h95,h94, h93,h92,h91,h90,h89,h88,h87,h86,h85,h84,h83,h82,h81,h80,h79,h78,h77,h76,h75,h74,h73,h72,h71,h70,
+			h69,h68,h67,h66,h65,h64,h63,h62,h61,h60,h59,h58,h57,h56,h55,h54,h53,h52,h51,h50,h49,h48,h47,h46,h45,h44,h43,h42,h41,h40,
+			h39,h38,h37,h36,h35,h34,h33,h32,h31,h30,h29,h28,h27,h26,h25,h24,h23,h22,h21,h20,h19,h18,h17,h16,h15,h14,h13, h12,h11,h10,
+			h9,h8,h7,h6,h5,h4,h3,h2,h1,mediestado,meditotal,ptomedicodi,tipoinfocodi,medifecha,lectcodi,tptomedicodi, emprcodi
+			)
+			values(
+			:h96,
+			:h95,
+			:h94,
+			:h93,
+			:h92,
+			:h91,
+			:h90,
+			:h89,
+			:h88,
+			:h87,
+			:h86,
+			:h85,
+			:h84,
+			:h83,
+			:h82,
+			:h81,
+			:h80,
+			:h79,
+			:h78,
+			:h77,
+			:h76,
+			:h75,
+			:h74,
+			:h73,
+			:h72,
+			:h71,
+			:h70,
+			:h69,
+			:h68,
+			:h67,
+			:h66,
+			:h65,
+			:h64,
+			:h63,
+			:h62,
+			:h61,
+			:h60,
+			:h59,
+			:h58,
+			:h57,
+			:h56,
+			:h55,
+			:h54,
+			:h53,
+			:h52,
+			:h51,
+			:h50,
+			:h49,
+			:h48,
+			:h47,
+			:h46,
+			:h45,
+			:h44,
+			:h43,
+			:h42,
+			:h41,
+			:h40,
+			:h39,
+			:h38,
+			:h37,
+			:h36,
+			:h35,
+			:h34,
+			:h33,
+			:h32,
+			:h31,
+			:h30,
+			:h29,
+			:h28,
+			:h27,
+			:h26,
+			:h25,
+			:h24,
+			:h23,
+			:h22,
+			:h21,
+			:h20,
+			:h19,
+			:h18,
+			:h17,
+			:h16,
+			:h15,
+			:h14,
+			:h13,
+			:h12,
+			:h11,
+			:h10,
+			:h9,
+			:h8,
+			:h7,
+			:h6,
+			:h5,
+			:h4,
+			:h3,
+			:h2,
+			:h1,
+			:mediestado,
+			:meditotal,
+			:ptomedicodi,
+			:tipoinfocodi,
+			:medifecha,
+			:lectcodi,
+			:tptomedicodi,
+			:emprcodi
+			)
+		</query>
+	</Sql>
+
+	<!--INICIO - Numerales Datos Base-->
+	<Sql>
+		<key>ListaDatosBase_5_1_1</key>
+		<query>
+			select
+			case
+			when e.Equinomb &lt;> '_NO DEFINIDO' then e.Equinomb
+			else M.PTOMEDIDESC
+			end as  EQUINOMB,
+			case
+			when E.OSIGRUPOCODI &lt;> '00000' then E.OSIGRUPOCODI
+			else (select OSICODI from pr_grupo where grupocodi = M.Codref)
+			end as OSICODI,
+			E.Equipadre,
+			t.*
+			from me_medicion96 t, EQ_EQUIPO E, me_ptomedicion M
+			where T.lectcodi = 1
+			AND T.TIPOINFOCODI = 1
+			AND T.MEDIFECHA BETWEEN TO_DATE('{0}', 'DD-MM-YYYY') AND
+			TO_DATE('{1} 23:59:59', 'DD-MM-YYYY  HH24:MI:SS')
+			AND M.ptomedicodi = T.ptomedicodi
+			AND E.EQUICODI = M.EQUICODI
+			AND E.FAMCODI IN (3, 5, 36,37,38,39,49)
+			order BY 4, 1 asc
+		</query>
+	</Sql>
+	<!--FIN - Numerales Datos Base-->
+
+	<!--INICIO Valorizaciones -->
+
+	<!--Consulta para Obtener Empresa por energia prevista-->
+	<Sql>
+		<key>GetEmpresaEnergiaPrevista</key>
+		<query>
+			select
+			distinct
+			emp.emprcodi EMPRCODI,
+			SUM(NVL(FN_VTD_CALCULARMONTORETIRO(m96.h1 + m96.h2,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,1),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h3 + m96.h4 ,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,2),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h5 + m96.h6,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,3),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h7 + m96.h8,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,4),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h9 + m96.h10,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,5),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h11 + m96.h12,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,6),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h13 + m96.h14,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,7),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h15 + m96.h16,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,8),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h17 + m96.h18,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,9),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h19 + m96.h20,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,10),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h21 + m96.h22,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,11),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h23 + m96.h24,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,12),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h25 + m96.h26,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,13),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h27 + m96.h28,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,14),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h29 + m96.h30,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,15),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h31 + m96.h32,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,16),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h33 + m96.h34,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,17),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h35 + m96.h36,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,18),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h37 + m96.h38,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,19),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h39 + m96.h40,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,20),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h41 + m96.h42,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,21),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h43 + m96.h44,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,22),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h45 + m96.h46,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,23),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h47 + m96.h48,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,24),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h49 + m96.h50,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,25),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h51 + m96.h52,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,26),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h53 + m96.h54,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,27),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h55 + m96.h56,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,28),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h57 + m96.h58,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,29),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h59 + m96.h60,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,30),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h61 + m96.h62,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,31),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h63 + m96.h64,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,32),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h65 + m96.h66,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,33),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h67 + m96.h68,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,34),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h69 + m96.h70,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,35),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h71 + m96.h72,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,36),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h73 + m96.h74,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,37),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h75 + m96.h76,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,38),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h77 + m96.h78,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,39),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h79 + m96.h80,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,40),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h81 + m96.h82,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,41),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h83 + m96.h84,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,42),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h85 + m96.h86,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,43),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h87 + m96.h88,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,44),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h89 + m96.h90,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,45),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h91 + m96.h92,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,46),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h93 + m96.h94,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,47),0)
+			+ NVL(FN_VTD_CALCULARMONTORETIRO(m96.h95 + m96.h96,TO_DATE('@date' ,'YYYY/MM/DD'),pto.barrcodi,48),0)
+			)  as VALDRETIRO
+			from me_medicion96 m96
+			inner join me_ptomedicion pto on
+			m96.ptomedicodi = pto.ptomedicodi
+			inner join si_empresa emp on emp.emprcodi= (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end)
+			where m96.MEDIFECHA = TO_DATE('@date','YYYY/MM/DD')
+			and NVL(pto.barrcodi,0) > 0
+			and m96.lectcodi = 223
+			group by emp.emprcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetDemandaCoincidente</key>
+		<query>
+			select si.Emprcodi EMPRCODI, (sum(H@h) * 1000)  * 4 VALDDEMANDACOINCIDENTE
+			from me_medicion96 m96 , me_ptomedicion pto, si_empresa si
+			where m96.ptomedicodi = pto.ptomedicodi and si.emprcodi = (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end) and m96.MEDIFECHA = to_date('{0}','YYYY-MM-DD')
+			and NVL(pto.barrcodi,0) > 0
+			and m96.lectcodi = 223
+			--and si.tipoemprcodi = 3
+			group by Si.Emprcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetEnergiaPrevistaRetirar</key>
+		<query>
+			select sum(h1+h2+h3+h4+h5+h6+h7+h8+h9+h10+h11+h12+h13+h14+h15+h16+h17+h18+h19+h20+h21+h22+h23+h24+h25+h26+h27+h28+h29+h30+h31+h32+h33+h34+h35+h36+h37+h38+h39+h40+h41+h42+h43+h44+h45+h46+h47+h48+h49+h50+h51+h52+h53+h54+h55+h56+h57+h58+h59+h60+h61+h62+h63+h64+h65+h66+h67+h68+h69+h70+h71+h72+h73+h74+h75+h76+h77+h78+h79+h80+h81+h82+h83+h84+h85+h86+h87+h88+h89+h90+h91+h92+h93+h94+h95+h96) SUMAEPR
+			from me_medicion96 m96
+			inner join me_ptomedicion pto on m96.ptomedicodi=pto.ptomedicodi
+			inner join si_empresa emp on emp.emprcodi= (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end)
+			where
+			m96.medifecha =to_date('{0}','YYYY-MM-DD')
+			and emp.emprcodi={1} and NVL(pto.barrcodi,0) > 0
+			and m96.lectcodi = {2}
+		</query>
+	</Sql>
+
+	<!--Reporte Prevista Remitida Por el Participante-->
+
+	<Sql>
+		<key>ListByFilter</key>
+		<query>
+			select e.emprcodi,m96.medifecha,e.emprnomb,pto.ptomedibarranomb,m96.h1,m96.h2,m96.h3,m96.h4,m96.h5,m96.h6,m96.h7,m96.h8,m96.h9,m96.h10,m96.h11,m96.h12,m96.h13,m96.h14,m96.h15,m96.h16,m96.h17,m96.h18,m96.h19,m96.h20,m96.h21,m96.h22,m96.h23,m96.h24,
+			m96.h25,m96.h26,m96.h27,m96.h28,m96.h29,m96.h30,m96.h31,m96.h32,m96.h33,m96.h34,m96.h35,m96.h36,m96.h37,m96.h38,m96.h39,m96.h40,m96.h41,m96.h42,m96.h43,m96.h44,m96.h45,m96.h46,m96.h47,m96.h48,m96.h49, m96.h50,m96.h51,m96.h52,m96.h53,m96.h54,m96.h55,m96.h56,m96.h57,
+			m96.h58,m96.h59,m96.h60,m96.h61,m96.h62,m96.h63,m96.h64,m96.h65,m96.h66,m96.h67,m96.h68,m96.h69,m96.h70,m96.h71,m96.h72,m96.h73,m96.h74,m96.h75,m96.h76,m96.h77,m96.h78,m96.h79,m96.h80,m96.h81,m96.h82,m96.h83,m96.h84,m96.h85,m96.h86,m96.h87,
+			m96.h88,m96.h89,m96.h90,m96.h91,m96.h92,m96.h93,m96.h94,m96.h95,m96.h96,
+			(select emprnomb from si_empresa semp where semp.emprcodi = pto.clientecodi) as clientenomb,
+			(select BARRNOMBRE from trn_barra tbarra where tbarra.BARRCODI = pto.barrcodi) as barrnomb
+			from me_medicion96 m96 inner join me_ptomedicion pto on m96.ptomedicodi=pto.ptomedicodi inner join si_empresa e on e.emprcodi = (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end) where m96.medifecha between to_date('{0}','YYYY-MM-DD') and to_date('{1}','YYYY-MM-DD') and e.emprcodi={2}
+		</query>
+	</Sql>
+
+
+	<Sql>
+		<key>ListPagedByFilter</key>
+		<query>
+			SELECT * from (
+			select e.emprcodi,m96.medifecha,e.emprnomb,pto.ptomedibarranomb,m96.h1,m96.h2,m96.h3,m96.h4,m96.h5,m96.h6,m96.h7,m96.h8,m96.h9,m96.h10,m96.h11,m96.h12,m96.h13,m96.h14,m96.h15,m96.h16,m96.h17,m96.h18,m96.h19,m96.h20,m96.h21,m96.h22,m96.h23,m96.h24,
+			m96.h25,m96.h26,m96.h27,m96.h28,m96.h29,m96.h30,m96.h31,m96.h32,m96.h33,m96.h34,m96.h35,m96.h36,m96.h37,m96.h38,m96.h39,m96.h40,m96.h41,m96.h42,m96.h43,m96.h44,m96.h45,m96.h46,m96.h47,m96.h48,m96.h49, m96.h50,m96.h51,m96.h52,m96.h53,m96.h54,m96.h55,m96.h56,m96.h57,
+			m96.h58,m96.h59,m96.h60,m96.h61,m96.h62,m96.h63,m96.h64,m96.h65,m96.h66,m96.h67,m96.h68,m96.h69,m96.h70,m96.h71,m96.h72,m96.h73,m96.h74,m96.h75,m96.h76,m96.h77,m96.h78,m96.h79,m96.h80,m96.h81,m96.h82,m96.h83,m96.h84,m96.h85,m96.h86,m96.h87,
+			m96.h88,m96.h89,m96.h90,m96.h91,m96.h92,m96.h93,m96.h94,m96.h95,m96.h96,
+			(select emprnomb from si_empresa semp where semp.emprcodi = pto.clientecodi) as clientenomb,
+			(select BARRNOMBRE from trn_barra tbarra where tbarra.BARRCODI = pto.barrcodi) as barrnomb,
+			(row_number() over (order by m96.medifecha asc)) as r FROM me_medicion96 m96 inner join me_ptomedicion pto on m96.ptomedicodi=pto.ptomedicodi inner join si_empresa e on e.emprcodi = (case when coalesce(m96.EMPRCODI, -1) > 0 then m96.EMPRCODI else pto.emprcodi end)
+			WHERE m96.medifecha between to_date('{0}','YYYY-MM-DD') and to_date('{1}','YYYY-MM-DD') and e.emprcodi={2} order by m96.medifecha asc
+			)where (r >= ((({3}-1) * {4}) + 1) and r&lt;= (({3} * {4}) + 1 )) or ({3} = -1 and {4}= -1)
+		</query>
+	</Sql>
+
+	<!--FIN Valorizaciones-->
+
+	<Sql>
+		<key>ObtenerDatosMedicionComparativo</key>
+		<query>
+			select
+			medifecha,
+			sum(h1) as h1,
+			sum(h2) as h2,
+			sum(h3) as h3,
+			sum(h4) as h4,
+			sum(h5) as h5,
+			sum(h6) as h6,
+			sum(h7) as h7,
+			sum(h8) as h8,
+			sum(h9) as h9,
+			sum(h10) as h10,
+			sum(h11) as h11,
+			sum(h12) as h12,
+			sum(h13) as h13,
+			sum(h14) as h14,
+			sum(h15) as h15,
+			sum(h16) as h16,
+			sum(h17) as h17,
+			sum(h18) as h18,
+			sum(h19) as h19,
+			sum(h20) as h20,
+			sum(h21) as h21,
+			sum(h22) as h22,
+			sum(h23) as h23,
+			sum(h24) as h24,
+			sum(h25) as h25,
+			sum(h26) as h26,
+			sum(h27) as h27,
+			sum(h28) as h28,
+			sum(h29) as h29,
+			sum(h30) as h30,
+			sum(h31) as h31,
+			sum(h32) as h32,
+			sum(h33) as h33,
+			sum(h34) as h34,
+			sum(h35) as h35,
+			sum(h36) as h36,
+			sum(h37) as h37,
+			sum(h38) as h38,
+			sum(h39) as h39,
+			sum(h40) as h40,
+			sum(h41) as h41,
+			sum(h42) as h42,
+			sum(h43) as h43,
+			sum(h44) as h44,
+			sum(h45) as h45,
+			sum(h46) as h46,
+			sum(h47) as h47,
+			sum(h48) as h48,
+			sum(h49) as h49,
+			sum(h50) as h50,
+			sum(h51) as h51,
+			sum(h52) as h52,
+			sum(h53) as h53,
+			sum(h54) as h54,
+			sum(h55) as h55,
+			sum(h56) as h56,
+			sum(h57) as h57,
+			sum(h58) as h58,
+			sum(h59) as h59,
+			sum(h60) as h60,
+			sum(h61) as h61,
+			sum(h62) as h62,
+			sum(h63) as h63,
+			sum(h64) as h64,
+			sum(h65) as h65,
+			sum(h66) as h66,
+			sum(h67) as h67,
+			sum(h68) as h68,
+			sum(h69) as h69,
+			sum(h70) as h70,
+			sum(h71) as h71,
+			sum(h72) as h72,
+			sum(h73) as h73,
+			sum(h74) as h74,
+			sum(h75) as h75,
+			sum(h76) as h76,
+			sum(h77) as h77,
+			sum(h78) as h78,
+			sum(h79) as h79,
+			sum(h80) as h80,
+			sum(h81) as h81,
+			sum(h82) as h82,
+			sum(h83) as h83,
+			sum(h84) as h84,
+			sum(h85) as h85,
+			sum(h86) as h86,
+			sum(h87) as h87,
+			sum(h88) as h88,
+			sum(h89) as h89,
+			sum(h90) as h90,
+			sum(h91) as h91,
+			sum(h92) as h92,
+			sum(h93) as h93,
+			sum(h94) as h94,
+			sum(h95) as h95,
+			sum(h96) as h96
+			from me_medicion96 med where
+			(med.medifecha >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and med.medifecha
+			&lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')) and
+			med.ptomedicodi in ({2}) and  med.lectcodi = {3} and med.tipoinfocodi = {4}
+
+			group by medifecha
+			order by medifecha asc
+		</query>
+	</Sql>
+
+</Sqls>

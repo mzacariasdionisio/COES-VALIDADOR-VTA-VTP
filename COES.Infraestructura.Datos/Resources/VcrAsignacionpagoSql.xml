@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(vcrapcodi), 0) + 1 from vcr_asignacionpago
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vcr_asignacionpago(
+      vcrapcodi,
+      vcrecacodi,
+      emprcodi,
+      equicodicen,
+      equicodiuni,
+      vcrapfecha,
+      vcrapasignpagorsf,
+      vcrapusucreacion,
+      vcrapfeccreacion
+      )
+      values(
+      :vcrapcodi,
+      :vcrecacodi,
+      :emprcodi,
+      :equicodicen,
+      :equicodiuni,
+      :vcrapfecha,
+      :vcrapasignpagorsf,
+      :vcrapusucreacion,
+      :vcrapfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vcr_asignacionpago
+      set
+      vcrecacodi = :vcrecacodi,
+      emprcodi = :emprcodi,
+      equicodicen = :equicodicen,
+      equicodiuni = :equicodiuni,
+      vcrapfecha = :vcrapfecha,
+      vcrapasignpagorsf = :vcrapasignpagorsf,
+      vcrapusucreacion = :vcrapusucreacion,
+      vcrapfeccreacion = :vcrapfeccreacion
+      where
+      vcrapcodi = :vcrapcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vcr_asignacionpago
+      where vcrecacodi = :vcrecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select * from vcr_asignacionpago
+       where vcrapcodi = :vcrapcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select ap.emprcodi, (select se.emprnomb from si_empresa se where se.emprcodi = ap.emprcodi) as emprnomb,
+      ap.equicodicen, (select eq.equinomb from eq_equipo eq where eq.equicodi = ap.equicodicen) as equinombcen,
+      ap.equicodiuni, (select eq.equinomb from eq_equipo eq where eq.equicodi = ap.equicodiuni) as equinombuni
+      from vcr_asignacionpago ap
+      where ap.vcrecacodi = :vcrecacodi
+      group by ap.emprcodi, ap.equicodicen, ap.equicodiuni
+      order by 2, 4, 6
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from vcr_asignacionpago
+      where vcrecacodi = :vcrecacodi and emprcodi = :emprcodi and equicodicen = :equicodicen and equicodiuni = :equicodiuni
+      order by vcrapfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdMesUnidad</key>
+    <query>
+      select emprcodi, equicodicen, equicodiuni,  sum(vcrapasignpagorsf) as vcrapasignpagorsf
+      from vcr_asignacionpago
+      where vcrecacodi = :vcrecacodi and equicodiuni = :equicodiuni
+      group by emprcodi, equicodicen, equicodiuni
+      order by emprcodi, equicodicen, equicodiuni
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresaMes</key>
+    <query>
+      select emprcodi from vcr_asignacionpago
+      where vcrecacodi = :vcrecacodi
+      group by emprcodi
+      order by emprcodi
+    </query>
+  </Sql>
+</Sqls>

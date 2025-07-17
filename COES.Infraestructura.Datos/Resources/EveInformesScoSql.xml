@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(eveinfcodi), 0) + 1 from eve_informes_sco
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eve_informes_sco(
+      eveinfcodi,
+      env_evencodi,
+      lastuser,
+      lastdate,
+      eveinfrutaarchivo,
+      eveinfactivo,
+      anio,
+      semestre,
+      diames
+      )
+      values(
+      :eveinfcodi,
+      :env_evencodi,
+      :lastuser,
+      :lastdate,
+      :eveinfrutaarchivo,
+      :eveinfactivo,
+      :anio,
+      :semestre,
+      :diames
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      ev_in.eveinfcodi,
+      ev_in.env_evencodi,
+      ev_in.lastuser,
+      ev_in.lastdate,
+      ev_in.eveinfrutaarchivo,
+      ev_in.eveinfactivo,
+      envio.emprcodi,
+      envio.envioplazo cumplimiento
+      from eve_informes_sco ev_in
+      inner join me_envio_eve_evento env_ev
+      on ev_in.env_evencodi = env_ev.env_evencodi
+      inner join me_envio envio on env_ev.enviocodi = envio.enviocodi
+      where env_ev.evencodi = {0} and env_ev.envetapainforme = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlListInformesSco</key>
+    <query>
+      select
+      ev_in.eveinfcodi,
+      ev_in.env_evencodi,
+      ev_in.lastuser,
+      ev_in.lastdate,
+      ev_in.eveinfrutaarchivo,
+      ev_in.eveinfactivo,
+      trim(empresa.emprnomb) emprnomb,
+      case when env_ev.envetapainforme = 1 then 'PRELIMINAR'
+      when env_ev.envetapainforme = 2 then 'FINAL'
+      end  version,
+      case when envio.envioplazo = 'P' then 'En Plazo'
+      when envio.envioplazo = 'F' then 'Fuera de Plazo'
+      end cumplimiento,
+      ev_in.portalweb,
+      env_ev.envetapainforme afiversion,
+      'N' tipodata,
+      envio.emprcodi,
+      afalla.afecodi,
+      ev_in.semestre,
+      ev_in.anio,
+      ev_in.diames,
+      env_ev.evencodi,
+      ev_in.eveinfcodigo
+      from eve_informes_sco ev_in
+      inner join me_envio_eve_evento env_ev
+      on ev_in.env_evencodi = env_ev.env_evencodi
+      inner join me_envio envio on env_ev.enviocodi = envio.enviocodi
+      inner join si_empresa empresa on envio.emprcodi = empresa.emprcodi
+      left join af_evento afalla on env_ev. evencodi = afalla.evencodi
+      where env_ev.evencodi = {0} and env_ev.envetapainforme = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlActualizarInformePortalWeb</key>
+    <query>
+      update eve_informes_sco
+      set portalweb = :portalweb, eveinfcodigo = :eveinfcodigo
+      where eveinfcodi = :eveinfcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>SqlObtenerInformeSco</key>
+    <query>
+      select
+      afalla.afecodi,
+      informe.eveinfcodi,
+      envio.emprcodi,
+      informe.lastuser,
+      informe.lastdate,
+      informe.eveinfrutaarchivo,
+      envioeven.envetapainforme afiversion,
+      envio.envioplazo cumplimiento,
+      informe.anio,
+      informe.semestre,
+      informe.diames,
+      empresa.emprnomb,
+      evento.eveninffalla,
+      evento.eveninffallan2,
+      evento.evencodi,
+      informe.env_evencodi
+      from eve_informes_sco informe
+      inner join me_envio_eve_evento envioeven
+      on informe.env_evencodi = envioeven.env_evencodi
+      inner join af_evento afalla on envioeven.evencodi = afalla.evencodi
+      inner join me_envio envio on envioeven.enviocodi = envio.enviocodi
+      inner join si_empresa empresa on envio.emprcodi = empresa.emprcodi
+      inner join eve_evento evento on afalla.evencodi = evento.evencodi
+      where informe.eveinfcodi = {0}
+    </query>
+  </Sql>
+	<Sql>
+		<key>SqlObtenerInformeScoEvenCodi</key>
+		<query>
+			select
+			afalla.afecodi,
+			informe.eveinfcodi,
+			envio.emprcodi,
+			informe.lastuser,
+			informe.lastdate,
+			informe.eveinfrutaarchivo,
+			envioeven.envetapainforme afiversion,
+			envio.envioplazo cumplimiento,
+			informe.anio,
+			informe.semestre,
+			informe.diames,
+			empresa.emprnomb,
+			evento.eveninffalla,
+			evento.eveninffallan2,
+			evento.evencodi,
+			informe.env_evencodi
+			from eve_informes_sco informe
+			where informe.env_evencodi = {0}
+		</query>
+	</Sql>
+</Sqls>

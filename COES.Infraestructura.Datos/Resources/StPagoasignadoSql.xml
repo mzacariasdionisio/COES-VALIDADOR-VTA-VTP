@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(pagasgcodi), 0) + 1 from st_pagoasignado
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into st_pagoasignado(
+      pagasgcodi,
+      strecacodi,
+      stcntgcodi,
+      stcompcodi,
+      pagasgcmggl,
+      pagasgcmgglp,
+      pagasgcmgglfinal,
+      pagasgusucreacion,
+      pagasgfeccreacion
+      )
+      values(
+      :pagasgcodi,
+      :strecacodi,
+      :stcntgcodi,
+      :stcompcodi,
+      :pagasgcmggl,
+      :pagasgcmgglp,
+      :pagasgcmgglfinal,
+      :pagasgusucreacion,
+      :pagasgfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update st_factorpago
+      set
+      strecacodi = :strecacodi,
+      stcntgcodi = :stcntgcodi,
+      stcompcodi = :stcompcodi,
+      facpagfggl = :facpagfggl,
+      facpagcmggl = :facpagcmggl,
+      facpagcmgglp = :facpagcmgglp,
+      facpagcmgglfinal = :facpagcmgglfinal,
+      facpagusucreacion = :facpagusucreacion,
+      facpagfeccreacion = :facpagfeccreacion
+      where
+      facpagcodi = :facpagcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from st_pagoasignado where strecacodi = :strecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCompensacion</key>
+    <query>
+      delete from st_pagoasignado where stcompcodi = :stcompcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from st_factorpago
+      where facpagcodi = :facpagcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from st_factorpago
+      where strecacodi = :strecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from st_pagoasignado
+      where stcntgcodi = :stcntgcodi and stcompcodi = :stcompcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaReporte</key>
+    <query>
+      select pa.*,cmp.stcompcodelemento, eq.equinomb from st_pagoasignado pa, st_centralgen cg, st_compensacion cmp , eq_equipo eq
+      where pa.stcompcodi = cmp.stcompcodi and pa.stcntgcodi = cg.stcntgcodi and cg.equicodi = eq.equicodi and pa.strecacodi = :strecacodi
+      order by cmp.stcompcodelemento, eq.equinomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresaGeneradores</key>
+    <query>
+		select e.emprnomb, e.emprcodi, e.emprruc
+		from st_pagoasignado pa, st_centralgen cg, st_generador g, si_empresa e
+		where pa.strecacodi = :strecacodi
+		and pa.stcntgcodi = cg.stcntgcodi
+		and cg.stgenrcodi = g.stgenrcodi
+		and g.emprcodi = e.emprcodi
+		group by e.emprnomb, e.emprcodi, e.emprruc
+		order by 1
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresaSistemas</key>
+    <query>
+		select e.emprnomb, st.sistrnnombre, e.emprcodi, st.sistrncodi, e.emprruc
+		from st_pagoasignado pa, st_compensacion c, st_sistematrans st, si_empresa e
+		where pa.strecacodi = :strecacodi
+		and pa.stcompcodi = c.stcompcodi
+		and c.sistrncodi = st.sistrncodi
+		and st.emprcodi = e.emprcodi
+		group by e.emprnomb, st.sistrnnombre, e.emprcodi, st.sistrncodi, e.emprruc
+		order by e.emprnomb, st.sistrnnombre
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetPagoGeneradorXSistema</key>
+    <query>
+      select nvl(sum(pa.pagasgcmgglfinal),0) as pagasgcmgglfinal
+      from st_pagoasignado pa, st_centralgen cg, st_generador g, st_compensacion c, st_sistematrans st
+      where pa.strecacodi = :strecacodi
+      and pa.stcntgcodi = cg.stcntgcodi
+      and cg.stgenrcodi = g.stgenrcodi
+      and g.emprcodi = :emprcodi
+      and pa.stcompcodi = c.stcompcodi
+      and c.sistrncodi = st.sistrncodi
+      and st.emprcodi = :emprcodi
+      and c.sistrncodi = :sistrncodi
+    </query>
+  </Sql>
+</Sqls>
+
+

@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(prrucodi), 0) + 1 from me_perfil_rule
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into me_perfil_rule(
+      prrucodi,
+      prrupref,
+      prruabrev,
+      prrudetalle,
+      prruformula,
+      prruactiva,
+      prrulastuser,
+      prrulastdate,
+      prruind,
+      prrufirstuser,
+      prrufirstdate
+      )
+      values(
+      :prrucodi,
+      :prrupref,
+      :prruabrev,
+      :prrudetalle,
+      :prruformula,
+      :prruactiva,
+      :prrulastuser,
+      :prrulastdate,
+      :prruind,
+      :prrufirstuser,
+      :prrufirstdate
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update me_perfil_rule
+      set   
+      prruabrev = :prruabrev,
+      prrudetalle = :prrudetalle,
+      prruformula = :prruformula,
+      prruactiva = :prruactiva,
+      prrulastuser = :prrulastuser,
+      prrulastdate = :prrulastdate,
+      prruind = :prruind
+      where
+      prrucodi = :prrucodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update me_perfil_rule
+      set prruactiva = 'N',
+      prrulastuser = :prrulastuser,
+      prrulastdate = :prrulastdate
+      where
+      prrucodi = :prrucodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      prrucodi,
+      prrupref,
+      prruabrev,
+      prrudetalle,
+      prruformula,
+      prruactiva,
+      prrulastuser,
+      prrulastdate,
+      prruind,
+      prrufirstuser,
+      prrufirstdate
+      from
+      me_perfil_rule
+      where
+      prrucodi = :prrucodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      prrucodi,
+      prrupref,
+      prruabrev,
+      prrudetalle,
+      prruformula,
+      prruactiva,
+      prrulastuser,
+      prrulastdate,
+      prruind,
+      prrufirstuser,
+      prrufirstdate
+      from
+      me_perfil_rule
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      a.prrucodi,
+      a.prrupref,
+      a.prruabrev,
+      a.prrudetalle,
+      a.prruformula,
+      a.prruactiva,
+      a.prrulastuser,
+      a.prrulastdate,
+      a.prruind,
+      a.prrufirstuser,
+      a.prrufirstdate
+      from
+      me_perfil_rule a inner join me_perfil_rule_area b
+      on a.prrucodi = b.prrucodi
+      where (a.prrudetalle = '{1}' or '{1}' = '-1') and b.areacode = {0} and a.prruactiva = 'S'
+      order by a.prrulastuser desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaPorUsuario</key>
+    <query>
+      select
+      a.prrucodi,
+      a.prrupref,
+      a.prruabrev,
+      a.prrudetalle,
+      a.prruformula,
+      a.prruactiva,
+      a.prrulastuser,
+      a.prrulastdate,
+      a.prruind,
+      a.prrufirstuser,
+      a.prrufirstdate
+      from
+      me_perfil_rule a inner join me_perfil_rule_area b
+      on a.prrucodi = b.prrucodi
+      where (a.prrudetalle = '{1}' or '{1}' = '-1') and b.areacode = {0} and a.prruactiva = 'S' and a.prrufirstuser= '{2}'
+      order by a.prrulastuser desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntosEjecutado</key>
+    <query>
+      select me_ptomedicion.ptomedicodi,
+      me_ptomedicion.ptomedielenomb as ptonomb,
+      si_empresa.emprnomb,
+      eq_tipoarea.tareaabrev || ' ' || eq_area.areanomb as areanomb,
+      eq_equipo.equiabrev as equinomb,
+      eq_area.areacodi,
+      si_empresa.emprcodi,
+      trim(me_ptomedicion.ptomedielenomb) || ' / ' || trim(si_empresa.emprnomb) || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || '(' || trim(me_origenlectura.origlectnombre) || ')'  as ptodescripcion
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      ((
+      ( -- me_ptomedicion.origlectcodi = 1 or 
+      me_ptomedicion.origlectcodi = 2 or me_ptomedicion.origlectcodi = 7
+      or me_ptomedicion.origlectcodi = 8 or me_ptomedicion.origlectcodi = 9) and si_empresa.emprcodi>0)
+      or (me_ptomedicion.origlectcodi=9)
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntosDemanda</key>
+    <query>
+      select me_ptomedicion.ptomedicodi,
+      me_ptomedicion.ptomedielenomb as ptonomb,
+      si_empresa.emprnomb,
+      eq_tipoarea.tareaabrev || ' ' || eq_area.areanomb as areanomb,
+      eq_equipo.equiabrev as equinomb,
+      eq_area.areacodi,
+      si_empresa.emprcodi,
+      trim(si_empresa.emprnomb) || ' / ' ||
+      me_ptomedicion.ptomedicodi || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || ' / ' ||
+      eq_equipo.equitension ||
+      'KV (' || trim(me_origenlectura.origlectnombre) || ')'  as ptodescripcion,
+      si_empresa.tipoemprcodi
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      (( me_ptomedicion.origlectcodi = 6) and si_empresa.emprcodi>0)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntosMedidoresGeneracion</key>
+    <query>
+      select me_ptomedicion.ptomedicodi,
+      me_ptomedicion.ptomedielenomb as ptonomb,
+      si_empresa.emprnomb,
+      eq_tipoarea.tareaabrev || ' ' || eq_area.areanomb as areanomb,
+      eq_equipo.equiabrev as equinomb,
+      eq_area.areacodi,
+      si_empresa.emprcodi,
+      trim(si_empresa.emprnomb) || ' / ' ||
+      me_ptomedicion.ptomedicodi || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || ' / ' ||
+      eq_equipo.equitension ||
+      'KV (' || trim(me_origenlectura.origlectnombre) || ')'  as ptodescripcion,
+      si_empresa.tipoemprcodi
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      (( me_ptomedicion.origlectcodi = 1) and si_empresa.emprcodi>0)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntosScada</key>
+    <query>
+      select a.emprenomb as emprnomb, a.emprcodi, c.zonanomb as areanomb, c.zonacodi as areacodi,
+      trim(nvl(b.canalabrev ,b.canalnomb ))||' ('|| trim(b.canaliccp)||')' as equinomb,
+      b.canalcodi as ptomedicodi,
+      trim(a.emprenomb) || ' / ' || trim(c.zonanomb) ||  ' / '
+      || trim(nvl(b.canalabrev ,b.canalnomb ))||' ('|| trim(b.canaliccp)||')' as ptodescripcion
+      from sc_empresa a, tr_canal b, sc_zona c
+      where a.emprcodi = b.emprcodi
+      and c.zonacodi = b.zonacodi
+      and a.emprcodi != 0
+      and  a.emprcodi not in (50,63,65)
+      and upper(rtrim(ltrim(canalunidad))) = 'MW'
+      order by a.emprenomb, c.zonanomb, b.canalabrev
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntosDemandaULyD</key>
+    <query>
+      select me_ptomedicion.ptomedicodi,
+      me_ptomedicion.ptomedielenomb as ptonomb,
+      si_empresa.emprnomb,
+      eq_tipoarea.tareaabrev || ' ' || eq_area.areanomb as areanomb,
+      eq_equipo.equiabrev as equinomb,
+      eq_area.areacodi,
+      si_empresa.emprcodi,
+      trim(si_empresa.emprnomb) || ' / ' ||
+      me_ptomedicion.ptomedicodi || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || ' / ' ||
+      eq_equipo.equitension ||
+      'KV (' || trim(me_origenlectura.origlectnombre) || ')'  as ptodescripcion,
+      si_empresa.tipoemprcodi
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      ( me_ptomedicion.ptomediestado = 'A') and
+      (( me_ptomedicion.origlectcodi = 19) and si_empresa.emprcodi>0) 
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNombrePunto</key>
+    <query>
+      select
+      trim(me_ptomedicion.ptomedielenomb) || ' / ' || trim(si_empresa.emprnomb) || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || '(' || trim(me_origenlectura.origlectnombre) || ')'  as ptonomb
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      (me_ptomedicion.ptomedicodi = :ptomedicodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNombrePuntoDemanda</key>
+    <query>
+      select
+      trim(si_empresa.emprnomb) || ' / ' ||
+      me_ptomedicion.ptomedicodi || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || ' / ' ||
+      eq_equipo.equitension ||
+      'KV (' || trim(me_origenlectura.origlectnombre) || ')' as ptonomb
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      (me_ptomedicion.ptomedicodi = :ptomedicodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNombrePuntoScada</key>
+    <query>
+      select trim(a.emprenomb) || ' / ' || trim(c.zonanomb) ||  ' / '
+      || trim(nvl(b.canalabrev ,b.canalnomb ))||' ('|| trim(b.canaliccp)||')' as ptodescripcion
+      from sc_empresa a, tr_canal b, sc_zona c
+      where a.emprcodi = b.emprcodi
+      and c.zonacodi = b.zonacodi
+      and b.canalcodi = :ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNombrePuntoMedidoresGeneracion</key>
+    <query>
+      select
+      trim(si_empresa.emprnomb) || ' / ' ||
+      me_ptomedicion.ptomedicodi || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || ' / ' ||
+      eq_equipo.equitension ||
+      'KV (' || trim(me_origenlectura.origlectnombre) || ')' as ptonomb
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      (me_ptomedicion.ptomedicodi = :ptomedicodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntosScadaSP7</key>
+    <query>
+      select a.emprenomb as emprnomb, a.emprcodi, c.zonanomb as areanomb, c.zonacodi as areacodi,
+      trim(nvl(b.canalabrev ,b.canalnomb ))||' ('|| trim(b.canaliccp)||')' as equinomb,
+      b.canalcodi as ptomedicodi,
+      trim(a.emprenomb) || ' / ' || trim(c.zonanomb) ||  ' / '
+      || trim(nvl(b.canalabrev ,b.canalnomb ))||' ('|| trim(b.canaliccp)||')' as ptodescripcion
+      from tr_empresa_sp7 a, tr_canal_sp7 b, tr_zona_sp7 c
+      where a.emprcodi = b.emprcodi
+      and c.zonacodi = b.zonacodi
+      and a.emprcodi != 0
+      and  a.emprcodi not in (50,63,65)
+      and upper(rtrim(ltrim(canalunidad))) = 'P'
+      order by a.emprenomb, c.zonanomb, b.canalabrev
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNombrePuntoScadaSP7</key>
+    <query>
+      select trim(a.emprenomb) || ' / ' || trim(c.zonanomb) ||  ' / '
+      || trim(nvl(b.canalabrev ,b.canalnomb ))||' ('|| trim(b.canaliccp)||')' as ptodescripcion
+      from tr_empresa_sp7 a, tr_canal_sp7 b, tr_zona_sp7 c
+      where a.emprcodi = b.emprcodi
+      and c.zonacodi = b.zonacodi
+      and b.canalcodi = :ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNombrePuntoPR16</key>
+    <query>
+      select
+      trim(si_empresa.emprnomb) || ' / ' ||
+      me_ptomedicion.ptomedicodi || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || ' / ' ||
+      eq_equipo.equitension ||
+      'KV (' || trim(me_origenlectura.origlectnombre) || ')' as ptonomb
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      (me_ptomedicion.ptomedicodi = :ptomedicodi)
+    </query>
+  </Sql>
+
+  <!--INICIO PR5-->
+  <Sql>
+    <key>ObtenerPuntosPR5</key>
+    <query>
+      select me_ptomedicion.ptomedicodi,
+      me_ptomedicion.ptomedielenomb as ptonomb,
+      si_empresa.emprnomb,
+      eq_tipoarea.tareaabrev || ' ' || eq_area.areanomb as areanomb,
+      eq_equipo.equiabrev as equinomb,
+      eq_area.areacodi,
+      si_empresa.emprcodi,
+      trim(si_empresa.emprnomb) || ' / ' ||
+      me_ptomedicion.ptomedicodi || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || ' / ' ||
+      eq_equipo.equitension ||
+      'KV (' || trim(me_origenlectura.origlectnombre) || ')'  as ptodescripcion,
+      si_empresa.tipoemprcodi
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      (( me_ptomedicion.origlectcodi = {0}) and si_empresa.emprcodi>0)
+    </query>
+  </Sql>
+  <!--FIN PR5-->
+
+  <Sql>
+    <key>ObtenerPuntosServiciosAuxiliares</key>
+    <query>
+      select me_ptomedicion.ptomedicodi,
+      me_ptomedicion.ptomedielenomb as ptonomb,
+      si_empresa.emprnomb,
+      eq_tipoarea.tareaabrev || ' ' || eq_area.areanomb as areanomb,
+      eq_equipo.equiabrev as equinomb,
+      eq_area.areacodi,
+      si_empresa.emprcodi,
+      trim(si_empresa.emprnomb) || ' / ' ||
+      me_ptomedicion.ptomedicodi || ' / ' ||
+      trim(eq_tipoarea.tareaabrev) || ' ' || trim(eq_area.areanomb) || ' / '  ||
+      trim(eq_equipo.equiabrev) || ' / ' ||
+      eq_equipo.equitension ||
+      'KV (' || trim(me_origenlectura.origlectnombre) || ')'  as ptodescripcion,
+      si_empresa.tipoemprcodi
+      from eq_area,
+      eq_equipo,
+      eq_tipoarea,
+      me_ptomedicion,
+      si_empresa  ,
+      me_origenlectura
+      where ( eq_equipo.areacodi = eq_area.areacodi ) and
+      ( eq_tipoarea.tareacodi = eq_area.tareacodi ) and
+      ( eq_equipo.equicodi = me_ptomedicion.equicodi ) and
+      ( si_empresa.emprcodi = eq_equipo.emprcodi ) and
+      ( me_origenlectura.origlectcodi = me_ptomedicion.origlectcodi) and
+      (( me_ptomedicion.origlectcodi = 14) and si_empresa.emprcodi>0)
+    </query>
+  </Sql>
+</Sqls>

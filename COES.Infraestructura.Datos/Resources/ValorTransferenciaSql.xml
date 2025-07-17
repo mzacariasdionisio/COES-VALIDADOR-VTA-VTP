@@ -1,0 +1,3335 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+
+  <Sql>
+    <key>GetById</key>
+    <query>select * from trn_valor_trans where vtrancodi = :vtrancodi</query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_valor_trans
+      (
+      vtrancodi,pericodi, barrcodi,emprcodi, cosmarcodi, vtranflag, vtrancodentret, vtranversion, vtrandia,vtrantotaldia,
+      vtrantotalenergia,vtrantipoinformacion,
+      vtran1, vtran2, vtran3, vtran4, vtran5, vtran6, vtran7, vtran8, vtran9, vtran10,
+      vtran11, vtran12, vtran13, vtran14, vtran15, vtran16, vtran17, vtran18, vtran19, vtran20,
+      vtran21, vtran22, vtran23, vtran24, vtran25, vtran26, vtran27, vtran28, vtran29, vtran30,
+      vtran31, vtran32, vtran33, vtran34, vtran35, vtran36, vtran37, vtran38, vtran39, vtran40,
+      vtran41, vtran42, vtran43, vtran44, vtran45, vtran46, vtran47, vtran48, vtran49, vtran50,
+      vtran51, vtran52, vtran53, vtran54, vtran55, vtran56, vtran57, vtran58, vtran59, vtran60,
+      vtran61, vtran62, vtran63, vtran64, vtran65, vtran66, vtran67, vtran68, vtran69, vtran70,
+      vtran71, vtran72, vtran73, vtran74, vtran75, vtran76, vtran77, vtran78, vtran79, vtran80,
+      vtran81, vtran82, vtran83, vtran84, vtran85, vtran86, vtran87, vtran88, vtran89, vtran90,
+      vtran91, vtran92, vtran93, vtran94, vtran95, vtran96, vtranusername, vtranfecins
+      )
+      values
+      (
+      :vtrancodi, :pericodi,:barrcodi, :emprcodi, :cosmarcodi, :vtranflag, :vtrancodentret, :vtranversion, :vtrandia, :vtrantotaldia,
+      :vtrantotalenergia,:vtrantipoinformacion,
+      :vtran1, :vtran2, :vtran3, :vtran4, :vtran5, :vtran6, :vtran7, :vtran8, :vtran9, :vtran10,
+      :vtran11, :vtran12, :vtran13, :vtran14, :vtran15, :vtran16, :vtran17, :vtran18, :vtran19, :vtran20,
+      :vtran21, :vtran22, :vtran23, :vtran24, :vtran25, :vtran26, :vtran27, :vtran28, :vtran29, :vtran30,
+      :vtran31, :vtran32, :vtran33, :vtran34, :vtran35, :vtran36, :vtran37, :vtran38, :vtran39, :vtran40,
+      :vtran41, :vtran42, :vtran43, :vtran44, :vtran45, :vtran46, :vtran47, :vtran48, :vtran49, :vtran50,
+      :vtran51, :vtran52, :vtran53, :vtran54, :vtran55, :vtran56, :vtran57, :vtran58, :vtran59, :vtran60,
+      :vtran61, :vtran62, :vtran63, :vtran64, :vtran65, :vtran66, :vtran67, :vtran68, :vtran69, :vtran70,
+      :vtran71, :vtran72, :vtran73, :vtran74, :vtran75, :vtran76, :vtran77, :vtran78, :vtran79, :vtran80,
+      :vtran81, :vtran82, :vtran83, :vtran84, :vtran85, :vtran86, :vtran87, :vtran88, :vtran89, :vtran90,
+      :vtran91, :vtran92, :vtran93, :vtran94, :vtran95, :vtran96, :vtranusername,:vtranfecins
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>delete from trn_valor_trans where pericodi = :pericodi and vtranversion = :vtranversion</query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(vtrancodi), 0) + 1 from trn_valor_trans
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select emprcodi, pericodi, vtranversion, sum(ENTREGA) as ENTREGA, sum(RETIRO) as RETIRO
+      from (
+      select a.emprcodi,a.pericodi,a.vtranversion, sum(vtrantotaldia) as ENTREGA, 0 as RETIRO
+      from trn_valor_trans a where a.pericodi=:pericodi and a.vtranversion=:vtranversion and vtranflag='E'
+      group by a.emprcodi,a.pericodi,a.vtranversion
+      union
+      select a.emprcodi,a.pericodi,a.vtranversion, 0 as ENTREGA, sum(vtrantotaldia) as RETIRO
+      from trn_valor_trans a where a.pericodi=:pericodi and a.vtranversion=:vtranversion and vtranflag in ('R', 'X')
+      group by a.emprcodi,a.pericodi,a.vtranversion) t
+      group by emprcodi,pericodi,vtranversion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		--ASSETEC 20181115
+		select val.*
+		,case when substr(rc.tretcodigo,1,2) = 'CL' then rc.rcrencrenta end as rclicitacion
+		,case when substr(rc.tretcodigo,1,2) &#60;> 'CL' then rc.rcrencrenta end as rcbilateral
+		from (
+		--Fin: Rentas Congestion WCY 26/08/2018
+		select
+		--Inicio: Rentas Congestion WCY 26/08/2018
+		a.pericodi,a.vtranversion,
+		--Fin: Rentas Congestion WCY 26/08/2018
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = b.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = b.emprcodi and info.fechacorte &#60;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.vtranversion) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = b.emprcodi) end as emprnomb,
+		b.emprcodi, b.Emprcodosinergmin, c.barrcodi, c.barrbarratransferencia, a.vtrancodentret, (select cliempr from vw_trn_codigo where codigo = a.vtrancodentret) as nombempresa,
+		(select rucclie from vw_trn_codigo where codigo = a.vtrancodentret) as rucempresa,
+		(select tc.tipconnombre from trn_tipo_contrato tc where cr.tipconcodi = tc.tipconcodi) as entrega,
+		case a.vtranflag
+		WHEN 'X' THEN (select tu.tipusunombre from trn_tipo_usuario tu where sc.tipusucodi = tu.tipusucodi)
+		ELSE (select tu.tipusunombre from trn_tipo_usuario tu where cr.tipusucodi = tu.tipusucodi)
+		END AS RETIRO,
+		--(select tu.tipusunombre from trn_tipo_usuario tu where cr.tipusucodi = tu.tipusucodi) as retiro,
+		sum(a.vtrantotaldia) as valorizacion, sum(a.vtrantotalenergia) as energia, a.vtrantipoinformacion, a.vtranflag, c.osinergcodi
+		from trn_valor_trans a join vw_trn_empresa_str b on a.emprcodi = b.emprcodi
+		left join trn_barra c on c.barrcodi = a.barrcodi
+		left join trn_codigo_retiro_solicitud cr on a.vtrancodentret = cr.coresocodigo
+		LEFT JOIN trn_codigo_retiro_sincontrato sc on sc.coresccodigo = a.vtrancodentret
+		where a.pericodi=:pericodi and a.vtranversion=:vtranversion and
+		(b.emprcodi =:emprcodi or :emprcodi is null) and
+		(b.tipoemprcodi =:tipoemprcodi or :tipoemprcodi is null) and
+		(a.barrcodi =:barrcodi or :barrcodi is null) and
+		(a.vtranflag=:vtranflag or :vtranflag is null)
+		group by
+		--Inicio: Rentas Congestion WCY 26/08/2018
+		a.pericodi,a.vtranversion,
+		--Fin: Rentas Congestion WCY 26/08/2018
+		b.emprnomb,b.emprcodi, b.Emprcodosinergmin, c.barrcodi, c.barrbarratransferencia, 4, a.vtranflag, a.vtrancodentret, vtrantipoinformacion, cr.tipconcodi, cr.tipusucodi, sc.tipusucodi,a.vtranversion, c.osinergcodi
+		order by b.emprnomb, a.vtranflag, a.vtrancodentret, c.barrbarratransferencia
+		--Inicio: Rentas Congestion WCY 26/08/2018
+		) val left join (select ret.pericodi,ret.tretversion,ret.tretcodigo,rc.rcrencrenta from trn_trans_retiro ret join rcg_renta_congestion rc on ret.tretcodi = rc.tretcodi
+		where tretestado = 'ACT' and ret.pericodi=:pericodi and ret.tretversion=:vtranversion) rc on val.pericodi = rc.pericodi and val.vtranversion = rc.tretversion and val.vtrancodentret = rc.tretcodigo
+		--Fin: Rentas Congestion WCY 26/08/2018
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetTotalByTipoFlag</key>
+    <query>
+      select pericodi, vtranversion, vtranflag, sum(vtrantotaldia) as vtrantotaldia
+      from trn_valor_trans
+      where pericodi = :pericodi and vtranversion = :vtranversion
+      group by vtranflag, pericodi, vtranversion
+      order by vtranflag asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetValorEmpresaByPeriVer</key>
+    <query>
+		select emprcodi,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = vt.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = vt.emprcodi and info.fechacorte &#60;= (select recafecins from trn_recalculo where pericodi = vt.pericodi and recacodi = vt.vtranversion) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = vt.emprcodi) end as emprnomb,
+		(select EMPRCODOSINERGMIN from vw_trn_empresa_str e where e.emprcodi = vt.emprcodi) as EMPRCODOSINERGMIN,
+		nvl((select vtranetotal from trn_valor_trans_empresa vte where vte.emprcodi = vt.emprcodi and vte.pericodi = vt.pericodi and vte.vtraneversion = vt.vtranversion),0) as VALORIZACION,
+		(SELECT SUM(se.salempsaldo)
+		FROM sic.trn_saldo_empresa se
+		WHERE (se.emprcodi = vt.emprcodi
+		OR se.emprcodi IN (
+		SELECT DISTINCT v.emprcodiorigen
+		FROM sic.vw_si_migracion v
+		LEFT JOIN sic.vw_si_migracion v1
+		ON v1.emprcodiorigen = v.emprcodidestino
+		WHERE NVL(v1.emprcodidestino, v.emprcodidestino) =vt.emprcodi
+		OR v.emprcodidestino =  vt.emprcodi
+		)
+		AND se.emprcodi NOT IN (
+		SELECT DISTINCT vy.emprcodi
+		FROM sic.trn_valor_trans vy
+		WHERE vy.pericodi = vt.pericodi
+		AND vy.vtranversion = vt.vtranversion
+		))
+		AND se.pericodi = vt.pericodi
+		AND se.salempversion = vt.vtranversion) as  SALEMPSALDO,
+		nvl((select salrscsaldo from trn_saldo_coresc scrsc where scrsc.emprcodi = vt.emprcodi and scrsc.pericodi = vt.pericodi and scrsc.salrscversion = vt.vtranversion),0) as  SALRSCSALDO,
+		nvl((select sum(ingcomimporte) from trn_ing_compensacion ic join trn_cabe_compensacion cc on ic.cabcomcodi = cc.cabcomcodi and ic.pericodi = cc.pericodi and cc.cabcomestado = 'ACT' where ic.emprcodi= vt.emprcodi and ic.pericodi = vt.pericodi and ic.ingcomversion= vt.vtranversion),0) as COMPENSACION,
+		nvl((select sum(ingcomimporte) from trn_ing_compensacion ic join trn_cabe_compensacion cc on ic.cabcomcodi = cc.cabcomcodi and ic.pericodi = cc.pericodi and cc.cabcomrentconge = 'Si' where ic.emprcodi= vt.emprcodi and ic.pericodi = vt.pericodi and ic.ingcomversion= vt.vtranversion),0) as ENTREGA,
+		--nvl((select nvl(sum(salrecsaldo),0) from trn_saldo_recalculo sr where sr.emprcodi = vt.emprcodi and sr.pericodidestino = vt.pericodi and tmopercodi != 4),0) as SALDORECALCULO,
+		nvl((select nvl(sum(salrecsaldo),0) from trn_saldo_recalculo sr where (sr.emprcodi = vt.emprcodi or sr.emprcodi in (select v.emprcodiorigen
+		from vw_si_migracion v
+		left join vw_si_migracion v1 on v1.emprcodiorigen = v.emprcodidestino
+		where nvl(v1.emprcodidestino,v.emprcodidestino) = vt.emprcodi or v.emprcodidestino = vt.emprcodi)) and sr.pericodidestino = vt.pericodi),0) as SALDORECALCULO,
+		nvl((select vtotemtotal from trn_valor_total_empresa vte where vte.emprcodi = vt.emprcodi and vte.vtotemversion = vt.vtranversion and vte.pericodi = vt.pericodi),0) as VTOTEMPRESA,
+		--nvl((select vtotemtotal from trn_valor_total_empresa vte where vte.emprcodi = vt.emprcodi and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi),0) as VTOTANTERIOR,
+		--nvl((select vtotemtotal from trn_valor_total_empresa vte where (vte.emprcodi = vt.emprcodi or vte.emprcodi in (select ant.emprcodiorigen from vw_si_migracion ant where ant.emprcodidestino = vt.emprcodi and tmopercodi != 4)) and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi),0) as VTOTANTERIOR,
+		--NVL(NVL(
+		--(select vtotemtotal from trn_valor_total_empresa vte where vte.emprcodi = vt.emprcodi and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi),
+		--(select vtotemtotal from trn_valor_total_empresa vte where (vte.emprcodi in (select ant.emprcodiorigen from vw_si_migracion ant where ant.emprcodidestino = vt.emprcodi)) and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi)
+		--), 0) as VTOTANTERIOR,
+		case
+		WHEN NVL((select vtotemtotal from trn_valor_total_empresa vte where vte.emprcodi = vt.emprcodi and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi),0) &lt;&gt; 0 and
+		NVL((select sum(vtotemtotal) from trn_valor_total_empresa vte where (vte.emprcodi in (select v.emprcodiorigen
+		from vw_si_migracion v
+		left join vw_si_migracion v1 on v1.emprcodiorigen = v.emprcodidestino
+		where nvl(v1.emprcodidestino,v.emprcodidestino) = vt.emprcodi or v.emprcodidestino = vt.emprcodi)) and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi),0) &lt;&gt; 0
+		then NVL((select vtotemtotal from trn_valor_total_empresa vte where vte.emprcodi = vt.emprcodi and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi),0) + NVL((select vtotemtotal from trn_valor_total_empresa vte where (vte.emprcodi in (select ant.emprcodiorigen from vw_si_migracion ant where ant.emprcodidestino = vt.emprcodi)) and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi),0)
+		else
+		NVL(NVL(
+		(select sum(vtotemtotal) from trn_valor_total_empresa vte where vte.emprcodi = vt.emprcodi and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi),
+		(select sum(vtotemtotal) from trn_valor_total_empresa vte where (vte.emprcodi in (select v.emprcodiorigen
+		from vw_si_migracion v
+		left join vw_si_migracion v1 on v1.emprcodiorigen = v.emprcodidestino
+		where nvl(v1.emprcodidestino,v.emprcodidestino) = vt.emprcodi or v.emprcodidestino = vt.emprcodi)) and vte.vtotemversion = (vt.vtranversion-1) and vte.pericodi = vt.pericodi)
+		), 0)
+		end as VTOTANTERIOR,
+		pericodi, vtranversion
+		from trn_valor_trans vt
+		where pericodi = :pericodi and vtranversion = :vtranversion
+		group by emprcodi, pericodi, vtranversion
+		order by 2 asc
+	</query>
+  </Sql>
+	<Sql>
+		<key>GetSaldoEmpresaByPeriVer</key>
+		<query>
+			SELECT SUM(se.salempsaldo) AS SALEMPSALDO
+			FROM sic.trn_saldo_empresa se
+			WHERE (se.emprcodi = :emprcodi
+			OR se.emprcodi IN (
+			SELECT DISTINCT v.emprcodiorigen
+			FROM sic.vw_si_migracion v
+			LEFT JOIN sic.vw_si_migracion v1
+			ON v1.emprcodiorigen = v.emprcodidestino
+			WHERE NVL(v1.emprcodidestino, v.emprcodidestino) = :emprcodi
+			OR v.emprcodidestino = :emprcodi
+			)
+			AND se.emprcodi NOT IN (
+			SELECT DISTINCT vy.emprcodi
+			FROM sic.trn_valor_trans vy
+			WHERE vy.pericodi = :pericodi
+			AND vy.vtranversion = :vtranversion
+			))
+			AND se.pericodi = :pericodi
+			AND se.salempversion = :vtranversion
+		</query>
+	</Sql>
+  <Sql>
+    <key>GetBalanceEnergia</key>
+    <query>
+		select r.emprcodi,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = r.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = r.emprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = :pericodi and recacodi = :version) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = r.emprcodi) end as nombempresa,
+		r.entregas, r.retiros
+		from (
+		SELECT vt.emprcodi,
+		SUM(CASE WHEN vt.vtranflag = 'E' THEN vt.vtrantotalenergia ELSE 0 END) AS entregas,
+		SUM(CASE WHEN vt.vtranflag IN ('R', 'X') THEN vt.vtrantotalenergia ELSE 0 END) AS retiros
+		FROM trn_valor_trans vt
+		WHERE vt.pericodi = :pericodi
+		AND vt.vtranversion = :version
+		GROUP BY vt.emprcodi
+		) r
+		ORDER BY 2
+	</query>
+  </Sql>
+  <Sql>
+    <key>GetBalanceValorTransferencia</key>
+    <query>
+      select emprcodi, emprnomb as nombempresa, sum(t.entrega) as entregas, sum(t.retiro) as retiros
+      from (
+      select vt.emprcodi, e.emprnomb, sum(vt.vtrantotaldia) as entrega, 0 as retiro
+      from trn_valor_trans vt join vw_trn_empresa_str e on vt.emprcodi = e.emprcodi
+      where vt.vtranflag = 'E'
+      and vt.pericodi = :pericodi and vt.vtranversion = :version
+      group by vt.emprcodi, e.emprnomb, 0
+      union
+      select vt.emprcodi, e.emprnomb, 0 as entrega, sum(vt.vtrantotaldia) as retiro
+      from trn_valor_trans vt join vw_trn_empresa_str e on vt.emprcodi = e.emprcodi
+      where vt.vtranflag in ('R','X')
+      and vt.pericodi = :pericodi and vt.vtranversion = :version
+      group by vt.emprcodi, e.emprnomb, 0
+      ) t
+      group by t.emprcodi,t.emprnomb
+      order by t.emprnomb
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetValorTransferencia</key>
+    <query>
+      select a.*,b.emprnomb, c.barrbarratransferencia, (select cliempr from vw_trn_codigo where codigo = a.vtrancodentret) as nombempresa
+      from trn_valor_trans a  join vw_trn_empresa_str b on  a.emprcodi = b.emprcodi
+      join trn_barra c on c.barrcodi = a.barrcodi
+      where a.pericodi=:pericodi and a.vtranversion=:vtranversion and
+      (a.emprcodi=:emprcodi or :emprcodi = 0) and
+      (a.barrcodi =:barrcodi or :barrcodi = 0)and
+      (a.vtranflag=:vtranflag or :vtranflag is null)
+      order by a.vtranflag,b.emprnomb,a.vtrancodentret,a.vtrandia
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetDesviacionRetiros</key>
+    <query>
+      select barrcodi, barrbarratransferencia, sum(t.entrega) as entregas, nvl(sum(t.retiro),1) as retiros
+      from (
+      select vt.barrcodi, b.barrbarratransferencia, sum(vt.vtrantotalenergia) as entrega, 0 as retiro
+      from trn_valor_trans vt join trn_barra b on vt.barrcodi = b.barrcodi
+      where vt.vtranflag in ('R','X')
+      and vt.pericodi = :pericodi and vt.vtranversion = (select max(r.recacodi) from trn_recalculo r where r.pericodi = :pericodi)
+      group by vt.barrcodi, b.barrbarratransferencia, 0
+      union
+      select vt.barrcodi, b.barrbarratransferencia, 0 as entrega, sum(vt.vtrantotalenergia) as retiro
+      from trn_valor_trans vt join trn_barra b  on vt.barrcodi = b.barrcodi
+      where vt.vtranflag in ('R','X')
+      and vt.pericodi = :vtranversion and vt.vtranversion = (select max(r.recacodi) from trn_recalculo r where r.pericodi = :vtranversion)
+      group by vt.barrcodi, b.barrbarratransferencia, 0
+      ) t
+      group by t.barrcodi,t.barrbarratransferencia
+      order by t.barrbarratransferencia
+    </query>
+  </Sql>
+  <!--ASSETEC - 20181001 -->
+  <Sql>
+    <key>GrabarValorizacionEntrega</key>
+    <query>
+      insert into trn_valor_trans (vtrancodi,pericodi,barrcodi,emprcodi,cosmarcodi,vtranflag,vtrancodentret,vtranversion,vtrandia,
+      vtrantotaldia,
+      vtrantotalenergia,vtrantipoinformacion,
+      vtran1,vtran2,vtran3,vtran4,vtran5,vtran6,vtran7,vtran8,vtran9,vtran10,
+      vtran11,vtran12,vtran13,vtran14,vtran15,vtran16,vtran17,vtran18,vtran19,vtran20,
+      vtran21,vtran22,vtran23,vtran24,vtran25,vtran26,vtran27,vtran28,vtran29,vtran30,
+      vtran31,vtran32,vtran33,vtran34,vtran35,vtran36,vtran37,vtran38,vtran39,vtran40,
+      vtran41,vtran42,vtran43,vtran44,vtran45,vtran46,vtran47,vtran48,vtran49,vtran50,
+      vtran51,vtran52,vtran53,vtran54,vtran55,vtran56,vtran57,vtran58,vtran59,vtran60,
+      vtran61,vtran62,vtran63,vtran64,vtran65,vtran66,vtran67,vtran68,vtran69,vtran70,
+      vtran71,vtran72,vtran73,vtran74,vtran75,vtran76,vtran77,vtran78,vtran79,vtran80,
+      vtran81,vtran82,vtran83,vtran84,vtran85,vtran86,vtran87,vtran88,vtran89,vtran90,
+      vtran91,vtran92,vtran93,vtran94,vtran95,vtran96,vtranusername,vtranfecins)
+      select vtrancodi, vt.pericodi, vt.barrcodi, vt.emprcodi,cosmarcodi,vtranflag,vtrancodentret,vtranversion,vtrandia,
+      ((tentde1 * cosmar1 * 1000) + (tentde2 * cosmar2 * 1000) + (tentde3 * cosmar3 * 1000) + (tentde4 * cosmar4 * 1000) + (tentde5 * cosmar5 * 1000) +
+      (tentde6 * cosmar6 * 1000) + (tentde7 * cosmar7 * 1000) + (tentde8 * cosmar8 * 1000) + (tentde9 * cosmar9 * 1000) + (tentde10 * cosmar10 * 1000) +
+      (tentde11 * cosmar11 * 1000) + (tentde12 * cosmar12 * 1000) + (tentde13 * cosmar13 * 1000) + (tentde14 * cosmar14 * 1000) + (tentde15 * cosmar15 * 1000) +
+      (tentde16 * cosmar16 * 1000) + (tentde17 * cosmar17 * 1000) + (tentde18 * cosmar18 * 1000) + (tentde19 * cosmar19 * 1000) + (tentde20 * cosmar20 * 1000) +
+      (tentde21 * cosmar21 * 1000) + (tentde22 * cosmar22 * 1000) + (tentde23 * cosmar23 * 1000) + (tentde24 * cosmar24 * 1000) + (tentde25 * cosmar25 * 1000) +
+      (tentde26 * cosmar26 * 1000) + (tentde27 * cosmar27 * 1000) + (tentde28 * cosmar28 * 1000) + (tentde29 * cosmar29 * 1000) + (tentde30 * cosmar30 * 1000) +
+      (tentde31 * cosmar31 * 1000) + (tentde32 * cosmar32 * 1000) + (tentde33 * cosmar33 * 1000) + (tentde34 * cosmar34 * 1000) +
+      (tentde35 * cosmar35 * 1000) + (tentde36 * cosmar36 * 1000) + (tentde37 * cosmar37 * 1000) + (tentde38 * cosmar38 * 1000) +
+      (tentde39 * cosmar39 * 1000) + (tentde40 * cosmar40 * 1000) + (tentde41 * cosmar41 * 1000) + (tentde42 * cosmar42 * 1000) +
+      (tentde43 * cosmar43 * 1000) + (tentde44 * cosmar44 * 1000) + (tentde45 * cosmar45 * 1000) + (tentde46 * cosmar46 * 1000) +
+      (tentde47 * cosmar47 * 1000) + (tentde48 * cosmar48 * 1000) + (tentde49 * cosmar49 * 1000) + (tentde50 * cosmar50 * 1000) +
+      (tentde51 * cosmar51 * 1000) + (tentde52 * cosmar52 * 1000) + (tentde53 * cosmar53 * 1000) + (tentde54 * cosmar54 * 1000) +
+      (tentde55 * cosmar55 * 1000) + (tentde56 * cosmar56 * 1000) + (tentde57 * cosmar57 * 1000) + (tentde58 * cosmar58 * 1000) +
+      (tentde59 * cosmar59 * 1000) + (tentde60 * cosmar60 * 1000) + (tentde61 * cosmar61 * 1000) + (tentde62 * cosmar62 * 1000) +
+      (tentde63 * cosmar63 * 1000) + (tentde64 * cosmar64 * 1000) + (tentde65 * cosmar65 * 1000) + (tentde66 * cosmar66 * 1000) +
+      (tentde67 * cosmar67 * 1000) + (tentde68 * cosmar68 * 1000) + (tentde69 * cosmar69 * 1000) + (tentde70 * cosmar70 * 1000) +
+      (tentde71 * cosmar71 * 1000) + (tentde72 * cosmar72 * 1000) + (tentde73 * cosmar73 * 1000) + (tentde74 * cosmar74 * 1000) +
+      (tentde75 * cosmar75 * 1000) + (tentde76 * cosmar76 * 1000) + (tentde77 * cosmar77 * 1000) + (tentde78 * cosmar78 * 1000) +
+      (tentde79 * cosmar79 * 1000) + (tentde80 * cosmar80 * 1000) + (tentde81 * cosmar81 * 1000) + (tentde82 * cosmar82 * 1000) +
+      (tentde83 * cosmar83 * 1000) + (tentde84 * cosmar84 * 1000) + (tentde85 * cosmar85 * 1000) + (tentde86 * cosmar86 * 1000) +
+      (tentde87 * cosmar87 * 1000) + (tentde88 * cosmar88 * 1000) + (tentde89 * cosmar89 * 1000) + (tentde90 * cosmar90 * 1000) +
+      (tentde91 * cosmar91 * 1000) + (tentde92 * cosmar92 * 1000) + (tentde93 * cosmar93 * 1000) + (tentde94 * cosmar94 * 1000) +
+      (tentde95 * cosmar95 * 1000) + (tentde96 * cosmar96 * 1000)) as vtrantotaldia,
+      vtrantotalenergia ,vtrantipoinformacion,
+      (tentde1 * cosmar1 * 1000) as vtran1,
+      (tentde2 * cosmar2 * 1000) as vtran2,
+      (tentde3 * cosmar3 * 1000) as vtran3,
+      (tentde4 * cosmar4 * 1000) as vtran4,
+      (tentde5 * cosmar5 * 1000) as vtran5,
+      (tentde6 * cosmar6 * 1000) as vtran6,
+      (tentde7 * cosmar7 * 1000) as vtran7,
+      (tentde8 * cosmar8 * 1000) as vtran8,
+      (tentde9 * cosmar9 * 1000) as vtran9,
+      (tentde10 * cosmar10 * 1000) as vtran10,
+      (tentde11 * cosmar11 * 1000) as vtran11,
+      (tentde12 * cosmar12 * 1000) as vtran12,
+      (tentde13 * cosmar13 * 1000) as vtran13,
+      (tentde14 * cosmar14 * 1000) as vtran14,
+      (tentde15 * cosmar15 * 1000) as vtran15,
+      (tentde16 * cosmar16 * 1000) as vtran16,
+      (tentde17 * cosmar17 * 1000) as vtran17,
+      (tentde18 * cosmar18 * 1000) as vtran18,
+      (tentde19 * cosmar19 * 1000) as vtran19,
+      (tentde20 * cosmar20 * 1000) as vtran20,
+      (tentde21 * cosmar21 * 1000) as vtran21,
+      (tentde22 * cosmar22 * 1000) as vtran22,
+      (tentde23 * cosmar23 * 1000) as vtran23,
+      (tentde24 * cosmar24 * 1000) as vtran24,
+      (tentde25 * cosmar25 * 1000) as vtran25,
+      (tentde26 * cosmar26 * 1000) as vtran26,
+      (tentde27 * cosmar27 * 1000) as vtran27,
+      (tentde28 * cosmar28 * 1000) as vtran28,
+      (tentde29 * cosmar29 * 1000) as vtran29,
+      (tentde30 * cosmar30 * 1000) as vtran30,
+      (tentde31 * cosmar31 * 1000) as vtran31,
+      (tentde32 * cosmar32 * 1000) as vtran32,
+      (tentde33 * cosmar33 * 1000) as vtran33,
+      (tentde34 * cosmar34 * 1000) as vtran34,
+      (tentde35 * cosmar35 * 1000) as vtran35,
+      (tentde36 * cosmar36 * 1000) as vtran36,
+      (tentde37 * cosmar37 * 1000) as vtran37,
+      (tentde38 * cosmar38 * 1000) as vtran38,
+      (tentde39 * cosmar39 * 1000) as vtran39,
+      (tentde40 * cosmar40 * 1000) as vtran40,
+      (tentde41 * cosmar41 * 1000) as vtran41,
+      (tentde42 * cosmar42 * 1000) as vtran42,
+      (tentde43 * cosmar43 * 1000) as vtran43,
+      (tentde44 * cosmar44 * 1000) as vtran44,
+      (tentde45 * cosmar45 * 1000) as vtran45,
+      (tentde46 * cosmar46 * 1000) as vtran46,
+      (tentde47 * cosmar47 * 1000) as vtran47,
+      (tentde48 * cosmar48 * 1000) as vtran48,
+      (tentde49 * cosmar49 * 1000) as vtran49,
+      (tentde50 * cosmar50 * 1000) as vtran50,
+      (tentde51 * cosmar51 * 1000) as vtran51,
+      (tentde52 * cosmar52 * 1000) as vtran52,
+      (tentde53 * cosmar53 * 1000) as vtran53,
+      (tentde54 * cosmar54 * 1000) as vtran54,
+      (tentde55 * cosmar55 * 1000) as vtran55,
+      (tentde56 * cosmar56 * 1000) as vtran56,
+      (tentde57 * cosmar57 * 1000) as vtran57,
+      (tentde58 * cosmar58 * 1000) as vtran58,
+      (tentde59 * cosmar59 * 1000) as vtran59,
+      (tentde60 * cosmar60 * 1000) as vtran60,
+      (tentde61 * cosmar61 * 1000) as vtran61,
+      (tentde62 * cosmar62 * 1000) as vtran62,
+      (tentde63 * cosmar63 * 1000) as vtran63,
+      (tentde64 * cosmar64 * 1000) as vtran64,
+      (tentde65 * cosmar65 * 1000) as vtran65,
+      (tentde66 * cosmar66 * 1000) as vtran66,
+      (tentde67 * cosmar67 * 1000) as vtran67,
+      (tentde68 * cosmar68 * 1000) as vtran68,
+      (tentde69 * cosmar69 * 1000) as vtran69,
+      (tentde70 * cosmar70 * 1000) as vtran70,
+      (tentde71 * cosmar71 * 1000) as vtran71,
+      (tentde72 * cosmar72 * 1000) as vtran72,
+      (tentde73 * cosmar73 * 1000) as vtran73,
+      (tentde74 * cosmar74 * 1000) as vtran74,
+      (tentde75 * cosmar75 * 1000) as vtran75,
+      (tentde76 * cosmar76 * 1000) as vtran76,
+      (tentde77 * cosmar77 * 1000) as vtran77,
+      (tentde78 * cosmar78 * 1000) as vtran78,
+      (tentde79 * cosmar79 * 1000) as vtran79,
+      (tentde80 * cosmar80 * 1000) as vtran80,
+      (tentde81 * cosmar81 * 1000) as vtran81,
+      (tentde82 * cosmar82 * 1000) as vtran82,
+      (tentde83 * cosmar83 * 1000) as vtran83,
+      (tentde84 * cosmar84 * 1000) as vtran84,
+      (tentde85 * cosmar85 * 1000) as vtran85,
+      (tentde86 * cosmar86 * 1000) as vtran86,
+      (tentde87 * cosmar87 * 1000) as vtran87,
+      (tentde88 * cosmar88 * 1000) as vtran88,
+      (tentde89 * cosmar89 * 1000) as vtran89,
+      (tentde90 * cosmar90 * 1000) as vtran90,
+      (tentde91 * cosmar91 * 1000) as vtran91,
+      (tentde92 * cosmar92 * 1000) as vtran92,
+      (tentde93 * cosmar93 * 1000) as vtran93,
+      (tentde94 * cosmar94 * 1000) as vtran94,
+      (tentde95 * cosmar95 * 1000) as vtran95,
+      (tentde96 * cosmar96 * 1000) as vtran96,
+      vtranusername,vtranfecins
+      from (
+      select te.tentcodi,
+      rownum + :vtrancodi as vtrancodi, te.pericodi as pericodi, te.barrcodi, te.emprcodi, 'E' as vtranflag,
+      tentcodigo as vtrancodentret, tentversion as vtranversion, det.tentdedia as vtrandia, 0 as vtrantotaldia,
+      det.tentdesumadia as vtrantotalenergia, te.tenttipoinformacion as vtrantipoinformacion,
+      tentde1, tentde2, tentde3, tentde4, tentde5, tentde6, tentde7, tentde8, tentde9, tentde10,
+      tentde11,tentde12,tentde13,tentde14,tentde15,tentde16,tentde17,tentde18,tentde19,tentde20,
+      tentde21,tentde22,tentde23,tentde24,tentde25,tentde26,tentde27,tentde28,tentde29,tentde30,
+      tentde31,tentde32,tentde33,tentde34,tentde35,tentde36,tentde37,tentde38,tentde39,tentde40,
+      tentde41,tentde42,tentde43,tentde44,tentde45,tentde46,tentde47,tentde48,tentde49,tentde50,
+      tentde51,tentde52,tentde53,tentde54,tentde55,tentde56,tentde57,tentde58,tentde59,tentde60,
+      tentde61,tentde62,tentde63,tentde64,tentde65,tentde66,tentde67,tentde68,tentde69,tentde70,
+      tentde71,tentde72,tentde73,tentde74,tentde75,tentde76,tentde77,tentde78,tentde79,tentde80,
+      tentde81,tentde82,tentde83,tentde84,tentde85,tentde86,tentde87,tentde88,tentde89,tentde90,
+      tentde91,tentde92,tentde93,tentde94,tentde95,tentde96,
+      :username as vtranusername, sysdate as vtranfecins
+      from trn_trans_entrega te inner join trn_trans_entrega_detalle det on te.tentcodi = det.tentcodi and te.tentversion = det.tentdeversion
+      where te.tentestado = 'ACT' and te.pericodi = :pericodi and te.tentversion = :tentversion order by det.tentdedia) vt
+      inner join trn_costo_marginal cm on vt.barrcodi = cm.barrcodi and vt.pericodi = cm.pericodi and vt.vtranversion = cm.cosmarversion and vt.vtrandia = cm.cosmardia
+      order by vtrancodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GrabarValorizacionRetiro</key>
+    <query>
+      insert into trn_valor_trans (vtrancodi,pericodi,barrcodi,emprcodi,cosmarcodi,vtranflag,vtrancodentret,vtranversion,vtrandia,
+      vtrantotaldia,
+      vtrantotalenergia,vtrantipoinformacion,
+      vtran1,vtran2,vtran3,vtran4,vtran5,vtran6,vtran7,vtran8,vtran9,vtran10,
+      vtran11,vtran12,vtran13,vtran14,vtran15,vtran16,vtran17,vtran18,vtran19,vtran20,
+      vtran21,vtran22,vtran23,vtran24,vtran25,vtran26,vtran27,vtran28,vtran29,vtran30,
+      vtran31,vtran32,vtran33,vtran34,vtran35,vtran36,vtran37,vtran38,vtran39,vtran40,
+      vtran41,vtran42,vtran43,vtran44,vtran45,vtran46,vtran47,vtran48,vtran49,vtran50,
+      vtran51,vtran52,vtran53,vtran54,vtran55,vtran56,vtran57,vtran58,vtran59,vtran60,
+      vtran61,vtran62,vtran63,vtran64,vtran65,vtran66,vtran67,vtran68,vtran69,vtran70,
+      vtran71,vtran72,vtran73,vtran74,vtran75,vtran76,vtran77,vtran78,vtran79,vtran80,
+      vtran81,vtran82,vtran83,vtran84,vtran85,vtran86,vtran87,vtran88,vtran89,vtran90,
+      vtran91,vtran92,vtran93,vtran94,vtran95,vtran96,vtranusername,vtranfecins)
+      select vtrancodi, vt.pericodi, vt.barrcodi, vt.emprcodi,cosmarcodi,vtranflag,vtrancodentret,vtranversion,vtrandia,
+      ((tretde1 * cosmar1 * 1000) + (tretde2 * cosmar2 * 1000) + (tretde3 * cosmar3 * 1000) + (tretde4 * cosmar4 * 1000) + (tretde5 * cosmar5 * 1000) +
+      (tretde6 * cosmar6 * 1000) + (tretde7 * cosmar7 * 1000) + (tretde8 * cosmar8 * 1000) + (tretde9 * cosmar9 * 1000) + (tretde10 * cosmar10 * 1000) +
+      (tretde11 * cosmar11 * 1000) + (tretde12 * cosmar12 * 1000) + (tretde13 * cosmar13 * 1000) + (tretde14 * cosmar14 * 1000) + (tretde15 * cosmar15 * 1000) +
+      (tretde16 * cosmar16 * 1000) + (tretde17 * cosmar17 * 1000) + (tretde18 * cosmar18 * 1000) + (tretde19 * cosmar19 * 1000) + (tretde20 * cosmar20 * 1000) +
+      (tretde21 * cosmar21 * 1000) + (tretde22 * cosmar22 * 1000) + (tretde23 * cosmar23 * 1000) + (tretde24 * cosmar24 * 1000) + (tretde25 * cosmar25 * 1000) +
+      (tretde26 * cosmar26 * 1000) + (tretde27 * cosmar27 * 1000) + (tretde28 * cosmar28 * 1000) + (tretde29 * cosmar29 * 1000) + (tretde30 * cosmar30 * 1000) +
+      (tretde31 * cosmar31 * 1000) + (tretde32 * cosmar32 * 1000) + (tretde33 * cosmar33 * 1000) + (tretde34 * cosmar34 * 1000) +
+      (tretde35 * cosmar35 * 1000) + (tretde36 * cosmar36 * 1000) + (tretde37 * cosmar37 * 1000) + (tretde38 * cosmar38 * 1000) +
+      (tretde39 * cosmar39 * 1000) + (tretde40 * cosmar40 * 1000) + (tretde41 * cosmar41 * 1000) + (tretde42 * cosmar42 * 1000) +
+      (tretde43 * cosmar43 * 1000) + (tretde44 * cosmar44 * 1000) + (tretde45 * cosmar45 * 1000) + (tretde46 * cosmar46 * 1000) +
+      (tretde47 * cosmar47 * 1000) + (tretde48 * cosmar48 * 1000) + (tretde49 * cosmar49 * 1000) + (tretde50 * cosmar50 * 1000) +
+      (tretde51 * cosmar51 * 1000) + (tretde52 * cosmar52 * 1000) + (tretde53 * cosmar53 * 1000) + (tretde54 * cosmar54 * 1000) +
+      (tretde55 * cosmar55 * 1000) + (tretde56 * cosmar56 * 1000) + (tretde57 * cosmar57 * 1000) + (tretde58 * cosmar58 * 1000) +
+      (tretde59 * cosmar59 * 1000) + (tretde60 * cosmar60 * 1000) + (tretde61 * cosmar61 * 1000) + (tretde62 * cosmar62 * 1000) +
+      (tretde63 * cosmar63 * 1000) + (tretde64 * cosmar64 * 1000) + (tretde65 * cosmar65 * 1000) + (tretde66 * cosmar66 * 1000) +
+      (tretde67 * cosmar67 * 1000) + (tretde68 * cosmar68 * 1000) + (tretde69 * cosmar69 * 1000) + (tretde70 * cosmar70 * 1000) +
+      (tretde71 * cosmar71 * 1000) + (tretde72 * cosmar72 * 1000) + (tretde73 * cosmar73 * 1000) + (tretde74 * cosmar74 * 1000) +
+      (tretde75 * cosmar75 * 1000) + (tretde76 * cosmar76 * 1000) + (tretde77 * cosmar77 * 1000) + (tretde78 * cosmar78 * 1000) +
+      (tretde79 * cosmar79 * 1000) + (tretde80 * cosmar80 * 1000) + (tretde81 * cosmar81 * 1000) + (tretde82 * cosmar82 * 1000) +
+      (tretde83 * cosmar83 * 1000) + (tretde84 * cosmar84 * 1000) + (tretde85 * cosmar85 * 1000) + (tretde86 * cosmar86 * 1000) +
+      (tretde87 * cosmar87 * 1000) + (tretde88 * cosmar88 * 1000) + (tretde89 * cosmar89 * 1000) + (tretde90 * cosmar90 * 1000) +
+      (tretde91 * cosmar91 * 1000) + (tretde92 * cosmar92 * 1000) + (tretde93 * cosmar93 * 1000) + (tretde94 * cosmar94 * 1000) +
+      (tretde95 * cosmar95 * 1000) + (tretde96 * cosmar96 * 1000)) as vtrantotaldia,
+      vtrantotalenergia ,vtrantipoinformacion,
+      (tretde1 * cosmar1 * 1000) as vtran1,
+      (tretde2 * cosmar2 * 1000) as vtran2,
+      (tretde3 * cosmar3 * 1000) as vtran3,
+      (tretde4 * cosmar4 * 1000) as vtran4,
+      (tretde5 * cosmar5 * 1000) as vtran5,
+      (tretde6 * cosmar6 * 1000) as vtran6,
+      (tretde7 * cosmar7 * 1000) as vtran7,
+      (tretde8 * cosmar8 * 1000) as vtran8,
+      (tretde9 * cosmar9 * 1000) as vtran9,
+      (tretde10 * cosmar10 * 1000) as vtran10,
+      (tretde11 * cosmar11 * 1000) as vtran11,
+      (tretde12 * cosmar12 * 1000) as vtran12,
+      (tretde13 * cosmar13 * 1000) as vtran13,
+      (tretde14 * cosmar14 * 1000) as vtran14,
+      (tretde15 * cosmar15 * 1000) as vtran15,
+      (tretde16 * cosmar16 * 1000) as vtran16,
+      (tretde17 * cosmar17 * 1000) as vtran17,
+      (tretde18 * cosmar18 * 1000) as vtran18,
+      (tretde19 * cosmar19 * 1000) as vtran19,
+      (tretde20 * cosmar20 * 1000) as vtran20,
+      (tretde21 * cosmar21 * 1000) as vtran21,
+      (tretde22 * cosmar22 * 1000) as vtran22,
+      (tretde23 * cosmar23 * 1000) as vtran23,
+      (tretde24 * cosmar24 * 1000) as vtran24,
+      (tretde25 * cosmar25 * 1000) as vtran25,
+      (tretde26 * cosmar26 * 1000) as vtran26,
+      (tretde27 * cosmar27 * 1000) as vtran27,
+      (tretde28 * cosmar28 * 1000) as vtran28,
+      (tretde29 * cosmar29 * 1000) as vtran29,
+      (tretde30 * cosmar30 * 1000) as vtran30,
+      (tretde31 * cosmar31 * 1000) as vtran31,
+      (tretde32 * cosmar32 * 1000) as vtran32,
+      (tretde33 * cosmar33 * 1000) as vtran33,
+      (tretde34 * cosmar34 * 1000) as vtran34,
+      (tretde35 * cosmar35 * 1000) as vtran35,
+      (tretde36 * cosmar36 * 1000) as vtran36,
+      (tretde37 * cosmar37 * 1000) as vtran37,
+      (tretde38 * cosmar38 * 1000) as vtran38,
+      (tretde39 * cosmar39 * 1000) as vtran39,
+      (tretde40 * cosmar40 * 1000) as vtran40,
+      (tretde41 * cosmar41 * 1000) as vtran41,
+      (tretde42 * cosmar42 * 1000) as vtran42,
+      (tretde43 * cosmar43 * 1000) as vtran43,
+      (tretde44 * cosmar44 * 1000) as vtran44,
+      (tretde45 * cosmar45 * 1000) as vtran45,
+      (tretde46 * cosmar46 * 1000) as vtran46,
+      (tretde47 * cosmar47 * 1000) as vtran47,
+      (tretde48 * cosmar48 * 1000) as vtran48,
+      (tretde49 * cosmar49 * 1000) as vtran49,
+      (tretde50 * cosmar50 * 1000) as vtran50,
+      (tretde51 * cosmar51 * 1000) as vtran51,
+      (tretde52 * cosmar52 * 1000) as vtran52,
+      (tretde53 * cosmar53 * 1000) as vtran53,
+      (tretde54 * cosmar54 * 1000) as vtran54,
+      (tretde55 * cosmar55 * 1000) as vtran55,
+      (tretde56 * cosmar56 * 1000) as vtran56,
+      (tretde57 * cosmar57 * 1000) as vtran57,
+      (tretde58 * cosmar58 * 1000) as vtran58,
+      (tretde59 * cosmar59 * 1000) as vtran59,
+      (tretde60 * cosmar60 * 1000) as vtran60,
+      (tretde61 * cosmar61 * 1000) as vtran61,
+      (tretde62 * cosmar62 * 1000) as vtran62,
+      (tretde63 * cosmar63 * 1000) as vtran63,
+      (tretde64 * cosmar64 * 1000) as vtran64,
+      (tretde65 * cosmar65 * 1000) as vtran65,
+      (tretde66 * cosmar66 * 1000) as vtran66,
+      (tretde67 * cosmar67 * 1000) as vtran67,
+      (tretde68 * cosmar68 * 1000) as vtran68,
+      (tretde69 * cosmar69 * 1000) as vtran69,
+      (tretde70 * cosmar70 * 1000) as vtran70,
+      (tretde71 * cosmar71 * 1000) as vtran71,
+      (tretde72 * cosmar72 * 1000) as vtran72,
+      (tretde73 * cosmar73 * 1000) as vtran73,
+      (tretde74 * cosmar74 * 1000) as vtran74,
+      (tretde75 * cosmar75 * 1000) as vtran75,
+      (tretde76 * cosmar76 * 1000) as vtran76,
+      (tretde77 * cosmar77 * 1000) as vtran77,
+      (tretde78 * cosmar78 * 1000) as vtran78,
+      (tretde79 * cosmar79 * 1000) as vtran79,
+      (tretde80 * cosmar80 * 1000) as vtran80,
+      (tretde81 * cosmar81 * 1000) as vtran81,
+      (tretde82 * cosmar82 * 1000) as vtran82,
+      (tretde83 * cosmar83 * 1000) as vtran83,
+      (tretde84 * cosmar84 * 1000) as vtran84,
+      (tretde85 * cosmar85 * 1000) as vtran85,
+      (tretde86 * cosmar86 * 1000) as vtran86,
+      (tretde87 * cosmar87 * 1000) as vtran87,
+      (tretde88 * cosmar88 * 1000) as vtran88,
+      (tretde89 * cosmar89 * 1000) as vtran89,
+      (tretde90 * cosmar90 * 1000) as vtran90,
+      (tretde91 * cosmar91 * 1000) as vtran91,
+      (tretde92 * cosmar92 * 1000) as vtran92,
+      (tretde93 * cosmar93 * 1000) as vtran93,
+      (tretde94 * cosmar94 * 1000) as vtran94,
+      (tretde95 * cosmar95 * 1000) as vtran95,
+      (tretde96 * cosmar96 * 1000) as vtran96,
+      vtranusername,vtranfecins
+      from (
+      select tr.tretcodi,
+      rownum + :vtrancodi as vtrancodi, tr.pericodi as pericodi, tr.barrcodi, tr.genemprcodi as emprcodi,
+      (case when tr.trettabla = 'CORESO' then 'R' else 'X' end) as vtranflag,
+      tretcodigo as vtrancodentret, tretversion as vtranversion, det.tretdedia as vtrandia, 0 as vtrantotaldia,
+      det.tretdesumadia as vtrantotalenergia, tr.trettipoinformacion as vtrantipoinformacion,
+      tretde1, tretde2, tretde3, tretde4, tretde5, tretde6, tretde7, tretde8, tretde9, tretde10,
+      tretde11,tretde12,tretde13,tretde14,tretde15,tretde16,tretde17,tretde18,tretde19,tretde20,
+      tretde21,tretde22,tretde23,tretde24,tretde25,tretde26,tretde27,tretde28,tretde29,tretde30,
+      tretde31,tretde32,tretde33,tretde34,tretde35,tretde36,tretde37,tretde38,tretde39,tretde40,
+      tretde41,tretde42,tretde43,tretde44,tretde45,tretde46,tretde47,tretde48,tretde49,tretde50,
+      tretde51,tretde52,tretde53,tretde54,tretde55,tretde56,tretde57,tretde58,tretde59,tretde60,
+      tretde61,tretde62,tretde63,tretde64,tretde65,tretde66,tretde67,tretde68,tretde69,tretde70,
+      tretde71,tretde72,tretde73,tretde74,tretde75,tretde76,tretde77,tretde78,tretde79,tretde80,
+      tretde81,tretde82,tretde83,tretde84,tretde85,tretde86,tretde87,tretde88,tretde89,tretde90,
+      tretde91,tretde92,tretde93,tretde94,tretde95,tretde96,
+      :username as vtranusername, sysdate as vtranfecins
+      from trn_trans_retiro tr inner join trn_trans_retiro_detalle det on tr.tretcodi = det.tretcodi and tr.tretversion = det.tretdeversion
+      where tr.tretestado = 'ACT' and tr.pericodi = :pericodi and tr.tretversion = :tretversion order by det.tretdedia) vt
+      inner join trn_costo_marginal cm on vt.barrcodi = cm.barrcodi and vt.pericodi = cm.pericodi and vt.vtranversion = cm.cosmarversion and vt.vtrandia = cm.cosmardia
+      order by vtrancodi
+    </query>
+  </Sql>
+
+  <!-- INICIO SIOSEIN 2 -->
+  <Sql>
+    <key>ListarValorTransferenciaTotalXEmpresaYTipoflag</key>
+    <query>
+      SELECT tv.emprcodi, si.emprnomb, tv.vtranflag, SUM(tv.vtrantotaldia) vtrantotaldia
+      FROM   trn_valor_trans tv
+      inner join si_empresa si
+      ON tv.emprcodi = si.emprcodi
+      WHERE  tv.pericodi = :pericodi AND tv.vtranversion = :vtranversion
+      GROUP  BY tv.emprcodi, si.emprnomb, tv.vtranflag
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxVersion</key>
+    <query>
+      SELECT max(vtranversion) FROM TRN_VALOR_TRANS WHERE pericodi   = :pericodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetValorTransferenciaAgrpBarra</key>
+    <query>
+      select tv.barrcodi,pericodi,tb.barrbarratransferencia,sum(vtrantotaldia) vtrantotaldia,sum(vtrantotalenergia) vtrantotalenergia from trn_valor_trans tv
+      inner join trn_barra tb on tb.barrcodi=tv.barrcodi
+      where pericodi={0} and vtranversion={1} and tv.vtranflag='{2}' and (tb.barrcodi in({3}) or '{3}'='-1')
+      group by tv.barrcodi,pericodi,tb.barrbarratransferencia
+    </query>
+  </Sql>
+  <!-- FIN SIOSEIN 2 -->
+
+  <Sql>
+    <key>ListarCodigosValorizados_OLD</key>
+    <query>
+      select * from (
+      select
+      d.cliemprcodi,
+      d.cliempr as nombempresa,
+      a.emprcodi, c.barrcodi,
+      a.vtrancodentret,
+      sum(a.vtrantotalenergia) as energia,
+      a.vtranflag
+      from trn_valor_trans a
+      left join trn_barra c on c.barrcodi = a.barrcodi
+      left join  vw_trn_codigo d on a.vtrancodentret= d.codigo
+      where a.pericodi=:pericodi
+      and a.vtranversion=:vtranversion
+      and (a.emprcodi =:emprcodi or :emprcodi is null)
+      and (d.cliemprcodi =:cliemprcodi or :cliemprcodi is null)
+      and (a.barrcodi =:barrcodi or :barrcodi is null)
+      and (a.vtranflag=:vtranflag or :vtranflag is null)
+      and (d.fechainicio &gt;={0} or {0} is null)
+      and (d.fechafin &lt;={1} or {1} is null)
+      group by
+      d.cliemprcodi,d.cliempr,a.emprcodi, c.barrcodi, a.vtranflag, a.vtrancodentret,a.vtranversion
+      order by d.cliempr, a.vtrancodentret, a.vtranflag
+      )t where t.nombempresa is not null
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigosValorizados</key>
+    <query>
+
+      SELECT DISTINCT nombempresa
+      ,vtrancodentret
+      FROM  (
+      SELECT
+      EMPR.EMPRNOMB nombempresa,
+      TENTCODIGO vtrancodentret,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||entrdt.TENTDEDIA,'YYYY-MM-DD') FECHA,
+      'E' flag
+      FROM trn_trans_entrega               entr
+      INNER JOIN trn_trans_entrega_detalle entrdt
+      ON entr.tentcodi=entrdt.tentcodi
+      INNER JOIN TRN_PERIODO              PER
+      ON ENTR.PERICODI=PER.PERICODI
+      INNER JOIN SI_EMPRESA                EMPR
+      ON ENTR.EMPRCODI=EMPR.EMPRCODI
+      WHERE entr.pericodi=:pericodi
+      and ENTR.TENTVERSION=:vtranversion
+      and (ENTR.emprcodi =:emprcodi or :emprcodi is null)
+      and ( :cliemprcodi is null or :cliemprcodi is null)
+      and (entr.barrcodi=:barrcodi or :barrcodi is null)
+      and TENTESTADO='ACT'
+      UNION
+      SELECT    EMPR.EMPRNOMB,
+      TRETCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||RETDT.TRETDEDIA,'YYYY-MM-DD') FECHA,
+      'R'
+      FROM trn_trans_retiro                   RET
+      INNER JOIN    trn_trans_retiro_detalle  RETDT
+      ON RET.TRETCODI=RETDT.TRETCODI
+      INNER JOIN TRN_PERIODO                  PER
+      ON RET.PERICODI=PER.PERICODI
+      INNER JOIN SI_EMPRESA                EMPR
+      ON RET.GENEMPRCODI=EMPR.EMPRCODI
+      INNER JOIN TRN_CODIGO_RETIRO_SOLICITUD SOL
+      ON RET.TRETCODIGO=SOL.CORESOCODIGO
+      WHERE RET.pericodi=:pericodi
+      and ret.TRETVERSION=:vtranversion
+      and (RET.GENEMPRCODI =:emprcodi or :emprcodi is null)
+      and  (SOL.CLIEMPRCODI=:cliemprcodi or :cliemprcodi is null)
+      and (RET.barrcodi=:barrcodi or :barrcodi is null)
+      and TRETESTADO='ACT'
+      ) tbl
+      WHERE trunc(FECHA) between trunc(to_date('{0}','YYYY-MM-DD')) and trunc(to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+      and (flag='{2}' or '{2}'= 'T')
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigosValorizadosTransferencia</key>
+    <query>
+      select DISTINCT
+      nombempresa
+      ,vtrancodentret
+      from(
+      SELECT
+      EMPR.EMPRNOMB nombempresa,
+      vtrancodentret vtrancodentret,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||TRN.VTRANDIA,'YYYY-MM-DD') FECHA,
+      VTRANFLAG flag
+      FROM trn_valor_trans               TRN
+      INNER JOIN TRN_PERIODO              PER
+      ON TRN.PERICODI=PER.PERICODI
+      INNER JOIN SI_EMPRESA                EMPR
+      ON TRN.EMPRCODI=EMPR.EMPRCODI
+      WHERE TRN.pericodi=:pericodi
+      and TRN.VTRANVERSION=:vtranversion
+      and (TRN.emprcodi =:emprcodi or :emprcodi is null)
+      and (TRN.barrcodi=:barrcodi or :barrcodi is null)
+      AND VTRANFLAG=:flag
+      )tbl
+      WHERE trunc(FECHA) between trunc(to_date('{0}','YYYY-MM-DD')) and trunc(to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigosValorizadosGrafica</key>
+    <query>
+      select * from trn_valor_trans
+      where
+      pericodi=:pericodi and vtranversion=:vtranversion
+      and (emprcodi = :emprcodi or :emprcodi is null)
+      and vtrancodentret in (@codigo)
+      order by vtrancodentret,vtrandia asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigosValorizadosGraficaNew</key>
+    <query>
+
+      SELECT *
+      FROM  (
+      SELECT
+      TENTCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||entrdt.TENTDEDIA,'YYYY-MM-DD') FECHA,
+      tentde1,
+      tentde2,
+      tentde3,
+      tentde4,
+      tentde5,
+      tentde6,
+      tentde7,
+      tentde8,
+      tentde9,
+      tentde10,
+      tentde11,
+      tentde12,
+      tentde13,
+      tentde14,
+      tentde15,
+      tentde16,
+      tentde17,
+      tentde18,
+      tentde19,
+      tentde20,
+      tentde21,
+      tentde22,
+      tentde23,
+      tentde24,
+      tentde25,
+      tentde26,
+      tentde27,
+      tentde28,
+      tentde29,
+      tentde30,
+      tentde31,
+      tentde32,
+      tentde33,
+      tentde34,
+      tentde35,
+      tentde36,
+      tentde37,
+      tentde38,
+      tentde39,
+      tentde40,
+      tentde41,
+      tentde42,
+      tentde43,
+      tentde44,
+      tentde45,
+      tentde46,
+      tentde47,
+      tentde48,
+      tentde49,
+      tentde50,
+      tentde51,
+      tentde52,
+      tentde53,
+      tentde54,
+      tentde55,
+      tentde56,
+      tentde57,
+      tentde58,
+      tentde59,
+      tentde60,
+      tentde61,
+      tentde62,
+      tentde63,
+      tentde64,
+      tentde65,
+      tentde66,
+      tentde67,
+      tentde68,
+      tentde69,
+      tentde70,
+      tentde71,
+      tentde72,
+      tentde73,
+      tentde74,
+      tentde75,
+      tentde76,
+      tentde77,
+      tentde78,
+      tentde79,
+      tentde80,
+      tentde81,
+      tentde82,
+      tentde83,
+      tentde84,
+      tentde85,
+      tentde86,
+      tentde87,
+      tentde88,
+      tentde89,
+      tentde90,
+      tentde91,
+      tentde92,
+      tentde93,
+      tentde94,
+      tentde95,
+      tentde96
+      FROM trn_trans_entrega               entr
+      INNER JOIN trn_trans_entrega_detalle entrdt
+      ON entr.tentcodi=entrdt.tentcodi
+      INNER JOIN TRN_PERIODO              PER
+      ON ENTR.PERICODI=PER.PERICODI
+      WHERE entr.pericodi=:pericodi and ENTR.TENTVERSION=:vtranversion and (ENTR.emprcodi = :emprcodi or :emprcodi is null)
+      and ENTR.TENTCODIGO in (@codigo)
+      and TENTESTADO='ACT'
+      UNION
+      SELECT  TRETCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||RETDT.TRETDEDIA,'YYYY-MM-DD') FECHA,
+      tretde1,
+      tretde2,
+      tretde3,
+      tretde4,
+      tretde5,
+      tretde6,
+      tretde7,
+      tretde8,
+      tretde9,
+      tretde10,
+      tretde11,
+      tretde12,
+      tretde13,
+      tretde14,
+      tretde15,
+      tretde16,
+      tretde17,
+      tretde18,
+      tretde19,
+      tretde20,
+      tretde21,
+      tretde22,
+      tretde23,
+      tretde24,
+      tretde25,
+      tretde26,
+      tretde27,
+      tretde28,
+      tretde29,
+      tretde30,
+      tretde31,
+      tretde32,
+      tretde33,
+      tretde34,
+      tretde35,
+      tretde36,
+      tretde37,
+      tretde38,
+      tretde39,
+      tretde40,
+      tretde41,
+      tretde42,
+      tretde43,
+      tretde44,
+      tretde45,
+      tretde46,
+      tretde47,
+      tretde48,
+      tretde49,
+      tretde50,
+      tretde51,
+      tretde52,
+      tretde53,
+      tretde54,
+      tretde55,
+      tretde56,
+      tretde57,
+      tretde58,
+      tretde59,
+      tretde60,
+      tretde61,
+      tretde62,
+      tretde63,
+      tretde64,
+      tretde65,
+      tretde66,
+      tretde67,
+      tretde68,
+      tretde69,
+      tretde70,
+      tretde71,
+      tretde72,
+      tretde73,
+      tretde74,
+      tretde75,
+      tretde76,
+      tretde77,
+      tretde78,
+      tretde79,
+      tretde80,
+      tretde81,
+      tretde82,
+      tretde83,
+      tretde84,
+      tretde85,
+      tretde86,
+      tretde87,
+      tretde88,
+      tretde89,
+      tretde90,
+      tretde91,
+      tretde92,
+      tretde93,
+      tretde94,
+      tretde95,
+      tretde96
+      FROM trn_trans_retiro                   RET
+      INNER JOIN    trn_trans_retiro_detalle  RETDT
+      ON RET.TRETCODI=RETDT.TRETCODI
+      INNER JOIN TRN_PERIODO                  PER
+      ON RET.PERICODI=PER.PERICODI
+      WHERE RET.pericodi=:pericodi and ret.TRETVERSION=:vtranversion and (RET.GENEMPRCODI = :emprcodi or :emprcodi is null) and RET.TRETCODIGO in (@codigo)
+      and TRETESTADO='ACT'
+      ) tbl
+      WHERE      FECHA between to_date('{0}','YYYY-MM-DD') and to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      order by fecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigosValorizadosTransferenciaGraficaNew</key>
+    <query>
+      SELECT * FROM (
+      SELECT
+      '' tentCODIGO,
+      SYSDATE   FECHA,
+      0 tentde1,
+      0 tentde2,
+      0 tentde3,
+      0 tentde4,
+      0 tentde5,
+      0 tentde6,
+      0 tentde7,
+      0 tentde8,
+      0 tentde9,
+      0 tentde10,
+      0 tentde11,
+      0 tentde12,
+      0 tentde13,
+      0 tentde14,
+      0 tentde15,
+      0 tentde16,
+      0 tentde17,
+      0 tentde18,
+      0 tentde19,
+      0 tentde20,
+      0 tentde21,
+      0 tentde22,
+      0 tentde23,
+      0 tentde24,
+      0 tentde25,
+      0 tentde26,
+      0 tentde27,
+      0 tentde28,
+      0 tentde29,
+      0 tentde30,
+      0 tentde31,
+      0 tentde32,
+      0 tentde33,
+      0 tentde34,
+      0 tentde35,
+      0 tentde36,
+      0 tentde37,
+      0 tentde38,
+      0 tentde39,
+      0 tentde40,
+      0 tentde41,
+      0 tentde42,
+      0 tentde43,
+      0 tentde44,
+      0 tentde45,
+      0 tentde46,
+      0 tentde47,
+      0 tentde48,
+      0 tentde49,
+      0 tentde50,
+      0 tentde51,
+      0 tentde52,
+      0 tentde53,
+      0 tentde54,
+      0 tentde55,
+      0 tentde56,
+      0 tentde57,
+      0 tentde58,
+      0 tentde59,
+      0 tentde60,
+      0 tentde61,
+      0 tentde62,
+      0 tentde63,
+      0 tentde64,
+      0 tentde65,
+      0 tentde66,
+      0 tentde67,
+      0 tentde68,
+      0 tentde69,
+      0 tentde70,
+      0 tentde71,
+      0 tentde72,
+      0 tentde73,
+      0 tentde74,
+      0 tentde75,
+      0 tentde76,
+      0 tentde77,
+      0 tentde78,
+      0 tentde79,
+      0 tentde80,
+      0 tentde81,
+      0 tentde82,
+      0 tentde83,
+      0 tentde84,
+      0 tentde85,
+      0 tentde86,
+      0 tentde87,
+      0 tentde88,
+      0 tentde89,
+      0 tentde90,
+      0 tentde91,
+      0 tentde92,
+      0 tentde93,
+      0 tentde94,
+      0 tentde95,
+      0 tentde96
+      FROM  DUAL
+      WHERE 1=0
+      UNION ALL
+      SELECT
+      vtrancodentret,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||ENTR.VTRANDIA,'YYYY-MM-DD') FECHA,
+      vtran1,
+      vtran2,
+      vtran3,
+      vtran4,
+      vtran5,
+      vtran6,
+      vtran7,
+      vtran8,
+      vtran9,
+      vtran10,
+      vtran11,
+      vtran12,
+      vtran13,
+      vtran14,
+      vtran15,
+      vtran16,
+      vtran17,
+      vtran18,
+      vtran19,
+      vtran20,
+      vtran21,
+      vtran22,
+      vtran23,
+      vtran24,
+      vtran25,
+      vtran26,
+      vtran27,
+      vtran28,
+      vtran29,
+      vtran30,
+      vtran31,
+      vtran32,
+      vtran33,
+      vtran34,
+      vtran35,
+      vtran36,
+      vtran37,
+      vtran38,
+      vtran39,
+      vtran40,
+      vtran41,
+      vtran42,
+      vtran43,
+      vtran44,
+      vtran45,
+      vtran46,
+      vtran47,
+      vtran48,
+      vtran49,
+      vtran50,
+      vtran51,
+      vtran52,
+      vtran53,
+      vtran54,
+      vtran55,
+      vtran56,
+      vtran57,
+      vtran58,
+      vtran59,
+      vtran60,
+      vtran61,
+      vtran62,
+      vtran63,
+      vtran64,
+      vtran65,
+      vtran66,
+      vtran67,
+      vtran68,
+      vtran69,
+      vtran70,
+      vtran71,
+      vtran72,
+      vtran73,
+      vtran74,
+      vtran75,
+      vtran76,
+      vtran77,
+      vtran78,
+      vtran79,
+      vtran80,
+      vtran81,
+      vtran82,
+      vtran83,
+      vtran84,
+      vtran85,
+      vtran86,
+      vtran87,
+      vtran88,
+      vtran89,
+      vtran90,
+      vtran91,
+      vtran92,
+      vtran93,
+      vtran94,
+      vtran95,
+      vtran96
+      FROM trn_valor_trans                ENTR
+      INNER JOIN TRN_PERIODO              PER
+      ON ENTR.PERICODI=PER.PERICODI
+      WHERE entr.pericodi=:pericodi
+      and ENTR.VTRANVERSION=:vtranversion
+      and (ENTR.emprcodi =:emprcodi or :emprcodi is null )
+      and ENTR.VTRANCODENTRET in (@codigo)
+      ) T1
+      WHERE FECHA between to_date('{0}','YYYY-MM-DD')
+      and to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')  order by fecha
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarCodigosValorizadosGraficaTotal_Old</key>
+    <query>
+      select
+      vtrandia,
+      sum(vtran1) vtran1, sum(vtran2) vtran2, sum(vtran3) vtran3, sum(vtran4) vtran4, sum(vtran5) vtran5,
+      sum(vtran6) vtran6, sum(vtran7) vtran7, sum(vtran8) vtran8, sum(vtran9) vtran9, sum(vtran10) vtran10,
+      sum(vtran11) vtran11, sum(vtran12) vtran12, sum(vtran13) vtran13, sum(vtran14) vtran14, sum(vtran15) vtran15,
+      sum(vtran16) vtran16, sum(vtran17) vtran17, sum(vtran18) vtran18, sum(vtran19) vtran19, sum(vtran20) vtran20,
+      sum(vtran21) vtran21, sum(vtran22) vtran22, sum(vtran23) vtran23, sum(vtran24) vtran24, sum(vtran25) vtran25,
+      sum(vtran26) vtran26, sum(vtran27) vtran27, sum(vtran28) vtran28, sum(vtran29) vtran29, sum(vtran30) vtran30,
+      sum(vtran31) vtran31, sum(vtran32) vtran32, sum(vtran33) vtran33, sum(vtran34) vtran34, sum(vtran35) vtran35,
+      sum(vtran36) vtran36, sum(vtran37) vtran37, sum(vtran38) vtran38, sum(vtran39) vtran39, sum(vtran40) vtran40,
+      sum(vtran41) vtran41, sum(vtran42) vtran42, sum(vtran43) vtran43, sum(vtran44) vtran44, sum(vtran45) vtran45,
+      sum(vtran46) vtran46, sum(vtran47) vtran47, sum(vtran48) vtran48, sum(vtran49) vtran49, sum(vtran50) vtran50,
+      sum(vtran51) vtran51, sum(vtran52) vtran52, sum(vtran53) vtran53, sum(vtran54) vtran54, sum(vtran55) vtran55,
+      sum(vtran56) vtran56, sum(vtran57) vtran57, sum(vtran58) vtran58, sum(vtran59) vtran59, sum(vtran60) vtran60,
+      sum(vtran61) vtran61, sum(vtran62) vtran62, sum(vtran63) vtran63, sum(vtran64) vtran64, sum(vtran65) vtran65,
+      sum(vtran66) vtran66, sum(vtran67) vtran67, sum(vtran68) vtran68, sum(vtran69) vtran69, sum(vtran70) vtran70,
+      sum(vtran71) vtran71, sum(vtran72) vtran72, sum(vtran73) vtran73, sum(vtran74) vtran74, sum(vtran75) vtran75,
+      sum(vtran76) vtran76, sum(vtran77) vtran77, sum(vtran78) vtran78, sum(vtran79) vtran79, sum(vtran80) vtran80,
+      sum(vtran81) vtran81, sum(vtran82) vtran82, sum(vtran83) vtran83, sum(vtran84) vtran84, sum(vtran85) vtran85,
+      sum(vtran86) vtran86, sum(vtran87) vtran87, sum(vtran88) vtran88, sum(vtran89) vtran89, sum(vtran90) vtran90,
+      sum(vtran91) vtran91, sum(vtran92) vtran92, sum(vtran93) vtran93, sum(vtran94) vtran94, sum(vtran95) vtran95,
+      sum(vtran96) vtran96
+      from trn_valor_trans
+      where
+      pericodi=:pericodi and vtranversion=:vtranversion
+      and (emprcodi = :emprcodi or :emprcodi is null)
+      and vtrancodentret in (@codigo)
+      group by vtrandia
+      order by vtrandia asc
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarCodigosValorizadosGraficaTotal</key>
+    <query>
+      SELECT *
+      FROM  (
+      SELECT
+      TENTCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||entrdt.TENTDEDIA,'YYYY-MM-DD') FECHA,
+      tentde1+
+      tentde2+
+      tentde3+
+      tentde4+
+      tentde5+
+      tentde6+
+      tentde7+
+      tentde8+
+      tentde9+
+      tentde10+
+      tentde11+
+      tentde12+
+      tentde13+
+      tentde14+
+      tentde15+
+      tentde16+
+      tentde17+
+      tentde18+
+      tentde19+
+      tentde20+
+      tentde21+
+      tentde22+
+      tentde23+
+      tentde24+
+      tentde25+
+      tentde26+
+      tentde27+
+      tentde28+
+      tentde29+
+      tentde30+
+      tentde31+
+      tentde32+
+      tentde33+
+      tentde34+
+      tentde35+
+      tentde36+
+      tentde37+
+      tentde38+
+      tentde39+
+      tentde40+
+      tentde41+
+      tentde42+
+      tentde43+
+      tentde44+
+      tentde45+
+      tentde46+
+      tentde47+
+      tentde48+
+      tentde49+
+      tentde50+
+      tentde51+
+      tentde52+
+      tentde53+
+      tentde54+
+      tentde55+
+      tentde56+
+      tentde57+
+      tentde58+
+      tentde59+
+      tentde60+
+      tentde61+
+      tentde62+
+      tentde63+
+      tentde64+
+      tentde65+
+      tentde66+
+      tentde67+
+      tentde68+
+      tentde69+
+      tentde70+
+      tentde71+
+      tentde72+
+      tentde73+
+      tentde74+
+      tentde75+
+      tentde76+
+      tentde77+
+      tentde78+
+      tentde79+
+      tentde80+
+      tentde81+
+      tentde82+
+      tentde83+
+      tentde84+
+      tentde85+
+      tentde86+
+      tentde87+
+      tentde88+
+      tentde89+
+      tentde90+
+      tentde91+
+      tentde92+
+      tentde93+
+      tentde94+
+      tentde95+
+      tentde96  totalDia
+      FROM trn_trans_entrega               entr
+      INNER JOIN trn_trans_entrega_detalle entrdt
+      ON entr.tentcodi=entrdt.tentcodi
+      INNER JOIN TRN_PERIODO              PER
+      ON ENTR.PERICODI=PER.PERICODI
+      WHERE entr.pericodi=:pericodi
+      and ENTR.TENTVERSION=:vtranversion and (ENTR.emprcodi = :emprcodi or :emprcodi is null)
+      and ENTR.TENTCODIGO in (@codigo)
+      and TENTESTADO='ACT'
+      UNION
+      SELECT  TRETCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||RETDT.TRETDEDIA,'YYYY-MM-DD') FECHA,
+      tretde1+
+      tretde2+
+      tretde3+
+      tretde4+
+      tretde5+
+      tretde6+
+      tretde7+
+      tretde8+
+      tretde9+
+      tretde10+
+      tretde11+
+      tretde12+
+      tretde13+
+      tretde14+
+      tretde15+
+      tretde16+
+      tretde17+
+      tretde18+
+      tretde19+
+      tretde20+
+      tretde21+
+      tretde22+
+      tretde23+
+      tretde24+
+      tretde25+
+      tretde26+
+      tretde27+
+      tretde28+
+      tretde29+
+      tretde30+
+      tretde31+
+      tretde32+
+      tretde33+
+      tretde34+
+      tretde35+
+      tretde36+
+      tretde37+
+      tretde38+
+      tretde39+
+      tretde40+
+      tretde41+
+      tretde42+
+      tretde43+
+      tretde44+
+      tretde45+
+      tretde46+
+      tretde47+
+      tretde48+
+      tretde49+
+      tretde50+
+      tretde51+
+      tretde52+
+      tretde53+
+      tretde54+
+      tretde55+
+      tretde56+
+      tretde57+
+      tretde58+
+      tretde59+
+      tretde60+
+      tretde61+
+      tretde62+
+      tretde63+
+      tretde64+
+      tretde65+
+      tretde66+
+      tretde67+
+      tretde68+
+      tretde69+
+      tretde70+
+      tretde71+
+      tretde72+
+      tretde73+
+      tretde74+
+      tretde75+
+      tretde76+
+      tretde77+
+      tretde78+
+      tretde79+
+      tretde80+
+      tretde81+
+      tretde82+
+      tretde83+
+      tretde84+
+      tretde85+
+      tretde86+
+      tretde87+
+      tretde88+
+      tretde89+
+      tretde90+
+      tretde91+
+      tretde92+
+      tretde93+
+      tretde94+
+      tretde95+
+      tretde96
+      FROM trn_trans_retiro                   RET
+      INNER JOIN    trn_trans_retiro_detalle  RETDT
+      ON RET.TRETCODI=RETDT.TRETCODI
+      INNER JOIN TRN_PERIODO                  PER
+      ON RET.PERICODI=PER.PERICODI
+      WHERE RET.pericodi=:pericodi
+      and ret.TRETVERSION=:vtranversion
+      and (RET.GENEMPRCODI =:emprcodi or :emprcodi is null ) and RET.TRETCODIGO in (@codigo)
+      and TRETESTADO='ACT'
+      ) tbl
+      WHERE      FECHA between to_date('{0}','YYYY-MM-DD') and to_date('{1}','YYYY-MM-DD HH24:MI:SS')
+      order by fecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigosValorizadosGraficaTotalTransferencia</key>
+    <query>
+      SELECT * FROM(
+      SELECT
+      vtrancodentret                                                            tentCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||ENTR.VTRANDIA,'YYYY-MM-DD') FECHA,
+      vtran1+
+      vtran2+
+      vtran3+
+      vtran4+
+      vtran5+
+      vtran6+
+      vtran7+
+      vtran8+
+      vtran9+
+      vtran10+
+      vtran11+
+      vtran12+
+      vtran13+
+      vtran14+
+      vtran15+
+      vtran16+
+      vtran17+
+      vtran18+
+      vtran19+
+      vtran20+
+      vtran21+
+      vtran22+
+      vtran23+
+      vtran24+
+      vtran25+
+      vtran26+
+      vtran27+
+      vtran28+
+      vtran29+
+      vtran30+
+      vtran31+
+      vtran32+
+      vtran33+
+      vtran34+
+      vtran35+
+      vtran36+
+      vtran37+
+      vtran38+
+      vtran39+
+      vtran40+
+      vtran41+
+      vtran42+
+      vtran43+
+      vtran44+
+      vtran45+
+      vtran46+
+      vtran47+
+      vtran48+
+      vtran49+
+      vtran50+
+      vtran51+
+      vtran52+
+      vtran53+
+      vtran54+
+      vtran55+
+      vtran56+
+      vtran57+
+      vtran58+
+      vtran59+
+      vtran60+
+      vtran61+
+      vtran62+
+      vtran63+
+      vtran64+
+      vtran65+
+      vtran66+
+      vtran67+
+      vtran68+
+      vtran69+
+      vtran70+
+      vtran71+
+      vtran72+
+      vtran73+
+      vtran74+
+      vtran75+
+      vtran76+
+      vtran77+
+      vtran78+
+      vtran79+
+      vtran80+
+      vtran81+
+      vtran82+
+      vtran83+
+      vtran84+
+      vtran85+
+      vtran86+
+      vtran87+
+      vtran88+
+      vtran89+
+      vtran90+
+      vtran91+
+      vtran92+
+      vtran93+
+      vtran94+
+      vtran95+
+      vtran96                         totalDia
+      FROM trn_valor_trans                ENTR
+      INNER JOIN TRN_PERIODO              PER
+      ON ENTR.PERICODI=PER.PERICODI
+      WHERE entr.pericodi=:pericodi
+      and ENTR.VTRANVERSION=:vtranversion
+      and (ENTR.emprcodi =:emprcodi or :emprcodi is null )
+      and ENTR.VTRANCODENTRET in (@codigo)
+      ) T1
+      WHERE FECHA between to_date('{0}','YYYY-MM-DD') and to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')  order by fecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigos</key>
+    <query>
+      select codi, codigo from vw_trn_codigo
+      order by codigo asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarEmpresasAsociadas</key>
+    <query>
+      SELECT DISTINCT SEM.EMPRCODI
+      ,SEM.EMPRNOMB
+      FROM SI_EMPRESA  SEM
+      ORDER BY SEM.EMPRNOMB
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarComparativo</key>
+    <query>
+      select
+      vtrandia,
+      sum(vtran1) vtran1, sum(vtran2) vtran2, sum(vtran3) vtran3, sum(vtran4) vtran4, sum(vtran5) vtran5,
+      sum(vtran6) vtran6, sum(vtran7) vtran7, sum(vtran8) vtran8, sum(vtran9) vtran9, sum(vtran10) vtran10,
+      sum(vtran11) vtran11, sum(vtran12) vtran12, sum(vtran13) vtran13, sum(vtran14) vtran14, sum(vtran15) vtran15,
+      sum(vtran16) vtran16, sum(vtran17) vtran17, sum(vtran18) vtran18, sum(vtran19) vtran19, sum(vtran20) vtran20,
+      sum(vtran21) vtran21, sum(vtran22) vtran22, sum(vtran23) vtran23, sum(vtran24) vtran24, sum(vtran25) vtran25,
+      sum(vtran26) vtran26, sum(vtran27) vtran27, sum(vtran28) vtran28, sum(vtran29) vtran29, sum(vtran30) vtran30,
+      sum(vtran31) vtran31, sum(vtran32) vtran32, sum(vtran33) vtran33, sum(vtran34) vtran34, sum(vtran35) vtran35,
+      sum(vtran36) vtran36, sum(vtran37) vtran37, sum(vtran38) vtran38, sum(vtran39) vtran39, sum(vtran40) vtran40,
+      sum(vtran41) vtran41, sum(vtran42) vtran42, sum(vtran43) vtran43, sum(vtran44) vtran44, sum(vtran45) vtran45,
+      sum(vtran46) vtran46, sum(vtran47) vtran47, sum(vtran48) vtran48, sum(vtran49) vtran49, sum(vtran50) vtran50,
+      sum(vtran51) vtran51, sum(vtran52) vtran52, sum(vtran53) vtran53, sum(vtran54) vtran54, sum(vtran55) vtran55,
+      sum(vtran56) vtran56, sum(vtran57) vtran57, sum(vtran58) vtran58, sum(vtran59) vtran59, sum(vtran60) vtran60,
+      sum(vtran61) vtran61, sum(vtran62) vtran62, sum(vtran63) vtran63, sum(vtran64) vtran64, sum(vtran65) vtran65,
+      sum(vtran66) vtran66, sum(vtran67) vtran67, sum(vtran68) vtran68, sum(vtran69) vtran69, sum(vtran70) vtran70,
+      sum(vtran71) vtran71, sum(vtran72) vtran72, sum(vtran73) vtran73, sum(vtran74) vtran74, sum(vtran75) vtran75,
+      sum(vtran76) vtran76, sum(vtran77) vtran77, sum(vtran78) vtran78, sum(vtran79) vtran79, sum(vtran80) vtran80,
+      sum(vtran81) vtran81, sum(vtran82) vtran82, sum(vtran83) vtran83, sum(vtran84) vtran84, sum(vtran85) vtran85,
+      sum(vtran86) vtran86, sum(vtran87) vtran87, sum(vtran88) vtran88, sum(vtran89) vtran89, sum(vtran90) vtran90,
+      sum(vtran91) vtran91, sum(vtran92) vtran92, sum(vtran93) vtran93, sum(vtran94) vtran94, sum(vtran95) vtran95,
+      sum(vtran96) vtran96
+      from trn_valor_trans a
+      left join  vw_trn_codigo d on a.vtrancodentret= d.codigo
+      where
+      pericodi=:pericodi and vtranversion=:vtranversion
+      and (emprcodi = :emprcodi or :emprcodi is null)
+      and (d.cliemprcodi =:cliemprcodi or :cliemprcodi is null)
+      and (a.barrcodi =:barrcodi or :barrcodi is null)
+      and (a.vtranflag=:vtranflag or :vtranflag is null)
+      and vtrancodentret in (@codigo)
+      and vtrandia in (@dia)
+      group by vtrandia
+      order by vtrandia asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarComparativoEntregaRetiroValor_OLD</key>
+    <query>
+
+      SELECT
+      1,
+      sum(vtran1) vtran1, sum(vtran2) vtran2, sum(vtran3) vtran3, sum(vtran4) vtran4, sum(vtran5) vtran5,
+      sum(vtran6) vtran6, sum(vtran7) vtran7, sum(vtran8) vtran8, sum(vtran9) vtran9, sum(vtran10) vtran10,
+      sum(vtran11) vtran11, sum(vtran12) vtran12, sum(vtran13) vtran13, sum(vtran14) vtran14, sum(vtran15) vtran15,
+      sum(vtran16) vtran16, sum(vtran17) vtran17, sum(vtran18) vtran18, sum(vtran19) vtran19, sum(vtran20) vtran20,
+      sum(vtran21) vtran21, sum(vtran22) vtran22, sum(vtran23) vtran23, sum(vtran24) vtran24, sum(vtran25) vtran25,
+      sum(vtran26) vtran26, sum(vtran27) vtran27, sum(vtran28) vtran28, sum(vtran29) vtran29, sum(vtran30) vtran30,
+      sum(vtran31) vtran31, sum(vtran32) vtran32, sum(vtran33) vtran33, sum(vtran34) vtran34, sum(vtran35) vtran35,
+      sum(vtran36) vtran36, sum(vtran37) vtran37, sum(vtran38) vtran38, sum(vtran39) vtran39, sum(vtran40) vtran40,
+      sum(vtran41) vtran41, sum(vtran42) vtran42, sum(vtran43) vtran43, sum(vtran44) vtran44, sum(vtran45) vtran45,
+      sum(vtran46) vtran46, sum(vtran47) vtran47, sum(vtran48) vtran48, sum(vtran49) vtran49, sum(vtran50) vtran50,
+      sum(vtran51) vtran51, sum(vtran52) vtran52, sum(vtran53) vtran53, sum(vtran54) vtran54, sum(vtran55) vtran55,
+      sum(vtran56) vtran56, sum(vtran57) vtran57, sum(vtran58) vtran58, sum(vtran59) vtran59, sum(vtran60) vtran60,
+      sum(vtran61) vtran61, sum(vtran62) vtran62, sum(vtran63) vtran63, sum(vtran64) vtran64, sum(vtran65) vtran65,
+      sum(vtran66) vtran66, sum(vtran67) vtran67, sum(vtran68) vtran68, sum(vtran69) vtran69, sum(vtran70) vtran70,
+      sum(vtran71) vtran71, sum(vtran72) vtran72, sum(vtran73) vtran73, sum(vtran74) vtran74, sum(vtran75) vtran75,
+      sum(vtran76) vtran76, sum(vtran77) vtran77, sum(vtran78) vtran78, sum(vtran79) vtran79, sum(vtran80) vtran80,
+      sum(vtran81) vtran81, sum(vtran82) vtran82, sum(vtran83) vtran83, sum(vtran84) vtran84, sum(vtran85) vtran85,
+      sum(vtran86) vtran86, sum(vtran87) vtran87, sum(vtran88) vtran88, sum(vtran89) vtran89, sum(vtran90) vtran90,
+      sum(vtran91) vtran91, sum(vtran92) vtran92, sum(vtran93) vtran93, sum(vtran94) vtran94, sum(vtran95) vtran95,
+      sum(vtran96) vtran96
+      FROM TRN_VALOR_TRANS    VTRA
+      LEFT JOIN vw_trn_codigo VCOD
+      ON VTRA.VTRANCODENTRET=VCOD.CODIGO
+      WHERE PERICODI=:PeriCodi1
+      AND  VTRANVERSION=:VersionCodi1
+      AND VTRANDIA IN({0})
+      AND (EMPRCODI=:EMPRCODI or :EmprCodi is null)
+      AND (VCOD.CLIEMPRCODI=:CLIEMPRCODI or :CliCodi is null)
+      AND (VTRA.BARRCODI=:BARRCODI or :BarrCodi is null)
+      and (vtranflag=:TipoEntregaCodi or :TipoEntregaCodi is null)
+      {1}
+      UNION
+      SELECT
+      2,
+      sum(vtran1) vtran1, sum(vtran2) vtran2, sum(vtran3) vtran3, sum(vtran4) vtran4, sum(vtran5) vtran5,
+      sum(vtran6) vtran6, sum(vtran7) vtran7, sum(vtran8) vtran8, sum(vtran9) vtran9, sum(vtran10) vtran10,
+      sum(vtran11) vtran11, sum(vtran12) vtran12, sum(vtran13) vtran13, sum(vtran14) vtran14, sum(vtran15) vtran15,
+      sum(vtran16) vtran16, sum(vtran17) vtran17, sum(vtran18) vtran18, sum(vtran19) vtran19, sum(vtran20) vtran20,
+      sum(vtran21) vtran21, sum(vtran22) vtran22, sum(vtran23) vtran23, sum(vtran24) vtran24, sum(vtran25) vtran25,
+      sum(vtran26) vtran26, sum(vtran27) vtran27, sum(vtran28) vtran28, sum(vtran29) vtran29, sum(vtran30) vtran30,
+      sum(vtran31) vtran31, sum(vtran32) vtran32, sum(vtran33) vtran33, sum(vtran34) vtran34, sum(vtran35) vtran35,
+      sum(vtran36) vtran36, sum(vtran37) vtran37, sum(vtran38) vtran38, sum(vtran39) vtran39, sum(vtran40) vtran40,
+      sum(vtran41) vtran41, sum(vtran42) vtran42, sum(vtran43) vtran43, sum(vtran44) vtran44, sum(vtran45) vtran45,
+      sum(vtran46) vtran46, sum(vtran47) vtran47, sum(vtran48) vtran48, sum(vtran49) vtran49, sum(vtran50) vtran50,
+      sum(vtran51) vtran51, sum(vtran52) vtran52, sum(vtran53) vtran53, sum(vtran54) vtran54, sum(vtran55) vtran55,
+      sum(vtran56) vtran56, sum(vtran57) vtran57, sum(vtran58) vtran58, sum(vtran59) vtran59, sum(vtran60) vtran60,
+      sum(vtran61) vtran61, sum(vtran62) vtran62, sum(vtran63) vtran63, sum(vtran64) vtran64, sum(vtran65) vtran65,
+      sum(vtran66) vtran66, sum(vtran67) vtran67, sum(vtran68) vtran68, sum(vtran69) vtran69, sum(vtran70) vtran70,
+      sum(vtran71) vtran71, sum(vtran72) vtran72, sum(vtran73) vtran73, sum(vtran74) vtran74, sum(vtran75) vtran75,
+      sum(vtran76) vtran76, sum(vtran77) vtran77, sum(vtran78) vtran78, sum(vtran79) vtran79, sum(vtran80) vtran80,
+      sum(vtran81) vtran81, sum(vtran82) vtran82, sum(vtran83) vtran83, sum(vtran84) vtran84, sum(vtran85) vtran85,
+      sum(vtran86) vtran86, sum(vtran87) vtran87, sum(vtran88) vtran88, sum(vtran89) vtran89, sum(vtran90) vtran90,
+      sum(vtran91) vtran91, sum(vtran92) vtran92, sum(vtran93) vtran93, sum(vtran94) vtran94, sum(vtran95) vtran95,
+      sum(vtran96) vtran96
+      FROM TRN_VALOR_TRANS    VTRA
+      LEFT JOIN vw_trn_codigo VCOD
+      ON VTRA.VTRANCODENTRET=VCOD.CODIGO
+      WHERE PERICODI=:PeriCodi2
+      AND  VTRANVERSION=:VersionCodi2
+      AND VTRANDIA IN({0})
+      AND (EMPRCODI=:EMPRCODI or :EmprCodi is null)
+      AND (VCOD.CLIEMPRCODI=:CLIEMPRCODI or :CliCodi is null)
+      AND (VTRA.BARRCODI=:BARRCODI  or :BarrCodi is null)
+      and (vtranflag=:TipoEntregaCodi or :TipoEntregaCodi is null)
+      {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarComparativoEntregaRetiroValor</key>
+
+    <query>
+      WITH T AS (
+      SELECT
+      entr.tentcodi,
+      TENTCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||entrdt.TENTDEDIA,'YYYY-MM-DD') FECHA,
+      entr.pericodi,
+      ENTR.TENTVERSION,
+      ENTR.emprcodi ,
+      null CLIEMPRCODI,
+      entr.barrcodi,
+      'E' flag,
+      entrdt.TENTDEDIA DIA,
+      tentde1,
+      tentde2,
+      tentde3,
+      tentde4,
+      tentde5,
+      tentde6,
+      tentde7,
+      tentde8,
+      tentde9,
+      tentde10,
+      tentde11,
+      tentde12,
+      tentde13,
+      tentde14,
+      tentde15,
+      tentde16,
+      tentde17,
+      tentde18,
+      tentde19,
+      tentde20,
+      tentde21,
+      tentde22,
+      tentde23,
+      tentde24,
+      tentde25,
+      tentde26,
+      tentde27,
+      tentde28,
+      tentde29,
+      tentde30,
+      tentde31,
+      tentde32,
+      tentde33,
+      tentde34,
+      tentde35,
+      tentde36,
+      tentde37,
+      tentde38,
+      tentde39,
+      tentde40,
+      tentde41,
+      tentde42,
+      tentde43,
+      tentde44,
+      tentde45,
+      tentde46,
+      tentde47,
+      tentde48,
+      tentde49,
+      tentde50,
+      tentde51,
+      tentde52,
+      tentde53,
+      tentde54,
+      tentde55,
+      tentde56,
+      tentde57,
+      tentde58,
+      tentde59,
+      tentde60,
+      tentde61,
+      tentde62,
+      tentde63,
+      tentde64,
+      tentde65,
+      tentde66,
+      tentde67,
+      tentde68,
+      tentde69,
+      tentde70,
+      tentde71,
+      tentde72,
+      tentde73,
+      tentde74,
+      tentde75,
+      tentde76,
+      tentde77,
+      tentde78,
+      tentde79,
+      tentde80,
+      tentde81,
+      tentde82,
+      tentde83,
+      tentde84,
+      tentde85,
+      tentde86,
+      tentde87,
+      tentde88,
+      tentde89,
+      tentde90,
+      tentde91,
+      tentde92,
+      tentde93,
+      tentde94,
+      tentde95,
+      tentde96
+      FROM trn_trans_entrega               entr
+      INNER JOIN trn_trans_entrega_detalle entrdt
+      ON entr.tentcodi=entrdt.tentcodi
+      INNER JOIN TRN_PERIODO              PER
+      ON ENTR.PERICODI=PER.PERICODI
+      WHERE TENTESTADO='ACT'
+
+      UNION
+
+      SELECT
+      RET.TRETCODI,
+      TRETCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||RETDT.TRETDEDIA,'YYYY-MM-DD') FECHA,
+      RET.pericodi,
+      RET.TRETVERSION,
+      RET.GENEMPRCODI ,
+      SOL.CLIEMPRCODI,
+      RET.barrcodi,
+      'R' flag,
+      RETDT.TRETDEDIA,
+      tretde1,
+      tretde2,
+      tretde3,
+      tretde4,
+      tretde5,
+      tretde6,
+      tretde7,
+      tretde8,
+      tretde9,
+      tretde10,
+      tretde11,
+      tretde12,
+      tretde13,
+      tretde14,
+      tretde15,
+      tretde16,
+      tretde17,
+      tretde18,
+      tretde19,
+      tretde20,
+      tretde21,
+      tretde22,
+      tretde23,
+      tretde24,
+      tretde25,
+      tretde26,
+      tretde27,
+      tretde28,
+      tretde29,
+      tretde30,
+      tretde31,
+      tretde32,
+      tretde33,
+      tretde34,
+      tretde35,
+      tretde36,
+      tretde37,
+      tretde38,
+      tretde39,
+      tretde40,
+      tretde41,
+      tretde42,
+      tretde43,
+      tretde44,
+      tretde45,
+      tretde46,
+      tretde47,
+      tretde48,
+      tretde49,
+      tretde50,
+      tretde51,
+      tretde52,
+      tretde53,
+      tretde54,
+      tretde55,
+      tretde56,
+      tretde57,
+      tretde58,
+      tretde59,
+      tretde60,
+      tretde61,
+      tretde62,
+      tretde63,
+      tretde64,
+      tretde65,
+      tretde66,
+      tretde67,
+      tretde68,
+      tretde69,
+      tretde70,
+      tretde71,
+      tretde72,
+      tretde73,
+      tretde74,
+      tretde75,
+      tretde76,
+      tretde77,
+      tretde78,
+      tretde79,
+      tretde80,
+      tretde81,
+      tretde82,
+      tretde83,
+      tretde84,
+      tretde85,
+      tretde86,
+      tretde87,
+      tretde88,
+      tretde89,
+      tretde90,
+      tretde91,
+      tretde92,
+      tretde93,
+      tretde94,
+      tretde95,
+      tretde96
+      FROM trn_trans_retiro                   RET
+      INNER JOIN    trn_trans_retiro_detalle  RETDT
+      ON RET.TRETCODI=RETDT.TRETCODI
+      INNER JOIN TRN_PERIODO                  PER
+      ON RET.PERICODI=PER.PERICODI
+      INNER JOIN TRN_CODIGO_RETIRO_SOLICITUD SOL
+      ON RET.TRETCODIGO=SOL.CORESOCODIGO
+      WHERE TRETESTADO='ACT'
+      )
+      SELECT FECHA,
+      SUM(tentde1),
+      SUM(tentde2),
+      SUM(tentde3),
+      SUM(tentde4),
+      SUM(tentde5),
+      SUM(tentde6),
+      SUM(tentde7),
+      SUM(tentde8),
+      SUM(tentde9),
+      SUM(tentde10),
+      SUM(tentde11),
+      SUM(tentde12),
+      SUM(tentde13),
+      SUM(tentde14),
+      SUM(tentde15),
+      SUM(tentde16),
+      SUM(tentde17),
+      SUM(tentde18),
+      SUM(tentde19),
+      SUM(tentde20),
+      SUM(tentde21),
+      SUM(tentde22),
+      SUM(tentde23),
+      SUM(tentde24),
+      SUM(tentde25),
+      SUM(tentde26),
+      SUM(tentde27),
+      SUM(tentde28),
+      SUM(tentde29),
+      SUM(tentde30),
+      SUM(tentde31),
+      SUM(tentde32),
+      SUM(tentde33),
+      SUM(tentde34),
+      SUM(tentde35),
+      SUM(tentde36),
+      SUM(tentde37),
+      SUM(tentde38),
+      SUM(tentde39),
+      SUM(tentde40),
+      SUM(tentde41),
+      SUM(tentde42),
+      SUM(tentde43),
+      SUM(tentde44),
+      SUM(tentde45),
+      SUM(tentde46),
+      SUM(tentde47),
+      SUM(tentde48),
+      SUM(tentde49),
+      SUM(tentde50),
+      SUM(tentde51),
+      SUM(tentde52),
+      SUM(tentde53),
+      SUM(tentde54),
+      SUM(tentde55),
+      SUM(tentde56),
+      SUM(tentde57),
+      SUM(tentde58),
+      SUM(tentde59),
+      SUM(tentde60),
+      SUM(tentde61),
+      SUM(tentde62),
+      SUM(tentde63),
+      SUM(tentde64),
+      SUM(tentde65),
+      SUM(tentde66),
+      SUM(tentde67),
+      SUM(tentde68),
+      SUM(tentde69),
+      SUM(tentde70),
+      SUM(tentde71),
+      SUM(tentde72),
+      SUM(tentde73),
+      SUM(tentde74),
+      SUM(tentde75),
+      SUM(tentde76),
+      SUM(tentde77),
+      SUM(tentde78),
+      SUM(tentde79),
+      SUM(tentde80),
+      SUM(tentde81),
+      SUM(tentde82),
+      SUM(tentde83),
+      SUM(tentde84),
+      SUM(tentde85),
+      SUM(tentde86),
+      SUM(tentde87),
+      SUM(tentde88),
+      SUM(tentde89),
+      SUM(tentde90),
+      SUM(tentde91),
+      SUM(tentde92),
+      SUM(tentde93),
+      SUM(tentde94),
+      SUM(tentde95),
+      SUM(tentde96)
+      FROM T
+      WHERE PERICODI=:PeriCodi1
+      AND  TENTVERSION=:VersionCodi1
+      AND DIA IN({0})
+      AND (emprcodi=:EMPRCODI or :EmprCodi is null)
+      AND (CLIEMPRCODI=:CliCodi or :CliCodi is null)
+      AND (BARRCODI=:BarrCodi or :BarrCodi is null)
+      and (flag=:TipoEntregaCodi or :TipoEntregaCodi is null)
+      {1}
+      GROUP BY  FECHA
+      ORDER BY FECHA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarComparativoEntregaRetiroValorTransferencia</key>
+    <query>
+      WITH T AS (
+      SELECT
+      0 tentcodi,
+      '' TENTCODIGO,
+      SYSDATE FECHA,
+      0 pericodi,
+      0 TENTVERSION,
+      0 emprcodi ,
+      null CLIEMPRCODI,
+      0 barrcodi,
+      '' flag,
+      0 DIA,
+      0 tentde1,
+      0 tentde2,
+      0 tentde3,
+      0 tentde4,
+      0 tentde5,
+      0 tentde6,
+      0 tentde7,
+      0 tentde8,
+      0 tentde9,
+      0 tentde10,
+      0 tentde11,
+      0 tentde12,
+      0 tentde13,
+      0 tentde14,
+      0 tentde15,
+      0 tentde16,
+      0 tentde17,
+      0 tentde18,
+      0 tentde19,
+      0 tentde20,
+      0 tentde21,
+      0 tentde22,
+      0 tentde23,
+      0 tentde24,
+      0 tentde25,
+      0 tentde26,
+      0 tentde27,
+      0 tentde28,
+      0 tentde29,
+      0 tentde30,
+      0 tentde31,
+      0 tentde32,
+      0 tentde33,
+      0 tentde34,
+      0 tentde35,
+      0 tentde36,
+      0 tentde37,
+      0 tentde38,
+      0 tentde39,
+      0 tentde40,
+      0 tentde41,
+      0 tentde42,
+      0 tentde43,
+      0 tentde44,
+      0 tentde45,
+      0 tentde46,
+      0 tentde47,
+      0 tentde48,
+      0 tentde49,
+      0 tentde50,
+      0 tentde51,
+      0 tentde52,
+      0 tentde53,
+      0 tentde54,
+      0 tentde55,
+      0 tentde56,
+      0 tentde57,
+      0 tentde58,
+      0 tentde59,
+      0 tentde60,
+      0 tentde61,
+      0 tentde62,
+      0 tentde63,
+      0 tentde64,
+      0 tentde65,
+      0 tentde66,
+      0 tentde67,
+      0 tentde68,
+      0 tentde69,
+      0 tentde70,
+      0 tentde71,
+      0 tentde72,
+      0 tentde73,
+      0 tentde74,
+      0 tentde75,
+      0 tentde76,
+      0 tentde77,
+      0 tentde78,
+      0 tentde79,
+      0 tentde80,
+      0 tentde81,
+      0 tentde82,
+      0 tentde83,
+      0 tentde84,
+      0 tentde85,
+      0 tentde86,
+      0 tentde87,
+      0 tentde88,
+      0 tentde89,
+      0 tentde90,
+      0 tentde91,
+      0 tentde92,
+      0 tentde93,
+      0 tentde94,
+      0 tentde95,
+      0 tentde96
+      FROM  DUAL
+      WHERE 1=0
+      UNION ALL
+      SELECT
+      vtrancodi,
+      vtrancodentret,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||ENTR.VTRANDIA,'YYYY-MM-DD'),
+      PER.pericodi,
+      vtranversion,
+      emprcodi,
+      null,
+      barrcodi,
+      vtranflag,
+      VTRANDIA,
+      vtran1,
+      vtran2,
+      vtran3,
+      vtran4,
+      vtran5,
+      vtran6,
+      vtran7,
+      vtran8,
+      vtran9,
+      vtran10,
+      vtran11,
+      vtran12,
+      vtran13,
+      vtran14,
+      vtran15,
+      vtran16,
+      vtran17,
+      vtran18,
+      vtran19,
+      vtran20,
+      vtran21,
+      vtran22,
+      vtran23,
+      vtran24,
+      vtran25,
+      vtran26,
+      vtran27,
+      vtran28,
+      vtran29,
+      vtran30,
+      vtran31,
+      vtran32,
+      vtran33,
+      vtran34,
+      vtran35,
+      vtran36,
+      vtran37,
+      vtran38,
+      vtran39,
+      vtran40,
+      vtran41,
+      vtran42,
+      vtran43,
+      vtran44,
+      vtran45,
+      vtran46,
+      vtran47,
+      vtran48,
+      vtran49,
+      vtran50,
+      vtran51,
+      vtran52,
+      vtran53,
+      vtran54,
+      vtran55,
+      vtran56,
+      vtran57,
+      vtran58,
+      vtran59,
+      vtran60,
+      vtran61,
+      vtran62,
+      vtran63,
+      vtran64,
+      vtran65,
+      vtran66,
+      vtran67,
+      vtran68,
+      vtran69,
+      vtran70,
+      vtran71,
+      vtran72,
+      vtran73,
+      vtran74,
+      vtran75,
+      vtran76,
+      vtran77,
+      vtran78,
+      vtran79,
+      vtran80,
+      vtran81,
+      vtran82,
+      vtran83,
+      vtran84,
+      vtran85,
+      vtran86,
+      vtran87,
+      vtran88,
+      vtran89,
+      vtran90,
+      vtran91,
+      vtran92,
+      vtran93,
+      vtran94,
+      vtran95,
+      vtran96
+      FROM trn_valor_trans                ENTR
+      INNER JOIN TRN_PERIODO              PER
+      ON ENTR.PERICODI=PER.PERICODI
+      )
+      SELECT FECHA,
+      SUM(tentde1),
+      SUM(tentde2),
+      SUM(tentde3),
+      SUM(tentde4),
+      SUM(tentde5),
+      SUM(tentde6),
+      SUM(tentde7),
+      SUM(tentde8),
+      SUM(tentde9),
+      SUM(tentde10),
+      SUM(tentde11),
+      SUM(tentde12),
+      SUM(tentde13),
+      SUM(tentde14),
+      SUM(tentde15),
+      SUM(tentde16),
+      SUM(tentde17),
+      SUM(tentde18),
+      SUM(tentde19),
+      SUM(tentde20),
+      SUM(tentde21),
+      SUM(tentde22),
+      SUM(tentde23),
+      SUM(tentde24),
+      SUM(tentde25),
+      SUM(tentde26),
+      SUM(tentde27),
+      SUM(tentde28),
+      SUM(tentde29),
+      SUM(tentde30),
+      SUM(tentde31),
+      SUM(tentde32),
+      SUM(tentde33),
+      SUM(tentde34),
+      SUM(tentde35),
+      SUM(tentde36),
+      SUM(tentde37),
+      SUM(tentde38),
+      SUM(tentde39),
+      SUM(tentde40),
+      SUM(tentde41),
+      SUM(tentde42),
+      SUM(tentde43),
+      SUM(tentde44),
+      SUM(tentde45),
+      SUM(tentde46),
+      SUM(tentde47),
+      SUM(tentde48),
+      SUM(tentde49),
+      SUM(tentde50),
+      SUM(tentde51),
+      SUM(tentde52),
+      SUM(tentde53),
+      SUM(tentde54),
+      SUM(tentde55),
+      SUM(tentde56),
+      SUM(tentde57),
+      SUM(tentde58),
+      SUM(tentde59),
+      SUM(tentde60),
+      SUM(tentde61),
+      SUM(tentde62),
+      SUM(tentde63),
+      SUM(tentde64),
+      SUM(tentde65),
+      SUM(tentde66),
+      SUM(tentde67),
+      SUM(tentde68),
+      SUM(tentde69),
+      SUM(tentde70),
+      SUM(tentde71),
+      SUM(tentde72),
+      SUM(tentde73),
+      SUM(tentde74),
+      SUM(tentde75),
+      SUM(tentde76),
+      SUM(tentde77),
+      SUM(tentde78),
+      SUM(tentde79),
+      SUM(tentde80),
+      SUM(tentde81),
+      SUM(tentde82),
+      SUM(tentde83),
+      SUM(tentde84),
+      SUM(tentde85),
+      SUM(tentde86),
+      SUM(tentde87),
+      SUM(tentde88),
+      SUM(tentde89),
+      SUM(tentde90),
+      SUM(tentde91),
+      SUM(tentde92),
+      SUM(tentde93),
+      SUM(tentde94),
+      SUM(tentde95),
+      SUM(tentde96)
+      FROM T
+      WHERE PERICODI=:PeriCodi1
+      AND  TENTVERSION=:VersionCodi1
+      AND DIA IN({0})
+      AND (emprcodi=:EMPRCODI or :EmprCodi is null)
+      AND (CLIEMPRCODI=:CliCodi or :CliCodi is null)
+      AND (BARRCODI=:BarrCodi or :BarrCodi is null)
+      and (flag=:TipoEntregaCodi or :TipoEntregaCodi is null) {1}
+      GROUP BY  FECHA
+      ORDER BY FECHA
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>ListarComparativoEntregaRetiroValorDET_old</key>
+    <query>
+      SELECT
+      VTRA.PERICODI,
+      RCL.RECANOMBRE,
+      VTRANDIA,
+      PER.PERIMES,
+      PER.PERIANIO,
+      VTRANVERSION,
+      sum(vtran1) vtran1, sum(vtran2) vtran2, sum(vtran3) vtran3, sum(vtran4) vtran4, sum(vtran5) vtran5,
+      sum(vtran6) vtran6, sum(vtran7) vtran7, sum(vtran8) vtran8, sum(vtran9) vtran9, sum(vtran10) vtran10,
+      sum(vtran11) vtran11, sum(vtran12) vtran12, sum(vtran13) vtran13, sum(vtran14) vtran14, sum(vtran15) vtran15,
+      sum(vtran16) vtran16, sum(vtran17) vtran17, sum(vtran18) vtran18, sum(vtran19) vtran19, sum(vtran20) vtran20,
+      sum(vtran21) vtran21, sum(vtran22) vtran22, sum(vtran23) vtran23, sum(vtran24) vtran24, sum(vtran25) vtran25,
+      sum(vtran26) vtran26, sum(vtran27) vtran27, sum(vtran28) vtran28, sum(vtran29) vtran29, sum(vtran30) vtran30,
+      sum(vtran31) vtran31, sum(vtran32) vtran32, sum(vtran33) vtran33, sum(vtran34) vtran34, sum(vtran35) vtran35,
+      sum(vtran36) vtran36, sum(vtran37) vtran37, sum(vtran38) vtran38, sum(vtran39) vtran39, sum(vtran40) vtran40,
+      sum(vtran41) vtran41, sum(vtran42) vtran42, sum(vtran43) vtran43, sum(vtran44) vtran44, sum(vtran45) vtran45,
+      sum(vtran46) vtran46, sum(vtran47) vtran47, sum(vtran48) vtran48, sum(vtran49) vtran49, sum(vtran50) vtran50,
+      sum(vtran51) vtran51, sum(vtran52) vtran52, sum(vtran53) vtran53, sum(vtran54) vtran54, sum(vtran55) vtran55,
+      sum(vtran56) vtran56, sum(vtran57) vtran57, sum(vtran58) vtran58, sum(vtran59) vtran59, sum(vtran60) vtran60,
+      sum(vtran61) vtran61, sum(vtran62) vtran62, sum(vtran63) vtran63, sum(vtran64) vtran64, sum(vtran65) vtran65,
+      sum(vtran66) vtran66, sum(vtran67) vtran67, sum(vtran68) vtran68, sum(vtran69) vtran69, sum(vtran70) vtran70,
+      sum(vtran71) vtran71, sum(vtran72) vtran72, sum(vtran73) vtran73, sum(vtran74) vtran74, sum(vtran75) vtran75,
+      sum(vtran76) vtran76, sum(vtran77) vtran77, sum(vtran78) vtran78, sum(vtran79) vtran79, sum(vtran80) vtran80,
+      sum(vtran81) vtran81, sum(vtran82) vtran82, sum(vtran83) vtran83, sum(vtran84) vtran84, sum(vtran85) vtran85,
+      sum(vtran86) vtran86, sum(vtran87) vtran87, sum(vtran88) vtran88, sum(vtran89) vtran89, sum(vtran90) vtran90,
+      sum(vtran91) vtran91, sum(vtran92) vtran92, sum(vtran93) vtran93, sum(vtran94) vtran94, sum(vtran95) vtran95,
+      sum(vtran96) vtran96
+      FROM TRN_VALOR_TRANS    VTRA
+      INNER JOIN vw_trn_codigo VCOD
+      ON VTRA.VTRANCODENTRET=VCOD.CODIGO
+      INNER JOIN TRN_PERIODO  PER
+      ON VTRA.PERICODI=PER.PERICODI
+      INNER JOIN TRN_RECALCULO RCL
+      ON VTRA.PERICODI=RCL.PERICODI
+      AND VTRA.VTRANVERSION=RCL.RECACODI
+      WHERE VTRA.PERICODI &gt;=:PeriCodi1
+      AND VTRA.PERICODI  &lt;=:PeriCodi2
+      AND VTRANVERSION &gt;=:VersionCodi1
+      AND VTRANVERSION &lt;=:VersionCodi2
+      AND VTRANDIA IN({0})
+      AND (EMPRCODI=:EmprCodi or :EmprCodi is null)
+      AND (VCOD.CLIEMPRCODI=:CliCodi or :CliCodi is null)
+      AND (VTRA.BARRCODI=:BarrCodi  or :BarrCodi is null)
+      and (vtranflag=:TipoEntregaCodi  or :TipoEntregaCodi is null)
+      {1}
+      GROUP BY     VTRA.PERICODI,
+      RCL.RECANOMBRE,
+      VTRANDIA,
+      PER.PERIMES,
+      PER.PERIANIO,
+      VTRANVERSION
+      ORDER BY
+      VTRA.PERICODI
+      , VTRANVERSION
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarComparativoEntregaRetiroValorDET</key>
+    <query>
+      WITH T AS (
+      SELECT
+      entr.tentcodi,
+      TENTCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||entrdt.TENTDEDIA,'YYYY-MM-DD') FECHA,
+      entr.pericodi,
+      ENTR.TENTVERSION,
+      ENTR.emprcodi ,
+      NULL CLIEMPRCODI,
+      entr.barrcodi,
+      'E' flag,
+      entrdt.TENTDEDIA DIA,
+      tentde1,
+      tentde2,
+      tentde3,
+      tentde4,
+      tentde5,
+      tentde6,
+      tentde7,
+      tentde8,
+      tentde9,
+      tentde10,
+      tentde11,
+      tentde12,
+      tentde13,
+      tentde14,
+      tentde15,
+      tentde16,
+      tentde17,
+      tentde18,
+      tentde19,
+      tentde20,
+      tentde21,
+      tentde22,
+      tentde23,
+      tentde24,
+      tentde25,
+      tentde26,
+      tentde27,
+      tentde28,
+      tentde29,
+      tentde30,
+      tentde31,
+      tentde32,
+      tentde33,
+      tentde34,
+      tentde35,
+      tentde36,
+      tentde37,
+      tentde38,
+      tentde39,
+      tentde40,
+      tentde41,
+      tentde42,
+      tentde43,
+      tentde44,
+      tentde45,
+      tentde46,
+      tentde47,
+      tentde48,
+      tentde49,
+      tentde50,
+      tentde51,
+      tentde52,
+      tentde53,
+      tentde54,
+      tentde55,
+      tentde56,
+      tentde57,
+      tentde58,
+      tentde59,
+      tentde60,
+      tentde61,
+      tentde62,
+      tentde63,
+      tentde64,
+      tentde65,
+      tentde66,
+      tentde67,
+      tentde68,
+      tentde69,
+      tentde70,
+      tentde71,
+      tentde72,
+      tentde73,
+      tentde74,
+      tentde75,
+      tentde76,
+      tentde77,
+      tentde78,
+      tentde79,
+      tentde80,
+      tentde81,
+      tentde82,
+      tentde83,
+      tentde84,
+      tentde85,
+      tentde86,
+      tentde87,
+      tentde88,
+      tentde89,
+      tentde90,
+      tentde91,
+      tentde92,
+      tentde93,
+      tentde94,
+      tentde95,
+      tentde96
+      FROM trn_trans_entrega               entr
+      INNER JOIN trn_trans_entrega_detalle entrdt
+      ON entr.tentcodi=entrdt.tentcodi
+      INNER JOIN TRN_PERIODO              PER
+      ON ENTR.PERICODI=PER.PERICODI
+
+      WHERE TENTESTADO='ACT'
+
+      UNION
+
+      SELECT
+      RET.TRETCODI,
+      TRETCODIGO,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||RETDT.TRETDEDIA,'YYYY-MM-DD') FECHA,
+      RET.pericodi,
+      RET.TRETVERSION,
+      RET.GENEMPRCODI ,
+      SOL.CLIEMPRCODI,
+      RET.barrcodi,
+      'R' flag,
+      RETDT.TRETDEDIA,
+      tretde1,
+      tretde2,
+      tretde3,
+      tretde4,
+      tretde5,
+      tretde6,
+      tretde7,
+      tretde8,
+      tretde9,
+      tretde10,
+      tretde11,
+      tretde12,
+      tretde13,
+      tretde14,
+      tretde15,
+      tretde16,
+      tretde17,
+      tretde18,
+      tretde19,
+      tretde20,
+      tretde21,
+      tretde22,
+      tretde23,
+      tretde24,
+      tretde25,
+      tretde26,
+      tretde27,
+      tretde28,
+      tretde29,
+      tretde30,
+      tretde31,
+      tretde32,
+      tretde33,
+      tretde34,
+      tretde35,
+      tretde36,
+      tretde37,
+      tretde38,
+      tretde39,
+      tretde40,
+      tretde41,
+      tretde42,
+      tretde43,
+      tretde44,
+      tretde45,
+      tretde46,
+      tretde47,
+      tretde48,
+      tretde49,
+      tretde50,
+      tretde51,
+      tretde52,
+      tretde53,
+      tretde54,
+      tretde55,
+      tretde56,
+      tretde57,
+      tretde58,
+      tretde59,
+      tretde60,
+      tretde61,
+      tretde62,
+      tretde63,
+      tretde64,
+      tretde65,
+      tretde66,
+      tretde67,
+      tretde68,
+      tretde69,
+      tretde70,
+      tretde71,
+      tretde72,
+      tretde73,
+      tretde74,
+      tretde75,
+      tretde76,
+      tretde77,
+      tretde78,
+      tretde79,
+      tretde80,
+      tretde81,
+      tretde82,
+      tretde83,
+      tretde84,
+      tretde85,
+      tretde86,
+      tretde87,
+      tretde88,
+      tretde89,
+      tretde90,
+      tretde91,
+      tretde92,
+      tretde93,
+      tretde94,
+      tretde95,
+      tretde96
+      FROM trn_trans_retiro                   RET
+      INNER JOIN    trn_trans_retiro_detalle  RETDT
+      ON RET.TRETCODI=RETDT.TRETCODI
+      INNER JOIN TRN_PERIODO                  PER
+      ON RET.PERICODI=PER.PERICODI
+      INNER JOIN TRN_CODIGO_RETIRO_SOLICITUD SOL
+      ON RET.TRETCODIGO=SOL.CORESOCODIGO
+      WHERE TRETESTADO='ACT'
+      )
+      SELECT
+      T.PERICODI,
+      RCL.RECANOMBRE,
+      T.DIA VTRANDIA,
+      PER.PERIMES,
+      PER.PERIANIO,
+      TENTVERSION VTRANVERSION,
+      SUM(tentde1)  tentde1,
+      SUM(tentde2) tentde2,
+      SUM(tentde3) tentde3,
+      SUM(tentde4) tentde4,
+      SUM(tentde5) tentde5,
+      SUM(tentde6) tentde6,
+      SUM(tentde7) tentde7,
+      SUM(tentde8) tentde8,
+      SUM(tentde9) tentde9,
+      SUM(tentde10) tentde10,
+      SUM(tentde11) tentde11,
+      SUM(tentde12) tentde12,
+      SUM(tentde13) tentde13,
+      SUM(tentde14) tentde14,
+      SUM(tentde15) tentde15,
+      SUM(tentde16) tentde16,
+      SUM(tentde17) tentde17,
+      SUM(tentde18) tentde18,
+      SUM(tentde19) tentde19,
+      SUM(tentde20) tentde20,
+      SUM(tentde21) tentde21,
+      SUM(tentde22) tentde22,
+      SUM(tentde23) tentde23,
+      SUM(tentde24) tentde24,
+      SUM(tentde25) tentde25,
+      SUM(tentde26) tentde26,
+      SUM(tentde27) tentde27,
+      SUM(tentde28) tentde28,
+      SUM(tentde29) tentde29,
+      SUM(tentde30) tentde30,
+      SUM(tentde31) tentde31,
+      SUM(tentde32) tentde32,
+      SUM(tentde33) tentde33,
+      SUM(tentde34) tentde34,
+      SUM(tentde35) tentde35,
+      SUM(tentde36) tentde36,
+      SUM(tentde37) tentde37,
+      SUM(tentde38) tentde38,
+      SUM(tentde39) tentde39,
+      SUM(tentde40) tentde40,
+      SUM(tentde41) tentde41,
+      SUM(tentde42) tentde42,
+      SUM(tentde43) tentde43,
+      SUM(tentde44) tentde44,
+      SUM(tentde45) tentde45,
+      SUM(tentde46) tentde46,
+      SUM(tentde47) tentde47,
+      SUM(tentde48) tentde48,
+      SUM(tentde49) tentde49,
+      SUM(tentde50) tentde50,
+      SUM(tentde51) tentde51,
+      SUM(tentde52) tentde52,
+      SUM(tentde53) tentde53,
+      SUM(tentde54) tentde54,
+      SUM(tentde55) tentde55,
+      SUM(tentde56) tentde56,
+      SUM(tentde57) tentde57,
+      SUM(tentde58) tentde58,
+      SUM(tentde59) tentde59,
+      SUM(tentde60) tentde60,
+      SUM(tentde61) tentde61,
+      SUM(tentde62) tentde62,
+      SUM(tentde63) tentde63,
+      SUM(tentde64) tentde64,
+      SUM(tentde65) tentde65,
+      SUM(tentde66) tentde66,
+      SUM(tentde67) tentde67,
+      SUM(tentde68) tentde68,
+      SUM(tentde69) tentde69,
+      SUM(tentde70) tentde70,
+      SUM(tentde71) tentde71,
+      SUM(tentde72) tentde72,
+      SUM(tentde73) tentde73,
+      SUM(tentde74) tentde74,
+      SUM(tentde75) tentde75,
+      SUM(tentde76) tentde76,
+      SUM(tentde77) tentde77,
+      SUM(tentde78) tentde78,
+      SUM(tentde79) tentde79,
+      SUM(tentde80) tentde80,
+      SUM(tentde81) tentde81,
+      SUM(tentde82) tentde82,
+      SUM(tentde83) tentde83,
+      SUM(tentde84) tentde84,
+      SUM(tentde85) tentde85,
+      SUM(tentde86) tentde86,
+      SUM(tentde87) tentde87,
+      SUM(tentde88) tentde88,
+      SUM(tentde89) tentde89,
+      SUM(tentde90) tentde90,
+      SUM(tentde91) tentde91,
+      SUM(tentde92) tentde92,
+      SUM(tentde93) tentde93,
+      SUM(tentde94) tentde94,
+      SUM(tentde95) tentde95,
+      SUM(tentde96) tentde96
+      FROM T
+      INNER JOIN TRN_PERIODO  PER
+      ON T.PERICODI=PER.PERICODI
+      INNER JOIN TRN_RECALCULO RCL
+      ON T.PERICODI=RCL.PERICODI
+      AND T.TENTVERSION=RCL.RECACODI
+      WHERE T.PERICODI=:PeriCodi1
+      AND  TENTVERSION=:VersionCodi1
+      AND DIA IN({0})
+      AND (emprcodi=:EMPRCODI or :EmprCodi is null)
+      AND (CLIEMPRCODI=:CliCodi or :CliCodi is null)
+      AND (BARRCODI=:BarrCodi or :BarrCodi is null)
+      and (flag=:TipoEntregaCodi or :TipoEntregaCodi is null)
+      {1}
+      GROUP BY T.PERICODI,
+      RCL.RECANOMBRE,
+      T.DIA,
+      PER.PERIMES,
+      PER.PERIANIO,
+      TENTVERSION
+      ORDER BY    PER.PERIMES
+      ,T.DIA
+      , PER.PERIANIO
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarComparativoEntregaRetiroValorDETTransferencia</key>
+
+    <query>
+      WITH T AS (
+      SELECT
+      0 tentcodi,
+      '' TENTCODIGO,
+      SYSDATE FECHA,
+      0 pericodi,
+      0 TENTVERSION,
+      0 emprcodi ,
+      null CLIEMPRCODI,
+      0 barrcodi,
+      '' flag,
+      0 DIA,
+      0 tentde1,
+      0 tentde2,
+      0 tentde3,
+      0 tentde4,
+      0 tentde5,
+      0 tentde6,
+      0 tentde7,
+      0 tentde8,
+      0 tentde9,
+      0 tentde10,
+      0 tentde11,
+      0 tentde12,
+      0 tentde13,
+      0 tentde14,
+      0 tentde15,
+      0 tentde16,
+      0 tentde17,
+      0 tentde18,
+      0 tentde19,
+      0 tentde20,
+      0 tentde21,
+      0 tentde22,
+      0 tentde23,
+      0 tentde24,
+      0 tentde25,
+      0 tentde26,
+      0 tentde27,
+      0 tentde28,
+      0 tentde29,
+      0 tentde30,
+      0 tentde31,
+      0 tentde32,
+      0 tentde33,
+      0 tentde34,
+      0 tentde35,
+      0 tentde36,
+      0 tentde37,
+      0 tentde38,
+      0 tentde39,
+      0 tentde40,
+      0 tentde41,
+      0 tentde42,
+      0 tentde43,
+      0 tentde44,
+      0 tentde45,
+      0 tentde46,
+      0 tentde47,
+      0 tentde48,
+      0 tentde49,
+      0 tentde50,
+      0 tentde51,
+      0 tentde52,
+      0 tentde53,
+      0 tentde54,
+      0 tentde55,
+      0 tentde56,
+      0 tentde57,
+      0 tentde58,
+      0 tentde59,
+      0 tentde60,
+      0 tentde61,
+      0 tentde62,
+      0 tentde63,
+      0 tentde64,
+      0 tentde65,
+      0 tentde66,
+      0 tentde67,
+      0 tentde68,
+      0 tentde69,
+      0 tentde70,
+      0 tentde71,
+      0 tentde72,
+      0 tentde73,
+      0 tentde74,
+      0 tentde75,
+      0 tentde76,
+      0 tentde77,
+      0 tentde78,
+      0 tentde79,
+      0 tentde80,
+      0 tentde81,
+      0 tentde82,
+      0 tentde83,
+      0 tentde84,
+      0 tentde85,
+      0 tentde86,
+      0 tentde87,
+      0 tentde88,
+      0 tentde89,
+      0 tentde90,
+      0 tentde91,
+      0 tentde92,
+      0 tentde93,
+      0 tentde94,
+      0 tentde95,
+      0 tentde96
+      FROM  DUAL
+      WHERE 1=0
+      UNION ALL
+      SELECT
+      vtrancodi,
+      vtrancodentret,
+      TO_DATE(PER.PERIANIO||'-'||PER.PERIMES||'-'||ENTR.VTRANDIA,'YYYY-MM-DD'),
+      PER.pericodi,
+      vtranversion,
+      emprcodi,
+      null,
+      barrcodi,
+      vtranflag,
+      VTRANDIA,
+      vtran1,
+      vtran2,
+      vtran3,
+      vtran4,
+      vtran5,
+      vtran6,
+      vtran7,
+      vtran8,
+      vtran9,
+      vtran10,
+      vtran11,
+      vtran12,
+      vtran13,
+      vtran14,
+      vtran15,
+      vtran16,
+      vtran17,
+      vtran18,
+      vtran19,
+      vtran20,
+      vtran21,
+      vtran22,
+      vtran23,
+      vtran24,
+      vtran25,
+      vtran26,
+      vtran27,
+      vtran28,
+      vtran29,
+      vtran30,
+      vtran31,
+      vtran32,
+      vtran33,
+      vtran34,
+      vtran35,
+      vtran36,
+      vtran37,
+      vtran38,
+      vtran39,
+      vtran40,
+      vtran41,
+      vtran42,
+      vtran43,
+      vtran44,
+      vtran45,
+      vtran46,
+      vtran47,
+      vtran48,
+      vtran49,
+      vtran50,
+      vtran51,
+      vtran52,
+      vtran53,
+      vtran54,
+      vtran55,
+      vtran56,
+      vtran57,
+      vtran58,
+      vtran59,
+      vtran60,
+      vtran61,
+      vtran62,
+      vtran63,
+      vtran64,
+      vtran65,
+      vtran66,
+      vtran67,
+      vtran68,
+      vtran69,
+      vtran70,
+      vtran71,
+      vtran72,
+      vtran73,
+      vtran74,
+      vtran75,
+      vtran76,
+      vtran77,
+      vtran78,
+      vtran79,
+      vtran80,
+      vtran81,
+      vtran82,
+      vtran83,
+      vtran84,
+      vtran85,
+      vtran86,
+      vtran87,
+      vtran88,
+      vtran89,
+      vtran90,
+      vtran91,
+      vtran92,
+      vtran93,
+      vtran94,
+      vtran95,
+      vtran96
+      FROM trn_valor_trans                ENTR
+      INNER JOIN TRN_PERIODO              PER
+      ON ENTR.PERICODI=PER.PERICODI
+      )
+      SELECT
+      T.PERICODI,
+      RCL.RECANOMBRE,
+      T.DIA VTRANDIA,
+      PER.PERIMES,
+      PER.PERIANIO,
+      TENTVERSION VTRANVERSION,
+      SUM(tentde1),
+      SUM(tentde2),
+      SUM(tentde3),
+      SUM(tentde4),
+      SUM(tentde5),
+      SUM(tentde6),
+      SUM(tentde7),
+      SUM(tentde8),
+      SUM(tentde9),
+      SUM(tentde10),
+      SUM(tentde11),
+      SUM(tentde12),
+      SUM(tentde13),
+      SUM(tentde14),
+      SUM(tentde15),
+      SUM(tentde16),
+      SUM(tentde17),
+      SUM(tentde18),
+      SUM(tentde19),
+      SUM(tentde20),
+      SUM(tentde21),
+      SUM(tentde22),
+      SUM(tentde23),
+      SUM(tentde24),
+      SUM(tentde25),
+      SUM(tentde26),
+      SUM(tentde27),
+      SUM(tentde28),
+      SUM(tentde29),
+      SUM(tentde30),
+      SUM(tentde31),
+      SUM(tentde32),
+      SUM(tentde33),
+      SUM(tentde34),
+      SUM(tentde35),
+      SUM(tentde36),
+      SUM(tentde37),
+      SUM(tentde38),
+      SUM(tentde39),
+      SUM(tentde40),
+      SUM(tentde41),
+      SUM(tentde42),
+      SUM(tentde43),
+      SUM(tentde44),
+      SUM(tentde45),
+      SUM(tentde46),
+      SUM(tentde47),
+      SUM(tentde48),
+      SUM(tentde49),
+      SUM(tentde50),
+      SUM(tentde51),
+      SUM(tentde52),
+      SUM(tentde53),
+      SUM(tentde54),
+      SUM(tentde55),
+      SUM(tentde56),
+      SUM(tentde57),
+      SUM(tentde58),
+      SUM(tentde59),
+      SUM(tentde60),
+      SUM(tentde61),
+      SUM(tentde62),
+      SUM(tentde63),
+      SUM(tentde64),
+      SUM(tentde65),
+      SUM(tentde66),
+      SUM(tentde67),
+      SUM(tentde68),
+      SUM(tentde69),
+      SUM(tentde70),
+      SUM(tentde71),
+      SUM(tentde72),
+      SUM(tentde73),
+      SUM(tentde74),
+      SUM(tentde75),
+      SUM(tentde76),
+      SUM(tentde77),
+      SUM(tentde78),
+      SUM(tentde79),
+      SUM(tentde80),
+      SUM(tentde81),
+      SUM(tentde82),
+      SUM(tentde83),
+      SUM(tentde84),
+      SUM(tentde85),
+      SUM(tentde86),
+      SUM(tentde87),
+      SUM(tentde88),
+      SUM(tentde89),
+      SUM(tentde90),
+      SUM(tentde91),
+      SUM(tentde92),
+      SUM(tentde93),
+      SUM(tentde94),
+      SUM(tentde95),
+      SUM(tentde96)
+      FROM T
+      INNER JOIN TRN_PERIODO  PER
+      ON T.PERICODI=PER.PERICODI
+      INNER JOIN TRN_RECALCULO RCL
+      ON T.PERICODI=RCL.PERICODI
+      AND T.TENTVERSION=RCL.RECACODI
+      WHERE T.PERICODI=:PeriCodi1
+      AND  TENTVERSION=:VersionCodi1
+      AND DIA IN({0})
+      AND (emprcodi=:EMPRCODI or :EmprCodi is null)
+      AND (CLIEMPRCODI=:CliCodi or :CliCodi is null)
+      AND (BARRCODI=:BarrCodi or :BarrCodi is null)
+      and (flag=:TipoEntregaCodi or :TipoEntregaCodi is null)
+      {1}
+      GROUP BY  T.PERICODI,
+      RCL.RECANOMBRE,
+      T.DIA,
+      PER.PERIMES,
+      PER.PERIANIO,
+      TENTVERSION
+      ORDER BY    PER.PERIMES
+      ,T.DIA
+      , PER.PERIANIO
+    </query>
+  </Sql>
+  <!--CU21-->
+  <Sql>
+    <key>ListarEnergiaEntregaDetalle</key>
+    <query>
+      select det.tentdedia as vtrandia, det.tentdesumadia as vtrantotalenergia,
+      tentde1 as vtran1, tentde2 as vtran2, tentde3 as vtran3, tentde4 as vtran4, tentde5 as vtran5,
+      tentde6 as vtran6, tentde7 as vtran7, tentde8 as vtran8, tentde9 as vtran9, tentde10 as vtran10,
+      tentde11 as vtran11, tentde12 as vtran12, tentde13 as vtran13, tentde14 as vtran14, tentde15 as vtran15,
+      tentde16 as vtran16, tentde17 as vtran17, tentde18 as vtran18, tentde19 as vtran19, tentde20 as vtran20,
+      tentde21 as vtran21, tentde22 as vtran22, tentde23 as vtran23, tentde24 as vtran24, tentde25 as vtran25,
+      tentde26 as vtran26, tentde27 as vtran27, tentde28 as vtran28, tentde29 as vtran29, tentde30 as vtran30,
+      tentde31 as vtran31, tentde32 as vtran32, tentde33 as vtran33, tentde34 as vtran34, tentde35 as vtran35,
+      tentde36 as vtran36, tentde37 as vtran37, tentde38 as vtran38, tentde39 as vtran39, tentde40 as vtran40,
+      tentde41 as vtran41, tentde42 as vtran42, tentde43 as vtran43, tentde44 as vtran44, tentde45 as vtran45,
+      tentde46 as vtran46, tentde47 as vtran47, tentde48 as vtran48, tentde49 as vtran49, tentde50 as vtran50,
+      tentde51 as vtran51, tentde52 as vtran52, tentde53 as vtran53, tentde54 as vtran54, tentde55 as vtran55,
+      tentde56 as vtran56, tentde57 as vtran57, tentde58 as vtran58, tentde59 as vtran59, tentde60 as vtran60,
+      tentde61 as vtran61, tentde62 as vtran62, tentde63 as vtran63, tentde64 as vtran64, tentde65 as vtran65,
+      tentde66 as vtran66, tentde67 as vtran67, tentde68 as vtran68, tentde69 as vtran69, tentde70 as vtran70,
+      tentde71 as vtran71, tentde72 as vtran72, tentde73 as vtran73, tentde74 as vtran74, tentde75 as vtran75,
+      tentde76 as vtran76, tentde77 as vtran77, tentde78 as vtran78, tentde79 as vtran79, tentde80 as vtran80,
+      tentde81 as vtran81, tentde82 as vtran82, tentde83 as vtran83, tentde84 as vtran84, tentde85 as vtran85,
+      tentde86 as vtran86, tentde87 as vtran87, tentde88 as vtran88, tentde89 as vtran89, tentde90 as vtran90,
+      tentde91 as vtran91, tentde92 as vtran92, tentde93 as vtran93, tentde94 as vtran94, tentde95 as vtran95,
+      tentde96 as vtran96
+      from trn_trans_entrega te inner join trn_trans_entrega_detalle det on te.tentcodi = det.tentcodi and te.tentversion = det.tentdeversion
+      where te.tentestado = 'ACT' and te.pericodi = :pericodi and te.tentversion = :vtranversion and codentcodi = :codentcodi
+      order by det.tentdedia
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarEnergiaRetiroDetalle</key>
+    <query>
+      select t.vtrandia, sum(tretdesumadia) as vtrantotalenergia,
+      sum(tretde1) as vtran1, sum(tretde2) as vtran2, sum(tretde3) as vtran3, sum(tretde4) as vtran4, sum(tretde5) as vtran5,
+      sum(tretde6) as vtran6, sum(tretde7) as vtran7, sum(tretde8) as vtran8, sum(tretde9) as vtran9, sum(tretde10) as vtran10,
+      sum(tretde11) as vtran11, sum(tretde12) as vtran12, sum(tretde13) as vtran13, sum(tretde14) as vtran14, sum(tretde15) as vtran15,
+      sum(tretde16) as vtran16, sum(tretde17) as vtran17, sum(tretde18) as vtran18, sum(tretde19) as vtran19, sum(tretde20) as vtran20,
+      sum(tretde21) as vtran21, sum(tretde22) as vtran22, sum(tretde23) as vtran23, sum(tretde24) as vtran24, sum(tretde25) as vtran25,
+      sum(tretde26) as vtran26, sum(tretde27) as vtran27, sum(tretde28) as vtran28, sum(tretde29) as vtran29, sum(tretde30) as vtran30,
+      sum(tretde31) as vtran31, sum(tretde32) as vtran32, sum(tretde33) as vtran33, sum(tretde34) as vtran34, sum(tretde35) as vtran35,
+      sum(tretde36) as vtran36, sum(tretde37) as vtran37, sum(tretde38) as vtran38, sum(tretde39) as vtran39, sum(tretde40) as vtran40,
+      sum(tretde41) as vtran41, sum(tretde42) as vtran42, sum(tretde43) as vtran43, sum(tretde44) as vtran44, sum(tretde45) as vtran45,
+      sum(tretde46) as vtran46, sum(tretde47) as vtran47, sum(tretde48) as vtran48, sum(tretde49) as vtran49, sum(tretde50) as vtran50,
+      sum(tretde51) as vtran51, sum(tretde52) as vtran52, sum(tretde53) as vtran53, sum(tretde54) as vtran54, sum(tretde55) as vtran55,
+      sum(tretde56) as vtran56, sum(tretde57) as vtran57, sum(tretde58) as vtran58, sum(tretde59) as vtran59, sum(tretde60) as vtran60,
+      sum(tretde61) as vtran61, sum(tretde62) as vtran62, sum(tretde63) as vtran63, sum(tretde64) as vtran64, sum(tretde65) as vtran65,
+      sum(tretde66) as vtran66, sum(tretde67) as vtran67, sum(tretde68) as vtran68, sum(tretde69) as vtran69, sum(tretde70) as vtran70,
+      sum(tretde71) as vtran71, sum(tretde72) as vtran72, sum(tretde73) as vtran73, sum(tretde74) as vtran74, sum(tretde75) as vtran75,
+      sum(tretde76) as vtran76, sum(tretde77) as vtran77, sum(tretde78) as vtran78, sum(tretde79) as vtran79, sum(tretde80) as vtran80,
+      sum(tretde81) as vtran81, sum(tretde82) as vtran82, sum(tretde83) as vtran83, sum(tretde84) as vtran84, sum(tretde85) as vtran85,
+      sum(tretde86) as vtran86, sum(tretde87) as vtran87, sum(tretde88) as vtran88, sum(tretde89) as vtran89, sum(tretde90) as vtran90,
+      sum(tretde91) as vtran91, sum(tretde92) as vtran92, sum(tretde93) as vtran93, sum(tretde94) as vtran94, sum(tretde95) as vtran95,
+      sum(tretde96) as vtran96
+      from
+      ( select det.tretdedia as vtrandia, det.tretdesumadia,
+      tretde1, tretde2, tretde3, tretde4, tretde5, tretde6, tretde7, tretde8, tretde9, tretde10,
+      tretde11,tretde12,tretde13,tretde14,tretde15,tretde16,tretde17,tretde18,tretde19,tretde20,
+      tretde21,tretde22,tretde23,tretde24,tretde25,tretde26,tretde27,tretde28,tretde29,tretde30,
+      tretde31,tretde32,tretde33,tretde34,tretde35,tretde36,tretde37,tretde38,tretde39,tretde40,
+      tretde41,tretde42,tretde43,tretde44,tretde45,tretde46,tretde47,tretde48,tretde49,tretde50,
+      tretde51,tretde52,tretde53,tretde54,tretde55,tretde56,tretde57,tretde58,tretde59,tretde60,
+      tretde61,tretde62,tretde63,tretde64,tretde65,tretde66,tretde67,tretde68,tretde69,tretde70,
+      tretde71,tretde72,tretde73,tretde74,tretde75,tretde76,tretde77,tretde78,tretde79,tretde80,
+      tretde81,tretde82,tretde83,tretde84,tretde85,tretde86,tretde87,tretde88,tretde89,tretde90,
+      tretde91,tretde92,tretde93,tretde94,tretde95,tretde96
+      from trn_trans_retiro tr inner join trn_trans_retiro_detalle det on tr.tretcodi = det.tretcodi and tr.tretversion = det.tretdeversion
+      where tr.tretestado = 'ACT' and tr.pericodi = {0} and tr.tretversion = {1} and tretcoresocoresccodi in ({2})
+      ) t
+      group by t.vtrandia
+      order by t.vtrandia
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarValorEnergiaEntregaDetalle</key>
+    <query>
+      select vt.vtrandia, vt.vtrantotaldia,
+      vtran1, vtran2, vtran3, vtran4, vtran5,
+      vtran6, vtran7, vtran8, vtran9, vtran10,
+      vtran11, vtran12, vtran13, vtran14, vtran15,
+      vtran16, vtran17, vtran18, vtran19, vtran20,
+      vtran21, vtran22, vtran23, vtran24, vtran25,
+      vtran26, vtran27, vtran28, vtran29, vtran30,
+      vtran31, vtran32, vtran33, vtran34, vtran35,
+      vtran36, vtran37, vtran38, vtran39, vtran40,
+      vtran41, vtran42, vtran43, vtran44, vtran45,
+      vtran46, vtran47, vtran48, vtran49, vtran50,
+      vtran51, vtran52, vtran53, vtran54, vtran55,
+      vtran56, vtran57, vtran58, vtran59, vtran60,
+      vtran61, vtran62, vtran63, vtran64, vtran65,
+      vtran66, vtran67, vtran68, vtran69, vtran70,
+      vtran71, vtran72, vtran73, vtran74, vtran75,
+      vtran76, vtran77, vtran78, vtran79, vtran80,
+      vtran81, vtran82, vtran83, vtran84, vtran85,
+      vtran86, vtran87, vtran88, vtran89, vtran90,
+      vtran91, vtran92, vtran93, vtran94, vtran95,
+      vtran96
+      from trn_valor_trans vt
+      where vt.pericodi = :pericodi and vt.vtranversion = :vtranversion and vt.vtranflag = 'E'
+      and vtrancodentret in (select codentcodigo from trn_codigo_entrega where codentcodi = :codentcodi)
+      order by vt.vtrandia
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarValorEnergiaRetiroDetalle</key>
+    <query>
+      select t.vtrandia, sum(vtrantotaldia) as vtrantotaldia,
+      sum(vtran1) as vtran1, sum(vtran2) as vtran2, sum(vtran3) as vtran3, sum(vtran4) as vtran4, sum(vtran5) as vtran5,
+      sum(vtran6) as vtran6, sum(vtran7) as vtran7, sum(vtran8) as vtran8, sum(vtran9) as vtran9, sum(vtran10) as vtran10,
+      sum(vtran11) as vtran11, sum(vtran12) as vtran12, sum(vtran13) as vtran13, sum(vtran14) as vtran14, sum(vtran15) as vtran15,
+      sum(vtran16) as vtran16, sum(vtran17) as vtran17, sum(vtran18) as vtran18, sum(vtran19) as vtran19, sum(vtran20) as vtran20,
+      sum(vtran21) as vtran21, sum(vtran22) as vtran22, sum(vtran23) as vtran23, sum(vtran24) as vtran24, sum(vtran25) as vtran25,
+      sum(vtran26) as vtran26, sum(vtran27) as vtran27, sum(vtran28) as vtran28, sum(vtran29) as vtran29, sum(vtran30) as vtran30,
+      sum(vtran31) as vtran31, sum(vtran32) as vtran32, sum(vtran33) as vtran33, sum(vtran34) as vtran34, sum(vtran35) as vtran35,
+      sum(vtran36) as vtran36, sum(vtran37) as vtran37, sum(vtran38) as vtran38, sum(vtran39) as vtran39, sum(vtran40) as vtran40,
+      sum(vtran41) as vtran41, sum(vtran42) as vtran42, sum(vtran43) as vtran43, sum(vtran44) as vtran44, sum(vtran45) as vtran45,
+      sum(vtran46) as vtran46, sum(vtran47) as vtran47, sum(vtran48) as vtran48, sum(vtran49) as vtran49, sum(vtran50) as vtran50,
+      sum(vtran51) as vtran51, sum(vtran52) as vtran52, sum(vtran53) as vtran53, sum(vtran54) as vtran54, sum(vtran55) as vtran55,
+      sum(vtran56) as vtran56, sum(vtran57) as vtran57, sum(vtran58) as vtran58, sum(vtran59) as vtran59, sum(vtran60) as vtran60,
+      sum(vtran61) as vtran61, sum(vtran62) as vtran62, sum(vtran63) as vtran63, sum(vtran64) as vtran64, sum(vtran65) as vtran65,
+      sum(vtran66) as vtran66, sum(vtran67) as vtran67, sum(vtran68) as vtran68, sum(vtran69) as vtran69, sum(vtran70) as vtran70,
+      sum(vtran71) as vtran71, sum(vtran72) as vtran72, sum(vtran73) as vtran73, sum(vtran74) as vtran74, sum(vtran75) as vtran75,
+      sum(vtran76) as vtran76, sum(vtran77) as vtran77, sum(vtran78) as vtran78, sum(vtran79) as vtran79, sum(vtran80) as vtran80,
+      sum(vtran81) as vtran81, sum(vtran82) as vtran82, sum(vtran83) as vtran83, sum(vtran84) as vtran84, sum(vtran85) as vtran85,
+      sum(vtran86) as vtran86, sum(vtran87) as vtran87, sum(vtran88) as vtran88, sum(vtran89) as vtran89, sum(vtran90) as vtran90,
+      sum(vtran91) as vtran91, sum(vtran92) as vtran92, sum(vtran93) as vtran93, sum(vtran94) as vtran94, sum(vtran95) as vtran95,
+      sum(vtran96) as vtran96
+      from
+      ( select vt.vtrandia, vt.vtrantotaldia,
+      vtran1, vtran2, vtran3, vtran4, vtran5, vtran6, vtran7, vtran8, vtran9, vtran10,
+      vtran11,vtran12,vtran13,vtran14,vtran15,vtran16,vtran17,vtran18,vtran19,vtran20,
+      vtran21,vtran22,vtran23,vtran24,vtran25,vtran26,vtran27,vtran28,vtran29,vtran30,
+      vtran31,vtran32,vtran33,vtran34,vtran35,vtran36,vtran37,vtran38,vtran39,vtran40,
+      vtran41,vtran42,vtran43,vtran44,vtran45,vtran46,vtran47,vtran48,vtran49,vtran50,
+      vtran51,vtran52,vtran53,vtran54,vtran55,vtran56,vtran57,vtran58,vtran59,vtran60,
+      vtran61,vtran62,vtran63,vtran64,vtran65,vtran66,vtran67,vtran68,vtran69,vtran70,
+      vtran71,vtran72,vtran73,vtran74,vtran75,vtran76,vtran77,vtran78,vtran79,vtran80,
+      vtran81,vtran82,vtran83,vtran84,vtran85,vtran86,vtran87,vtran88,vtran89,vtran90,
+      vtran91,vtran92,vtran93,vtran94,vtran95,vtran96
+      from trn_valor_trans vt
+      where vt.pericodi = {0} and vt.vtranversion = {1} and vt.vtranflag in ('R', 'X')
+      and vtrancodentret in (select tretcodigo from vw_trn_codigo_retiro where tretcoresocoresccodi in ({2}))
+      ) t
+      group by t.vtrandia
+      order by t.vtrandia
+    </query>
+  </Sql>
+</Sqls>

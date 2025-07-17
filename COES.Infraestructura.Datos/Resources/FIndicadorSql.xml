@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into f_indicador(
+      fechahora,
+      gps,
+      indiccodi,
+      indicitem,
+      indicvalor
+      )
+      values(
+      :fechahora,
+      :gps,
+      :indiccodi,
+      :indicitem,
+      :indicvalor
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update f_indicador
+      set
+      fechahora = :fechahora,
+      gps = :gps,
+      indiccodi = :indiccodi,
+      indicitem = :indicitem,
+      indicvalor = :indicvalor
+      where
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from f_indicador
+      where
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      fechahora,
+      gps,
+      indiccodi,
+      indicitem,
+      indicvalor
+      from
+      f_indicador
+      where
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      fechahora,
+      gps,
+      indiccodi,
+      indicitem,
+      indicvalor
+      from
+      f_indicador
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      fechahora,
+      gps,
+      indiccodi,
+      indicitem,
+      indicvalor
+      from
+      f_indicador
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetTransgresion</key>
+    <query>
+      select FECHAHORA, INDICVALOR from F_INDICADOR
+      where GPS = {0} and
+      FECHAHORA >= to_date('{1} 00:00:00', 'DD-MM-YYYY HH24:MI:SS') and
+      FECHAHORA &lt;= to_date('{1} 23:59:59', 'DD-MM-YYYY HH24:MI:SS') and
+      INDICCODI = '{2}'
+      order by FECHAHORA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetFallaAcumulada</key>
+    <query>
+      select * from F_INDICADOR where GPS = {0} and
+      INDICCODI = '{1}' and to_char(FECHAHORA, 'YYYYMM') = '{2}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetTransgresionFrec</key>
+    <query>
+      select FECHAHORA, INDICVALOR from F_INDICADOR_FREC
+      where GPS = {0} and
+      FECHAHORA >= to_date('{1} 00:00:00', 'DD-MM-YYYY HH24:MI:SS') and
+      FECHAHORA &lt;= to_date('{1} 23:59:59', 'DD-MM-YYYY HH24:MI:SS') and
+      INDICCODI = '{2}'
+      order by FECHAHORA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetFallaAcumuladaFrec</key>
+    <query>
+      select * from F_INDICADOR_FREC where GPS = {0} 
+      and INDICCODI = '{1}'
+      and FECHAHORA >= to_date('{2} 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+      and FECHAHORA &lt;= to_date('{3} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <!--INICIO PR5-->
+  <Sql>
+    <key>ListarReporteVariacionesFrecuenciaSEIN</key>
+    <query>
+      select ind.*,gps.EMPRCODI, gps.NOMBRE as GPSNOMB
+      from F_INDICADOR ind
+      inner join me_gps gps on ind.GPS = gps.GPSCODI
+      where trunc(ind.FECHAHORA) >= to_date('{0}', 'YYYY-MM-DD') and trunc(ind.FECHAHORA) &lt;= to_date('{1}', 'YYYY-MM-DD')
+      and ind.GPS in ({2}) and (gps.emprcodi in ({3}) or '-1'='{3}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarTransgresionXRango</key>
+    <query>
+      select *
+      from F_INDICADOR
+      where GPS = {0} and
+      INDICCODI = '{1}' and
+      FECHAHORA >= to_date('{2} 00:00:00', 'yyyy-MM-dd HH24:MI:SS') and
+      FECHAHORA &lt;= to_date('{3} 23:59:59', 'yyyy-MM-dd HH24:MI:SS') 
+      order by FECHAHORA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetFallaAcumuladaXRango</key>
+    <query>
+      select count(*) as total
+      from F_INDICADOR 
+      where GPS = {0} and
+      INDICCODI = '{1}' and
+      FECHAHORA >= to_date('{2} 00:00:00', 'yyyy-MM-dd HH24:MI:SS') and
+      FECHAHORA &lt;= to_date('{3} 23:59:59', 'yyyy-MM-dd HH24:MI:SS')
+    </query>
+  </Sql>
+  
+  <!--FIN PR5-->
+
+  <!--INICIO MigracionSGOCOES-GrupoB-->
+
+  <Sql>
+    <key>ListaIndicador</key>
+    <query>
+      SELECT  * FROM f_indicador
+      WHERE fechahora >= to_date('{0} 00:00:00','yyyy-mm-dd hh24:mi:ss') and fechahora &lt;= to_date('{0} 23:59:59','yyyy-mm-dd hh24:mi:ss') And gps = 1
+      And (indiccodi in ({1}) or '-1' = '{1}')
+      order by fechahora
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaIndicadorAcu</key>
+    <query>
+      SELECT  * FROM f_indicador
+      WHERE to_number(to_char(fechahora,'MM')) = {0} and to_number(to_char(fechahora,'YYYY')) = {2} And gps = 1
+      And (indiccodi in ({1}) or '-1' = '{1}')
+      order by fechahora
+    </query>
+  </Sql>
+
+  <!--FIN MigracionSGOCOES-GrupoB-->  
+</Sqls>

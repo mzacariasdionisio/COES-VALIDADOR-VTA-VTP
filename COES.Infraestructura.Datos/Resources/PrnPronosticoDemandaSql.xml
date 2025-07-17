@@ -1,0 +1,1473 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <!--CONFIGURACIÓN GENERAL-->
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <!--LISTA LOS NIVELES-->
+  <Sql>
+    <key>ListPrnNivel</key>
+    <query>
+      select distinct eq_areanivel.anivelcodi, eq_areanivel.anivelnomb
+      from
+      eq_areanivel join eq_area on eq_areanivel.anivelcodi = eq_area.anivelcodi
+      join eq_arearel on eq_arearel.areapadre = eq_area.areacodi
+      order by eq_areanivel.anivelnomb
+    </query>
+  </Sql>
+  <!--LISTA LAS ÁREAS - Pendiente Eliminar-->
+  <Sql>
+    <key>ListPrnArea</key>
+    <query>
+      select eq_area.areacodi, eq_area.areaabrev, nvl(eq_area.areanomb, eq_area.areaabrev) as areanomb
+      from eq_area where areaestado = 'A' and anivelcodi = :anivelcodi and anivelcodi != 0
+      order by areanomb
+    </query>
+  </Sql>
+  <!--LISTA LOS GRUPOS DE ÁREAS - 'SOLO SUBESTACIONES' - Pendiente Eliminar-->
+  <Sql>
+    <key>ListPrnAreaGrupo</key>
+    <query>
+      <!--select areacodi, areaabrev, nvl(areanomb, areaabrev) as areanomb
+      from(
+      select eq_area.*, eq_arearel.areapadre as aopadre
+      from eq_area join eq_arearel on eq_area.areacodi = eq_arearel.areacodi
+      where eq_area.areaestado = 'A' and eq_area.anivelcodi = 0 and eq_area.tareacodi = 1
+      and eq_arearel.areapadre in (select areacodi from eq_area where areaestado = 'A' and anivelcodi = :anivelcodi)
+      )
+      where aopadre = :areacodi and areacodi not in(-1, 0) or 0 = :areacodi and areacodi not in(-1, 0)
+      order by areanomb-->
+      select distinct areacodi, areaabrev, nvl(areanomb, areaabrev) as areanomb
+      from(
+      select eq_area.*, eq_arearel.areapadre as aopadre
+      from eq_area
+      join eq_arearel on eq_area.areacodi = eq_arearel.areacodi
+      join eq_equipo on eq_equipo.areacodi = eq_area.areacodi
+      inner join me_ptomedicion on eq_equipo.equicodi = me_ptomedicion.equicodi
+      where eq_area.areaestado = 'A' and eq_area.anivelcodi = 0 and eq_area.tareacodi = 1
+      and eq_arearel.areapadre in (select areacodi from eq_area where areaestado = 'A' and anivelcodi = :anivelcodi)
+      )
+      where aopadre = :areacodi and areacodi not in(-1, 0) or 0 = :areacodi and areacodi not in(-1, 0)
+      order by areanomb
+    </query>
+  </Sql>
+  <!--LISTA LOS PUNTOS DE MEDICIÓN - TODOS - Pendiente Eliminar-->
+  <Sql>
+    <key>ListPrnPtoMedicion</key>
+    <query>
+      select ptomedicodi, nvl(ptomedidesc, ptomedielenomb) as ptomedidesc
+      from(
+      select *
+      from(
+      select eq_area.areacodi, eq_arearel.areapadre, me_ptomedicion.*
+      from me_ptomedicion join eq_equipo on me_ptomedicion.equicodi = eq_equipo.equicodi
+      join eq_area on eq_equipo.areacodi = eq_area.areacodi
+      join eq_arearel on eq_area.areacodi = eq_arearel.areacodi
+      where me_ptomedicion.ptomediestado = 'A' and me_ptomedicion.origlectcodi = {0}
+      and eq_equipo.equiestado = 'A' and eq_area.areaestado = 'A'
+      and eq_arearel.areapadre in (select areacodi from eq_area where areaestado = 'A' and anivelcodi = {1})
+      )
+      where areapadre = {2} or 0 = {2}
+      )
+      where areacodi = {3} or 0 = {3}
+      order by ptomedidesc
+    </query>
+  </Sql>
+
+  <!--LISTA LOS PUNTOS DE MEDICIÓN - DISTRIBUIDORES - Pendiente Eliminar-->
+  <Sql>
+    <key>ListPrnPtoMedicionDistr</key>
+    <query>
+      select ptomedicodi, nvl(ptomedidesc, ptomedielenomb) as ptomedidesc, emprcodi
+      from(
+      select *
+      from(
+      select eq_area.areacodi, eq_arearel.areapadre, si_empresa.emprcodi, me_ptomedicion.ptomedicodi,
+      me_ptomedicion.ptomedidesc, me_ptomedicion.ptomedielenomb
+      from me_ptomedicion join eq_equipo on me_ptomedicion.equicodi = eq_equipo.equicodi
+      join si_empresa on si_empresa.emprcodi = eq_equipo.emprcodi
+      join eq_area on eq_equipo.areacodi = eq_area.areacodi
+      join eq_arearel on eq_area.areacodi = eq_arearel.areacodi
+      where me_ptomedicion.ptomediestado = 'A' and me_ptomedicion.origlectcodi = {0} and si_empresa.tipoemprcodi = {1}
+      and eq_equipo.equiestado = 'A' and eq_area.areaestado = 'A'
+      and eq_arearel.areapadre in (select areacodi from eq_area where areaestado = 'A' and anivelcodi = {2})
+      )
+      where areapadre = {3} or 0 = {3}
+      )
+      where areacodi = {4} or 0 = {4}
+      order by ptomedidesc
+    </query>
+  </Sql>
+  
+  <!--CONFIGURACIÓN DE PARAMETROS DE UN PUNTO DE MEDICIÓNES-->
+  <Sql>
+    <key>GetConfiguracionByPtoMedicionDate</key>
+    <query>
+      select * from (
+      select ptomedicodi, pmedatfecha, pmconpcodi, pmedatvalor from prn_ptomeddat
+      where ptomedicodi = :ptomedicodi and pmedatfecha = :fecha
+      )
+      pivot(
+      max(pmedatvalor) for  pmconpcodi in (1 as parptoporcerrormin, 2 as parptoporcerrormax, 3 as parptoporcmuestra, 4 as parptoporcdesvia,
+      5 as parptomagcargamin, 6 as parptomagcargamax, 7 as parptoferiado, 8 as parptoatipico, 9 as parptodepurauto, 10 as parptopatron,
+      11 as parptoveda, 12 as parptonumcoincidencia)
+      )
+    </query>
+  </Sql>
+  <!--VALIDA LA EXISTENCIA DE AL MENOS UN REGISTRO EN LA TABLA PRN_PTOMEDDAT-->
+  <Sql>
+    <key>ValidarPlantillaAnio</key>
+    <query>
+      select
+      pmedatcodi
+      from
+      prn_ptomeddat
+      where
+      pmedatfecha = :pmedatfecha and rownum = 1
+    </query>
+  </Sql>
+ 
+  <!--LISTA TODOS LOS PUNTOS DE MEDICIÓN DE ACTIVOS - Ubicar en otro Xml-->
+  <Sql>
+    <key>ListPtomedicionActivos</key>
+    <query>      
+      select distinct      
+      pto.ptomedicodi, pto.ptomedidesc
+      from
+      eq_propequi pe
+      join eq_equipo eq on pe.equicodi = eq.equicodi
+      and (pe.propcodi = 1064)
+      and (fechapropequi = (select max(fechapropequi) from eq_propequi where propcodi = 1064 and equicodi = eq.equicodi))
+      join eq_familia fam on eq.famcodi = fam.famcodi
+      join eq_area area on eq.areacodi = area.areacodi
+      join eq_tipoarea tarea on area.tareacodi = tarea.tareacodi
+      join si_empresa emp on eq.emprcodi = emp.emprcodi
+      join si_tipoempresa te on emp.tipoemprcodi = te.tipoemprcodi
+      join me_ptomedicion pto on eq.equicodi = pto.equicodi
+      and (pto.origlectcodi = 6)
+      where
+      pe.valor = '0' or '0' = '0'
+    </query>
+  </Sql>
+  
+  
+  
+  
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <!--DEPURACIÓN MANUAL-->
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <!--LISTA LOS PUNTOS DE MEDICIÓN QUE HAN PASADO POR UNA CLASIFICACIÓN-->
+  <Sql>
+    <key>ListPuntosClasificadosByFecha</key>
+    <query>
+      select
+      a.*, eq_equipo.equinomb, si_empresa.emprcodi,
+      nvl(si_empresa.emprnomb, si_empresa.emprabrev) emprnomb,
+      eq_area.areacodi, nvl(eq_area.areanomb, eq_area.areaabrev) areanomb
+      from
+      (
+      select
+      me_ptomedicion.ptomedicodi, me_ptomedicion.ptomedidesc, me_ptomedicion.equicodi,
+      prn_medicion48.prnm48estado prnmestado, prn_medicion48.medifecha, prn_medicion48.meditotal,
+      48 prnmintervalo, prn_clasificacion.prnclsclasificacion
+      from
+      me_ptomedicion
+      join prn_medicion48 on me_ptomedicion.ptomedicodi = prn_medicion48.ptomedicodi
+      join prn_clasificacion on prn_medicion48.ptomedicodi = prn_clasificacion.ptomedicodi
+      and prn_medicion48.medifecha = prn_clasificacion.prnclsfecha
+      join eq_equipo on me_ptomedicion.equicodi = eq_equipo.equicodi
+      join eq_arearel on eq_equipo.areacodi = eq_arearel.areacodi
+      where
+      eq_arearel.areapadre in (select areacodi from eq_area where anivelcodi = 1) and
+      prn_medicion48.prnm48tipo = :prntipo and prn_clasificacion.lectcodi = :ejec48
+      union all
+      select
+      me_ptomedicion.ptomedicodi, me_ptomedicion.ptomedidesc, me_ptomedicion.equicodi,
+      prn_medicion96.prnm96estado prnmestado, prn_medicion96.medifecha, prn_medicion96.meditotal,
+      96 prnmintervalo, prn_clasificacion.prnclsclasificacion
+      from
+      me_ptomedicion
+      join prn_medicion96 on me_ptomedicion.ptomedicodi = prn_medicion96.ptomedicodi
+      join prn_clasificacion on prn_medicion96.ptomedicodi = prn_clasificacion.ptomedicodi
+      and prn_medicion96.medifecha = prn_clasificacion.prnclsfecha
+      join eq_equipo on me_ptomedicion.equicodi = eq_equipo.equicodi
+      join eq_arearel on eq_equipo.areacodi = eq_arearel.areacodi
+      where
+      eq_arearel.areapadre in (select areacodi from eq_area where anivelcodi = 1) and
+      prn_medicion96.prnm96tipo = :prntipo and prn_clasificacion.lectcodi = :ejec96
+      ) a
+      join eq_equipo on a.equicodi = eq_equipo.equicodi
+      join si_empresa on eq_equipo.emprcodi = si_empresa.emprcodi
+      join eq_area on eq_equipo.areacodi = eq_area.areacodi
+      where a.medifecha = :medifecha
+      order by a.prnclsclasificacion, a.ptomedicodi
+    </query>
+  </Sql>
+  <!--LISTAS LAS EMPRESAS POR TIPO-->
+  <Sql>
+    <key>ListEmpresasByTipo</key>
+    <query>
+      select distinct
+      si_empresa.emprcodi, nvl(si_empresa.emprnomb, si_empresa.emprabrev) emprnomb,
+      eq_arearel.areapadre
+      from
+      si_empresa
+      join eq_equipo on si_empresa.emprcodi = eq_equipo.emprcodi
+      join me_ptomedicion on eq_equipo.equicodi = me_ptomedicion.equicodi
+      join eq_area on eq_equipo.areacodi = eq_area.areacodi
+      join eq_arearel on eq_area.areacodi = eq_arearel.areacodi
+      where
+      si_empresa.emprcodi != -1
+      and si_empresa.emprestado = 'A' and si_empresa.tipoemprcodi = :tipoemprcodi
+      and me_ptomedicion.origlectcodi = :origlectcodi
+    </query>
+  </Sql>
+  <!--LISTA LAS SUBESTACIONES POR EMPRESAS-->
+  <Sql>
+    <key>ListSubestacionesByEmpresa</key>
+    <query>
+      select distinct
+      areacodi, areaabrev, nvl(areanomb, areaabrev) as areanomb
+      from
+      (
+      select eq_area.*
+      from eq_area
+      join eq_arearel on eq_area.areacodi = eq_arearel.areacodi
+      join eq_equipo on eq_area.areacodi = eq_equipo.areacodi
+      where
+      (eq_equipo.emprcodi = :emprcodi
+      and eq_area.areaestado = 'A' and eq_area.anivelcodi = :nivelsubest
+      and eq_arearel.areapadre in (select areacodi from eq_area where areaestado = 'A' and anivelcodi = :nivelao))
+      or
+      (0 = :emprcodi
+      and eq_area.areaestado = 'A' and eq_area.anivelcodi = :nivelsubest
+      and eq_arearel.areapadre in (select areacodi from eq_area where areaestado = 'A' and anivelcodi = :nivelao))
+      )
+      where areacodi not in(-1, 0)
+      order by areanomb
+    </query>
+  </Sql>
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <!--DEMANADA DEL AREA-->
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <Sql>
+    <key>ListMePtomedicionAO</key><!--ASSETEC 20181122-->
+    <query>
+      select
+      ptomedicodi,
+      ptomedidesc
+      from
+      me_ptomedicion
+      where
+      ptomedicodi in (3004, 3005, 3006, 3009, 1210)
+    </query>
+  </Sql>
+
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <!--INFORMACIÓN USUARIOS LIBRES-->
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <Sql>
+    <key>ListSubestacionEmpresa</key>
+    <query>
+      select distinct
+      emp.emprcodi, a.areacodi, emp.emprabrev, a.areaabrev,
+      emp.emprnomb, a.areanomb, ar.areapadre
+      from
+      eq_equipo eq
+      join si_empresa emp on eq.emprcodi = emp.emprcodi and (emp.tipoemprcodi = 4)
+      join eq_area a on eq.areacodi = a.areacodi and (a.anivelcodi = 0)--SUBESTACIONES
+      join eq_arearel ar on a.areacodi = ar.areacodi
+      where
+      eq.equiestado = 'A' and
+      ar.areapadre in (select areacodi from eq_area where anivelcodi = 1)
+      order by a.areanomb, emp.emprnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPuntosBySubestacionEmpresa</key>
+    <query>
+      select
+      pt.ptomedicodi, pt.ptomedidesc,
+      eq.equicodi, eq.equinomb,
+      emp.emprcodi, emp.emprnomb,
+      a.areacodi, a.areanomb,
+      me.medifecha, me.prnitv
+      from
+      me_ptomedicion pt
+      join eq_equipo eq on pt.equicodi = eq.equicodi
+      join si_empresa emp on eq.emprcodi = emp.emprcodi and (tipoemprcodi = 4)
+      join eq_area a on eq.areacodi = a.areacodi and (anivelcodi = 0)
+      join eq_arearel ar on a.areacodi = ar.areacodi
+      join (
+      select ptomedicodi, medifecha, 48 prnitv from me_medicion48
+      where lectcodi = 103 and tipoinfocodi = 1
+      union all
+      select ptomedicodi, medifecha, 96 prnitv from me_medicion96
+      where lectcodi = 51 and tipoinfocodi = 1
+      ) me on pt.ptomedicodi = me.ptomedicodi
+      where
+      emp.emprcodi = :emprcodi and
+      a.areacodi = :areacodi and
+      me.medifecha= :medifecha
+      order by pt.ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <!--no esta uso-->
+    <key>ListPtoMedicionByEmpresaArea</key>
+    <query>
+      select
+      me_ptomedicion.ptomedicodi
+      from
+      me_ptomedicion
+      join eq_equipo on me_ptomedicion.equicodi = eq_equipo.equicodi
+      join eq_area on eq_equipo.areacodi = eq_area.areacodi
+      join eq_arearel on eq_area.areacodi = eq_arearel.areacodi
+      join si_empresa on eq_equipo.emprcodi = si_empresa.emprcodi
+      where
+      si_empresa.tipoemprcodi = :tipoemprcodi and
+      eq_arearel.areapadre = :areapadre
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CountDespEjecByTipoEmpresa</key>
+    <query>
+      select sum(total)
+      from(
+      select
+      count(rownum) total
+      from me_medicion48 medi48
+      inner join me_ptomedicion pm on pm.ptomedicodi = medi48.ptomedicodi --gr.grupocodi = pm.grupocodi and origlectcodi=2
+      inner join pr_grupo gr on gr.grupocodi = pm.grupocodi and (gr.catecodi =3 or gr.catecodi =5)
+      inner join si_empresa emp on emp.emprcodi = gr.emprcodi
+      where
+      emp.tipoemprcodi = :tipoemprcodi and
+      medi48.ptomedicodi = :ptomedicodi and
+      medi48.lectcodi = :lectcodi   and
+      medi48.tipoinfocodi = :tipoinfocodi and
+      medi48.medifecha between :fecini and :fecfin
+      union all
+      select
+      count(rownum) total
+      from me_medicion96 medi96
+      inner join me_ptomedicion pm on pm.ptomedicodi = medi96.ptomedicodi --gr.grupocodi = pm.grupocodi and origlectcodi=2
+      inner join pr_grupo gr on gr.grupocodi = pm.grupocodi and (gr.catecodi =3 or gr.catecodi =5)
+      inner join si_empresa emp on emp.emprcodi = gr.emprcodi
+      where
+      emp.tipoemprcodi = :tipoemprcodi and
+      medi96.ptomedicodi = :ptomedicodi and
+      medi96.lectcodi = :lectcodi and
+      medi96.tipoinfocodi = :tipoinfocodi and
+      medi96.medifecha between :fecini and :fecfin
+      )
+    </query>
+  </Sql>
+  <!--OBTIENE EL AREA OPERATIVA DE UN EQUIPO-->
+  <Sql>
+    <key>GetAreaOperativaByEquipo</key>
+    <query>
+      select a.* from eq_area a
+      inner join eq_arearel ar on a.areacodi = ar.areapadre
+      inner join eq_equipo e on ar.areacodi = e.areacodi and equicodi = :equicodi
+      where anivelcodi = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetSubestacionCentralByNivel</key>
+    <query>
+      select
+      a.areacodi,
+      a.areaabrev,
+      a.areanomb,
+      ta.tareaabrev,
+      a.areapadre,
+      a.anivelcodi
+      from eq_area a inner join eq_tipoarea ta on ta.tareacodi = a.tareacodi
+      where ta.tareacodi in (1,3,4,10,11) and a.anivelcodi = :anivelcodi
+      order by ta.tareaabrev, a.areanomb
+    </query>
+  </Sql>
+
+  <!--0705 Separando la consulta de areas y subestaciob + centrales-->
+  <Sql>
+    <key>GetAreaOperativaByNivel</key>
+    <query>
+      select
+              areacodi,
+              areaabrev,
+              areanomb,
+              areapadre,
+              anivelcodi
+      from eq_area where anivelcodi = :anivelcodi and areacodi not in (-1,0)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetSubEstacionSeleccionadas</key>
+    <query>
+      select
+      a.areacodi,
+      ta.tareaabrev ||' ' ||a.areanomb AREANOMB,
+      b.areapadre
+      from eq_area a join eq_arearel b on a.areacodi = b.areacodi
+      inner join eq_tipoarea ta on ta.tareacodi = a.tareacodi
+      where a.anivelcodi = :anivelcodi and b.areapadre = :areapadre and ta.tareacodi in (1,3,4,10,11)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetSubEstacionDisponibles</key>
+    <query>
+      <!--select
+              a.areacodi,
+              a.areanomb,
+              b.areapadre
+      from
+      (select  
+                * 
+       from eq_area 
+       where areacodi not in (-1,0) and anivelcodi = {0} and areacodi not in (select 
+                                                                                   areacodi
+                                                                            from eq_arearel 
+                                                                            where areapadre = {1})) a
+      left outer join
+      (select 
+              * 
+       from eq_arearel where areapadre != {2} and areapadre in (select 
+                                                                     areacodi 
+                                                              from  eq_area 
+                                                              where anivelcodi = {3})and areacodi not in (0,-1) and areacodi in (select 
+                                                                                                                                       areacodi
+                                                                                                                               from eq_area 
+                                                                                                                                where anivelcodi = {4})) b
+      on  a.areacodi = b.areacodi-->
+      select
+      a.areacodi,
+      ta.tareaabrev ||' ' ||a.areanomb AREANOMB,
+      b.areapadre
+      from
+      (select
+      *
+      from eq_area
+      where areacodi not in (-1,0) and anivelcodi = {0} and areacodi not in (select
+      areacodi
+      from eq_arearel
+      where areapadre = {1})) a
+      left outer join
+      (select
+      *
+      from eq_arearel where areapadre != {2} and areapadre in (select
+      areacodi
+      from  eq_area
+      where anivelcodi = {3})and areacodi not in (0,-1) and areacodi in (select
+      areacodi
+      from eq_area
+      where anivelcodi = {4})) b
+      on  a.areacodi = b.areacodi
+
+      inner join eq_tipoarea ta on ta.tareacodi = a.tareacodi
+      where  ta.tareacodi in (1,3,4,10,11)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetDeleteRelacion</key>
+    <query>
+      delete from eq_arearel where areacodi = :areacodi and areapadre = :areapadre
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetDeleteByPadre</key>
+    <query>
+      delete from eq_arearel where  areapadre = :areapadre
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetAreaOperativaBySubestacion</key>
+    <query>
+      select
+              area.areacodi,
+              area.areanomb
+      from eq_arearel rel join eq_area area on rel.areapadre = area.areacodi
+      where rel.areacodi = :areacodi and area.anivelcodi = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetSubestacionRel</key>
+    <query>
+      select
+               rel.arearlcodi,
+               rel.areapadre,
+               rel.areacodi
+      from eq_arearel rel join eq_area area on rel.areapadre = area.areacodi
+      where rel.areacodi = :areacodi and area.anivelcodi = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetBarrasDisponibles</key>
+    <query>
+      select
+              areacodi,
+              barracodi,
+              grupocodi,
+              gruponomb,
+              catecodi
+      from pr_grupo where areacodi != :areacodi and catecodi = 10
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetBarrasSeleccionadas</key>
+    <query>
+      select
+              areacodi,
+              barracodi,
+              grupocodi,
+              gruponomb,
+              catecodi
+      from pr_grupo where areacodi = :areacodi and catecodi = 10
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateGrupo</key>
+    <query>
+      update
+      pr_grupo
+      set
+      areacodi = :areacodi
+      where
+      grupocodi = :grupocodi
+    </query>
+  </Sql>
+
+  
+  <Sql>
+    <key>GetListBarra</key>
+    <query>
+      select
+      grupocodi,
+      gruponomb
+      from pr_grupo where catecodi = 10
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListBarraPM</key>
+    <query>
+      select
+      grupocodi,
+      gruponomb,
+      catecodi
+      from pr_grupo
+      where catecodi = {0} and grupocodi not in (select prnredbarracp from prn_reduccionred where prnvercodi = {2}) and grupocodi not in ({1})
+      and grupocodi not in (select prnredbarrapm from(select prnredbarrapm, sum(prnredgauss) Gauss
+      from prn_reduccionred where prnvercodi = {2} group by prnredbarrapm) where Gauss &gt;= 1)
+      <!--union
+      select prnredbarrapm from prn_reduccionred where prnvercodi = {2}) and grupocodi not in ({1})-->
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListBarraPMEdit</key>
+    <query>
+      select
+      grupocodi,
+      gruponomb,
+      catecodi
+      from pr_grupo
+      where catecodi = {0} and grupocodi not in (      select prnredbarracp from prn_reduccionred where prnvercodi = {1})
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListaBarrasCPDisponible</key>
+    <query>
+      select
+      grupocodi,
+      gruponomb
+      from pr_grupo
+      where catecodi = :catecodi and grupocodi not in (
+      select prnredbarrapm from prn_reduccionred where prnvercodi = :prnvercodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaBarrasPMDisponible</key>
+    <query>
+      select
+      grupocodi,
+      gruponomb
+      from pr_grupo
+      where catecodi = :catecodi and grupocodi not in (select prnredbarracp from prn_reduccionred where prnvercodi = :prnvercodi)
+        and grupocodi not in (select prnredbarrapm from(select prnredbarrapm, sum(prnredgauss) Gauss
+                              from prn_reduccionred where prnvercodi = :prnvercodi group by prnredbarrapm) where Gauss &gt;= 1)
+    </query>
+  </Sql>
+  <!--Lista las barras PM para el módulo de "Relación de Barras-Puntos"-->
+  <!--
+  {0}: Anivelcodi - Nivel de Subestaciones
+  {1}: Anivelcodi - Nivel de Áreas Operativas
+  {2}: Catecodi - Categoria de Barras PM
+  {3}: Areapadre - Identificador areacodi de una Area operativa
+  {4}: Grupocodi - Identificador grupocodi de una Barra PM
+  -->
+  <Sql>
+    <key>ListRelacionBarrasPM</key>
+    <query>
+      select
+      pdr.areapadre, pdr.areapadreabrev, pdr.areapadrenomb,
+      area.areacodi, area.areaabrev, area.areanomb,
+      grp.grupocodi, grp.grupoabrev, grp.gruponomb
+      from
+      pr_grupo grp
+      left join eq_area area on grp.areacodi = area.areacodi
+      and (area.anivelcodi = {0} and area.areacodi != -1)
+      left join (
+        select
+        arel.areacodi,
+        arel.areapadre AREAPADRE,
+        area.areaabrev AREAPADREABREV, area.areanomb AREAPADRENOMB
+        from
+        eq_arearel arel
+        join eq_area area on arel.areapadre = area.areacodi
+        and (area.anivelcodi = {1})
+      ) pdr on area.areacodi = pdr.areacodi
+      where
+      (grp.catecodi = {2}) and
+      (pdr.areapadre in ({3}) or '0' = '{3}') and
+      (grp.grupocodi in ({4}) or '0' = '{4}' )
+    </query>
+  </Sql>
+
+  <!--Lista los puntos de medición o agrupaciones relacionados a una Barra PM para el módulo de "Relación de Barras-Puntos"-->
+  <!--
+  {0}: Grupocodibarra - Identificador grupocodi de la tabla PR_GRUPO representa una BarraPM
+  -->
+  <Sql>
+    <key>ListRelacionPtosPorBarraPM</key>
+    <query>
+      select
+      ptomedicodi,
+      ptomedibarranomb,
+      ptomedidesc,
+      grupocodibarra,
+      origlectcodi
+      from
+      me_ptomedicion
+      where
+      grupocodibarra in ({0})
+    </query>
+  </Sql>
+  
+  <!--//RelacionBarras-->
+  <Sql>
+    <key>ListRelacionAgrupacionPunto</key>
+    <query>
+      select
+      pto.ptomedicodi, pto.ptomedidesc,
+      1 PRNM48TIPO,
+      pto.grupocodibarra,
+      area.areacodi, area.areanomb,
+      emp.emprcodi, emp.emprnomb,
+      ptogrp.ptogrppronostico,
+      grp.ptomedicodi PTOGRPHIJOCODI,
+      pto2.ptomedibarranomb || nvl2(pto2.ptomedidesc, (' - ' || pto2.ptomedidesc), null) PTOGRPHIJODESC
+      from
+      me_ptomedicion pto
+      join eq_area area on pto.equicodi = area.areacodi
+      join si_empresa emp on pto.emprcodi = emp.emprcodi
+      join prn_puntoagrupacion ptogrp on pto.ptomedicodi = ptogrp.ptomedicodi
+      and (pto.origlectcodi = {0} and pto.ptomediestado = 'A')
+      and pto.grupocodibarra = {1}
+      and (ptogrp.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+      join prn_agrupacion grp on ptogrp.ptogrpcodi = grp.ptogrpcodi
+      join me_ptomedicion pto2 on grp.ptomedicodi = pto2.ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaAgrupaciones</key>
+    <query>
+      select
+      pto.ptomedicodi, pto.ptomedidesc
+      from
+      me_ptomedicion pto
+      join eq_area area on pto.equicodi = area.areacodi
+      join si_empresa emp on pto.emprcodi = emp.emprcodi
+      join prn_puntoagrupacion ptogrp on pto.ptomedicodi = ptogrp.ptomedicodi
+      and (pto.origlectcodi = {0} and pto.ptomediestado = 'A')
+      and pto.grupocodibarra = {1}
+      and (ptogrp.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+      join prn_agrupacion grp on ptogrp.ptogrpcodi = grp.ptogrpcodi
+      join me_ptomedicion pto2 on grp.ptomedicodi = pto2.ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaPuntosNoAgrupaciones</key>
+    <query>
+      select
+      pto.ptomedicodi, pto.ptomedidesc,
+      pto.grupocodibarra,
+      emp.emprnomb
+      from
+      me_ptomedicion pto
+      join si_empresa emp on pto.emprcodi = emp.emprcodi
+      where origlectcodi = {2} and
+      grupocodibarra = {1} and 
+      ptomediestado = 'A' and 
+      ptomedicodi not in 
+      (   
+          select
+          grp.ptomedicodi PTOGRPHIJOCODI
+          from
+          me_ptomedicion pto
+          join eq_area area on pto.equicodi = area.areacodi
+          join si_empresa emp on pto.emprcodi = emp.emprcodi
+          join prn_puntoagrupacion ptogrp on pto.ptomedicodi = ptogrp.ptomedicodi
+          and (pto.origlectcodi = {0} and pto.ptomediestado = 'A')
+          and pto.grupocodibarra = {1}
+          and (ptogrp.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+          join prn_agrupacion grp on ptogrp.ptogrpcodi = grp.ptogrpcodi
+          join me_ptomedicion pto2 on grp.ptomedicodi = pto2.ptomedicodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>PuntosBarraList</key>
+    <query>
+      select
+      me.ptomedicodi,
+      me.ptomedidesc,
+      me.grupocodibarra
+      from me_ptomedicion me
+      where grupocodibarra = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateMeMedicionBarra</key>
+    <query>
+		update
+		me_ptomedicion
+		set
+		grupocodibarra = :barra,
+		lastuser = :lastuser,
+		lastdate = sysdate
+		where
+		Ptomedicodi = :punto
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListBarrasPMNombre</key>
+    <query>
+      select distinct gruponomb from
+      (select red.prnredbarrapm,red.prnredbarracp from prn_reduccionred red join prn_version ver on red.prnvercodi = ver.prnvercodi where ver.prnverestado = 'A') tb1
+      left join
+      (select grupocodi from pr_grupo where catecodi = {1}) tb2 on tb1.prnredbarrapm = tb2.grupocodi
+      left join
+      (select grupocodi,gruponomb from pr_grupo where catecodi = {1}) tb3 on tb1.prnredbarracp = tb3.grupocodi where tb1.prnredbarrapm = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListBarrasCPNombre</key>
+    <query>
+      select distinct tb2.gruponomb from
+      (select red.prnredbarracp from prn_reduccionred red join prn_version ver on red.prnvercodi = ver.prnvercodi where ver.prnverestado = 'A') tb1
+      left join
+      (select grupocodi,gruponomb from pr_grupo where catecodi = {1}) tb2 on tb1.prnredbarracp = tb2.grupocodi where tb1.prnredbarracp = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListBarrasSoloPM</key>
+    <query>
+      select distinct
+      tb.grupocodi,
+      tb.gruponomb
+      from
+      (select
+      grupocodi,
+      gruponomb,
+      tb1.prnredbarracp
+      from
+      (select distinct red.prnredbarrapm
+      , red.prnredbarracp
+      from prn_reduccionred red join prn_version ver on red.prnvercodi = ver.prnvercodi where ver.prnverestado = 'A') tb1
+      left join
+      (select
+      grupocodi,
+      gruponomb
+      from pr_grupo
+      where catecodi = {0}) tb2 on tb1.prnredbarrapm = tb2.grupocodi) tb where tb.prnredbarracp in ({1}) or '0'= '{1}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListBarrasSoloCP</key>
+    <query>
+      select
+        grupocodi,
+        gruponomb
+      from
+      (select distinct red.prnredbarracp from prn_reduccionred red join prn_version ver on red.prnvercodi = ver.prnvercodi where ver.prnverestado = 'A') tb1
+      left join
+      (select
+        grupocodi,
+        gruponomb
+      from pr_grupo
+      where catecodi = {0}) tb2 on tb1.prnredbarracp = tb2.grupocodi
+    </query>
+  </Sql>
+
+  <!--14042020-->
+  <!--Lista para el filtro empresa de relacion barras-->
+  <Sql>
+    <key>ListEmpresaBarrasRel</key>
+    <query>
+      select distinct emprcodi, emprnomb from (select emp1.emprcodi, emp1.emprnomb from (select ptomedicodi, emprcodi from me_ptomedicion where grupocodibarra != -1 and origlectcodi = 6) pto1 join si_empresa emp1 on pto1.emprcodi = emp1.emprcodi
+      union all
+      select
+      emp2.emprcodi,
+      emp2.emprnomb
+      from (select
+      emprcodi
+      from  me_ptomedicion where ptomedicodi in (select
+      agr.ptomedicodi
+      from (select
+      pagr.ptogrpcodi
+      from (select
+      ptomedicodi
+      from   me_ptomedicion where grupocodibarra != -1 and origlectcodi = 33) pto2 join prn_puntoagrupacion pagr on pto2.ptomedicodi = pagr.ptomedicodi and pagr.ptogrpfechafin = to_date('31/12/9999','DD/MM/RR')) tab1 join prn_agrupacion agr on tab1.ptogrpcodi = agr.ptogrpcodi)) tab2 join si_empresa emp2 on tab2.emprcodi = emp2.emprcodi)
+    </query>
+  </Sql>
+
+  <!--Puntos por Empresa-->
+  <Sql>
+    <key>ListPuntosByEmpresa</key>
+    <query>
+      select grupocodi from PR_grupo where grupocodi in
+      (select grupocodibarra from me_ptomedicion where emprcodi in ({0}) and origlectcodi =6 and grupocodibarra != -1
+      union all
+      select grupocodibarra from me_ptomedicion where ptomedicodi in (select ptomedicodi from prn_puntoagrupacion where ptogrpcodi in (select ptogrpcodi from prn_agrupacion where ptomedicodi in (select ptomedicodi from me_ptomedicion where emprcodi in ({0}) and origlectcodi =6)) and ptogrpfechafin = to_date('31/12/9999','DD/MM/RR')) and origlectcodi = 33)
+    </query>
+  </Sql>
+
+  <!--Lista de refrescada de Empresa por Barra-->
+  <Sql>
+    <key>ListEmpresaByBarra</key>
+    <query>
+      select distinct emprcodi, emprnomb from (select tb2.emprcodi, tb2.emprnomb from (select * from me_ptomedicion where grupocodibarra in ({0}) and origlectcodi = 6) tb1 join si_empresa tb2 on tb1.emprcodi = tb2.emprcodi
+      union all
+      select tb4.emprcodi, tb4.emprnomb from (select * from me_ptomedicion where ptomedicodi in (select ptomedicodi from prn_agrupacion where ptogrpcodi in (select ptogrpcodi from prn_puntoagrupacion where ptomedicodi in (select ptomedicodi from me_ptomedicion where grupocodibarra in ({0}) and origlectcodi = 33)) and agrupfechafin = to_date('31/12/9999','DD/MM/RR'))) tb3 join si_empresa tb4 on tb3.emprcodi = tb4.emprcodi)
+    </query>
+  </Sql>
+
+<!--Lista de barra solo registradas en Me_ptomedicion-->
+  <Sql>
+    <key>ListBarrasInPtoMedicion</key>
+    <query>
+      select
+      pdr.areapadre, pdr.areapadreabrev, pdr.areapadrenomb,
+      area.areacodi, area.areaabrev, area.areanomb,
+      grp.grupocodi, grp.grupoabrev, grp.gruponomb
+      from
+      pr_grupo grp
+      left join eq_area area on grp.areacodi = area.areacodi
+      and (area.anivelcodi = {0} and area.areacodi != -1)
+      left join (
+      select
+      arel.areacodi,
+      arel.areapadre AREAPADRE,
+      area.areaabrev AREAPADREABREV, area.areanomb AREAPADRENOMB
+      from
+      eq_arearel arel
+      join eq_area area on arel.areapadre = area.areacodi
+      and (area.anivelcodi = {1})
+      ) pdr on area.areacodi = pdr.areacodi
+      where
+      (grp.catecodi = {2}) and
+      (pdr.areapadre in ({3}) or '0' = '{3}') and
+      (grp.grupocodi in ({4}) or '0' = '{4}' )
+      and  grp.grupocodi in (select grupocodibarra from me_ptomedicion where grupocodibarra != -1 and origlectcodi in (6,33))
+    </query>
+  </Sql>
+
+  <!--Perdidas transversales-->
+  <!--
+  <Sql>
+    <key>ListaBarrasPerdidasTransversales</key>
+    <query>
+      select t1.grupocodi, t1.gruponomb from pr_grupo t1 
+      right join prn_prdtransversal t2 on t1.grupocodi = t2.grupocodi 
+      inner join prn_version t3 on t3.prnvercodi = t2.prnvercodi where t3.prnverestado = 'A'
+    </query>
+  </Sql>
+  -->
+	
+	
+	<Sql>
+    <key>ListaPerdidasTransversalesByBarra</key>
+    <query>
+      select t1.prdtrncodi, t1.prdtrnetqnomb, t1.grupocodi, t2.gruponomb, t1.prdtrnperdida from prn_prdtransversal t1 
+      left join pr_grupo t2 on t1.grupocodi = t2.grupocodi where t1.prdtrnetqnomb in 
+      (select distinct prdtrnetqnomb from prn_prdtransversal where (grupocodi in ({0}) or '0' = '{0}'))
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>PerdidasTransversalesCPDisponibles</key>
+    <query>
+      select grupocodi, gruponomb from pr_grupo where grupocodi in
+      (select distinct prnredbarracp from prn_reduccionred where prnvercodi = (select prnvercodi from prn_version where prnverestado = 'A')) and
+      <!--grupocodi not in (select grupocodi from prn_prdtransversal where prnvercodi = (select prnvercodi from prn_version where prnverestado = 'A')) and-->
+      (grupocodi in ({0}) or '0' = '{0}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>PerdidasTransversalesCPSeleccionadas</key>
+    <query>
+      select
+      t1.prdtrnetqnomb,
+      t1.grupocodi,
+      t2.gruponomb,
+      t1.prdtrnperdida
+      from prn_prdtransversal t1 inner join
+      pr_grupo t2 on t1.grupocodi = t2.grupocodi inner join
+      prn_version t3 on t1.prnvercodi = t3.prnvercodi where t3.prnverestado = 'A' and (t1.prdtrncodi in ({0}) or '0' = '{0}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeletePerdidaTransversal</key>
+    <query>
+      delete from prn_prdtransversal
+      where
+      grupocodi = :grupocodi and prnvercodi = (select prnvercodi from prn_version where prnverestado = 'A')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>VersionActiva</key>
+    <query>
+      select prnvercodi from prn_version where prnverestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>BarraDefecto</key>
+    <query>
+      select
+      grupocodi,
+      gruponomb
+      from pr_grupo
+      where catecodi = :catecodi and grupocodi not in ((select prnredbarracp from prn_reduccionred where prnvercodi = :prnvercodi)
+      UNION ALL (select prnredbarrapm from prn_reduccionred where prnvercodi = :prnvercodi))
+    </query>
+  </Sql>
+
+  <!--Lista Bitacora-->>
+  <Sql>
+	  <key>ListaBitacora</key>
+	  <query>
+		  select
+		  tab1.ptomedicodi,
+		  tab1.ptomedidesc,
+		  tab1.emprcodi,
+		  tab1.emprnomb,
+		  tab1.grupocodi,
+		  tab1.gruponomb,
+		  tab3.area,
+		  tab2.medifecha,
+		  tab1.horainicio,
+		  tab1.horafin,
+          tab1.subcausadesc,
+		  case to_char(tab1.justfechainicio, 'HH24:MI:SS')
+		  when    '00:30:00' then    tab2.H1
+		  when    '01:00:00' then    tab2.H2
+		  when    '01:30:00' then    tab2.H3
+		  when    '02:00:00' then    tab2.H4
+		  when    '02:30:00' then    tab2.H5
+		  when    '03:00:00' then    tab2.H6
+		  when    '03:30:00' then    tab2.H7
+		  when    '04:00:00' then    tab2.H8
+		  when    '04:30:00' then    tab2.H9
+		  when    '05:00:00' then    tab2.H10
+		  when    '05:30:00' then    tab2.H11
+		  when    '06:00:00' then    tab2.H12
+		  when    '06:30:00' then    tab2.H13
+		  when    '07:00:00' then    tab2.H14
+		  when    '07:30:00' then    tab2.H15
+		  when    '08:00:00' then    tab2.H16
+		  when    '08:30:00' then    tab2.H17
+		  when    '09:00:00' then    tab2.H18
+		  when    '09:30:00' then    tab2.H19
+		  when    '10:00:00' then    tab2.H20
+		  when    '10:30:00' then    tab2.H21
+		  when    '11:00:00' then    tab2.H22
+		  when    '11:30:00' then    tab2.H23
+		  when    '12:00:00' then    tab2.H24
+		  when    '12:30:00' then    tab2.H25
+		  when    '13:00:00' then    tab2.H26
+		  when    '13:30:00' then    tab2.H27
+		  when    '14:00:00' then    tab2.H28
+		  when    '14:30:00' then    tab2.H29
+		  when    '15:00:00' then    tab2.H30
+		  when    '15:30:00' then    tab2.H31
+		  when    '16:00:00' then    tab2.H32
+		  when    '16:30:00' then    tab2.H33
+		  when    '17:00:00' then    tab2.H34
+		  when    '17:30:00' then    tab2.H35
+		  when    '18:00:00' then    tab2.H36
+		  when    '18:30:00' then    tab2.H37
+		  when    '19:00:00' then    tab2.H38
+		  when    '19:30:00' then    tab2.H39
+		  when    '20:00:00' then    tab2.H40
+		  when    '20:30:00' then    tab2.H41
+		  when    '21:00:00' then    tab2.H42
+		  when    '21:30:00' then    tab2.H43
+		  when    '22:00:00' then    tab2.H44
+		  when    '22:30:00' then    tab2.H45
+		  when    '23:00:00' then    tab2.H46
+		  when    '23:30:00' then    tab2.H47
+		  else    H48
+		  end   AS CONSUMOPREVISTO
+		  from
+		  (
+		      select *
+		      from (
+		          select
+		          rownum ORDEN,
+		          stab.*
+		          from (
+		              select
+		              mjus.ptomedicodi,
+		              pto.ptomedidesc,
+		              emp.emprcodi,
+		              emp.emprnomb,
+		              grp.grupocodi,
+		              grp.gruponomb,
+		              mjus.lectcodi,
+		              mjus.justfechainicio,
+		              to_char(mjus.justfechainicio, 'HH24:MI:SS') AS HORAINICIO,
+		              to_char(mjus.justfechafin, 'HH24:MI:SS') AS HORAFIN,
+		              esub.subcausadesc
+		              from me_justificacion mjus
+		              join eve_subcausaevento esub on mjus.subcausacodi = esub.subcausacodi
+		              and (esub.causaevencodi = 401)
+		              and (lectcodi in ({2}))
+		              and (to_date(mjus.justfechainicio, 'DD-MM-RRRR') between to_date('{0}', 'DD/MM/RRRR') and to_date('{1}', 'DD/MM/RRRR'))
+		              left outer join me_ptomedicion pto on mjus.ptomedicodi = pto.ptomedicodi
+		              and (pto.origlectcodi = 6)
+		              join si_empresa emp on pto.emprcodi = emp.emprcodi
+		              and (emp.tipoemprcodi in ({3}))
+		              join pr_grupo grp on pto.grupocodibarra = grp.grupocodi
+		              order by emp.emprcodi, mjus.ptomedicodi, mjus.justfechainicio
+		          ) stab
+		      ) where orden between {4} and {5}
+		      ) tab1
+		  left outer join (
+		      select * from me_medicion48
+		      where
+		      lectcodi in ({2})
+		      and tipoinfocodi = 1
+		      and (to_date(medifecha, 'DD-MM-RRRR') between to_date('{0}', 'DD/MM/RRRR') and to_date('{1}', 'DD/MM/RRRR'))
+		  ) tab2
+		  on tab1.ptomedicodi = tab2.ptomedicodi
+		  and to_date(tab1.justfechainicio, 'DD-MM-RRRR') = to_date(tab2.medifecha, 'DD-MM-RRRR')
+		  and (tab1.lectcodi = tab2.lectcodi)
+		  left outer join (
+		      select distinct
+		      pto.ptomedicodi,
+		      pe.VALOR as area
+		      from
+		      eq_propequi pe
+		      join eq_equipo eq on pe.equicodi = eq.equicodi
+		      and (pe.propcodi = 1064)
+		      and (fechapropequi = (select max(fechapropequi) from eq_propequi where propcodi = 1064 and equicodi = eq.equicodi))
+		      join eq_familia fam on eq.famcodi = fam.famcodi
+		      join eq_area area on eq.areacodi = area.areacodi
+		      join eq_tipoarea tarea on area.tareacodi = tarea.tareacodi
+		      join si_empresa emp on eq.emprcodi = emp.emprcodi
+		      join si_tipoempresa te on emp.tipoemprcodi = te.tipoemprcodi
+		      join me_ptomedicion pto on eq.equicodi = pto.equicodi
+		      and (pto.origlectcodi = 6)
+		  ) tab3
+		  on tab1.ptomedicodi = tab3.ptomedicodi
+	  </query>
+  </Sql>
+
+  <!--Lista Generadores-->
+  <Sql>
+    <key>ListUnidadByTipo</key>
+    <query>
+      select * from me_ptomedicion where origlectcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPuntosFormulas</key>
+    <query>
+      select
+        ptomedicodi,
+        case
+        when ptomedidesc is null then ptomedielenomb
+        else ptomedidesc end as Ptomedidesc
+      from me_ptomedicion
+      where origlectcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPerfilRuleByEstimador</key>
+    <query>
+      select
+      prrucodi,
+      prruabrev
+      from me_perfil_rule
+      where prruabrev like '{0}' and prruactiva = 'S'
+      <!--prrulastuser in ('allosa','walmeyda','luis.reategui','assetec')-->
+    </query>
+  </Sql>
+  
+	<Sql>
+		<key>ListPtomedicionByOriglectcodi</key>
+		<query>
+			select
+			ptomedicodi,
+			ptomedidesc
+			from
+			me_ptomedicion
+			where
+			origlectcodi = {0}
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>ListVersionMedicionGrp</key>
+    <query>
+      SELECT distinct
+      t2.vergrpcodi,
+      t2.vergrpnomb
+      FROM prn_mediciongrp t1 right join prn_versiongrp t2
+      on t1.vergrpcodi = t2.vergrpcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>MedicionBarraByFechaVersionBarra</key>
+    <query>
+      select
+      Grupocodi,
+      Medifecha,
+      vergrpcodi,
+      H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+      H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+      H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+      H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+      H41, H42, H43, H44, H45, H46, H47, H48
+      from prn_mediciongrp
+      where vergrpcodi = {1} and grupocodi = {2} and medifecha = to_date('{0}', 'DD/MM/YYYY') and prnmgrtipo = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateMedicionTrasladoCarga</key>
+    <query>
+      update prn_mediciongrp
+      set
+      H1 = :H1,
+      H2 = :H2,
+      H3 = :H3,
+      H4 = :H4,
+      H5 = :H5,
+      H6 = :H6,
+      H7 = :H7,
+      H8 = :H8,
+      H9 = :H9,
+      H10 = :H10,
+      H11 = :H11,
+      H12 = :H12,
+      H13 = :H13,
+      H14 = :H14,
+      H15 = :H15,
+      H16 = :H16,
+      H17 = :H17,
+      H18 = :H18,
+      H19 = :H19,
+      H20 = :H20,
+      H21 = :H21,
+      H22 = :H22,
+      H23 = :H23,
+      H24 = :H24,
+      H25 = :H25,
+      H26 = :H26,
+      H27 = :H27,
+      H28 = :H28,
+      H29 = :H29,
+      H30 = :H30,
+      H31 = :H31,
+      H32 = :H32,
+      H33 = :H33,
+      H34 = :H34,
+      H35 = :H35,
+      H36 = :H36,
+      H37 = :H37,
+      H38 = :H38,
+      H39 = :H39,
+      H40 = :H40,
+      H41 = :H41,
+      H42 = :H42,
+      H43 = :H43,
+      H44 = :H44,
+      H45 = :H45,
+      H46 = :H46,
+      H47 = :H47,
+      H48 = :H48,
+      prnmgrtraslado = :prnmgrtraslado
+      where
+      vergrpcodi = :vergrpcodi and
+      grupocodi = :grupocodi and
+      prnmgrtipo = :prnmgrtipo and
+      medifecha = :medifecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListBarrasSoloCPTraslado</key>
+    <query>
+      select
+      tb2.grupocodi,
+      tb2.gruponomb,
+      (select count(grupocodi) 
+	    from prn_mediciongrp
+		where 
+		prnmgrtraslado = 'T' and
+		grupocodi = tb2.grupocodi and
+		vergrpcodi = {1}) prnmgrtrasladocount
+      from
+      (select distinct red.prnredbarracp
+	    from 
+	    prn_reduccionred red 
+	    join prn_version ver on red.prnvercodi = ver.prnvercodi
+	    where ver.prnverestado = 'A') tb1
+      left join
+      (select
+        grupocodi,
+        gruponomb
+        from pr_grupo
+        where catecodi = {0}) tb2 on tb1.prnredbarracp = tb2.grupocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetBarrasCPGroupByFechaTipo</key>
+    <query>
+      select
+      prnmgrtipo,
+      medifecha,
+      sum(H1) H1, sum(H2) H2, sum(H3) H3, sum(H4) H4,
+      sum(H5) H5, sum(H6) H6, sum(H7) H7, sum(H8) H8,
+      sum(H9) H9, sum(H10) H10, sum(H11) H11, sum(H12) H12,
+      sum(H13) H13, sum(H14) H14, sum(H15) H15, sum(H16) H16,
+      sum(H17) H17, sum(H18) H18, sum(H19) H19, sum(H20) H20,
+      sum(H21) H21, sum(H22) H22, sum(H23) H23, sum(H24) H24,
+      sum(H25) H25, sum(H26) H26, sum(H27) H27, sum(H28) H28,
+      sum(H29) H29, sum(H30) H30, sum(H31) H31, sum(H32) H32,
+      sum(H33) H33, sum(H34) H34, sum(H35) H35, sum(H36) H36,
+      sum(H37) H37, sum(H38) H38, sum(H39) H39, sum(H40) H40,
+      sum(H41) H41, sum(H42) H42, sum(H43) H43, sum(H44) H44,
+      sum(H45) H45, sum(H46) H46, sum(H47) H47, sum(H48) H48
+      from prn_mediciongrp
+      where
+      prnmgrtipo = :prnmgrtipo and
+      medifecha = :medifecha and
+      grupocodi in (select
+      grupocodi
+      from
+      (select distinct red.prnredbarracp from prn_reduccionred red join prn_version ver on red.prnvercodi = ver.prnvercodi where ver.prnverestado = 'A') tb1
+      left join
+      (select
+      grupocodi,
+      gruponomb
+      from pr_grupo
+      where catecodi = 10) tb2 on tb1.prnredbarracp = tb2.grupocodi)
+      group by medifecha, prnmgrtipo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListFormatoDemandaCPByVersion</key>
+    <query>
+      select
+      medgrp.grupocodi,
+      pto.ptomedicodi,
+      medgrp.medifecha,
+      nvl(sum(medgrp.H1),0) H1, nvl(sum(medgrp.H2),0) H2, nvl(sum(medgrp.H3),0) H3, nvl(sum(medgrp.H4),0) H4, nvl(sum(medgrp.H5),0) H5,
+      nvl(sum(medgrp.H6),0) H6, nvl(sum(medgrp.H7),0) H7, nvl(sum(medgrp.H8),0) H8, nvl(sum(medgrp.H9),0) H9, nvl(sum(medgrp.H10),0) H10,
+      nvl(sum(medgrp.H11),0) H11, nvl(sum(medgrp.H12),0) H12, nvl(sum(medgrp.H13),0) H13, nvl(sum(medgrp.H14),0) H14, nvl(sum(H15),0) H15,
+      nvl(sum(medgrp.H16),0) H16, nvl(sum(medgrp.H17),0) H17, nvl(sum(medgrp.H18),0) H18, nvl(sum(medgrp.H19),0) H19, nvl(sum(medgrp.H20),0) H20,
+      nvl(sum(medgrp.H21),0) H21, nvl(sum(medgrp.H22),0) H22, nvl(sum(medgrp.H23),0) H23, nvl(sum(medgrp.H24),0) H24, nvl(sum(medgrp.H25),0) H25,
+      nvl(sum(medgrp.H26),0) H26, nvl(sum(medgrp.H27),0) H27, nvl(sum(medgrp.H28),0) H28, nvl(sum(medgrp.H29),0) H29, nvl(sum(medgrp.H30),0) H30,
+      nvl(sum(medgrp.H31),0) H31, nvl(sum(medgrp.H32),0) H32, nvl(sum(medgrp.H33),0) H33, nvl(sum(medgrp.H34),0) H34, nvl(sum(medgrp.H35),0) H35,
+      nvl(sum(medgrp.H36),0) H36, nvl(sum(medgrp.H37),0) H37, nvl(sum(medgrp.H38),0) H38, nvl(sum(medgrp.H39),0) H39, nvl(sum(medgrp.H40),0) H40,
+      nvl(sum(medgrp.H41),0) H41, nvl(sum(medgrp.H42),0) H42, nvl(sum(medgrp.H43),0) H43, nvl(sum(medgrp.H44),0) H44, nvl(sum(medgrp.H45),0) H45,
+      nvl(sum(medgrp.H46),0) H46, nvl(sum(medgrp.H47),0) H47, nvl(sum(medgrp.H48),0) H48
+      from prn_mediciongrp medgrp
+      join pr_grupo grp on medgrp.grupocodi = grp.grupocodi and medgrp.prnmgrtipo in (1,2,9,10)
+      and medgrp.vergrpcodi = {2}
+      and medgrp.medifecha >=  to_date('{0}','DD/MM/YYYY')
+      and medgrp.medifecha &lt; to_date('{1}','DD/MM/YYYY')
+      join me_ptomedicion pto on grp.grupocodi = pto.grupocodi
+      inner join me_hojaptomed hp on hp.ptomedicodi = pto.ptomedicodi and hp.formatcodi = 47
+      where medgrp.grupocodi in (select distinct prnredbarracp from prn_reduccionred t1 join prn_version t2 on t1.prnvercodi = t2.prnvercodi and t2.prnverestado = 'A')
+      group by grp.grupocodi,pto.ptomedicodi,medgrp.medifecha
+    </query>
+  </Sql>
+
+	<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+	<!-- ASSETEC 07-03-2022 Querys de la nueva tabla BITACORA -->
+	<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+	<Sql>
+		<key>GetMaxIdBitacora</key>
+		<query>
+			select nvl(max(prnbitcodi), 0) + 1 from prn_bitacora
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SaveBitacora</key>
+		<query>
+			insert into prn_bitacora(
+			prnbitcodi,
+			emprcodi,
+			medifecha,
+			prnbithorainicio,
+			prnbithorafin,
+			prnbitregistro,
+			prnbitocurrencia,
+			grupocodi,
+			prnbittipico,
+			prnbitprevisto,
+			prnbitdiferencial,
+			ptomedicodi,
+			lectcodi,
+			tipoemprcodi,
+			prnbitvalor
+			)
+			values(
+			:prnbitcodi,
+			:emprcodi,
+			:medifecha,
+			:prnbithorainicio,
+			:prnbithorafin,
+			:prnbitregistro,
+			:prnbitocurrencia,
+			:grupocodi,
+			:prnbittipico,
+			:prnbitprevisto,
+			:prnbitdiferencial,
+			:ptomedicodi,
+			:lectcodi,
+			:tipoemprcodi,
+			:prnbitvalor
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListBitacora</key>
+		<query>
+			select
+			b.prnbitcodi,
+			b.emprcodi,
+			e.emprnomb,
+			b.medifecha,
+			b.prnbithorainicio,
+			b.prnbithorafin,
+			b.prnbitregistro,
+			b.prnbitocurrencia,
+			b.grupocodi,
+			case b.grupocodi
+			when -1 then 'NO DEFINIDO'
+			else g.gruponomb
+			end gruponomb,
+			b.prnbittipico,
+			b.prnbitprevisto,
+			b.prnbitdiferencial,
+			b.ptomedicodi,
+			p.ptomedidesc,
+			b.lectcodi,
+			b.tipoemprcodi,
+			b.prnbitvalor
+			from
+			prn_bitacora b
+			join si_empresa e
+			on b.emprcodi = e.emprcodi and e.tipoemprcodi in (2,4)
+			left join me_ptomedicion p
+			on b.ptomedicodi = p.ptomedicodi
+			left join pr_grupo g
+			on (g.grupocodi = p.grupocodibarra)
+			where
+			(to_date(b.medifecha, 'DD-MM-RRRR') between to_date('{0}','DD/MM/RRRR') and to_date('{1}','DD/MM/RRRR')) and
+			(b.prnbitregistro = '{2}') and
+			(b.tipoemprcodi in ({3}) or '0' = '{3}') and
+			(b.lectcodi in ({4}) or '0' = '{4}')
+		</query>
+	</Sql>
+	<!--++++++++++++++++++++++++++++++++++++++++FIN ASSETEC 07-03-2022++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+	
+  <!--Assetec 20220321-->
+  <Sql>
+    <key>GetAgrupacionByBarraPM</key>
+    <query>
+      select
+      pto.ptomedicodi,
+      pto.ptomedidesc,
+      pto.grupocodibarra,
+      grp.gruponomb
+      from
+      me_ptomedicion pto
+      join si_empresa empr on pto.emprcodi = empr.emprcodi
+      join pr_grupo grp on pto.grupocodibarra = grp.grupocodi
+      where
+      pto.ptomediestado = 'A' and
+      pto.origlectcodi = 33 and
+      empr.tipoemprcodi = 4 and
+      pto.grupocodibarra = {0}
+    </query>
+  </Sql>
+
+	<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+	<!-- ASSETEC 30-09-2022 Mejoras PRODEM.E3 40 horas -->
+	<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+	<Sql>
+		<key>TotalRegConsultaBitacora</key>
+		<query>
+			select count(*) total
+			from me_justificacion mjus
+			join eve_subcausaevento esub on mjus.subcausacodi = esub.subcausacodi
+			and esub.causaevencodi = 401
+			join me_ptomedicion pto on mjus.ptomedicodi = pto.ptomedicodi
+			join si_empresa emp on pto.emprcodi = emp.emprcodi
+			where
+			(mjus.lectcodi in ({0}))
+			and (emp.tipoemprcodi in ({1}))
+			and (to_date(mjus.justfechainicio, 'DD-MM-RRRR') between to_date('{2}', 'DD/MM/RRRR') and to_date('{3}', 'DD/MM/RRRR'))
+		</query>
+	</Sql>
+	<!--++++++++++++++++++++++++++++++++++++++++FIN ASSETEC 07-03-2022++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+</Sqls>

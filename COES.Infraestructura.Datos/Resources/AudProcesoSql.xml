@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(proccodi), 0) + 1 from aud_proceso
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into aud_proceso(
+      proccodi,
+      areacodi,
+      proccodigo,
+      procdescripcion,
+      proctienesuperior,
+      procprocesosuperior,
+      procactivo,
+      prochistorico,
+      procusucreacion,
+      procfeccreacion,
+      procusumodificacion,
+      procfecmodificacion,
+      procsuperior
+      )
+      values(
+      :proccodi,
+      :areacodi,
+      :proccodigo,
+      :procdescripcion,
+      :proctienesuperior,
+      :procprocesosuperior,
+      :procactivo,
+      :prochistorico,
+      :procusucreacion,
+      :procfeccreacion,
+      :procusumodificacion,
+      :procfecmodificacion,
+      :procsuperior
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update aud_proceso
+      set
+      areacodi = :areacodi,
+      proccodigo = :proccodigo,
+      procdescripcion = :procdescripcion,
+      proctienesuperior = :proctienesuperior,
+      procprocesosuperior = :procprocesosuperior,
+      prochistorico = :prochistorico,
+      procusumodificacion = :procusumodificacion,
+      procfecmodificacion = :procfecmodificacion,
+      procsuperior = :procsuperior
+      where
+      proccodi = :proccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update aud_proceso
+      set procactivo = '0', prochistorico = '1',
+      procusumodificacion = :procusumodificacion, procfecmodificacion = :procfecmodificacion
+      where
+      proccodi = :proccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update aud_proceso
+      set procactivo = '0', prochistorico = '1',
+      procusumodificacion = :procusumodificacion, procfecmodificacion = :procfecmodificacion
+      where
+      proccodi != :proccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      proccodi,
+      areacodi,
+      proccodigo,
+      procdescripcion,
+      proctienesuperior,
+      procprocesosuperior,
+      procactivo,
+      prochistorico,
+      procusucreacion,
+      procfeccreacion,
+      procusumodificacion,
+      procfecmodificacion,
+      Procsuperior,
+      (CASE
+      WHEN (select count(*) from aud_audplanificada_proceso aap where aap.proccodi = aud_proceso.proccodi and aap.AUDPPACTIVO = '1') > 0
+      THEN 1
+      WHEN (select count(*) from aud_auditoriaproceso ap where ap.proccodi = aud_proceso.proccodi and ap.AUDIPACTIVO = '1') > 0
+      THEN 1
+      ELSE 0 END) existerelacion
+      from
+      aud_proceso
+      where
+      proccodi = :proccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCodigo</key>
+    <query>
+      select
+      proccodi,
+      areacodi,
+      proccodigo,
+      procdescripcion,
+      proctienesuperior,
+      procprocesosuperior,
+      procactivo,
+      prochistorico,
+      procusucreacion,
+      procfeccreacion,
+      procusumodificacion,
+      procfecmodificacion,
+      Procsuperior
+      from
+      aud_proceso
+      where
+      proccodigo = :proccodigo
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      proccodi,
+      areacodi,
+      proccodigo,
+      procdescripcion,
+      proctienesuperior,
+      procprocesosuperior,
+      procactivo,
+      prochistorico,
+      procusucreacion,
+      procfeccreacion,
+      procusumodificacion,
+      procfecmodificacion,
+      Procsuperior
+      from
+      aud_proceso
+      where procactivo = '1'
+      order by proccodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListProcesoSuperior</key>
+    <query>
+      select
+      proccodi,
+      areacodi,
+      proccodigo,
+      procdescripcion,
+      proctienesuperior,
+      procprocesosuperior,
+      procactivo,
+      prochistorico,
+      procusucreacion,
+      procfeccreacion,
+      procusumodificacion,
+      procfecmodificacion,
+      Procsuperior
+      from
+      aud_proceso
+      where proccodi != '{0}' and procactivo = '1' and areacodi = '{1}'
+      order by proccodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from (
+      select
+      p.proccodi,
+      p.areacodi,
+      p.proccodigo,
+      p.procdescripcion,
+      p.proctienesuperior,
+      p.procprocesosuperior,
+      p.procactivo,
+      p.prochistorico,
+      p.procusucreacion,
+      p.procfeccreacion,
+      p.procusumodificacion,
+      p.procfecmodificacion,
+      a.areanomb,
+      ps.procdescripcion procsuperiordescripcion,
+      p.Procsuperior,
+      (row_number() over (order by p.proccodi desc)) as r
+      from
+      aud_proceso p
+      inner join si_area a on p.areacodi = a.areacodi
+      left join aud_proceso ps on ps.proccodi = p.procprocesosuperior
+      where (p.areacodi = {0} or {0} = 0) and (LOWER(p.procdescripcion) like '%{1}%' or '{1}' = '') and p.procactivo = '1'
+      order by p.proccodi desc)
+      where (r >= ((({2}-1) * {3}) + 1) and r &lt; (({2} * {3}) + 1 )) or ({2} = -1 and {3} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNroRegistroBusqueda</key>
+    <query>
+      select
+      count(*) as contador
+      from
+      aud_proceso p
+      inner join si_area a on p.areacodi = a.areacodi
+      left join aud_proceso ps on ps.proccodi = p.procprocesosuperior
+      where (p.areacodi = {0} or {0} = 0) and (LOWER(p.procdescripcion) like '%{1}%' or '{1}' = '') and p.procactivo = '1'
+      order by p.proccodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByProcesoPorEstado</key>
+    <query>
+      select
+      proccodi,
+      areacodi,
+      proccodigo,
+      procdescripcion,
+      proctienesuperior,
+      procprocesosuperior,
+      procactivo,
+      prochistorico,
+      procusucreacion,
+      procfeccreacion,
+      procusumodificacion,
+      procfecmodificacion,
+      Procsuperior
+      from
+      aud_proceso
+      where procactivo = '{0}'
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByProcesoPorArea</key>
+    <query>
+      select
+      p.proccodi,
+      p.areacodi,
+      p.proccodigo,
+      p.procdescripcion,
+      p.proctienesuperior,
+      p.procprocesosuperior,
+      p.procactivo,
+      p.prochistorico,
+      p.procusucreacion,
+      p.procfeccreacion,
+      p.procusumodificacion,
+      p.procfecmodificacion,
+      p.Procsuperior
+      from
+      aud_proceso p
+      left join (select proccodi, procprocesosuperior from aud_proceso where procactivo = '1') ps on ps.procprocesosuperior = p.proccodi
+      where ps.proccodi is null
+      and p.areacodi in ({0}) and p.procactivo = '1'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ExisteUnicoProceso</key>
+    <query>
+      SELECT COUNT(*) FROM AUD_PROCESO pr where (pr.PROCDESCRIPCION = '{1}' OR pr.PROCCODIGO = '{2}') and pr.PROCCODI != {0} and pr.PROCACTIVO = '1'
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByProcesoValidacion</key>
+    <query>
+      select
+      (
+      CASE
+            WHEN (SELECT COUNT(*) FROM AUD_PROCESO pr where pr.procprocesosuperior = p.proccodi and pr.PROCACTIVO = '1') > 0
+                THEN 'No se puede eliminar, el proceso seleccionado es un proceso superior'
+            WHEN (SELECT COUNT(*) FROM AUD_RIESGO r where r.proccodi = p.proccodi and r.RIESACTIVO = '1') > 0
+                THEN 'No se puede eliminar, el proceso seleccionado est&#225; asociado a un riesgo'
+            WHEN (SELECT COUNT(*) FROM AUD_ELEMENTO e where e.proccodi = p.proccodi and e.ELEMACTIVO = '1') > 0 
+                THEN 'No se puede eliminar, el proceso seleccionado est&#225; asociado a un elemento'
+            WHEN (SELECT COUNT(*) FROM AUD_AUDPLANIFICADA_PROCESO app where app.proccodi = p.proccodi and app.AUDPPACTIVO = '1') > 0 
+                THEN 'No se puede eliminar, el proceso seleccionado est&#225; asociado a una auditoria planificada'
+      WHEN (SELECT COUNT(*) FROM AUD_AUDITORIAPROCESO ap where ap.proccodi = p.proccodi and ap.AUDIPACTIVO = '1') > 0
+      THEN 'No se puede eliminar, el proceso seleccionado est&#225; asociado a una auditoria'
+            ELSE '' END
+        ) ValidacionMensaje
+      from
+      aud_proceso p
+      where p.proccodi = {0} and procactivo = '1'
+    </query>
+  </Sql>
+
+</Sqls>

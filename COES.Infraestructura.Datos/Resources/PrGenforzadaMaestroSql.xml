@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(genformaecodi), 0) + 1 from pr_genforzada_maestro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into pr_genforzada_maestro(
+      genformaecodi,
+      relacioncodi,
+      genformaesimbolo,
+      indestado,
+      genfortipo,
+      subcausacodi,
+      lastuser,
+      lastdate
+      )
+      values(
+      :genformaecodi,
+      :relacioncodi,
+      :genformaesimbolo,
+      :indestado,
+      :genfortipo,
+      :subcausacodi,
+      :lastuser,
+      :lastdate
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update pr_genforzada_maestro
+      set
+      relacioncodi = :relacioncodi,
+      genformaesimbolo = :genformaesimbolo,
+      indestado = :indestado,
+      genfortipo = :genfortipo,
+      subcausacodi = :subcausacodi,
+      lastuser = :lastuser,
+      lastdate = :lastdate
+      where
+      genformaecodi = :genformaecodi
+    </query>s
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from pr_genforzada_maestro
+       where
+           genformaecodi = :genformaecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      genformaecodi,
+      relacioncodi,
+      genformaesimbolo,
+      indestado,
+      genfortipo,
+      subcausacodi,
+      lastuser,
+      lastdate
+      from
+      pr_genforzada_maestro
+      where
+      genformaecodi = :genformaecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      genformaecodi,
+      relacioncodi,
+      genformaesimbolo,
+      indestado,
+      genfortipo,
+      subcausacodi,
+      lastuser,
+      lastdate
+      from
+      pr_genforzada_maestro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      tipoarea.tareaabrev || ' ' || rtrim(area.areanomb) || ' ' || equipo.equiabrev as equinomb,
+      relacion.nombarra,
+      relacion.idgener,
+      mae.genformaecodi,
+      mae.relacioncodi,
+      mae.subcausacodi,
+      mae.genformaesimbolo,
+      case mae.indestado when 'A' then 'Activo' when 'B' then 'Inactivo' else '' end as indestado,
+      case mae.genfortipo when '1' then 'C.H. de pasada' when '2' then 'Otros' else '' end as genfortipo,
+      mae.lastuser,
+      mae.lastdate,
+      (select sc.subcausadesc from eve_subcausaevento sc where sc.subcausacodi = mae.subcausacodi) as subcausadesc
+      from
+      pr_genforzada_maestro mae
+      inner join eq_relacion relacion on mae.relacioncodi = relacion.relacioncodi
+      inner join eq_equipo equipo on relacion.equicodi = equipo.equicodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      order by 1 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarExistenciaPorRelacion</key>
+    <query>
+      select count(*) as contador from pr_genforzada_maestro where relacioncodi = :relacioncodi
+    </query>
+  </Sql>
+  
+</Sqls>

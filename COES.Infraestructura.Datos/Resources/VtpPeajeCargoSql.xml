@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(pecarcodi), 0) + 1 from vtp_peaje_cargo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_peaje_cargo(pecarcodi, pericodi, recpotcodi, emprcodi, pingcodi,
+      pecartransmision, pecarpeajecalculado, pecarpeajedeclarado, pecarpeajerecaudado,
+      pecarsaldoanterior, pecarajuste, pecarusucreacion, pecarfeccreacion)
+      values(:pecarcodi, :pericodi, :recpotcodi, :emprcodi, :pingcodi,
+      :pecartransmision, :pecarpeajecalculado, :pecarpeajedeclarado, :pecarpeajerecaudado,
+      :pecarsaldoanterior, :pecarajuste, :pecarusucreacion, :pecarfeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_peaje_cargo
+      set
+      pecarsaldo = :pecarsaldo,
+      pecarpericodidest = :pecarpericodidest
+      where pecarcodi = :pecarcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdatePeriodoDestino</key>
+    <query>
+      update vtp_peaje_cargo
+      set pecarpericodidest = :pecarpericodidest
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_peaje_cargo where pecarcodi = :pecarcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_peaje_cargo where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from vtp_peaje_cargo where pecarcodi = :pecarcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdSaldo</key>
+    <query>
+		select * from vtp_peaje_cargo
+		where pericodi = :pericodi and recpotcodi = :recpotcodi
+		--and emprcodi = :emprcodi
+		and (emprcodi = :emprcodi or emprcodi in (select m.emprcodiorigen from vw_si_migracion m where m.emprcodidestino = :emprcodi))
+		and pingcodi = :pingcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetSaldoAnterior</key>
+    <query>
+      select nvl(sum(pecarsaldo), 0) from vtp_peaje_cargo
+      where pecarpericodidest = :pecarpericodidest
+      and (emprcodi = :emprcodi or emprcodi in (select m.emprcodiorigen from vw_si_migracion m where m.emprcodidestino = :emprcodi))
+      and pingcodi = :pingcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vtp_peaje_cargo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresa</key>
+    <query>
+      select distinct pc.emprcodi, (select emprnomb from vw_si_empresa e where e.emprcodi = pc.emprcodi) as emprnomb
+      from vtp_peaje_cargo pc
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+      order by 2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPagoNo</key>
+    <query>
+      select pc.pingcodi, pi.pingnombre, pc.pecarpeajerecaudado, pc.pecarsaldoanterior, pc.pecarsaldo, pc.pecarajuste,pc.emprcodi
+      from vtp_peaje_cargo pc join vtp_peaje_ingreso pi on  pc.pingcodi = pi.pingcodi and pc.pericodi = pi.pericodi and pc.recpotcodi = pi.recpotcodi  and pingpago = 'NO'
+      where (pc.emprcodi in({0}) or '-1'='{0}') and pc.pericodi = {1} and pc.recpotcodi = {2}
+      order by 2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPagoAdicional</key>
+    <query>
+      select (select emprnomb from vw_si_empresa e where e.emprcodi = pc.emprcodi) as emprnomb, pc.*
+      from vtp_peaje_cargo pc
+      where pc.pericodi = :pericodi and pc.recpotcodi = :recpotcodi and pc.pingcodi = :pingcodi
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from vtp_peaje_cargo
+    </query>
+  </Sql>
+</Sqls>

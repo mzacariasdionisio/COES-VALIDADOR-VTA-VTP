@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>ListEstad</key>
+    <query>
+      select
+      docflj.Fljcodi,
+      docflj.Tipcodi,
+      docflj.Fljdiasmaxaten,
+      docflj.Fljnumext,
+      docflj.Fljnombre,
+      docflj.Fljestado,
+      docflj.Fljfecharecep,
+      docflj.Fljfechaproce,
+      docflj.Fljfechaorig,
+      docflj.Fljfechaterm,
+      to_number(detflj.FLJCADATENCION) as Tatcodi,
+      docflj.Areacodedest,
+      docflj.Fljremitente,
+      empr.emprcodi,
+      detflj.FLJDETCODI,
+      detflj.fljfechainicio,
+      (select min(fljdetcodi) from doc_flujo_ref_flujo where fljdetcodiref = detflj.FLJDETCODI) as FLJDETCODIREF
+      from
+      doc_flujo docflj, doc_flujo_det detflj, si_empresa empr
+      where
+      docflj.fljcodi = detflj.fljcodi and
+      detflj.fljdetnivel = 0 and
+      docflj.fljremitente = empr.emprcodi and
+      docflj.Fljfecharecep between to_date('{0}','yyyy-MM-dd') and to_date('{1}','yyyy-MM-dd') and
+      docflj.fljcodi in (
+      select docs1.fljcodi from doc_flujo docs1, doc_flujo_det docs2 where  docs1.fljcodi = docs2.fljcodi and (to_number(SUBSTR(docs2.FLJCADATENCION,3,1))=1 or to_number(SUBSTR(docs2.FLJCADATENCION,5,1))=1 or to_number(SUBSTR(docs2.FLJCADATENCION,1,1))=1 or to_number(SUBSTR(docs2.FLJCADATENCION,6,1))=1)  <!--Modificado por sts 17 oct 2017-->
+      )
+      order by docflj.fljcodi,detflj.FLJDETCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetDocRespuesta</key>
+    <query>
+      select
+      docflj.Fljcodi,
+      docflj.Tipcodi,
+      docflj.Fljdiasmaxaten,
+      docflj.Fljnumext,
+      docflj.Fljnombre,
+      docflj.Fljestado,
+      docflj.Fljfecharecep,
+      docflj.Fljfechaproce,
+      docflj.Fljfechaorig,
+      docflj.Fljfechaterm,
+      to_number(detflj.FLJCADATENCION) as Tatcodi,
+      docflj.Areacodedest,
+      docflj.Fljremitente,
+      empr.emprcodi,
+      detflj.FLJDETCODI,
+      detflj.fljfechainicio,
+      0 as FLJDETCODIREF
+      from
+      doc_flujo docflj, doc_flujo_det detflj, si_empresa empr
+      where
+      docflj.fljcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListAreaResponsable</key>
+    <query>
+      select
+      det.areacode,
+      det.areapadre,
+      to_number(det.FLJCADATENCION) as Tatcodi,
+      det.Fljcadatencion,
+      det.fljdetnivel
+      from
+      doc_flujo_det det
+      where
+      det.fljcodi = {0} and
+      det.fljdetnivel>=0 and
+      (to_number(SUBSTR(det.FLJCADATENCION,3,1))=1 or to_number(SUBSTR(det.FLJCADATENCION,5,1))=1 or to_number(SUBSTR(det.FLJCADATENCION,1,1))=1 or to_number(SUBSTR(det.FLJCADATENCION,6,1))=1) <!--Modificado por sts 17 oct 2017-->
+      order by det.fljdetnivel desc
+    </query>
+  </Sql>
+
+  <!--INICIO MigracionSGOCOES-GrupoB-->
+
+  <Sql>
+    <key>ListDocCV</key>
+    <query>
+      select f.fljfecharecep,f.fljfechaorig,f.fljnombre, ar.fileruta
+      from doc_flujo f
+      inner join doc_flujo_det det on det.fljcodi = f.fljcodi
+      inner join doc_flujo_files ar on ar.fljdetcodi = det.fljdetcodi
+      where det.fljdetnivel = 0 and det.archsubcodi in (248,249,253) and f.fljconf &lt;> 'S'
+      AND f.fljfecharecep >=  TO_DATE('{0}','YYYY-MM-DD')  AND f.fljfecharecep &lt;= TO_DATE('{1}','YYYY-MM-DD')
+      order by f.fljfechaorig desc
+    </query>
+  </Sql>
+
+  <!--FIN MigracionSGOCOES-GrupoB-->
+  
+</Sqls>

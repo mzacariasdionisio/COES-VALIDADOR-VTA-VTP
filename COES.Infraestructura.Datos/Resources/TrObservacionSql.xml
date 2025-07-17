@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(obscancodi), 0) + 1 from tr_observacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into tr_observacion(
+      obscancodi,
+      obscanusucreacion,
+      obscanusumodificacion,
+      obscanfeccreacion,
+      obscanfecmodificacion,
+      obscanestado,
+      obscancomentario,
+      obscantipo,
+      emprcodi,
+      obscanproceso,
+      obscancomentarioagente
+      )
+      values(
+      :obscancodi,
+      :obscanusucreacion,
+      :obscanusumodificacion,
+      :obscanfeccreacion,
+      :obscanfecmodificacion,
+      :obscanestado,
+      :obscancomentario,
+      :obscantipo,
+      :emprcodi,
+      :obscanproceso,
+      :obscancomentarioagente
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update tr_observacion
+      set
+      --obscanusucreacion = :obscanusucreacion,
+      obscanusumodificacion = :obscanusumodificacion,
+      --obscanfeccreacion = :obscanfeccreacion,
+      obscanfecmodificacion = :obscanfecmodificacion,
+      --obscanestado = :obscanestado,
+      obscancomentario = :obscancomentario,
+      obscantipo = :obscantipo,
+      emprcodi = :emprcodi,
+      obscancomentarioagente = :obscancomentarioagente
+      where
+      obscancodi = :obscancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       update
+           tr_observacion 
+       set 
+           obscanestado = 'X'
+       where
+           obscancodi = :obscancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      obscancodi,
+      obscanusucreacion,
+      obscanusumodificacion,
+      obscanfeccreacion,
+      obscanfecmodificacion,
+      obscanestado,
+      obscancomentario,
+      obscantipo,
+      emprcodi,
+      obscancomentarioagente
+      from
+      tr_observacion
+      where
+      obscancodi = :obscancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           obscancodi,
+           obscanusucreacion,
+           obscanusumodificacion,
+           obscanfeccreacion,
+           obscanfecmodificacion,
+           obscanestado,
+           obscancomentario,
+           obscantipo,
+           emprcodi
+       from
+           tr_observacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      observacion.obscancodi,
+      observacion.obscanusucreacion,
+      observacion.obscanusumodificacion,
+      observacion.obscanfeccreacion,
+      observacion.obscanfecmodificacion,
+      observacion.obscanestado,
+      observacion.obscancomentario,
+      observacion.obscantipo,
+      observacion.emprcodi,
+      observacion.obscancomentarioagente,
+      empresa.emprenomb
+      from
+      tr_observacion observacion
+      inner join
+      tr_empresa_sp7 empresa on observacion.emprcodi = empresa.emprcodi
+      where
+      (observacion.emprcodi = '{0}' or '{0}' = '-1') and
+      (observacion.obscanfeccreacion between to_date('{1} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('{2} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')) and
+      (observacion.obscanestado != 'X')
+      order by observacion.obscanfeccreacion desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresasScada</key>
+    <query>
+      select distinct empresa.*, scempresa.emprcodisic,  sicem.emprnomb
+      from tr_empresa_sp7 empresa
+      inner join tr_canal_sp7 canal on empresa.emprcodi = canal.emprcodi
+      inner join sc_empresa scempresa on empresa.emprcodi = scempresa.emprcodi
+      inner join si_empresa sicem on scempresa.emprcodisic = sicem.emprcodi
+      where scempresa.emprcodisic != -1
+      order by sicem.emprnomb asc
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerZonasPorEmpresa</key>
+    <query>
+      select distinct zona.zonacodi, zona.zonanomb from tr_zona_sp7 zona inner join tr_canal_sp7 canal  on  zona.zonacodi = canal.zonacodi
+      where canal.emprcodi = {0} or '{0}' = '-1'
+      order by zona.zonanomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCanales</key>
+    <query>
+      select * from (
+      select canal.canalcodi, canal.canalnomb, canal.canaliccp, canal.canalunidad, canal.canalabrev,canal.canalpointtype,
+      empresa.emprenomb, zona.zonanomb,
+      (row_number() over (order by canal.canalcodi)) as r
+      from tr_canal_sp7 canal
+      inner join tr_empresa_sp7 empresa on canal.emprcodi = empresa.emprcodi
+      inner join tr_zona_sp7 zona on canal.zonacodi = zona.zonacodi
+      where
+      (empresa.emprcodi = {0} or '{0}' = '-1') and
+      (zona.zonacodi = {1} or '{1}' = '-1') and
+      (canal.canalpointtype = '{2}' or '{2}' = '-1') and
+      (canal.canaliccp is not null) and
+      (upper(canal.canalnomb) like upper('%{3}%') or upper(canal.canalabrev) like upper('%{3}%') )
+      order by canal.canaliccp asc
+      )
+      where r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNroFilaBusquedaCanal</key>
+    <query>
+      select count(*) as contador
+      from tr_canal_sp7 canal
+      inner join tr_empresa_sp7 empresa on canal.emprcodi = empresa.emprcodi
+      inner join tr_zona_sp7 zona on canal.zonacodi = zona.zonacodi
+      where
+      (empresa.emprcodi = {0} or '{0}' = '-1') and
+      (zona.zonacodi = {1} or '{1}' = '-1') and
+      (canal.canalpointtype = '{2}' or '{2}' = '-1') and
+      (canal.canaliccp is not null) and
+      (upper(canal.canalnomb) like upper('%{3}%') or upper(canal.canalabrev) like upper('%{3}%') )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCanalesPorCodigo</key>
+    <query>
+      select canal.canalcodi, canal.canalnomb, canal.canaliccp, canal.canalunidad, canal.canalabrev,canal.canalpointtype,
+      empresa.emprenomb, zona.zonanomb
+      from tr_canal_sp7 canal
+      inner join tr_empresa_sp7 empresa on canal.emprcodi = empresa.emprcodi
+      inner join tr_zona_sp7 zona on canal.zonacodi = zona.zonacodi
+      where
+      canal.canalcodi in ({0})
+      order by canal.canaliccp asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarEstado</key>
+    <query>
+      update tr_observacion
+      set obscanestado = :obscanestado
+      where obscancodi = :obscancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresa</key>
+    <query>
+      select emprcodi, emprenomb from tr_empresa_sp7 where emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <!-- FIT - Señales no Disponibles - Inicio -->
+
+  <Sql>
+    <key>ObtenerCanalesSenalesObservadasBusqueda</key>
+    <query>
+      select * from (
+      select m.*,  (row_number() over (order by m.canalcodi)) as r from (
+      select t.*,
+      FN_MOTIVO_DISPONIBILIDAD(t.canaliccp, t.canalpointtype, t.emprcodi, t.vercodi) as motivo
+      from (
+      select
+      c.canalcodi,
+      c.canalnomb,
+      c.canaliccp,
+      c.canalunidad,
+      c.canalabrev,
+      c.canalpointtype,
+      trim(z.zonanomb) as zonanomb,
+      c.canalcritico,
+      t.vercodi,
+      c.emprcodi,
+      emp.emprenomb,
+      trunc( (t.estcnltvalido /x.revttng)*100 ,2) as estcnltvalido
+      from
+      tr_estadcanalr_sp7 t ,tr_canal_sp7 c,tr_zona_sp7 z,tr_reporteversion_sp7 x, tr_empresa_sp7 emp
+      where
+      t.canalcodi = c.canalcodi and c.zonacodi = z.zonacodi and
+      c.emprcodi = x.emprcodi and x.revfecha = t.estcnlfecha and x.vercodi=t.vercodi
+      and c.emprcodi = emp.emprcodi
+      and (c.emprcodi = {0} or '{0}' = '-1')
+      and t.vercodi=(
+      select nvl(vercodi,0) vercodi
+      from tr_version_sp7
+      where verfechaini=verfechafin
+      and verfechaini=to_date('{1}', 'YYYY-MM-DD')
+      and vernumero=(select max(vernumero) from tr_version_sp7 where verfechaini=verfechafin
+      and verfechaini=to_date('{1}', 'YYYY-MM-DD'))
+      )
+      ) t
+      where (t.estcnltvalido &lt;= 96 and t.canalcritico = 'S') or (t.estcnltvalido &lt;= 98 and t.canalcritico != 'S')
+      ) m
+      )
+      where r >= ((({2}-1) * {3}) + 1) and r &lt; (({2} * {3}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNroFilaBusquedaCanalSenalesObservadasBusqueda</key>
+    <query>
+      select count(*) as contador
+      from tr_estadcanalr_sp7 t ,tr_canal_sp7 c,tr_zona_sp7 z, tr_reporteversion_sp7 x, tr_muestraris_sp7 r,tr_empresa_sp7 empresa
+      where
+      empresa.emprcodi =  {0}
+      and (t.estcnlfecha between to_date('{1} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS'))
+      and t.canalcodi = c.canalcodi and c.zonacodi = z.zonacodi and  c.emprcodi = x.emprcodi and trunc(x.revfecha) = trunc(t.estcnlfecha)
+
+      and empresa.emprcodi = c.emprcodi
+      and trunc( (t.estcnltvalido /x.revttng)*100 ,2)
+      &lt;  (case when (CANALCRITICO = 'S') then 96 else 98 end )
+      and extract(hour from (r.CANALFHORA2 - r.CANALFHORA)) *60*60+
+      extract(minute from (r.CANALFHORA2- r.CANALFHORA)) *60 +
+      extract(second from (r.CANALFHORA2- r.CANALFHORA)) >
+      case when c.canalpointtype = 'D' then 5
+      when c.canalpointtype = 'A' then 7
+      else 0 end
+
+      and trim(r.CANALICCP) = trim(c.CANALICCP)
+
+      and t.vercodi=(
+      select nvl(vercodi,0) vercodi
+      from tr_version_sp7
+      where verfechaini=verfechafin
+      and (verfechaini between to_date('{1} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS'))
+      and vernumero=(select max(vernumero) from tr_version_sp7 where verfechaini=verfechafin
+      and (verfechaini between to_date('{1} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS'))
+      ))
+      order by c.canaliccp asc
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerSenalesObservadas</key>
+    <query>
+
+      select t.*,  FN_MOTIVO_DISPONIBILIDAD(t.direrencia, t.canalpointtype, t.canalcalidad) as motivo from (
+      select
+      r.canalfhora2,
+      r.canalfhora,
+      extract(hour from (r.CANALFHORA2 - r.CANALFHORA)) *60*60+
+      extract(minute from (r.CANALFHORA2- r.CANALFHORA)) *60 +
+      extract(second from (r.CANALFHORA2- r.CANALFHORA)) as direrencia,
+      r.canalcalidad,
+      r.canaliccp,
+      r.canalcodi,
+      c.canalnomb,
+      c.canalunidad,
+      c.canalabrev,
+      c.canalpointtype,
+      e.emprenomb,
+      z.zonanomb
+      from tr_muestraris_sp7 r inner join tr_canal_sp7 c on r.canalcodi = c.canalcodi
+      inner join tr_empresa_sp7 e on c.emprcodi = e.emprcodi
+      inner join tr_zona_sp7 z on c.zonacodi = z.zonacodi
+      where (r.emprcodi = {0} or '{0}' = '-1')
+      ) t
+      where ((direrencia >= 7 and canalpointtype = 'A') or (direrencia >= 5 and canalpointtype = 'D'))
+      or
+      (
+      canalcalidad between 48 AND 63  or
+      canalcalidad between 112 AND 127 or
+      canalcalidad between 176 AND 191 or
+      canalcalidad between 240 AND 255
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerSenalesObservadasReportadas</key>
+    <query>
+      select distinct item.canalcodi from TR_OBSERVACION obs join TR_OBSERVACION_ITEM item on obs.OBSCANCODI = item.OBSCANCODI where obs.EMPRCODI = {0}
+      and obsitefecha between sysdate-1 and sysdate and obs.obscanestado = 'P' and item.obsiteestado = 'P'
+    </query>
+  </Sql>
+
+
+
+  <!-- FIT - Señales no Disponibles - Fin -->
+  
+</Sqls>

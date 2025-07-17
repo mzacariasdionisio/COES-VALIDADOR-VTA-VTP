@@ -1,0 +1,776 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into me_medicionxintervalo(
+      medintcodi,
+      medintfechaini,
+      medintfechafin,
+      ptomedicodi,
+      lectcodi,
+      tipoinfocodi,
+      medinth1,
+      medintusumodificacion,
+      medintfecmodificacion,
+      medintdescrip,
+      medestcodi,
+      medintsemana,
+      medintanio,
+      medintblqhoras,
+      medintblqnumero,
+      enviocodi,
+      TPTOMEDICODI,
+      emprcodi
+      )
+      values(
+      :medintcodi,
+      :medintfechaini,
+      :medintfechafin,
+      :ptomedicodi,
+      :lectcodi,
+      :tipoinfocodi,
+      :medinth1,
+      :medintusumodificacion,
+      :medintfecmodificacion,
+      :medintdescrip,
+      :medestcodi,
+      :medintsemana,
+      :medintanio,
+      :medintblqhoras,
+      :medintblqnumero,
+      :enviocodi,
+      :TPTOMEDICODI,
+      :emprcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update me_medicionxintervalo
+      set
+      medintfechaini = :medintfechaini,
+      medintfechafin = :medintfechafin,
+      ptomedicodi = :ptomedicodi,
+      lectcodi = :lectcodi,
+      tipoinfocodi = :tipoinfocodi,
+      medinth1 = :medinth1,
+      medintusumodificacion = :medintusumodificacion,
+      medintfecmodificacion = :medintfecmodificacion,
+      medintdescrip = :medintdescrip,
+      medestcodi = :medestcodi,
+      medintsemana = :medintsemana,
+      medintanio = :medintanio,
+      medintblqhoras = :medintblqhoras,
+      medintblqnumero = :medintblqnumero,
+      enviocodi = :enviocodi,
+      emprcodi = :emprcodi
+      where
+      medintcodi = :medintcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from me_medicionxintervalo
+      where medintcodi = :medintcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      me_medicionxintervalo
+      where
+      ptomedicodi = {0} and
+      medintfechaini = to_date('{1}','YYYY-MM-DD')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      me_medicionxintervalo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      pto.ptomedielenomb, pto.ptomedidesc,
+      ti.tipoinfoabrev,tpmed.tptomedinomb,
+      m.*
+      from me_medicionxintervalo m
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = m.PTOMEDICODI
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = m.tipoinfocodi
+      inner join me_tipoptomedicion tpmed on tpmed.tptomedicodi = m.tptomedicodi
+      where m.enviocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteEnvioArchivo</key>
+    <query>
+      delete from me_medicionxintervalo me where lectcodi = {0} and medintfechaini >= to_date('{1}','YYYY-MM-DD  HH24:MI:SS') and
+      medintfechaini &lt;= to_date('{2}','YYYY-MM-DD  HH24:MI:SS') and emprcodi={4}  and ptomedicodi in (
+          --Puntos de medición de la empresa segun la fecha de inicio
+          SELECT distinct ptomedicodi FROM
+          (
+              SELECT HP.HPTOCODI,vwpt.HPTDATFECHA ,hp.ptomedicodi, pto.PTOMEDIELENOMB
+              , ROW_NUMBER() OVER(PARTITION BY HP.HPTOCODI ORDER BY HP.HPTOCODI,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+              ,vwpt.HPTDATPTOESTADO
+              ,CASE WHEN vwpt.HPTDATPTOESTADO = 'F' THEN 0 ELSE HP.HPTOACTIVO END AS HPTOACTIVO 
+              from me_hojaptomed HP
+              inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+              inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= TO_DATE('{1}','YYYY-MM-DD HH24:MI:SS') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+              WHERE hp.formatcodi = {3} and vwpt.EMPRCODI = {4} 
+          )rview
+          WHERE NUM_VIEW = 1
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteEnvioFormato</key>
+    <query>
+      delete from me_medicionxintervalo where lectcodi in (
+      select lectcodi from me_hoja where formatcodi = {2}
+      ) and medintfechaini >= to_date('{0}','YYYY-MM-DD  HH24:MI:SS') and
+      medintfechaini &lt;= to_date('{1}','YYYY-MM-DD  HH24:MI:SS') and emprcodi={3} and ptomedicodi in (
+          --Puntos de medición de la empresa segun la fecha de inicio
+          SELECT distinct ptomedicodi FROM
+          (
+              SELECT HP.HPTOCODI,vwpt.HPTDATFECHA ,hp.ptomedicodi, pto.PTOMEDIELENOMB
+              , ROW_NUMBER() OVER(PARTITION BY HP.HPTOCODI ORDER BY HP.HPTOCODI,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+              ,vwpt.HPTDATPTOESTADO
+              ,CASE WHEN vwpt.HPTDATPTOESTADO = 'F' THEN 0 ELSE HP.HPTOACTIVO END AS HPTOACTIVO 
+              from me_hojaptomed HP
+              inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+              inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= TO_DATE('{1}','YYYY-MM-DD HH24:MI:SS') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+              WHERE hp.formatcodi = {2} and vwpt.EMPRCODI = {3} 
+          )rview
+          WHERE NUM_VIEW = 1 and HPTOACTIVO = 1
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEnvioArchivo</key>
+    <query>
+      select pto.tptomedicodi,pto.equicodi,
+      emp.emprcodi, me.MEDINTFECHAINI, me.MEDINTFECHAFIN, me.PTOMEDICODI, me.LECTCODI, me.TIPOINFOCODI, me.MEDINTH1, me.MEDINTUSUMODIFICACION, me.MEDINTFECMODIFICACION, me.MEDINTDESCRIP, me.MEDESTCODI, me.MEDINTSEMANA, me.MEDINTANIO, me.MEDINTBLQNUMERO, me.MEDINTBLQHORAS, me.ENVIOCODI, me.MEDINTCODI
+      from me_medicionxintervalo me
+      inner join me_hojaptomed hp on hp.ptomedicodi = me.ptomedicodi and hp.tipoinfocodi = me.tipoinfocodi
+      inner join me_formato f on f.formatcodi = hp.formatcodi
+      inner join me_ptomedicion pto on pto.ptomedicodi = hp.ptomedicodi
+      inner join si_empresa emp on emp.emprcodi = (case when coalesce(me.EMPRCODI, -1) > 0 then me.EMPRCODI else pto.emprcodi end)
+      where hp.formatcodi = {0} and emp.emprcodi = {1} and medintfechaini >= to_date('{2}','YYYY-MM-DD HH24:MI:SS') AND
+      medintfechaini &lt;= to_date('{3}','YYYY-MM-DD HH24:MI:SS')
+      order by hp.hptoorden,me.medintfechaini  asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetHidrologiaDescargaVert</key>
+    <query>
+      select
+      empr.emprcodi,m1.MEDINTFECHAINI, m1.MEDINTFECHAFIN, m1.PTOMEDICODI, m1.LECTCODI, m1.TIPOINFOCODI, m1.MEDINTH1, m1.MEDINTUSUMODIFICACION, m1.MEDINTFECMODIFICACION, m1.MEDINTDESCRIP, m1.MEDESTCODI, m1.MEDINTSEMANA, m1.MEDINTANIO, m1.MEDINTBLQNUMERO, m1.MEDINTBLQHORAS, m1.ENVIOCODI, m1.MEDINTCODI, m1.EMPRCODI,
+      tpto.TPTOMEDINOMB, eq.equinomb,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      eq.famcodi, tpto.TPTOMEDICODI, empr.emprnomb,fam.famabrev,eq.equipadre,eq.equicodi
+      from
+      me_medicionxintervalo m1
+      inner join me_ptomedicion pto on pto.ptomedicodi = m1.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join me_tipoptomedicion tpto on tpto.TPTOMEDICODI = pto.TPTOMEDICODI
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = m1.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = (case when coalesce(m1.EMPRCODI, -1) > 0 then m1.EMPRCODI else pto.emprcodi end)
+      inner join me_formato fr on fr.lectcodi = m1.lectcodi
+      inner join ME_HOJAPTOMED hj on hj.ptomedicodi = m1.ptomedicodi and hj.formatcodi = fr.formatcodi
+      where
+      fr.formatcodi ={0} and m1.medintfechaini >= to_date('{2}','YYYY-MM-DD HH24:MI:SS') AND
+      (empr.emprcodi in ({1}) or '{1}' = '-1') and
+      m1.medintfechaini &lt;= to_date('{3} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      order by 1 asc, 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetHidrologiaDescargaVertPag</key>
+    <query>
+      select EMPRCODI2 as EMPRCODI, a.* from
+      (
+      select
+      empr.emprcodi as EMPRCODI2, m1.MEDINTFECHAINI, m1.MEDINTFECHAFIN, m1.PTOMEDICODI, m1.LECTCODI, m1.TIPOINFOCODI, m1.MEDINTH1, m1.MEDINTUSUMODIFICACION, m1.MEDINTFECMODIFICACION, m1.MEDINTDESCRIP, m1.MEDESTCODI, m1.MEDINTSEMANA, m1.MEDINTANIO, m1.MEDINTBLQNUMERO, m1.MEDINTBLQHORAS, m1.ENVIOCODI, m1.MEDINTCODI, m1.EMPRCODI,
+      tpto.TPTOMEDINOMB, eq.equinomb,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      eq.famcodi, tpto.TPTOMEDICODI, empr.emprnomb,fam.famabrev,
+      (row_number() over (order by m1.MEDINTFECHAINI asc, m1.MEDINTFECHAFIN asc)) as r
+      from
+      me_medicionxintervalo m1
+      inner join me_ptomedicion pto on pto.ptomedicodi = m1.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join me_tipoptomedicion tpto on tpto.TPTOMEDICODI = pto.TPTOMEDICODI
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = m1.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = (case when coalesce(m1.EMPRCODI, -1) > 0 then m1.EMPRCODI else pto.emprcodi end)
+      inner join me_formato fr on fr.lectcodi = m1.lectcodi
+      inner join ME_HOJAPTOMED hj on hj.ptomedicodi = m1.ptomedicodi and hj.formatcodi = fr.formatcodi
+      where
+      fr.formatcodi ={0} and m1.medintfechaini >= to_date('{2}','YYYY-MM-DD HH24:MI:SS') AND
+      (empr.emprcodi in ({1}) or '{1}' = '-1') and
+      m1.medintfechaini &lt;= to_date('{3} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      order by 2 asc, 3 asc
+      )a
+      where r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaMedxintervStock</key>
+    <query>
+      select
+      empr.emprcodi, m1.MEDINTFECHAINI, m1.MEDINTFECHAFIN, m1.PTOMEDICODI, m1.LECTCODI, m1.TIPOINFOCODI, m1.MEDINTH1, m1.MEDINTUSUMODIFICACION, m1.MEDINTFECMODIFICACION, m1.MEDINTDESCRIP, m1.MEDESTCODI, m1.MEDINTSEMANA, m1.MEDINTANIO, m1.MEDINTBLQNUMERO, m1.MEDINTBLQHORAS, m1.ENVIOCODI, m1.MEDINTCODI, m1.EMPRCODI,
+      tpto.tptomedinomb,eq.equicodi, eq.equinomb,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      eq.famcodi, tpto.tptomedicodi,empr.emprnomb,fam.famabrev, fte.fenergcodi, fte.fenergnomb, fte.fenercolor
+      from
+      me_medicionxintervalo m1
+      inner join me_ptomedicion pto on pto.ptomedicodi = m1.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join pr_grupo pr on pr.grupocodi = eq.grupocodi
+      inner join pr_tipogrupo tgr on tgr.tipogrupocodi = pr.tipogrupocodi
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = m1.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = (case when coalesce(m1.EMPRCODI, -1) > 0 then m1.EMPRCODI else eq.emprcodi end)
+      inner join ME_TIPOPTOFENERGIA tpe on tpe.tptomedicodi = pto.tptomedicodi
+      inner join SI_FUENTEENERGIA fte on fte.fenergcodi = tpe.fenergcodi
+      where m1.lectcodi = {0} and pto.origlectcodi = {1} and m1.medintfechaini >= to_date('{4}','YYYY-MM-DD') AND
+      (empr.emprcodi in ({2}) or '{2}' = '-1') and
+      (eq.equicodi in ({8}) or '{8}' = '-1') and
+      (eq.famcodi in ({3}) or '{3}' = '-1') and
+      ('{9}' = '-1' or tpto.tptomedicodi in ({9})) and
+      m1.medintfechaini &lt;= to_date('{5}','YYYY-MM-DD') and (tpto.tptomedicodi in ({6}) or '{6}' = '-1') and (tgr.tipogrupocodi in ({7})
+      or '{7}' = '-1')
+      order by m1.medintfechaini asc, eq.equicodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaMedxintervStockPag</key>
+    <query>
+      select emprcodi2 as emprcodi, a.* from
+      (
+      select
+      empr.emprcodi as emprcodi2,m1.MEDINTFECHAINI, m1.MEDINTFECHAFIN, m1.PTOMEDICODI, m1.LECTCODI, m1.TIPOINFOCODI, m1.MEDINTH1, m1.MEDINTUSUMODIFICACION, m1.MEDINTFECMODIFICACION, m1.MEDINTDESCRIP, m1.MEDESTCODI, m1.MEDINTSEMANA, m1.MEDINTANIO, m1.MEDINTBLQNUMERO, m1.MEDINTBLQHORAS, m1.ENVIOCODI, m1.MEDINTCODI, m1.EMPRCODI,
+      tpto.tptomedinomb,eq.equicodi, eq.equinomb,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      eq.famcodi, tpto.tptomedicodi, empr.emprnomb,fam.famabrev, fte.fenergnomb, fte.fenercolor,
+      (row_number() over (order by m1.medintfechaini asc, eq.equicodi asc)) as r
+      from
+      me_medicionxintervalo m1
+      inner join me_ptomedicion pto on pto.ptomedicodi = m1.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join pr_grupo pr on pr.grupocodi = eq.grupocodi
+      inner join pr_tipogrupo tgr on tgr.tipogrupocodi = pr.tipogrupocodi
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = m1.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = (case when coalesce(m1.EMPRCODI, -1) > 0 then m1.EMPRCODI else pto.emprcodi end)
+      inner join ME_TIPOPTOFENERGIA tpe on tpe.tptomedicodi = pto.tptomedicodi
+      inner join SI_FUENTEENERGIA fte on fte.fenergcodi = tpe.fenergcodi
+      where m1.lectcodi = {0} and pto.origlectcodi = {1} and m1.medintfechaini >= to_date('{4}','YYYY-MM-DD') AND
+      (empr.emprcodi in ({2}) or '{2}' = '-1') and
+      (eq.equicodi in ({8}) or '{8}' = '-1') and
+      (eq.famcodi in ({3}) or '{3}' = '-1') and
+      ('{11}' = '-1' or tpto.tptomedicodi in ({11})) and
+      m1.medintfechaini &lt;= to_date('{5}','YYYY-MM-DD') and (tpto.tptomedicodi in ({6}) or '{6}' = '-1') and (tgr.tipogrupocodi in ({7})
+      or '{7}' = '-1')
+      order by m1.medintfechaini asc, eq.equicodi asc
+      )a
+      where r >= ((({9}-1) * {10}) + 1) and r &lt; (({9} * {10}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaMedxintervConsumo</key>
+    <query>
+      select
+      empr.emprcodi, m1.*, tpto.tptomedinomb,eq.equicodi, eq.equinomb,(case when coalesce(eq.equipadre, -1) >0 then eq.equipadre else eq.equicodi end) as equipadre, eqp.equinomb equipopadre,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      tpto.tptomedicodi, empr.emprnomb, empr.Emprcoes, pto.Ptomedielenomb, fte.fenergcodi, fte.fenergnomb, fte.fenercolor
+      from
+      me_medicionxintervalo m1
+      inner join me_ptomedicion pto on pto.ptomedicodi = m1.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join eq_equipo eqp on eqp.equicodi = (case when coalesce(eq.equipadre, -1) >0 then eq.equipadre else eq.equicodi end)
+      inner join pr_grupo pr on pr.grupocodi = eq.grupocodi
+      inner join pr_tipogrupo tgr on tgr.tipogrupocodi = pr.tipogrupocodi
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = m1.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = (case when coalesce(m1.EMPRCODI, -1) > 0 then m1.EMPRCODI else pto.emprcodi end)
+      inner join ME_TIPOPTOFENERGIA tpe on tpe.tptomedicodi = pto.tptomedicodi
+      inner join SI_FUENTEENERGIA fte on fte.fenergcodi = tpe.fenergcodi
+      where m1.lectcodi = {0} and pto.origlectcodi = {1} and m1.medintfechaini >= to_date('{3}','YYYY-MM-DD') AND
+      (empr.emprcodi in ({2}) or '{2}' = '-1') and
+      m1.medintfechaini &lt;= to_date('{4}','YYYY-MM-DD') and (tpto.tptomedicodi in ({5}) or '{5}' = '-1') and (tgr.tipogrupocodi in ({6})
+      or '{6}' = '-1' ) and (m1.ptomedicodi in ({7}) or '{7}'='-1')
+      order by m1.medintfechaini asc, eq.equicodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaMedxintervDisponibilidad</key>
+    <query>
+      select distinct
+      empr.emprcodi,m1.*, tpto.tptomedinomb,eq.equicodi, eq.equinomb,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      tpto.tptomedicodi, empr.emprnomb
+      from
+      me_medicionxintervalo m1
+      inner join me_ptomedicion pto on pto.ptomedicodi = m1.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      --inner join pr_grupo pr on pr.grupocodi = eq.grupocodi
+      --inner join pr_tipogrupo tgr on tgr.tipogrupocodi = pr.tipogrupocodi
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = m1.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = (case when coalesce(m1.EMPRCODI, -1) > 0 then m1.EMPRCODI else pto.emprcodi end)
+      inner join EQ_CATEGORIA_EQUIPO cateq on eq.equicodi = cateq.EQUICODI
+      inner join eq_categoria_det det on cateq.ctgdetcodi = det.ctgdetcodi
+
+      inner join eq_categoria cat on det.ctgcodi = cat.ctgcodi
+      where m1.lectcodi = {0} and pto.origlectcodi = {1} and m1.medintfechaini >= to_date('{3}','YYYY-MM-DD') AND
+      (empr.emprcodi in ({2}) or '{2}' = '-1') and
+      m1.medintfechaini &lt;= to_date('{4} 23:59:59','YYYY-MM-DD HH24:MI:SS') --and (tgr.tipogrupocodi in ({5}) or '{5}' = '-1' )
+      and (det.ctgdetcodi in({6}) or '{6}' = '-1')
+      and cat.CTGCODI = {7}
+      order by m1.medintfechaini asc, empr.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaMedxintervQuema</key>
+    <query>
+      select
+      empr.emprcodi,m1.*, tpto.tptomedinomb,eq.equicodi, eq.equinomb,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      tpto.tptomedicodi, empr.emprnomb
+      from
+      me_medicionxintervalo m1
+      inner join me_ptomedicion pto on pto.ptomedicodi = m1.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join pr_grupo pr on pr.grupocodi = eq.grupocodi
+      inner join pr_tipogrupo tgr on tgr.tipogrupocodi = pr.tipogrupocodi
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = m1.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = (case when coalesce(m1.EMPRCODI, -1) > 0 then m1.EMPRCODI else pto.emprcodi end)
+      where m1.lectcodi = {0} and pto.origlectcodi = {1} and m1.medintfechaini >= to_date('{3}','YYYY-MM-DD') AND
+      (empr.emprcodi in ({2}) or '{2}' = '-1') and
+      m1.medintfechaini &lt;= to_date('{4}','YYYY-MM-DD') and (tgr.tipogrupocodi in ({5}) or '{5}' = '-1')
+      order by m1.medintfechaini asc, empr.emprnomb asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetConsumoCentral</key>
+    <query>
+      select eq.equipadre equicodi,pto.tptomedicodi, sum(mx.medinth1) Medinth1 from me_medicionxintervalo mx
+      inner join me_ptomedicion pto on pto.ptomedicodi = mx.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      where mx.medintfechaini = to_date('{0}','YYYY-MM-DD') AND
+      mx.ptomedicodi in (
+          --Puntos de medición de la empresa segun la fecha de inicio
+          SELECT distinct ptomedicodi FROM
+          (
+              SELECT HP.HPTOCODI,vwpt.HPTDATFECHA ,hp.ptomedicodi, pto.PTOMEDIELENOMB
+              , ROW_NUMBER() OVER(PARTITION BY HP.HPTOCODI ORDER BY HP.HPTOCODI,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+              ,vwpt.HPTDATPTOESTADO
+              ,CASE WHEN vwpt.HPTDATPTOESTADO = 'F' THEN 0 ELSE HP.HPTOACTIVO END AS HPTOACTIVO 
+              from me_hojaptomed HP
+              inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+              inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= TO_DATE('{1}','YYYY-MM-DD HH24:MI:SS') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+              WHERE hp.formatcodi = {3}
+          )rview
+          WHERE NUM_VIEW = 1
+      )
+      group by eq.equipadre,pto.tptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteEnvioFormatoColumna</key>
+    <query>
+      delete from me_medicionxintervalo where medintfechaini >= to_date('{0} 00:00:00','YYYY-MM-DD  HH24:MI:SS') and
+      medintfechaini &lt;= to_date('{1}  23:59:59','YYYY-MM-DD  HH24:MI:SS') and emprcodi={3} and ptomedicodi in (
+      --Puntos de medición de la empresa segun la fecha de inicio
+      SELECT distinct ptomedicodi FROM
+      (
+      SELECT HP.HPTOCODI,vwpt.HPTDATFECHA ,hp.ptomedicodi, pto.PTOMEDIELENOMB
+      , ROW_NUMBER() OVER(PARTITION BY HP.HPTOCODI ORDER BY HP.HPTOCODI,vwpt.HPTDATFECHA desc, vwpt.HPTDATPTOESTADO desc) AS NUM_VIEW
+      ,vwpt.HPTDATPTOESTADO
+      ,CASE WHEN vwpt.HPTDATPTOESTADO = 'F' THEN 0 ELSE HP.HPTOACTIVO END AS HPTOACTIVO
+      from me_hojaptomed HP
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= TO_DATE('{1}','YYYY-MM-DD HH24:MI:SS') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+      WHERE hp.formatcodi = {2} and hp.hojacodi = {4} and pto.tptomedicodi in ({5})
+      )rview
+      WHERE NUM_VIEW = 1 and HPTOACTIVO = 1
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaFiltrada</key>
+    <query>
+      select
+      *
+      from
+      me_medicionxintervalo
+      where
+      ptomedicodi={0} and lectcodi={1} and tipoinfocodi={2} and
+      medintfechaini between to_date('{3}','yyyy-MM-dd') and to_date('{4}','yyyy-MM-dd')
+      order by
+      medintfechaini
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      SELECT NVL(MAX(medintcodi), 0) + 1 FROM me_medicionxintervalo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteEnvioMedicionxIntervalo</key>
+    <query>
+      delete from me_medicionxintervalo where enviocodi = {0}
+    </query>
+  </Sql>
+
+   <Sql>
+    <key>BuscarRegistroPeriodo</key>
+    <query>
+      select * from me_medicionxintervalo me
+      where me.medintfechaini >= to_date('{0}','YYYY-MM-DD') and 
+      me.medintfechaini &lt;= to_date('{1}','YYYY-MM-DD') and
+      me.ptomedicodi = {2} and me.tipoinfocodi = {3} and me.lectcodi = {4}
+      order by medintfechaini
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCombustibleXCentral</key>
+    <query>
+      select mxi.* from me_medicionxintervalo mxi
+      inner join me_ptomedicion pto on pto.ptomedicodi = mxi.ptomedicodi
+      inner join me_tipoptofenergia tf on tf.TPTOMEDICODI = pto.TPTOMEDICODI and tf.TPTOMEDICODI in ({0})
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      where mxi.medintfechaini >= to_date('{3}','YYYY-MM-DD HH24:MI:SS') AND mxi.medintfechaini &lt;= to_date('{4} 23:59:59','YYYY-MM-DD HH24:MI:SS') and tf.FENERGCODI = {1} and eq.grupocodi = {2}
+    </query>
+  </Sql>
+
+  <!--  INICIO SIOSEIN2 -->
+  <Sql>
+    <key>GetListaMedicionXIntervaloByLecturaYTipomedicion</key>
+    <query>    
+      SELECT pr.grupocodi,
+             pr.grupopadre,
+             pr.gruponomb,
+             pr.fenergcodi,
+             emp.emprnomb,
+             si.tgenercodi,
+             pr.tipogenerrer,
+             pr.grupotipocogen,
+             pr.grupointegrante,
+             pr.osinergcodi,
+             eq.equicodi,
+             eq.equinomb,
+             eq.famcodi,
+             mt.ptomedidesc,
+             mi.*
+      FROM   me_medicionxintervalo mi
+             inner join me_ptomedicion mt ON mt.ptomedicodi = mi.ptomedicodi
+             inner join pr_grupo pr ON pr.grupocodi = mt.grupocodi
+             left join si_fuenteenergia si ON si.fenergcodi = pr.fenergcodi
+             left join eq_equipo eq on eq.equicodi = mt.equicodi
+             --left join spo_concepto spo ON spo.ptomedicodi2 = mt.ptomedicodi
+             --left join me_ptomedicion mt2 ON mt2.ptomedicodi = spo.ptomedicodi
+             left join si_empresa emp ON emp.emprcodi = (CASE WHEN Coalesce(mi.emprcodi, -1) > 0 THEN mi.emprcodi ELSE mt.emprcodi END)
+      WHERE  lectcodi = {2}
+             AND (mt.ptomedicodi in({4}) or '{4}'='-1')
+             -- AND pr.grupocodi > 0
+             -- and pr.TIPOGENERRER='N' and pr.GRUPOTIPOCOGEN='N' and pr.GRUPOINTEGRANTE='S'
+             AND mi.medintfechaini >= TO_DATE('{0}','YYYY-MM-DD')
+             AND mi.medintfechaini &lt;= TO_DATE('{1}','YYYY-MM-DD')
+      AND mi.enviocodi = (select max(en.enviocodi) from me_envio en where en.enviofechaperiodo = To_date('{5}', 'YYYY-MM-DD') and formatcodi=100)
+      AND mi.tptomedicodi in({3})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaMedicionXIntervaloByLecturaYTipomedicionYCentral</key>
+    <query>
+      SELECT  (CASE WHEN prp.grupopadre > 0 THEN prpp.grupocodi ELSE prp.grupocodi END) grupocodi,
+              (CASE WHEN prp.grupopadre > 0 THEN prpp.gruponomb ELSE prp.gruponomb END) gruponomb,
+              (CASE WHEN prp.grupopadre > 0 THEN prpp.osinergcodi ELSE prp.osinergcodi END) osinergcodi,
+              mi.emprcodi,
+              em.emprnomb,
+              mi.medintfechaini,
+              si.tgenercodi,
+              COALESCE(pr.tipogenerrer, 'N') as tipogenerrer,
+              COALESCE(pr.grupotipocogen, 'N') as grupotipocogen,
+              COALESCE(pr.grupointegrante, 'N') as grupointegrante,
+              pr.fenergcodi,
+              si.fenergnomb,
+              mi.medinth1,
+              mi.ptomedicodi,
+              mt.PTOMEDIDESC
+      FROM me_medicionxintervalo mi
+      inner join me_ptomedicion mt ON mt.ptomedicodi = mi.ptomedicodi
+      inner join pr_grupo pr ON pr.grupocodi = mt.grupocodi
+      inner join pr_grupo prp ON prp.grupocodi = pr.grupopadre
+      left join SI_EMPRESA em on em.EMPRCODI = (case when coalesce(mi.EMPRCODI, -1) > 0 then mi.EMPRCODI else mt.emprcodi end)
+      left join pr_grupo prpp ON prpp.grupocodi = prp.grupopadre AND prpp.grupocodi > 0
+      left join si_fuenteenergia si ON si.fenergcodi = pr.fenergcodi
+      WHERE lectcodi = {2}
+            AND ( mt.ptomedicodi IN({4}) OR '{4}' = '-1' )
+            --AND pr.grupocodi > 0
+            --AND prp.grupocodi &lt;> 1000
+            -- and pr.TIPOGENERRER='N' and pr.GRUPOTIPOCOGEN='N' and pr.GRUPOINTEGRANTE='S'
+            AND mi.medintfechaini >= To_date('{0}', 'YYYY-MM-DD')
+            AND mi.medintfechaini &lt;= To_date('{1}', 'YYYY-MM-DD')
+            AND mi.enviocodi = (select max(en.enviocodi) from me_envio en where en.enviofechaperiodo = To_date('{5}', 'YYYY-MM-DD') and formatcodi=100)
+            AND mi.tptomedicodi = {3}
+    </query>
+  </Sql>
+
+  <!--  FIN SIOSEIN2 -->
+
+  <!--   REGION PMPO  -->
+  
+  <Sql>
+    <key>ListarReporteGeneracionSDDP</key>
+    <query>
+      select mi.ptomedicodi,
+      trim(pto.PTOMEDIDESC) PTOMEDIDESC,
+      GR.GRUPOCODI,
+      mi.MEDINTSEMANA  ||'/'||TO_CHAR(mi.MEDINTANIO, 'YYYY') AS SEMANA,
+      trim(gr.GRUPONOMB) GRUPONOMB,
+      trim(emp.emprnomb) emprnomb,
+      mi.MEDINTH1,
+      mi.MEDINTFECHAINI,
+      gr.catecodi,
+      gr.fenergcodi,
+      si.fenergnomb,
+      si.tgenercodi,
+      COALESCE(gr.tipogenerrer, 'N') as tipogenerrer,
+      COALESCE(gr.grupotipocogen, 'N') as grupotipocogen,
+      COALESCE(gr.grupointegrante, 'N') as grupointegrante
+      from ME_MEDICIONXINTERVALO mi
+      inner JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      left JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      left join si_fuenteenergia si ON si.fenergcodi = GR.fenergcodi
+      left join si_empresa emp on emp.emprcodi = (case when coalesce(pto.EMPRCODI, -1) > 0 then pto.EMPRCODI else gr.emprcodi end)
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 69 AND MI.enviocodi = {0}
+      ORDER BY pto.PTOMEDIDESC,mi.MEDINTFECHAINI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarReporteSDDP</key>
+    <query>
+      select mi.ptomedicodi, pto.barrcodi,
+      trim(pto.PTOMEDIDESC) PTOMEDIDESC,
+      BH.PMBLOQNOMBRE,
+      mi.MEDINTSEMANA ||'/'||TO_CHAR(mi.MEDINTANIO, 'YYYY') AS SEMANA,
+      mi.MEDINTH1,
+      mi.MEDINTFECHAINI,
+      MI.MEDINTBLQNUMERO,
+      mi.MEDINTANIO,
+      MI.TPTOMEDICODI,
+      tpto.TPTOMEDINOMB,
+      gr.grupocodi,
+      trim(gr.GRUPONOMB) GRUPONOMB,
+      COALESCE(gr.tipogenerrer, 'N') as tipogenerrer,
+      COALESCE(gr.grupotipocogen, 'N') as grupotipocogen,
+      COALESCE(gr.grupointegrante, 'N') as grupointegrante
+      from ME_MEDICIONXINTERVALO mi
+      inner JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      inner join ME_TIPOPTOMEDICION tpto on tpto.TPTOMEDICODI = mi.TPTOMEDICODI
+      left JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      left JOIN PMO_BLOQUE_HOR BH ON MI.MEDINTBLQNUMERO = BH.PMBLOQCODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI in ({1}) AND MI.enviocodi = {0}
+      and ('{2}'='-1' or PTO.ptomedicodi in ({2}))
+      ORDER BY pto.PTOMEDIDESC,mi.MEDINTFECHAINI,MI.MEDINTBLQNUMERO
+    </query>
+  </Sql>
+
+  <!-- FIN REGION PMPO  -->
+
+  <!-- INICIO FIT - VAlORIZACION DIARIA -->
+
+  <Sql>
+    <key>GetDemandaMedianoPlazoCOES</key>
+    <query>
+      select distinct
+      cm.MEDINTH1 * 1000 Medinth1
+      from sic.me_medicionxintervalo cm
+      where
+      cm.ptomedicodi=25000 AND cm.tptomedicodi=82 and cm.lectcodi=109 and
+      cm.medintsemana = {0} and
+      cm.enviocodi = (
+      select max( m.enviocodi) from sic.me_medicionxintervalo m
+      where m.medintsemana = {0} and m.ptomedicodi=25000 AND m.tptomedicodi=82 and m.lectcodi=109 and
+      to_char(m.medintfechaini, 'YYYY') = {1}
+      )
+      and
+      to_char(cm.medintfechaini, 'YYYY') = {1}
+    </query>
+  </Sql>
+  
+  <!-- FIN FIT - VAlORIZACION DIARIA -->
+
+  <!--INICIO Mejoras RDO-->
+  <Sql>
+    <key>GetListaDisponibilidadCombustible</key>
+    <query>
+      select
+      empr.emprcodi, m1.*, tpto.tptomedinomb,eq.equicodi, eq.equinomb,(case when coalesce(eq.equipadre, -1) >0 then eq.equipadre else eq.equicodi end) as equipadre, eqp.equinomb equipopadre,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      tpto.tptomedicodi, empr.emprnomb, empr.Emprcoes, pto.Ptomedielenomb, fte.fenergcodi, fte.fenergnomb, fte.fenercolor
+      from
+      ME_MEDICIONXINTERVALO_RDO m1
+      inner join me_ptomedicion pto on pto.ptomedicodi = m1.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join eq_equipo eqp on eqp.equicodi = (case when coalesce(eq.equipadre, -1) >0 then eq.equipadre else eq.equicodi end)
+      inner join pr_grupo pr on pr.grupocodi = eq.grupocodi
+      inner join pr_tipogrupo tgr on tgr.tipogrupocodi = pr.tipogrupocodi
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = m1.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = (case when coalesce(m1.EMPRCODI, -1) > 0 then m1.EMPRCODI else pto.emprcodi end)
+      inner join ME_TIPOPTOFENERGIA tpe on tpe.tptomedicodi = pto.tptomedicodi
+      inner join SI_FUENTEENERGIA fte on fte.fenergcodi = tpe.fenergcodi
+      inner join me_envio_horario hor on m1.ENVIOCODI = hor.ENVIOCODI
+      where m1.lectcodi = {0} and pto.origlectcodi = {1} and m1.medintfechaini >= to_date('{3}','YYYY-MM-DD') AND
+      (empr.emprcodi in ({2}) or '{2}' = '-1') and
+      m1.medintfechaini &lt;= to_date('{4}','YYYY-MM-DD') and (tpto.tptomedicodi in ({5}) or '{5}' = '-1') and (tgr.tipogrupocodi in ({6})
+      or '{6}' = '-1' ) and (m1.ptomedicodi in ({7}) or '{7}'='-1') and (hor.HORARIOCODI = {8})
+      order by m1.medintfechaini asc, eq.equicodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveRDO</key>
+    <query>
+      insert into ME_MEDICIONXINTERVALO_RDO(
+      medintcodi,
+      medintfechaini,
+      medintfechafin,
+      ptomedicodi,
+      lectcodi,
+      tipoinfocodi,
+      medinth1,
+      medintusumodificacion,
+      medintfecmodificacion,
+      medintdescrip,
+      medestcodi,
+      medintsemana,
+      medintanio,
+      medintblqhoras,
+      medintblqnumero,
+      enviocodi,
+      TPTOMEDICODI,
+      emprcodi
+      )
+      values(
+      :medintcodi,
+      :medintfechaini,
+      :medintfechafin,
+      :ptomedicodi,
+      :lectcodi,
+      :tipoinfocodi,
+      :medinth1,
+      :medintusumodificacion,
+      :medintfecmodificacion,
+      :medintdescrip,
+      :medestcodi,
+      :medintsemana,
+      :medintanio,
+      :medintblqhoras,
+      :medintblqnumero,
+      :enviocodi,
+      :TPTOMEDICODI,
+      :emprcodi
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetEnvioArchivoRDO</key>
+    <query>
+      SELECT PTO.TPTOMEDICODI,PTO.EQUICODI,
+      EMP.EMPRCODI, ME.MEDINTFECHAINI, ME.MEDINTFECHAFIN, ME.PTOMEDICODI, ME.LECTCODI, ME.TIPOINFOCODI, ME.MEDINTH1, ME.MEDINTUSUMODIFICACION, ME.MEDINTFECMODIFICACION, ME.MEDINTDESCRIP, ME.MEDESTCODI, ME.MEDINTSEMANA, ME.MEDINTANIO, ME.MEDINTBLQNUMERO, ME.MEDINTBLQHORAS, ME.ENVIOCODI, ME.MEDINTCODI
+      FROM ME_MEDICIONXINTERVALO_RDO ME
+      INNER JOIN ME_HOJAPTOMED HP ON HP.PTOMEDICODI = ME.PTOMEDICODI AND HP.TIPOINFOCODI = ME.TIPOINFOCODI
+      INNER JOIN ME_FORMATO F ON F.FORMATCODI = HP.FORMATCODI
+      INNER JOIN ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = (CASE WHEN COALESCE(ME.EMPRCODI, -1) > 0 THEN ME.EMPRCODI ELSE PTO.EMPRCODI END)
+      INNER JOIN ME_ENVIO_HORARIO HOR ON ME.ENVIOCODI = HOR.ENVIOCODI
+      WHERE HP.FORMATCODI = {0} AND EMP.EMPRCODI = {1} AND MEDINTFECHAINI >= TO_DATE('{2}','YYYY-MM-DD HH24:MI:SS') AND
+      MEDINTFECHAINI &lt;= TO_DATE('{3}','YYYY-MM-DD HH24:MI:SS')
+      AND (HOR.HORARIOCODI = {4} OR ('{4}' = '0'))
+      AND ME.ENVIOCODI = (SELECT MAX(SME.ENVIOCODI) FROM ME_MEDICIONXINTERVALO_RDO SME
+      INNER JOIN ME_ENVIO_HORARIO SHOR ON SME.ENVIOCODI = SHOR.ENVIOCODI WHERE SME.LECTCODI = ME.LECTCODI
+      AND SME.PTOMEDICODI = ME.PTOMEDICODI AND SME.MEDINTFECHAINI = ME.MEDINTFECHAINI AND SME.EMPRCODI = ME.EMPRCODI
+      AND SME.TPTOMEDICODI = ME.TPTOMEDICODI AND SHOR.HORARIOCODI = {4} OR ('{4}' = '0'))
+      ORDER BY HP.HPTOORDEN,ME.MEDINTFECHAINI  ASC
+    </query>
+  </Sql>
+  <!--FIN Mejoras RDO-->
+
+  <!--Inicio PrimasRER.2023-->
+  <Sql>
+    <key>ListarBarrasPMPO</key>
+    <query>
+      select pto.ptomedicodi, trim(pto.PTOMEDIDESC) PTOMEDIDESC
+      from ME_MEDICIONXINTERVALO mi
+      inner JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 80 
+      /*and mi.MEDINTFECHAINI BETWEEN to_date('{0}', 'DD/MM/YYYY') and to_date('{1}', 'DD/MM/YYYY') */
+      and mi.medintblqnumero = 1
+      Group BY pto.ptomedicodi, pto.PTOMEDIDESC
+      ORDER BY pto.PTOMEDIDESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCentralesPMPO</key>
+    <query>
+		select * from (
+		  select mi.ptomedicodi,
+		  gr.gruponomb,
+		  trim(pto.PTOMEDIDESC) ptomedidesc,
+		  gr.emprcodi,
+		  gr.fenergcodi,
+		  si.tgenercodi,
+		  COALESCE(gr.grupotipocogen, 'N') as grupotipocogen
+		  from ME_MEDICIONXINTERVALO mi
+		  inner JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+		  left JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+		  left join si_fuenteenergia si ON si.fenergcodi = GR.fenergcodi
+		  WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 69 AND MI.enviocodi in (select enviocodi from me_envio where formatcodi = 100)
+		) t
+		where emprcodi =  {0}
+		group by ptomedicodi, gruponomb, ptomedidesc, emprcodi, fenergcodi, tgenercodi, grupotipocogen
+		ORDER BY PTOMEDIDESC
+	</query>
+  </Sql>
+  <!--Fin PrimasRER.2023-->
+</Sqls>

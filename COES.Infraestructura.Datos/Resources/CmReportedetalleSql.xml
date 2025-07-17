@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(cmredecodi), 0) + 1 from cm_reportedetalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into cm_reportedetalle(
+		cmrepcodi,
+		barrcodi,
+		cmredefecha,
+		cmredeperiodo,
+		cmredecmtotal,
+		cmredecmenergia,
+		cmredecongestion,
+		cmredevaltotal,
+		cmredevalenergia,
+		cmredevalcongestion,
+		cmredetiporeporte,
+		cmredecodi,
+		barrcodi2
+		)
+		values(
+		:cmrepcodi,
+		:barrcodi,
+		:cmredefecha,
+		:cmredeperiodo,
+		:cmredecmtotal,
+		:cmredecmenergia,
+		:cmredecongestion,
+		:cmredevaltotal,
+		:cmredevalenergia,
+		:cmredevalcongestion,
+		:cmredetiporeporte,
+		:cmredecodi,
+		:barrcodi2
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+		update cm_reportedetalle
+		set
+		cmrepcodi = :cmrepcodi,
+		barrcodi = :barrcodi,
+		cmredefecha = :cmredefecha,
+		cmredeperiodo = :cmredeperiodo,
+		cmredecmtotal = :cmredecmtotal,
+		cmredecmenergia = :cmredecmenergia,
+		cmredecongestion = :cmredecongestion,
+		cmredevaltotal = :cmredevaltotal,
+		cmredevalenergia = :cmredevalenergia,
+		cmredevalcongestion = :cmredevalcongestion,
+		cmredetiporeporte = :cmredetiporeporte,
+		barrcodi2 = :barrcodi2
+		where
+		cmredecodi = :cmredecodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cm_reportedetalle
+       where
+           cmredecodi = :cmredecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+		select
+		cmrepcodi,
+		barrcodi,
+		cmredefecha,
+		cmredeperiodo,
+		cmredecmtotal,
+		cmredecmenergia,
+		cmredecongestion,
+		cmredevaltotal,
+		cmredevalenergia,
+		cmredevalcongestion,
+		cmredetiporeporte,
+		cmredecodi,
+		barrcodi2
+		from
+		cm_reportedetalle
+		where
+		cmredecodi = :cmredecodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+		select
+		cmrepcodi,
+		barrcodi,
+		cmredefecha,
+		cmredeperiodo,
+		cmredecmtotal,
+		cmredecmenergia,
+		cmredecongestion,
+		cmredevaltotal,
+		cmredevalenergia,
+		cmredevalcongestion,
+		cmredetiporeporte,
+		cmredecodi,
+		barrcodi2
+		from
+		cm_reportedetalle
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		det.cmrepcodi,
+		det.barrcodi,
+		det.cmredefecha,
+		det.cmredeperiodo,
+		det.cmredecmtotal,
+		det.cmredecmenergia,
+		det.cmredecongestion,
+		det.cmredevaltotal,
+		det.cmredevalenergia,
+		det.cmredevalcongestion,
+		det.cmredetiporeporte,
+		det.cmredecodi,
+		barr.barrnombre,
+		det.barrcodi2
+		from
+		cm_reportedetalle det
+		inner join trn_barra barr
+		on det.barrcodi = barr.barrcodi
+		where
+		det.cmrepcodi = {0} and det.cmredetiporeporte = '{1}'
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerReporte</key>
+		<query>
+			select cm.*, barr.barrnombre, rep.cmrepversion,
+			(select barr2.barrnombre from trn_barra barr2 where barr2.barrcodi = cm.barrcodi2) as barrnombre2
+			from cm_reportedetalle cm
+			inner join trn_barra barr on cm.barrcodi = barr.barrcodi
+			inner join cm_reporte rep on cm.cmrepcodi = rep.cmrepcodi
+			inner join (
+			select t.cmrepfecha, max(t.cmrepversion) as nroversion from cm_reporte t
+			where
+			t.cmrepfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and
+			t.cmrepfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+			group by t.cmrepfecha
+			) maximo on rep.cmrepversion = maximo.nroversion and rep.cmrepfecha = maximo.cmrepfecha
+			where (cm.cmredevaltotal = -1 or cm.barrcodi2 is not null) and cm.cmredetiporeporte = 2
+			order by rep.cmrepfecha, cm.barrcodi, cm.cmredeperiodo
+		</query>
+	</Sql> 	
+	
+</Sqls>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(trnmigcodi), 0) + 1 from trn_migracion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_migracion(
+      trnmigcodi,
+      migracodi,
+      emprcodiorigen,
+      emprcodidestino,
+      trnmigdescripcion,
+      trnmigsql,
+      trnmigestado,
+      trnmigusucreacion,
+      trnmigfeccreacion,
+      trnmigusumodificacion,
+      trnmigfecmodificacion
+      )
+      values(
+      :trnmigcodi,
+      :migracodi,
+      :emprcodiorigen,
+      :emprcodidestino,
+      :trnmigdescripcion,
+      :trnmigsql,
+      :trnmigestado,
+      :trnmigusucreacion,
+      :trnmigfeccreacion,
+      :trnmigusumodificacion,
+      :trnmigfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update trn_migracion
+      set
+      migracodi = :migracodi,
+      emprcodiorigen = :emprcodiorigen,
+      emprcodidestino = :emprcodidestino,
+      trnmigdescripcion = :trnmigdescripcion,
+      trnmigsql = :trnmigsql,
+      trnmigestado = :trnmigestado,
+      trnmigusumodificacion = :trnmigusumodificacion,
+      trnmigfecmodificacion = :trnmigfecmodificacion
+      where
+      trnmigcodi = :trnmigcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from trn_migracion
+       where trnmigcodi = :trnmigcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select *
+      from trn_migracion
+      where trnmigcodi = :trnmigcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select *
+       from trn_migracion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select migracodi, emprcodiorigen, emprcodidestino, '[' || emprcodiorigen || '] ' || empresaorigen || ' => [' || emprcodidestino || '] ' || empresadestino as trnmigsql from (
+        select sm.migracodi, sm.migrafeccreacion, sm.migrafeccorte,
+        smo.emprcodi as emprcodiorigen, (select trim(se.emprnomb) from si_empresa se where smo.emprcodi = se.emprcodi) as empresaorigen,
+        sm.emprcodi as emprcodidestino, (select trim(se.emprnomb) from si_empresa se where sm.emprcodi = se.emprcodi) as empresadestino,
+        'a'
+        from si_migracion sm, si_migraemprorigen smo
+        where sm.tmopercodi in (3,4) and sm.migrafeccreacion &gt; ADD_MONTHS(SYSDATE, -12) and sm.migracodi = smo.migracodi
+		order by sm.migracodi desc) t
+	</query>
+  </Sql>
+	<Sql>
+		<key>ListMigracion</key>
+		<query>
+			SELECT
+			0 as TRNMIGCODI ,
+			MIGRACODI ,
+			EMPRCODIORIGEN,
+			EMPRCODIDESTINO,
+			'' as  TRNMIGDESCRIPCION,
+			'' as	TRNMIGSQL,
+			''as	TRNMIGESTADO,
+			''as	TRNMIGUSUCREACION,
+			sysdate as	TRNMIGFECCREACION,
+			''as	TRNMIGUSUMODIFICACION,
+			sysdate as	TRNMIGFECMODIFICACION from VW_SI_MIGRACION
+		</query>
+	</Sql>
+</Sqls>

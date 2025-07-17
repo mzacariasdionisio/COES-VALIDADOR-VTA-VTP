@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(obsitecodi), 0) + 1 from tr_observacion_item
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into tr_observacion_item(
+      obsitecodi,
+      canalcodi,
+      obsiteestado,
+      obsitecomentario,
+      obscancodi,
+      obsiteusuario,
+      obsitefecha,
+      obsitecomentarioagente,
+      obsiteproceso
+      )
+      values(
+      :obsitecodi,
+      :canalcodi,
+      :obsiteestado,
+      :obsitecomentario,
+      :obscancodi,
+      :obsiteusuario,
+      :obsitefecha,
+      :obsitecomentarioagente,
+      :obsiteproceso
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update tr_observacion_item
+      set
+      canalcodi = :canalcodi,
+      obsiteestado = :obsiteestado,
+      obsitecomentario = :obsitecomentario,
+      obscancodi = :obscancodi,
+      obsiteusuario = :obsiteusuario,
+      obsitefecha = :obsitefecha,
+      obsitecomentarioagente = :obsitecomentarioagente
+      where
+      obsitecodi = :obsitecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update tr_observacion_item
+      set obsiteestado = 'X'
+      where
+      obsitecodi = :obsitecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      canalcodi,
+      obsitecodi,
+      obsiteestado,
+      obsitecomentario,
+      obscancodi,
+      obsiteusuario,
+      obsitefecha,
+      obsitecomentarioagente
+      from
+      tr_observacion_item
+      where
+      obsitecodi = :obsitecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      canalcodi,
+      obsitecodi,
+      obsiteestado,
+      obsitecomentario,
+      obscancodi,
+      obsiteusuario,
+      obsitefecha,
+      obsitecomentarioagente
+      from
+      tr_observacion_item
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      canal.canalnomb, canal.canaliccp, canal.canalunidad, canal.canalabrev, canal.canalpointtype,
+      empresa.emprenomb, zona.zonanomb,
+      item.canalcodi,
+      item.obsitecodi,
+      item.obsiteestado,
+      item.obsitecomentario,
+      item.obscancodi,
+      item.obsiteusuario,
+      item.obsitefecha,
+      item.obsitecomentarioagente
+      from tr_observacion_item item
+      inner join tr_canal_sp7 canal on item.canalcodi = canal.canalcodi
+      inner join tr_empresa_sp7 empresa on canal.emprcodi = empresa.emprcodi
+      inner join tr_zona_sp7 zona on canal.zonacodi = zona.zonacodi
+      where
+      item.obscancodi = :obscancodi and item.obsiteestado != 'X'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteSeniales</key>
+    <query>
+      select
+      canal.canalnomb, canal.canaliccp, canal.canalunidad, canal.canalabrev, canal.canalpointtype,
+      empresa.emprenomb, zona.zonanomb,
+      item.canalcodi,
+      item.obsitecodi,
+      item.obsiteestado,
+      item.obsitecomentario,
+      item.obscancodi,
+      item.obsiteusuario,
+      observacion.Obscanfeccreacion as obsitefecha,
+      item.obsitecomentarioagente
+      from tr_observacion_item item
+      inner join tr_observacion observacion on item.obscancodi = observacion.obscancodi
+      inner join tr_canal_sp7 canal on item.canalcodi = canal.canalcodi
+      inner join tr_empresa_sp7 empresa on canal.emprcodi = empresa.emprcodi
+      inner join tr_zona_sp7 zona on canal.zonacodi = zona.zonacodi
+      where item.obsiteestado = 'P' and
+      (observacion.emprcodi = '{0}' or '{0}' = '-1') and
+      (observacion.obscanestado != 'X')
+      order by  observacion.Obscanfeccreacion desc, empresa.emprenomb, zona.zonanomb, canal.canalnomb
+
+    </query>
+  </Sql>
+</Sqls>

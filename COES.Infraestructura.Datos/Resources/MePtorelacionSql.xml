@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(ptorelcodi), 0) + 1 from me_ptorelacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into me_ptorelacion(
+           ptorelcodi,
+           equicodi,
+           ptorelpunto1,
+           ptorelpunto2,
+           ptoreltipo,
+           lastuser,
+           lastdate
+       )
+       values(
+           :ptorelcodi,
+           :equicodi,
+           :ptorelpunto1,
+           :ptorelpunto2,
+           :ptoreltipo,
+           :lastuser,
+           :lastdate
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update me_ptorelacion
+       set
+           equicodi = :equicodi,
+           ptorelpunto1 = :ptorelpunto1,
+           ptorelpunto2 = :ptorelpunto2,
+           ptoreltipo = :ptoreltipo,
+           lastuser = :lastuser,
+           lastdate = :lastdate
+       where
+           ptorelcodi = :ptorelcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from me_ptorelacion
+       where
+           equicodi = :equicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           ptorelcodi,
+           equicodi,
+           ptorelpunto1,
+           ptorelpunto2,
+           ptoreltipo,
+           lastuser,
+           lastdate
+       from
+           me_ptorelacion
+       where
+           ptorelcodi = :ptorelcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>      
+      select
+      relacion.origlectcodi, relacion.ptomedicodi, relacion.equiabrev, relacion.equinomb,
+      case when relacion.origlectcodi = 1 then case when (select count(*) as contador from me_ptorelacion rel where rel.ptorelpunto1 = relacion.ptomedicodi and rel.equicodi = relacion.central) > 0 then 1 else 0 end
+      when relacion.origlectcodi = 2 then case when (select count(*) as contador from me_ptorelacion rel where rel.ptorelpunto2 = relacion.ptomedicodi and rel.equicodi = relacion.central) > 0 then 1 else 0 end
+      else 0 end as seleccion
+      from
+      (
+      select tabla.origlectcodi, tabla.ptomedicodi, tabla.equiabrev, tabla.equinomb,
+      case when tabla.famcodi in (4,5,37,38,39) then tabla.equicodi else tabla.equipadre end as central
+      from
+      (
+      select pto.origlectcodi, pto.ptomedicodi, eq.equicodi, eq.famcodi, eq.equipadre, eq.equiabrev, eq.equinomb from wb_serviciorpf servicio
+      inner join me_ptomedicion pto on servicio.ptomedicodi = pto.ptomedicodi
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      union all
+      select pto.origlectcodi, pto.ptomedicodi, eq.equicodi, eq.famcodi, eq.equipadre, eq.equiabrev, eq.equinomb from me_ptomedicion pto
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      where pto.origlectcodi = 2 and pto.equicodi > 0
+      ) tabla
+      ) relacion
+      where relacion.central = :centralcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select tabla.equicodi as centralcodi, tabla.equinomb as centralnomb, tabla.ptomedicodi, tabla.origlectcodi,
+      emp.emprnomb, emp.emprcodi,eq.equicodi, eq.equinomb, eq.equiabrev
+      from (
+      select
+      pto.equicodi, eq.equinomb, pto.ptorelpunto1 as ptomedicodi,
+      1 as origlectcodi
+      from me_ptorelacion pto inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      where (eq.emprcodi = {0} or '{0}' = '-1') and (eq.equicodi = {1} or '{1}' = '-1')
+      union all
+      select
+      pto.equicodi, eq.equinomb, pto.ptorelpunto2 as ptomedicodi,
+      2 as origlectcodi
+      from me_ptorelacion pto inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      where (eq.emprcodi = {0} or '{0}' = '-1') and (eq.equicodi = {1} or '{1}' = '-1')
+      )tabla
+      inner join me_ptomedicion pto on tabla.ptomedicodi = pto.ptomedicodi
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      inner join si_empresa emp on eq.emprcodi = emp.emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresas</key>
+    <query>
+      select distinct empresa.emprcodi, empresa.emprnomb, empresa.tipoemprcodi from (
+      select servicio.ptomedicodi, vweq.emprcodi from wb_serviciorpf servicio
+      inner join me_ptomedicion pto on servicio.ptomedicodi = pto.ptomedicodi
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      inner join SI_HISEMPEQ_DATA vweq on vweq.equicodi = eq.equicodi
+      union all
+      select pto.ptomedicodi, vweq.emprcodi from me_ptomedicion pto
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      inner join SI_HISEMPEQ_DATA vweq on vweq.equicodi = eq.equicodi
+      where pto.origlectcodi = 2 and pto.equicodi > 0) tabla
+      inner join si_empresa empresa on tabla.emprcodi = empresa.emprcodi
+      order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCentrales</key>
+    <query>
+      select distinct
+      case when tabla.famcodi in (4,5, 37,38,39) then tabla.equicodi else tabla.equipadre end as equicodi,
+      case when tabla.famcodi in (4,5,37,38,39) then tabla.equinomb else (select equipo.equinomb from eq_equipo equipo where equipo.equicodi = tabla.equipadre) end as equinomb
+      from
+      (
+      select eq.equicodi, eq.famcodi, eq.equipadre, eq.equinomb, eq.equiabrev, vweq.emprcodi from wb_serviciorpf servicio
+      inner join me_ptomedicion pto on servicio.ptomedicodi = pto.ptomedicodi
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      inner join(
+          SELECT equicodi,EMPRCODI,HEQDATESTADO FROM
+          (
+              SELECT vweq.HEQDATFECHA ,eq.EQUICODI, eq.EQUINOMB,vweq.EMPRCODI
+              , ROW_NUMBER() OVER(PARTITION BY eq.EQUICODI ORDER BY eq.EQUICODI, vweq.HEQDATFECHA desc, vweq.HEQDATESTADO desc) AS NUM_VIEW
+              ,vweq.HEQDATESTADO
+              from eq_equipo eq
+              inner join SI_HISEMPEQ_DATA vweq on vweq.HEQDATFECHA &lt;= TO_DATE('{1}','YYYY-MM-DD') and vweq.EQUICODI = eq.EQUICODI
+          )rview
+          WHERE NUM_VIEW = 1 and  HEQDATESTADO = 'I'
+      )vweq on vweq.EQUICODI=eq.EQUICODI
+      union all
+      select eq.equicodi, eq.famcodi, eq.equipadre, eq.equinomb, eq.equiabrev, vweq.emprcodi from me_ptomedicion pto
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      inner join(
+          SELECT equicodi,EMPRCODI,HEQDATESTADO FROM
+          (
+              SELECT vweq.HEQDATFECHA ,eq.EQUICODI, eq.EQUINOMB,vweq.EMPRCODI
+              , ROW_NUMBER() OVER(PARTITION BY eq.EQUICODI ORDER BY eq.EQUICODI, vweq.HEQDATFECHA desc, vweq.HEQDATESTADO desc) AS NUM_VIEW
+              ,vweq.HEQDATESTADO
+              from eq_equipo eq
+              inner join SI_HISEMPEQ_DATA vweq on vweq.HEQDATFECHA &lt;= TO_DATE('{1}','YYYY-MM-DD') and vweq.EQUICODI = eq.EQUICODI
+          )rview
+          WHERE NUM_VIEW = 1 and HEQDATESTADO = 'I'
+      )vweq on vweq.EQUICODI=eq.EQUICODI
+      where pto.origlectcodi = 2 and pto.equicodi > 0
+      ) tabla
+      where tabla.emprcodi = {0} or {0} = '-1'
+      order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntosRelacion</key>
+    <query>
+      select
+      1 as origlectcodi,
+      pto.ptorelpunto1 as ptomedicodi,
+      eq.equicodi
+      from me_ptorelacion pto
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      inner join(
+      SELECT equicodi,EMPRCODI FROM
+      (
+      SELECT vweq.HEQDATFECHA ,eq.EQUICODI, eq.EQUINOMB,vweq.EMPRCODI
+      , ROW_NUMBER() OVER(PARTITION BY eq.EQUICODI ORDER BY eq.EQUICODI, vweq.HEQDATFECHA desc, vweq.HEQDATESTADO desc) AS NUM_VIEW
+      ,vweq.HEQDATESTADO
+      from eq_equipo eq
+      inner join SI_HISEMPEQ_DATA vweq on vweq.HEQDATFECHA &lt;= TO_DATE('{2}','YYYY-MM-DD') and vweq.EQUICODI = eq.EQUICODI
+      )rview
+      WHERE NUM_VIEW = 1
+      )vweq on vweq.EQUICODI=eq.EQUICODI
+      where
+      (vweq.emprcodi = {0} or {0} = -1) and
+      (pto.equicodi = {1} or {1} = -1) and
+      pto.ptorelpunto1 != -1
+
+      union all
+
+      select
+      2 as origlectcodi,
+      pto.ptorelpunto2 as ptomedicodi,
+      eq.equicodi
+      from me_ptorelacion pto
+      inner join eq_equipo eq on pto.equicodi = eq.equicodi
+      inner join(
+      SELECT equicodi,EMPRCODI FROM
+      (
+      SELECT vweq.HEQDATFECHA ,eq.EQUICODI, eq.EQUINOMB,vweq.EMPRCODI
+      , ROW_NUMBER() OVER(PARTITION BY eq.EQUICODI ORDER BY eq.EQUICODI, vweq.HEQDATFECHA desc, vweq.HEQDATESTADO desc) AS NUM_VIEW
+      ,vweq.HEQDATESTADO
+      from eq_equipo eq
+      inner join SI_HISEMPEQ_DATA vweq on vweq.HEQDATFECHA &lt;= TO_DATE('{2}','YYYY-MM-DD') and vweq.EQUICODI = eq.EQUICODI
+      )rview
+      WHERE NUM_VIEW = 1
+      )vweq on vweq.EQUICODI=eq.EQUICODI
+      where
+      (vweq.emprcodi = {0} or {0} = -1) and
+      (pto.equicodi = {1} or {1} = -1) and
+      pto.ptorelpunto2 != -1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerDatosDespacho</key>
+    <query>
+      select
+      sum(h1) as h1, sum(h2) as h2,
+      sum(h3) as h3, sum(h4) as h4,
+      sum(h5) as h5, sum(h6) as h6,
+      sum(h7) as h7, sum(h8) as h8,
+      sum(h9) as h9, sum(h10) as h10,
+      sum(h11) as h11, sum(h12) as h12,
+      sum(h13) as h13, sum(h14) as h14,
+      sum(h15) as h15, sum(h16) as h16,
+      sum(h17) as h17, sum(h18) as h18,
+      sum(h19) as h19, sum(h20) as h20,
+      sum(h21) as h21, sum(h22) as h22,
+      sum(h23) as h23, sum(h24) as h24,
+      sum(h25) as h25, sum(h26) as h26,
+      sum(h27) as h27, sum(h28) as h28,
+      sum(h29) as h29, sum(h30) as h30,
+      sum(h31) as h31, sum(h32) as h32,
+      sum(h33) as h33, sum(h34) as h34,
+      sum(h35) as h35, sum(h36) as h36,
+      sum(h37) as h37, sum(h38) as h38,
+      sum(h39) as h39, sum(h40) as h40,
+      sum(h41) as h41, sum(h42) as h42,
+      sum(h43) as h43, sum(h44) as h44,
+      sum(h45) as h45, sum(h46) as h46,
+      sum(h47) as h47, sum(h48) as h48
+      from me_medicion48 me
+      where
+      me.tipoinfocodi = 1 and
+      me.lectcodi = 6 and
+      me.ptomedicodi in ({0}) and
+      me.medifecha >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and
+      me.medifecha &lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntosMedicionRPF</key>
+    <query>
+      select
+      rel.equicodi,
+      rel.ptorelpunto1 as ptomedicodi,
+      eq.equinomb,
+      emp.emprnomb
+      from me_ptorelacion rel
+      inner join eq_equipo eq on rel.equicodi = eq.equicodi
+      inner join(
+          SELECT equicodi,EMPRCODI FROM
+          (
+              SELECT vweq.HEQDATFECHA ,eq.EQUICODI, eq.EQUINOMB,vweq.EMPRCODI
+              , ROW_NUMBER() OVER(PARTITION BY eq.EQUICODI ORDER BY eq.EQUICODI, vweq.HEQDATFECHA desc, vweq.HEQDATESTADO desc) AS NUM_VIEW
+              ,vweq.HEQDATESTADO
+              from eq_equipo eq
+              inner join SI_HISEMPEQ_DATA vweq on vweq.HEQDATFECHA &lt;= TO_DATE('{0}','YYYY-MM-DD') and vweq.EQUICODI = eq.EQUICODI
+          )rview
+          WHERE NUM_VIEW = 1
+      )vweq on vweq.EQUICODI = eq.EQUICODI
+      inner join si_empresa emp on vweq.emprcodi = emp.emprcodi
+      where rel.ptorelpunto1!= -1 and rel.ptorelpunto1 is not null
+    </query>
+  </Sql>
+  
+</Sqls>

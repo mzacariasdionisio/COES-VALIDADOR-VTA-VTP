@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into vtp_recalculo_potencia(
+		pericodi,
+		recpotcodi,
+		recpotnombre,
+		recpotinfovtp,
+		recpotfactincecontrantacion,
+		recpotfactincedespacho,
+		recpotmaxidemamensual,
+		recpotinterpuntames,
+		recpotpreciopoteppm,
+		recpotpreciopeajeppm,
+		recpotpreciocostracionamiento,
+		recpotpreciodemaservauxiliares,
+		recpotconsumidademanda,
+		recpotfechalimite,
+		recpothoralimite,
+		recpotcuadro1,
+		recpotnota1,
+		recpotcomegeneral,
+		recacodi,
+		pericodidestino,
+		recpotestado,
+		recpotusucreacion,
+		recpotfeccreacion,
+		recpotusumodificacion,
+		recpotfecmodificacion,
+		recpotcargapfr
+		)
+		values(
+		:pericodi,
+		:recpotcodi,
+		:recpotnombre,
+		:recpotinfovtp,
+		:recpotfactincecontrantacion,
+		:recpotfactincedespacho,
+		:recpotmaxidemamensual,
+		:recpotinterpuntames,
+		:recpotpreciopoteppm,
+		:recpotpreciopeajeppm,
+		:recpotpreciocostracionamiento,
+		:recpotpreciodemaservauxiliares,
+		:recpotconsumidademanda,
+		:recpotfechalimite,
+		:recpothoralimite,
+		:recpotcuadro1,
+		:recpotnota1,
+		:recpotcomegeneral,
+		:recacodi,
+		:pericodidestino,
+		:recpotestado,
+		:recpotusucreacion,
+		:recpotfeccreacion,
+		:recpotusumodificacion,
+		:recpotfecmodificacion,
+		:recpotcargapfr
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+		update vtp_recalculo_potencia
+		set
+		recpotnombre = :recpotnombre,
+		recpotinfovtp = :recpotinfovtp,
+		recpotfactincecontrantacion = :recpotfactincecontrantacion,
+		recpotfactincedespacho = :recpotfactincedespacho,
+		recpotmaxidemamensual = :recpotmaxidemamensual,
+		recpotinterpuntames = :recpotinterpuntames,
+		recpotpreciopoteppm = :recpotpreciopoteppm,
+		recpotpreciopeajeppm = :recpotpreciopeajeppm,
+		recpotpreciocostracionamiento = :recpotpreciocostracionamiento,
+		recpotpreciodemaservauxiliares = :recpotpreciodemaservauxiliares,
+		recpotconsumidademanda = :recpotconsumidademanda,
+		recpotfechalimite = :recpotfechalimite,
+		recpothoralimite = :recpothoralimite,
+		recpotcuadro1 = :recpotcuadro1,
+		recpotnota1 = :recpotnota1,
+		recpotcomegeneral = :recpotcomegeneral,
+		recacodi = :recacodi,
+		pericodidestino = :pericodidestino,
+		recpotestado = :recpotestado,
+		recpotusumodificacion = :recpotusumodificacion,
+		recpotfecmodificacion = :recpotfecmodificacion,
+		recpotcargapfr = :recpotcargapfr
+		where
+		pericodi = :pericodi and
+		recpotcodi = :recpotcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from vtp_recalculo_potencia
+       where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from vtp_recalculo_potencia
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vtp_recalculo_potencia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByPericodi</key>
+    <query>
+      select * from vtp_recalculo_potencia
+      where pericodi = :pericodi
+      order by recpotcodi desc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from vtp_recalculo_potencia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(recpotcodi), 0) + 1 from vtp_recalculo_potencia where pericodi = :pericodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListView</key>
+    <query>
+      select rp.*, p.perinombre, r.recanombre, pd.perinombre as perinombredestino
+      from vtp_recalculo_potencia rp left join trn_periodo p on rp.pericodi = p.pericodi
+      left join trn_recalculo r on rp.pericodi = r.pericodi and rp.recacodi = r.recacodi
+      left join trn_periodo pd on rp.pericodidestino = pd.pericodi
+      order by p.perinombre asc, rp.recpotcodi
+    </query>
+  </Sql>
+
+  <!--Inio PrimasRER.2023-->
+  <Sql>
+	<key>ListVTP</key>
+	<query>
+	  select r.*, (select p.perinombre from trn_periodo p where p.pericodi = r.pericodi) as perinombre 
+      from vtp_recalculo_potencia r
+      where r.pericodidestino = (select a.pericodi from trn_periodo a where a.perianio = :perianio and a.perimes = :perimes)
+      and r.recpotcodi > 1 and r.recpotestado = 'Cerrado'
+      order by r.pericodi desc
+	</query>
+	</Sql>
+
+  <Sql>
+    <key>GetByIdCerrado</key>
+    <query>
+      select * from vtp_recalculo_potencia
+      where pericodi = :pericodi and recpotcodi = :recpotcodi and recpotestado = 'Cerrado'
+    </query>
+  </Sql>
+  <!--Fin PrimasRER.2023-->
+	
+  <Sql>
+    <key>GetByIdView</key>
+    <query>
+      select rp.*, p.perinombre, r.recanombre, pd.perinombre as perinombredestino
+      from vtp_recalculo_potencia rp left join trn_periodo p on rp.pericodi = p.pericodi
+      left join trn_recalculo r on rp.pericodi = r.pericodi and rp.recacodi = r.recacodi
+      left join trn_periodo pd on rp.pericodidestino = pd.pericodi
+      where
+      rp.pericodi = :pericodi and
+      rp.recpotcodi = :recpotcodi
+      order by p.perinombre asc, rp.recpotcodi
+    </query>
+  </Sql>
+
+  <!--Inicio - FIT Aplicativo VTD-->
+
+  <Sql>
+    <key>GetPrecioPotencia</key>
+    <query>
+      SELECT
+      Recpotpreciopoteppm VALOPRECIOPOTENCIA
+      FROM
+      vtp_recalculo_potencia
+      WHERE
+      Pericodi = :pericodi
+      and recpotcodi = (select max(recpotcodi) from vtp_recalculo_potencia where pericodi= :pericodi)
+    </query>
+  </Sql>
+
+  <!--Fin - FIT Aplicativo VTD-->
+  
+  <!--ASSETEC 202108 TIEE-->
+  <Sql>
+    <key>ListMaxRecalculoByPeriodo</key>
+    <query>
+      select pericodi, max(recpotcodi) as recpotcodi from vtp_recalculo_potencia where recpotcodi &gt; 1 group by pericodi order by pericodi
+    </query>
+  </Sql>
+  <!--TRANSFERENCIA DE PORTENCIA -> MOVIMIENTO DE SALDOS
+  {0} emprcodiorigen
+  {1} emprcodidestino
+  {2} pericodi
+  {3} recpotcodi-->
+  <Sql>
+    <key>MigrarSaldosVTP</key>
+    <query>
+      begin
+      update vtp_saldo_empresa set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_peaje_cargo set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_peaje_empresa_pago set emprcodipeaje = {1} where pericodi = {2} and recpotcodi = {3} and emprcodipeaje = {0};
+      update vtp_peaje_empresa_pago set emprcodicargo = {1} where pericodi  = {2} and recpotcodi = {3} and emprcodicargo = {0};
+      update vtp_ingreso_tarifario set emprcodingpot = {1} where pericodi  = {2} and recpotcodi = {3} and emprcodingpot = {0};
+      end;
+    </query>
+  </Sql>
+  <!--TRANSFERENCIA DE PORTENCIA -> MIGRACIÓN DE DATOS DE UN CALCULO
+  {0} emprcodiorigen
+  {1} emprcodidestino
+  {2} pericodi
+  {3} recpotcodi-->
+  <Sql>
+    <key>MigrarCalculoVTP</key>
+    <query>
+      begin
+      update vtp_empresa_pago set emprcodicobro = {1} where pericodi = {2} and recpotcodi = {3} and emprcodicobro = {0};
+      update vtp_empresa_pago set emprcodipago = {1} where pericodi = {2} and recpotcodi = {3} and emprcodipago = {0};
+      update vtp_ingreso_potefr_detalle set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_ingreso_potencia set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_ingreso_potunid_intervl set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_ingreso_potunid_promd set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_ingreso_tarifario set emprcodingpot = {1} where pericodi = {2} and recpotcodi = {3} and emprcodingpot = {0};
+      update vtp_ingreso_tarifario set emprcodiping = {1} where pericodi = {2} and recpotcodi = {3} and emprcodiping = {0};
+      update vtp_pago_egreso set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_peaje_cargo set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_peaje_empresa set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_peaje_empresa_pago set emprcodicargo = {1} where pericodi = {2} and recpotcodi = {3} and emprcodicargo = {0};
+      update vtp_peaje_empresa_pago set emprcodipeaje = {1} where pericodi = {2} and recpotcodi = {3} and emprcodipeaje = {0};
+      update vtp_peaje_ingreso set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_peaje_saldo_transmision set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_saldo_empresa set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update trn_ing_retirosc set emprcodi = {1} where pericodi = {2} and ingrscversion = {3} and emprcodi = {0};
+      --ASSETEC 20210922
+      update vtp_peaje_egreso set emprcodi = {1} where pericodi = {2} and recpotcodi = {3} and emprcodi = {0};
+      update vtp_peaje_egreso_minfo set genemprcodi = {1} where pericodi = {2} and recpotcodi = {3} and genemprcodi = {0};
+      end;
+    </query>
+  </Sql>
+
+  <!--INICIO CU05 - CPA-->
+  <Sql>
+    <key>ListRecalculoByPeriodo</key>
+    <query>
+      SELECT p.perinombre,
+      p.perianio,
+      p.perimes,
+      rp.recpotinterpuntames,
+      rp.recpotpreciopoteppm
+      FROM vtp_recalculo_potencia rp
+      LEFT JOIN trn_periodo p ON rp.pericodi = p.pericodi AND p.perianio = {0}
+      WHERE rp.recpotestado = 'Cerrado'
+      AND recpotcodi IN (SELECT MAX(recpotcodi)
+      FROM vtp_recalculo_potencia vtp
+      WHERE vtp.pericodi = p.pericodi
+      AND vtp.recpotestado = 'Cerrado')
+      ORDER BY p.perimes
+    </query>
+  </Sql>
+  <!-- FIN CU05 - CPA-->
+  
+</Sqls>

@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+	<Sql>
+		<key>GetMaxId</key>
+		<query>
+			select nvl(max(trncmacodi), 0) + 1 from trn_costo_marginal_ajuste
+		</query>
+	</Sql>
+  
+	<Sql>
+		<key>Save</key>
+		<query>
+			insert into trn_costo_marginal_ajuste (
+			trncmacodi,
+			pericodi,
+			recacodi,
+			trncmafecha,
+			trncmausucreacion,
+			trncmafeccreacion
+			)
+			values (
+			:trncmacodi,
+			:pericodi,
+			:recacodi,
+			:trncmafecha,
+			:trncmausucreacion,
+			:trncmafeccreacion
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+    <key>Update</key>
+    <query>
+      Update trn_costo_marginal_ajuste set 
+      trncmausumodificacion = :trncmausumodificacion,
+      trncmafecmodificacion = :trncmafecmodificacion
+      where pericodi = :pericodi and recacodi = :recacodi
+    </query>
+  </Sql>
+  
+	<Sql>
+		<key>ListByPeriodoVersion</key>
+		<query>
+      select
+      trncmacodi,
+      pericodi,
+      recacodi,
+      trncmafecha,
+      trncmausucreacion,
+      trncmafeccreacion,
+      trncmausumodificacion,
+      trncmafecmodificacion
+      from
+      trn_costo_marginal_ajuste
+      where
+      pericodi = {0} and
+      recacodi = {1}
+      order by trncmafecha asc
+    </query>
+	</Sql>
+
+	<Sql>
+		<key>Delete</key>
+		<query>
+			delete from trn_costo_marginal_ajuste
+			where trncmacodi = :trncmacodi
+		</query>
+	</Sql>
+  
+	<Sql>
+		<key>GetPeriodo</key>
+		<query>
+			select
+			pericodi,
+			perianio,
+			perimes,
+			perinombre
+			from
+			trn_periodo
+			where
+			pericodi = :pericodi
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>CopiarAjustesCostosMarginales</key>
+    <query>
+      insert into trn_costo_marginal_ajuste (trncmacodi, pericodi,recacodi,
+      trncmafecha, trncmausucreacion, trncmafeccreacion)
+      select (:trncmacodi + rownum) as trncmacodi, :pericodi, :recacodi <!--iVersionNew-->,
+      trncmafecha, trncmausucreacion, sysdate
+      from trn_costo_marginal_ajuste
+      where pericodi = :pericodi and recacodi = :recacodi <!--iVersionOld-->
+      order by trncmafecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteListaAjusteCostoMarginal</key>
+    <query>
+      delete from trn_costo_marginal_ajuste
+      where pericodi = :pericodi and recacodi = :recacodi
+    </query>
+  </Sql>
+</Sqls>

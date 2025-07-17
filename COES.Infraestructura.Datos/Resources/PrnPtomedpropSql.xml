@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into prn_ptomedprop(
+      ptomedicodi,
+      prnpmpvarexoproceso,
+      prnpmpusucreacion,
+      prnpmpfeccreacion,
+      prnpmpusumodificacion,
+      prnpmpfecmodificacion
+      )
+      values(
+      :ptomedicodi,
+      :prnpmpvarexoproceso,
+      :prnpmpusucreacion,
+      :prnpmpfeccreacion,
+      :prnpmpusumodificacion,
+      :prnpmpfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update
+      prn_ptomedprop
+      set
+      prnpmpvarexoproceso = :prnpmpvarexoproceso,
+      prnpmpusumodificacion = :prnpmpusumodificacion,
+      prnpmpfecmodificacion = :prnpmpfecmodificacion
+      where
+      ptomedicodi = :ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from prn_ptomedprop
+      where
+      ptomedicodi = :ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      ptomedicodi,
+      prnpmpvarexoproceso,
+      prnpmpusucreacion,
+      prnpmpfeccreacion,
+      prnpmpusumodificacion,
+      prnpmpfecmodificacion
+      from
+      prn_ptomedprop
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      ptomedicodi,
+      prnpmpvarexoproceso,
+      prnpmpusucreacion,
+      prnpmpfeccreacion,
+      prnpmpusumodificacion,
+      prnpmpfecmodificacion
+      from
+      prn_ptomedprop
+      where
+      ptomedicodi = :ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>PR03Puntos</key>
+    <query>
+      select distinct
+      pe.valor AREAOPERATIVA,
+      tarea.tareaabrev,
+      area.areacodi, area.areanomb,
+      te.tipoemprcodi, te.tipoemprdesc,
+      emp.emprcodi, emp.emprnomb,
+      eq.equicodi, eq.equinomb,
+      pto.ptomedicodi,
+      pto.ptomedidesc || ' (' || pto.ptomedicodi || ')' PTOMEDIDESC,
+      pto.grupocodibarra,
+      nvl(pmp.prnpmpvarexoproceso, 'N') PRNPMPVAREXOPROCESO
+      from
+      eq_propequi pe
+      join eq_equipo eq on pe.equicodi = eq.equicodi
+      and (pe.propcodi = 1064)
+      and (fechapropequi = (select max(fechapropequi) from eq_propequi where propcodi = 1064 and equicodi = eq.equicodi))
+      join eq_familia fam on eq.famcodi = fam.famcodi
+      join eq_area area on eq.areacodi = area.areacodi
+      join eq_tipoarea tarea on area.tareacodi = tarea.tareacodi
+      join si_empresa emp on eq.emprcodi = emp.emprcodi
+      join si_tipoempresa te on emp.tipoemprcodi = te.tipoemprcodi
+      join me_ptomedicion pto on eq.equicodi = pto.equicodi
+      and (pto.origlectcodi = 6)
+      left join prn_ptomedprop pmp on pto.ptomedicodi = pmp.ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>PR03Agrupaciones</key>
+    <query>
+      select
+      pto.ptomedicodi, pto.ptomedidesc,
+      pto.grupocodibarra,
+      emp.emprcodi, emp.emprnomb,
+      grp.ptomedicodi PTOGRPHIJOCODI,
+      pto2.ptomedibarranomb || nvl2(pto2.ptomedidesc, (' - ' || pto2.ptomedidesc), null) PTOGRPHIJODESC,
+      nvl(pmp.prnpmpvarexoproceso, 'N') PRNPMPVAREXOPROCESO
+      from
+      me_ptomedicion pto
+      join eq_area area on pto.equicodi = area.areacodi
+      join si_empresa emp on pto.emprcodi = emp.emprcodi
+      join prn_puntoagrupacion ptogrp on pto.ptomedicodi = ptogrp.ptomedicodi
+      and (pto.origlectcodi = {0} and pto.ptomediestado = 'A')
+      and pto.grupocodibarra = {1}
+      and (ptogrp.ptogrpfechafin = to_date('31/12/9999', 'DD/MM/YYYY'))
+      join prn_agrupacion grp on ptogrp.ptogrpcodi = grp.ptogrpcodi
+      join me_ptomedicion pto2 on grp.ptomedicodi = pto2.ptomedicodi
+      left join prn_ptomedprop pmp on pto.ptomedicodi = pmp.ptomedicodi
+    </query>
+  </Sql>
+  
+</Sqls>

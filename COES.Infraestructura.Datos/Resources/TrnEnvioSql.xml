@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <!-- ASSETEC 202001-->
+
+  <!-- METODOS BASICOS-->
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(trnenvcodi), 0) + 1 from trn_envio
+    </query>
+  </Sql>
+
+  <!-- ASSETEC 202001-->
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_envio (
+      trnenvcodi,
+      pericodi,
+      recacodi,
+      emprcodi,
+      trnmodcodi,
+      trnenvtipinf,
+      trnenvplazo,
+      trnenvliqvt,
+      trnenvuseins,
+      trnenvfecins, trnenvuseact, trnenvfecact)
+      values (
+      :trnenvcodi,
+      :pericodi,
+      :recacodi,
+      :emprcodi,
+      :trnmodcodi,
+      :trnenvtipinf,
+      :trnenvplazo,
+      :trnenvliqvt,
+      :trnenvuseins,
+      :trnenvfecins, :trnenvuseact, :trnenvfecact )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update trn_envio
+      set
+      pericodi = :pericodi,
+      recacodi = :recacodi,
+      emprcodi = :emprcodi,
+      trnenvtipinf = :trnenvtipinf,
+      trnenvplazo = :trnenvplazo,
+      trnenvliqvt = :trnenvliqvt,
+      trnenvusecoes = :trnenvuseact,
+      trnenvfeccoes = :trnenvfecact
+      where
+      trnenvcodi = :trnenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select env.*, emp.emprnomb, per.perinombre, (select m.trnmodnombre from trn_modelo m where env.trnmodcodi = m.trnmodcodi) as trnmodnombre
+      from trn_envio env
+      inner join vw_trn_empresa_str emp on (env.emprcodi = emp.emprcodi)
+      inner join trn_periodo per on (env.pericodi = per.pericodi)
+      where trnenvcodi = :trnenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_envio where trnenvcodi = :trnenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select env.*, emp.emprnomb, per.perinombre
+      from trn_envio env inner join vw_trn_empresa_str emp on (env.emprcodi = emp.emprcodi)
+      inner join trn_periodo per on (env.pericodi = per.pericodi)
+      where env.pericodi = :pericodi and env.recacodi = :recacodi and env.emprcodi = :emprcodi and env.trnenvtipinf = :trnenvtipinf
+      and (trnmodcodi = :trnmodcodi or trnmodcodi = 0)
+      order by env.trnenvcodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select env.*, emp.emprnomb, per.perinombre
+      from
+      trn_envio env
+      inner join vw_trn_empresa_str emp on (env.emprcodi = emp.emprcodi)
+      inner join trn_periodo per on (env.pericodi = per.pericodi)
+      where
+      env.emprcodi = :emprcodi and
+      env.pericodi = :pericodi
+      order by
+      emp.emprnomb,
+      per.perinombre
+    </query>
+  </Sql>
+
+  <!-- METODOS ADICIONALES-->
+  <Sql>
+    <key>GetByIdPeriodoEmpresa</key>
+    <query>
+      select * from trn_envio
+      where pericodi = :pericodi and recacodi = :recacodi and emprcodi = :emprcodi and trnenvtipinf = :trnenvtipinf
+      and (trnmodcodi = :trnmodcodi or trnmodcodi = 0)
+      order by trnenvcodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateByCriteriaTrnEnvio</key>
+    <query>
+      update trn_envio
+      set trnenvliqvt = 'N',
+      trnenvusecoes = :trnenvuseact,
+      trnenvfeccoes = :trnenvfecact
+      where pericodi = :pericodi 
+      and recacodi = :recacodi 
+      and emprcodi = :emprcodi  
+      and trnmodcodi = :trnmodcodi 
+      and trnenvtipinf = :trnenvtipinf
+    </query>
+  </Sql>
+  <!-- ASSETEC 20200907: se cambio si_empresa por vw_trn_empresa_str, para listar los retiros no declarados -->
+  <Sql>
+    <key>ListIntranet</key>
+    <query>
+      select env.*, emp.emprnomb, per.perinombre, (select m.trnmodnombre from trn_modelo m where env.trnmodcodi = m.trnmodcodi) as trnmodnombre
+      from trn_envio env
+      inner join vw_trn_empresa_str emp on (env.emprcodi = emp.emprcodi)
+      inner join trn_periodo per on (env.pericodi = per.pericodi)
+      where env.trnenvtipinf not in ('IB') and env.pericodi = :pericodi and env.recacodi = :recacodi
+      and (env.emprcodi = :emprcodi or 0=:emprcodi)
+      and (env.trnenvtipinf = :trnenvtipinf or 'X' = :trnenvtipinf)
+      and (env.trnenvplazo = :trnenvplazo or 'X' = :trnenvplazo)
+      and (env.trnenvliqvt = :trnenvliqvt or 'X' = :trnenvliqvt)
+      order by emp.emprnomb, env.trnenvcodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateTrnEnvioLiquidacion</key>
+    <query>
+      begin
+      --CAMBIAMOS EL ESTADO DE LAS ENTREGAS A INACTIVO
+      update trn_trans_entrega set tentestado = 'INA', tentusercoes = '{3}', tentfeccoes = sysdate
+      where pericodi= {0} and tentversion = {1} and emprcodi = {2};
+      --CAMBIAMOS EL ESTADO DE LOS RETIROS A INACTIVO
+      update trn_trans_retiro set tretestado = 'INA', tretusercoes = '{3}', tretfeccoes = sysdate
+      where pericodi= {0} and tretversion = {1} and genemprcodi = {2};
+
+      --CAMBIAMOS EL ESTADO DE LAS ENTREGAS A ACTIVO solo para el trnenvcodi
+      update trn_trans_entrega set tentestado = 'ACT', tentusercoes = '{3}', tentfeccoes = sysdate where trnenvcodi = {3};
+      --CAMBIAMOS EL ESTADO DE LOS RETIROS A ACTIVO solo para el trnenvcodi
+      update trn_trans_retiro set tretestado = 'ACT', tretusercoes = '{3}', tretfeccoes = sysdate where trnenvcodi = {3};
+      end;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEntregaLiquidacion</key>
+    <query>
+      begin
+      --CAMBIAMOS EL ESTADO DE LAS ENTREGAS A INACTIVO
+      update trn_trans_entrega set tentestado = 'INA' where pericodi= {0} and tentversion = {1} and emprcodi = {2};
+
+      --CAMBIAMOS EL ESTADO DE LAS ENTREGAS A ACTIVO solo para el trnenvcodi
+      update trn_trans_entrega set tentestado = 'ACT' where tentcodi = {3};
+      end;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateRetiroLiquidacion</key>
+    <query>
+      begin
+      --CAMBIAMOS EL ESTADO DE LOS RETIROS A INACTIVO
+      update trn_trans_retiro set tretestado = 'INA', tretusercoes = '{5}', tretfeccoes = sysdate 
+      where pericodi= {0} and tretversion = {1} and tretcoresocoresccodi = {2};
+
+      --CAMBIAMOS EL ESTADO DE LOS RETIROS A ACTIVO solo para el trnenvcodi
+      update trn_trans_retiro set tretestado = 'ACT', tretusercoes = '{5}', tretfeccoes = sysdate  
+      where pericodi= {0} and tretversion = {1} and tretcoresocoresccodi = {2} and trnenvcodi = {3} and trnmodcodi= {4};
+      end;
+    </query>
+  </Sql>
+</Sqls>

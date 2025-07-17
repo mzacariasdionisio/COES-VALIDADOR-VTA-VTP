@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GenerateDat</key>
+    <query>
+      DECLARE
+
+      V_TABLE_NAME VARCHAR2(50):=:V_TABLE_NAME_VAL;
+      V_PMPERICODI NUMBER:=:V_PMPERICODI_VAL;
+      V_USUARIO VARCHAR2(50):=:V_USUARIO_VAL;
+
+      STRSQL VARCHAR2(30000);
+
+      V_CONT INTEGER;
+      V_PMPERIANIOMES CHAR(6);
+      V_PMPERITIPO CHAR(1);
+
+      C_CONCEPCODI_POTINSTALADA CONSTANT INT := 14;
+      C_CONCEPCODI_FACTOROPERACION CONSTANT INT := 164;
+
+      BEGIN
+      SELECT PMPERIANIOMES,PMPERITIPO INTO V_PMPERIANIOMES,V_PMPERITIPO
+      FROM PMO_PERIODO
+      WHERE PMPERICODI = V_PMPERICODI;
+
+
+      IF LOWER(V_TABLE_NAME) = 'dbus.dat' THEN
+
+        DELETE FROM PMO_DAT_DBUS;
+
+        SELECT COUNT(*) INTO V_CONT FROM PMO_DAT_DBUS;
+
+        IF V_CONT = 0 THEN
+          INSERT INTO PMO_DAT_DBUS(PMDBUSCODI,GRUPOCODI,PMDBUSIDSISTEMA,PMDBUSNROSECGEN,PMDBUSCENGRUPOCODI,PMDBUSNROAREA)
+          SELECT ROWNUM,GR.GRUPOCODI,'pe',GE.GRRASOSECUENCIA,GE.GRUPOCODI2,GE.GRRASOTAG
+          FROM PR_GRUPO GR LEFT JOIN PR_GRUPORELASO GE ON GR.GRUPOCODI = GE.GRUPOCODI1 AND GE.GRRDEFCODI IN (2,3)
+          WHERE GR.CATECODI = 13;
+        END IF;
+      END IF;
+
+      IF LOWER(V_TABLE_NAME) = 'cgndpe.dat' THEN
+
+        DELETE FROM PMO_DAT_CGND;
+
+        SELECT COUNT(*) INTO V_CONT FROM PMO_DAT_CGND;
+
+        IF V_CONT = 0 THEN
+          INSERT INTO PMO_DAT_CGND(PMCGNDCODI,GRUPOCODI,PMCGNDGRUPOCODIBARRA,PMCGNDTIPOPLANTA,PMCGNDNROUNIDADES,PMCGNDPOTINSTALADA,PMCGNDFACTOROPE,PMCGNDPROBFALLA,PMCGNDCORTEOFALLA)
+          SELECT ROWNUM, RES.* FROM (
+          SELECT GR.GRUPOCODI,(SELECT MAX(GRUPOCODI1) FROM PR_GRUPORELASO RE WHERE RE.GRRDEFCODI = 4 AND RE.GRUPOCODI2 = GR.GRUPOCODI ) AS GRUPOCODIBARRA
+          ,1 AS TIPOPLANTA,1 AS NROUNIDADES,NULL AS POTINS, NULL AS FACOPE,1 AS PROBFALLA,0 AS CORTE
+          FROM PR_GRUPO GR
+          WHERE GR.CATECODI IN (5) AND TRIM(GR.GRUPOESTADO) in ('A','P') AND GR.TIPOGENERRER = 'S'
+          UNION
+          SELECT GR.GRUPOCODI,(SELECT MAX(GRUPOCODI1) FROM PR_GRUPORELASO RE WHERE RE.GRRDEFCODI = 5 AND RE.GRUPOCODI2 = GR.GRUPOCODI ) AS GRUPOCODIBARRA
+          ,1 AS TIPOPLANTA,1 AS NROUNIDADES,NULL AS POTINS, NULL AS FACOPE,1 AS PROBFALLA,0 AS CORTE
+          FROM PR_GRUPO GR
+          WHERE GR.CATECODI IN (2) AND GR.GRUPOACTIVO='S' AND GR.TIPOGENERRER = 'S'
+          ) RES;
+        END IF;
+      END IF;
+
+      IF LOWER(V_TABLE_NAME) = 'mgndpe.dat' THEN
+
+        DELETE FROM PMO_DAT_MGND;
+
+        SELECT COUNT(*) INTO V_CONT FROM PMO_DAT_MGND;
+
+        IF V_CONT = 0 THEN
+          INSERT INTO PMO_DAT_MGND(PMMGNDCODI,GRUPOCODI,PMMGNDGRUPOCODIBARRA,PMMGNDFECHA,PMMGNDTIPOPLANTA,PMMGNDNROUNIDADES,PMMGNDPOTINSTALADA,PMMGNDFACTOROPE,PMMGNDPROBFALLA)
+          SELECT ROWNUM, RES.GRUPOCODI,GRUPOCODIBARRA,DAT.FECHADAT, TIPOPLANTA,NROUNIDADES,POTINS,FACOPE,PROBFALLA
+          FROM (
+          SELECT GR.GRUPOCODI,(SELECT MAX(GRUPOCODI1) FROM PR_GRUPORELASO RE WHERE RE.GRRDEFCODI = 4 AND RE.GRUPOCODI2 = GR.GRUPOCODI ) AS GRUPOCODIBARRA
+          ,1 AS TIPOPLANTA,1 AS NROUNIDADES,NULL AS POTINS, NULL AS FACOPE,1 AS PROBFALLA,0 AS CORTE
+          FROM PR_GRUPO GR
+          WHERE GR.CATECODI IN (5) AND TRIM(GR.GRUPOESTADO) in ('A','P') AND GR.TIPOGENERRER = 'S'
+          UNION
+          SELECT GR.GRUPOCODI,(SELECT MAX(GRUPOCODI1) FROM PR_GRUPORELASO RE WHERE RE.GRRDEFCODI = 5 AND RE.GRUPOCODI2 = GR.GRUPOCODI ) AS GRUPOCODIBARRA
+          ,1 AS TIPOPLANTA,1 AS NROUNIDADES,NULL AS POTINS, NULL AS FACOPE,1 AS PROBFALLA,0 AS CORTE
+          FROM PR_GRUPO GR
+          WHERE GR.CATECODI IN (2) AND GR.GRUPOACTIVO='S' AND GR.TIPOGENERRER = 'S'
+          ) RES JOIN (SELECT GRUPOCODI,FECHADAT
+          FROM PR_GRUPODAT WHERE FECHADAT &gt; TO_DATE(V_PMPERIANIOMES,'YYYYMM') AND CONCEPCODI IN (C_CONCEPCODI_POTINSTALADA,C_CONCEPCODI_FACTOROPERACION)) DAT ON RES.GRUPOCODI = DAT.GRUPOCODI;
+        END IF;
+      END IF;
+
+      IF LOWER(V_TABLE_NAME) = 'dbf005.dat' THEN
+
+        DELETE FROM PMO_DAT_DBF WHERE PMPERICODI = V_PMPERICODI;
+
+        SELECT NVL(MAX(PMDBF5CODI),0) INTO V_CONT FROM PMO_DAT_DBF;
+
+        INSERT INTO PMO_DAT_DBF(PMDBF5CODI,PMPERICODI,GRUPOCODI,PMDBF5LCOD,PMDBF5FECINI,PMBLOQCODI,PMDBF5CARGA,PMDBF5ICCO)
+        SELECT ROWNUM + V_CONT,V_PMPERICODI,grupocodisddp,lectcodi,medintfechaini,medintblqnumero,medinth1,CCO
+        FROM (SELECT bm.grupocodisddp,lectcodi,me.medintfechaini,me.medintblqnumero,SUM(medinth1) AS medinth1,0 AS CCO
+        from me_medicionxintervalo me
+        inner join me_envio en on me.enviocodi = en.enviocodi
+        inner join me_ptomedicion pto on pto.ptomedicodi = me.ptomedicodi
+        inner join pr_gruporelaso rel on rel.grupocodi2 = pto.grupocodi and rel.grrasofechadesde &lt;= trunc(sysdate) and (rel.grrasofechahasta is null or rel.grrasofechahasta &gt; sysdate)
+        inner join pr_grupo bm on bm.grupocodi = rel.grupocodi1
+        inner join eq_equipo eq on eq.equicodi = pto.equicodi
+        WHERE  en.formatcodi IN (74,76)
+        AND ME.LECTCODI IN (104,105)
+        AND en.enviofechaperiodo = to_date(V_PMPERIANIOMES,'YYYYMM')
+        GROUP  BY bm.grupocodisddp,bm.grupoabrev,lectcodi,me.medintfechaini,me.medintblqnumero);
+
+      END IF;
+
+      END;
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>DeleteDataDisponibilidadPorPeriodoYtipo</key>
+    <query>
+      delete from PMO_DAT_PMHI_TR where PMPERICODI={0} and PMPMHTTIPO = '{1}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetFechasProcesamientoDisponibilidad</key>
+    <query>
+      SELECT pmperianiomes,to_date(substr(pmperianiomes,1,4)||'/01/01','YYYY/MM/DD') as RDGfechaInicio
+      ,to_date((TO_NUMBER(substr(pmperianiomes,1,4))+3)||'/01/01','YYYY/MM/DD') as RDGfechaFin
+      --,to_date(substr(pmperianiomes,1,4)||'/'||substr(pmperianiomes,5,2)||'/01','YYYY/MM/DD') as FechaPeriodo
+      ,pmperifechaperiodo as FechaPeriodo
+      ,case when (to_date(substr(pmperianiomes,1,4)||'/01/01','YYYY/MM/DD') &lt;= pmperifechaperiodo and pmperifechaperiodo &lt; to_date(substr(pmperianiomes,1,4)||'/06/01','YYYY/MM/DD') ) then to_date(substr(pmperianiomes,1,4)||'/01/01','YYYY/MM/DD')
+      when to_date(substr(pmperianiomes,1,4)||'/06/01','YYYY/MM/DD') &lt;= pmperifechaperiodo and pmperifechaperiodo &lt; to_date(substr(pmperianiomes,1,4)||'/12/01','YYYY/MM/DD') then to_date(substr(pmperianiomes,1,4)||'/07/01','YYYY/MM/DD')
+      when to_date(substr(pmperianiomes,1,4)||'/12/01','YYYY/MM/DD') &lt;= pmperifechaperiodo and pmperifechaperiodo &lt;= to_date(substr(pmperianiomes,1,4)||'/12/31','YYYY/MM/DD') then to_date((TO_NUMBER(substr(pmperianiomes,1,4))+1)||'/01/01','YYYY/MM/DD')
+      when substr(pmperianiomes,1,4)&lt;>to_char(pmperifechaperiodo,'YYYY') THEN to_date(substr(pmperianiomes,1,4)||'/01/01','YYYY/MM/DD')
+      else null end MANTFechaInicio
+      ,case when (to_date(substr(pmperianiomes,1,4)||'/01/01','YYYY/MM/DD') &lt;= pmperifechaperiodo and pmperifechaperiodo &lt; to_date(substr(pmperianiomes,1,4)||'/06/01','YYYY/MM/DD') ) then to_date((TO_NUMBER(substr(pmperianiomes,1,4))+1)||'/01/01','YYYY/MM/DD')
+      when to_date(substr(pmperianiomes,1,4)||'/06/01','YYYY/MM/DD') &lt;= pmperifechaperiodo and pmperifechaperiodo &lt; to_date(substr(pmperianiomes,1,4)||'/12/01','YYYY/MM/DD') then to_date((TO_NUMBER(substr(pmperianiomes,1,4))+1)||'/07/01','YYYY/MM/DD')
+      when to_date(substr(pmperianiomes,1,4)||'/12/01','YYYY/MM/DD') &lt;= pmperifechaperiodo and pmperifechaperiodo &lt;= to_date(substr(pmperianiomes,1,4)||'/12/31','YYYY/MM/DD') then to_date((TO_NUMBER(substr(pmperianiomes,1,4))+2)||'/01/01','YYYY/MM/DD')
+      when substr(pmperianiomes,1,4)&lt;>to_char(pmperifechaperiodo,'YYYY') THEN to_date((TO_NUMBER(substr(pmperianiomes,1,4))+1)||'/01/01','YYYY/MM/DD')
+      else null end MANTFechaFin
+      ,substr(pmperianiomes,1,4) anio ,substr(pmperianiomes,5,2) mes
+      FROM pmo_periodo WHERE PMPERIESTADO = 'A' and pmpericodi= {0}
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetDataGrupoRelaso</key>
+    <query>
+      select GREL.GRRASOCODI AS COD_REL,
+      DREL.GRRDEFNOMB AS TIPO_REL
+      ,GBR.GRUPOCODISDDP AS COD_SDDP,GBR.GRUPONOMB AS DESC_SDDP
+      ,GRSIC.GRUPOCODI AS COD_SIC,GRSIC.GRUPONOMB AS DESC_SIC
+      ,GREL.GRRASOTAG AS TAG,GREL.GRRASOSECUENCIA AS SECUENCIA
+      ,CASE WHEN GREL.GRRASOFECMODIFICACION IS NOT NULL THEN GREL.GRRASOFECMODIFICACION ELSE GREL.GRRASOFECCREACION END AS FECHA_MODI
+      ,CASE WHEN GREL.GRRASOUSUMODIFICACION IS NOT NULL THEN GREL.GRRASOUSUMODIFICACION ELSE GREL.GRRASOUSUCREACION END AS USUA_MODI
+      from PR_GRUPORELASO GREL
+      JOIN PR_GRUPORELDEF DREL ON GREL.GRRDEFCODI=DREL.GRRDEFCODI
+      LEFT JOIN PR_GRUPO GBR ON GREL.GRUPOCODI1=GBR.GRUPOCODI
+      --LEFT JOIN ME_PTOMEDICION PTO ON GREL.GRUPOCODI1=PTO.GRUPOCODI
+      LEFT JOIN PR_GRUPO GRSIC ON GREL.GRUPOCODI2=GRSIC.GRUPOCODI
+      where GREL.GRRDEFCODI IN ({0})
+      --order by PTO.PTOMEDIDESC
+      order by GBR.GRUPONOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GenerateDatCgnd</key>
+    <query>
+
+      DECLARE
+        V_PMPERICODI NUMBER:=:V_PMPERICODI_VAL;        
+
+      BEGIN
+      
+         DELETE FROM PMO_DAT_CGND;
+
+        INSERT INTO PMO_DAT_CGND(PMCGNDCODI,GRUPOCODI,PMCGNDGRUPOCODIBARRA,PMCGNDTIPOPLANTA,PMCGNDNROUNIDADES,PMCGNDPOTINSTALADA,PMCGNDFACTOROPE,PMCGNDPROBFALLA,PMCGNDCORTEOFALLA)
+          SELECT ROWNUM, RES.* FROM (
+          SELECT GR.GRUPOCODI,(SELECT MAX(GRUPOCODI1) FROM PR_GRUPORELASO RE WHERE RE.GRRDEFCODI = 4 AND RE.GRUPOCODI2 = GR.GRUPOCODI ) AS GRUPOCODIBARRA
+          ,1 AS TIPOPLANTA,1 AS NROUNIDADES,NULL AS POTINS, NULL AS FACOPE,1 AS PROBFALLA,0 AS CORTE
+          FROM PR_GRUPO GR
+          WHERE GR.CATECODI IN (5) AND TRIM(GR.GRUPOESTADO) in ('A','P') AND GR.TIPOGENERRER = 'S'
+          UNION
+          SELECT GR.GRUPOCODI,(SELECT MAX(GRUPOCODI1) FROM PR_GRUPORELASO RE WHERE RE.GRRDEFCODI = 5 AND RE.GRUPOCODI2 = GR.GRUPOCODI ) AS GRUPOCODIBARRA
+          ,1 AS TIPOPLANTA,1 AS NROUNIDADES,NULL AS POTINS, NULL AS FACOPE,1 AS PROBFALLA,0 AS CORTE
+          FROM PR_GRUPO GR
+          WHERE GR.CATECODI IN (2) AND GR.GRUPOACTIVO='S' AND GR.TIPOGENERRER = 'S'
+          ) RES;
+          
+          --Procedemos con el Update del PMCGNDPOTINSTALADA
+          UPDATE PMO_DAT_CGND SET PMCGNDPOTINSTALADA = (
+          SELECT MAX(TO_NUMBER(FORMULADAT,'999999999999D0000000000',' NLS_NUMERIC_CHARACTERS=''.,''')) 
+            FROM (SELECT DAT.* FROM PR_GRUPODAT DAT JOIN (SELECT GRUPOCODI,MAX(FECHADAT) FECHADAT FROM PR_GRUPODAT 
+                  WHERE CONCEPCODI in (88,87) 
+                  AND FECHADAT &lt;= (SELECT PMPERIFECHAPERIODO FROM PMO_PERIODO WHERE PMPERICODI=V_PMPERICODI)
+                  GROUP BY GRUPOCODI) RES ON DAT.GRUPOCODI = RES.GRUPOCODI AND DAT.FECHADAT = RES.FECHADAT 
+                  AND DAT.CONCEPCODI in (88,87) ) DA                  
+          WHERE PMO_DAT_CGND.GRUPOCODI = DA.GRUPOCODI);
+          
+          --Procedemos con el Update del PMCGNDFACTOROPE
+          UPDATE PMO_DAT_CGND SET PMCGNDFACTOROPE = (
+          SELECT MAX(TO_NUMBER(FORMULADAT,'999999999999D0000000000',' NLS_NUMERIC_CHARACTERS=''.,''')) 
+            FROM (SELECT DAT.* FROM PR_GRUPODAT DAT JOIN (SELECT GRUPOCODI,MAX(FECHADAT) FECHADAT FROM PR_GRUPODAT 
+                  WHERE CONCEPCODI in (295,296) 
+                  AND FECHADAT &lt;= (SELECT PMPERIFECHAPERIODO FROM PMO_PERIODO WHERE PMPERICODI=V_PMPERICODI)
+                  GROUP BY GRUPOCODI) RES ON DAT.GRUPOCODI = RES.GRUPOCODI AND DAT.FECHADAT = RES.FECHADAT 
+                  AND DAT.CONCEPCODI in (295,296) ) DA                  
+          WHERE PMO_DAT_CGND.GRUPOCODI = DA.GRUPOCODI);
+
+      END;
+    </query>
+  </Sql>
+  
+
+  <Sql>
+    <key>GenerateDatMgnd</key>
+    <query>
+
+      DECLARE
+        V_PMPERICODI NUMBER:=:V_PMPERICODI_VAL;        
+
+      BEGIN
+      
+         DELETE FROM PMO_DAT_MGND;
+         
+         
+         INSERT INTO PMO_DAT_MGND(PMMGNDCODI,GRUPOCODI,PMMGNDGRUPOCODIBARRA,PMMGNDFECHA,PMMGNDTIPOPLANTA,PMMGNDNROUNIDADES,PMMGNDPOTINSTALADA,PMMGNDFACTOROPE,PMMGNDPROBFALLA)
+          SELECT ROWNUM, RES.GRUPOCODI,GRUPOCODIBARRA,DAT.FECHADAT, TIPOPLANTA,NROUNIDADES,POTINS,FACOPE,PROBFALLA
+          FROM (
+          SELECT GR.GRUPOCODI,(SELECT MAX(GRUPOCODI1) FROM PR_GRUPORELASO RE WHERE RE.GRRDEFCODI = 4 AND RE.GRUPOCODI2 = GR.GRUPOCODI ) AS GRUPOCODIBARRA
+          ,1 AS TIPOPLANTA,1 AS NROUNIDADES,NULL AS POTINS, NULL AS FACOPE,1 AS PROBFALLA,0 AS CORTE
+          FROM PR_GRUPO GR
+          WHERE GR.CATECODI IN (5) AND TRIM(GR.GRUPOESTADO) in ('A','P') AND GR.TIPOGENERRER = 'S'
+          UNION
+          SELECT GR.GRUPOCODI,(SELECT MAX(GRUPOCODI1) FROM PR_GRUPORELASO RE WHERE RE.GRRDEFCODI = 5 AND RE.GRUPOCODI2 = GR.GRUPOCODI ) AS GRUPOCODIBARRA
+          ,1 AS TIPOPLANTA,1 AS NROUNIDADES,NULL AS POTINS, NULL AS FACOPE,1 AS PROBFALLA,0 AS CORTE
+          FROM PR_GRUPO GR
+          WHERE GR.CATECODI IN (2) AND GR.GRUPOACTIVO='S' AND GR.TIPOGENERRER = 'S'
+          ) RES JOIN (SELECT DISTINCT GRUPOCODI,FECHADAT FROM PR_GRUPODAT
+              WHERE CONCEPCODI IN (87,88,295,296)
+              AND FECHADAT> (SELECT PMPERIFECHAPERIODO FROM PMO_PERIODO WHERE PMPERICODI=V_PMPERICODI)
+            ) DAT ON RES.GRUPOCODI = DAT.GRUPOCODI;
+         
+
+      END;
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GenerateDatMgndPtoInstFactOpe</key>
+    <query>
+
+      DECLARE
+        V_FECHADAT DATE:=:V_FECHA_VAL;
+
+      BEGIN
+              
+          
+          --Procedemos con el Update del PMCGNDPOTINSTALADA
+          UPDATE PMO_DAT_MGND SET PMMGNDPOTINSTALADA = (
+          SELECT MAX(TO_NUMBER(FORMULADAT,'999999999999D0000000000',' NLS_NUMERIC_CHARACTERS=''.,''')) 
+            FROM (SELECT DAT.* FROM PR_GRUPODAT DAT JOIN (SELECT GRUPOCODI,MAX(FECHADAT) FECHADAT FROM PR_GRUPODAT 
+                  WHERE CONCEPCODI in (88,87) 
+                  AND FECHADAT &lt;= V_FECHADAT
+                  GROUP BY GRUPOCODI) RES ON DAT.GRUPOCODI = RES.GRUPOCODI AND DAT.FECHADAT = RES.FECHADAT 
+                  AND DAT.CONCEPCODI in (88,87) ) DA                  
+          WHERE PMO_DAT_MGND.GRUPOCODI = DA.GRUPOCODI);  
+          
+                    
+          --Procedemos con el Update del PMCGNDFACTOROPE
+          UPDATE PMO_DAT_MGND SET PMMGNDFACTOROPE = (
+          SELECT MAX(TO_NUMBER(FORMULADAT,'999999999999D0000000000',' NLS_NUMERIC_CHARACTERS=''.,''')) 
+            FROM (SELECT DAT.* FROM PR_GRUPODAT DAT JOIN (SELECT GRUPOCODI,MAX(FECHADAT) FECHADAT FROM PR_GRUPODAT 
+                  WHERE CONCEPCODI in (295,296) 
+                  AND FECHADAT &lt;= V_FECHADAT
+                  GROUP BY GRUPOCODI) RES ON DAT.GRUPOCODI = RES.GRUPOCODI AND DAT.FECHADAT = RES.FECHADAT 
+                  AND DAT.CONCEPCODI in (295,296) ) DA                  
+          WHERE PMO_DAT_MGND.GRUPOCODI = DA.GRUPOCODI);                   
+
+      END;
+    </query>
+  </Sql>
+  
+  
+</Sqls>
+
+

@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(indcpccodi), 0) + 1 from ind_capacidad
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ind_capacidad(
+      indcpccodi,
+      indcbrcodi,
+      equicodicentral,
+      equicodiunidad,
+      grupocodi,
+      famcodi,
+      indcpcfecinicio,
+      indcpcfecfin,
+      indcpctipo,
+      indcpcusucreacion,
+      indcpcfeccreacion
+      )
+      values(
+      :indcpccodi,
+      :indcbrcodi,
+      :equicodicentral,
+      :equicodiunidad,
+      :grupocodi,
+      :famcodi,
+      :indcpcfecinicio,
+      :indcpcfecfin,
+      :indcpctipo,
+      :indcpcusucreacion,
+      :indcpcfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateDateById</key>
+    <query>
+      update ind_capacidad
+      set 
+          indcpcfecinicio = :indcpcfecinicio,
+          indcpcfecfin = :indcpcfecfin
+      where indcpccodi = :indcpccodi    
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListCapacidadByCabecera</key>
+    <query>
+      select
+        indcpccodi,
+        indcbrcodi,
+        equicodicentral,
+        equicodiunidad,
+        grupocodi,
+        famcodi,
+        indcpcfecinicio,
+        indcpcfecfin,
+        indcpctipo
+      from ind_capacidad
+      where indcbrcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCapacidadJoinCabecera</key>
+    <query>
+      select
+          t1.indcbrcodi,
+          t2.indcpccodi,
+          t1.emprcodi,
+          t1.ipericodi,
+          t2.equicodicentral,
+          t2.equicodiunidad,
+          t2.grupocodi,
+          t2.famcodi,
+          t2.indcpcfecinicio,
+          t2.indcpcfecfin,
+          t2.indcpctipo,
+          t1.indcbrtipo
+      from ind_cabecera t1 join ind_capacidad t2
+      on t1.indcbrcodi = t2.indcbrcodi
+      where t1.emprcodi = {0} and t1.ipericodi = {1} and t1.indcbrtipo = {2}
+      order by t2.equicodicentral
+    </query>
+  </Sql>
+  
+
+  <Sql>
+    <key>ListByCriteria</key>
+    <query>
+      select
+        cab.ipericodi,
+        cab.emprcodi,
+        cab.indcbrtipo,
+        cap.*
+      from
+        ind_cabecera cab
+        inner join ind_capacidad cap on cap.indcbrcodi = cab.indcbrcodi
+      where
+        cab.ipericodi = {0} and
+        ('0'='{1}' or cab.emprcodi in ({1})) and
+        cab.indcbrtipo in ({2}) and
+        ('0'='{3}' or cap.equicodicentral in ({3})) and
+        ('0'='{4}' or cap.equicodiunidad in ({4})) and
+        ('0'='{5}' or cap.grupocodi in ({5})) and
+        ('0'='{6}' or cap.famcodi in ({6})) and
+        cap.indcpctipo in ({7})
+    </query>
+  </Sql>
+
+</Sqls>

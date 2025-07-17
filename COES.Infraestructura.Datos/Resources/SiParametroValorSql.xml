@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(siparvcodi), 0) + 1 from si_parametro_valor
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into si_parametro_valor(
+           siparvcodi,
+           siparcodi,
+           siparvfechainicial,
+           siparvfechafinal,
+           siparvvalor,
+           siparvnota,
+           siparveliminado,
+           siparvusucreacion,
+           siparvfeccreacion,
+           siparvusumodificacion,
+           siparvfecmodificacion
+       )
+       values(
+           :siparvcodi,
+           :siparcodi,
+           :siparvfechainicial,
+           :siparvfechafinal,
+           :siparvvalor,
+           :siparvnota,
+           :siparveliminado,
+           :siparvusucreacion,
+           :siparvfeccreacion,
+           :siparvusumodificacion,
+           :siparvfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update si_parametro_valor
+       set
+           siparcodi = :siparcodi,
+           siparvfechainicial = :siparvfechainicial,
+           siparvfechafinal = :siparvfechafinal,
+           siparvvalor = :siparvvalor,
+           siparvnota = :siparvnota,
+           siparveliminado = :siparveliminado,
+           siparvusucreacion = :siparvusucreacion,
+           siparvfeccreacion = :siparvfeccreacion,
+           siparvusumodificacion = :siparvusumodificacion,
+           siparvfecmodificacion = :siparvfecmodificacion
+       where
+           siparvcodi = :siparvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from si_parametro_valor
+       where
+           siparvcodi = :siparvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           siparvcodi,
+           siparcodi,
+           siparvfechainicial,
+           siparvfechafinal,
+           siparvvalor,
+           siparvnota,
+           siparveliminado,
+           siparvusucreacion,
+           siparvfeccreacion,
+           siparvusumodificacion,
+           siparvfecmodificacion
+       from
+           si_parametro_valor
+       where
+           siparvcodi = :siparvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           siparvcodi,
+           siparcodi,
+           siparvfechainicial,
+           siparvfechafinal,
+           siparvvalor,
+           siparvnota,
+           siparveliminado,
+           siparvusucreacion,
+           siparvfeccreacion,
+           siparvusumodificacion,
+           siparvfecmodificacion
+       from
+           si_parametro_valor
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           siparvcodi,
+           siparcodi,
+           siparvfechainicial,
+           siparvfechafinal,
+           siparvvalor,
+           siparvnota,
+           siparveliminado,
+           siparvusucreacion,
+           siparvfeccreacion,
+           siparvusumodificacion,
+           siparvfecmodificacion
+       from
+           si_parametro_valor
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListado</key>
+    <query>
+      select
+      *
+      from (
+      select 
+          a.siparvcodi,b.siparcodi,a.siparvfechainicial,a.siparvfechafinal,a.siparvvalor,a.siparvnota,
+          a.siparveliminado,a.siparvusucreacion,a.siparvfeccreacion,a.siparvusumodificacion,a.siparvfecmodificacion,
+          b.siparabrev, (row_number() over (order by b.siparabrev,a.siparvfechainicial, a.siparvfechafinal)) as r 
+      from 
+          si_parametro_valor a, si_parametro b 
+      where 
+      (b.siparcodi= a.siparcodi) and (a.siparcodi={0} or {0} = 0)
+      and
+      (
+      (( a.siparvfechainicial >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.siparvfechainicial &lt; to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') ) )
+      or
+      (( a.siparvfechafinal > to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.siparvfechafinal &lt; to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1) )
+      or
+      ( a.siparvfechainicial &lt; to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.siparvfechafinal > to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS'))
+      )
+      and (a.siparveliminado='{5}' or ('{5}'='T'))
+      order by b.siparabrev,a.siparvfechainicial,a.siparvfechafinal
+      )
+      where (r >= ((({3}-1) * {4}) + 1) and r &lt; (({3} * {4}) + 1 )) or ({3} = -1 and {4} = -1)
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>TotalRegistros</key>
+    <query>
+      select count(*) from si_parametro_valor a,si_parametro b where (b.siparcodi= a.siparcodi) and (a.siparcodi={0} or {0} = 0)
+      and
+      (
+      (( a.siparvfechainicial >= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.siparvfechainicial &lt; to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') ) )
+      or
+      (( a.siparvfechafinal > to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.siparvfechafinal &lt; to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1) )
+      or
+      ( a.siparvfechainicial &lt; to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.siparvfechafinal > to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS'))
+      )
+      and (a.siparveliminado='{3}' or ('{3}'='T'))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByIdParametro</key>
+    <query>
+      select
+      paramvalor.*
+      from si_parametro_valor paramvalor
+      where paramvalor.SIPARCODI = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByIdParametroAndFechaInicial</key>
+    <query>
+      select
+      paramvalor.*
+      from si_parametro_valor paramvalor
+      where paramvalor.SIPARCODI = {0} and paramvalor.siparvfechainicial = to_date('{1}','YYYY-MM-DD')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerValorParametro</key>
+    <query>
+      select
+      a.siparvvalor
+      from
+      si_parametro_valor a
+      where
+      a.siparcodi={0}
+      and (
+      to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') >= a.siparvfechainicial
+      and
+      to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') &lt;= a.siparvfechafinal)
+      and a.siparveliminado='N' and rownum = 1 
+    </query>
+  </Sql>
+  
+</Sqls>

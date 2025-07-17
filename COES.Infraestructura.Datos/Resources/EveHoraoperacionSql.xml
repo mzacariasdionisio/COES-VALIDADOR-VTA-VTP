@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into eve_horaoperacion(
+		hopcodi,
+		hophorini,
+		subcausacodi,
+		hophorfin,
+		equicodi,
+		hopdesc,
+		hophorordarranq,
+		hophorparada,
+		lastuser,
+		lastdate,
+		grupocodi,
+		hopsaislado,
+		hoplimtrans,
+		hopfalla,
+		hopcompordarrq,
+		hopcompordpard,
+		hopcausacodi,
+		hopcodipadre,
+		hopestado,
+		Hopnotifuniesp,
+		evencodi,
+		hopobs,
+		emprcodi,
+		hoparrqblackstart,
+		hopensayope,
+		hopensayopmin
+		)
+		values(
+		:hopcodi,
+		:hophorini,
+		:subcausacodi,
+		:hophorfin,
+		:equicodi,
+		:hopdesc,
+		:hophorordarranq,
+		:hophorparada,
+		:lastuser,
+		:lastdate,
+		:grupocodi,
+		:hopsaislado,
+		:hoplimtrans,
+		:hopfalla,
+		:hopcompordarrq,
+		:hopcompordpard,
+		:hopcausacodi,
+		:hopcodipadre,
+		:hopestado,
+		:hopnotifuniesp,
+		:evencodi,
+		:hopobs,
+		:emprcodi,
+		:hoparrqblackstart,
+		:hopensayope,
+		:hopensayopmin
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+		update eve_horaoperacion
+		set
+		hophorini= :hophorini,
+		subcausacodi= :subcausacodi,
+		hophorfin= :hophorfin,
+		equicodi= :equicodi,
+		hopdesc= :hopdesc,
+		hophorordarranq= :hophorordarranq,
+		hophorparada= :hophorparada,
+		lastuser= :lastuser,
+		lastdate= :lastdate,
+		grupocodi= :grupocodi,
+		hopsaislado= :hopsaislado,
+		hoplimtrans= :hoplimtrans,
+		hopfalla= :hopfalla,
+		hopcompordarrq= :hopcompordarrq,
+		hopcompordpard= :hopcompordpard,
+		hopcausacodi= :hopcausacodi,
+		hopcodipadre= :hopcodipadre,
+		hopestado= :hopestado,
+		Hopnotifuniesp = :Hopnotifuniesp,
+		evencodi = :evencodi,
+		hopobs = :hopobs,
+		emprcodi = :emprcodi,
+		hoparrqblackstart = :hoparrqblackstart,
+		hopensayope = :hopensayope,
+		hoppruebaexitosa = :hoppruebaexitosa,
+		hopensayopmin = :hopensayopmin
+		where
+		hopcodi=: hopcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from eve_horaoperacion
+       where
+           hopcodi = :hopcodi 
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      eve_horaoperacion
+      where
+      hopcodi = :hopcodi and hopestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      eve_horaoperacion
+      where
+      hopestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           *
+       from
+           eve_horaoperacion
+       where
+          hophorini >= to_date('{0}','YYYY-MM-DD') and hophorini &lt; to_date('{1}','YYYY-MM-DD')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByDetalleHO</key>
+    <query>
+      select pgp.grupopadre,ho.hophorini,pg.grupopadre Unidad,pgp.gruponomb, ho.* from eve_horaoperacion ho
+      inner join pr_grupo pg on  pg.grupocodi = ho.grupocodi
+      inner join pr_grupo pgp on pgp.grupocodi = pg.grupopadre
+      where
+      hophorini >= to_date('{0}','YYYY-MM-DD') and hophorini &lt; to_date('{1}','YYYY-MM-DD') and pgp.Grupocodi  not in
+      (select distinct gr2.grupocodi  from pr_grupocc cc
+      inner join pr_grupo gr on gr.grupocodi = cc.grupocodicc
+      inner join pr_grupo gr2 on gr2.grupocodi = gr.grupopadre)
+      union
+      select pg.grupopadre,ho.hophorini,pg.grupocodi Unidad,pg.gruponomb, ho.* from eve_horaoperacion ho
+      inner join pr_grupocc cc on  cc.grupocodicc = ho.grupocodi
+      inner join pr_grupo pg on cc.grupocodidet = pg.grupocodi
+      where
+      hophorini >= to_date('{0}','YYYY-MM-DD') and hophorini &lt; to_date('{1}','YYYY-MM-DD')
+      order by 1,3,2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaXEmpresaxFecha</key>
+    <query>
+      select emprcodi2 as emprcodi,a.* from
+      (
+          select hop.*
+          ,ROW_NUMBER() OVER(PARTITION BY hopcodi  ORDER BY hopcodi asc) AS NUM
+          from
+          (
+            select  emp.emprcodi as emprcodi2,ho.*,fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR,eqp.equicodi equipadre,eqp.equicodi codipadre,eqp.equinomb central, eq.equiabrev, emp.emprnomb, pr.gruponomb equiponombre, pr.gruponomb, pr.GRUPOABREV
+            from eve_horaoperacion ho
+            inner join eq_equipo eq on eq.equicodi = ho.equicodi
+            inner join eq_equipo eqp on eqp.equicodi = (case when eq.equipadre>0 then eq.equipadre else eq.equicodi end )
+            left join pr_grupo pr on pr.grupocodi = ho.GRUPOCODI
+            left join si_empresa emp on emp.emprcodi = (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end)
+            left join si_fuenteenergia fe on fe.FENERGCODI = pr.FENERGCODI
+            where ho.hophorini >= to_date('{1}','YYYY-MM-DD') and hophorini &lt; to_date('{2}','YYYY-MM-DD') 
+				    and ((case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end) = {0} or ('{0}' = '-2')) and (eqp.equicodi = {3} or ('{3}' = '-2'))  and coalesce(ho.hopcodipadre, 0) = 0 AND hopestado = 'A'
+        
+            union
+        
+            select  emp.emprcodi as emprcodi2,ho.*,fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR,eqp.equicodi equipadre,eqp.equicodi codipadre,eqp.equinomb central, eq.equiabrev, emp.emprnomb, pr.gruponomb equiponombre, pr.gruponomb, pr.GRUPOABREV
+            from eve_horaoperacion ho
+            inner join pr_grupo pr on pr.grupocodi = ho.grupocodi
+            inner join eq_equipo eq on eq.equicodi = ho.equicodi
+            inner join eq_equipo eqp on eqp.equicodi = (case when eq.equipadre>0 then eq.equipadre else eq.equicodi end )
+            left join si_empresa emp on emp.emprcodi = (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end)
+            left join si_fuenteenergia fe on fe.FENERGCODI = pr.FENERGCODI
+            where ho.hophorini >= to_date('{1}','YYYY-MM-DD') and hophorini &lt; to_date('{2}','YYYY-MM-DD')
+				    and ((case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end) = {0} or ('{0}' = '-2')) AND (eqp.equicodi = {3} or ({3} = -1))  and coalesce(ho.hopcodipadre, 0) = 0 AND hopestado = 'A'
+          )hop
+      ) a
+      where num = 1 and ('-2' = '{0}' or emprcodi2 in ({0}) )
+      and ('-2' = '{3}' or  equipadre in ({3}) )
+      --order by emprnomb, central, HOPHORINI, equiponombre
+      order by emprnomb, central, hophorini, GRUPOCODI, equicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEquiposHorasOperacionxFormato</key>
+    <query>
+      select * from eve_horaoperacion ho
+      where ho.equicodi in (
+      select distinct (case when eq.famcodi in (36,38) then eq.equipadre else eq.equicodi end) from me_hojaptomed hpto
+      inner join me_ptomedicion pto on hpto.ptomedicodi = pto.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      where hpto.formatcodi = {0} and (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end) = {1}) and ho.hophorini >= to_date('{2}','YYYY-MM-DD') and
+      hophorini &lt; to_date('{3}','YYYY-MM-DD') and hopestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHorasOperacxEmpresaxFechaxTipoOP</key>
+    <query>
+      select emp.emprcodi,ho.*, emp.emprnomb, eve.subcausadesc, eq.equiabrev, eq.equinomb equiponombre, ho.equicodi equipadre, eq2.equinomb padrenombre, eq.famcodi,fener.fenergcodi,fener.fenergnomb
+      from eve_horaoperacion ho
+      inner join eq_equipo eq on eq.equicodi = ho.equicodi
+      inner join eq_equipo eq2 on eq2.equicodi = eq.EQUIPADRE
+      inner join si_empresa emp on emp.emprcodi = (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end)
+      inner join eve_subcausaevento eve on eve.subcausacodi = ho.subcausacodi
+      left join pr_grupo pr on pr.grupocodi = eq.grupocodi
+      left join si_fuenteenergia fener  on fener.FENERGCODI = pr.FENERGCODI
+      where ('{0}' = '-2' or emp.emprcodi in ({0})) AND ho.hophorini >= to_date('{1}','YYYY-MM-DD') and
+      hophorini &lt; to_date('{2}','YYYY-MM-DD') and ('{3}'='-2' or ho.subcausacodi in ({3})) and hopestado = 'A' and eq.famcodi = {4}
+      union
+      select emp.emprcodi,ho.*, emp.emprnomb, eve.subcausadesc, eq.equiabrev, eq.equinomb equiponombre, ho.equicodi equipadre, eq2.equinomb padrenombre, eq.famcodi,fener.fenergcodi,fener.fenergnomb
+      from eve_horaoperacion ho
+      inner join eq_equipo eq on eq.grupocodi = ho.grupocodi
+      inner join eq_equipo eq2 on eq2.equicodi =  eq.EQUIPADRE
+      inner join si_empresa emp on emp.emprcodi = (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end)
+      inner join eve_subcausaevento eve on eve.subcausacodi = ho.subcausacodi
+      left join pr_grupo pr on pr.grupocodi = eq.grupocodi
+      left join si_fuenteenergia fener  on fener.FENERGCODI = pr.FENERGCODI
+      where ('{0}' = '-2' or emp.emprcodi in ({0})) and ho.hophorini >= to_date('{1}','YYYY-MM-DD') and
+      hophorini &lt; to_date('{2}','YYYY-MM-DD') and ('{3}'='-2' or ho.subcausacodi in ({3})) and hopestado = 'A' and eq.famcodi = {4}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHorasOperacxEquiposXEmpXTipoOPxFam</key>
+    <query>
+      select emp.emprcodi, ho.*, emp.emprnomb, eve.subcausadesc, eq.equiabrev, eq.equinomb equiponombre, eq2.equicodi equipadre, eq2.equinomb padrenombre, fener.fenergcodi,fener.fenergnomb
+      from eve_horaoperacion ho
+      inner join eq_equipo eq on eq.equicodi = ho.equicodi
+      inner join eq_equipo eq2 on eq2.equicodi = (case when eq.equipadre>0 then eq.equipadre else eq.equicodi end )
+      inner join si_empresa emp on emp.emprcodi = (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end)
+      inner join eve_subcausaevento eve on eve.subcausacodi = ho.subcausacodi
+      left join pr_grupo pr on pr.grupocodi = eq.grupocodi
+      left join si_fuenteenergia fener  on fener.FENERGCODI = pr.FENERGCODI
+      where eq2.famcodi = {4} and ('{0}' = '-2' or emp.emprcodi in ({0})) AND ho.hophorini >= to_date('{1}','YYYY-MM-DD')
+      and hophorini &lt; to_date('{2}','YYYY-MM-DD') and ('{3}'='-2' or ho.subcausacodi in ({3})) and hopestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHorasOperacxEquiposXEmpXTipoOPxFam2</key>
+    <query>
+      select pr.OSINERGCODI,emp.emprcodi, ho.*, emp.emprnomb, eve.subcausadesc, eq.equiabrev, pr.gruponomb equiponombre, eqp.equicodi equipadre, eqp.equinomb padrenombre,fener.fenergcodi,fener.fenergnomb
+      ,emp.emprabrev, ta.tareaabrev || ' ' || ar.areanomb as areanomb
+      from eve_horaoperacion ho
+      inner join eq_equipo eq on eq.equicodi = ho.equicodi
+      inner join pr_grupo pr on pr.grupocodi = ho.grupocodi
+      inner join eq_equipo eq on eq.equicodi = ho.equicodi
+      inner join eq_equipo eqp on eqp.equicodi = (case when eq.equipadre>0 then eq.equipadre else eq.equicodi end )
+      inner join si_empresa emp on emp.emprcodi = (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end)
+      inner join eve_subcausaevento eve on eve.subcausacodi = ho.subcausacodi
+      inner join eq_area ar on (eq.areacodi=ar.areacodi)
+      left join eq_tipoarea ta on (ar.tareacodi = ta.tareacodi)
+      left join si_fuenteenergia fener  on fener.FENERGCODI = pr.FENERGCODI
+      where ('{0}' = '-2' or emp.emprcodi in ({0})) AND ho.hophorini >= to_date('{1}','YYYY-MM-DD') and
+      hophorini &lt; to_date('{2}','YYYY-MM-DD') and ('{3}'='-2' or ho.subcausacodi in ({3}))
+      and hopestado = 'A' and ('{4}' = '-2' or eqp.equicodi in ({4}))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCriteriaxPKCodis</key>
+    <query>
+      select eqp.equicodi equipadre,ho.* from eve_horaoperacion ho
+      inner join eq_equipo eq on eq.equicodi = ho.equicodi
+      inner join eq_equipo eqp on eqp.equicodi = (case when eq.equipadre>0 then eq.equipadre else eq.equicodi end )
+      where ho.hopcodi in ({0}) and HO.hopestado = 'A'
+    </query>
+  </Sql>
+  
+	<Sql>
+		<key>GetHorasURS</key>
+		<query>
+			select ho.*,
+			(select grupourspadre from pr_grupo where grupocodi = ho.grupocodi) grupourspadre
+			from eve_horaoperacion ho where grupocodi in (
+			select grupocodi from pr_grupo where grupourspadre in (
+			select grupocodi from pr_grupo where catecodi = 12 and grupoactivo = 'S')
+			) and ho.hophorini >= to_date('{0}','YYYY-MM-DD')
+			and hophorini &lt; to_date('{1}','YYYY-MM-DD')
+		</query>
+	</Sql>
+
+  <!--INICIO HOP-EMS-->
+  <Sql>
+    <key>ListarHorasOperacionByCriteria</key>
+    <query>
+		select emprcodi2 as emprcodi,a.* from
+		(
+        --hidraulicos, eolicos, solares
+		    select emp.emprcodi as emprcodi2,ho.*,pr.GRUPOCODI as GRUPOPADRE,fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, eve.subcausadesc, emp.emprnomb, pr.gruponomb equiponombre, pr.GRUPOABREV,eqp.equicodi equipadre,eqp.equicodi codipadre,eqp.equinomb central, eq.equiabrev,eq.famcodi, pr.gruponomb, 2 as FLAGTIPOHO, pr.grupotipomodo
+		    from eve_horaoperacion ho
+		    inner join eve_subcausaevento eve on eve.subcausacodi = ho.subcausacodi
+		    inner join eq_equipo eq on eq.equicodi = ho.equicodi
+		    inner join eq_equipo eqp on eqp.equicodi = (case when eq.equipadre>0 then eq.equipadre else eq.equicodi end )
+		    left join pr_grupo pr on pr.grupocodi = eq.GRUPOCODI
+		    left join si_empresa emp on emp.emprcodi = (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end)
+		    left join si_fuenteenergia fe on fe.FENERGCODI = pr.FENERGCODI
+		    where  ('1'='{4}') and ho.hophorini >= to_date('{0}','YYYY-MM-DD') and hophorini &lt; to_date('{1}','YYYY-MM-DD') and hopestado = 'A' and ho.grupocodi is null
+
+		    union
+
+        --termicos
+		    select emp.emprcodi as emprcodi2,ho.*,pr.GRUPOPADRE,fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR,eve.subcausadesc, emp.emprnomb, pr.gruponomb equiponombre, pr.GRUPOABREV,eqp.equicodi equipadre,eqp.equicodi codipadre,eqp.equinomb central, eq.equiabrev,eq.famcodi, pr.gruponomb, 1 as FLAGTIPOHO, pr.grupotipomodo
+		    from eve_horaoperacion ho
+		    inner join eve_subcausaevento eve on eve.subcausacodi = ho.subcausacodi
+		    inner join pr_grupo pr on pr.grupocodi = ho.grupocodi
+		    inner join eq_equipo eq on eq.equicodi = ho.equicodi
+		    inner join eq_equipo eqp on eqp.equicodi = (case when eq.equipadre>0 then eq.equipadre else eq.equicodi end )
+		    left join si_empresa emp on emp.emprcodi = (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end)
+		    left join si_fuenteenergia fe on fe.FENERGCODI = pr.FENERGCODI
+		    where ('1'='{4}' or '2'='{4}') and ho.hophorini >= to_date('{0}','YYYY-MM-DD') and hophorini &lt; to_date('{1}','YYYY-MM-DD') and hopestado = 'A' and ho.grupocodi > 0   
+      ) a
+      where ('-2' = '{2}' or emprcodi2 in ({2}) )
+      and ('-2' = '{3}' or  equipadre in ({3}) )
+      order by emprnomb, central, hophorini, GRUPOCODI, equicodi
+    </query>
+  </Sql>
+  
+  <!--FIN HOP-EMS-->
+
+  <!--INICIO MigracionSGOCOES-GrupoB-->
+
+  <Sql>
+    <key>ListaEstadoOperacion</key>
+    <query>
+      SELECT * FROM
+      (
+      SELECT SI_EMPRESA.EMPRCODI,SI_EMPRESA.EMPRNOMB,EQ_AREA.AREACODI, EQ_AREA.AREANOMB, EQ_EQUIPO.EQUIABREV, EVE_HORAOPERACION.EQUICODI, EVE_HORAOPERACION.HOPHORINI, EVE_HORAOPERACION.HOPHORFIN , EVE_SUBCAUSAEVENTO.SUBCAUSACODI, EVE_SUBCAUSAEVENTO.SUBCAUSADESC
+      , 'H' as TIPO_FUENTE
+      FROM EVE_HORAOPERACION, EQ_EQUIPO, EQ_AREA, SI_EMPRESA, EVE_SUBCAUSAEVENTO
+      WHERE EVE_SUBCAUSAEVENTO.SUBCAUSACODI=EVE_HORAOPERACION.SUBCAUSACODI AND EVE_HORAOPERACION.EQUICODI = EQ_EQUIPO.EQUICODI
+      AND EQ_EQUIPO.AREACODI = EQ_AREA.AREACODI AND (case when coalesce(EVE_HORAOPERACION.EMPRCODI, -1) > 0 then EVE_HORAOPERACION.EMPRCODI else EQ_EQUIPO.emprcodi end) = SI_EMPRESA.EMPRCODI AND (EQ_EQUIPO.FAMCODI = 3 OR EQ_EQUIPO.FAMCODI = 5)
+      AND EVE_HORAOPERACION.HOPHORINI >= to_date('{0}','yyyy-mm-dd hh24:mi:ss')
+      AND EVE_HORAOPERACION.HOPHORINI &lt; to_date('{1}','yyyy-mm-dd hh24:mi:ss')
+      and EVE_HORAOPERACION.HOPESTADO = 'A'
+
+      UNION ALL
+
+      SELECT SI_EMPRESA.EMPRCODI,SI_EMPRESA.EMPRNOMB,EQ_AREA.AREACODI, Eq_area.areanomb, Eq_equipo.equiabrev, Eve_mantto.equicodi, Eve_mantto.evenini as hophorini, Eve_mantto.evenfin as hophorfin ,120 AS SUBCAUSACODI,'POR MANTENIMIENTO' as SUBCAUSADESC
+      , 'M' AS TIPO_FUENTE
+      FROM Eve_mantto, Eq_equipo, Eq_area, SI_EMPRESA
+      WHERE SI_EMPRESA.EMPRCODI= (case when coalesce(Eve_mantto.EMPRCODI, -1) > 0 then Eve_mantto.EMPRCODI else Eq_equipo.emprcodi end) AND Eve_mantto.equicodi = Eq_equipo.equicodi
+      AND Eq_equipo.areacodi = Eq_area.areacodi AND Eve_mantto.evenclasecodi = 1 AND (Eq_equipo.famcodi = 3 OR Eq_equipo.famcodi = 5)
+      AND Eve_mantto.evenini >= TO_DATE('{0}','YYYY-MM-DD HH24:MI:SS')
+      AND Eve_mantto.evenini &lt; TO_DATE('{1}','YYYY-MM-DD HH24:MI:SS')
+      )
+      ORDER BY EMPRNOMB, AREANOMB, EQUIABREV, HOPHORINI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaEstadoOperacion90</key>
+    <query>
+      SELECT * FROM
+      (
+      SELECT SI_EMPRESA.EMPRCODI,SI_EMPRESA.EMPRNOMB,EQ_AREA.AREACODI, EQ_AREA.AREANOMB, EQ_EQUIPO.EQUIABREV, EVE_HORAOPERACION.EQUICODI, EVE_HORAOPERACION.HOPHORINI, EVE_HORAOPERACION.HOPHORFIN , EVE_SUBCAUSAEVENTO.SUBCAUSACODI, EVE_SUBCAUSAEVENTO.SUBCAUSADESC
+      , 'H' as TIPO_FUENTE
+      FROM EVE_HORAOPERACION, EQ_EQUIPO, EQ_AREA, SI_EMPRESA, EVE_SUBCAUSAEVENTO
+      WHERE EVE_SUBCAUSAEVENTO.SUBCAUSACODI=EVE_HORAOPERACION.SUBCAUSACODI AND EVE_HORAOPERACION.EQUICODI = EQ_EQUIPO.EQUICODI
+      AND EQ_EQUIPO.AREACODI = EQ_AREA.AREACODI AND (case when coalesce(EVE_HORAOPERACION.EMPRCODI, -1) > 0 then EVE_HORAOPERACION.EMPRCODI else EQ_EQUIPO.emprcodi end) = SI_EMPRESA.EMPRCODI AND (EQ_EQUIPO.FAMCODI = 3 OR EQ_EQUIPO.FAMCODI = 5)
+      AND EVE_HORAOPERACION.HOPHORINI >= to_date('{0}','yyyy-mm-dd hh24:mi:ss')
+      AND EVE_HORAOPERACION.HOPHORINI &lt; to_date('{1}','yyyy-mm-dd hh24:mi:ss')
+      and EVE_HORAOPERACION.HOPESTADO = 'A'
+      
+      UNION ALL
+
+      SELECT SI_EMPRESA.EMPRCODI,SI_EMPRESA.EMPRNOMB,EQ_AREA.AREACODI, Eq_area.areanomb, Eq_equipo.equiabrev, Eve_mantto.equicodi, Eve_mantto.evenini as hophorini, Eve_mantto.evenfin as hophorfin ,120 AS SUBCAUSACODI,'POR MANTENIMIENTO' as SUBCAUSADESC
+      , 'M' AS TIPO_FUENTE
+      FROM Eve_mantto, Eq_equipo, Eq_area, SI_EMPRESA
+      WHERE SI_EMPRESA.EMPRCODI= (case when coalesce(Eve_mantto.EMPRCODI, -1) > 0 then Eve_mantto.EMPRCODI else Eq_equipo.emprcodi end) AND Eve_mantto.equicodi = Eq_equipo.equicodi
+      AND Eq_equipo.areacodi = Eq_area.areacodi AND Eve_mantto.evenclasecodi = 1 AND (Eq_equipo.famcodi = 3 OR Eq_equipo.famcodi = 5)
+      AND Eve_mantto.evenini >= TO_DATE('{0}','YYYY-MM-DD HH24:MI:SS')
+      AND Eve_mantto.evenini &lt; TO_DATE('{1}','YYYY-MM-DD HH24:MI:SS')
+      )
+      ORDER BY EMPRNOMB, AREANOMB, EQUIABREV, HOPHORINI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaProdTipCombustible</key>
+    <query>
+      SELECT a.EQUICODI,b.grupoCODI,b.grupopadre,c.ptomedicodi, HOPHORINI, HOPHORFIN, grupocomb, f.fenergcodi,f.fenergnomb, B.GRUPONOMB , e.emprcodi, e.emprnomb
+      FROM EVE_HORAOPERACION a, pr_grupo b, me_ptomedicion c, eq_equipo d, si_empresa e, si_fuenteenergia f
+      WHERE a.grupocodi=b.grupocodi
+      and  c.codref=b.grupopadre
+      and  a.equicodi=d.equicodi
+      and  (case when coalesce(a.EMPRCODI, -1) > 0 then a.EMPRCODI else d.emprcodi end)=e.emprcodi
+      and b.fenergcodi=f.fenergcodi
+      and c.origlectcodi = 2
+      and HOPHORINI >= to_date('{0} 00:00:00','yyyy-mm-dd hh24:mi:ss')
+      and HOPHORINI &lt; to_date('{1} 00:00:00','yyyy-mm-dd hh24:mi:ss')
+      and a.equicodi in (select equicodi from eq_equipo where famcodi in (3,5) )
+      AND E.EMPRCOES = 'S'
+      order by b.grupopadre,HOPHORINI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaOperacionTension</key>
+    <query>
+      SELECT b.emprabrev, DECODE(C.FAMCODI,3,trim(e.tareaabrev||' '||trim(d.areanomb) ||' - '|| trim(a.equiabrev)),trim(e.tareaabrev||' '||d.areanomb)) AS gruponomb, f.hophorini, f.hophorfin, f.HOPDESC
+      fROM eq_equipo a, si_empresa b, eq_familia c, eq_area d, eq_tipoarea e, eve_horaoperacion f
+      WHERE ( b.emprcodi = (case when coalesce(f.EMPRCODI, -1) > 0 then f.EMPRCODI else a.emprcodi end) ) and ( a.famcodi = c.famcodi ) and ( d.areacodi = a.areacodi ) and ( e.tareacodi = d.tareacodi ) and f.equicodi=a.equicodi and f.subcausacodi in (103, 117)
+      and f.hophorini >= to_date('{0} 00:00:00','yyyy-mm-dd hh24:mi:ss')
+      and f.hophorini &lt;= to_date('{0} 23:59:59','yyyy-mm-dd hh24:mi:ss')
+      Order by hophorini,hophorfin
+    </query>
+  </Sql>
+
+  <!--FIN MigracionSGOCOES-GrupoB-->
+
+  <!--INICIO HOP REQ-6274-->
+
+  <Sql>
+    <key>GetCriteriaUnidadesxPKCodis</key>
+    <query>
+		select ho.HOPUNICODI as HOPCODI ,ho.HOPUNIHORINI as HOPHORINI ,-1 as SUBCAUSACODI, ho.HOPUNIHORFIN as HOPHORFIN ,ho.EQUICODI ,'' as HOPDESC
+		,ho.HOPUNIHORORDARRANQ as HOPHORORDARRANQ,ho.HOPUNIHORPARADA as HOPHORPARADA
+		,case when ho.HOPUNIFECMODIFICACION is null then ho.HOPUNIUSUCREACION else ho.HOPUNIUSUMODIFICACION end as  LASTUSER
+		,case when ho.HOPUNIFECMODIFICACION is null then ho.HOPUNIFECCREACION else ho.HOPUNIFECMODIFICACION end as LASTDATE
+		,eq.GRUPOCODI,0 as HOPSAISLADO,hop.HOPLIMTRANS as HOPLIMTRANS,'' as HOPFALLA , hop.HOPCOMPORDARRQ as HOPCOMPORDARRQ, hop.HOPCOMPORDPARD as HOPCOMPORDPARD,hop.HOPCAUSACODI
+		,ho.HOPCODI as HOPCODIPADRE ,case when ho.HOPUNIACTIVO = 1 then 'A' else 'B' end as HOPESTADO, 0 as HOPNOTIFUNIESP,null as EVENCODI,null as HOPOBS,(case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end) as EMPRCODI
+		,hop.hoparrqblackstart as hoparrqblackstart,hop.hopensayope as hopensayope, hop.hopensayopmin as hopensayopmin
+		from eve_ho_unidad ho
+		inner join EVE_HORAOPERACION hop on hop.hopcodi = ho.hopcodi
+		inner join eq_equipo eq on eq.equicodi = ho.equicodi
+		where ho.hopcodi in ({0}) and ho.HOPUNIACTIVO = 1 and hop.HOPESTADO = 'A'
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaUnidadesXEmpresaxFecha</key>
+    <query>
+		-- Horas de Operacion de Unidades de Modos de Operacion
+		select ho.HOPUNICODI as HOPCODI ,ho.HOPUNIHORINI as HOPHORINI ,-1 as SUBCAUSACODI, ho.HOPUNIHORFIN as HOPHORFIN ,ho.EQUICODI ,'' as HOPDESC
+		,ho.HOPUNIHORORDARRANQ as HOPHORORDARRANQ,ho.HOPUNIHORPARADA as HOPHORPARADA
+		,case when ho.HOPUNIFECMODIFICACION is null then ho.HOPUNIUSUCREACION else ho.HOPUNIUSUMODIFICACION end as  LASTUSER
+		,case when ho.HOPUNIFECMODIFICACION is null then ho.HOPUNIFECCREACION else ho.HOPUNIFECMODIFICACION end as LASTDATE
+		,eq.GRUPOCODI,0 as HOPSAISLADO,hop.HOPLIMTRANS as HOPLIMTRANS,'' as HOPFALLA , hop.HOPCOMPORDARRQ as HOPCOMPORDARRQ, hop.HOPCOMPORDPARD as HOPCOMPORDPARD,hop.HOPCAUSACODI
+		,ho.HOPCODI as HOPCODIPADRE ,case when ho.HOPUNIACTIVO = 1 then 'A' else 'B' end as HOPESTADO, 0 as HOPNOTIFUNIESP,null as EVENCODI,null as HOPOBS
+		,fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR,(case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end) as EMPRCODI
+		,hop.hoparrqblackstart as hoparrqblackstart,hop.hopensayope as hopensayope, hop.hopensayopmin as hopensayopmin
+		, eq.equiabrev, gr.gruponomb equiponombre
+		from eve_ho_unidad ho
+		inner join EVE_HORAOPERACION hop on hop.hopcodi = ho.hopcodi
+		inner join eq_equipo eq on eq.equicodi = ho.equicodi
+		left join pr_grupo gr on gr.grupocodi = eq.GRUPOCODI
+		left join si_fuenteenergia fe on fe.FENERGCODI = gr.FENERGCODI
+		where ho.HOPUNIHORINI >= to_date('{1}','YYYY-MM-DD') and HOPUNIHORINI &lt; to_date('{2}','YYYY-MM-DD')
+		and hop.hopestado = 'A'
+		and ((case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else eq.emprcodi end) = {0} or ('{0}' = '-2'))	and (eq.equipadre = {3} or ('{3}' = '-2')) and HOPUNIACTIVO =1
+	</query>
+  </Sql>
+		
+	<Sql>
+    <key>ListarHorasOperacionByCriteriaUnidades</key>
+    <query>
+		  select * from
+		  (
+          --termicos
+		      select ho.HOPUNICODI as HOPCODI ,ho.HOPUNIHORINI as HOPHORINI ,hop.subcausacodi as SUBCAUSACODI, ho.HOPUNIHORFIN as HOPHORFIN ,ho.EQUICODI ,'' as HOPDESC
+		      ,ho.HOPUNIHORORDARRANQ as HOPHORORDARRANQ,ho.HOPUNIHORPARADA as HOPHORPARADA
+		      ,case when ho.HOPUNIFECMODIFICACION is null then ho.HOPUNIUSUCREACION else ho.HOPUNIUSUMODIFICACION end as  LASTUSER
+		      ,case when ho.HOPUNIFECMODIFICACION is null then ho.HOPUNIFECCREACION else ho.HOPUNIFECMODIFICACION end as LASTDATE
+		      ,eq.GRUPOCODI,0 as HOPSAISLADO,hop.HOPLIMTRANS as HOPLIMTRANS,'' as HOPFALLA , hop.HOPCOMPORDARRQ as HOPCOMPORDARRQ, hop.HOPCOMPORDPARD as HOPCOMPORDPARD,hop.HOPCAUSACODI
+		      ,ho.HOPCODI as HOPCODIPADRE ,case when ho.HOPUNIACTIVO = 1 then 'A' else 'B' end as HOPESTADO, 0 as HOPNOTIFUNIESP,null as EVENCODI,null as HOPOBS
+		      ,hop.hoparrqblackstart as hoparrqblackstart, hop.hopensayope as hopensayope, hop.hopensayopmin as hopensayopmin
+		      ,fe.fenergcodi, fe.fenergnomb, fe.fenergabrev, fe.FENERCOLOR, '' as subcausadesc,emp.emprcodi, emp.emprnomb, pr.gruponomb equiponombre, pr.GRUPOABREV,eqp.equicodi equipadre, eqp.equinomb central, eq.equiabrev,eq.famcodi, pr.gruponomb, 2 as FLAGTIPOHO, pr.GRUPOPADRE
+		      from eve_ho_unidad ho
+		      inner join EVE_HORAOPERACION hop on hop.hopcodi = ho.hopcodi
+		      inner join eq_equipo eq on eq.equicodi = ho.equicodi
+		      inner join eq_equipo eqp on eqp.equicodi = (case when eq.equipadre>0 then eq.equipadre else eq.equicodi end )
+		      left join pr_grupo pr on pr.grupocodi = eq.GRUPOCODI
+		      left join pr_grupo prm on prm.grupocodi = hop.grupocodi
+		      left join si_empresa emp on emp.emprcodi = (case when coalesce(ho.EMPRCODI, -1) > 0 then ho.EMPRCODI else pr.emprcodi end)
+		      --left join si_fuenteenergia fe on fe.FENERGCODI = pr.FENERGCODI
+		      left join si_fuenteenergia fe on fe.FENERGCODI = (case when coalesce(prm.fenergcodi, -1) > 0 then prm.fenergcodi else  pr.FENERGCODI end)
+		      where ho.HOPUNIHORINI >= to_date('{0}','YYYY-MM-DD') and HOPUNIHORINI &lt; to_date('{1}','YYYY-MM-DD') and HOPUNIACTIVO =1 and hop.HOPESTADO = 'A' and hop.grupocodi > 0
+      )
+      where ('-2' = '{2}' or emprcodi in ({2}) )
+      and ('-2' = '{3}' or  equipadre in ({3}) )
+      order by emprnomb, central, hophorini, GRUPOCODI, equicodi
+    </query>
+  </Sql>
+		
+	<!--FIN HOP REQ-6274-->
+
+  <!--INICIO NUMERALES DATOS BASE-->
+  <Sql>
+    <key>ListaDatosBase_5_1_2</key>
+    <query>
+      select * from
+      (
+      select
+      case TRIM(e.equinomb)
+      when '_NO DEFINIDO' then TRIM(G.GRUPONOMB)
+      else TRIM(e.equinomb)
+      end as  EQUINOMB,
+      (
+      case TRIM(E.OSIGRUPOCODI)
+      when '00000' then (select OSICODI from pr_grupo where grupocodi = G.Grupocodi)
+      else  E.OSIGRUPOCODI
+      end ) as OSICODI,
+      UPPER(TRIM(G.GRUPOCOMB)) as GRUPOCOMB,
+      TO_CHAR(H.HOPHORINI, 'DD') AS DIA,
+      H.Equicodi,
+      g.Grupocodi
+      from eve_horaoperacion H, pr_grupo G,eq_equipo E
+      where H.HOPHORINI BETWEEN TO_DATE('{0}', 'DD-MM-YYYY') AND
+      TO_DATE('{1} 23:59:59', 'DD-MM-YYYY  HH24:MI:SS')
+      AND H.GRUPOCODI = G.GRUPOCODI
+      AND e.Equicodi = h.Equicodi
+      and h.hopestado = 'A'
+      GROUP BY TRIM(e.equinomb),TRIM(G.GRUPONOMB),TO_CHAR(H.HOPHORINI, 'DD'),
+      E.OSIGRUPOCODI,H.Equicodi,G.Grupocodi,UPPER(TRIM(G.GRUPOCOMB))
+      )
+      ORDER BY upper(equinomb),3
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaDatosBase_5_6_2</key>
+    <query>
+      select e.osigrupocodi,H.EQUICODI, UPPER(TRIM(G.GRUPOCOMB)) as GRUPOCOMB, H.HOPHORFIN, H.GRUPOCODI
+      from eve_horaoperacion H, pr_grupo G,eq_equipo E
+      where H.HOPHORINI BETWEEN TO_DATE('{0}', 'DD-MM-YYYY') AND
+      TO_DATE('{1} 23:59:59', 'DD-MM-YYYY HH24:MI:SS')
+      AND H.GRUPOCODI = G.GRUPOCODI
+      AND E.Equicodi = H.EQUICODI
+      and h.hopestado = 'A'
+      ORDER BY 3, 1 DESC
+    </query>
+  </Sql>
+  <!--FIN NUMERALES DATOS BASE-->
+  
+  <!--MEJORAS CMgN - Movisoft-->
+  <Sql>
+    <key>HorasOperacionComparativoCM</key>
+    <query>
+      select ho.grupocodi, ho.hophorini, ho.hophorfin, gr.grupopadre
+      from eve_horaoperacion ho inner join pr_grupo gr on ho.grupocodi = gr.grupocodi
+      where
+      ho.hophorini >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and
+      ho.hophorfin &lt;= to_date('{1} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and
+      ho.hopestado = 'A' and ho.subcausacodi = 101 and ho.hoplimtrans != 'S'
+      order by ho.hophorini
+    </query>
+  </Sql>
+  <!--Fin MEJORAS CMgN - Movisoft-->
+
+</Sqls>

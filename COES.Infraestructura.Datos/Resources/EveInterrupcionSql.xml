@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(interrupcodi), 0) + 1 from eve_interrupcion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eve_interrupcion(
+        interrupcodi,
+        interrmw_de,
+        interrmw_a,
+        interrminu,
+        interrmw,
+        interrdesc,
+        ptointerrcodi,
+        evencodi,
+        interrnivel,
+        interrracmf,
+        interrmfetapa,
+        interrmanualr,
+        lastuser,
+        lastdate
+      )
+      values(
+        :interrupcodi,
+        :interrmw_de,
+        :interrmw_a,
+        :interrminu,
+        :interrmw,
+        :interrdesc,
+        :ptointerrcodi,
+        :evencodi,
+        :interrnivel,
+        :interrracmf,
+        :interrmfetapa,
+        :interrmanualr,
+        :lastuser,
+        sysdate
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update eve_interrupcion
+       set
+           interrmw_de = :interrmw_de,
+           interrmw_a = :interrmw_a,
+           interrminu = :interrminu,
+           interrmw = :interrmw,
+           interrdesc = :interrdesc,
+           ptointerrcodi = :ptointerrcodi,
+           evencodi = :evencodi,
+           interrnivel = :interrnivel,
+           interrracmf = :interrracmf,
+           interrmfetapa = :interrmfetapa,
+           interrmanualr = :interrmanualr,
+           lastuser = :lastuser,
+           lastdate = sysdate
+       where
+           interrupcodi = :interrupcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from eve_interrupcion
+       where
+           interrupcodi = :interrupcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+        interrupcion.interrmw_de,
+        interrupcion.interrmw_a,
+        interrupcion.interrminu,
+        interrupcion.interrmw,
+        interrupcion.interrdesc,
+        interrupcion.interrupcodi,
+        interrupcion.ptointerrcodi,
+        interrupcion.evencodi,
+        interrupcion.interrnivel,
+        interrupcion.interrracmf,
+        interrupcion.interrmfetapa,
+        interrupcion.interrmanualr,
+        interrupcion.lastuser,
+        interrupcion.lastdate,
+        empresa.emprnomb,
+        ptointerrupcion.ptointerrupnomb,
+        ptoentrega.ptoentrenomb
+      from
+        eve_interrupcion interrupcion
+        inner join eve_ptointerrup ptointerrupcion on interrupcion.ptointerrcodi = ptointerrupcion.ptointerrcodi
+        inner join eve_ptoentrega ptoentrega on ptointerrupcion.ptoentregacodi = ptoentrega.ptoentregacodi
+        inner join si_empresa empresa on ptoentrega.clientecodi = empresa.emprcodi
+      where
+        interrupcodi = :interrupcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           interrmw_de,
+           interrmw_a,
+           interrminu,
+           interrmw,
+           interrdesc,
+           interrupcodi,
+           ptointerrcodi,
+           evencodi,
+           interrnivel,
+           interrracmf,
+           interrmfetapa,
+           interrmanualr,
+           lastuser,
+           lastdate
+       from
+           eve_interrupcion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      interrupcion.interrmw_de,
+      interrupcion.interrmw_a,
+      interrupcion.interrminu,
+      interrupcion.interrmw,
+      interrupcion.interrdesc,
+      interrupcion.interrupcodi,
+      interrupcion.ptointerrcodi,
+      interrupcion.evencodi,
+      interrupcion.interrnivel,
+      interrupcion.interrracmf,
+      interrupcion.interrmfetapa,
+      interrupcion.interrmanualr,
+      interrupcion.lastuser,
+      interrupcion.lastdate,
+      punto.ptointerrupnomb,
+      entrega.ptoentrenomb,
+      area.areanomb,
+      equipo.equiabrev,
+      equipo.equitension,
+      fam.famnomb,
+      empresa.emprnomb
+      from eve_interrupcion interrupcion
+      inner join eve_ptointerrup punto on interrupcion.ptointerrcodi = punto.ptointerrcodi
+      inner join eve_ptoentrega entrega on punto.ptoentregacodi = entrega.ptoentregacodi
+      inner join eq_equipo equipo on entrega.equicodi = equipo.equicodi
+      inner join eq_familia fam on fam.famcodi = equipo.famcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join si_empresa empresa on entrega.clientecodi = empresa.emprcodi
+      where interrupcion.evencodi in ({0})
+    </query>
+  </Sql>
+
+  <!--INICIO MigracionSGOCOES-GrupoB-->
+
+  <Sql>
+    <key>ListaCalidadSuministro</key>
+    <query>
+      SELECT
+      EVE_PTOINTERRUP.PTOINTERRUPNOMB,      SI_EMPRESA.EMPRNOMB,      EVE_PTOENTREGA.PTOENTRENOMB,  EVE_INTERRUPCION.INTERRMW,      EVE_EVENTO.EVENINI,
+      EVE_INTERRUPCION.INTERRMINU,      EVE_INTERRUPCION.INTERRDESC,      CASE EVE_INTERRUPCION.INTERRRACMF WHEN 'S' THEN 'Si' WHEN 'N' then 'No' ELSE '' END AS INTERRRACMF,
+      CASE EVE_INTERRUPCION.INTERRMFETAPA WHEN -1 THEN '' WHEN 0 THEN '' WHEN 1 THEN '1&#176;' WHEN 2 THEN '2&#176;' WHEN 3 THEN '3&#176;'      WHEN 4 THEN '4&#176;' WHEN 5 THEN '5&#176;' WHEN 6 THEN '6&#176;' WHEN 7 THEN '7&#176;' WHEN 8 THEN '8&#176;' ELSE '' END AS INTERRMFETAPA,
+      CASE EVE_INTERRUPCION.INTERRMANUALR WHEN 'S' THEN 'Si' WHEN 'N' then 'No' ELSE '' END AS INTERRMANUALR,      EVE_INTERRUPCION.EVENCODI
+      FROM EVE_INTERRUPCION,      EVE_EVENTO,      EVE_PTOENTREGA,      EVE_PTOINTERRUP,      EQ_EQUIPO,      EQ_AREA,      SI_EMPRESA
+      WHERE
+      ( EVE_INTERRUPCION.EVENCODI = EVE_EVENTO.EVENCODI ) and
+      ( EVE_INTERRUPCION.PTOINTERRCODI = EVE_PTOINTERRUP.PTOINTERRCODI ) and
+      ( EVE_PTOENTREGA.PTOENTREGACODI = EVE_PTOINTERRUP.PTOENTREGACODI ) and
+      ( EVE_PTOENTREGA.EQUICODI = EQ_EQUIPO.EQUICODI ) and
+      ( EQ_EQUIPO.AREACODI = EQ_AREA.AREACODI ) and
+      ( SI_EMPRESA.EMPRCODI = EVE_PTOENTREGA.CLIENTECODI ) and
+      ( EVE_EVENTO.EVENINI >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') ) and
+      ( EVE_EVENTO.EVENINI &lt;= TO_DATE('{0} 23:59:59','YYYY-MM-DD HH24:MI:SS') )
+    </query>
+  </Sql>
+
+  <!--FIN MigracionSGOCOES-GrupoB-->
+</Sqls>

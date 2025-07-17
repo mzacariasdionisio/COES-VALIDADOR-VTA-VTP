@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(calendcodi), 0) + 1 from wb_calendario
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into wb_calendario(
+      calendcodi,
+      calendicon,
+      calendestado,
+      calendusumodificacion,
+      calendfecmodificacion,
+      calenddescripcion,
+      calendtitulo,
+      calendfecinicio,
+      calendfecfin,
+      calendcolor,
+      calendtipo,
+      tipcalcodi
+      )
+      values(
+      :calendcodi,
+      :calendicon,
+      :calendestado,
+      :calendusumodificacion,
+      :calendfecmodificacion,
+      :calenddescripcion,
+      :calendtitulo,
+      :calendfecinicio,
+      :calendfecfin,
+      :calendcolor,
+      :calendtipo,
+      :tipcalcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update wb_calendario
+      set
+      calendicon = :calendicon,
+      calendestado = :calendestado,
+      calendusumodificacion = :calendusumodificacion,
+      calendfecmodificacion = :calendfecmodificacion,
+      calenddescripcion = :calenddescripcion,
+      calendtitulo = :calendtitulo,
+      calendfecinicio = :calendfecinicio,
+      calendfecfin = :calendfecfin,
+      calendcolor = :calendcolor,
+      calendtipo = :calendtipo,
+      tipcalcodi = :tipcalcodi
+      where
+      calendcodi = :calendcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from wb_calendario
+       where
+           calendcodi = :calendcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      calendicon,
+      calendestado,
+      calendusumodificacion,
+      calendfecmodificacion,
+      calendcodi,
+      calenddescripcion,
+      calendtitulo,
+      calendfecinicio,
+      calendfecfin,
+      calendcolor,
+      calendtipo,
+      tipcalcodi
+      from
+      wb_calendario
+      where
+      calendcodi = :calendcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      tipo.tipcalicono as calendicon,
+      calendario.calendestado,
+      calendario.calendusumodificacion,
+      calendario.calendfecmodificacion,
+      calendario.calendcodi,
+      calendario.calenddescripcion,
+      calendario.calendtitulo,
+      calendario.calendfecinicio,
+      calendario.calendfecfin,
+      tipo.tipcalcolor as calendcolor,
+      calendario.calendtipo,
+      calendario.tipcalcodi
+      from
+      wb_calendario calendario
+      inner join wb_caltipovento tipo on calendario.tipcalcodi = tipo.tipcalcodi
+      where calendario.calendestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      tipo.tipcalicono as calendicon,
+      case calendario.calendestado
+      when 'A' then 'Activo'
+      when 'I' then 'Inactivo'
+      else '' end as calendestado,
+      calendario.calendusumodificacion,
+      calendario.calendfecmodificacion,
+      calendario.calendcodi,
+      calendario.calenddescripcion,
+      calendario.calendtitulo,
+      calendario.calendfecinicio,
+      calendario.calendfecfin,
+      tipo.tipcalcolor as calendcolor,
+      tipo.tipcaldesc as calendtipo,
+      calendario.tipcalcodi
+      from
+      wb_calendario calendario
+      inner join wb_caltipovento tipo on calendario.tipcalcodi = tipo.tipcalcodi
+      where
+      calendario.calendtitulo like '%{0}%' and
+      (
+      calendario.calendfecinicio >= to_date('{1} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and
+      calendario.calendfecinicio &lt;= to_date('{2} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      )
+      order by calendario.calendfecinicio asc
+    </query>
+  </Sql>
+</Sqls>

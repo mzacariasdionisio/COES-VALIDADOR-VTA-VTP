@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(trnfpmcodi), 0) + 1 from trn_factor_perdida_media
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into trn_factor_perdida_media(
+           trnfpmcodi,
+           pericodi,
+           barrcodi,
+           codentcodi,
+           emprcodi,
+           equicodi,
+           trnfpmversion,
+           trnfpmvalor,
+           trnfpmobserv,
+           trnfpmusername,
+           trnfpmfecins
+       )
+       values(
+           :trnfpmcodi,
+           :pericodi,
+           :barrcodi,
+           :codentcodi,
+           :emprcodi,
+           :equicodi,
+           :trnfpmversion,
+           :trnfpmvalor,
+           :trnfpmobserv,
+           :trnfpmusername,
+           :trnfpmfecins
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update trn_factor_perdida_media
+       set
+           pericodi = :pericodi,
+           barrcodi = :barrcodi,
+           codentcodi = :codentcodi,
+           emprcodi = :emprcodi,
+           equicodi = :equicodi,
+           trnfpmversion = :trnfpmversion,
+           trnfpmvalor = :trnfpmvalor,
+           trnfpmobserv = :trnfpmobserv,
+           trnfpmusername = :trnfpmusername,
+           trnfpmfecins = :trnfpmfecins
+       where
+           trnfpmcodi = :trnfpmcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_factor_perdida_media where pericodi = :pericodi and trnfpmversion = :trnfpmversion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           trnfpmcodi,
+           pericodi,
+           barrcodi,
+           codentcodi,
+           emprcodi,
+           equicodi,
+           trnfpmversion,
+           trnfpmvalor,
+           trnfpmobserv,
+           trnfpmusername,
+           trnfpmfecins
+       from
+           trn_factor_perdida_media
+       where
+           trnfpmcodi = :trnfpmcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select e.codentcodigo, b.barrnombre, emp.emprnomb, eq.equinomb, fpm.*
+      from trn_factor_perdida_media fpm inner join trn_codigo_entrega e on fpm.codentcodi = e.codentcodi
+      inner join trn_barra b on fpm.barrcodi = b.barrcodi
+      inner join si_empresa emp on fpm.emprcodi = emp.emprcodi
+      inner join eq_equipo eq on fpm.equicodi = eq.equicodi
+      where fpm.pericodi = :pericodi and fpm.trnfpmversion = :trnfpmversion
+      order by e.codentcodigo, b.barrnombre, emp.emprnomb, eq.equinomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           trnfpmcodi,
+           pericodi,
+           barrcodi,
+           codentcodi,
+           emprcodi,
+           equicodi,
+           trnfpmversion,
+           trnfpmvalor,
+           trnfpmobserv,
+           trnfpmusername,
+           trnfpmfecins
+       from
+           trn_factor_perdida_media
+    </query>
+  </Sql>
+  <!--ASSETEC 20190104-->
+  <Sql>
+    <key>ListDesvEntregas</key>
+    <query>
+      select e.codentcodigo, b.barrnombre, emp.emprnomb, eq.equinomb, fpm.*,
+      (select sum(ted.tentdesumadia) from trn_trans_entrega te, trn_trans_entrega_detalle ted
+      where te.pericodi = fpm.pericodi and te.tentversion = fpm.trnfpmversion and te.codentcodi = fpm.codentcodi and te.tentcodi = ted.tentcodi
+      group by te.codentcodi) as EntregaMes,
+      (select sum(trnmebenergia) from trn_medborne
+      where pericodi = fpm.pericodi and trnmebversion = fpm.trnfpmversion and emprcodi = fpm.emprcodi and equicodi = fpm.equicodi
+      group by emprcodi, equicodi) as MedidoresMes
+      from trn_factor_perdida_media fpm inner join trn_codigo_entrega e on fpm.codentcodi = e.codentcodi
+      inner join trn_barra b on fpm.barrcodi = b.barrcodi
+      inner join si_empresa emp on fpm.emprcodi = emp.emprcodi
+      inner join eq_equipo eq on fpm.equicodi = eq.equicodi
+      where fpm.pericodi = :pericodi and fpm.trnfpmversion = :trnfpmversion
+      order by e.codentcodigo, b.barrnombre, emp.emprnomb, eq.equinomb
+    </query>
+  </Sql>
+</Sqls>

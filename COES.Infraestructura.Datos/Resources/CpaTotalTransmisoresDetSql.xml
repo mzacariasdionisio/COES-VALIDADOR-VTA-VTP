@@ -1,0 +1,355 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(cpattdcodi), 0) + 1 from cpa_total_transmisoresdet
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cpa_total_transmisoresdet
+      (
+      cpattdcodi,
+      cpattcodi,
+      emprcodi,
+      cpattdtotmes01,
+      cpattdtotmes02,
+      cpattdtotmes03,
+      cpattdtotmes04,
+      cpattdtotmes05,
+      cpattdtotmes06,
+      cpattdtotmes07,
+      cpattdtotmes08,
+      cpattdtotmes09,
+      cpattdtotmes10,
+      cpattdtotmes11,
+      cpattdtotmes12,
+      cpattdusucreacion,
+      cpattdfeccreacion
+      )
+      values
+      (
+      :cpattdcodi,
+      :cpattcodi,
+      :emprcodi,
+      :cpattdtotmes01,
+      :cpattdtotmes02,
+      :cpattdtotmes03,
+      :cpattdtotmes04,
+      :cpattdtotmes05,
+      :cpattdtotmes06,
+      :cpattdtotmes07,
+      :cpattdtotmes08,
+      :cpattdtotmes09,
+      :cpattdtotmes10,
+      :cpattdtotmes11,
+      :cpattdtotmes12,
+      :cpattdusucreacion,
+      :cpattdfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from cpa_total_transmisoresdet where cpattdcodi = :cpattdcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      cpattdcodi,
+      cpattcodi,
+      emprcodi,
+      cpattdtotmes01,
+      cpattdtotmes02,
+      cpattdtotmes03,
+      cpattdtotmes04,
+      cpattdtotmes05,
+      cpattdtotmes06,
+      cpattdtotmes07,
+      cpattdtotmes08,
+      cpattdtotmes09,
+      cpattdtotmes10,
+      cpattdtotmes11,
+      cpattdtotmes12,
+      cpattdusucreacion,
+      cpattdfeccreacion
+      from
+      cpa_total_transmisoresdet
+      order by
+      cpattdcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      cpattdcodi,
+      cpattcodi,
+      emprcodi,
+      cpattdtotmes01,
+      cpattdtotmes02,
+      cpattdtotmes03,
+      cpattdtotmes04,
+      cpattdtotmes05,
+      cpattdtotmes06,
+      cpattdtotmes07,
+      cpattdtotmes08,
+      cpattdtotmes09,
+      cpattdtotmes10,
+      cpattdtotmes11,
+      cpattdtotmes12,
+      cpattdusucreacion,
+      cpattdfeccreacion
+      from
+      cpa_total_transmisoresdet
+      where
+      cpattdcodi = :cpattdcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdTransmisores</key>
+    <query>
+      select
+      distinct
+      tradet.cpattdcodi,
+      tradet.cpattcodi,
+      tradet.emprcodi,
+      tradet.cpattdtotmes01,
+      tradet.cpattdtotmes02,
+      tradet.cpattdtotmes03,
+      tradet.cpattdtotmes04,
+      tradet.cpattdtotmes05,
+      tradet.cpattdtotmes06,
+      tradet.cpattdtotmes07,
+      tradet.cpattdtotmes08,
+      tradet.cpattdtotmes09,
+      tradet.cpattdtotmes10,
+      tradet.cpattdtotmes11,
+      tradet.cpattdtotmes12,
+      tradet.cpattdusucreacion,
+      tradet.cpattdfeccreacion,
+      siem.emprnomb
+      from
+      cpa_empresa cpaemp
+      left join si_empresa siem on (cpaemp.emprcodi = siem.emprcodi)
+      left join cpa_total_transmisoresdet tradet on (cpaemp.emprcodi = tradet.emprcodi)
+      where
+      tradet.cpattcodi = {0} and
+      cpaemp.cpaemptipo = 'T' and
+      cpaemp.cpaempestado = 'A'
+      order by
+      siem.emprnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetLastEnvio</key>
+    <query>
+      select
+      siem.emprcodi,
+      trim(siem.emprnomb) as emprnomb,
+      tradet.cpattdcodi,
+      tradet.cpattcodi,
+      tradet.cpattdtotmes01,
+      tradet.cpattdtotmes02,
+      tradet.cpattdtotmes03,
+      tradet.cpattdtotmes04,
+      tradet.cpattdtotmes05,
+      tradet.cpattdtotmes06,
+      tradet.cpattdtotmes07,
+      tradet.cpattdtotmes08,
+      tradet.cpattdtotmes09,
+      tradet.cpattdtotmes10,
+      tradet.cpattdtotmes11,
+      tradet.cpattdtotmes12,
+      tradet.cpattdusucreacion,
+      tradet.cpattdfeccreacion
+      from
+      cpa_empresa cpaemp
+      join si_empresa siem on (cpaemp.emprcodi = siem.emprcodi)
+      left join cpa_total_transmisores tra on (cpaemp.cparcodi = tra.cparcodi and 
+                                               tra.cpattcodi = (select max(cpattcodi) 
+                                                                from cpa_total_transmisores 
+                                                                where cparcodi = {0}))
+      left join cpa_total_transmisoresdet tradet on (tradet.cpattcodi = tra.cpattcodi and 
+                                                     cpaemp.emprcodi = tradet.emprcodi)
+      where
+      cpaemp.cparcodi = {0} and 
+      cpaemp.cpaemptipo = 'T' and 
+      cpaemp.cpaempestado = 'A'
+      order by
+      siem.emprnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEnvioVacio</key>
+    <query>
+      select
+      distinct
+      null cpattdcodi,
+      null cpattcodi,
+      cpaemp.emprcodi,
+      siem.emprnomb,
+      null cpattdtotmes01,
+      null cpattdtotmes02,
+      null cpattdtotmes03,
+      null cpattdtotmes04,
+      null cpattdtotmes05,
+      null cpattdtotmes06,
+      null cpattdtotmes07,
+      null cpattdtotmes08,
+      null cpattdtotmes09,
+      null cpattdtotmes10,
+      null cpattdtotmes11,
+      null cpattdtotmes12,
+      null cpattdusucreacion,
+      null cpattdfeccreacion
+      from
+      cpa_empresa cpaemp
+      inner join si_empresa siem on (cpaemp.emprcodi = siem.emprcodi)
+      where
+      cpaemp.cparcodi = {0} and
+      cpaemp.cpaemptipo = 'T' and
+      cpaemp.cpaempestado = 'A'
+      order by
+      siem.emprnomb
+    </query>
+  </Sql>
+
+	
+    <!-- CU17: INICIO -->
+	<Sql>
+		<key>ListLastByRevision</key>
+		<query>
+			select
+			emp.emprcodi,
+			emp.emprnomb,
+			t.cparcodi,
+			td.cpattdcodi,
+			td.cpattcodi,
+			td.cpattdtotmes01,
+			td.cpattdtotmes02,
+			td.cpattdtotmes03,
+			td.cpattdtotmes04,
+			td.cpattdtotmes05,
+			td.cpattdtotmes06,
+			td.cpattdtotmes07,
+			td.cpattdtotmes08,
+			td.cpattdtotmes09,
+			td.cpattdtotmes10,
+			td.cpattdtotmes11,
+			td.cpattdtotmes12,
+			case
+			    when td.cpattdtotmes01 is null
+			        and td.cpattdtotmes02 is null
+			        and td.cpattdtotmes03 is null
+			        and td.cpattdtotmes04 is null
+			        and td.cpattdtotmes05 is null
+			        and td.cpattdtotmes06 is null
+			        and td.cpattdtotmes07 is null
+			        and td.cpattdtotmes08 is null
+			        and td.cpattdtotmes09 is null
+			        and td.cpattdtotmes10 is null
+			        and td.cpattdtotmes11 is null
+			        and td.cpattdtotmes12 is null
+			    then null
+			        else coalesce(td.cpattdtotmes01, 0) +
+			        coalesce(td.cpattdtotmes02, 0) +
+			        coalesce(td.cpattdtotmes03, 0) +
+			        coalesce(td.cpattdtotmes04, 0) +
+			        coalesce(td.cpattdtotmes05, 0) +
+			        coalesce(td.cpattdtotmes06, 0) +
+			        coalesce(td.cpattdtotmes07, 0) +
+			        coalesce(td.cpattdtotmes08, 0) +
+			        coalesce(td.cpattdtotmes09, 0) +
+			        coalesce(td.cpattdtotmes10, 0) +
+			        coalesce(td.cpattdtotmes11, 0) +
+			        coalesce(td.cpattdtotmes12, 0)
+			end as cpattdtotal,
+			td.cpattdusucreacion,
+			td.cpattdfeccreacion
+			from
+			cpa_total_transmisores t
+			inner join cpa_total_transmisoresdet td on td.cpattcodi = t.cpattcodi
+			inner join si_empresa emp on emp.emprcodi = td.emprcodi
+			where
+			t.cpattcodi = (select max(tt.cpattcodi) from cpa_total_transmisores tt where tt.cparcodi = {0})
+			order by
+			emp.emprcodi
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>ListByCpattcodi</key>
+		<query>
+			select
+			emp.emprcodi,
+			emp.emprnomb,
+			t.cparcodi,
+			td.cpattdcodi,
+			td.cpattcodi,
+			td.cpattdtotmes01,
+			td.cpattdtotmes02,
+			td.cpattdtotmes03,
+			td.cpattdtotmes04,
+			td.cpattdtotmes05,
+			td.cpattdtotmes06,
+			td.cpattdtotmes07,
+			td.cpattdtotmes08,
+			td.cpattdtotmes09,
+			td.cpattdtotmes10,
+			td.cpattdtotmes11,
+			td.cpattdtotmes12,
+			case
+			    when td.cpattdtotmes01 is null
+			        and td.cpattdtotmes02 is null
+			        and td.cpattdtotmes03 is null
+			        and td.cpattdtotmes04 is null
+			        and td.cpattdtotmes05 is null
+			        and td.cpattdtotmes06 is null
+			        and td.cpattdtotmes07 is null
+			        and td.cpattdtotmes08 is null
+			        and td.cpattdtotmes09 is null
+			        and td.cpattdtotmes10 is null
+			        and td.cpattdtotmes11 is null
+			        and td.cpattdtotmes12 is null
+			        then null
+			    else coalesce(td.cpattdtotmes01, 0) +
+			        coalesce(td.cpattdtotmes02, 0) +
+			        coalesce(td.cpattdtotmes03, 0) +
+			        coalesce(td.cpattdtotmes04, 0) +
+			        coalesce(td.cpattdtotmes05, 0) +
+			        coalesce(td.cpattdtotmes06, 0) +
+			        coalesce(td.cpattdtotmes07, 0) +
+			        coalesce(td.cpattdtotmes08, 0) +
+			        coalesce(td.cpattdtotmes09, 0) +
+			        coalesce(td.cpattdtotmes10, 0) +
+			        coalesce(td.cpattdtotmes11, 0) +
+			        coalesce(td.cpattdtotmes12, 0)
+			end as cpattdtotal,
+			td.cpattdusucreacion,
+			td.cpattdfeccreacion
+			from
+			cpa_total_transmisores t
+			inner join cpa_total_transmisoresdet td on td.cpattcodi = t.cpattcodi
+			inner join si_empresa emp on emp.emprcodi = td.emprcodi
+			where
+			t.cpattcodi = {0}
+			order by
+			emp.emprcodi
+		</query>
+	</Sql>
+	<!-- CU17: FIN -->
+</Sqls>

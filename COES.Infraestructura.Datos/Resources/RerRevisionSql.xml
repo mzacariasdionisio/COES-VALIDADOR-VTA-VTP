@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(rerrevcodi), 0) + 1 from rer_revision
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into rer_revision(
+      rerrevcodi,
+      ipericodi,
+      rerrevnombre,
+      rerrevtipo,
+      rerrevfecha,
+      rerrevestado,
+      rerrevusucreacion,
+      rerrevfeccreacion,
+      rerrevusumodificacion,
+      rerrevfecmodificacion
+      )
+      values(
+      :rerrevcodi,
+      :ipericodi,
+      :rerrevnombre,
+      :rerrevtipo,
+      :rerrevfecha,
+      :rerrevestado,
+      :rerrevusucreacion,
+      :rerrevfeccreacion,
+      :rerrevusumodificacion,
+      :rerrevfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update rer_revision
+      set
+      ipericodi = :ipericodi,
+      rerrevnombre = :rerrevnombre,
+      rerrevtipo = :rerrevtipo,
+      rerrevfecha = :rerrevfecha,
+      rerrevestado = :rerrevestado,
+      rerrevusumodificacion = :rerrevusumodificacion,
+      rerrevfecmodificacion = :rerrevfecmodificacion
+      where
+      rerrevcodi = :rerrevcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstado</key>
+    <query>
+      update rer_revision
+      set
+      rerrevestado = :rerrevestado,
+      rerrevusumodificacion = :rerrevusumodificacion,
+      rerrevfecmodificacion = :rerrevfecmodificacion
+      where
+      rerrevcodi = :rerrevcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      rer_revision
+      where
+      rerrevcodi = :rerrevcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      rer_revision
+      where
+      (-1 = {0} or ipericodi = {0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPeriodosConUltimaRevision</key>
+    <query>
+      select t.* from (
+        select
+          row_number() over(partition by i.ipericodi order by i.ipericodi) as rn,
+          i.ipericodi, i.iperinombre, i.iperianio, i.iperimes,
+          r.rerrevcodi, r.rerrevnombre, r.rerrevfecha, r.rerrevestado,
+          ( select 
+              add_months( to_date((i.iperianio || '-' || lpad(i.iperimes,2,0) || '-' || lpad(pv.siparvvalor,2,0)), 'YYYY-MM-DD') , 1)  
+            from 
+              si_parametro_valor pv
+            where
+              pv.siparcodi in ({0}) and
+              to_number(i.iperianiomes) between to_number(to_char(pv.siparvfechainicial, 'YYYYMM')) and to_number(to_char(pv.siparvfechafinal, 'YYYYMM')) and 
+              (trim(upper(pv.siparveliminado)) = 'N' or trim(upper(pv.siparveliminado)) = 'NO')
+          ) as rerrevfechaentregaedi
+        from ind_periodo i
+          left outer join rer_revision r on i.ipericodi = r.ipericodi
+        where
+          i.iperihorizonte = 'M'
+        order by
+         i.ipericodi desc, r.rerrevcodi desc
+        ) t
+      where t.rn = 1
+    </query>
+  </Sql>
+
+  <Sql>
+	<key>GetCantidadRevisionesTipoRevision</key>
+	<query>
+	  select
+	    count(*)
+	  from
+		rer_revision
+	  where
+		ipericodi = {0} and
+		upper(rerrevtipo) = 'R'
+	</query>
+  </Sql>
+
+</Sqls> 

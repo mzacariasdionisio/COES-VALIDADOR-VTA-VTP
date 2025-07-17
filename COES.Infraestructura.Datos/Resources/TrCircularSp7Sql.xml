@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into tr_yyyymmdd_sp7(
+           canalcodi,
+           canalfhsist,
+           canalvalor,
+           canalcalidad,
+           canalfechahora
+       )
+       values(
+           :canalcodi,
+           :canalfhsist,
+           :canalvalor,
+           :canalcalidad,
+           :canalfechahora
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update tr_yyyymmdd_sp7
+       set
+           canalvalor = :canalvalor,
+           canalcalidad = :canalcalidad,
+           canalfechahora = :canalfechahora
+       where
+           canalcodi = :canalcodi and
+           canalfhsist = :canalfhsist
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from tr_yyyymmdd_sp7
+       where
+           canalcodi = :canalcodi and
+           canalfhsist = :canalfhsist
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           canalcodi,
+           canalfhsist,
+           canalvalor,
+           canalcalidad,
+           canalfechahora
+       from
+           tr_yyyymmdd_sp7
+       where
+           canalcodi = :canalcodi and
+           canalfhsist = :canalfhsist
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           canalcodi,
+           canalfhsist,
+           canalvalor,
+           canalcalidad,
+           canalfechahora
+       from
+           tr_yyyymmdd_sp7
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           canalcodi,
+           canalfhsist,
+           canalvalor,
+           canalcalidad,
+           canalfechahora
+       from
+           tr_yyyymmdd_sp7
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListado</key>
+    <query>
+      select
+      *
+      from (
+      select a.*,
+      (row_number() over (order by a.canalcodi,a.canalfhsist)) as r
+      from tr_{0}_sp7 a
+      where
+      ( a.canalcodi in ({1}) and
+      (a.canalfhsist >= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.canalfhsist &lt; to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      )
+      order by a.canalcodi,a.canalfhsist
+      )
+      where (r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )) or ({4} = -1 and {5} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListadoRango</key>
+    <query>
+      select
+      *
+      from (
+      select a.*,(SELECT TCS7.CALNOMB FROM TR_CALIDADICCP_SP7 TCS7 WHERE TCS7.CALCODI = a.canalcalidad fetch first 1 row only) AS CALIDADDESCRIPCION,
+      (row_number() over (order by a.canalcodi,a.canalfhsist)) as r
+      from tr_{0}_sp7 a
+      where
+      ( a.canalcodi in ({1}) and
+      (a.canalfhsist >= to_date('{2}','YYYY-MM-DD HH24:MI:SS') and a.canalfhsist &lt; to_date('{3}','YYYY-MM-DD HH24:MI:SS'))
+      )
+      order by a.canalcodi,a.canalfhsist
+      )
+      where (r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )) or ({4} = -1 and {5} = -1)
+    </query>
+  </Sql>
+  
+
+  <Sql>
+    <key>ObtenerListadoClasif</key>
+    <query>
+      select
+      *
+      from (
+      select a.*,(select canalnomb from tr_canal_sp7 z where z.canalcodi=a.canalcodi) canalnomb,
+      (select calnomb from tr_calidadiccp_sp7 z where z.calcodi=a.canalcalidad) calnomb,
+      (row_number() over (order by a.canalcodi,a.canalfhsist)) as r
+      from tr_{0}_sp7 a
+      where
+      ( a.canalcodi in ({1}) and
+      (a.canalfhsist >= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.canalfhsist &lt; to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      and  ((((mod(to_number(to_char(canalfechahora, 'MI')),5) != 0 or 
+           mod(to_number(to_char(canalfechahora, 'SS')),0) != 0 or
+           mod(to_number(to_char(canalfechahora, 'ff3')),0) != 0)
+           and Canalcalidad!={7}
+           and Canalcalidad!={8} )and {6}=1) or {6}=0)
+      )
+      order by a.canalcodi,a.canalfhsist
+      )
+      where (r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )) or ({4} = -1 and {5} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRegistros</key>
+    <query>
+      select count(*)
+        from tr_{0}_sp7 a
+      where
+      ( a.canalcodi in ({1}) and 
+        (a.canalfhsist >= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.canalfhsist &lt; to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+         and  ((((mod(to_number(to_char(canalfechahora, 'MI')),5) != 0 or 
+           mod(to_number(to_char(canalfechahora, 'SS')),0) != 0 or
+           mod(to_number(to_char(canalfechahora, 'ff3')),0) != 0)
+           and Canalcalidad!={5}
+           and Canalcalidad!={6} )and {4}=1) or {4}=0)
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearTablaCampo0</key>
+    <query>
+      CREATE TABLE tr_{0}_sp7
+      (
+      CANALCODI            NUMBER(10) NOT NULL ,
+      CANALFHSIST          TIMESTAMP(3) NOT NULL ,
+      CANALVALOR           NUMBER(10,4) NULL ,
+      CANALCALIDAD         NUMBER(3) NULL ,
+      CANALFECHAHORA       TIMESTAMP(3) NULL 
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearTablaCampo1</key>
+    <query>
+      COMMENT ON TABLE tr_{0}_sp7 IS 'Tabla de datos históricos Siemens del dia {0}.'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearTablaCampo2</key>
+    <query>
+      COMMENT ON COLUMN tr_{0}_sp7.CANALCODI IS 'Codigo de canal'
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>CrearTablaCampo3</key>
+    <query>
+      COMMENT ON COLUMN tr_{0}_sp7.CANALVALOR IS 'Valor de canal'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearTablaCampo4</key>
+    <query>
+      COMMENT ON COLUMN tr_{0}_sp7.CANALCALIDAD IS 'Calidad de canal'
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>CrearTablaCampo5</key>
+    <query>
+      COMMENT ON COLUMN tr_{0}_sp7.CANALFECHAHORA IS 'Estampa de tiempo de la empresa (al milisegundo)'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearTablaCampo6</key>
+    <query>
+      COMMENT ON COLUMN tr_{0}_sp7.CANALFHSIST IS 'Estampa de tiempo del sistema (al milisegundo)'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearTablaCampo7</key>
+    <query>
+      CREATE UNIQUE INDEX PK_tr_{0}_sp7 ON tr_{0}_sp7 (CANALCODI, CANALFHSIST)
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerConsultaFlujos</key>
+		<query>
+			select * from tr_{0}_sp7
+			where
+			((canalcalidad between 0 and 15) or (canalcalidad between 64 and 79) or
+			(canalcalidad between 128 and 143) or (canalcalidad between 192 and 207)) and
+			(to_char(canalfechahora, 'MI:SS') in ( '00:00', '30:00'))
+			and canalcodi in ({1})
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>ObtenerCircularesPorFecha</key>
+    <query>
+      WITH  TCIRCRANK  AS
+      (
+      SELECT CANALCODI, CANALFHSIST, CANALVALOR, CANALFECHAHORA, CANALCALIDAD,
+      RANK() OVER (PARTITION BY CANALCODI ORDER BY CANALFHSIST DESC) AS RNUM_P
+      FROM      TR_{0}_SP7
+      WHERE
+      CAST(CANALFHSIST AS DATE)
+      BETWEEN (TO_DATE('{1}', 'YYYY/MM/DD HH24:MI:SS') - interval '15' minute)
+      and TO_DATE('{1}', 'YYYY/MM/DD HH24:MI:SS')
+      GROUP BY  CANALCODI, CANALFHSIST, CANALVALOR, CANALFECHAHORA, CANALCALIDAD
+      )
+      SELECT    CANALCODI, CANALFHSIST, CANALVALOR, CANALFECHAHORA, CANALCALIDAD
+      FROM      TCIRCRANK
+      WHERE     RNUM_P  = 1 
+      ORDER BY  CANALCODI desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCanalesParaMuestraInstantanea</key>
+    <query>
+      SELECT CANALCODI FROM TR_CANAL_SP7 A WHERE A.EMPRCODI &gt; 0 and A.emprcodi &lt;&gt; 324 and EMPRCODI IS NOT NULL and CANALCODI > 0 AND CANALPOINTTYPE IS NOT NULL AND A.CANALCODI IN (SELECT FG.CANALCODI FROM TR_MUESTRARIS_SP7 FG WHERE FG.CANALFHORA &lt;= TO_DATE('2025/04/04 00:00:00', 'YYYY/MM/DD HH24:MI:SS')) order by canalnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCircularesPorIntervalosDeFechaMuestraInstantanea</key>
+    <query>
+      SELECT * FROM TR_{0}_SP7 WHERE CANALCODI = {1} AND CAST(CANALFHSIST AS DATE) BETWEEN TO_DATE('{2}', 'YYYY/MM/DD HH24:MI:SS') AND TO_DATE('{3}', 'YYYY/MM/DD HH24:MI:SS') ORDER BY CANALFHSIST DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCanalById</key>
+    <query>
+      select
+      *
+      from
+      tr_canal_sp7
+      where
+      canalcodi = :canalcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EliminarRegistroMuestraInstantanea</key>
+    <query>
+      DELETE FROM TR_MUESTRARIS_SP7 WHERE CANALCODI = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GenerarRegistroMuestraInstantanea</key>
+    <query>
+      INSERT INTO TR_MUESTRARIS_SP7
+      (CANALCODI, CANALFECHA, CANALCALIDAD, CANALFHORA, CANALFHORA2, CANALNOMB, CANALICCP, EMPRCODI, CANALVALOR, ESTADO, MUERISUSUCREACION, MUERISFECCREACION, MUERISUSUMODIFICACION, MUERISFECMODIFICACION)
+      VALUES({0}, SYSDATE, '{1}', TO_TIMESTAMP('{2}', 'YYYY/MM/DD HH24:MI:SS.FF3'), TO_TIMESTAMP('{3}', 'YYYY/MM/DD HH24:MI:SS.FF3'), '{4}', '{5}', {6}, {7}, '{8}', '{9}', SYSDATE, '{10}', SYSDATE)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCalidadesSp7</key>
+    <query>
+      SELECT CALCODI, CALNOMB FROM TR_CALIDADICCP_SP7 ORDER BY CALNOMB ASC
+    </query>
+  </Sql>
+	
+</Sqls>

@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(clofaccodi), 0) + 1 from iio_sicli_osig_factura
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into iio_sicli_osig_factura(
+           clofaccodi,
+           clofacanhiomes,
+           clofaccodempresa,
+           clofacnomempresa,
+           clofacruc,
+           clofaccodcliente,
+           clofacnomcliente,
+           clofaccodbarrasumin,
+           clofacnombarrasumin,
+           clofactensionentrega,
+           clofaccodbrg,
+           clofacnombrg,
+           clofactensionbrg,
+           clofacphpbe,
+           clofacpfpbe,
+           clofacehpbe,
+           clofacefpbe,
+           clofacusucreacion,
+           clofacfeccreacion
+       )
+       values(
+           :clofaccodi,
+           :clofacanhiomes,
+           :clofaccodempresa,
+           :clofacnomempresa,
+           :clofacruc,
+           :clofaccodcliente,
+           :clofacnomcliente,
+           :clofaccodbarrasumin,
+           :clofacnombarrasumin,
+           :clofactensionentrega,
+           :clofaccodbrg,
+           :clofacnombrg,
+           :clofactensionbrg,
+           :clofacphpbe,
+           :clofacpfpbe,
+           :clofacehpbe,
+           :clofacefpbe,
+           :clofacusucreacion,
+           :clofacfeccreacion
+       )
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from iio_sicli_osig_factura
+      where
+      clofacanhiomes = :clofacanhiomes
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCountTotal</key>
+    <query>
+      select nvl(count(*),0) from iio_sicli_osig_factura
+        where clofacanhiomes = '{0}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCountTotalFactura</key>
+    <query>
+      select count(*) from iio_factura
+      where ufacmesfacturado = '{0}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListRepCompCliente</key>
+    <query>
+
+      SELECT CLOFACCODCLIENTE
+      ,MAX(CASE WHEN ORIGEN = 'OSIG' THEN CLOFACANHIOMES END) AS CLOFACANHIOMES_OSIG
+      ,MAX(CASE WHEN ORIGEN = 'COES' THEN CLOFACANHIOMES END) AS CLOFACANHIOMES_WEBS
+      ,MAX(CASE WHEN ORIGEN = 'OSIG' THEN CLOFACCODEMPRESA END) AS CLOFACCODEMPRESA_OSIG
+      ,MAX(CASE WHEN ORIGEN = 'COES' THEN CLOFACCODEMPRESA END) AS CLOFACCODEMPRESA_WEBS
+
+      ,MAX(CASE WHEN ORIGEN = 'OSIG' THEN CLOFACRUC END) AS CLOFACRUC_OSIG
+      ,MAX(CASE WHEN ORIGEN = 'COES' THEN CLOFACRUC END) AS CLOFACRUC_WEBS
+
+      ,MAX(CASE WHEN ORIGEN = 'OSIG' THEN CLOFACNOMCLIENTE END) AS CLOFACNOMCLIENTE_OSIG
+      ,MAX(CASE WHEN ORIGEN = 'COES' THEN CLOFACNOMCLIENTE END) AS CLOFACNOMCLIENTE_WEBS
+
+      ,MAX(CASE WHEN ORIGEN = 'OSIG' THEN CLOFACTENSIONENTREGA END) AS CLOFACTENSIONENTREGA_OSIG
+      ,MAX(CASE WHEN ORIGEN = 'COES' THEN CLOFACTENSIONENTREGA END) AS CLOFACTENSIONENTREGA_WEBS
+
+      ,MAX(CASE WHEN ORIGEN = 'OSIG' THEN CLOFACPHPBE END) AS CLOFACPHPBE_OSIG
+      ,MAX(CASE WHEN ORIGEN = 'COES' THEN CLOFACPHPBE END) AS CLOFACPHPBE_WEBS
+
+      ,MAX(CASE WHEN ORIGEN = 'OSIG' THEN CLOFACPFPBE END) AS CLOFACPFPBE_OSIG
+      ,MAX(CASE WHEN ORIGEN = 'COES' THEN CLOFACPFPBE END) AS CLOFACPFPBE_WEBS
+      FROM (
+      SELECT 'OSIG' AS ORIGEN, CLOFACCODCLIENTE,CLOFACANHIOMES,CLOFACCODEMPRESA,CLOFACRUC,CLOFACNOMCLIENTE,TO_CHAR(CLOFACTENSIONENTREGA) AS CLOFACTENSIONENTREGA,CLOFACPHPBE,CLOFACPFPBE ,1 AS CANTIDAD
+      FROM IIO_SICLI_OSIG_FACTURA
+      WHERE CLOFACANHIOMES = '{0}'
+      UNION
+      SELECT 'COES' AS ORIGEN,EQ.OSINERGCODI,FAC.UFACMESFACTURADO,EMP.EMPRCODOSINERGMIN,ECL.EMPRRUC,ECL.EMPRNOMB,BAR.BARRTENSION,FAC.UFACMAXDEMHPPS,FAC.UFACMAXDEMFPPS,1 AS CANTIDAD
+      FROM IIO_FACTURA FAC LEFT JOIN SI_EMPRESA EMP ON FAC.EMPRCODI = EMP.EMPRCODI
+      LEFT JOIN EQ_EQUIPO EQ ON FAC.EQUICODI = EQ.EQUICODI
+      LEFT JOIN SI_EMPRESA ECL ON EQ.EMPRCODI = ECL.EMPRCODI
+      LEFT JOIN PR_BARRA BAR ON FAC.UFACCODPUNTOSUMINISTRO = BAR.BARRCODI
+      WHERE FAC.UFACMESFACTURADO = '{0}'
+      ) RES
+      GROUP BY CLOFACCODCLIENTE
+      ORDER BY CLOFACCODCLIENTE
+      
+    </query>
+  </Sql>  
+
+  <Sql>
+    <key>GetCountTotalRuc</key>
+    <query>
+      select nvl(count(distinct clofacruc),0) from iio_sicli_osig_factura
+      where clofacanhiomes = '{0}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCountTotalFacturaRuc</key>
+    <query>
+
+      select count(distinct ecl.emprruc)
+      from iio_factura fac left join si_empresa emp on fac.emprcodi = emp.emprcodi
+      left join eq_equipo eq on fac.equicodi = eq.equicodi
+      left join si_empresa ecl on eq.emprcodi = ecl.emprcodi
+      where fac.ufacmesfacturado = '{0}'
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListRepCompEmpresa</key>
+    <query>
+
+
+      SELECT CLOFACRUC
+      ,MAX(CASE WHEN ORIGEN = 'OSIG' THEN CLOFACNOMCLIENTE END) AS CLOFACNOMCLIENTE_OSIG
+      ,MAX(CASE WHEN ORIGEN = 'COES' THEN CLOFACNOMCLIENTE END) AS CLOFACNOMCLIENTE_WEBS
+
+      ,SUM(CASE WHEN ORIGEN = 'OSIG' THEN CANTIDAD END) AS CANTIDAD_OSIG
+      ,SUM(CASE WHEN ORIGEN = 'COES' THEN CANTIDAD END) AS CANTIDAD_WEBS
+
+      FROM (
+      SELECT 'OSIG' AS ORIGEN, CLOFACCODCLIENTE,CLOFACANHIOMES,CLOFACCODEMPRESA,CLOFACRUC,CLOFACNOMCLIENTE,TO_CHAR(CLOFACTENSIONENTREGA) AS CLOFACTENSIONENTREGA,CLOFACPHPBE,CLOFACPFPBE,1 AS CANTIDAD
+      FROM IIO_SICLI_OSIG_FACTURA
+      WHERE CLOFACANHIOMES = '{0}'
+      UNION
+      SELECT 'COES' AS ORIGEN,EQ.OSINERGCODI,FAC.UFACMESFACTURADO,EMP.EMPRCODOSINERGMIN,ECL.EMPRRUC,ECL.EMPRNOMB,BAR.BARRTENSION,FAC.UFACMAXDEMHPPS,FAC.UFACMAXDEMFPPS,1 AS CANTIDAD
+      FROM IIO_FACTURA FAC LEFT JOIN SI_EMPRESA EMP ON FAC.EMPRCODI = EMP.EMPRCODI
+      LEFT JOIN EQ_EQUIPO EQ ON FAC.EQUICODI = EQ.EQUICODI
+      LEFT JOIN SI_EMPRESA ECL ON EQ.EMPRCODI = ECL.EMPRCODI
+      LEFT JOIN PR_BARRA BAR ON FAC.UFACCODPUNTOSUMINISTRO = BAR.BARRCODI
+      WHERE FAC.UFACMESFACTURADO = '{0}'
+      ) RES
+      GROUP BY CLOFACRUC
+      ORDER BY CLOFACRUC
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListRepCompHistorico</key>
+    <query>
+
+
+      SELECT EMPRCODOSINERGMIN,NOMBRESUMINISTRADOR 
+      {0}
+
+      FROM (
+      SELECT EQ.OSINERGCODI,FAC.UFACMESFACTURADO,EMP.EMPRCODOSINERGMIN,EMP.EMPRNOMB AS NOMBRESUMINISTRADOR,ECL.EMPRRUC,ECL.EMPRNOMB AS NOMBRECLIENTE,BAR.BARRTENSION,FAC.UFACMAXDEMHPPS,FAC.UFACMAXDEMFPPS,1 AS CANTIDAD
+      FROM IIO_FACTURA FAC LEFT JOIN SI_EMPRESA EMP ON FAC.EMPRCODI = EMP.EMPRCODI
+      LEFT JOIN EQ_EQUIPO EQ ON FAC.EQUICODI = EQ.EQUICODI
+      LEFT JOIN SI_EMPRESA ECL ON EQ.EMPRCODI = ECL.EMPRCODI
+      LEFT JOIN PR_BARRA BAR ON FAC.UFACCODPUNTOSUMINISTRO = BAR.BARRCODI
+      WHERE FAC.UFACMESFACTURADO BETWEEN '{1}' AND '{2}'
+      ) RES
+      GROUP BY EMPRCODOSINERGMIN,NOMBRESUMINISTRADOR
+      ORDER BY EMPRCODOSINERGMIN,NOMBRESUMINISTRADOR
+
+    </query>
+  </Sql>
+  
+</Sqls>

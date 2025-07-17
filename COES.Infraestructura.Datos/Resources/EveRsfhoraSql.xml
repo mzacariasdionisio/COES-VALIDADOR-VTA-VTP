@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(rsfhorcodi), 0) + 1 from eve_rsfhora
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eve_rsfhora(
+      rsfhorcodi,
+      rsfhorindman,
+      rsfhorindaut,
+      rsfhorcomentario,
+      lastuser,
+      lastdate,
+      rsfhorfecha,
+      rsfhorinicio,
+      rsfhorfin,
+      rsfhormaximo,
+      rsfhorindxml
+      )
+      values(
+      :rsfhorcodi,
+      :rsfhorindman,
+      :rsfhorindaut,
+      :rsfhorcomentario,
+      :lastuser,
+      :lastdate,
+      :rsfhorfecha,
+      :rsfhorinicio,
+      :rsfhorfin,
+      :rsfhormaximo,
+      :rsfhorindxml
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update eve_rsfhora
+       set
+           --rsfhorindman = :rsfhorindman,
+           --rsfhorindaut = :rsfhorindaut,
+           --rsfhorcomentario = :rsfhorcomentario,
+           lastuser = :lastuser,
+           lastdate = :lastdate,
+           rsfhorfecha = :rsfhorfecha,
+           rsfhorinicio = :rsfhorinicio,
+           rsfhorfin = :rsfhorfin--,
+           --rsfhormaximo = :rsfhormaximo
+       where
+           rsfhorcodi = :rsfhorcodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>Update2</key>
+		<query>
+			update eve_rsfhora
+			set
+			lastuser = :lastuser,
+			lastdate = :lastdate,
+			rsfhorcomentario = :rsfhorcomentario,
+			rsfhorindman = :rsfhorindman,
+			rsfhorindaut = :rsfhorindaut
+			where
+			rsfhorcodi = :rsfhorcodi
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>ActualizarXML</key>
+    <query>
+      update eve_rsfhora
+      set
+      rsfhorindxml = :rsfhorindxml
+      where
+      rsfhorcodi = :rsfhorcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from eve_rsfhora
+      where      
+      rsfhorfecha = to_date('{0}', 'YYYY-MM-DD')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           rsfhorcodi,
+           rsfhorindman,
+           rsfhorindaut,
+           rsfhorcomentario,
+           lastuser,
+           lastdate,
+           rsfhorfecha,
+           rsfhorinicio,
+           rsfhorfin,
+           rsfhormaximo,
+           rsfhorindxml
+       where
+           rsfhorcodi = :rsfhorcodi
+       from
+           eve_rsfhora
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      rsfhorcodi,
+      rsfhorindman,
+      rsfhorindaut,
+      rsfhorcomentario,
+      lastuser,
+      lastdate,
+      rsfhorfecha,
+      rsfhorinicio,
+      rsfhorfin,
+      rsfhormaximo,
+      rsfhorindxml,
+      0 rsfadd, 0 rsfdel
+      from
+      eve_rsfhora
+    </query>
+  </Sql>
+
+  <!--<Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from eve_rsfhora where rsfhorfecha = to_date('{0}', 'YYYY-MM-DD')
+      order by rsfhorinicio asc
+    </query>
+  </Sql>-->
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		rsfhorcodi, rsfhorindman, rsfhorindaut, rsfhorcomentario, lastuser, lastdate, rsfhorfecha, rsfhorinicio, rsfhorfin, rsfhormaximo, rsfhorindxml,
+		case when rsfhorfin > sysdate THEN 0 else 1 end rsfadd,
+		case when rsfhorfin > sysdate THEN 0 else 1 end rsfdel
+		from eve_rsfhora where rsfhorfecha = to_date('{0}', 'YYYY-MM-DD')
+		order by rsfhorinicio asc
+	</query>
+  </Sql>
+
+  <!--Modificación RSF 05012021-->
+  <Sql>
+    <key>ObtenerDatosXML</key>
+    <query>
+      select tablarsf_a.*, 0 rsfadd, 0 rsfdel  from (
+      select * from eve_rsfhora where rsfhorfecha = to_date('{0}', 'YYYY-MM-DD') - 1
+      order by rsfhorinicio desc) tablarsf_a where rownum = 1
+      union
+      select tablarsf_b.*, 0 rsfadd, 0 rsfdel from (
+      select * from eve_rsfhora where rsfhorfecha = to_date('{0}', 'YYYY-MM-DD')
+      order by rsfhorinicio asc) tablarsf_b
+    </query>
+  </Sql>
+  <!--Fin - Modificación RSF 05012021-->
+  <!--
+  <Sql>
+    <key>ObtenerDatosXML</key>
+    <query>
+      select * from (
+      select * from eve_rsfhora where rsfhorfecha = to_date('{0}', 'YYYY-MM-DD') - 1
+      order by rsfhorinicio desc) where rownum = 1
+      union
+      select * from (
+      select * from eve_rsfhora where rsfhorfecha = to_date('{0}', 'YYYY-MM-DD')
+      order by rsfhorinicio asc)
+    </query>
+  </Sql>
+  -->
+
+  <Sql>
+    <key>ValidarExistencia</key>
+    <query>
+      select count(*) from eve_rsfhora where rsfhorfecha = to_date('{0}', 'YYYY-MM-DD')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporte</key>
+    <query>
+      select
+      hora.rsfhorfecha, hora.rsfhorinicio, hora.rsfhorfin,
+      case when eq.famcodi = 4 or eq.famcodi = 5 then grupo.gruponomb else grupo.gruponomb || ' - ' || eq.equiabrev end as gruponomb,
+      sum(detalle.rsfdetvalaut) as rsfdetvalaut
+      from eve_rsfdetalle detalle
+      inner join eve_rsfhora hora on detalle.rsfhorcodi = hora.rsfhorcodi
+      inner join pr_grupo grupo on detalle.grupocodi = grupo.grupocodi
+      inner join eq_equipo eq on detalle.equicodi = eq.equicodi
+      where detalle.rsfdetvalaut is not null
+      and hora.rsfhorfecha >= to_date('{0}', 'YYYY-MM-DD')
+      and hora.rsfhorfecha &lt;= to_date('{1}', 'YYYY-MM-DD')
+      group by hora.rsfhorfecha, hora.rsfhorinicio, hora.rsfhorfin,
+      case when eq.famcodi = 4 or eq.famcodi = 5 then grupo.gruponomb else grupo.gruponomb || ' - ' || eq.equiabrev end
+      order by hora.rsfhorfecha asc, hora.rsfhorinicio asc
+    </query>
+  </Sql>
+  
+<Sql>
+    <key>DeletePorId</key>
+    <query>
+      delete from eve_rsfhora where rsfhorcodi = {0}
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>GetCriteria2</key>
+		<query>
+			select rsfhorcodi from eve_rsfhora
+			where
+			rsfhorfecha = :rsfhorfecha and
+			rsfhorinicio = :rsfhorinicio and
+			rsfhorfin = :rsfhorfin
+		</query>
+	</Sql>
+	
+</Sqls>

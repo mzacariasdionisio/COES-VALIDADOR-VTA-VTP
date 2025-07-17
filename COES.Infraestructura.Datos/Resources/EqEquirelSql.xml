@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eq_equirel(
+      equicodi1,
+      tiporelcodi,
+      equicodi2,
+      equirelagrup,
+      equirelfecmodificacion,
+      equirelusumodificacion,
+      equirelexcep
+      )
+      values(
+      :equicodi1,
+      :tiporelcodi,
+      :equicodi2,
+      :equirelagrup,
+      :equirelfecmodificacion,
+      :equirelusumodificacion,
+      :equirelexcep
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from eq_equirel
+      where
+      equicodi1 = :equicodi1 and
+      tiporelcodi = :tiporelcodi and
+      equicodi2 = :equicodi2
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update aud_eq_equirel
+			set USERAUDITORIA = :usuarioupdate
+			where
+			equicodi1 = :equicodi1 and
+			tiporelcodi = :tiporelcodi and
+			equicodi2 = :equicodi2
+			and ACTIONAUDITORIA = 'DELETE'
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      eq_equirel
+      where
+      equicodi1 = :equicodi1 and
+      tiporelcodi = :tiporelcodi and
+      equicodi2 = :equicodi2
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      eq_equirel
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      eq1.famcodi famcodi1,eq2.famcodi famcodi2,
+      fam1.famabrev famnomb1,fam2.famabrev famnomb2,
+      eq1.equinomb equinomb1,eq2.equinomb equinomb2,
+      emp1.emprnomb emprnomb1,emp2.emprnomb emprnomb2,
+      rel.*
+      from eq_equirel rel
+      inner join eq_equipo eq1 on eq1.equicodi=rel.equicodi1
+      inner join eq_equipo eq2 on eq2.equicodi=rel.equicodi2
+      inner join eq_familia fam1 on fam1.famcodi=eq1.famcodi
+      inner join eq_familia fam2 on fam2.famcodi=eq2.famcodi
+      inner join si_empresa emp1 on eq1.emprcodi=emp1.emprcodi
+      inner join si_empresa emp2 on eq2.emprcodi=emp2.emprcodi
+      where (rel.equicodi1 = {0} or '-1' = '{0}') and (rel.tiporelcodi in ({1}) or '-1' = '{1}')
+      order by  emp1.emprnomb,eq1.equinomb,emp2.emprnomb,eq2.equinomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaTopologia</key>
+    <query>
+      select emp.emprnomb, eq.equinomb, eqr.*, eq2.equinomb equipotopologia,  emp2.emprnomb empresatopologia
+      from eq_equirel eqr
+      inner join eq_equipo eq on eq.equicodi = eqr.equicodi1
+      inner join eq_equipo eq2 on eq2.equicodi = eqr.equicodi2
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi
+      inner join si_empresa emp2 on emp2.emprcodi = eq2.emprcodi
+      where
+      equicodi1 = {0} and tiporelcodi = {1}
+      order by eqr.equirelagrup, emp2.emprnomb, eq2.equinomb
+    </query>
+  </Sql>
+
+  <!-- INICIO INTERVENCIONES --> 
+  <!--QUERYS PARA PROCEDIMIENTO MANIOBRA --> 
+  <Sql>
+    <key>ListarRelacionesByIdsEquicodi</key>
+    <query>
+      select
+      equicodi1,
+      equicodi2
+      from
+      eq_equirel
+      where
+      tiporelcodi = 12 and
+      equicodi2 in ({0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarRelacionesBarraByIdsEquicodi</key>
+    <query>
+      select
+      equicodi1,
+      equicodi2
+      from
+      eq_equirel
+      where
+      tiporelcodi = 25 and
+      equicodi2 in ({0})
+    </query>
+  </Sql>  
+  <!--FIN INTERVENCIONES -->
+  
+</Sqls>

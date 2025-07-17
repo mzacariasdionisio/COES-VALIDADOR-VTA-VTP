@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ftreqpcodi), 0) + 1 from ft_ext_releqpry
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ft_ext_releqpry(
+      ftreqpcodi,
+      equicodi,
+      ftprycodi,
+      ftreqpestado,
+      ftreqpusucreacion,
+      ftreqpfeccreacion,
+      ftreqpusumodificacion,
+      ftreqpfecmodificacion,
+      grupocodi
+      )
+      values(
+      :ftreqpcodi,
+      :equicodi,
+      :ftprycodi,
+      :ftreqpestado,
+      :ftreqpusucreacion,
+      :ftreqpfeccreacion,
+      :ftreqpusumodificacion,
+      :ftreqpfecmodificacion,
+      :grupocodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ft_ext_releqpry
+      set
+      equicodi = :equicodi,
+      ftprycodi = :ftprycodi,
+      ftreqpestado = :ftreqpestado,
+      ftreqpusucreacion = :ftreqpusucreacion,
+      ftreqpfeccreacion = :ftreqpfeccreacion,
+      ftreqpusumodificacion = :ftreqpusumodificacion,
+      ftreqpfecmodificacion = :ftreqpfecmodificacion,
+      grupocodi = :grupocodi
+      where
+      ftreqpcodi = :ftreqpcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ft_ext_releqpry
+      where
+      ftreqpcodi = :ftreqpcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_releqpry
+      where
+      ftreqpcodi = :ftreqpcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_releqpry
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_releqpry
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorEquipo</key>
+    <query>
+      select rp.*, e.emprnomb, p.ftpryeocodigo, p.ftpryeonombre, p.ftprynombre from ft_ext_releqpry rp
+      inner join ft_ext_proyecto p on p.ftprycodi = rp.ftprycodi
+      inner join si_empresa e on e.emprcodi = p.emprcodi
+      where ('{0}' = '-1' or rp.equicodi = {0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorGrupo</key>
+    <query>
+      select rp.*, e.emprnomb, p.ftpryeocodigo, p.ftpryeonombre, p.ftprynombre from ft_ext_releqpry rp
+      inner join ft_ext_proyecto p on p.ftprycodi = rp.ftprycodi
+      inner join si_empresa e on e.emprcodi = p.emprcodi
+      where rp.grupocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarSoloEquipos</key>
+    <query>
+      select * from ft_ext_releqpry
+      where grupocodi is null
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarSoloGrupos</key>
+    <query>
+      select  rp.* from ft_ext_releqpry rp
+      where rp.equicodi is null
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorEmpresaPropYProyecto</key>
+    <query>
+      select
+      rep.*,
+      (CASE WHEN eq.equicodi IS NULL THEN emp2.emprnomb ELSE emp1.emprnomb  END) AS nombempresaelemento,
+      (CASE WHEN eq.equicodi IS NULL THEN g.emprcodi ELSE eq.emprcodi END) AS idempresaelemento,
+      (CASE WHEN eq.equicodi IS NULL THEN g.gruponomb ELSE eq.equinomb END) AS nombreelemento,
+      (CASE WHEN eq.equicodi IS NULL THEN c.catenomb ELSE f.famnomb END) AS tipoelemento,
+      (CASE WHEN eq.equicodi IS NULL THEN ar2.areanomb ELSE ar1.areanomb END) AS areaelemento,
+      (CASE WHEN eq.equicodi IS NULL THEN g.grupoestado ELSE eq.equiestado END) AS estadoelemento,
+      eq.famcodi,
+      g.catecodi
+      from ft_ext_releqpry rep
+      left join eq_equipo eq on eq.equicodi = rep.equicodi
+      left join eq_familia f on f.famcodi = eq.famcodi
+      left join pr_grupo g on g.grupocodi = rep.grupocodi
+      left join pr_categoria c on c.catecodi = g.catecodi
+      left join eq_area ar1 on ar1.areacodi = eq.areacodi
+      left join eq_area ar2 on ar2.areacodi = g.areacodi
+      left join si_empresa emp1 on emp1.emprcodi = eq.emprcodi
+      left join si_empresa emp2 on emp2.emprcodi = g.emprcodi
+      where rep.ftreqpestado = 1
+      and rep.ftprycodi = {0}
+      and (g.emprcodi = {1} or eq.emprcodi = {1})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorEmpresaCopropYProyecto</key>
+    <query>
+      select rep.*,
+      emp1.emprcodi as idempresaelemento,
+      emp1.emprnomb as nombempresaelemento,
+      emp2.emprcodi as idempresacopelemento,
+      emp2.emprnomb as nombempresacopelemento,
+      eq.equinomb  as nombreelemento,
+      f.famnomb as tipoelemento,
+      ar1.areanomb as areaelemento,
+      eq.equiestado as estadoelemento,
+      eq.famcodi
+      from ft_ext_releqpry rep
+      inner join ft_ext_releqemplt relt on relt.equicodi = rep.equicodi
+      inner join eq_equipo eq on eq.equicodi = rep.equicodi
+      inner join si_empresa emp1 on emp1.emprcodi = eq.emprcodi
+      inner join si_empresa emp2 on emp2.emprcodi = relt.emprcodi
+      inner join eq_familia f on f.famcodi = eq.famcodi
+      inner join eq_area ar1 on ar1.areacodi = eq.areacodi
+      where rep.ftreqpestado = 1
+      and rep.ftprycodi = {0}
+      and relt.emprcodi = {1}
+
+    </query>
+  </Sql>
+
+
+</Sqls>

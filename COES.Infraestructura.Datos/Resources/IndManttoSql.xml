@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(indmancodi), 0) + 1 from ind_mantto
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ind_mantto(
+      indmancodi,
+      emprcodi,
+      manttocodi,
+      equicodi,
+      evenclasecodi,
+      tipoevencodi,
+      indmanfecini,
+      indmanfecfin,
+      indmantipoindisp,
+      indmanpr,
+      indmanasocproc,
+      indmanusarencalculo,
+      indmancomentario,
+      indmanestado,
+      indmantipoaccion,
+      indmanindispo,
+      indmaninterrup,
+      indmandescripcion,
+      indmanusucreacion,
+      indmanfeccreacion,
+      indmanusumodificacion,
+      indmanfecmodificacion,
+      indmancodiold,
+      indmanomitir7d,
+      indmanomitirexcesopr
+      )
+      values(
+      :indmancodi,
+      :emprcodi,
+      :manttocodi,
+      :equicodi,
+      :evenclasecodi,
+      :tipoevencodi,
+      :indmanfecini,
+      :indmanfecfin,
+      :indmantipoindisp,
+      :indmanpr,
+      :indmanasocproc,
+      :indmanusarencalculo,
+      :indmancomentario,
+      :indmanestado,
+      :indmantipoaccion,
+      :indmanindispo,
+      :indmaninterrup,
+      :indmandescripcion,
+      :indmanusucreacion,
+      :indmanfeccreacion,
+      :indmanusumodificacion,
+      :indmanfecmodificacion,
+      :indmancodiold,
+      :indmanomitir7d,
+      :indmanomitirexcesopr
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ind_mantto
+      set
+      emprcodi                = :emprcodi,
+      manttocodi              = :manttocodi,
+      equicodi                = :equicodi,
+      evenclasecodi           = :evenclasecodi,
+      tipoevencodi            = :tipoevencodi,
+      indmanfecini            = :indmanfecini,
+      indmanfecfin            = :indmanfecfin,
+      indmantipoindisp        = :indmantipoindisp,
+      indmanpr                = :indmanpr,
+      indmanasocproc          = :indmanasocproc,
+      indmanusarencalculo     = :indmanusarencalculo,
+      indmancomentario        = :indmancomentario,
+      indmanestado            = :indmanestado,
+      indmantipoaccion        = :indmantipoaccion,
+      indmanindispo           = :indmanindispo,
+      indmaninterrup          = :indmaninterrup,
+      indmandescripcion       = :indmandescripcion,
+      indmanusucreacion       = :indmanusucreacion,
+      indmanfeccreacion       = :indmanfeccreacion,
+      indmanusumodificacion   = :indmanusumodificacion,
+      indmanfecmodificacion   = :indmanfecmodificacion,
+      indmancodiold           = :indmancodiold,
+      indmanomitir7d          = :indmanomitir7d,
+      indmanomitirexcesopr    = :indmanomitirexcesopr
+      where
+      indmancodi = :indmancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ind_mantto where indmancodi = :indmancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from ind_mantto where indmancodi = :indmancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from ind_mantto
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById2</key>
+    <query>
+      select
+      mant.*,
+      eq.equiabrev,
+      eq.famcodi,
+      eq.areacodi,
+      eq.equitension,
+      ar.areanomb,
+      tipoarea.tareaabrev || ' ' || ar.areanomb as areadesc,
+      f.famabrev,
+      f.famnomb,
+      emp.emprcodi,
+      emp.emprnomb,
+      emp.emprabrev,
+      cla.evenclasedesc,
+      CLA.EVENCLASEABREV,
+      tipo_empresa.tipoemprcodi,
+      tipo_empresa.tipoemprdesc,
+      TIPOEVE.TIPOEVENABREV,
+      TIPOEVE.TIPOEVENDESC,
+      case f.tipoecodi when 2 then 'G' else 'T' end osigrupocodi,
+      gr.GRUPOTIPOCOGEN,
+      (row_number() over (order by MANT.MANTTOCODI)) as r
+      from
+      ind_mantto mant
+      INNER JOIN EVE_TIPOEVENTO TIPOEVE ON TIPOEVE.TIPOEVENCODI = MANT.TIPOEVENCODI
+      INNER JOIN EVE_EVENCLASE CLA ON CLA.EVENCLASECODI = MANT.EVENCLASECODI
+      INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI = mant.EQUICODI
+      INNER JOIN EQ_AREA AR ON AR.AREACODI = EQ.AREACODI
+      inner join eq_tipoarea tipoarea on ar.tareacodi = tipoarea.tareacodi
+      left join pr_grupo gr on gr.grupocodi = eq.grupocodi
+      INNER JOIN EQ_FAMILIA F ON F.FAMCODI = EQ.FAMCODI
+      INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+      inner join si_tipoempresa tipo_empresa on emp.tipoemprcodi = tipo_empresa.tipoemprcodi
+      where
+      mant.INDMANESTADO = 'A' and mant.indmancodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select *
+      from (
+      select
+      mant.*,
+      eq.equiabrev,
+      eq.famcodi,
+      eq.areacodi,
+      eq.equitension,
+      ar.areanomb,
+      tipoarea.tareaabrev || ' ' || ar.areanomb as areadesc,
+      f.famabrev,
+      f.famnomb,
+      emp.emprcodi,
+      emp.emprnomb,
+      emp.emprabrev,
+      cla.evenclasedesc,
+      CLA.EVENCLASEABREV,
+      tipo_empresa.tipoemprcodi,
+      tipo_empresa.tipoemprdesc,
+      TIPOEVE.TIPOEVENABREV,
+      TIPOEVE.TIPOEVENDESC,
+      case f.tipoecodi when 2 then 'G' else 'T' end osigrupocodi,
+      (row_number() over (order by MANT.MANTTOCODI)) as r
+      from
+      ind_mantto mant
+      INNER JOIN EVE_TIPOEVENTO TIPOEVE ON TIPOEVE.TIPOEVENCODI = MANT.TIPOEVENCODI
+      INNER JOIN EVE_EVENCLASE CLA ON CLA.EVENCLASECODI = MANT.EVENCLASECODI
+      INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI = mant.EQUICODI
+      INNER JOIN EQ_AREA AR ON AR.AREACODI = EQ.AREACODI
+      inner join eq_tipoarea tipoarea on ar.tareacodi = tipoarea.tareacodi
+      INNER JOIN EQ_FAMILIA F ON F.FAMCODI = EQ.FAMCODI
+      INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+      inner join si_tipoempresa tipo_empresa on emp.tipoemprcodi = tipo_empresa.tipoemprcodi
+      where
+      mant.INDMANESTADO = 'A' and
+      (mant.EVENCLASECODI in ({0}) or '{0}' = '-1') and
+      (TIPOEVE.TIPOEVENCODI in ({9}) or '{9}' = '-1') and
+      (emp.emprcodi in ({1}) or '{1}' = '-1') and
+      (tipo_empresa.tipoemprcodi in ({7}) or '{7}' = '-1') and
+      (f.famcodi in ({2}) or '{2}' = '-1') and
+      (mant.indmanindispo = '{10}' or '{10}' = '-1') and
+      (mant.indmaninterrup = '{8}' or '{8}' = '-1') and
+      (( indmanfecini >=  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and indmanfecini &lt;  TO_DATE('{4} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and indmanfecfin >  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      ))
+      order by emp.emprnomb asc
+
+      )
+      where r >= ((({5}-1) * {6}) + 1) and r &lt; (({6} * {5}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRecords</key>
+    <query>
+      select
+      count(*)
+      from ind_mantto mantto
+      inner join eq_equipo equipo on mantto.equicodi = equipo.equicodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      INNER JOIN EVE_TIPOEVENTO TIPOEVE ON TIPOEVE.TIPOEVENCODI = MANTto.TIPOEVENCODI
+      inner join EVE_EVENCLASE clase on mantto.EVENCLASECODI = clase.EVENCLASECODI
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipo_empresa on empresa.tipoemprcodi = tipo_empresa.tipoemprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      where
+      mantto.INDMANESTADO = 'A' and
+      (mantto.EVENCLASECODI in ({0}) or '{0}' = '-1') and
+      (TIPOEVE.TIPOEVENCODI in ({7}) or '{7}' = '-1') and
+      (empresa.emprcodi in ({1}) or '{1}' = '-1') and
+      (tipo_empresa.tipoemprcodi in ({5}) or '{5}' = '-1') and
+      (familia.famcodi in ({2}) or '{2}' = '-1') and
+      (mantto.indmanindispo = '{8}' or '{8}' = '-1') and
+      (mantto.indmaninterrup = '{6}' or '{6}' = '-1') and
+      (( indmanfecini >=  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and indmanfecini &lt;  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( indmanfecfin >  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and indmanfecfin &lt;=  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ) or
+      ( indmanfecini &lt;  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and indmanfecfin >  TO_DATE('{4} 00:00:00','YYYY-MM-DD HH24:MI:SS')  ))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ReporteIndMantto</key>
+    <query>
+      select
+      mant.*,
+      eq.equiabrev,
+      eq.famcodi,
+      eq.areacodi,
+      eq.equitension,
+      eq2.equicodi as equipadre,
+      ar.areanomb,
+      tipoarea.tareaabrev || ' ' || ar.areanomb as areadesc,
+      f.famabrev,
+      f.famnomb,
+      emp.emprcodi,
+      emp.emprnomb,
+      emp.emprabrev,
+      cla.evenclasedesc,
+      CLA.EVENCLASEABREV,
+      tipo_empresa.tipoemprcodi,
+      tipo_empresa.tipoemprdesc,
+      TIPOEVE.TIPOEVENABREV,
+      TIPOEVE.TIPOEVENDESC,
+      case f.tipoecodi when 2 then 'G' else 'T' end osigrupocodi,
+      gr.GRUPOTIPOCOGEN,
+      (row_number() over (order by MANT.MANTTOCODI)) as r
+      from
+      ind_mantto mant
+      INNER JOIN EVE_TIPOEVENTO TIPOEVE ON TIPOEVE.TIPOEVENCODI = MANT.TIPOEVENCODI
+      INNER JOIN EVE_EVENCLASE CLA ON CLA.EVENCLASECODI = MANT.EVENCLASECODI
+      INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI = mant.EQUICODI
+      LEFT JOIN EQ_EQUIPO eq2 ON eq2.EQUICODI = (CASE WHEN EQ.FAMCODI in (4,5,37,39) THEN EQ.equicodi ELSE EQ.EQUIPADRE END)
+      left join pr_grupo gr on gr.grupocodi = eq.grupocodi
+      INNER JOIN EQ_AREA AR ON AR.AREACODI = EQ.AREACODI
+      inner join eq_tipoarea tipoarea on ar.tareacodi = tipoarea.tareacodi
+      INNER JOIN EQ_FAMILIA F ON F.FAMCODI = EQ.FAMCODI
+      INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+      inner join si_tipoempresa tipo_empresa on emp.tipoemprcodi = tipo_empresa.tipoemprcodi
+      where
+      mant.INDMANESTADO = 'A' and
+      (mant.EVENCLASECODI in ({0}) or '{0}' = '-1') and
+      (TIPOEVE.TIPOEVENCODI in ({7}) or '{7}' = '-1') and
+      (emp.emprcodi in ({1}) or '{1}' = '-1') and
+      (tipo_empresa.tipoemprcodi in ({5}) or '{5}' = '-1') and
+      (f.famcodi in ({2}) or '{2}' = '-1') and
+      (mant.indmanindispo = '{8}' or '{8}' = '-1') and
+      (mant.indmaninterrup = '{6}' or '{6}' = '-1') and
+      (( indmanfecini >=  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')  and indmanfecini &lt;  TO_DATE('{4} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and indmanfecfin >  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      ))
+      order by emp.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>IndisponibilidadesIndmanto</key>
+    <query>
+      select distinct em.emprcodi,(case when eq.famcodi = 5 then eq.equicodi else eq.equipadre end) as equipadre,eq.grupocodi,eq.EQUIABREV,m.EQUICODI,m.EVENCLASECODI,
+      m.INDMANFECINI,m.INDMANFECFIN,m.manttocodi from ind_mantto m
+      inner join eq_equipo eq on eq.equicodi = m.equicodi and eq.famcodi in ({2}) --and eq.equiestado = 'A'
+      inner join si_empresa em on em.emprcodi = eq.emprcodi
+      where m.INDMANESTADO = 'A'
+      AND m.INDMANFECINI >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and m.INDMANFECINI &lt; to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      AND M.INDMANFECFIN > to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and m.evenclasecodi in (1,2)
+      order by m.equicodi, m.INDMANFECINI, m.evenclasecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>IndisponibilidadesIndmantoCuadro4</key>
+    <query>
+      select t.* from (
+      select em.emprcodi,eq.equicodi equipadre,eq.grupocodi,eq.EQUIABREV,eq.equipadre as EQUICODI,m.EVENCLASECODI,
+      m.INDMANFECINI,m.INDMANFECFIN,m.manttocodi from ind_mantto m
+      inner join eq_equipo eq on eq.equicodi = m.equicodi and eq.famcodi = {3} --and eq.equiestado='A'
+      inner join si_empresa em on em.emprcodi = eq.emprcodi
+      where m.INDMANESTADO = 'A'
+      and m.INDMANFECINI >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and m.INDMANFECINI &lt; to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      AND M.INDMANFECFIN > to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and evenclasecodi in (1,2)
+      UNION
+      select em.emprcodi,eqp.equicodi equipadre,eq.grupocodi,eq.EQUIABREV,m.EQUICODI,m.EVENCLASECODI,
+      m.INDMANFECINI,m.INDMANFECFIN,m.manttocodi from ind_mantto m
+      inner join eq_equipo eq on eq.equicodi = m.equicodi and eq.famcodi = {2} --and eq.equiestado = 'A'
+      inner join eq_equipo eqp on eqp.equipadre = eq.equicodi --and eqp.equiestado = 'A'
+      inner join si_empresa em on em.emprcodi = eq.emprcodi
+      where m.INDMANESTADO = 'A'
+      and m.INDMANFECINI >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and m.INDMANFECINI &lt; to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      AND M.INDMANFECFIN > to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and evenclasecodi in (1,2)
+      ) t
+      order by t.equicodi,t.INDMANFECINI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarIndManttoByEveMantto</key>
+    <query>
+      select mant.* from ind_mantto mant
+      where mant.manttocodi in ({0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListHistoricoByIndmacodi</key>
+    <query>
+      select mant.* from ind_mantto mant
+      where mant.indmancodi in ({0}) or mant.indmancodiold in ({0})
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListarIndManttoAppPR25</key>
+    <query>
+      select em.emprcodi,em.emprnomb,
+      case when eq.famcodi in (4,5,37,39) then eq.equicodi else eqp.equicodi end as equipadre,
+      case when eq.famcodi in (4,5,37,39) then eq.equinomb else eqp.equinomb end as central,
+      eq.grupocodi,eq.EQUIABREV,m.EQUICODI,eq.famcodi,
+      m.EVENCLASECODI,
+      m.INDMANFECINI,m.INDMANFECFIN,m.manttocodi, m.indmandescripcion
+      from ind_mantto m
+      inner join eq_equipo eq on eq.equicodi = m.equicodi and eq.famcodi in ({2}) --and eq.equiestado = 'A'
+      inner join eq_equipo eqp on eqp.EQUICODI = coalesce(eq.EQUIPADRE, -1)
+      inner join si_empresa em on em.emprcodi = eq.emprcodi --(case when coalesce(m.EMPRCODI, -1) > 0 then m.EMPRCODI else eq.emprcodi end)
+      where m.INDMANESTADO = 'A'
+      AND m.INDMANFECINI >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and m.INDMANFECINI &lt; to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      AND M.INDMANFECFIN > to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and m.evenclasecodi in (1,2)
+      order by 4, m.INDMANFECINI, m.evenclasecodi
+    </query>
+  </Sql>
+
+</Sqls>

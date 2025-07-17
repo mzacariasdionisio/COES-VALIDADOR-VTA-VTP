@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      SELECT NVL(MAX(pmcindcodi), 0) + 1 FROM pmo_conf_indisp_equipo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      INSERT
+      INTO pmo_conf_indisp_equipo
+      (
+      pmcindcodi,
+      sddpcodi,
+      equicodi,
+      pmcindporcentaje,
+      pmcindconjuntoeqp,
+      pmcindrelinversa,
+      pmcindestregistro,
+      pmcindusucreacion,
+      pmcindfeccreacion,
+      pmcindusumodificacion,
+      pmcindfecmodificacion,
+      grupocodimodo
+      )
+      VALUES
+      (
+      :pmcindcodi,
+      :sddpcodi,
+      :equicodi,
+      :pmcindporcentaje,
+      :pmcindconjuntoeqp,
+      :pmcindrelinversa,
+      :pmcindestregistro,
+      :pmcindusucreacion,
+      :pmcindfeccreacion,
+      :pmcindusumodificacion,
+      :pmcindfecmodificacion,
+      :grupocodimodo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update pmo_conf_indisp_equipo
+      set
+      sddpcodi = :sddpcodi,
+      equicodi = :equicodi,
+      pmcindporcentaje = :pmcindporcentaje,
+      pmcindconjuntoeqp = :pmcindconjuntoeqp,
+      pmcindusumodificacion = :pmcindusumodificacion,
+      pmcindfecmodificacion = :pmcindfecmodificacion,
+      pmcindrelinversa = :pmcindrelinversa,
+      grupocodimodo = :grupocodimodo
+      where
+      pmcindcodi = :pmcindcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      TCOD.TSDDPCODI,
+      eq.famcodi,
+      ci.*
+      from pmo_conf_indisp_equipo ci
+      inner join PMO_SDDP_CODIGO cod on cod.sddpcodi = ci.sddpcodi
+      inner JOIN PMO_SDDP_TIPO TCOD ON TCOD.TSDDPCODI=cod.TSDDPCODI
+      inner JOIN EQ_EQUIPO EQ ON CI.EQUICODI = EQ.EQUICODI
+      where
+      pmcindcodi = :pmcindcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>EliminarCorrelacion</key>
+    <query>
+      update pmo_conf_indisp_equipo
+      set
+      pmcindestregistro = 'X',
+      pmcindusumodificacion = :pmcindusumodificacion,
+      pmcindfecmodificacion = :pmcindfecmodificacion
+      where
+      pmcindcodi = :pmcindcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      SELECT
+      gr.grupocodi,
+      gr.EMPRCODI,
+      emp.emprnomb,
+      trim(gR.GRUPONOMB) gruponomb,
+      TA.TAREAABREV || ' ' || AR.AREANOMB as areanomb,
+      EQ.FAMCODI,
+      fam.famabrev,
+      EQ.EQUIABREV,
+      (case when eq.equipadre = eq2.equicodi then eq2.equinomb else eq.equinomb end) as equinomb ,
+      eq2.equicodi as equipadre,
+      TCOD.TSDDPCODI,
+      ci.*,
+      CASE WHEN CI.PMCINDUSUMODIFICACION IS NOT NULL THEN CI.PMCINDUSUMODIFICACION ELSE CI.PMCINDUSUCREACION END USUARIO_MOD,
+      CASE WHEN CI.PMCINDFECMODIFICACION IS NOT NULL THEN CI.PMCINDFECMODIFICACION ELSE CI.PMCINDFECCREACION END FECHA_MOD
+      FROM PMO_CONF_INDISP_EQUIPO CI
+      inner join PMO_SDDP_CODIGO cod on cod.sddpcodi = ci.sddpcodi
+      inner JOIN PMO_SDDP_TIPO TCOD ON TCOD.TSDDPCODI=cod.TSDDPCODI
+      inner JOIN EQ_EQUIPO EQ ON CI.EQUICODI = EQ.EQUICODI
+      left join me_ptomedicion pto on pto.ptomedicodi = cod.ptomedicodi
+      left JOIN PR_GRUPO GR ON pto.GRUPOCODI = GR.GRUPOCODI
+      left JOIN EQ_EQUIPO eq2 ON eq2.EQUICODI = (CASE WHEN EQ.FAMCODI in (4,5,37,39) THEN EQ.equicodi ELSE EQ.EQUIPADRE END)
+      left join eq_familia fam on fam.famcodi = eq.famcodi
+      left join si_empresa emp on emp.emprcodi = gr.emprcodi
+      LEFT JOIN EQ_AREA AR ON EQ.AREACODI = AR.AREACODI
+      LEFT JOIN EQ_TIPOAREA TA ON AR.TAREACODI=TA.TAREACODI
+      where CI.pmcindestregistro = 'A'
+      and ('{0}'='-1' or gr.emprcodi = {0})
+      and ('{1}'='-1' or TCOD.TSDDPCODI = {1})
+      and ('{2}'='-1' or eq.famcodi = {2})
+    </query>
+  </Sql>
+
+</Sqls>

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(calecodi), 0) + 1 from dai_calendariopago
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into dai_calendariopago(
+           calecodi,
+           aporcodi,
+           caleanio,
+           calenroamortizacion,
+           calecapital,
+           caleinteres,
+           caleamortizacion,
+           caletotal,
+           calecartapago,
+           caleactivo,
+           caleusucreacion,
+           calefeccreacion,
+           caleusumodificacion,
+           calefecmodificacion,
+           TABCDCODIESTADO
+       )
+       values(
+           :calecodi,
+           :aporcodi,
+           :caleanio,
+           :calenroamortizacion,
+           :calecapital,
+           :caleinteres,
+           :caleamortizacion,
+           :caletotal,
+           :calecartapago,
+           :caleactivo,
+           :caleusucreacion,
+           :calefeccreacion,
+           :caleusumodificacion,
+           :calefecmodificacion,
+           :TABCDCODIESTADO
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update dai_calendariopago
+      set
+      aporcodi = :aporcodi,
+      calecartapago = :calecartapago,
+      caleactivo = :caleactivo,
+      caleusumodificacion = :caleusumodificacion,
+      calefecmodificacion = :calefecmodificacion,
+      TABCDCODIESTADO = :TABCDCODIESTADO,
+      calecapital = :calecapital,
+      caleinteres = :caleinteres,
+      Caleamortizacion = :Caleamortizacion,
+      Caletotal = :Caletotal,
+      Calechequeamortpago = :Calechequeamortpago,
+      Calechequeintpago = :Calechequeintpago
+      where
+      calecodi = :calecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from dai_calendariopago
+       where
+           calecodi = :calecodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Liquidar</key>
+    <query>
+       update dai_calendariopago
+       set caleactivo = '0',
+           caleusumodificacion = :caleusumodificacion,
+           calefecmodificacion = :calefecmodificacion
+       where
+           calecodi > :calecodi and aporcodi = :aporcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Reprocesar</key>
+    <query>
+       update dai_calendariopago
+       set caleactivo = '0', caleusumodificacion = :caleusumodificacion,
+           calefecmodificacion = :calefecmodificacion
+       where
+           aporcodi = :aporcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           calecodi,
+           aporcodi,
+           caleanio,
+           calenroamortizacion,
+           calecapital,
+           caleinteres,
+           caleamortizacion,
+           caletotal,
+           calecartapago,
+           caleactivo,
+           caleusucreacion,
+           calefeccreacion,
+           caleusumodificacion,
+           calefecmodificacion,
+           TABCDCODIESTADO
+       from
+           dai_calendariopago
+       where
+           calecodi = :calecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      calecodi,
+      aporcodi,
+      caleanio,
+      calenroamortizacion,
+      calecapital,
+      caleinteres,
+      caleamortizacion,
+      caletotal,
+      calecartapago,
+      caleactivo,
+      caleusucreacion,
+      calefeccreacion,
+      caleusumodificacion,
+      calefecmodificacion,
+      TABCDCODIESTADO
+      from
+      dai_calendariopago
+      where caleactivo = '1' and TABCDCODIESTADO = {0} and aporcodi = {1}
+      order by caleanio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      cp.calecodi,
+      cp.aporcodi,
+      cp.caleanio,
+      cp.calenroamortizacion,
+      cp.calecapital,
+      cp.caleinteres,
+      cp.caleamortizacion,
+      cp.caletotal,
+      cp.calecartapago,
+      cp.caleactivo,
+      cp.caleusucreacion,
+      cp.calefeccreacion,
+      cp.caleusumodificacion,
+      cp.calefecmodificacion,
+      cp.TABCDCODIESTADO,
+      d.tabddescripcion,
+      Calechequeamortpago,
+      Calechequeintpago
+      from
+      dai_calendariopago cp
+      inner join DAI_TABLACODIGO_DETALLE d on cp.TABCDCODIESTADO = d.tabdcodi
+      where aporcodi = :aporcodi and caleactivo = '1'
+      order by calenroamortizacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaByAnio</key>
+    <query>
+      select
+      cp.calecodi,
+      cp.aporcodi,
+      cp.caleanio,
+      cp.calenroamortizacion,
+      cp.calecapital,
+      cp.caleinteres,
+      cp.caleamortizacion,
+      cp.caletotal,
+      cp.calecartapago,
+      cp.caleactivo,
+      cp.caleusucreacion,
+      cp.calefeccreacion,
+      cp.caleusumodificacion,
+      cp.calefecmodificacion,
+      cp.TABCDCODIESTADO,
+      d.tabddescripcion,
+      p.presanio
+      from
+      dai_calendariopago cp
+      inner join DAI_TABLACODIGO_DETALLE d on cp.TABCDCODIESTADO = d.tabdcodi
+      inner join dai_aportante a on cp.aporcodi = a.aporcodi
+      inner join dai_presupuesto p on p.prescodi = a.prescodi
+      where caleactivo = '1' and a.aporactivo = '1' and p.presactivo = '1' and a.emprcodi = {0}
+      order by calenroamortizacion
+    </query>
+  </Sql>
+</Sqls>

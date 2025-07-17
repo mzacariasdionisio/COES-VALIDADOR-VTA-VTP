@@ -1,0 +1,693 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+		<key>SqlListCapacidadTransmision</key>
+		<query>
+			WITH equipo AS (
+			SELECT eq.*
+			FROM
+			eq_equipo eq join epr_equipo ep on eq.equicodi = ep.equicodi and ep.epequiestregistro='1' and eq.equiestado='A'
+			WHERE eq.famcodi = 8
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			, ult_fecha_modificacion_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM ult_fecha_prop p
+			GROUP BY
+			p.equicodi
+			)
+			, ult_proy_act_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.epproycodi) AS epproycodi
+			FROM
+			eq_propequi p join ult_fecha_modificacion_equipo ufa on p.equicodi = ufa.equicodi and p.fechapropequi = ufa.fechapropequi
+			GROUP BY
+			p.equicodi
+			)
+			, ult_modificador_equipo AS (
+			SELECT
+			p.equicodi
+			,MAX(nvl(p.propequiusumodificacion,p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_modificacion_equipo e ON p.equicodi = e.equicodi
+			AND p.fechapropequi = e.fechapropequi
+			GROUP BY
+			p.equicodi
+			)
+			,data_prop_prev AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			pe.propequicomentario
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			)
+			,data_coment as (
+			select distinct trim(propequicomentario) as propequicomentario
+			from data_prop_prev
+			where propcodi in (
+			3358
+			,3359
+			,3361
+			,3362
+			,3353
+			,3354
+			,3366
+			)
+			and equicodi in (select equicodi from data_prop_prev where propcodi = 3351
+			and ( nvl(:ID_AREA_EXCEL, 0) = 0 OR to_number(valor default 0 on conversion error) = :ID_AREA_EXCEL )
+			)
+			and propequicomentario is not null
+			order by 1)
+			,comentario as (
+			select c.*,rownum as nro_coment
+			from data_coment c
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			case when co.nro_coment is not null then ' ('||co.nro_coment||')' end as tag_comentario
+			FROM
+			data_prop_prev pe
+			LEFT JOIN comentario co ON pe.propequicomentario = co.propequicomentario
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			,max(tag_comentario) as coment
+			FOR propcodi
+			IN (
+			3351 as id_area
+			,263 as longitud
+			,1852 as tension
+			,3355 as id_celda_1
+			,3356 as id_celda_2
+			,3357 as id_banco_condensador
+			,3358 as capac_trans_cond_1_porcen
+			,3359 as capac_trans_cond_1_min
+			,3361 as capac_trans_cond_2_porcen
+			,3362 as capac_trans_cond_2_min
+			,3353 as capacidad_transmision_a
+			,3354 as capacidad_transmision_mva
+			,3366 as factor_limitante_final
+			,3367 as observaciones
+			)
+			)
+			)
+			SELECT 0 as numero
+			,em.emprnomb as empresa
+			,e.equiabrev as codigo
+			,p.tension
+			,trim(ac1.areanomb)||' - '||trim(ac2.areanomb) as subestaciones
+			,p.capacidad_transmision_a as capacidad_transmision_a
+			,p.capacidad_transmision_mva as capacidad_transmision_mva
+			,p.capac_trans_cond_1_porcen||p.capac_trans_cond_1_porcen_coment||'/'||p.capac_trans_cond_2_porcen||p.capac_trans_cond_2_porcen_coment as capac_trans_cond_porcen
+			,p.capac_trans_cond_1_min||p.capac_trans_cond_1_min_coment||'/'||p.capac_trans_cond_2_min||p.capac_trans_cond_2_min_coment as capac_trans_cond_min
+			,p.factor_limitante_final factor_limitante_final
+			,p.equicodi
+			-- Nuevos campos
+			,p.capacidad_transmision_a_coment
+			,p.capacidad_transmision_mva_coment
+			,p.factor_limitante_final_coment
+
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			JOIN ult_fecha_modificacion_equipo ufm ON p.equicodi = ufm.equicodi
+			JOIN ult_modificador_equipo uum ON p.equicodi = uum.equicodi
+			JOIN ult_proy_act_equipo upa on p.equicodi = upa.equicodi
+			LEFT JOIN eq_area ubi on e.areacodi = ubi.areacodi
+			LEFT JOIN eq_area al on to_number(p.id_area default 0 on conversion error) = al.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi = em.emprcodi
+			LEFT JOIN eq_equipo ec1 on to_number(p.id_celda_1 default 0 on conversion error) = ec1.equicodi
+			LEFT JOIN eq_area ac1 on ec1.areacodi= ac1.areacodi
+			LEFT JOIN eq_equipo ec2 on to_number(p.id_celda_2 default 0 on conversion error) = ec2.equicodi
+			LEFT JOIN eq_area ac2 on ec2.areacodi= ac2.areacodi
+			LEFT JOIN eq_prop_catalogo_data es ON eqcatccodi = 6 and e.equiestado = es.eqcatdabrev
+			LEFT JOIN eq_equipo ebc on to_number(p.id_banco_condensador default 0 on conversion error) = ebc.equicodi
+			LEFT JOIN eq_area abc on ebc.areacodi= abc.areacodi
+			LEFT JOIN epr_proyecto_acteqp proy on upa.epproycodi = proy.epproycodi
+			WHERE 1 = 1
+			AND ( nvl(:ID_AREA_EXCEL, 0) = 0 OR to_number(p.id_area default 0 on conversion error) = :ID_AREA_EXCEL )
+			union all
+			select nro_coment, '('||nro_coment||')',propequicomentario,null,null,null,null,null,null,null,null,null,null,null from comentario
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlListActualizaciones</key>
+		<query>
+			SELECT to_char(epproyfecregistro, 'DD/MM/YYYY')|| ': '|| TRIM(epproynomb)|| '('|| epproynemotecnico|| ')' AS epproynomb
+			FROM epr_proyecto_acteqp p
+			WHERE epproycodi IN (SELECT epproycodi
+			FROM eq_propequi p JOIN eq_equipo e ON p.equicodi = e.equicodi
+			WHERE e.famcodi IN ( 6, 8, 12, 9, 10,47) AND epproycodi IS NOT NULL
+			and p.propequideleted='0'
+			)
+			and p.epproyestregistro='1'
+			ORDER BY p.epproyfecregistro
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlListRevisiones</key>
+		<query>
+			SELECT
+			eprtlcfecemision,
+			eprtlcrevision,
+			eprtlcdescripcion,
+			eprtlcusuelabora,
+			eprtlcusurevisa,
+			eprtlcusuaprueba
+			FROM
+			epr_rep_limit_cap
+			WHERE eprtlcestregistro='1'
+			ORDER BY
+			eprtlcfecemision,
+			eprtlcrevision
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlListCapacidadTransformador</key>
+		<query>
+			WITH equipo AS (
+			SELECT eq.*
+			FROM
+			eq_equipo eq join epr_equipo ep on eq.equicodi = ep.equicodi and ep.epequiestregistro='1' and eq.equiestado='A'
+			join epr_area ap on eq.areacodi = ap.areacodi
+			WHERE eq.famcodi in (9,10,47)
+			and ap.areacodizona=:ID_AREA_EXCEL
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			, ult_fecha_modificacion_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM ult_fecha_prop p
+			GROUP BY
+			p.equicodi
+			)
+			, ult_proy_act_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.epproycodi) AS epproycodi
+			FROM
+			eq_propequi p join ult_fecha_modificacion_equipo ufa on p.equicodi = ufa.equicodi and p.fechapropequi = ufa.fechapropequi
+			GROUP BY
+			p.equicodi
+			)
+			, ult_modificador_equipo AS (
+			SELECT
+			p.equicodi
+			,MAX(nvl(p.propequiusumodificacion,p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_modificacion_equipo e ON p.equicodi = e.equicodi
+			AND p.fechapropequi = e.fechapropequi
+			GROUP BY
+			p.equicodi
+			)
+			,data_prop_prev AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			pe.propequicomentario
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			)
+			,data_coment as (
+			select distinct trim(propequicomentario) as propequicomentario
+			from data_prop_prev
+			where propcodi in (
+			77
+			,75
+			,830
+			,831
+			,832
+			,1894
+			,1895
+			,1896
+			,1897
+
+			,3425
+			,3445
+			,3465
+			,3485
+			,3505
+			,3525
+			,3545
+			,3565
+			,3585
+
+			,3424
+			,3444
+			,3464
+			,3484
+			,3504
+			,3524
+			,3544
+			,3564
+			,3584
+
+			,3427
+			,3447
+			,3467
+			,3487
+			,3507
+			,3527
+			,3547
+			,3567
+			,3587
+			)
+			and propequicomentario is not null
+			order by 1)
+			,comentario as (
+			select c.*,rownum as nro_coment
+			from data_coment c
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			case when co.nro_coment is not null then ' ('||co.nro_coment||')' end as tag_comentario
+			FROM
+			data_prop_prev pe
+			LEFT JOIN comentario co ON pe.propequicomentario = co.propequicomentario
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			,max(tag_comentario) as coment
+			FOR propcodi
+			IN (
+
+			77 as d2d1_tension
+			,75 as d2d2_tension
+			,830 as d3d1_tension
+			,831 as d3d2_tension
+			,832 as d3d3_tension
+			,1894 as d4d1_tension
+			,1895 as d4d2_tension
+			,1896 as d4d3_tension
+			,1897 as d4d4_tension
+
+			,3425 as d2d1_capacidad_transmision_mva
+			,3445 as d2d2_capacidad_transmision_mva
+			,3465 as d3d1_capacidad_transmision_mva
+			,3485 as d3d2_capacidad_transmision_mva
+			,3505 as d3d3_capacidad_transmision_mva
+			,3525 as d4d1_capacidad_transmision_mva
+			,3545 as d4d2_capacidad_transmision_mva
+			,3565 as d4d3_capacidad_transmision_mva
+			,3585 as d4d4_capacidad_transmision_mva
+
+
+			,3424 as d2d1_capacidad_transmision_a
+			,3444 as d2d2_capacidad_transmision_a
+			,3464 as d3d1_capacidad_transmision_a
+			,3484 as d3d2_capacidad_transmision_a
+			,3504 as d3d3_capacidad_transmision_a
+			,3524 as d4d1_capacidad_transmision_a
+			,3544 as d4d2_capacidad_transmision_a
+			,3564 as d4d3_capacidad_transmision_a
+			,3584 as d4d4_capacidad_transmision_a
+
+			,3427 as d2d1_factor_limitante_final
+			,3447 as d2d2_factor_limitante_final
+			,3467 as d3d1_factor_limitante_final
+			,3487 as d3d2_factor_limitante_final
+			,3507 as d3d3_factor_limitante_final
+			,3527 as d4d1_factor_limitante_final
+			,3547 as d4d2_factor_limitante_final
+			,3567 as d4d3_factor_limitante_final
+			,3587 as d4d4_factor_limitante_final
+
+			)
+			)
+			)
+
+
+			SELECT 0 as numero
+			,em.emprnomb as empresa
+			,e.equinomb as codigo
+			,trim(ubi.areanomb) as subestaciones
+			/*
+			,case when e.famcodi = 9 then d2d1_tension||d2d1_tension_coment||' \n '||d2d2_tension||d2d2_tension_coment
+			when e.famcodi = 10 then d3d1_tension||d3d1_tension_coment||' \n '||d3d2_tension||d3d2_tension_coment||'\n'||d3d3_tension||d3d3_tension_coment
+			when e.famcodi = 47 then d4d1_tension||d4d1_tension_coment||' \n '||d4d2_tension||d4d2_tension_coment||'\n'||d4d3_tension||d4d3_tension_coment||'\n'||d4d4_tension||d4d4_tension_coment
+			end as tension
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_mva||d2d1_capacidad_transmision_mva_coment||'\n'||d2d2_capacidad_transmision_mva||d2d2_capacidad_transmision_mva_coment
+			when e.famcodi = 10 then d3d1_capacidad_transmision_mva||d3d1_capacidad_transmision_mva_coment||'\n'||d3d2_capacidad_transmision_mva||d3d2_capacidad_transmision_mva_coment||'\n'||d3d3_capacidad_transmision_mva||d3d3_capacidad_transmision_mva_coment
+			when e.famcodi = 47 then d4d1_capacidad_transmision_mva||d4d1_capacidad_transmision_mva_coment||'\n'||d4d2_capacidad_transmision_mva||d4d2_capacidad_transmision_mva_coment||'\n'||d4d3_capacidad_transmision_mva||d4d3_capacidad_transmision_mva_coment||'\n'||d4d4_capacidad_transmision_mva||d4d4_capacidad_transmision_mva_coment
+			end as capacidad_transmision_mva
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_a||d2d1_capacidad_transmision_a_coment||'\n'||d2d2_capacidad_transmision_a||d2d2_capacidad_transmision_a_coment
+			when e.famcodi = 10 then d3d1_capacidad_transmision_a||d3d1_capacidad_transmision_a_coment||'\n'||d3d2_capacidad_transmision_a||d3d2_capacidad_transmision_a_coment||'\n'||d3d3_capacidad_transmision_a||d3d3_capacidad_transmision_a_coment
+			when e.famcodi = 47 then d4d1_capacidad_transmision_a||d4d1_capacidad_transmision_a_coment||'\n'||d4d2_capacidad_transmision_a||d4d2_capacidad_transmision_a_coment||'\n'||d4d3_capacidad_transmision_a||d4d3_capacidad_transmision_a_coment||'\n'||d4d4_capacidad_transmision_a||d4d4_capacidad_transmision_a_coment
+			end as capacidad_transmision_a
+
+			,case when e.famcodi = 9 then d2d1_factor_limitante_final||d2d1_factor_limitante_final_coment||'\n'||d2d2_factor_limitante_final||d2d2_factor_limitante_final_coment
+			when e.famcodi = 10 then d3d1_factor_limitante_final||d3d1_factor_limitante_final_coment||'\n'||d3d2_factor_limitante_final||d3d2_factor_limitante_final_coment||'\n'||d3d3_factor_limitante_final||d3d3_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d1_factor_limitante_final||d4d1_factor_limitante_final_coment||'\n'||d4d2_factor_limitante_final||d4d2_factor_limitante_final_coment||'\n'||d4d3_factor_limitante_final||d4d3_factor_limitante_final_coment||'\n'||d4d4_factor_limitante_final||d4d4_factor_limitante_final_coment
+			end as factor_limitante_final
+			*/
+			,p.equicodi
+			,e.famcodi
+			-- nuevos campos
+			,case when e.famcodi = 9 then d2d1_tension||d2d1_tension_coment
+			when e.famcodi = 10 then d3d1_tension||d3d1_tension_coment
+			when e.famcodi = 47 then d4d1_tension||d4d1_tension_coment
+			end as d1_tension
+			,case when e.famcodi = 9 then d2d2_tension||d2d2_tension_coment
+			when e.famcodi = 10 then d3d2_tension||d3d2_tension_coment
+			when e.famcodi = 47 then d4d2_tension||d4d2_tension_coment
+			end as d2_tension
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_tension||d3d3_tension_coment
+			when e.famcodi = 47 then d4d3_tension||d4d3_tension_coment
+			end as d3_tension
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_tension||d4d4_tension_coment
+			end as d4_tension
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_mva
+			when e.famcodi = 10 then d3d1_capacidad_transmision_mva
+			when e.famcodi = 47 then d4d1_capacidad_transmision_mva
+			end as d1_capacidad_transmision_mva
+			,case when e.famcodi = 9 then d2d2_capacidad_transmision_mva
+			when e.famcodi = 10 then d3d2_capacidad_transmision_mva
+			when e.famcodi = 47 then d4d2_capacidad_transmision_mva
+			end as d2_capacidad_transmision_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_transmision_mva
+			when e.famcodi = 47 then d4d3_capacidad_transmision_mva
+			end as d3_capacidad_transmision_mva
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_transmision_mva
+			end as d4_capacidad_transmision_mva
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_mva_coment
+			when e.famcodi = 10 then d3d1_capacidad_transmision_mva_coment
+			when e.famcodi = 47 then d4d1_capacidad_transmision_mva_coment
+			end as d1_capacidad_transmision_mva_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_transmision_mva_coment
+			when e.famcodi = 10 then d3d2_capacidad_transmision_mva_coment
+			when e.famcodi = 47 then d4d2_capacidad_transmision_mva_coment
+			end as d2_capacidad_transmision_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_transmision_mva_coment
+			when e.famcodi = 47 then d4d3_capacidad_transmision_mva_coment
+			end as d3_capacidad_transmision_mva_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_transmision_mva_coment
+			end as d4_capacidad_transmision_mva_coment
+
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_a
+			when e.famcodi = 10 then d3d1_capacidad_transmision_a
+			when e.famcodi = 47 then d4d1_capacidad_transmision_a
+			end as d1_capacidad_transmision_a
+			,case when e.famcodi = 9 then d2d2_capacidad_transmision_a
+			when e.famcodi = 10 then d3d2_capacidad_transmision_a
+			when e.famcodi = 47 then d4d2_capacidad_transmision_a
+			end as d2_capacidad_transmision_a
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_transmision_a
+			when e.famcodi = 47 then d4d3_capacidad_transmision_a
+			end as d3_capacidad_transmision_a
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_transmision_a
+			end as d4_capacidad_transmision_a
+
+			,case when e.famcodi = 9 then d2d1_capacidad_transmision_a_coment
+			when e.famcodi = 10 then d3d1_capacidad_transmision_a_coment
+			when e.famcodi = 47 then d4d1_capacidad_transmision_a_coment
+			end as d1_capacidad_transmision_a_coment
+			,case when e.famcodi = 9 then d2d2_capacidad_transmision_a_coment
+			when e.famcodi = 10 then d3d2_capacidad_transmision_a_coment
+			when e.famcodi = 47 then d4d2_capacidad_transmision_a_coment
+			end as d2_capacidad_transmision_a_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_capacidad_transmision_a_coment
+			when e.famcodi = 47 then d4d3_capacidad_transmision_a_coment
+			end as d3_capacidad_transmision_a_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_capacidad_transmision_a_coment
+			end as d4_capacidad_transmision_a_coment
+
+			,case when e.famcodi = 9 then d2d1_factor_limitante_final
+			when e.famcodi = 10 then d3d1_factor_limitante_final
+			when e.famcodi = 47 then d4d1_factor_limitante_final
+			end as d1_factor_limitante_final
+			,case when e.famcodi = 9 then d2d2_factor_limitante_final
+			when e.famcodi = 10 then d3d2_factor_limitante_final
+			when e.famcodi = 47 then d4d2_factor_limitante_final
+			end as d2_factor_limitante_final
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_factor_limitante_final
+			when e.famcodi = 47 then d4d3_factor_limitante_final
+			end as d3_factor_limitante_final
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_factor_limitante_final
+			end as d4_factor_limitante_final
+
+			,case when e.famcodi = 9 then d2d1_factor_limitante_final_coment
+			when e.famcodi = 10 then d3d1_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d1_factor_limitante_final_coment
+			end as d1_factor_limitante_final_coment
+			,case when e.famcodi = 9 then d2d2_factor_limitante_final_coment
+			when e.famcodi = 10 then d3d2_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d2_factor_limitante_final_coment
+			end as d2_factor_limitante_final_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then d3d3_factor_limitante_final_coment
+			when e.famcodi = 47 then d4d3_factor_limitante_final_coment
+			end as d3_factor_limitante_final_coment
+			,case when e.famcodi = 9 then null
+			when e.famcodi = 10 then null
+			when e.famcodi = 47 then d4d4_factor_limitante_final_coment
+			end as d4_factor_limitante_final_coment
+
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			JOIN ult_fecha_modificacion_equipo ufm ON p.equicodi = ufm.equicodi
+			JOIN ult_modificador_equipo uum ON p.equicodi = uum.equicodi
+			JOIN ult_proy_act_equipo upa on p.equicodi = upa.equicodi
+			LEFT JOIN eq_area ubi on e.areacodi = ubi.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi = em.emprcodi
+			LEFT JOIN eq_prop_catalogo_data es ON eqcatccodi = 6 and e.equiestado = es.eqcatdabrev
+			LEFT JOIN epr_proyecto_acteqp proy on upa.epproycodi = proy.epproycodi
+			WHERE 1 = 1
+
+			union all
+			select nro_coment, '('||nro_coment||')',propequicomentario,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null from comentario
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlListCapacidadAcoplaminento</key>
+		<query>
+			WITH equipo AS (
+			SELECT eq.*
+			FROM
+			eq_equipo eq join epr_equipo ep on eq.equicodi = ep.equicodi and ep.epequiestregistro='1' and eq.equiestado='A'
+			join epr_area ap on eq.areacodi = ap.areacodi
+			WHERE eq.famcodi = 6
+			and ep.epequiflagsev='1'
+			and (nvl(:ID_AREA_EXCEL,0) = 0 or ap.areacodizona=:ID_AREA_EXCEL)
+			and (nvl(:TENSION,0) = 0 or eq.equitension = :TENSION)
+			)
+			, ult_fecha_prop AS (
+			SELECT
+			p.equicodi,
+			p.propcodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM
+			eq_propequi p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			GROUP BY
+			p.equicodi,
+			p.propcodi
+			)
+			, ult_fecha_modificacion_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.fechapropequi) AS fechapropequi
+			FROM ult_fecha_prop p
+			GROUP BY
+			p.equicodi
+			)
+			, ult_proy_act_equipo AS (
+			SELECT
+			p.equicodi,
+			MAX(p.epproycodi) AS epproycodi
+			FROM
+			eq_propequi p join ult_fecha_modificacion_equipo ufa on p.equicodi = ufa.equicodi and p.fechapropequi = ufa.fechapropequi
+			GROUP BY
+			p.equicodi
+			)
+			, ult_modificador_equipo AS (
+			SELECT
+			p.equicodi
+			,MAX(nvl(p.propequiusumodificacion,p.propequiusucreacion)) AS propequiusumodificacion
+			,MAX(nvl(p.propequifecmodificacion,p.propequifeccreacion)) AS propequifecmodificacion
+			FROM
+			eq_propequi p
+			JOIN ult_fecha_modificacion_equipo e ON p.equicodi = e.equicodi
+			AND p.fechapropequi = e.fechapropequi
+			GROUP BY
+			p.equicodi
+			)
+			,data_prop_prev AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			pe.propequicomentario
+			FROM
+			eq_propequi pe
+			JOIN ult_fecha_prop up ON pe.equicodi = up.equicodi
+			AND pe.propcodi = up.propcodi
+			AND pe.fechapropequi = up.fechapropequi
+			)
+			,data_coment as (
+			select distinct trim(propequicomentario) as propequicomentario
+			from data_prop_prev
+			where propcodi in (
+			3411
+			,3414
+			,3415
+			,3417
+			,3418
+			)
+			and propequicomentario is not null
+			order by 1)
+			,comentario as (
+			select c.*,rownum as nro_coment
+			from data_coment c
+			)
+			,data_prop AS (
+			SELECT
+			pe.equicodi,
+			pe.propcodi,
+			pe.valor,
+			case when co.nro_coment is not null then ' ('||co.nro_coment||')' end as tag_comentario
+			FROM
+			data_prop_prev pe
+			LEFT JOIN comentario co ON pe.propequicomentario = co.propequicomentario
+			)
+			,eq_propiedad AS (
+			SELECT
+			*
+			FROM
+			data_prop PIVOT (
+			MAX(valor)
+			,max(tag_comentario) as coment
+			FOR propcodi
+			IN (
+			3411 as id_interruptor
+			,3414 as capacidad_transmision_a
+			,3415 as capacidad_transmision_mva
+			,3417 as factor_limitante_final
+			,3418 as observaciones
+
+			)
+			)
+			)
+			SELECT 0 as numero
+			,em.emprnomb as empresa
+			,trim(ubi.areanomb) as subestaciones
+			,e.equitension as tension
+			,p.capacidad_transmision_a as capacidad_transmision_a
+			,p.capacidad_transmision_mva as capacidad_transmision_mva
+			,p.factor_limitante_final as factor_limitante_final
+			,p.observaciones as observaciones
+			,p.equicodi
+			-- nuevos campos
+			,p.capacidad_transmision_a_coment
+			,p.capacidad_transmision_mva_coment
+			,p.factor_limitante_final_coment
+
+			FROM
+			eq_propiedad p
+			JOIN equipo e ON p.equicodi = e.equicodi
+			JOIN ult_fecha_modificacion_equipo ufm ON p.equicodi = ufm.equicodi
+			JOIN ult_modificador_equipo uum ON p.equicodi = uum.equicodi
+			JOIN ult_proy_act_equipo upa on p.equicodi = upa.equicodi
+			LEFT JOIN eq_area ubi on e.areacodi = ubi.areacodi
+			LEFT JOIN si_empresa em on e.emprcodi = em.emprcodi
+			LEFT JOIN eq_prop_catalogo_data es ON eqcatccodi = 6 and e.equiestado = es.eqcatdabrev
+			LEFT JOIN epr_proyecto_acteqp proy on upa.epproycodi = proy.epproycodi
+			WHERE 1 = 1
+			union all
+			select nro_coment, '('||nro_coment||')',propequicomentario,null,null,null,null,null,null,null,null,null from comentario
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlListaEmpresaSigla</key>
+		<query>
+			SELECT emprabrev as siglas
+			,emprnomb as descripcion
+			FROM si_empresa
+			WHERE emprcodi IN (SELECT eq.emprcodi
+			FROM eq_equipo eq
+			JOIN epr_equipo ep ON eq.equicodi = ep.equicodi
+			AND ep.epequiestregistro = '1'
+			JOIN epr_area   ap ON eq.areacodi = ap.areacodi
+			AND ap.epareaestregistro = '1'
+			WHERE eq.famcodi IN ( 9, 10, 47, 6 ))
+			ORDER BY 1
+		</query>
+	</Sql>
+</Sqls>

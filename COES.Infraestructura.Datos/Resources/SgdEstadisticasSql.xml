@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(SGDECODI), 0) + 1 from sgd_estadisticas
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into sgd_estadisticas(
+      SGDECODI,
+      SGDEFECDERDIRRESP,
+      SGDEFECDERAREARESP,
+      SGDEDIRRESPCODI,
+      SGDEAREARESPCODI,
+      SGDEDIASATENCION,
+      SGDEDIASDEAREA,
+      SGDEDIASDEDIR,
+      SGDEDIADOC,
+      SGDEDIRRESPNOMB,
+      SGDEAREARESPNOMB,
+      EMPRCODI,
+      FLJCODI,
+      FLJDETCODI,
+      FLJDETCODIREF,
+      SGDEUSUCREACION,
+      SGDEFECCREACION
+      )
+      values(
+      :SGDECODI,
+      :SGDEFECDERDIRRESP,
+      :SGDEFECDERAREARESP,
+      :SGDEDIRRESPCODI,
+      :SGDEAREARESPCODI,
+      :SGDEDIASATENCION,
+      :SGDEDIASDEAREA,
+      :SGDEDIASDEDIR,
+      :SGDEDIADOC,
+      :SGDEDIRRESPNOMB,
+      :SGDEAREARESPNOMB,
+      :EMPRCODI,
+      :FLJCODI,
+      :FLJDETCODI,
+      :FLJDETCODIREF,
+      :SGDEUSUCREACION,
+      :SGDEFECCREACION)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update sgd_estadisticas
+      set SGDEFECDERDIRRESP = :SGDEFECDERDIRRESP,
+      SGDEFECDERAREARESP = :SGDEFECDERAREARESP,
+      SGDEDIRRESPCODI = :SGDEDIRRESPCODI,
+      SGDEDIASATENCION = :SGDEDIASATENCION,
+      SGDEDIASDEAREA = :SGDEDIASDEAREA,
+      SGDEDIASDEDIR = :SGDEDIASDEDIR,
+      SGDEDIADOC = :SGDEDIADOC,
+      SGDEDIRRESPNOMB = :SGDEDIRRESPNOMB,
+      SGDEAREARESPNOMB = :SGDEAREARESPNOMB,
+      FLJDETCODIREF = :FLJDETCODIREF,
+      SGDEUSUMODIFICACION = :SGDEUSUMODIFICACION,
+      SGDEFECMODIFICACION = :SGDEFECMODIFICACION
+      where
+      SGDECODI = :SGDECODI
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      0 as emprcodi,
+      null as emprnomb,
+      0 as areacodedest,
+      sgde.SGDEAREARESPNOMB,
+      fljcodi,
+      null as FLJFECHARECEP,
+      null as FLJFECHAPROCE,
+      0 as FLJREMITENTE,
+      null as FLJFECHAORIG,
+      null as Sgdefecderdirresp,
+      null as Sgdefecderarearesp,
+      0 as FLJDIASMAXATEN,
+      null FLJFECHATERM,
+      ' ' as FLJNUMEXT,
+      ' ' as FLJNOMBRE,
+      ' ' as FLJESTADO,
+      0 as TATCODI,
+      ' ' as DescTipDoc,
+      sgde.SGDEDIASATENCION,
+      sgde.SGDECODI,
+      sgde.EMPRCODI,
+      0 as FLJDETCODI,
+      sgde.SGDEDIASDEAREA,
+      sgde.SGDEDIASDEDIR,
+      sgde.SGDEDIADOC,
+      sgde.SGDEDIRRESPCODI,
+      sgde.SGDEAREARESPCODI,
+      sgde.SGDEDIRRESPNOMB,
+      0 as FLJDETCODIREF,
+      sgde.SGDEUSUCREACION,
+      sgde.SGDEFECCREACION,
+      sgde.SGDEUSUMODIFICACION,
+      sgde.SGDEFECMODIFICACION,
+      0 as CORRNUMPROC
+      from
+      sgd_estadisticas sgde
+      where
+      fljcodi = :fljcodi
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      empr.emprcodi,
+      empr.emprnomb,
+      dflj.areacodedest,
+      sgde.SGDEAREARESPNOMB,
+      dflj.fljcodi,
+      dflj.FLJFECHARECEP,
+      dflj.FLJFECHAPROCE,
+      dflj.FLJREMITENTE,
+      dflj.FLJFECHAORIG,
+      dfdt.FLJFECHAINICIO as Sgdefecderdirresp,
+      dfdt.FLJFECHAINICIO as Sgdefecderarearesp,
+      (select  tipplazo from doc_tipo where tipcodi = dflj.tipcodi) as FLJDIASMAXATEN,
+      dflj.FLJFECHATERM,
+      sgde.FLJNUMEXT,
+      dflj.FLJNOMBRE,
+      dflj.FLJESTADO,
+      to_number(dfdt.FLJCADATENCION) as Tatcodi,
+      (select doctip.tipnombre from doc_tipo doctip where doctip.tipcodi = dflj.tipcodi) as DescTipDoc,
+      sgde.SGDEDIASATENCION,
+      sgde.SGDECODI,
+      sgde.EMPRCODI,
+      dfdt.FLJDETCODI,
+      sgde.SGDEDIASDEAREA,
+      sgde.SGDEDIASDEDIR,
+      sgde.SGDEDIADOC,
+      sgde.SGDEDIRRESPCODI,
+      sgde.SGDEAREARESPCODI,
+      sgde.SGDEDIRRESPNOMB,
+      0 as FLJDETCODIREF,
+      sgde.SGDEUSUCREACION,
+      sgde.SGDEFECCREACION,
+      sgde.SGDEUSUMODIFICACION,
+      sgde.SGDEFECMODIFICACION,
+      dflj.CORRNUMPROC
+      from
+      sgd_estadisticas sgde, doc_flujo dflj, doc_flujo_det dfdt,si_empresa empr, si_tipoempresa tipempr
+      where
+      sgde.fljcodi = dflj.fljcodi and
+      dflj.fljcodi = dfdt.fljcodi and
+      dfdt.FLJFECHAINICIO is not null and
+      dfdt.fljdetnivel = 0 and
+      sgde.emprcodi = empr.emprcodi and
+      empr.tipoemprcodi = tipempr.tipoemprcodi and
+      empr.tipoemprcodi = decode({3},0,empr.tipoemprcodi,{3}) and
+      empr.emprsein = decode('{4}','-1',empr.emprsein,'{4}') and
+      empr.emprcoes = decode('{5}','-1',empr.emprcoes,'{5}') and
+      empr.emprambito = decode('{6}','-1',empr.emprambito,'{6}') and
+      empr.emprdomiciliada = decode('{7}','-1',empr.emprdomiciliada,'{7}') and
+      EMPR.EMPRRUBRO = decode({10},0,empr.EMPRRUBRO,{10}) and
+      dflj.FLJFECHARECEP between TO_DATE('{0}', 'DD/MM/YYYY') and TO_DATE('{1}', 'DD/MM/YYYY') and
+      dflj.tipcodi = decode({2},0,dflj.tipcodi,{2}) and
+      empr.emprcodi in ({8}) and
+      sgde.SGDEAREARESPCODI {9} and <!--Modificado por sts 17 oct 2017-->
+      empr.empragente = decode('{11}','-1',empr.empragente,'{11}') <!--agregado por sts 20 oct 2017-->
+      order by dflj.CORRNUMPROC desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListAllCompanies</key>
+    <query>
+		select
+		empr.emprcodi,
+		empr.emprnomb,
+		dflj.areacodedest,
+		sgde.SGDEAREARESPNOMB,
+		dflj.fljcodi,
+		dflj.FLJFECHARECEP,
+		dflj.FLJFECHAPROCE,
+		dflj.FLJREMITENTE,
+		dflj.FLJFECHAORIG,
+		dfdt.FLJFECHAINICIO as Sgdefecderdirresp,
+		dfdt.FLJFECHAINICIO as Sgdefecderarearesp,
+		(select  tipplazo from doc_tipo where tipcodi = dflj.tipcodi) as FLJDIASMAXATEN,
+		dflj.FLJFECHATERM,
+		sgde.FLJNUMEXT,
+		dflj.FLJNOMBRE,
+		dflj.FLJESTADO,
+		to_number(dfdt.FLJCADATENCION) as Tatcodi,
+		(select doctip.tipnombre from doc_tipo doctip where doctip.tipcodi = dflj.tipcodi) as DescTipDoc,
+		sgde.SGDEDIASATENCION,
+		sgde.SGDECODI,
+		sgde.EMPRCODI,
+		dfdt.FLJDETCODI,
+		sgde.SGDEDIASDEAREA,
+		sgde.SGDEDIASDEDIR,
+		sgde.SGDEDIADOC,
+		sgde.SGDEDIRRESPCODI,
+		sgde.SGDEAREARESPCODI,
+		sgde.SGDEDIRRESPNOMB,
+		0 as FLJDETCODIREF,
+		sgde.SGDEUSUCREACION,
+		sgde.SGDEFECCREACION,
+		sgde.SGDEUSUMODIFICACION,
+		sgde.SGDEFECMODIFICACION,
+		dflj.CORRNUMPROC
+		from
+		sgd_estadisticas sgde, doc_flujo dflj, doc_flujo_det dfdt,si_empresa empr, si_tipoempresa tipempr
+		where
+		sgde.fljcodi = dflj.fljcodi and
+		dflj.fljcodi = dfdt.fljcodi and
+		dfdt.FLJFECHAINICIO is not null and
+		dfdt.fljdetnivel = 0 and
+		sgde.emprcodi = empr.emprcodi and
+		empr.tipoemprcodi = tipempr.tipoemprcodi and
+		empr.tipoemprcodi = decode({3},0,empr.tipoemprcodi,{3}) and
+		empr.emprsein = decode('{4}','-1',empr.emprsein,'{4}') and
+		empr.emprcoes = decode('{5}','-1',empr.emprcoes,'{5}') and
+		empr.emprambito = decode('{6}','-1',empr.emprambito,'{6}') and
+		empr.emprdomiciliada = decode('{7}','-1',empr.emprdomiciliada,'{7}') and
+		EMPR.EMPRRUBRO = decode({10},0,empr.EMPRRUBRO,{10}) and
+		dflj.FLJFECHARECEP between TO_DATE('{0}', 'DD/MM/YYYY') and TO_DATE('{1}', 'DD/MM/YYYY') and
+		dflj.tipcodi = decode({2},0,dflj.tipcodi,{2}) and
+		sgde.SGDEAREARESPCODI  {9}  and<!--Modificado por sts 17 oct 2017-->
+      empr.empragente = decode('{11}','-1',empr.empragente,'{11}') <!--agregado por sts 20 oct 2017-->
+      order by dflj.CORRNUMPROC desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCodiRef</key>
+    <query>
+      select
+      sgd.fljcodi, (select distinct dt.fljcodi from doc_flujo_det dt where  dt.fljdetcodi = refe.fljdetcodi ) as fljdetcodiref
+      from
+      doc_flujo doc , doc_flujo_ref_flujo refe, sgd_estadisticas sgd
+      where
+      sgd.fljcodi = doc.fljcodi and
+      doc.fljestado = 'A' and
+      sgd.fljdetcodi = refe.fljdetcodiref and
+      doc.FLJFECHARECEP between TO_DATE('{0}', 'DD/MM/YYYY') and TO_DATE('{1}', 'DD/MM/YYYY')
+      order by doc.fljcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateCodiRef</key>
+    <query>
+      update sgd_estadisticas
+      SET FLJDETCODIREF = :FLJDETCODIREF
+      where
+      FLJCODI = :FLJCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateNumext</key>
+    <query>
+      update sgd_estadisticas sgd
+      set fljnumext = (select doc.fljnumext from doc_flujo doc where doc.fljcodi = {0})
+      where sgd.fljcodi = {1}
+    </query>
+  </Sql>
+  
+</Sqls>

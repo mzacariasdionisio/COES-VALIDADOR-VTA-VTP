@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      SELECT NVL(MAX(MEDINTCODI), 0) + 1 FROM ME_MEDICIONXINTERVALO
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveRegistroArchivo</key>
+    <query>
+      insert into me_medicionxintervalo (medintcodi, medintfechaini, medintfechafin, ptomedicodi, lectcodi, tipoinfocodi, tptomedicodi2,
+      medintblqnumero, medintsemana, medinth1, medintusumodificacion, medintfecmodificacion)
+      values(:medintcodi, :medintfechaini, :medintfechafin, :ptomedicodi, 109, :tipoinfocodi, :tptomedicodi2,
+      :medintblqnumero, :medintsemana, :medinth1, 'sddpproc', sysdate)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstado</key>
+    <query>
+      
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListFechas</key>
+    <query>
+      SELECT TO_CHAR(MEDINTFECHAFIN,'DD/MM/YYYY') AS CODIGO
+      --,MIN(MEDINTFECHAINI) AS FECDESDE,MAX(MEDINTFECHAINI) AS FECHASTA,COUNT(*) AS CANTIDAD
+      ,TO_CHAR(MIN(MEDINTFECHAINI),'DD/MM/YY')||' ['||COUNT(*)||']' AS DESCRIPCION
+      FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 GROUP BY MEDINTFECHAFIN
+      ORDER BY 1 DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListCentralesHidraulicas</key>
+    <query>
+
+      SELECT BA.GRUPOCODI,BA.MEDINTSEMANA,BA.GRUPONOMB,NVL(GE.MEDINTH1,0) AS MEDINTH1
+      FROM ( SELECT * FROM (SELECT DISTINCT MI.MEDINTSEMANA
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      WHERE MI.MEDINTFECHAFIN = TO_DATE('{0}','YYYYMM') ) D1
+      ,(SELECT DISTINCT GR.GRUPOCODI,GR.GRUPONOMB
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      WHERE MI.MEDINTFECHAFIN = TO_DATE('{0}','YYYYMM') ) D2
+      ) BA LEFT JOIN (SELECT MI.MEDINTSEMANA,PTO.GRUPOCODI, SUM(MI.MEDINTH1) AS MEDINTH1
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI2 = 69
+      AND MI.MEDINTFECHAFIN = TO_DATE('{0}','YYYYMM')
+      GROUP BY MI.MEDINTSEMANA,PTO.GRUPOCODI
+      ) GE
+      ON BA.MEDINTSEMANA = GE.MEDINTSEMANA AND BA.GRUPOCODI = GE.GRUPOCODI
+      ORDER BY BA.GRUPOCODI,BA.MEDINTSEMANA
+    </query>
+  </Sql>
+</Sqls>

@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select vtp_codigo_retiro_sol_det.*,
+      transferencia.barrbarratransferencia,
+      suministro.barrnombre as barrnombsum
+      from vtp_codigo_retiro_sol_det
+      join trn_barra transferencia  on transferencia.barrcodi = vtp_codigo_retiro_sol_det.barrcoditra
+      join trn_barra suministro  on suministro.barrcodi = vtp_codigo_retiro_sol_det.barrcodisum
+      where vtp_codigo_retiro_sol_det.coresocodi = :coresocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_codigo_retiro_sol_det
+      (
+      coresdcodi, coresocodi,barrcoditra ,barrcodisum,coresdreg, coresdusucreacion,coresdfeccreacion,coresdestado)
+      values
+      (
+      :coresdcodi, :coresocodi,:barrcoditra ,:barrcodisum,:coresdreg, :coresdusucreacion,:coresdfeccreacion,'ACT')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_codigo_retiro_sol_det
+      set
+      coresdreg = :coresdreg,
+      coresdusumodificacion = :coresdusumodificacion,
+      coresdfecmodificacion = :coresdfecmodificacion
+      where
+      coresdcodi = :coresdcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update vtp_codigo_retiro_sol_det
+      set
+      coresdestado = 'INA',
+      coresdusumodificacion = :coresdusumodificacion,
+      coresdfecmodificacion = :coresdfecmodificacion
+      where
+      coresdcodi = :coresdcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select vtp_codigo_retiro_sol_det.*,
+      transferencia.barrbarratransferencia,
+      suministro.barrnombre as barrnombsum
+      from vtp_codigo_retiro_sol_det
+      join trn_barra transferencia  on transferencia.barrcodi = vtp_codigo_retiro_sol_det.barrcoditra
+      join trn_barra suministro  on suministro.barrcodi = vtp_codigo_retiro_sol_det.barrcodisum
+      where vtp_codigo_retiro_sol_det.coresocodi = :coresocodi
+      and vtp_codigo_retiro_sol_det.coresdestado='ACT'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaRelacion</key>
+    <query>
+      select vtp_barra_relacion.barecodi,
+      vtp_barra_relacion.barrcoditra,
+      vtp_barra_relacion.barrcodisum,
+      suministro.barrnombre as barrnombsum
+      from vtp_barra_relacion
+      join trn_barra suministro on suministro.barrcodi = vtp_barra_relacion.barrcodisum
+      where vtp_barra_relacion.barrcoditra = :barrcoditra
+      and vtp_barra_relacion.bareestado = 'ACT'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(coresdcodi), 0) + 1 from vtp_codigo_retiro_sol_det
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxIdGenerado</key>
+    <query>
+      select nvl(max(coregecodi), 0) + 1 from vtp_codigo_retiro_generado
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveGenerado</key>
+    <query>
+      insert into vtp_codigo_retiro_generado
+      (
+      coregecodi, coresdcodi, coregeestado,coregecodvtp, coregeusucreacion, coregefeccreacion
+      )
+      values
+      (
+      :coregecodi, :coresdcodi, :coregeestado,:coregecodvtp, :coregeusucreacion,:coregefeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteGenerado</key>
+    <query>
+      update vtp_codigo_retiro_generado
+      set
+      coregeestado = :coregeestado,
+      coregeusumodificacion = :coresdusumodificacion,
+      coregefecmodificacion = :coresdfecmodificacion
+      where
+      coregecodi = :coregecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxIdBR</key>
+    <query>
+      select nvl(max(barecodi), 0) + 1 from vtp_barra_relacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveBR</key>
+    <query>
+      insert into vtp_barra_relacion
+      (
+      barecodi,barrcoditra,barrcodisum,bareusucreacion,barefeccreacion)
+      values
+      (
+      :barecodi, :barrcoditra,:barrcodisum ,:bareusucreacion,:barefeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteBR</key>
+    <query>
+      delete from vtp_barra_relacion
+      where vtp_barra_relacion.barecodi = :barecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarBarraSuministro</key>
+    <query>
+      select barrcodi,barrnombre from trn_barra
+      where barrflagbarratransferencia = 'NO'
+      and barrestado='ACT'
+      order by barrnombre asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarDetalle</key>
+    <query>
+      select
+      detalle.coresdcodi,
+      generado.coregecodi,
+      detalle.barrcodisum,
+      suministro.barrnombre,
+      detalle.coresdreg,
+      generado.coregecodvtp,
+      generado.coregeestado
+      from vtp_codigo_retiro_sol_det detalle
+      inner join vtp_codigo_retiro_generado generado on generado.coresdcodi = detalle.coresdcodi
+      join trn_barra suministro  on suministro.barrcodi = detalle.barrcodisum
+      where detalle.coresocodi = :coresocodi
+      and coregeestado not in ('INA')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRecordsGenerado</key>
+    <query>
+      select count(*) as NroRegistros from vtp_codigo_retiro_generado
+      where coresdcodi = :coresdcodi
+      and coregeestado not in ('INA')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SolicitarBajarGenerado</key>
+    <query>
+      update vtp_codigo_retiro_generado
+      set
+      coregeestado = :coregeestado,
+      coregeusumodificacion = :coregeusumodificacion,
+      coregefecmodificacion = :coregefecmodificacion
+      where
+      coregecodi = :coregecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdGenerado</key>
+    <query>
+      select
+      vtp_codigo_retiro_generado.coregecodi,
+      vtp_codigo_retiro_generado.coresdcodi,
+      vtp_codigo_retiro_generado.coregeestado,
+      vtp_codigo_retiro_generado.coregecodvtp,
+      solicitud.coresocodi,
+      trn_barra.barrnombre
+      from vtp_codigo_retiro_generado
+      inner join vtp_codigo_retiro_sol_det detalle on detalle.coresdcodi = vtp_codigo_retiro_generado.coresdcodi
+      inner join trn_codigo_retiro_solicitud solicitud on solicitud.coresocodi = detalle.coresocodi
+      inner join trn_barra on detalle.barrcodisum = trn_barra.barrcodi
+      where coregecodi = :coregecodi
+    </query>
+  </Sql>
+  
+</Sqls>

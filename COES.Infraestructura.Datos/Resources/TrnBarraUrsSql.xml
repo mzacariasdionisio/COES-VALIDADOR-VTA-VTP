@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+  
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_barra_urs
+      (
+      barrcodi,
+      grupocodi,
+      equicodi,
+      emprcodi,
+      barursusucreacion,
+      barursfeccreacion
+      )
+      values
+      (
+      :barrcodi,
+      :grupocodi,
+      :equicodi,
+      :emprcodi,
+      :barursusucreacion,
+      :barursfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select (select trim(substr(gruponomb,0,30)) as gruponomb from pr_grupo pg where bu.grupocodi = pg.grupocodi) as gruponomb,
+      (select equinomb from eq_equipo e where bu.equicodi = e.equicodi) as equinomb,
+      (select emprnomb from si_empresa s where bu.emprcodi = s.emprcodi) as emprnomb,
+      bu.*
+      from trn_barra_urs bu where bu.barrcodi = :id
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListURS</key>
+    <query>
+      select (select trim(substr(gruponomb,0,30)) as gruponomb from pr_grupo pg where bu.grupocodi = pg.grupocodi) as gruponomb,
+      (select equinomb from eq_equipo e where bu.equicodi = e.equicodi) as equinomb,
+      (select emprnomb from si_empresa s where bu.emprcodi = s.emprcodi) as emprnomb,
+      bu.*
+      from trn_barra_urs bu
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListURSCostoMarginal</key>
+    <query>
+      select (select trim(substr(gruponomb,0,30)) as gruponomb from pr_grupo pg where bu.grupocodi = pg.grupocodi) as gruponomb,
+      (select equinomb from eq_equipo e where bu.equicodi = e.equicodi) as equinomb,
+      (select emprnomb from si_empresa s where bu.emprcodi = s.emprcodi) as emprnomb,
+      bu.*
+      from trn_barra_urs bu
+      where bu.barrcodi in (select barrcodi from trn_costo_marginal where pericodi = :barrcodi and cosmarversion = :grupocodi)
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_barra_urs
+      where barrcodi = :barrcodi and grupocodi = :grupocodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update aud_trn_barra_urs
+			set USERAUDITORIA = :barursusucreacion
+			where
+			barrcodi = :barrcodi and grupocodi = :grupocodi
+			and ACTIONAUDITORIA = 'DELETE'
+		</query>
+	</Sql>
+  
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from trn_barra_urs
+      where barrcodi = :barrcodi and grupocodi = :grupocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdGrupoCodi</key>
+    <query>
+      select GrupoCodi, trim(substr(gruponomb,0,30)) as GrupoNomb from pr_grupo
+      where grupocodi = :grupocodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListURSbyEquicodi</key>
+    <query>
+      select bu.*, (select trim(substr(gruponomb,0,30)) as gruponomb from pr_grupo pg where bu.grupocodi = pg.grupocodi) as gruponomb,
+      (select equinomb from eq_equipo e where bu.equicodi = e.equicodi) as equinomb
+      from trn_barra_urs bu where bu.equicodi = :id
+    </query>
+  </Sql>
+
+  <!--Implementaciones para la tabla PR_GRUPO-->
+  <Sql>
+    <key>GetByNombrePrGrupo</key>
+    <query>
+      select grupocodi, trim(substr(gruponomb,0,30)) as gruponomb from pr_grupo
+      where catecodi = 12 and trim(substr(gruponomb,0,30)) = :gruponomb
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListPrGrupo</key>
+    <query>
+      select grupocodi, trim(substr(gruponomb,0,30)) as gruponomb from pr_grupo where catecodi= 12
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEmpresas</key>
+    <query>
+      select distinct bu.emprcodi, 
+      (select emprnomb from si_empresa s where bu.emprcodi = s.emprcodi) as emprnomb
+      from trn_barra_urs bu
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByGrupoCodiTRN</key>
+    <query>
+      select * from trn_barra_urs
+      where grupocodi = :grupocodi
+    </query>
+  </Sql>
+  
+</Sqls>

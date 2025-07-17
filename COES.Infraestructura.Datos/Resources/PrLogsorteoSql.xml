@@ -1,0 +1,524 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into pr_logsorteo(
+           logusuario,
+           logfecha,
+           logdescrip,
+           logtipo,
+           logcoordinador,
+           logdocoes
+       )
+       values(
+           :logusuario,
+           :logfecha,
+           :logdescrip,
+           :logtipo,
+           :logcoordinador,
+           :logdocoes
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update pr_logsorteo
+       set
+           logusuario = :logusuario,
+           logdescrip = :logdescrip,
+           logtipo = :logtipo,
+           logcoordinador = :logcoordinador,
+           logdocoes = :logdocoes
+       where
+           logfecha = :logfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from pr_logsorteo
+       where
+           logfecha = :logfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           logusuario,
+           logfecha,
+           logdescrip,
+           logtipo,
+           logcoordinador,
+           logdocoes
+       from
+           pr_logsorteo
+       where
+           logfecha = :logfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           logusuario,
+           logfecha,
+           logdescrip,
+           logtipo,
+           logcoordinador,
+           logdocoes
+       from
+           pr_logsorteo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      logusuario,
+      logfecha,
+      logdescrip,
+      logtipo,
+      logcoordinador,
+      logdocoes
+      from
+      pr_logsorteo ls
+      inner join eve_paleatoria pa on trunc(pa.pafecha) = trunc(ls.logfecha) and (pa.PA2FIN='S' OR pa.NPRUE2FIN='S' OR pa.RPRUE2OA  ='S')
+      where trunc(logfecha) > trunc(last_day(add_months(sysdate, -2)))
+      and logtipo like 'X%' order by logfecha
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerSituacionUnidades</key>
+    <query>
+      select emprnomb, areanomb, equiabrev, equicodi, hophorini, hophorfin, 
+      case 
+      when subcausacodi in (101,102,103,104) then 'POR REQUERIMIENTO DEL SISTEMA' 
+      when subcausacodi in (106, 113) then 'POR REQUERIMIENTO PROPIO'
+      when subcausacodi in (114) then 'POR PRUEBAS ALEATORIAS PROC.25'
+      when subcausacodi in (120) then 'EN MANTENIMIENTO' else '' end as subcausadesc
+      from(
+      select si_empresa.emprnomb, eq_area.areanomb, eq_equipo.equiabrev, eve_mantto.equicodi, eve_mantto.evenini as hophorini, 
+      eve_mantto.evenfin as hophorfin, 120 as subcausacodi from eve_mantto, eq_equipo, eq_area, si_empresa 
+      where eq_equipo.emprcodi=si_empresa.emprcodi and eve_mantto.equicodi = eq_equipo.equicodi 
+      and eq_equipo.areacodi = eq_area.areacodi and eve_mantto.evenclasecodi = 1 and (eq_equipo.famcodi = 3 or eq_equipo.famcodi = 5) 
+      and eve_mantto.evenini >=  to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and eve_mantto.evenini &lt; to_date('{1} 16:00:00','YYYY-MM-DD HH24:MI:SS')  
+      union 
+      select si_empresa.emprnomb, eq_area.areanomb, eq_equipo.equiabrev, eve_horaoperacion.equicodi, eve_horaoperacion.hophorini,
+      eve_horaoperacion.hophorfin, eve_subcausaevento.subcausacodi from eve_horaoperacion, eq_equipo, eq_area, si_empresa, eve_subcausaevento
+      where eve_subcausaevento.subcausacodi=eve_horaoperacion.subcausacodi and eve_horaoperacion.equicodi = eq_equipo.equicodi 
+      and eq_equipo.areacodi = eq_area.areacodi and eq_equipo.emprcodi = si_empresa.emprcodi and (eq_equipo.famcodi = 3 or eq_equipo.famcodi = 5) 
+      and eve_horaoperacion.hophorini>= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and eve_horaoperacion.hophorini &lt;  to_date('{1} 16:00:00','YYYY-MM-DD HH24:MI:SS') 
+      )
+      order by emprnomb, areanomb, equiabrev, hophorini
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerMantenimientos</key>
+    <query>     
+      select si_empresa.emprnomb, eq_area.areanomb, eq_equipo.equiabrev, eve_mantto.equicodi, eve_mantto.evenini as hophorini, 
+      eve_mantto.evenfin as hophorfin, '{0}' as evenclase, eve_mantto.evendescrip 
+      from eve_mantto, eq_equipo, eq_area, si_empresa where eq_equipo.emprcodi=si_empresa.emprcodi and
+      eve_mantto.equicodi = eq_equipo.equicodi  and eq_equipo.areacodi = eq_area.areacodi and
+      eve_mantto.evenclasecodi = {1} and eve_mantto.evenini >=to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') 
+      and eve_mantto.evenini &lt; to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      order by emprnomb asc, areanomb asc, equiabrev asc, evenini asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalConteoTipo</key>
+    <query>
+      SELECT
+      count(*)
+      FROM pr_logsorteo
+      WHERE ( logtipo = '{0}' ) and
+      logfecha >= TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and
+      logfecha &lt; (TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalBalotaNegra</key>
+    <query>
+      SELECT count(*) cuenta
+      fROM eq_equipo a, si_empresa b, eq_familia c, eq_area d, eq_tipoarea e, pr_equiposorteo f
+      WHERE ( b.emprcodi = (case when coalesce(f.EMPRCODI, -1) > 0 then f.EMPRCODI else a.emprcodi end)) and ( a.famcodi = c.famcodi ) and ( d.areacodi = a.areacodi )
+      and ( e.tareacodi = d.tareacodi ) and f.equicodi=a.equicodi and
+      f.logfecha>=to_date('{0} 00:00:00','yyyy-mm-dd hh24:mi:ss') and
+      f.logfecha&lt;(to_date('{0} 23:59:59','yyyy-mm-dd hh24:mi:ss')+1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EquipoPrueba</key>
+    <query>
+      SELECT nvl(trim(a.equiabrev),'')||'  de la C.T. '|| nvl(d.areanomb,'')||' - '||nvl(b.emprNOMB,'')  equipo
+      fROM eq_equipo a, si_empresa b, eq_familia c, eq_area d, eq_tipoarea e, pr_equiposorteo f
+      WHERE ( b.emprcodi = (case when coalesce(f.EMPRCODI, -1) > 0 then f.EMPRCODI else a.emprcodi end)) and ( a.famcodi = c.famcodi ) and ( d.areacodi = a.areacodi )
+      and ( e.tareacodi = d.tareacodi ) and f.equicodi=a.equicodi and
+      f.logfecha>=to_date('{0} 00:00:00','yyyy-mm-dd hh24:mi:ss') and
+      f.logfecha&lt;(to_date('{0} 23:59:59','yyyy-mm-dd hh24:mi:ss')+1) and
+      f.EQUIPOPRUEBA='S'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EquicodiPrueba</key>
+    <query>
+      select nvl(max(equicodi),0) equicodi
+      from pr_equiposorteo
+      where equipoprueba='S' and  logfecha=to_date('{0}','yyyy-mm-dd')
+    </query>
+  </Sql>
+
+  <!--INICIO MigracionSGOCOES-GrupoB-->
+
+  <Sql>
+    <key>ListaLogSorteo</key>
+    <query>
+      SELECT * FROM pr_logsorteo where logtipo like 'X%'
+      and logfecha >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and logfecha &lt;= (TO_DATE('{0} 23:59:59','YYYY-MM-DD HH24:MI:SS'))
+    </query>
+  </Sql>
+  <!--FIN MigracionSGOCOES-GrupoB-->
+  
+  <!-- INICIO FIT SGOCOES func A-->
+  
+  <Sql>
+    <key>eq_equipo</key>
+    <query>
+      SELECT
+      Eq_equipo.equicodi,
+      Si_empresa.emprnomb,
+      Eq_area.areanomb,
+      Eq_equipo.equiabrev,
+      Eq_equipo.equipadre
+      FROM
+      Eq_equipo,
+      Eq_area,
+      Si_empresa
+      WHERE
+      Eq_equipo.areacodi = Eq_area.areacodi AND
+      Eq_equipo.emprcodi = Si_empresa.emprcodi AND
+      Eq_equipo.famcodi=3 AND
+      Eq_equipo.equiestado='A'
+      order by
+      Si_empresa.emprnomb,
+      Eq_area.areanomb,
+      Eq_equipo.equiabrev
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>eq_central</key>
+    <query>
+      SELECT
+      Eq_equipo.equicodi,
+      Si_empresa.emprnomb,
+      Eq_area.areanomb,
+      Eq_equipo.equiabrev,
+      Eq_equipo.equipadre
+      FROM
+      Eq_equipo,
+      Eq_area,
+      Si_empresa
+      WHERE
+      Eq_equipo.areacodi = Eq_area.areacodi AND
+      Eq_equipo.emprcodi = Si_empresa.emprcodi AND
+      Eq_equipo.famcodi=5
+      order by
+      Si_empresa.emprnomb,
+      Eq_area.areanomb,
+      Eq_equipo.equiabrev
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>eve_mantto</key>
+    <query>
+      SELECT
+      Eq_area.areanomb,
+      Eq_equipo.equiabrev,
+      Eve_mantto.equicodi,
+      Eve_mantto.evenini,
+      Eve_mantto.evenfin
+      FROM
+      Eve_mantto,
+      Eq_equipo,
+      Eq_area
+      WHERE
+      Eve_mantto.equicodi = Eq_equipo.equicodi AND
+      Eq_equipo.areacodi = Eq_area.areacodi AND
+      (Eve_mantto.evenclasecodi = 2 AND (tipoevencodi != 6 and evenindispo != 'E')) AND
+      (Eq_equipo.famcodi = 3 OR Eq_equipo.famcodi = 5) AND
+      Eve_mantto.evenini >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') AND
+      Eve_mantto.evenfin &lt;= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') AND
+      Eve_mantto.evenfin > trunc(SYSDATE) + 14.5/24
+      UNION ALL
+      SELECT
+      Eq_area.areanomb,
+      Eq_equipo.equiabrev,
+      Eve_mantto.equicodi,
+      Eve_mantto.evenini,
+      Eve_mantto.evenfin
+      FROM
+      Eve_mantto,
+      Eq_equipo,
+      Eq_area
+      WHERE
+      Eve_mantto.equicodi = Eq_equipo.equicodi AND
+      Eq_equipo.areacodi = Eq_area.areacodi AND
+      (tipoevencodi = 6 and evenindispo = 'E') AND 
+      (Eq_equipo.famcodi = 3 OR Eq_equipo.famcodi = 5) AND
+      Eve_mantto.evenini >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') AND
+      Eve_mantto.evenfin &lt;= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') AND
+      Eve_mantto.evenfin > trunc(SYSDATE) + 14.5/24
+
+      <!--
+      Eve_mantto.evenini >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') AND
+      Eve_mantto.evenini &lt; (to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1) AND
+      Eve_mantto.evenfin > to_date('{0} 12:00:00','YYYY-MM-DD HH24:MI:SS') AND
+      not (Eve_mantto.evenclasecodi = 2 and Eve_mantto.evenfin > trunc(SYSDATE) + 14.5/24)
+      -->
+      <!--Eve_mantto.evenini >= to_date('2018-01-27 00:00:00','YYYY-MM-DD HH24:MI:SS') AND
+        Eve_mantto.evenini &lt; (to_date('2018-01-27 00:00:00','YYYY-MM-DD HH24:MI:SS')+1) AND
+        Eve_mantto.evenfin > to_date('2018-01-27 12:00:00','YYYY-MM-DD HH24:MI:SS')-->
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>eve_indisponibilidad</key>
+    <query>
+      SELECT
+      Eq_area.areanomb,
+      Eq_equipo.equiabrev,
+      Eve_ieodcuadro.equicodi,
+      Eve_ieodcuadro.ichorini,
+      Eve_ieodcuadro.ichorfin
+      FROM
+      Eve_ieodcuadro,
+      Eq_equipo,Eq_area
+      WHERE
+      Eve_ieodcuadro.equicodi = Eq_equipo.equicodi AND
+      Eq_equipo.areacodi = Eq_area.areacodi AND
+      Eve_ieodcuadro.subcausacodi =205 AND
+      Eve_ieodcuadro.ichorini >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') AND
+      <!--Eve_ieodcuadro.ichorini >= to_date('2018-01-27 00:00:00','YYYY-MM-DD HH24:MI:SS') AND-->
+      Eve_ieodcuadro.iccheck1 &lt;> 'S' AND
+      Eve_ieodcuadro.ichorini &lt; (to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1) AND
+      Eve_ieodcuadro.ichorfin > to_date('{0} 12:00:00','YYYY-MM-DD HH24:MI:SS')
+ </query>
+  </Sql>
+
+  <Sql>
+    <key>eve_horaoperacion</key>
+    <query>
+      SELECT
+      eve_ho.hophorini,
+      eve_ho.equicodi,
+      eve_ho.hopfalla,
+      eve_ho.grupocodi,
+      Si_empresa.emprnomb,
+      Eq_area.areanomb,
+      Eq_equipo.equiabrev,
+      subcausacodi
+      FROM
+      Eve_horaoperacion eve_ho,
+      Eq_equipo,
+      Eq_area,
+      Si_empresa
+      WHERE
+      eve_ho.equicodi = Eq_equipo.equicodi AND
+      Eq_equipo.areacodi = Eq_area.areacodi AND
+      Eq_equipo.emprcodi = Si_empresa.emprcodi AND
+      (HOPFALLA IS NULL or hopfalla &lt;> 'F') AND
+      (Eq_equipo.famcodi = 3 OR Eq_equipo.famcodi = 5) AND 
+      SUBCAUSACODI &lt;> 106  AND SUBCAUSACODI &lt;> 113 AND SUBCAUSACODI &lt;> 114 AND eve_ho.HOPESTADO = 'A' AND
+      eve_ho.hophorini>= (to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')-90) AND
+      eve_ho.hophorini &lt;  to_date('{0} 14:00:00','YYYY-MM-DD HH24:MI:SS') AND
+      eve_ho.hopcodi not in (select peh.hopcodi from eve_horaoperacion peh where (peh.hopcodi = eve_ho.hopcodi and peh.subcausacodi = 114 and peh.HOPHORINI >= SYSDATE-61 and peh.HOPPRUEBAEXITOSA = 1) OR (peh.hopcodi = eve_ho.hopcodi and peh.subcausacodi = 106 and peh.HOPHORINI >= SYSDATE-91 and peh.HOPENSAYOPE = 'S'))
+      
+      union all
+
+      SELECT
+      eve_ho.hophorini,
+      eve_ho.equicodi,
+      eve_ho.hopfalla,
+      eve_ho.grupocodi,
+      Si_empresa.emprnomb,
+      Eq_area.areanomb,
+      Eq_equipo.equiabrev,
+      subcausacodi
+      FROM
+      Eve_horaoperacion eve_ho,
+      Eq_equipo,
+      Eq_area,
+      Si_empresa
+      WHERE
+      eve_ho.equicodi = Eq_equipo.equicodi AND
+      Eq_equipo.areacodi = Eq_area.areacodi AND
+      Eq_equipo.emprcodi = Si_empresa.emprcodi AND
+      (HOPFALLA IS NULL or hopfalla &lt;> 'F') AND
+      (Eq_equipo.famcodi = 3 OR Eq_equipo.famcodi = 5) AND
+      eve_ho.HOPESTADO = 'A' AND
+      eve_ho.hophorini>= (to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')-90) AND
+      eve_ho.hophorini &lt;  to_date('{0} 14:00:00','YYYY-MM-DD HH24:MI:SS') AND
+      eve_ho.hopcodi in (select peh.hopcodi from eve_horaoperacion peh where (peh.hopcodi = eve_ho.hopcodi and peh.subcausacodi = 114 and peh.HOPHORINI >= SYSDATE-61 and peh.HOPPRUEBAEXITOSA = 1) OR (peh.hopcodi = eve_ho.hopcodi and peh.subcausacodi = 106 and peh.HOPHORINI >= SYSDATE-91 and peh.HOPENSAYOPE = 'S'))
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>eve_pruebaunidad</key>
+    <query>
+      SELECT
+      *
+      FROM
+      eve_pruebaunidad
+      WHERE
+      PRUNDCALCPRUEBAEXITOSA &lt;>'S' AND
+      PRUNDELIMINADO ='N' AND
+      prundfecha >= (to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')-31)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>equipos_validos</key>
+    <query>
+      SELECT
+      Eq_equirel.equicodi1,
+      Eq_equirel.equicodi2
+      FROM
+      Eq_equirel
+      where
+      Eq_equirel.Tiporelcodi = 24 AND
+      (Eq_equirel.equicodi1 = '{0}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>eve_mantto_calderos</key>
+    <query>
+      SELECT
+      Eq_equirel.equicodi1,
+      Eq_equirel.equicodi2
+      FROM
+      Eq_equirel
+      where
+      Eq_equirel.equicodi1 = '{0}' AND
+      Eq_equirel.Tiporelcodi = 24
+      minus
+      SELECT
+      Eq_equirel.equicodi1,
+      Eq_equirel.equicodi2
+      FROM
+      Eq_equirel
+      where
+      Eq_equirel.equicodi1 = '{0}' AND
+      Eq_equirel.Tiporelcodi = 24 AND
+      Eq_equirel.equicodi2 in
+      (
+      SELECT
+      Eve_mantto.equicodi
+      FROM
+      Eve_mantto,
+      Eq_equipo,Eq_area
+      WHERE
+      Eve_mantto.equicodi = Eq_equipo.equicodi AND
+      Eq_equipo.areacodi = Eq_area.areacodi AND Eve_mantto.evenclasecodi = 1 AND
+      Eq_equipo.Famcodi = 22 AND
+      Eve_mantto.evenini>= '{1}' AND
+      Eve_mantto.evenini &lt; '{2}'  AND
+      Eve_mantto.evenfin > '{3}'
+      ) "
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>InsertPrSorteo</key>
+    <query>
+      INSERT INTO pr_equiposorteo (
+      equicodi,
+      logfecha,
+      equipoprueba,
+      emprcodi
+      )
+      values (
+      :equicodi,
+      :fecha,
+      :prueba,
+      :emprcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteEquipo</key>
+    <query>
+      delete
+      from
+      PR_EQUIPOSORTEO
+      where
+      LOGFECHA >= :logfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalConteoTipoXEQ</key>
+    <query>
+      SELECT
+      count(*)
+      FROM pr_logsorteo
+      WHERE ( logtipo = 'XEQ' ) and
+      logfecha >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DiasFaltantes</key>
+    <query>
+      SELECT
+      count(*)
+      FROM pr_logsorteo
+      WHERE ( logtipo = 'XEQ' OR logtipo = 'XNO') and
+      logfecha >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaHistorico</key>
+    <query>
+      select
+      logusuario,
+      logfecha,
+      logdescrip,
+      logtipo,
+      logcoordinador,
+      logdocoes
+      from
+      pr_logsorteo
+      where logfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and
+      logtipo like 'X%' order by logfecha
+    </query>
+  </Sql>
+  
+  <!-- FIN FIT SGOCOES func A-->
+
+
+</Sqls>

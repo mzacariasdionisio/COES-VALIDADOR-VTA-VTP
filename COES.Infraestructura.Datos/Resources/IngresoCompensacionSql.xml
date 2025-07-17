@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+
+  <Sql>
+    <key>GetById</key>
+    <query>select * from trn_ing_compensacion where ingcomcodi = :ingcomcodi</query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_ing_compensacion
+      (
+      ingcomcodi, pericodi, emprcodi, cabcomcodi, ingcomversion, ingcomimporte, ingcomusername, ingcomfecins
+      )
+      values
+      (
+      :ingcomcodi, :pericodi, :emprcodi, :cabcomcodi, :ingcomversion, :ingcomimporte, :ingcomusername, :ingcomfecins
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>delete from trn_ing_compensacion where pericodi = :pericodi and ingcomversion = :ingcomversion</query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ingcomcodi), 0) + 1 from trn_ing_compensacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCodigo</key>
+    <query>
+      select trn_ing_compensacion.*, (select emprnomb from vw_si_empresa where emprcodi=trn_ing_compensacion.emprcodi) as nombEmpresa,
+      (select perinombre from trn_periodo where pericodi=trn_ing_compensacion.pericodi) as nombPeriodo,
+      (select cabcomnombre from trn_cabe_compensacion where cabcomcodi=trn_ing_compensacion.cabcomcodi) as nombCompensacion
+      from trn_ing_compensacion where (pericodi =:pericodi or :pericodi is null ) and (ingcomversion =:ingcomversion or :ingcomversion is null)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByPeriodoVersion</key>
+    <query>
+      select * from trn_ing_compensacion where pericodi = :pericodi and ingcomversion = :ingcomversion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByPeriVersCabCompEmpr</key>
+    <query>
+      select * from trn_ing_compensacion
+      where pericodi = :pericodi
+      and cabcomcodi = :cabcomcodi
+      and ingcomversion = :ingcomversion
+      and emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>BuscarListaEmpresas</key>
+    <query>
+      select distinct e.emprcodi, e.emprnomb as nombempresa
+      from trn_ing_compensacion ic join vw_trn_empresa_str e on ic.emprcodi = e.emprcodi
+      where pericodi = :pericodi and ingcomversion = :ingcomversion
+      order by e.emprnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByPeriVersRentasCongestion</key>
+    <query>
+      select nvl(sum(ingcomimporte),0) as ingcomimporte
+      from trn_ing_compensacion ic join trn_cabe_compensacion cc on ic.cabcomcodi = cc.cabcomcodi and ic.pericodi = cc.pericodi and cc.cabcomrentconge = 'Si'
+      where ic.pericodi = :pericodi and ic.ingcomversion = :ingcomversion
+    </query>
+  </Sql>
+</Sqls>

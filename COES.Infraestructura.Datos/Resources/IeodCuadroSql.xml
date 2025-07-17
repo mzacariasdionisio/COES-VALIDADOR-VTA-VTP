@@ -1,0 +1,194 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select cuadro.*, empresa.emprcodi, empresa.emprnomb, area.areanomb, tipoarea.tareaabrev, equipo.equiabrev, equipo.equinomb, familia.famabrev
+      from eve_ieodcuadro cuadro
+      inner join eq_equipo equipo on cuadro.equicodi = equipo.equicodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      where cuadro.ichorini >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and cuadro.ichorfin &lt;= TO_DATE('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and cuadro.subcausacodi in (318,319)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select *
+      from eve_ieodcuadro
+      where iccodi = : iccodi and icestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlObtenerReporte</key>
+    <query>
+      select
+      case equicodi
+      when 11571 then 'URS-KLP-001'
+      when 12720 then 'URS-KLP-002'
+      when 291 then 'URS-STK-001'
+      when 276 then 'URS-STK-002'
+      when 260 then 'URS-STK-003'
+      else  'URS' end  as rus,
+      (to_char(ichorini, 'HH24') || ':' || to_char(ichorini, 'MI') || '-' ||
+      to_char(ichorfin, 'HH24') || ':' || to_char(ichorfin, 'MI')) as hora,
+      cuadro.subcausacodi, ichorini, ichorfin, icvalor1
+      from eve_ieodcuadro cuadro
+      where cuadro.ichorini >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and cuadro.ichorfin &lt;= TO_DATE('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and cuadro.subcausacodi in (318,319) and cuadro.icvalor1 > 0
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      --select maxcount + 1 from fw_counter where tablename = 'EVE_IEODCUADRO'
+      select nvl(max(iccodi), 0) + 1 from eve_ieodcuadro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eve_ieodcuadro(iccodi,equicodi,subcausacodi,ichorini,ichorfin,icdescrip1,iccheck1,icvalor1,lastuser,lastdate,evenclasecodi,iccheck2,icnombarchenvio,Icnombarchfisico)
+      Values (:iccodi,:equicodi,:subcausacodi,:ichorini,:ichorfin,:icdescrip1,:iccheck1,:icvalor1,:lastuser,:lastdate,:evenclasecodi,:iccheck2,:icnombarchenvio,: Icnombarchfisico)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from eve_ieodcuadro
+      where ichorini >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and ichorfin &lt;= TO_DATE('{0} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and subcausacodi in (318,319)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateCounter</key>
+    <query>
+      update fw_counter set maxcount = :maxcount
+      where tablename = 'EVE_IEODCUADRO'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ConfiguracionEquipo</key>
+    <query>
+      select empresa.emprnomb, empresa.emprcodi, area.areanomb, familia.famabrev, equipo.equiabrev, tipoarea.tareaabrev, equipo.equicodi
+      from eq_equipo equipo
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      where  equipo.equicodi in (11571, 12720, 291, 276, 260)
+      order by equipo.equinomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarExistencia</key>
+    <query>
+      select a.* from eve_ieodcuadro a inner join eq_equipo b on (a.equicodi = b.equicodi or a.equicodi = b.equipadre)
+      inner join me_ptomedicion c on b.equicodi = c.equicodi
+      where a.subcausacodi = 319 and c.ptomedicodi = {0} and a.icvalor1 > 0 and
+      ((a.ichorini &lt;= to_date('{1}','YYYY-MM-DD HH24:MI:SS') and a.ichorfin >= to_date('{1}','YYYY-MM-DD HH24:MI:SS'))
+      or
+      (a.ichorini &lt;= to_date('{2}','YYYY-MM-DD HH24:MI:SS') and a.ichorfin >= to_date('{2}','YYYY-MM-DD HH24:MI:SS')))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetFallaAcumuladaSein</key>
+    <query>
+      select sum({0}) as {0}
+      from EVE_IEODCUADRO
+      where SUBCAUSACODI = 206 and
+      EVENCLASECODI = 1 and
+      to_char(ICHORINI, 'YYYYMM') = '{1}'
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarIeodCuadroxEmpresa</key>
+    <query>
+      select cuadro.*, empresa.emprcodi, empresa.emprnomb, area.areanomb, tipoarea.tareaabrev, equipo.equiabrev, equipo.equinomb, familia.famabrev, ev.SUBCAUSADESC
+      from eve_ieodcuadro cuadro
+      inner join eq_equipo equipo on cuadro.equicodi = equipo.equicodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join eve_subcausaevento ev on cuadro.subcausacodi = ev.subcausacodi
+      where cuadro.ichorini >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and cuadro.ichorfin &lt;= TO_DATE('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and cuadro.subcausacodi =  {2} and empresa.emprcodi = {3} and cuadro.icestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteById</key>
+    <query>
+      delete from eve_ieodcuadro
+      where iccodi = :iccodi and icestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eve_ieodcuadro
+      set
+      equicodi= : equicodi,
+      subcausacodi= : subcausacodi,
+      ichorini= : ichorini,
+      ichorfin= : ichorfin,
+      icdescrip1= : icdescrip1,
+      iccheck1= : iccheck1,
+      icvalor1= : icvalor1,
+      lastuser= : lastuser,
+      lastdate= : lastdate,
+      evenclasecodi= : evenclasecodi,
+      iccheck2= : iccheck2,
+      icnombarchenvio= :icnombarchenvio,
+      icnombarchfisico= :icnombarchfisico,
+      where
+      iccodi= : iccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCriteriaxPKCodis</key>
+    <query>
+      select cuadro.*, empresa.emprcodi, empresa.emprnomb, area.areanomb, tipoarea.tareaabrev, equipo.equiabrev, equipo.equinomb, familia.famabrev, ev.SUBCAUSADESC
+      from eve_ieodcuadro cuadro
+      inner join eq_equipo equipo on cuadro.equicodi = equipo.equicodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      inner join eq_familia familia on equipo.famcodi = familia.famcodi
+      inner join eve_subcausaevento ev on cuadro.subcausacodi = ev.subcausacodi
+      where cuadro.iccodi in ({0}) and cuadro.icestado = 'A'
+
+    </query>
+  </Sql>
+  <Sql>
+    <key>BorradoLogico</key>
+    <query>
+      update eve_ieodcuadro
+      set
+      icestado = 'D'
+      where
+      iccodi= {0}
+    </query>
+  </Sql>
+
+
+</Sqls>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(irptcodi), 0) + 1 from ind_reporte
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ind_reporte(
+      irptcodi,
+      irecacodi,
+      icuacodi,
+      irptestado,
+      irpttipo,
+      irpttiempo,
+      irptmedicionorigen,
+      irptnumversion,
+      irptesfinal,
+      irptreporteold,
+      irptusucreacion,
+      irptfeccreacion,
+      irptusumodificacion,
+      irptfecmodificacion
+      )
+      values(
+      :irptcodi,
+      :irecacodi,
+      :icuacodi,
+      :irptestado,
+      :irpttipo,
+      :irpttiempo,
+      :irptmedicionorigen,
+      :irptnumversion,
+      :irptesfinal,
+      :irptreporteold,
+      :irptusucreacion,
+      :irptfeccreacion,
+      :irptusumodificacion,
+      :irptfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateAprobar</key>
+    <query>
+      update ind_reporte
+      set
+      irptesfinal = :irptesfinal,
+      irptusumodificacion = :irptusumodificacion,
+      irptfecmodificacion = :irptfecmodificacion
+      where
+      irptcodi = :irptcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateHistorico</key>
+    <query>
+      update ind_reporte
+      set
+      irptestado = 'H'
+      where
+      irptcodi = :irptcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ind_reporte
+      where
+      irptcodi = :irptcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      r.*,
+      rec.IRECANOMBRE,
+      per.IPERINOMBRE,
+      rec.irecafechaini,
+      rec.irecafechafin,
+      rec.IRECAINFORME
+      from ind_reporte r
+      inner join ind_recalculo rec on rec.irecacodi = r.irecacodi
+      inner join ind_periodo per on per.ipericodi = rec.ipericodi
+      where
+      r.irptcodi = :irptcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      ind_reporte
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      r.*,
+      rec.IRECANOMBRE,
+      per.IPERINOMBRE,
+      rec.irecafechaini,
+      rec.irecafechafin,
+      rec.IRECAINFORME
+      from ind_reporte r
+      inner join ind_recalculo rec on rec.irecacodi = r.irecacodi
+      inner join ind_periodo per on per.ipericodi = rec.ipericodi
+      where ( '{0}' = '-1' or r.irecacodi in ({0}) )
+      and r.icuacodi = {1}
+      and ( '{2}' = '-1' or r.irptcodi in ({2}))
+      and r.irptestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>LstReporteParaPFR</key>
+    <query>
+      select
+      *
+      from
+      ind_reporte
+      where
+      (irecacodi = {0})
+      and (irptesfinal = {1})
+      and (icuacodi in ({2}, {3}, {4}))
+    </query>
+  </Sql>
+</Sqls>

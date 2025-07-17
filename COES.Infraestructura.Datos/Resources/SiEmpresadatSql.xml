@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into si_empresadat(
+      empdatfecha,
+      consiscodi,
+      emprcodi,
+      empdatusucreacion,
+      empdatfeccreacion,
+      empdatusumodificacion,
+      empdatfecmodificacion,
+      empdatdeleted,
+      empdatvalor
+      )
+      values(
+      :empdatfecha,
+      :consiscodi,
+      :emprcodi,
+      :empdatusucreacion,
+      :empdatfeccreacion,
+      :empdatusumodificacion,
+      :empdatfecmodificacion,
+      :empdatdeleted,
+      :empdatvalor
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update si_empresadat
+      set
+      empdatusucreacion = :empdatusucreacion,
+      empdatfeccreacion = :empdatfeccreacion,
+      empdatusumodificacion = :empdatusumodificacion,
+      empdatfecmodificacion = :empdatfecmodificacion,
+      empdatdeleted = :empdatdeleted,
+      empdatvalor = :empdatvalor
+      where
+      empdatfecha = :empdatfecha and
+      consiscodi = :consiscodi and
+      emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from si_empresadat
+      where
+      empdatfecha = :empdatfecha and
+      consiscodi = :consiscodi and
+      emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update aud_si_empresadat
+			set USERAUDITORIA = :empdatusumodificacion
+			where
+			empdatfecha = :empdatfecha and
+			consiscodi = :consiscodi and
+			emprcodi = :emprcodi
+			and ACTIONAUDITORIA = 'DELETE'
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      si_empresadat
+      where
+      empdatfecha = :empdatfecha and
+      consiscodi = :consiscodi and
+      emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      si_empresadat
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      si_empresadat
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByEmpresaYConcepto</key>
+    <query>
+      select
+      emp.emprnomb,emp.tipoemprcodi, emp.EMPRABREV, coalesce(upper(trim(dat.EMPDATVALOR)), 'B') as EMPRESTADO, dat.EMPDATFECHA as EMPRESTADOFECHA
+      ,dat.*
+      from SI_EMPRESADAT dat
+      inner join si_empresa emp on emp.emprcodi = dat.emprcodi
+      where dat.EMPDATFECHA BETWEEN to_date('{0}', 'YYYY-MM-DD') and to_date('{1}', 'YYYY-MM-DD')
+      and ('-1' = '{2}' or dat.emprcodi in ({2}) )
+      and ('-1' = '{3}' or dat.consiscodi in ({3}))
+      order by emp.emprnomb, dat.EMPDATFECHA desc, dat.EMPDATFECCREACION desc
+    </query>
+  </Sql>
+
+</Sqls>

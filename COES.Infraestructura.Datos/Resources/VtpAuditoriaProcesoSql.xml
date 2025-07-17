@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+	<Sql>
+		<key>Save</key>
+		<query>
+			insert into vtp_auditoria_proceso(
+			audprocodi,
+			tipprocodi,
+			estdcodi,
+			audproproceso,
+			audprodescripcion,
+			audprousucreacion,
+			audprofeccreacion,
+			audprousumodificacion,
+			audprofecmodificacion
+			)
+			values(
+			:audprocodi,
+			:tipprocodi,
+			:estdcodi,
+			:audproproceso,
+			:audprodescripcion,
+			:audprousucreacion,
+			:varempfeccreacion,
+			:audprousumodificacion,
+			:audprofecmodificacion
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetMaxId</key>
+		<query>
+			select nvl(max(AUDPROCODI), 0) + 1 from vtp_auditoria_proceso
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListAuditoriaProcesoByFiltro</key>
+		<query>
+            select * from (select
+            ap.audprocodi,
+            tp.tipprodescripcion,
+            es.estddescripcion,
+            ap.tipprocodi,
+            ap.estdcodi,
+            ap.audproproceso,
+            ap.audprodescripcion,
+            ap.audprousucreacion,
+            ap.audprofeccreacion,
+            ap.audprousumodificacion,
+            ap.audprofecmodificacion,
+            row_number() over (order by 9 desc)  as fila
+            from vtp_auditoria_proceso ap
+            inner join vtp_tipo_proceso tp on tp.tipprocodi=ap.tipprocodi
+            inner join vtp_estado es on es.estdcodi=ap.estdcodi
+            where
+            ap.tipprocodi=:tipprocodi and
+            (audprousucreacion=:audprousucreacion or :audprousucreacion = '*') and
+            TRUNC(audprofeccreacion)  between TO_DATE(:audprofeccreacion,'yyyy-MM-dd') and TO_DATE(:audprofeccreacion,'yyyy-MM-dd') order by 9 desc)
+            where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize)
+            
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>NroRegistroAuditoriaProcesoByFiltro</key>
+		<query>
+            select count(1)  as NroRegistros
+            from vtp_auditoria_proceso where
+            tipprocodi=:tipprocodi and
+            (audprousucreacion=:audprousucreacion or :audprousucreacion = '*') and
+            TRUNC(audprofeccreacion)  between TO_DATE(:audprofeccreacion,'yyyy-MM-dd') and TO_DATE(:audprofeccreacion,'yyyy-MM-dd')
+          </query>
+	</Sql>
+
+</Sqls>

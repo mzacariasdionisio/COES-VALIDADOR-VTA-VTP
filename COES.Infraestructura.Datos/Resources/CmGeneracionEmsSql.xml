@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(genemscodi), 0) + 1 from cm_generacion_ems
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cm_generacion_ems(
+      genemscodi,
+      cmgncorrelativo,
+      equicodi,
+      genemsgeneracion,
+      genemsoperativo,
+      genemsfecha,
+      genemsusucreacion,
+      genemsfechacreacion,
+      emprcodi,
+      genemstipoestimador,
+      genemspotmax,
+      genemspotmin
+      )
+      values(
+      :genemscodi,
+      :cmgncorrelativo,
+      :equicodi,
+      :genemsgeneracion,
+      :genemsoperativo,
+      :genemsfecha,
+      :genemsusucreacion,
+      :genemsfechacreacion,
+      :emprcodi,
+      :genemstipoestimador,
+      :genemspotmax,
+      :genemspotmin
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cm_generacion_ems
+       set
+           cmgncorrelativo = :cmgncorrelativo,
+           equicodi = :equicodi,
+           genemsgeneracion = :genemsgeneracion,
+           genemsoperativo = :genemsoperativo,
+           genemsfecha = :genemsfecha,
+           genemsusucreacion = :genemsusucreacion,
+           genemsfechacreacion = :genemsfechacreacion,
+           emprcodi = :emprcodi
+       where
+           genemscodi = :genemscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cm_generacion_ems
+       where
+           genemscodi = :genemscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           genemscodi,
+           cmgncorrelativo,
+           equicodi,
+           genemsgeneracion,
+           genemsoperativo,
+           genemsfecha,
+           genemsusucreacion,
+           genemsfechacreacion,
+           emprcodi
+       from
+           cm_generacion_ems
+       where
+           genemscodi = :genemscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           genemscodi,
+           cmgncorrelativo,
+           equicodi,
+           genemsgeneracion,
+           genemsoperativo,
+           genemsfecha,
+           genemsusucreacion,
+           genemsfechacreacion,
+           emprcodi
+       from
+           cm_generacion_ems
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select a.* from
+      (
+        select GEN.*,ROW_NUMBER() OVER(PARTITION BY GEN.EQUICODI,GEN.GENEMSFECHA  ORDER BY GEN.EQUICODI,GEN.GENEMSFECHA,GEN.GENEMSFECHACREACION DESC) AS NUM
+        from CM_GENERACION_EMS GEN
+        where GEN.GENEMSFECHA = to_date('{0}:00', 'YYYY-MM-DD HH24:MI:SS')
+      ) a
+      where num = 1
+    </query>
+  </Sql>
+  
+  <Sql>
+	  <key>DeleteByFecha</key>
+	  <query>
+      delete cm_generacion_ems
+      where genemsfecha = to_date('{0}', 'YYYY-MM-DD HH24:MI') and genemstipoestimador = '{1}'
+    </query>
+  </Sql>
+  
+	<Sql>
+		<key>GeneracionPorCorrelativo</key>
+		<query>
+      select EM.emprcodi,GEN.*,EM.EMPRNOMB, EQ.EQUINOMB, EQ.EQUIABREV from CM_GENERACION_EMS GEN
+      INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI=GEN.EQUICODI
+      inner join si_empresa EM on EM.emprcodi = (case when coalesce(GEN.EMPRCODI,-1) > 0 then GEN.EMPRCODI else EQ.emprcodi end)
+      where GEN.CMGNCORRELATIVO={0} ORDER BY EM.EMPRNOMB, EQ.EQUINOMB, EQ.EQUIABREV
+    </query>
+	</Sql>
+  
+	<Sql>
+		<key>GeneracionPorFechas</key>
+		<query>
+      select EM.emprcodi, GEN.*,EM.EMPRNOMB, EQ.EQUINOMB, EQ.EQUIABREV from CM_GENERACION_EMS GEN
+      INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI=GEN.EQUICODI
+      inner join si_empresa EM on EM.emprcodi = (case when coalesce(GEN.EMPRCODI,-1) > 0 then GEN.EMPRCODI else EQ.emprcodi end)
+      where (GEN.GENEMSFECHA >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and GEN.GENEMSFECHA &lt; to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS'))
+          and gen.genemstipoestimador = '{2}'
+			ORDER BY GEN.CMGNCORRELATIVO,EM.EMPRNOMB, EQ.EQUINOMB, EQ.EQUIABREV
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>ActualizarModoOperacion</key>
+    <query>
+      update cm_generacion_ems
+      set 
+      grupocodi = {1},
+      genemsusucreacion = '{3}'
+      where equicodi = {0} and
+      to_char( genemsfecha, 'YYYY-MM-DD HH24:MI') = '{2}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaGeneracionByEquipoFecha</key>
+    <query>
+      select emprcodi2 as emprcodi, a.* from
+      (
+          select EM.emprcodi as emprcodi2,GEN.*,ROW_NUMBER() OVER(PARTITION BY GEN.EQUICODI,GEN.GENEMSFECHA  ORDER BY GEN.EQUICODI,GEN.GENEMSFECHA,GEN.GENEMSFECHACREACION DESC) AS NUM
+          , EM.EMPRNOMB
+          , EQ.EQUINOMB, EQ.EQUIABREV, eq.equipadre, eqp.equinomb central, eqp.famcodi famcodipadre
+          from CM_GENERACION_EMS GEN
+          INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI=GEN.EQUICODI
+          INNER JOIN EQ_EQUIPO EQP on eqp.equicodi = eq.equipadre
+          INNER JOIN SI_EMPRESA EM ON EM.EMPRCODI= (case when coalesce(GEN.EMPRCODI,-1) > 0 then GEN.EMPRCODI else EQ.emprcodi end)
+          where GEN.GENEMSFECHA >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and GEN.GENEMSFECHA &lt; to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+          and eqp.famcodi in (5,3)
+          and coalesce(Genemsgeneracion,0) &lt;> 0
+      ) a
+      where num = 1
+      and ('-2' = '{2}' or emprcodi2 in ({2}) )
+      ORDER BY EMPRNOMB,central,equinomb,GENEMSFECHA
+    </query>
+  </Sql>
+
+	<!--Mejoras CMgN - Movisoft-->
+
+	<Sql>
+		<key>ObtenerGeneracionCostoIncremental</key>
+		<query>
+			select
+			cm.equicodi, cm.genemsgeneracion, cm.genemsoperativo, cm.genemsfecha
+			from cm_generacion_ems cm
+			inner join
+			(
+			select max(t.cmgncorrelativo) as correlativo from (
+			select distinct cm1.cmgncorrelativo, to_char(genemsfecha, 'YYYY-MM-DD HH24:MI') as fecha from cm_generacion_ems cm1
+			where cm1.genemsfecha >= to_date('{1} 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+			and cm1.genemsfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+			) t
+			group by t.fecha
+			) tabla on cm.cmgncorrelativo = tabla.correlativo
+			where
+			cm.genemsfecha >= to_date('{1} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and
+			cm.genemsfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS') and
+			cm.equicodi in ({0})
+			order by cm.equicodi, cm.genemsfecha
+		</query>
+	</Sql>
+	
+	<!--Fin mejoras CMgN - Movisoft-->
+  
+</Sqls>

@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetById</key>
+    <query>
+		select trn_codigo_retiro_sincontrato.*,
+		vw_si_empresa.emprnomb,
+		vw_si_empresa.emprruc,
+		trn_barra.barrbarratransferencia,
+		CASE TIPUSUCODI
+		WHEN 1 THEN 'LIBRE'
+		WHEN 2 THEN 'REGULADO'
+		ELSE ''
+		END TIPUSUNOMB
+		from trn_codigo_retiro_sincontrato left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_retiro_sincontrato.cliemprcodi
+		join trn_barra on trn_barra.barrcodi = trn_codigo_retiro_sincontrato.barrcodi
+		where (trn_codigo_retiro_sincontrato.coresccodi = :coresccodi)
+	</query>
+  </Sql>
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into trn_codigo_retiro_sincontrato
+		(
+		coresccodi, cliemprcodi, barrcodi, coresccodigo,
+		corescfechainicio,corescfechafin,
+		corescestado, corescusername, corescfecins,genemprcodi,tipusucodi)
+		values
+		(
+		:coresccodi, :cliemprcodi, :barrcodi, :coresccodigo,
+		:corescfechainicio, :corescfechafin,
+		:corescestado, :corescusername, :corescfecins,:genemprcodi, :tipusucodi
+		)
+	</query>
+  </Sql>
+  <Sql>
+    <key>Update</key>
+    <query>
+		update trn_codigo_retiro_sincontrato
+		set
+		cliemprcodi = :cliemprcodi,
+		barrcodi = :barrcodi,
+		coresccodigo = :coresccodigo,
+		corescfechainicio = :corescfechainicio,
+		corescfechafin = :corescfechafin,
+		corescestado = :corescestado,
+		corescfecact = :corescfecact,
+		tipusucodi = :tipusucodi
+		where
+		coresccodi = :coresccodi
+	</query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_codigo_retiro_sincontrato where coresccodi = :coresccodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>List</key>
+    <query>
+		select trn_codigo_retiro_sincontrato.*,
+		vw_si_empresa.emprnomb,
+		trn_barra.barrbarratransferencia,
+		CASE TIPUSUCODI
+		WHEN 1 THEN 'LIBRE'
+		WHEN 2 THEN 'REGULADO'
+		ELSE ''
+		END TIPUSUNOMB
+		from trn_codigo_retiro_sincontrato left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_retiro_sincontrato.cliemprcodi
+		join trn_barra on trn_barra.barrcodi = trn_codigo_retiro_sincontrato.barrcodi
+		where trn_codigo_retiro_sincontrato.corescestado not in ('ina')
+		order by trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		*
+		from (select trn_codigo_retiro_sincontrato.*,
+		NVL(vw_si_empresa.EMPRRUC, 0) EMPRRUC,
+		vw_si_empresa.emprnomb,
+		trn_barra.barrbarratransferencia,
+		CASE TIPUSUCODI
+		WHEN 1 THEN 'LIBRE'
+		WHEN 2 THEN 'REGULADO'
+		ELSE ''
+		END TIPUSUNOMB,
+		(row_number() over (order by trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb)) as r
+		from trn_codigo_retiro_sincontrato left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_retiro_sincontrato.cliemprcodi
+		join trn_barra  on trn_barra.barrcodi = trn_codigo_retiro_sincontrato.barrcodi
+		where (vw_si_empresa.emprnomb =:emprnomb  or :emprnomb is null)
+		and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+		and (trn_codigo_retiro_sincontrato.corescfechainicio &gt;=:corescfechainicio or :corescfechainicio is null)
+      and (trn_codigo_retiro_sincontrato.corescfechafin &lt;=:corescfechafin or :corescfechafin is null)
+      and (trn_codigo_retiro_sincontrato.corescestado =:corescestado or :corescestado is null)
+      and (trn_codigo_retiro_sincontrato.coresccodigo like '%'||:coresccodigo||'%' or :coresccodigo is null )
+      order by trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+      )
+      where r >= (((:nropagina-1) * :pagesize) + 1) and r &lt; ((:nropagina * :pagesize) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRecords</key>
+    <query>
+      select count(*) as NroRegistros
+      from trn_codigo_retiro_sincontrato left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_retiro_sincontrato.cliemprcodi
+      join trn_barra  on trn_barra.barrcodi = trn_codigo_retiro_sincontrato.barrcodi
+      where (vw_si_empresa.emprnomb =:emprnomb  or :emprnomb is null)
+      and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+      and (trn_codigo_retiro_sincontrato.corescfechainicio &gt;=:corescfechainicio or :corescfechainicio is null)
+      and (trn_codigo_retiro_sincontrato.corescfechafin &lt;=:corescfechafin or :corescfechafin is null)
+      and (trn_codigo_retiro_sincontrato.corescestado =:corescestado or :corescestado is null)
+      and (trn_codigo_retiro_sincontrato.coresccodigo like '%'||:coresccodigo||'%' or :coresccodigo is null )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCodigoRetiroSinContratoCodigo</key>
+    <query>
+		select trn_codigo_retiro_sincontrato.*,
+		vw_si_empresa.emprnomb,
+		trn_barra.barrbarratransferencia,
+		CASE TIPUSUCODI
+		WHEN 1 THEN 'LIBRE'
+		WHEN 2 THEN 'REGULADO'
+		ELSE ''
+		END TIPUSUNOMB
+		from trn_codigo_retiro_sincontrato left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_retiro_sincontrato.cliemprcodi
+		join trn_barra on trn_barra.barrcodi = trn_codigo_retiro_sincontrato.barrcodi
+		where (trn_codigo_retiro_sincontrato.coresccodigo = :codretisinconcodigo)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(coresccodi), 0) + 1 from trn_codigo_retiro_sincontrato
+    </query>
+  </Sql>
+</Sqls>

@@ -1,0 +1,2181 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      SELECT NVL(MAX(DCALCODI),0) + 1 FROM GMM_DATCALCULO
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpsertDatos</key>
+    <query>
+      INSERT INTO GMM_DATCALCULO
+      (DCALCODI, TINSCODI, PERICODI,
+      EMPGCODI, DCALVALOR, EMPRCODI,
+      BARRCODI, PTOMEDICODI, TPTOMEDICODI,
+      TIPOINFOCODI, MEDIFECHA, LECTCODI,
+      DCALANIO, DCALMES, DCALUSUCREACION,
+      DCALFECCREACION)
+      VALUES
+      ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM GMM_DATCALCULO), :TINSCODI, :PERICODI,
+      :EMPGCODI, :DCALVALOR, :EMPRCODI,
+      :BARRCODI, :PTOMEDICODI, :TPTOMEDICODI,
+      :TIPOINFOCODI,  to_date(:MEDIFECHA,'yyyy-mm-dd'), :LECTCODI,
+      :DCALANIO, :DCALMES, :DCALUSUCREACION,
+      SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateDatCalculo</key>
+    <query>
+      UPDATE  gmm_datcalculo SET  DCALVALOR  = {4}
+      where
+      TINSCODI = '{0}'
+      and DCALANIO = {1}
+      and DCALMES = {2}
+      and EMPRCODI = {3}
+      AND DATCALESTADO = '1'
+    </query>
+  </Sql>
+  <Sql>
+    <key>DeleteDatCalculo</key>
+    <query>
+      UPDATE  gmm_datcalculo SET   DATCALESTADO = '0'
+      where
+      TINSCODI = '{0}'
+      and DCALANIO = {1}
+      and DCALMES = {2}
+      and EMPRCODI = {3}
+      AND DATCALESTADO = '1'
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetUpsertDatos</key>
+    <query>
+      select
+      DCALCODI,
+      PERICODI,
+      DCALVALOR
+      from
+      gmm_datcalculo
+      where
+      TINSCODI = '{0}'
+      AND DCALANIO = {1}
+      AND DCALMES = {2}
+      AND EMPRCODI = {3}
+      AND DATCALESTADO = '1'
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetValorDC</key>
+    <query>
+      SELECT me.h1 as DCALVALOR, me.EMPRCODI, pto.BARRCODI, me.PTOMEDICODI, me.TPTOMEDICODI, me.TIPOINFOCODI, me.MEDIFECHA, me.LECTCODI,
+      extract(year from me.MEDIFECHA) DCALANIO, EXTRACT(month from me.MEDIFECHA) DCALMES
+      from me_medicion1 me
+      inner join me_hojaptomed hp on hp.ptomedicodi = me.ptomedicodi and hp.tipoinfocodi = me.tipoinfocodi
+      inner join me_formato fh on fh.formatcodi = hp.formatcodi and fh.lectcodi = me.lectcodi
+      inner join me_ptomedicion pto on pto.ptomedicodi = hp.ptomedicodi
+      where hp.formatcodi = {0} and pto.EMPRCODI = {1} and pto.ptomedicodi = {2}
+      and extract(year from me.MEDIFECHA) || EXTRACT(month from me.MEDIFECHA) in ({3}, {4}, {5}, {6})
+    </query>
+  </Sql>
+  <Sql>
+    <key>DeleteValoresEnergia</key>
+    <query>
+      delete from gmm_valenergia where emprcodi = {0} and pericodi = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>DeleteValoresEnergiaEntrega</key>
+    <query>
+      delete from gmm_valenergiaentrega where emprcodi = {0} and pericodi = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>DeleteValoresDemanda</key>
+    <query>
+        delete from GMM_DATCALCULO where emprcodi = {0} and pericodi = {1}
+      AND TINSCODI not in ('SSCC','TINFLEX','TEXCESO', 'MRESERVA')
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetPPO</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'PPO' TINSCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = (
+
+      select val from (
+      select max(recpotcodi) as rec, nvl(max(recpotpreciopoteppm),0)as val
+      from vtp_recalculo_potencia WHERE pericodi = (select pericodi - 1 from trn_periodo where perianio = {0} and perimes = {1})  /*(select max(pericodi) -1 from trn_periodo)*/
+      )
+      --ASSETEC: se comento (select max(pericodi) -1 from trn_periodo), pues no siempre trae el periodo anterior.
+      ),
+      DCALUSUCREACION = '{2}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+      select val from (
+      select max(recpotcodi) as rec, nvl(max(recpotpreciopoteppm),0)as val
+      from vtp_recalculo_potencia WHERE pericodi = (select pericodi - 1 from trn_periodo where perianio = {0} and perimes = {1})  /* (select max(pericodi) -1 from trn_periodo)*/
+      )
+
+      ),
+      {3}, 'PPO', {4}, {5}, '{6}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetPFR</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'PFR' TINSCODI, {2} PERICODI, {3} EMPRCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.EMPRCODI = E.EMPRCODI and B.PERICODI = E.PERICODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = (
+
+      select NVL(sum(a.ipefrdpotefirmeremunerable),0) as val
+      from vtp_ingreso_potefr_detalle a
+      where a.emprcodi = {3} and recpotcodi = 1
+      and pericodi = (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+
+      ), DCALUSUCREACION = '{4}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,
+      PERICODI, EMPRCODI,
+      TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo),
+      (
+
+      select NVL(sum(a.ipefrdpotefirmeremunerable),0) as val
+      from vtp_ingreso_potefr_detalle a
+      where a.emprcodi = {3} and recpotcodi = 1
+      and pericodi = (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+
+      ), {2}, {3},
+      'PFR', {0}, {1},'{4}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetLVTEA</key>
+    <query>
+      DECLARE   l_valor decimal(18,4):=0;
+BEGIN
+      select nvl((
+      select sum(valorizacion)
+      from (
+      select
+      a.pericodi,a.vtranversion,
+      b.emprnomb, b.emprcodi, c.barrcodi, c.barrbarratransferencia, a.vtrancodentret,
+      (select cliempr from vw_trn_codigo where codigo = a.vtrancodentret) as nombempresa,
+      (select tc.tipconnombre from trn_tipo_contrato tc where cr.tipconcodi = tc.tipconcodi) as entrega,
+      (select tu.tipusunombre from trn_tipo_usuario tu where cr.tipusucodi = tu.tipusucodi) as retiro,
+      ( case WHEN a.vtranflag ='E' THEN sum(a.vtrantotaldia) * -1
+      ELSE sum(a.vtrantotaldia) END ) as valorizacion, sum(a.vtrantotalenergia) as energia, a.vtrantipoinformacion, a.vtranflag, c.osinergcodi
+      from trn_valor_trans a join vw_trn_empresa_str b on a.emprcodi = b.emprcodi
+      left join trn_barra c on c.barrcodi = a.barrcodi
+      left join trn_codigo_retiro_solicitud cr on a.vtrancodentret = cr.coresocodigo
+      where
+      b.emprcodi = (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end)
+      --b.emprcodi = (select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+      and a.pericodi = (select pericodi from trn_periodo where perianio = {0} and perimes = {1})
+      and a.vtranversion = 1
+      group by
+      a.pericodi,a.vtranversion,
+      b.emprnomb,b.emprcodi, c.barrcodi, c.barrbarratransferencia, 4, a.vtranflag, a.vtrancodentret,
+      vtrantipoinformacion, cr.tipconcodi, cr.tipusucodi,a.vtranversion, c.osinergcodi
+      order by b.emprnomb, a.vtranflag, a.vtrancodentret, c.barrbarratransferencia
+      )), 0 )  INTO l_valor from dual;
+
+      SELECT  (CASE WHEN l_valor > 0 THEN l_valor else to_number(0) end ) INTO l_valor FROM dual;
+
+
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'LVTEA' TINSCODI, {2} PERICODI, {3} EMPRCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.EMPRCODI = E.EMPRCODI and B.PERICODI = E.PERICODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = l_valor, DCALUSUCREACION = '{4}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,
+      PERICODI, EMPRCODI,
+      TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo),
+      l_valor, {2}, {3},
+      'LVTEA', {0}, {1}, '{4}', SYSDATE);
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetMEEN10</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'MEEN10' TINSCODI, {2} PERICODI, {3} EMPRCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.EMPRCODI = E.EMPRCODI and B.PERICODI = E.PERICODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = (
+
+      select val from (
+      select nvl(sum(vd.VALDRETIRO - vd.VALDENTREGA),0) as val
+      FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd on v.valocodi = vd.valocodi
+      inner join si_empresa e on vd.emprcodi=e.emprcodi
+      WHERE vd.emprcodi = {3}
+      and extract(year from v.VALOFECHA) || EXTRACT(month from v.VALOFECHA) = '{5}'
+      and extract(day from v.VALOFECHA) &lt; 11 and v.valoestado = 'A'
+      )
+      )
+
+      , DCALUSUCREACION = '{4}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,
+      PERICODI, EMPRCODI,
+      TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo),
+      (
+
+      select val from (
+      select nvl(sum(vd.VALDRETIRO - vd.VALDENTREGA),0) as val
+      FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd on v.valocodi = vd.valocodi
+      inner join si_empresa e on vd.emprcodi=e.emprcodi
+      WHERE vd.emprcodi = {3}
+      and extract(year from v.VALOFECHA) || EXTRACT(month from v.VALOFECHA) = '{5}'
+      and extract(day from v.VALOFECHA) &lt; 11 and v.valoestado = 'A'
+      )
+
+      ), {2}, {3},
+      'MEEN10', {0}, {1}, '{4}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetVTP</key>
+    <query>
+      DECLARE   l_valor decimal(18,4):=0;
+      BEGIN
+      select nvl(sum(se.potseegreso - se.potseingreso),0) INTO l_valor
+      from vtp_saldo_empresa se
+      where pericodi = (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+      and recpotcodi = 1
+      and emprcodi =  (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end);
+      --(select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+
+      SELECT  (CASE WHEN l_valor > 0 THEN l_valor else to_number(0) end ) INTO l_valor FROM dual;
+
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'VTP' TINSCODI, {2} PERICODI, {3} EMPRCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.EMPRCODI = E.EMPRCODI and B.PERICODI = E.PERICODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = l_valor, DCALUSUCREACION = '{4}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,PERICODI, EMPRCODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo),l_valor, {2}, {3},'VTP', {0}, {1}, '{4}', SYSDATE);
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetDemandaCOES1</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'DEMANDACOES' TINSCODI, {2} PERICODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.PERICODI = E.PERICODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = (
+
+
+      SELECT SUM(MEDINTH1) FROM(
+      SELECT SUM(MI.MEDINTH1) AS MEDINTH1, MI.MEDINTFECHAINI
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI AND TRIM(GR.GRUPOINTEGRANTE)='S'
+      LEFT JOIN SI_SEMANA SE ON MI.MEDINTFECHAINI = SE.SEMANAFECHA
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 69
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      AND extract(year from MI.MEDINTFECHAINI) || EXTRACT(month from MI.MEDINTFECHAINI) = '{3}'
+      group by SE.SEMANANUM||'/'||SE.SEMANAANHIO,MI.MEDINTFECHAINI
+      )
+
+
+      ),
+      DCALUSUCREACION = '{4}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+      SELECT SUM(MEDINTH1) FROM(
+      SELECT SUM(MI.MEDINTH1) AS MEDINTH1, MI.MEDINTFECHAINI
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI AND TRIM(GR.GRUPOINTEGRANTE)='S'
+      LEFT JOIN SI_SEMANA SE ON MI.MEDINTFECHAINI = SE.SEMANAFECHA
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 69
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      AND extract(year from MI.MEDINTFECHAINI) || EXTRACT(month from MI.MEDINTFECHAINI) = '{3}'
+      group by SE.SEMANANUM||'/'||SE.SEMANAANHIO,MI.MEDINTFECHAINI
+      )
+
+      ),
+      {2}, 'DEMANDACOES', {0}, {1}, '{4}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetDemandaCOES</key>
+    <query>
+      /*ASSETEC: 20220207 - Se cambio el codigo MI.TPTOMEDICODI = 81 en vez de 82 */
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'DEMANDACOES' TINSCODI, {2} PERICODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.PERICODI = E.PERICODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = (
+
+      select sum(MEDINTH1) as MEDINTH1
+      from (
+      SELECT * FROM (
+      SELECT to_date('{7}', 'dd/mm/yyyy') - BA.MEDINTFECHAINI AS DIF,
+      case to_date('{7}', 'dd/mm/yyyy') - BA.MEDINTFECHAINI
+      when 1 then sum(GE.MEDINTH1)*1000*6/7
+      when 2 then sum(GE.MEDINTH1)*1000*5/7
+      when 3 then sum(GE.MEDINTH1)*1000*4/7
+      when 4 then sum(GE.MEDINTH1)*1000*3/7
+      when 5 then sum(GE.MEDINTH1)*1000*2/7
+      when 6 then sum(GE.MEDINTH1)*1000*1/7
+      end AS MEDINTH1,
+      SE.SEMANANUM, SE.SEMANAANHIO, BA.MEDINTFECHAINI
+      FROM (
+      SELECT DISTINCT MI.MEDINTFECHAINI
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 81 and MI.ptomedicodi=25000
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      ) BA LEFT JOIN (SELECT MI.MEDINTFECHAINI,
+      SUM(MI.MEDINTH1) AS MEDINTH1
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 81 and MI.ptomedicodi=25000
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      GROUP BY MI.MEDINTFECHAINI
+      ) GE
+      ON BA.MEDINTFECHAINI = GE.MEDINTFECHAINI
+      LEFT JOIN SI_SEMANA SE ON BA.MEDINTFECHAINI = SE.SEMANAFECHA
+      group by SE.SEMANANUM,SE.SEMANAANHIO,BA.MEDINTFECHAINI
+      ) T
+      WHERE to_date('{7}', 'dd/mm/yyyy') > T.MEDINTFECHAINI AND
+      to_date('{7}', 'dd/mm/yyyy') - T.MEDINTFECHAINI between 0 and 6
+
+      UNION
+
+      SELECT * FROM (
+      SELECT to_date('{8}', 'dd/mm/yyyy') - BA.MEDINTFECHAINI + 1 AS DIF,
+      case to_date('{8}', 'dd/mm/yyyy') - BA.MEDINTFECHAINI
+      when 1 then sum(GE.MEDINTH1)*1000*2/7
+      when 2 then sum(GE.MEDINTH1)*1000*3/7
+      when 3 then sum(GE.MEDINTH1)*1000*4/7
+      when 4 then sum(GE.MEDINTH1)*1000*5/7
+      when 5 then sum(GE.MEDINTH1)*1000*6/7
+      when 6 then sum(GE.MEDINTH1)*1000*7/7
+      else sum(GE.MEDINTH1)*1000
+      end AS MEDINTH1,
+      SE.SEMANANUM, SE.SEMANAANHIO, BA.MEDINTFECHAINI
+      FROM (
+      SELECT DISTINCT MI.MEDINTFECHAINI
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 81 and MI.ptomedicodi=25000
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      ) BA LEFT JOIN (SELECT MI.MEDINTFECHAINI,
+      SUM(MI.MEDINTH1) AS MEDINTH1
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 81 and MI.ptomedicodi=25000
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      GROUP BY MI.MEDINTFECHAINI
+      ) GE
+      ON BA.MEDINTFECHAINI = GE.MEDINTFECHAINI
+      LEFT JOIN SI_SEMANA SE ON BA.MEDINTFECHAINI = SE.SEMANAFECHA
+      group by SE.SEMANANUM,SE.SEMANAANHIO,BA.MEDINTFECHAINI
+      ) T1
+      WHERE extract(year from T1.MEDINTFECHAINI) || EXTRACT(month from T1.MEDINTFECHAINI) = '{3}'
+      order by 4
+      )
+
+
+
+
+
+      ),
+      DCALUSUCREACION = '{4}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+
+      select sum(MEDINTH1) as MEDINTH1
+      from (
+      SELECT * FROM (
+      SELECT to_date('{7}', 'dd/mm/yyyy') - BA.MEDINTFECHAINI AS DIF,
+      case to_date('{7}', 'dd/mm/yyyy') - BA.MEDINTFECHAINI
+      when 1 then sum(GE.MEDINTH1)*1000*6/7
+      when 2 then sum(GE.MEDINTH1)*1000*5/7
+      when 3 then sum(GE.MEDINTH1)*1000*4/7
+      when 4 then sum(GE.MEDINTH1)*1000*3/7
+      when 5 then sum(GE.MEDINTH1)*1000*2/7
+      when 6 then sum(GE.MEDINTH1)*1000*1/7
+      end AS MEDINTH1,
+      SE.SEMANANUM, SE.SEMANAANHIO, BA.MEDINTFECHAINI
+      FROM (
+      SELECT DISTINCT MI.MEDINTFECHAINI
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 81 and MI.ptomedicodi=25000
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      ) BA LEFT JOIN (SELECT MI.MEDINTFECHAINI,
+      SUM(MI.MEDINTH1) AS MEDINTH1
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 81 and MI.ptomedicodi=25000
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      GROUP BY MI.MEDINTFECHAINI
+      ) GE
+      ON BA.MEDINTFECHAINI = GE.MEDINTFECHAINI
+      LEFT JOIN SI_SEMANA SE ON BA.MEDINTFECHAINI = SE.SEMANAFECHA
+      group by SE.SEMANANUM,SE.SEMANAANHIO,BA.MEDINTFECHAINI
+      ) T
+      WHERE to_date('{7}', 'dd/mm/yyyy') > T.MEDINTFECHAINI AND
+      to_date('{7}', 'dd/mm/yyyy') - T.MEDINTFECHAINI between 0 and 6
+
+      UNION
+
+      SELECT * FROM (
+      SELECT to_date('{8}', 'dd/mm/yyyy') - BA.MEDINTFECHAINI + 1 AS DIF,
+      case to_date('{8}', 'dd/mm/yyyy') - BA.MEDINTFECHAINI
+      when 1 then sum(GE.MEDINTH1)*1000*2/7
+      when 2 then sum(GE.MEDINTH1)*1000*3/7
+      when 3 then sum(GE.MEDINTH1)*1000*4/7
+      when 4 then sum(GE.MEDINTH1)*1000*5/7
+      when 5 then sum(GE.MEDINTH1)*1000*6/7
+      when 6 then sum(GE.MEDINTH1)*1000*7/7
+      else sum(GE.MEDINTH1)*1000
+      end AS MEDINTH1,
+      SE.SEMANANUM, SE.SEMANAANHIO, BA.MEDINTFECHAINI
+      FROM (
+      SELECT DISTINCT MI.MEDINTFECHAINI
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      JOIN PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 81 and MI.ptomedicodi=25000
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      ) BA LEFT JOIN (SELECT MI.MEDINTFECHAINI,
+      SUM(MI.MEDINTH1) AS MEDINTH1
+      FROM ME_MEDICIONXINTERVALO MI JOIN ME_PTOMEDICION PTO ON MI.PTOMEDICODI = PTO.PTOMEDICODI
+      WHERE MI.LECTCODI= 109 AND MI.TPTOMEDICODI = 81 and MI.ptomedicodi=25000
+      AND MI.enviocodi = (
+      SELECT MAX(ENVIOCODI) FROM ME_MEDICIONXINTERVALO WHERE LECTCODI= 109 AND TPTOMEDICODI = 69
+      AND extract(year from MEDINTFECHAINI) || EXTRACT(month from MEDINTFECHAINI) = '{3}'
+      AND EXTRACT(month from MEDINTFECMODIFICACION) &lt; {6} AND EXTRACT(YEAR from MEDINTFECMODIFICACION) = {5}
+      )
+      GROUP BY MI.MEDINTFECHAINI
+      ) GE
+      ON BA.MEDINTFECHAINI = GE.MEDINTFECHAINI
+      LEFT JOIN SI_SEMANA SE ON BA.MEDINTFECHAINI = SE.SEMANAFECHA
+      group by SE.SEMANANUM,SE.SEMANAANHIO,BA.MEDINTFECHAINI
+      ) T1
+      WHERE extract(year from T1.MEDINTFECHAINI) || EXTRACT(month from T1.MEDINTFECHAINI) = '{3}'
+      order by 4
+      )
+
+
+
+
+
+      ),
+      {2}, 'DEMANDACOES', {0}, {1}, '{4}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetValoresAdicionales</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, '{4}' TINSCODI, {2} PERICODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.PERICODI = E.PERICODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR =
+
+      {5}
+
+      ,
+      DCALUSUCREACION = '{3}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo),
+      {5}
+
+      ,
+      {2}, '{4}', {0}, {1}, '{3}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetValoresAdicionalesInsumos</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, '{4}' TINSCODI , {7} EMPGCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI AND B.EMPGCODI = E.EMPGCODI AND B.DATCALESTADO='1')
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = {5},
+      DCALUSUCREACION = '{3}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION,EMPRCODI,EMPGCODI)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), {5},
+      (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}), '{4}', {0}, {1}, '{3}', SYSDATE,{6},  {7})
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetVDIO10</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'VDIO10' TINSCODI, {2} PERICODI, {5} EMPRCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.PERICODI = E.PERICODI AND B.EMPRCODI = E.EMPRCODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = nvl((
+
+      select sum(vd.VALDPAGOIO)
+      FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd
+      on  v.valocodi = vd.valocodi
+      WHERE vd.emprcodi = {5} and v.valoestado = 'A'
+      and v.VALOFECHA>= to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and v.VALOFECHA &lt; TO_DATE('{4} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+
+      ),0),
+      DCALUSUCREACION = '{6}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR, EMPRCODI,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), nvl((
+
+      select sum(vd.VALDPAGOIO)
+      FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd
+      on  v.valocodi = vd.valocodi
+      WHERE vd.emprcodi = {5} and v.valoestado = 'A'
+      and v.VALOFECHA>= to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and v.VALOFECHA &lt; TO_DATE('{4} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+
+
+      ),0), {5},
+      {2}, 'VDIO10', {0}, {1}, '{6}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetVDSC10</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'VDSC10' TINSCODI, {2} PERICODI, {5} EMPRCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.PERICODI = E.PERICODI AND B.EMPRCODI = E.EMPRCODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = nvl((
+
+      select sum(vd.Valdpagosc)
+      FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd
+      on  v.valocodi = vd.valocodi
+      WHERE vd.emprcodi = {5} and v.valoestado = 'A'
+      and v.VALOFECHA>= to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and v.VALOFECHA &lt; TO_DATE('{4} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+
+      ),0),
+      DCALUSUCREACION = '{6}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR, EMPRCODI,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), nvl((
+
+      select sum(vd.Valdpagosc)
+      FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd
+      on  v.valocodi = vd.valocodi
+      WHERE vd.emprcodi = {5} and v.valoestado = 'A'
+      and v.VALOFECHA>= to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and v.VALOFECHA &lt; TO_DATE('{4} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+
+      ),0), {5},
+      {2}, 'VDSC10', {0}, {1}, '{6}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetVDER10</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'VDER10' TINSCODI, {2} PERICODI, {5} EMPRCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.PERICODI = E.PERICODI AND B.EMPRCODI = E.EMPRCODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = nvl((
+
+      select sum(vd.VALDAPORTESADICIONAL)
+      FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd
+      on  v.valocodi = vd.valocodi
+      WHERE vd.emprcodi = {5} and v.valoestado = 'A'
+      and v.VALOFECHA>= to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and v.VALOFECHA &lt; TO_DATE('{4} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+
+      ),0),
+      DCALUSUCREACION = '{6}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR, EMPRCODI,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), nvl((
+
+      select sum(vd.VALDAPORTESADICIONAL)
+      FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd
+      on  v.valocodi = vd.valocodi
+      WHERE vd.emprcodi = {5} and v.valoestado = 'A'
+      and v.VALOFECHA>= to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      and v.VALOFECHA &lt; TO_DATE('{4} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+
+      ),0), {5},
+      {2}, 'VDER10', {0}, {1}, '{6}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetMPE_BKP_202208_ASSETEC</key>
+    <query>
+		MERGE INTO gmm_datcalculo B
+		USING (
+		SELECT {0} DCALANIO, {1} DCALMES, 'MPE' TINSCODI, {2} PERICODI, {3} EMPRCODI
+		FROM DUAL
+		) E
+		ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+		AND B.PERICODI = E.PERICODI AND B.EMPRCODI = E.EMPRCODI)
+		WHEN MATCHED THEN
+		UPDATE SET B.DCALVALOR = (
+
+		select sum (val) from (
+		select NVL(sum(pep.pempagpeajepago + pep.pempagsaldoanterior + pep.pempagajuste),0) as val
+		from vtp_peaje_empresa_pago pep
+		where pempagtransmision = 'SI'
+		and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI')
+		and emprcodipeaje = (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end)
+		--(select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+		and pericodi =  (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+		and recpotcodi = 1
+		union
+		select NVL(sum(pep.pempagpeajepago + pep.pempagsaldoanterior + pep.pempagajuste),0) as val
+		from vtp_peaje_empresa_pago pep
+		where pempagtransmision = 'NO'
+		and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI' and emprcodi is not null)
+		and emprcodipeaje = (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end)
+		--(select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+		and pericodi =  (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+		and recpotcodi = 1
+		)
+
+		),
+		DCALUSUCREACION = '{4}', DCALFECCREACION = SYSDATE
+		WHEN NOT MATCHED THEN
+		INSERT (DCALCODI, DCALVALOR, EMPRCODI,
+		PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+		VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+		select sum (val) from (
+		select NVL(sum(pep.pempagpeajepago + pep.pempagsaldoanterior + pep.pempagajuste),0) as val
+		from vtp_peaje_empresa_pago pep
+		where pempagtransmision = 'SI'
+		and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI')
+		and emprcodipeaje = (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end)
+		--(select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+		and pericodi =  (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+		and recpotcodi = 1
+		union
+		select NVL(sum(pep.pempagpeajepago + pep.pempagsaldoanterior + pep.pempagajuste),0) as val
+		from vtp_peaje_empresa_pago pep
+		where pempagtransmision = 'NO'
+		and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI' and emprcodi is not null)
+		and emprcodipeaje = (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end)
+		--(select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+		and pericodi =  (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+		and recpotcodi = 1
+		)
+
+		), {3},
+		{2}, 'MPE', {0}, {1}, '{4}', SYSDATE)
+	</query>
+  </Sql>
+  <Sql>
+    <key>SetMPE</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'MPE' TINSCODI, {2} PERICODI, {3} EMPRCODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.PERICODI = E.PERICODI AND B.EMPRCODI = E.EMPRCODI)
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = (
+
+      select sum (val) from (
+      select NVL(sum(pep.pempagpeajepago),0) as val
+      from vtp_peaje_empresa_pago pep
+      where pempagtransmision = 'SI'
+      and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI')
+      and emprcodipeaje = (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end)
+      --(select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+      and pericodi =  (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+      and recpotcodi = 1
+      union
+      select NVL(sum(pep.pempagpeajepago),0) as val
+      from vtp_peaje_empresa_pago pep
+      where pempagtransmision = 'NO'
+      and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI' and emprcodi is not null)
+      and emprcodipeaje = (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end)
+      --(select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+      and pericodi =  (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+      and recpotcodi = 1
+      )
+
+      ),
+      DCALUSUCREACION = '{4}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR, EMPRCODI,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+      select sum (val) from (
+      select NVL(sum(pep.pempagpeajepago),0) as val
+      from vtp_peaje_empresa_pago pep
+      where pempagtransmision = 'SI'
+      and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI')
+      and emprcodipeaje = (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end)
+      --(select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+      and pericodi =  (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+      and recpotcodi = 1
+      union
+      select NVL(sum(pep.pempagpeajepago),0) as val
+      from vtp_peaje_empresa_pago pep
+      where pempagtransmision = 'NO'
+      and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI' and emprcodi is not null)
+      and emprcodipeaje = (case when ({3} = 67) then (select infadicodi from trn_infoadicional_det where emprcodi = 67) else to_number({3}) end)
+      --(select emprcodi from vw_trn_empresa_str where emprcodi = {3})
+      and pericodi =  (select pericodi from trn_periodo where perianio = {5} and perimes = {6})
+      and recpotcodi = 1
+      )
+
+      ), {3},
+      {2}, 'MPE', {0}, {1}, '{4}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetPREG</key>
+    <query>
+      MERGE INTO gmm_datcalculo B
+      USING (
+      SELECT {0} DCALANIO, {1} DCALMES, 'PREG' TINSCODI, {2} PERICODI
+      FROM DUAL
+      ) E
+      ON (B.DCALANIO = E.DCALANIO AND B.DCALMES = E.DCALMES AND B.TINSCODI = E.TINSCODI
+      AND B.PERICODI = E.PERICODI )
+      WHEN MATCHED THEN
+      UPDATE SET B.DCALVALOR = (
+
+      select nvl(sum(pi.pingregulado),0)
+      from vtp_peaje_ingreso pi
+      where pi.pericodi = (select max(PERICODI) from TRN_PERIODO WHERE PERIANIO = {5} AND PERIMES &lt;= {6})
+      and pi.recpotcodi = 1
+
+      ),
+      DCALUSUCREACION = '{4}', DCALFECCREACION = SYSDATE
+      WHEN NOT MATCHED THEN
+      INSERT (DCALCODI, DCALVALOR,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+      select nvl(sum(pi.pingregulado),0)
+      from vtp_peaje_ingreso pi
+      where pi.pericodi = (select PERICODI from TRN_PERIODO WHERE PERIANIO = {5} AND PERIMES = {6})
+      and pi.recpotcodi = 1
+
+      ),
+      {2}, 'PREG', {0}, {1}, '{4}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>DelENRG10</key>
+    <query>
+      delete from gmm_datcalculo where TINSCODI = 'ENRG10' AND
+      dcalanio = {0} AND dcalmes = {1} AND pericodi = {2} AND emprcodi = {3}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetENRG10</key>
+    <query>
+
+      INSERT into gmm_datcalculo (DCALCODI, DCALVALOR, EMPRCODI,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+      select nvl(sum(val),0) from (
+      select h1 + h2 + h3 + h4+
+      h5 + h6 + h7 + h8+
+      h9 + h10 + h11 + h12+
+      h13 + h14 + h15 + h16+
+      h17 + h18 + h19 + h20+
+      h21 + h22 + h23 + h24+
+      h25 + h26 + h27 + h28+
+      h29 + h30 + h31 + h32+
+      h33 + h34 + h35 + h36+
+      h37 + h38 + h39 + h40+
+      h41 + h42 + h43 + h44+
+      h45 + h46 + h47 + h48+
+      h49 + h50 + h51 + h52+
+      h53 + h54 + h55 + h56+
+      h57 + h58 + h59 + h60+
+      h61 + h62 + h63 + h64+
+      h65 + h66 + h67 + h68+
+      h69 + h70 + h71 + h72+
+      h73 + h74 + h75 + h76+
+      h77 + h78 + h79 + h80+
+      h81 + h82 + h83 + h84+
+      h85 + h86 + h87 + h88+
+      h89 + h90 + h91 + h92+
+      h93 + h94 + h95 + h96
+      as val, medifecha
+      from me_medicion96 me
+      inner join me_hojaptomed hp on hp.ptomedicodi = me.ptomedicodi
+      and hp.tipoinfocodi = me.tipoinfocodi and hp.TPTOMEDICODI = me.TPTOMEDICODI and hp.formatcodi = 101
+      inner join me_ptomedicion pto on pto.ptomedicodi = hp.ptomedicodi and lectcodi = 223
+      and pto.emprcodi = {4}
+      where (extract(year from medifecha) || EXTRACT(month from medifecha)) = '{3}'
+      and extract(day from medifecha) &lt; 11
+      ) dat
+
+      ), {4},
+      {2}, 'ENRG10', {0}, {1}, '{5}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>DelENRG11</key>
+    <query>
+      delete from gmm_datcalculo where TINSCODI = 'ENRG11' AND
+      dcalanio = {0} AND dcalmes = {1} AND pericodi = {2} AND emprcodi = {3}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetENRG11</key>
+    <query>
+      INSERT INTO gmm_datcalculo (DCALCODI, DCALVALOR, EMPRCODI,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+      select NVL(sum(
+      valovalor1 + valovalor2 + valovalor3 + valovalor4+
+      valovalor5 + valovalor6 + valovalor7 + valovalor8+
+      valovalor9 + valovalor10 + valovalor11 + valovalor12+
+      valovalor13 + valovalor14 + valovalor15 + valovalor16+
+      valovalor17 + valovalor18 + valovalor19 + valovalor20+
+      valovalor21 + valovalor22 + valovalor23 + valovalor24+
+      valovalor25 + valovalor26 + valovalor27 + valovalor28+
+      valovalor29 + valovalor30 + valovalor31 + valovalor32+
+      valovalor33 + valovalor34 + valovalor35 + valovalor36+
+      valovalor37 + valovalor38 + valovalor39 + valovalor40+
+      valovalor41 + valovalor42 + valovalor43 + valovalor44+
+      valovalor45 + valovalor46 + valovalor47 + valovalor48+
+      valovalor49 + valovalor50 + valovalor51 + valovalor52+
+      valovalor53 + valovalor54 + valovalor55 + valovalor56+
+      valovalor57 + valovalor58 + valovalor59 + valovalor60+
+      valovalor61 + valovalor62 + valovalor63 + valovalor64+
+      valovalor65 + valovalor66 + valovalor67 + valovalor68+
+      valovalor69 + valovalor70 + valovalor71 + valovalor72+
+      valovalor73 + valovalor74 + valovalor75 + valovalor76+
+      valovalor77 + valovalor78 + valovalor79 + valovalor80+
+      valovalor81 + valovalor82 + valovalor83 + valovalor84+
+      valovalor85 + valovalor86 + valovalor87 + valovalor88+
+      valovalor89 + valovalor90 + valovalor91 + valovalor92+
+      valovalor93 + valovalor94 + valovalor95 + valovalor96
+      ),0) from gmm_valenergia
+      where pericodi = {2}
+      and emprcodi = {4}
+      and extract(year from medifecha) || EXTRACT(month from medifecha) = '{3}'
+      and extract(day from medifecha) BETWEEN 11 and extract(day from TRUNC(LAST_DAY(medifecha)))
+
+      ), {4},
+      {2}, 'ENRG11', {0}, {1}, '{5}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>DelENRGN1</key>
+    <query>
+      delete from gmm_datcalculo where TINSCODI = 'ENRGN1' AND
+      pericodi = {0} AND emprcodi = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetENRGN1</key>
+    <query>
+      INSERT INTO gmm_datcalculo (DCALCODI, DCALVALOR, EMPRCODI,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+      select NVL(sum(
+      valovalor1 + valovalor2 + valovalor3 + valovalor4+
+      valovalor5 + valovalor6 + valovalor7 + valovalor8+
+      valovalor9 + valovalor10 + valovalor11 + valovalor12+
+      valovalor13 + valovalor14 + valovalor15 + valovalor16+
+      valovalor17 + valovalor18 + valovalor19 + valovalor20+
+      valovalor21 + valovalor22 + valovalor23 + valovalor24+
+      valovalor25 + valovalor26 + valovalor27 + valovalor28+
+      valovalor29 + valovalor30 + valovalor31 + valovalor32+
+      valovalor33 + valovalor34 + valovalor35 + valovalor36+
+      valovalor37 + valovalor38 + valovalor39 + valovalor40+
+      valovalor41 + valovalor42 + valovalor43 + valovalor44+
+      valovalor45 + valovalor46 + valovalor47 + valovalor48+
+      valovalor49 + valovalor50 + valovalor51 + valovalor52+
+      valovalor53 + valovalor54 + valovalor55 + valovalor56+
+      valovalor57 + valovalor58 + valovalor59 + valovalor60+
+      valovalor61 + valovalor62 + valovalor63 + valovalor64+
+      valovalor65 + valovalor66 + valovalor67 + valovalor68+
+      valovalor69 + valovalor70 + valovalor71 + valovalor72+
+      valovalor73 + valovalor74 + valovalor75 + valovalor76+
+      valovalor77 + valovalor78 + valovalor79 + valovalor80+
+      valovalor81 + valovalor82 + valovalor83 + valovalor84+
+      valovalor85 + valovalor86 + valovalor87 + valovalor88+
+      valovalor89 + valovalor90 + valovalor91 + valovalor92+
+      valovalor93 + valovalor94 + valovalor95 + valovalor96
+      ),0) from gmm_valenergia
+      where pericodi = {2}
+      and emprcodi = {4}
+      and extract(year from medifecha) || EXTRACT(month from medifecha) = '{3}'
+
+      ), {4},
+      {2}, 'ENRGN1', {0}, {1}, '{5}', SYSDATE)
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetPerimsjpaso1</key>
+    <query>
+      update gmm_periodo set perimsjpaso1 = '{0} - Respaldo ejecutado [{1}]' || chr(13) || nvl(perimsjpaso1, '')
+      where pericodi = {2}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetPerimsjpaso2</key>
+    <query>
+      update gmm_periodo set perimsjpaso2 = '{0} - Cálculo ejecutado [{1}]' || chr(13) || nvl(perimsjpaso2, '')
+      where pericodi = {2}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetPerimsjpaso3</key>
+    <query>
+      update gmm_periodo set perimsjpaso3 = '{0} - Finalizado [{1}]' || chr(13) || nvl(perimsjpaso3, '')
+      where pericodi = {2}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetPeriEstado</key>
+    <query>
+      update gmm_periodo
+      set perimsjpaso3 = '{0} - {4} [{2}]' || chr(13) || nvl(perimsjpaso3, ''),
+      periestado = '{1}'
+      where pericodi = {3}
+    </query>
+  </Sql>
+  <Sql>
+    <key>CleanGarantia</key>
+    <query>
+      delete from GMM_RENERGIA where pericodi = {0} and EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>CleanPotencia</key>
+    <query>
+      delete from gmm_rpotencia where pericodi = {0} and EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaEnergia</key>
+    <query>
+
+      DECLARE   l_RVD11 decimal(18,4):=0;
+         l_RVPROY decimal(18,4):=0;
+      BEGIN
+      SELECT (
+      (select NVL(sum(
+      valovalor1 * valovalorcm1 + valovalor2 * valovalorcm2 + valovalor3 * valovalorcm3 + valovalor4 * valovalorcm4  +
+      valovalor5 * valovalorcm5 + valovalor6 * valovalorcm6 + valovalor7 * valovalorcm7 + valovalor8 * valovalorcm8  +
+      valovalor9 * valovalorcm9 + valovalor10 * valovalorcm10 + valovalor11 * valovalorcm11 + valovalor12 * valovalorcm12  +
+      valovalor13 * valovalorcm13 + valovalor14 * valovalorcm14 + valovalor15 * valovalorcm15 + valovalor16 * valovalorcm16  +
+      valovalor17 * valovalorcm17 + valovalor18 * valovalorcm18 + valovalor19 * valovalorcm19 + valovalor20 * valovalorcm20  +
+      valovalor21 * valovalorcm21 + valovalor22 * valovalorcm22 + valovalor23 * valovalorcm23 + valovalor24 * valovalorcm24  +
+      valovalor25 * valovalorcm25 + valovalor26 * valovalorcm26 + valovalor27 * valovalorcm27 + valovalor28 * valovalorcm28  +
+      valovalor29 * valovalorcm29 + valovalor30 * valovalorcm30 + valovalor31 * valovalorcm31 + valovalor32 * valovalorcm32  +
+      valovalor33 * valovalorcm33 + valovalor34 * valovalorcm34 + valovalor35 * valovalorcm35 + valovalor36 * valovalorcm36  +
+      valovalor37 * valovalorcm37 + valovalor38 * valovalorcm38 + valovalor39 * valovalorcm39 + valovalor40 * valovalorcm40  +
+      valovalor41 * valovalorcm41 + valovalor42 * valovalorcm42 + valovalor43 * valovalorcm43 + valovalor44 * valovalorcm44  +
+      valovalor45 * valovalorcm45 + valovalor46 * valovalorcm46 + valovalor47 * valovalorcm47 + valovalor48 * valovalorcm48  +
+      valovalor49 * valovalorcm49 + valovalor50 * valovalorcm50 + valovalor51 * valovalorcm51 + valovalor52 * valovalorcm52  +
+      valovalor53 * valovalorcm53 + valovalor54 * valovalorcm54 + valovalor55 * valovalorcm55 + valovalor56 * valovalorcm56  +
+      valovalor57 * valovalorcm57 + valovalor58 * valovalorcm58 + valovalor59 * valovalorcm59 + valovalor60 * valovalorcm60  +
+      valovalor61 * valovalorcm61 + valovalor62 * valovalorcm62 + valovalor63 * valovalorcm63 + valovalor64 * valovalorcm64  +
+      valovalor65 * valovalorcm65 + valovalor66 * valovalorcm66 + valovalor67 * valovalorcm67 + valovalor68 * valovalorcm68  +
+      valovalor69 * valovalorcm69 + valovalor70 * valovalorcm70 + valovalor71 * valovalorcm71 + valovalor72 * valovalorcm72  +
+      valovalor73 * valovalorcm73 + valovalor74 * valovalorcm74 + valovalor75 * valovalorcm75 + valovalor76 * valovalorcm76  +
+      valovalor77 * valovalorcm77 + valovalor78 * valovalorcm78 + valovalor79 * valovalorcm79 + valovalor80 * valovalorcm80  +
+      valovalor81 * valovalorcm81 + valovalor82 * valovalorcm82 + valovalor83 * valovalorcm83 + valovalor84 * valovalorcm84  +
+      valovalor85 * valovalorcm85 + valovalor86 * valovalorcm86 + valovalor87 * valovalorcm87 + valovalor88 * valovalorcm88  +
+      valovalor89 * valovalorcm89 + valovalor90 * valovalorcm90 + valovalor91 * valovalorcm91 + valovalor92 * valovalorcm92  +
+      valovalor93 * valovalorcm93 + valovalor94 * valovalorcm94 + valovalor95 * valovalorcm95 + valovalor96 * valovalorcm96),0)
+      from gmm_valenergia where pericodi = {0} and emprcodi = {1} and EXTRACT(month from medifecha) = {3}
+      and extract(day from medifecha) > 10)
+      -
+      (
+      select NVL(sum(
+      valenevaleneval1 * valenevalenevalcm1 + valenevaleneval2 * valenevalenevalcm2 + valenevaleneval3 * valenevalenevalcm3 + valenevaleneval4 * valenevalenevalcm4  +
+      valenevaleneval5 * valenevalenevalcm5 + valenevaleneval6 * valenevalenevalcm6 + valenevaleneval7 * valenevalenevalcm7 + valenevaleneval8 * valenevalenevalcm8  +
+      valenevaleneval9 * valenevalenevalcm9 + valenevaleneval10 * valenevalenevalcm10 + valenevaleneval11 * valenevalenevalcm11 + valenevaleneval12 * valenevalenevalcm12  +
+      valenevaleneval13 * valenevalenevalcm13 + valenevaleneval14 * valenevalenevalcm14 + valenevaleneval15 * valenevalenevalcm15 + valenevaleneval16 * valenevalenevalcm16  +
+      valenevaleneval17 * valenevalenevalcm17 + valenevaleneval18 * valenevalenevalcm18 + valenevaleneval19 * valenevalenevalcm19 + valenevaleneval20 * valenevalenevalcm20  +
+      valenevaleneval21 * valenevalenevalcm21 + valenevaleneval22 * valenevalenevalcm22 + valenevaleneval23 * valenevalenevalcm23 + valenevaleneval24 * valenevalenevalcm24  +
+      valenevaleneval25 * valenevalenevalcm25 + valenevaleneval26 * valenevalenevalcm26 + valenevaleneval27 * valenevalenevalcm27 + valenevaleneval28 * valenevalenevalcm28  +
+      valenevaleneval29 * valenevalenevalcm29 + valenevaleneval30 * valenevalenevalcm30 + valenevaleneval31 * valenevalenevalcm31 + valenevaleneval32 * valenevalenevalcm32  +
+      valenevaleneval33 * valenevalenevalcm33 + valenevaleneval34 * valenevalenevalcm34 + valenevaleneval35 * valenevalenevalcm35 + valenevaleneval36 * valenevalenevalcm36  +
+      valenevaleneval37 * valenevalenevalcm37 + valenevaleneval38 * valenevalenevalcm38 + valenevaleneval39 * valenevalenevalcm39 + valenevaleneval40 * valenevalenevalcm40  +
+      valenevaleneval41 * valenevalenevalcm41 + valenevaleneval42 * valenevalenevalcm42 + valenevaleneval43 * valenevalenevalcm43 + valenevaleneval44 * valenevalenevalcm44  +
+      valenevaleneval45 * valenevalenevalcm45 + valenevaleneval46 * valenevalenevalcm46 + valenevaleneval47 * valenevalenevalcm47 + valenevaleneval48 * valenevalenevalcm48  +
+      valenevaleneval49 * valenevalenevalcm49 + valenevaleneval50 * valenevalenevalcm50 + valenevaleneval51 * valenevalenevalcm51 + valenevaleneval52 * valenevalenevalcm52  +
+      valenevaleneval53 * valenevalenevalcm53 + valenevaleneval54 * valenevalenevalcm54 + valenevaleneval55 * valenevalenevalcm55 + valenevaleneval56 * valenevalenevalcm56  +
+      valenevaleneval57 * valenevalenevalcm57 + valenevaleneval58 * valenevalenevalcm58 + valenevaleneval59 * valenevalenevalcm59 + valenevaleneval60 * valenevalenevalcm60  +
+      valenevaleneval61 * valenevalenevalcm61 + valenevaleneval62 * valenevalenevalcm62 + valenevaleneval63 * valenevalenevalcm63 + valenevaleneval64 * valenevalenevalcm64  +
+      valenevaleneval65 * valenevalenevalcm65 + valenevaleneval66 * valenevalenevalcm66 + valenevaleneval67 * valenevalenevalcm67 + valenevaleneval68 * valenevalenevalcm68  +
+      valenevaleneval69 * valenevalenevalcm69 + valenevaleneval70 * valenevalenevalcm70 + valenevaleneval71 * valenevalenevalcm71 + valenevaleneval72 * valenevalenevalcm72  +
+      valenevaleneval73 * valenevalenevalcm73 + valenevaleneval74 * valenevalenevalcm74 + valenevaleneval75 * valenevalenevalcm75 + valenevaleneval76 * valenevalenevalcm76  +
+      valenevaleneval77 * valenevalenevalcm77 + valenevaleneval78 * valenevalenevalcm78 + valenevaleneval79 * valenevalenevalcm79 + valenevaleneval80 * valenevalenevalcm80  +
+      valenevaleneval81 * valenevalenevalcm81 + valenevaleneval82 * valenevalenevalcm82 + valenevaleneval83 * valenevalenevalcm83 + valenevaleneval84 * valenevalenevalcm84  +
+      valenevaleneval85 * valenevalenevalcm85 + valenevaleneval86 * valenevalenevalcm86 + valenevaleneval87 * valenevalenevalcm87 + valenevaleneval88 * valenevalenevalcm88  +
+      valenevaleneval89 * valenevalenevalcm89 + valenevaleneval90 * valenevalenevalcm90 + valenevaleneval91 * valenevalenevalcm91 + valenevaleneval92 * valenevalenevalcm92  +
+      valenevaleneval93 * valenevalenevalcm93 + valenevaleneval94 * valenevalenevalcm94 + valenevaleneval95 * valenevalenevalcm95 + valenevaleneval96 * valenevalenevalcm96),0)
+      from gmm_valenergiaentrega
+      where pericodi = {0} and emprcodi = {1} and EXTRACT(month from medifecha) = {3}
+      and extract(day from medifecha) > 10)
+      ) INTO l_RVD11 FROM DUAL;
+
+      SELECT
+      (
+      (
+      select NVL(sum(
+      valovalor1 * valovalorcm1 + valovalor2 * valovalorcm2 + valovalor3 * valovalorcm3 + valovalor4 * valovalorcm4  +
+      valovalor5 * valovalorcm5 + valovalor6 * valovalorcm6 + valovalor7 * valovalorcm7 + valovalor8 * valovalorcm8  +
+      valovalor9 * valovalorcm9 + valovalor10 * valovalorcm10 + valovalor11 * valovalorcm11 + valovalor12 * valovalorcm12  +
+      valovalor13 * valovalorcm13 + valovalor14 * valovalorcm14 + valovalor15 * valovalorcm15 + valovalor16 * valovalorcm16  +
+      valovalor17 * valovalorcm17 + valovalor18 * valovalorcm18 + valovalor19 * valovalorcm19 + valovalor20 * valovalorcm20  +
+      valovalor21 * valovalorcm21 + valovalor22 * valovalorcm22 + valovalor23 * valovalorcm23 + valovalor24 * valovalorcm24  +
+      valovalor25 * valovalorcm25 + valovalor26 * valovalorcm26 + valovalor27 * valovalorcm27 + valovalor28 * valovalorcm28  +
+      valovalor29 * valovalorcm29 + valovalor30 * valovalorcm30 + valovalor31 * valovalorcm31 + valovalor32 * valovalorcm32  +
+      valovalor33 * valovalorcm33 + valovalor34 * valovalorcm34 + valovalor35 * valovalorcm35 + valovalor36 * valovalorcm36  +
+      valovalor37 * valovalorcm37 + valovalor38 * valovalorcm38 + valovalor39 * valovalorcm39 + valovalor40 * valovalorcm40  +
+      valovalor41 * valovalorcm41 + valovalor42 * valovalorcm42 + valovalor43 * valovalorcm43 + valovalor44 * valovalorcm44  +
+      valovalor45 * valovalorcm45 + valovalor46 * valovalorcm46 + valovalor47 * valovalorcm47 + valovalor48 * valovalorcm48  +
+      valovalor49 * valovalorcm49 + valovalor50 * valovalorcm50 + valovalor51 * valovalorcm51 + valovalor52 * valovalorcm52  +
+      valovalor53 * valovalorcm53 + valovalor54 * valovalorcm54 + valovalor55 * valovalorcm55 + valovalor56 * valovalorcm56  +
+      valovalor57 * valovalorcm57 + valovalor58 * valovalorcm58 + valovalor59 * valovalorcm59 + valovalor60 * valovalorcm60  +
+      valovalor61 * valovalorcm61 + valovalor62 * valovalorcm62 + valovalor63 * valovalorcm63 + valovalor64 * valovalorcm64  +
+      valovalor65 * valovalorcm65 + valovalor66 * valovalorcm66 + valovalor67 * valovalorcm67 + valovalor68 * valovalorcm68  +
+      valovalor69 * valovalorcm69 + valovalor70 * valovalorcm70 + valovalor71 * valovalorcm71 + valovalor72 * valovalorcm72  +
+      valovalor73 * valovalorcm73 + valovalor74 * valovalorcm74 + valovalor75 * valovalorcm75 + valovalor76 * valovalorcm76  +
+      valovalor77 * valovalorcm77 + valovalor78 * valovalorcm78 + valovalor79 * valovalorcm79 + valovalor80 * valovalorcm80  +
+      valovalor81 * valovalorcm81 + valovalor82 * valovalorcm82 + valovalor83 * valovalorcm83 + valovalor84 * valovalorcm84  +
+      valovalor85 * valovalorcm85 + valovalor86 * valovalorcm86 + valovalor87 * valovalorcm87 + valovalor88 * valovalorcm88  +
+      valovalor89 * valovalorcm89 + valovalor90 * valovalorcm90 + valovalor91 * valovalorcm91 + valovalor92 * valovalorcm92  +
+      valovalor93 * valovalorcm93 + valovalor94 * valovalorcm94 + valovalor95 * valovalorcm95 + valovalor96 * valovalorcm96),0)
+      from gmm_valenergia where pericodi = {0} and emprcodi = {1} and EXTRACT(month from medifecha) = {4}
+      )
+      -
+      (
+      select NVL(sum(
+      valenevaleneval1 * valenevalenevalcm1 + valenevaleneval2 * valenevalenevalcm2 + valenevaleneval3 * valenevalenevalcm3 + valenevaleneval4 * valenevalenevalcm4  +
+      valenevaleneval5 * valenevalenevalcm5 + valenevaleneval6 * valenevalenevalcm6 + valenevaleneval7 * valenevalenevalcm7 + valenevaleneval8 * valenevalenevalcm8  +
+      valenevaleneval9 * valenevalenevalcm9 + valenevaleneval10 * valenevalenevalcm10 + valenevaleneval11 * valenevalenevalcm11 + valenevaleneval12 * valenevalenevalcm12  +
+      valenevaleneval13 * valenevalenevalcm13 + valenevaleneval14 * valenevalenevalcm14 + valenevaleneval15 * valenevalenevalcm15 + valenevaleneval16 * valenevalenevalcm16  +
+      valenevaleneval17 * valenevalenevalcm17 + valenevaleneval18 * valenevalenevalcm18 + valenevaleneval19 * valenevalenevalcm19 + valenevaleneval20 * valenevalenevalcm20  +
+      valenevaleneval21 * valenevalenevalcm21 + valenevaleneval22 * valenevalenevalcm22 + valenevaleneval23 * valenevalenevalcm23 + valenevaleneval24 * valenevalenevalcm24  +
+      valenevaleneval25 * valenevalenevalcm25 + valenevaleneval26 * valenevalenevalcm26 + valenevaleneval27 * valenevalenevalcm27 + valenevaleneval28 * valenevalenevalcm28  +
+      valenevaleneval29 * valenevalenevalcm29 + valenevaleneval30 * valenevalenevalcm30 + valenevaleneval31 * valenevalenevalcm31 + valenevaleneval32 * valenevalenevalcm32  +
+      valenevaleneval33 * valenevalenevalcm33 + valenevaleneval34 * valenevalenevalcm34 + valenevaleneval35 * valenevalenevalcm35 + valenevaleneval36 * valenevalenevalcm36  +
+      valenevaleneval37 * valenevalenevalcm37 + valenevaleneval38 * valenevalenevalcm38 + valenevaleneval39 * valenevalenevalcm39 + valenevaleneval40 * valenevalenevalcm40  +
+      valenevaleneval41 * valenevalenevalcm41 + valenevaleneval42 * valenevalenevalcm42 + valenevaleneval43 * valenevalenevalcm43 + valenevaleneval44 * valenevalenevalcm44  +
+      valenevaleneval45 * valenevalenevalcm45 + valenevaleneval46 * valenevalenevalcm46 + valenevaleneval47 * valenevalenevalcm47 + valenevaleneval48 * valenevalenevalcm48  +
+      valenevaleneval49 * valenevalenevalcm49 + valenevaleneval50 * valenevalenevalcm50 + valenevaleneval51 * valenevalenevalcm51 + valenevaleneval52 * valenevalenevalcm52  +
+      valenevaleneval53 * valenevalenevalcm53 + valenevaleneval54 * valenevalenevalcm54 + valenevaleneval55 * valenevalenevalcm55 + valenevaleneval56 * valenevalenevalcm56  +
+      valenevaleneval57 * valenevalenevalcm57 + valenevaleneval58 * valenevalenevalcm58 + valenevaleneval59 * valenevalenevalcm59 + valenevaleneval60 * valenevalenevalcm60  +
+      valenevaleneval61 * valenevalenevalcm61 + valenevaleneval62 * valenevalenevalcm62 + valenevaleneval63 * valenevalenevalcm63 + valenevaleneval64 * valenevalenevalcm64  +
+      valenevaleneval65 * valenevalenevalcm65 + valenevaleneval66 * valenevalenevalcm66 + valenevaleneval67 * valenevalenevalcm67 + valenevaleneval68 * valenevalenevalcm68  +
+      valenevaleneval69 * valenevalenevalcm69 + valenevaleneval70 * valenevalenevalcm70 + valenevaleneval71 * valenevalenevalcm71 + valenevaleneval72 * valenevalenevalcm72  +
+      valenevaleneval73 * valenevalenevalcm73 + valenevaleneval74 * valenevalenevalcm74 + valenevaleneval75 * valenevalenevalcm75 + valenevaleneval76 * valenevalenevalcm76  +
+      valenevaleneval77 * valenevalenevalcm77 + valenevaleneval78 * valenevalenevalcm78 + valenevaleneval79 * valenevalenevalcm79 + valenevaleneval80 * valenevalenevalcm80  +
+      valenevaleneval81 * valenevalenevalcm81 + valenevaleneval82 * valenevalenevalcm82 + valenevaleneval83 * valenevalenevalcm83 + valenevaleneval84 * valenevalenevalcm84  +
+      valenevaleneval85 * valenevalenevalcm85 + valenevaleneval86 * valenevalenevalcm86 + valenevaleneval87 * valenevalenevalcm87 + valenevaleneval88 * valenevalenevalcm88  +
+      valenevaleneval89 * valenevalenevalcm89 + valenevaleneval90 * valenevalenevalcm90 + valenevaleneval91 * valenevalenevalcm91 + valenevaleneval92 * valenevalenevalcm92  +
+      valenevaleneval93 * valenevalenevalcm93 + valenevaleneval94 * valenevalenevalcm94 + valenevaleneval95 * valenevalenevalcm95 + valenevaleneval96 * valenevalenevalcm96),0)
+      from gmm_valenergiaentrega
+      where pericodi = {0} and emprcodi = {1} and EXTRACT(month from medifecha) = {4}
+      )
+      ) INTO l_RVPROY FROM DUAL;
+
+      SELECT  (CASE WHEN l_RVD11 > 0 THEN l_RVD11 else to_number(0) end ) INTO l_RVD11 FROM dual;
+      SELECT  (CASE WHEN l_RVPROY > 0 THEN l_RVPROY else to_number(0) end ) INTO l_RVPROY FROM dual;
+      
+      insert into GMM_RENERGIA (
+      RCODI, RPMES, PERICODI, EMPRCODI, EMPGCODI,
+      RLVTEA, RVD10, RVD11, RVPROY
+      ) values (
+      (select NVL(max(RCODI),0) +1 from GMM_RENERGIA), '0', {0}, {1}, {2},
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'LVTEA' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'MEEN10' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL),
+      l_RVD11,l_RVPROY
+
+      );
+
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaEnergiaComp</key>
+    <query>
+      update GMM_RENERGIA set RENERGIA = RLVTEA + RVD10
+      + RVD11 * (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TCAMBIO' AND PERICODI = {0}),1) FROM DUAL)
+      + RVPROY * (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TCAMBIO' AND PERICODI = {0}),1) FROM DUAL),
+      RVD11 = RVD11  * (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TCAMBIO' AND PERICODI = {0}),1) FROM DUAL),
+      RVPROY = RVPROY * (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TCAMBIO' AND PERICODI = {0}),1) FROM DUAL),
+      RUSUCREACION = '{2}',
+      RFECCREACION = SYSDATE
+      where PERICODI = {0} AND EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaEnergia1mesComp</key>
+    <query>
+      /*
+      update GMM_RENERGIA set RENERGIA = CASE WHEN (RRETIRO
+      * (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TCAMBIO' AND PERICODI = {0}),1) FROM DUAL)
+      - RENTREGA) &lt; 0 THEN 0
+      ELSE (RRETIRO
+      * (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TCAMBIO' AND PERICODI = {0}),1) FROM DUAL)
+      - RENTREGA) END, RRETIRO = RRETIRO, RUSUCREACION = '{2}', RFECCREACION = SYSDATE
+      where PERICODI = {0} AND EMPGCODI = {1}
+      -- CAMBIO DE ASSETEC
+      */
+      update GMM_RENERGIA set RENERGIA = CASE WHEN ((RRETIRO - RENTREGA)
+      * (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TCAMBIO' AND PERICODI = {0}),1) FROM DUAL)) &lt; 0 THEN 0
+      ELSE (RRETIRO - RENTREGA)
+      /* * (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TCAMBIO' AND PERICODI = {0}),1) FROM DUAL)) */
+      END, RRETIRO = RRETIRO, RUSUCREACION = '{2}', RFECCREACION = SYSDATE
+      where PERICODI = {0} AND EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaEnergia1mes</key>
+    <query>
+      insert into GMM_RENERGIA (
+      RCODI, RPMES, PERICODI, EMPRCODI, EMPGCODI, RRETIRO, RENTREGA
+      )
+      values (
+      (select max(RCODI) from GMM_RENERGIA), '1', {0}, {1}, {2},
+      (
+      select NVL(sum(
+      valovalor1 * valovalorcm1 + valovalor2 * valovalorcm2 + valovalor3 * valovalorcm3 + valovalor4 * valovalorcm4  +
+      valovalor5 * valovalorcm5 + valovalor6 * valovalorcm6 + valovalor7 * valovalorcm7 + valovalor8 * valovalorcm8  +
+      valovalor9 * valovalorcm9 + valovalor10 * valovalorcm10 + valovalor11 * valovalorcm11 + valovalor12 * valovalorcm12  +
+      valovalor13 * valovalorcm13 + valovalor14 * valovalorcm14 + valovalor15 * valovalorcm15 + valovalor16 * valovalorcm16  +
+      valovalor17 * valovalorcm17 + valovalor18 * valovalorcm18 + valovalor19 * valovalorcm19 + valovalor20 * valovalorcm20  +
+      valovalor21 * valovalorcm21 + valovalor22 * valovalorcm22 + valovalor23 * valovalorcm23 + valovalor24 * valovalorcm24  +
+      valovalor25 * valovalorcm25 + valovalor26 * valovalorcm26 + valovalor27 * valovalorcm27 + valovalor28 * valovalorcm28  +
+      valovalor29 * valovalorcm29 + valovalor30 * valovalorcm30 + valovalor31 * valovalorcm31 + valovalor32 * valovalorcm32  +
+      valovalor33 * valovalorcm33 + valovalor34 * valovalorcm34 + valovalor35 * valovalorcm35 + valovalor36 * valovalorcm36  +
+      valovalor37 * valovalorcm37 + valovalor38 * valovalorcm38 + valovalor39 * valovalorcm39 + valovalor40 * valovalorcm40  +
+      valovalor41 * valovalorcm41 + valovalor42 * valovalorcm42 + valovalor43 * valovalorcm43 + valovalor44 * valovalorcm44  +
+      valovalor45 * valovalorcm45 + valovalor46 * valovalorcm46 + valovalor47 * valovalorcm47 + valovalor48 * valovalorcm48  +
+      valovalor49 * valovalorcm49 + valovalor50 * valovalorcm50 + valovalor51 * valovalorcm51 + valovalor52 * valovalorcm52  +
+      valovalor53 * valovalorcm53 + valovalor54 * valovalorcm54 + valovalor55 * valovalorcm55 + valovalor56 * valovalorcm56  +
+      valovalor57 * valovalorcm57 + valovalor58 * valovalorcm58 + valovalor59 * valovalorcm59 + valovalor60 * valovalorcm60  +
+      valovalor61 * valovalorcm61 + valovalor62 * valovalorcm62 + valovalor63 * valovalorcm63 + valovalor64 * valovalorcm64  +
+      valovalor65 * valovalorcm65 + valovalor66 * valovalorcm66 + valovalor67 * valovalorcm67 + valovalor68 * valovalorcm68  +
+      valovalor69 * valovalorcm69 + valovalor70 * valovalorcm70 + valovalor71 * valovalorcm71 + valovalor72 * valovalorcm72  +
+      valovalor73 * valovalorcm73 + valovalor74 * valovalorcm74 + valovalor75 * valovalorcm75 + valovalor76 * valovalorcm76  +
+      valovalor77 * valovalorcm77 + valovalor78 * valovalorcm78 + valovalor79 * valovalorcm79 + valovalor80 * valovalorcm80  +
+      valovalor81 * valovalorcm81 + valovalor82 * valovalorcm82 + valovalor83 * valovalorcm83 + valovalor84 * valovalorcm84  +
+      valovalor85 * valovalorcm85 + valovalor86 * valovalorcm86 + valovalor87 * valovalorcm87 + valovalor88 * valovalorcm88  +
+      valovalor89 * valovalorcm89 + valovalor90 * valovalorcm90 + valovalor91 * valovalorcm91 + valovalor92 * valovalorcm92  +
+      valovalor93 * valovalorcm93 + valovalor94 * valovalorcm94 + valovalor95 * valovalorcm95 + valovalor96 * valovalorcm96), 0)
+      from gmm_valenergia where pericodi = {0} and emprcodi = {1}
+      ),(
+      /*SELECT NVL((select dinsvalor from gmm_datinsumo where tinscodi = 'ENTREGAS' AND PERICODI = {0} AND EMPGCODI = {2}),0) FROM DUAL*/
+      select NVL(sum(
+      valenevaleneval1 * valenevalenevalcm1 + valenevaleneval2 * valenevalenevalcm2 + valenevaleneval3 * valenevalenevalcm3 + valenevaleneval4 * valenevalenevalcm4  +
+      valenevaleneval5 * valenevalenevalcm5 + valenevaleneval6 * valenevalenevalcm6 + valenevaleneval7 * valenevalenevalcm7 + valenevaleneval8 * valenevalenevalcm8  +
+      valenevaleneval9 * valenevalenevalcm9 + valenevaleneval10 * valenevalenevalcm10 + valenevaleneval11 * valenevalenevalcm11 + valenevaleneval12 * valenevalenevalcm12  +
+      valenevaleneval13 * valenevalenevalcm13 + valenevaleneval14 * valenevalenevalcm14 + valenevaleneval15 * valenevalenevalcm15 + valenevaleneval16 * valenevalenevalcm16  +
+      valenevaleneval17 * valenevalenevalcm17 + valenevaleneval18 * valenevalenevalcm18 + valenevaleneval19 * valenevalenevalcm19 + valenevaleneval20 * valenevalenevalcm20  +
+      valenevaleneval21 * valenevalenevalcm21 + valenevaleneval22 * valenevalenevalcm22 + valenevaleneval23 * valenevalenevalcm23 + valenevaleneval24 * valenevalenevalcm24  +
+      valenevaleneval25 * valenevalenevalcm25 + valenevaleneval26 * valenevalenevalcm26 + valenevaleneval27 * valenevalenevalcm27 + valenevaleneval28 * valenevalenevalcm28  +
+      valenevaleneval29 * valenevalenevalcm29 + valenevaleneval30 * valenevalenevalcm30 + valenevaleneval31 * valenevalenevalcm31 + valenevaleneval32 * valenevalenevalcm32  +
+      valenevaleneval33 * valenevalenevalcm33 + valenevaleneval34 * valenevalenevalcm34 + valenevaleneval35 * valenevalenevalcm35 + valenevaleneval36 * valenevalenevalcm36  +
+      valenevaleneval37 * valenevalenevalcm37 + valenevaleneval38 * valenevalenevalcm38 + valenevaleneval39 * valenevalenevalcm39 + valenevaleneval40 * valenevalenevalcm40  +
+      valenevaleneval41 * valenevalenevalcm41 + valenevaleneval42 * valenevalenevalcm42 + valenevaleneval43 * valenevalenevalcm43 + valenevaleneval44 * valenevalenevalcm44  +
+      valenevaleneval45 * valenevalenevalcm45 + valenevaleneval46 * valenevalenevalcm46 + valenevaleneval47 * valenevalenevalcm47 + valenevaleneval48 * valenevalenevalcm48  +
+      valenevaleneval49 * valenevalenevalcm49 + valenevaleneval50 * valenevalenevalcm50 + valenevaleneval51 * valenevalenevalcm51 + valenevaleneval52 * valenevalenevalcm52  +
+      valenevaleneval53 * valenevalenevalcm53 + valenevaleneval54 * valenevalenevalcm54 + valenevaleneval55 * valenevalenevalcm55 + valenevaleneval56 * valenevalenevalcm56  +
+      valenevaleneval57 * valenevalenevalcm57 + valenevaleneval58 * valenevalenevalcm58 + valenevaleneval59 * valenevalenevalcm59 + valenevaleneval60 * valenevalenevalcm60  +
+      valenevaleneval61 * valenevalenevalcm61 + valenevaleneval62 * valenevalenevalcm62 + valenevaleneval63 * valenevalenevalcm63 + valenevaleneval64 * valenevalenevalcm64  +
+      valenevaleneval65 * valenevalenevalcm65 + valenevaleneval66 * valenevalenevalcm66 + valenevaleneval67 * valenevalenevalcm67 + valenevaleneval68 * valenevalenevalcm68  +
+      valenevaleneval69 * valenevalenevalcm69 + valenevaleneval70 * valenevalenevalcm70 + valenevaleneval71 * valenevalenevalcm71 + valenevaleneval72 * valenevalenevalcm72  +
+      valenevaleneval73 * valenevalenevalcm73 + valenevaleneval74 * valenevalenevalcm74 + valenevaleneval75 * valenevalenevalcm75 + valenevaleneval76 * valenevalenevalcm76  +
+      valenevaleneval77 * valenevalenevalcm77 + valenevaleneval78 * valenevalenevalcm78 + valenevaleneval79 * valenevalenevalcm79 + valenevaleneval80 * valenevalenevalcm80  +
+      valenevaleneval81 * valenevalenevalcm81 + valenevaleneval82 * valenevalenevalcm82 + valenevaleneval83 * valenevalenevalcm83 + valenevaleneval84 * valenevalenevalcm84  +
+      valenevaleneval85 * valenevalenevalcm85 + valenevaleneval86 * valenevalenevalcm86 + valenevaleneval87 * valenevalenevalcm87 + valenevaleneval88 * valenevalenevalcm88  +
+      valenevaleneval89 * valenevalenevalcm89 + valenevaleneval90 * valenevalenevalcm90 + valenevaleneval91 * valenevalenevalcm91 + valenevaleneval92 * valenevalenevalcm92  +
+      valenevaleneval93 * valenevalenevalcm93 + valenevaleneval94 * valenevalenevalcm94 + valenevaleneval95 * valenevalenevalcm95 + valenevaleneval96 * valenevalenevalcm96),0)
+      from gmm_valenergiaentrega where pericodi = {0} and emprcodi = {1}
+      )
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaPotenciaPeaje1mes</key>
+    <query>
+      INSERT INTO gmm_rpotencia (
+      rcodi, rpmes, pericodi, emprcodi, empgcodi,
+      rprepot, rpeajeu, rmargenr, rpfirme, rpfirme1mr, rdmes1, rdmes2, rdmes3
+      ) VALUES (
+      (select NVL(max(RCODI),0) +1 from gmm_rpotencia), '1', {0}, {1}, {2},
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'PPO' AND PERICODI = {0}),0) FROM DUAL),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'PREG' AND PERICODI = {0}),0) FROM DUAL),
+      /*(SELECT NVL((select dinsvalor from gmm_datinsumo where tinscodi = 'MRESERVA' AND PERICODI = {0}),0) FROM DUAL),*/
+      (SELECT NVL(( select dcalvalor from gmm_datcalculo where TINSCODI = 'MRESERVA' AND EMPRCODI = {1}),0 ) from DUAL),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'PFR' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'PFR' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL) /
+      /*(1 + (SELECT NVL((select dinsvalor from gmm_datinsumo where tinscodi = 'MRESERVA' AND PERICODI = {0}),0) FROM DUAL)),*/
+      (1+(SELECT NVL(( select dcalvalor from gmm_datcalculo where TINSCODI = 'MRESERVA' AND EMPRCODI = {1}),0 ) from DUAL)),
+      (SELECT NVL((select sum(dcalvalor) from gmm_datcalculo
+      where tinscodi = 'DCP' AND PERICODI = {0} AND EMPRCODI = {1} AND DCALANIO = {3} AND DCALMES = {4}),0) FROM DUAL),
+      (SELECT NVL((select sum(dcalvalor) from gmm_datcalculo
+      where tinscodi = 'DCP' AND PERICODI = {0} AND EMPRCODI = {1} AND DCALANIO = {5} AND DCALMES = {6}),0) FROM DUAL),
+      (SELECT NVL((select sum(dcalvalor) from gmm_datcalculo
+      where tinscodi = 'DCP' AND PERICODI = {0} AND EMPRCODI = {1} AND DCALANIO = {7} AND DCALMES = {8}),0) FROM DUAL)
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaPotenciaPeaje1mesComp</key>
+    <query>
+      update GMM_RPOTENCIA set
+      RCAPACIDAD =
+      (
+      CASE
+      WHEN (RDMES1 - RPFIRME1MR) &lt; 0 THEN 0
+      ELSE
+      RDMES1 - RPFIRME1MR END +
+      CASE
+      WHEN (RDMES2 - RPFIRME1MR) &lt; 0 THEN 0
+      ELSE
+      RDMES2 - RPFIRME1MR END +
+      CASE
+      WHEN (RDMES3 - RPFIRME1MR) &lt; 0 THEN 0
+      ELSE
+      RDMES3 - RPFIRME1MR END
+      ) * RPREPOT,
+      RPEAJE = (RDMES1 + RDMES2 + RDMES3) * RPEAJEU,
+      RUSUCREACION = '{2}', RFECCREACION = SYSDATE
+      where PERICODI = {0} AND EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaPotenciaPeaje</key>
+    <query>
+      INSERT INTO gmm_rpotencia (
+      rcodi, rpmes, pericodi, emprcodi, empgcodi,
+      rclvtp, rprepot, rdmes2, rdmes3, rplvtp, RPEAJEU
+      ) VALUES (
+      (select NVL(max(RCODI),0) +1 from gmm_rpotencia), '0', {0}, {1}, {2},
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'VTP' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'PPO' AND PERICODI = {0}),0) FROM DUAL),
+      (SELECT NVL((select sum(dcalvalor) from gmm_datcalculo
+      where tinscodi = 'DCP' AND PERICODI = {0} AND EMPRCODI = {1} AND DCALANIO = {3} AND DCALMES = {4}),0) FROM DUAL),
+      (SELECT NVL((select sum(dcalvalor) from gmm_datcalculo
+      where tinscodi = 'DCP' AND PERICODI = {0} AND EMPRCODI = {1} AND DCALANIO = {5} AND DCALMES = {6}),0) FROM DUAL),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'MPE' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'PREG' AND PERICODI = {0}),0) FROM DUAL)
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaPotenciaPeajeComp</key>
+    <query>
+      update GMM_RPOTENCIA set
+      RMCM2 = rprepot * rdmes2,
+      RMCM3 = rprepot * rdmes3,
+      RCAPACIDAD = rclvtp + (rprepot * rdmes2) + (rprepot * rdmes3),
+      RMPM2 = RPEAJEU * rdmes2,
+      RMPM3 = RPEAJEU * rdmes3,
+      RPEAJE = rplvtp + (RPEAJEU * rdmes2) + (RPEAJEU * rdmes3),
+      RUSUCREACION = '{2}', RFECCREACION = SYSDATE
+      where PERICODI = {0} AND EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>CleanServicioComp</key>
+    <query>
+      delete from gmm_rscomple where pericodi = {0} and EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaServiciosComp1mes</key>
+    <query>
+      INSERT INTO gmm_rscomple (
+      rcodi, rpmes, pericodi, emprcodi, empgcodi,
+      rmes1, rmes2, rmes3
+      ) VALUES (
+      (select NVL(max(RCODI),0) +1 from gmm_rpotencia), '1', {0}, {1}, {2},
+      (
+      /* (SELECT NVL((select dinsvalor from gmm_datinsumo where tinscodi = 'SSCC' AND dinsanio = {3} and dinsmes = {4}),0) FROM DUAL)  */
+      (SELECT NVL(( select dcalvalor from gmm_datcalculo where TINSCODI = 'SSCC' AND EMPRCODI = {1} ),0) FROM DUAL)
+      *
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {3} and dcalmes = {4})/
+      (
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {3} AND dcalmes = {4}) +
+      (select sum(dcalvalor) from gmm_datcalculo where PERICODI = {0} and tinscodi = 'ENRGN1' and dcalanio = {3} and dcalmes = {4})
+      )
+      )
+      ,
+      (
+      /* (SELECT NVL((select dinsvalor from gmm_datinsumo where tinscodi = 'SSCC' AND dinsanio = {3} and dinsmes = {4}),0) FROM DUAL) */
+      (SELECT NVL(( select dcalvalor from gmm_datcalculo where TINSCODI = 'SSCC' AND EMPRCODI = {1} ),0) FROM DUAL)
+      *
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {5} and dcalmes = {6})/
+      (
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {5} AND dcalmes = {6}) +
+      (select sum(dcalvalor) from gmm_datcalculo where PERICODI = {0} and tinscodi = 'ENRGN1' and dcalanio = {5} and dcalmes = {6})
+      )
+      ),
+      (
+      /* (SELECT NVL((select dinsvalor from gmm_datinsumo where tinscodi = 'SSCC' AND dinsanio = {3} and dinsmes = {4}),0) FROM DUAL) */
+      (SELECT NVL(( select dcalvalor from gmm_datcalculo where TINSCODI = 'SSCC' AND EMPRCODI = {1} ),0) FROM DUAL)
+      *
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {7} and dcalmes = {8})/
+      (
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {7} AND dcalmes = {8}) +
+      (select sum(dcalvalor) from gmm_datcalculo where PERICODI = {0} and tinscodi = 'ENRGN1' and dcalanio = {7} and dcalmes = {8})
+      )
+      )
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaServiciosComp</key>
+    <query>
+      INSERT INTO gmm_rscomple (
+      rcodi, rpmes, pericodi, emprcodi, empgcodi,
+      rmes1, rmes2, rmes3, ENRGN1, ENRGN
+      ) VALUES (
+      (select NVL(max(RCODI),0) +1 from gmm_rpotencia), '0', {0}, {1}, {2},
+      (SELECT NVL((select dinsvalor from gmm_datinsumo where tinscodi = 'SC' AND empgcodi = {2} and  dinsanio = {7} and dinsmes = {8}),0) FROM DUAL),
+      {9}/10*(SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'VDSC10' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL),
+
+      case when ((select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG10') +
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG11')) = 0 then 0
+      else
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {5} and dcalmes = {6}) *
+      ({9}/10*(SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'VDSC10' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL)) /
+      ((select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG10') +
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG11')) end,
+
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {5} and dcalmes = {6}),
+      ((select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG10') +
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG11'))
+      )
+
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaServiciosCompComp</key>
+    <query>
+      update gmm_rscomple set
+      rscomple = rmes1 + rmes2 + rmes3,
+      RUSUCREACION = '{2}', RFECCREACION = SYSDATE
+      where PERICODI = {0} AND EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>CleanEnergiaReactiva</key>
+    <query>
+      delete from gmm_rereactiva where pericodi = {0} and EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaEnergiaReactiva1mes</key>
+    <query>
+      INSERT INTO gmm_rereactiva (
+      rcodi, rpmes, pericodi, emprcodi, empgcodi,
+      reprm1, rparm1, reprm2, rparm2, reprm3, rparm3
+      ) VALUES (
+      (select NVL(max(RCODI),0) +1 from gmm_rereactiva), '1', {0}, {1}, {2},
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and  dcalanio = {3} and dcalmes = {4}),0) FROM DUAL),
+      (
+      ((SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and  dcalanio = {3} and dcalmes = {4}),0) FROM DUAL))/
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {3} AND dcalmes = {4})
+      )*100,
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and  dcalanio = {5} and dcalmes = {6}),0) FROM DUAL),
+      (
+      ((SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and  dcalanio = {5} and dcalmes = {6}),0) FROM DUAL))/
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {5} AND dcalmes = {6})
+      )*100,
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and  dcalanio = {7} and dcalmes = {8}),0) FROM DUAL),
+      (
+      ((SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and  dcalanio = {7} and dcalmes = {8}),0) FROM DUAL))/
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {7} AND dcalmes = {8})
+      )*100
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaEnergiaReactiva1mesComp</key>
+    <query>
+      UPDATE gmm_rereactiva
+      SET
+      rereactiva = (
+      SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TEXCESO' AND PERICODI = {0} AND EMPGCODI = {1}),0) FROM DUAL
+      )* NVL((rparm1 + rparm2 + rparm3),0)/100,
+      RUSUCREACION = '{2}', RFECCREACION = SYSDATE
+      WHERE
+      PERICODI = {0} AND EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaEnergiaReactiva</key>
+    <query>
+      INSERT INTO gmm_rereactiva (
+      rcodi, rpmes, pericodi, emprcodi, empgcodi,
+      rvmerm1, rcol1, rcol2, repr11, rer10
+      ) VALUES (
+      (select NVL(max(RCODI),0) +1 from gmm_rpotencia), '0', {0}, {1}, {2},
+      (SELECT NVL((select dinsvalor from gmm_datinsumo where tinscodi = 'RECAU' AND empgcodi = {2} and  dinsanio = {7} and dinsmes = {8}),0) FROM DUAL),
+      {9}/10*(SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'VDER10' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL),
+
+      case when (((select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG10') +
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG11')) *
+      ({9}/10*(SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'VDER10' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL))) = 0 then 0
+      else
+      ((select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {5} and dcalmes = {6})/
+
+      ((select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG10') +
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG11')) *
+      ({9}/10*(SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'VDER10' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL)))
+      end
+      ,
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {5} and dcalmes = {6}),
+      ((select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG10') +
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG11'))
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiaEnergiaReactivaComp</key>
+    <query>
+      update gmm_rereactiva set
+      rereactiva = rvmerm1 + rcol1 + rcol2,
+      rusucreacion = '{2}', rfeccreacion = SYSDATE
+      where PERICODI = {0} AND EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>CleaninflexibilidadOpe</key>
+    <query>
+      delete from gmm_rinflexop where pericodi = {0} and EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiainflexibilidadOpe1mes</key>
+    <query>
+      INSERT INTO gmm_rinflexop (
+      rcodi, rpmes, pericodi, emprcodi, empgcodi,
+      reprm1, reprm2, reprm3, rdemm1, rdemm2, rdemm3, rparm1, rparm2, rparm3
+      ) VALUES (
+      (select NVL(max(RCODI),0) +1 from gmm_rereactiva), '1', {0}, {1}, {2},
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and dcalanio = {3} and dcalmes = {4}),0) FROM DUAL),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and dcalanio = {5} and dcalmes = {6}),0) FROM DUAL),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and dcalanio = {7} and dcalmes = {8}),0) FROM DUAL),
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {3} AND dcalmes = {4}),
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {5} AND dcalmes = {6}),
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {7} AND dcalmes = {8}),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and dcalanio = {3} and dcalmes = {4}),0) FROM DUAL)/
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {3} AND dcalmes = {4}),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and dcalanio = {5} and dcalmes = {6}),0) FROM DUAL)/
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {5} AND dcalmes = {6}),
+      (SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'ENRGN1' and PERICODI = {0} AND emprcodi = {1} and dcalanio = {7} and dcalmes = {8}),0) FROM DUAL)/
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and tinscodi = 'DEMANDACOES' and dcalanio = {7} AND dcalmes = {6})
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiainflexibilidadOpe1mesComp</key>
+    <query>
+      UPDATE gmm_rinflexop
+      SET
+      RINFLEXOP = (
+      SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TINFLEX' AND PERICODI = {0} AND EMPGCODI = {1}),0) FROM DUAL
+      )*(rparm1 + rparm2 + rparm3),
+      RINFLEX = (
+      SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'TINFLEX' AND PERICODI = {0} AND EMPGCODI = {1}),0) FROM DUAL
+      ), RUSUCREACION = '{2}', RFECCREACION = SYSDATE
+      WHERE
+      PERICODI = {0} AND EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiainflexibilidadOpe</key>
+    <query>
+      INSERT INTO gmm_rinflexop (
+      rcodi, rpmes, pericodi, emprcodi, empgcodi,
+      rer10, repr11, rlscio, rcol1, rcol2
+      ) VALUES (
+      (select NVL(max(RCODI),0) +1 from gmm_rereactiva), '0', {0}, {1}, {2},
+      ((select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG10') +
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG11')),
+
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {5} and dcalmes = {6}),
+
+      (SELECT NVL((select dinsvalor from gmm_datinsumo where tinscodi = 'INFLEX' AND empgcodi = {2} and  dinsanio = {7} and dinsmes = {8}),0) FROM DUAL),
+
+      {9}/10*(SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'VDIO10' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL),
+
+      case when (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {5} and dcalmes = {6}) = 0 then 0
+      when (/*ASSETEC 20220419*/
+           (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG10') + 
+           (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG11')
+           ) = 0 then 0
+      else
+      {9}/10*(SELECT NVL((select dcalvalor from gmm_datcalculo where tinscodi = 'VDIO10' AND PERICODI = {0} AND EMPRCODI = {1}),0) FROM DUAL)*
+      (
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRGN1' and dcalanio = {5} and dcalmes = {6})
+      /
+      (
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG10') +
+      (select dcalvalor from gmm_datcalculo where PERICODI = {0} and emprcodi = {1} and tinscodi = 'ENRG11')
+      )
+      )
+      end
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetGarantiainflexibilidadOpeComp</key>
+    <query>
+      update gmm_rinflexop set
+      RINFLEXOP = rlscio + rcol1 + rcol2,
+      rusucreacion = '{2}', rfeccreacion = SYSDATE
+      where PERICODI = {0} AND EMPGCODI = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>listarRpt1</key>
+    <query>
+      select
+      (Select '(' || TRIM(NVL(EMPRRUC,'- SIN RUC -')) || ') ' || NVL(TRIM(NVL(EMPRRAZSOCIAL,EMPRNOMB)), ' - SIN RAZON SOCIAL -')
+      from si_empresa where EMPRCODI = emp.EMPRCODI) AS EMPRESA,
+      nvl((select RENERGIA from GMM_RENERGIA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) as RENERGIA,
+      nvl((select RCAPACIDAD from GMM_RPOTENCIA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) as RCAPACIDAD,
+      nvl((select RPEAJE from GMM_RPOTENCIA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) as RPEAJE,
+      nvl((select RSCOMPLE from GMM_RSCOMPLE where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) as RSCOMPLE,
+      nvl((select RINFLEXOP from GMM_RINFLEXOP where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) as RINFLEXOP,
+      nvl((select REREACTIVA from GMM_REREACTIVA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) as REREACTIVA,
+      (
+      nvl((select RENERGIA from GMM_RENERGIA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select RCAPACIDAD from GMM_RPOTENCIA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select RPEAJE from GMM_RPOTENCIA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select RSCOMPLE from GMM_RSCOMPLE where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select RINFLEXOP from GMM_RINFLEXOP where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select REREACTIVA from GMM_REREACTIVA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0)
+      ) AS TOTALGARANTIA,
+      (SELECT nvl(SUM(garamontogarantia), 0) FROM GMM_GARANTIA
+      WHERE TO_DATE('01 {1} {0}','DD MM YYYY') BETWEEN GARAFECINICIO AND GARAFECFIN AND garaestado = 1 and empgcodi = emp.empgcodi) GARANTIADEP,
+      (
+      CASE WHEN (
+      SELECT nvl(SUM(garamontogarantia), 0) FROM GMM_GARANTIA
+      WHERE TO_DATE('01 {1} {0}','DD MM YYYY') BETWEEN GARAFECINICIO AND GARAFECFIN  AND garaestado = 1 and empgcodi = emp.empgcodi
+      ) > 0 AND (select RPMES from GMM_RENERGIA WHERE pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi) = '0' THEN
+      ROUND(
+      (
+      (
+      nvl((select RENERGIA from GMM_RENERGIA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select RCAPACIDAD from GMM_RPOTENCIA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select RPEAJE from GMM_RPOTENCIA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select RSCOMPLE from GMM_RSCOMPLE where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select RINFLEXOP from GMM_RINFLEXOP where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0) +
+      nvl((select REREACTIVA from GMM_REREACTIVA where pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi),0)
+      ) -
+      (
+      SELECT nvl(SUM(garamontogarantia), 0) FROM GMM_GARANTIA
+      WHERE TO_DATE('01 {1} {0}','DD MM YYYY') BETWEEN GARAFECINICIO AND GARAFECFIN  AND garaestado = 1 and empgcodi = emp.empgcodi
+      )
+      )/
+      (
+      SELECT nvl(SUM(garamontogarantia), 0) FROM GMM_GARANTIA
+      WHERE TO_DATE('01 {1} {0}','DD MM YYYY')  BETWEEN GARAFECINICIO AND GARAFECFIN  AND garaestado = 1 and empgcodi = emp.empgcodi
+      ),2)
+      ELSE 0 END
+      ) AS FACTOR,
+      CASE when (select RPMES from GMM_RENERGIA WHERE pericodi = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1}) and empgcodi = emp.empgcodi) = '1'
+      THEN
+      'PRIMER CALCULO'
+      ELSE
+      ' -- '
+      END AS COMENTARIO
+      from gmm_empresa emp where empgestado = 'H' and '{2}' >= to_char(empgfecingreso,'YYYYMM')
+    </query>
+  </Sql>
+  <Sql>
+    <key>listarRpt2</key>
+    <query>
+    SELECT
+      (Select '(' || TRIM(NVL(EMPRRUC,'- SIN RUC -')) || ') ' ||
+      NVL(TRIM(NVL(EMPRRAZSOCIAL,EMPRNOMB)), ' - SIN RAZON SOCIAL -
+      ') from si_empresa where EMPRCODI = rpt.EMPRCODI) AS EMPRESA,
+      rpt.RCODI,
+      rpt.RPMES,
+      rpt.PERICODI,
+      rpt.EMPRCODI,
+      rpt.EMPGCODI,
+      rpt.RRETIRO,
+      rpt.RENTREGA,
+      rpt.RLVTEA,
+      rpt.RVD10,
+      rpt.RVD11,
+      rpt.RVPROY,
+      rpt.RENERGIA,
+      rpt.RUSUCREACION,
+      rpt.RFECCREACION
+      FROM
+      GMM_RENERGIA rpt
+      INNER JOIN GMM_EMPRESA G ON G.EMPRCODI=RPT.EMPRCODI
+      where rpt.PERICODI = (select PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1})
+      AND G.EMPGESTADO='H'
+    </query>
+  </Sql>
+  <Sql>
+    <key>listarRpt3</key>
+    <query>
+      SELECT
+      (Select '(' || TRIM(NVL(EMPRRUC,'- SIN RUC -')) || ') ' ||
+      NVL(TRIM(NVL(EMPRRAZSOCIAL,EMPRNOMB)), ' - SIN RAZON SOCIAL -
+      ') from si_empresa where EMPRCODI = rpt.EMPRCODI) AS EMPRESA,
+      RCODI,
+      RPMES,
+      PERICODI,
+      EMPRCODI,
+      EMPGCODI,
+      RPREPOT,
+      RPEAJEU,
+      RMARGENR,
+      RPFIRME,
+      RPFIRME1MR,
+      RDMES1,
+      RDMES2,
+      RDMES3,
+      RCLVTP,
+      RMCM2,
+      RMCM3,
+      RPLVTP,
+      RMPM2,
+      RMPM3,
+      RCAPACIDAD,
+      RPEAJE
+      FROM
+      GMM_RPOTENCIA rpt
+      WHERE PERICODI = (SELECT PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1})
+    </query>
+  </Sql>
+  <Sql>
+    <key>listarRpt4</key>
+    <query>
+      SELECT
+      (Select '(' || TRIM(NVL(EMPRRUC,'- SIN RUC -')) || ') ' ||
+      NVL(TRIM(NVL(EMPRRAZSOCIAL,EMPRNOMB)), ' - SIN RAZON SOCIAL -
+      ') from si_empresa where EMPRCODI = rpt.EMPRCODI) AS EMPRESA,
+      RCODI,
+      RPMES,
+      PERICODI,
+      EMPRCODI,
+      EMPGCODI,
+      RMES1,
+      RMES2,
+      RMES3,
+      RSCOMPLE,
+      ENRGN,
+      ENRGN1,
+      RUSUCREACION,
+      RFECCREACION
+      FROM
+      GMM_RSCOMPLE rpt
+      WHERE PERICODI = (SELECT PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1})
+    </query>
+  </Sql>
+  <Sql>
+    <key>listarRpt5</key>
+    <query>
+      SELECT
+      (Select '(' || TRIM(NVL(EMPRRUC,'- SIN RUC -')) || ') ' ||
+      NVL(TRIM(NVL(EMPRRAZSOCIAL,EMPRNOMB)), ' - SIN RAZON SOCIAL -
+      ') from si_empresa where EMPRCODI = rpt.EMPRCODI) AS EMPRESA,
+      RCODI,
+      RPMES,
+      PERICODI,
+      EMPRCODI,
+      EMPGCODI,
+      REPRM1,
+      RPARM1,
+      REPRM2,
+      RPARM2,
+      REPRM3,
+      RPARM3,
+      RER10,
+      REPR11,
+      RVMERM1,
+      RCOL1,
+      RCOL2,
+      REREACTIVA,
+      RUSUCREACION,
+      RFECCREACION
+      FROM
+      GMM_REREACTIVA rpt
+      WHERE PERICODI = (SELECT PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1})
+    </query>
+  </Sql>
+  <Sql>
+    <key>listarRpt6</key>
+    <query>
+      SELECT
+      (Select '(' || TRIM(NVL(EMPRRUC,'- SIN RUC -')) || ') ' ||
+      NVL(TRIM(NVL(EMPRRAZSOCIAL,EMPRNOMB)), ' - SIN RAZON SOCIAL -
+      ') from si_empresa where EMPRCODI = rpt.EMPRCODI) AS EMPRESA,
+      RCODI,
+      RPMES,
+      PERICODI,
+      EMPRCODI,
+      EMPGCODI,
+      REPRM1,
+      RPARM1,
+      REPRM2,
+      RPARM2,
+      REPRM3,
+      RPARM3,
+      RER10,
+      REPR11,
+      RLSCIO,
+      RCOL1,
+      RCOL2,
+      RINFLEXOP,
+      RDEMM1,
+      RDEMM2,
+      RDEMM3,
+      RINFLEX,
+      RUSUCREACION,
+      RFECCREACION
+      FROM
+      GMM_RINFLEXOP rpt
+      WHERE PERICODI = (SELECT PERICODI FROM  GMM_PERIODO WHERE PERIANIO = {0} AND PERIMES = {1})
+    </query>
+  </Sql>
+  <Sql>
+    <key>listarRptInsumo</key>
+    <query>
+      SELECT
+      dat.dinsanio as anio,
+      dat.dinsmes as mes,
+      dat.pericodi as periodo,
+      nvl(nvl(emp.emprnomb, emp.emprrazsocial), '-Todas-') as empresa,
+      tins.tinsdesc as insumo,
+      dat.dinsvalor as valor,
+      nvl(dinsusumodificacion,dinsusucreacion) as usuario,
+      nvl(dinsfecmodificacion,dinsfeccreacion) as fecha
+      FROM
+      gmm_datinsumo dat
+      left join gmm_empresa empg  on empg.empgcodi = dat.empgcodi and empg.empgestado = 'H'
+      left join si_empresa emp on emp.emprcodi = empg.emprcodi
+      left join gmm_tinsumo tins on tins.tinscodi =  dat.tinscodi
+      where dat.pericodi = (select pericodi from gmm_periodo where perianio = {0} and perimes = {1})
+      union
+      SELECT
+      dat2.dcalanio as anio,
+      dat2.dcalmes as mes,
+      dat2.pericodi as periodo,
+      nvl(nvl(emp.emprnomb, emp.emprrazsocial), '-Todas-') as empresa,
+      tins.tinsdesc as insumo,
+      dat2.dcalvalor as valor,
+      dcalusucreacion as usuario,
+      dcalfeccreacion as fecha
+      FROM
+      gmm_datcalculo dat2
+      left join si_empresa emp on emp.emprcodi = dat2.emprcodi
+      left join gmm_empresa empg  on empg.emprcodi = emp.emprcodi and empg.empgestado = 'H'
+      left join gmm_tinsumo tins on tins.tinscodi =  dat2.tinscodi
+      where dat2.pericodi = (select pericodi from gmm_periodo where perianio = {0} and perimes = {1})
+      order by insumo, anio, mes
+    </query>
+  </Sql>
+  <Sql>
+    <key>listarRptEnergia</key>
+    <query>
+      SELECT
+      valanio as anio,
+      valmes as mes,
+      nvl(nvl(emp.emprnomb, emp.emprrazsocial), '-Todas-') as empresa,
+      casddbbarra as barra,
+      medifecha as fecha,
+      valovalor1 as energia_t1,
+      valovalor2 as energia_t2,
+      valovalor3 as energia_t3,
+      valovalor4 as energia_t4,
+      valovalor5 as energia_t5,
+      valovalor6 as energia_t6,
+      valovalor7 as energia_t7,
+      valovalor8 as energia_t8,
+      valovalor9 as energia_t9,
+      valovalor10 as energia_t10,
+      valovalor11 as energia_t11,
+      valovalor12 as energia_t12,
+      valovalor13 as energia_t13,
+      valovalor14 as energia_t14,
+      valovalor15 as energia_t15,
+      valovalor16 as energia_t16,
+      valovalor17 as energia_t17,
+      valovalor18 as energia_t18,
+      valovalor19 as energia_t19,
+      valovalor20 as energia_t20,
+      valovalor21 as energia_t21,
+      valovalor22 as energia_t22,
+      valovalor23 as energia_t23,
+      valovalor24 as energia_t24,
+      valovalor25 as energia_t25,
+      valovalor26 as energia_t26,
+      valovalor28 as energia_t27,
+      valovalor27 as energia_t28,
+      valovalor29 as energia_t29,
+      valovalor30 as energia_t30,
+      valovalor31 as energia_t31,
+      valovalor32 as energia_t32,
+      valovalor33 as energia_t33,
+      valovalor34 as energia_t34,
+      valovalor35 as energia_t35,
+      valovalor36 as energia_t36,
+      valovalor37 as energia_t37,
+      valovalor38 as energia_t38,
+      valovalor39 as energia_t39,
+      valovalor40 as energia_t40,
+      valovalor41 as energia_t41,
+      valovalor42 as energia_t42,
+      valovalor43 as energia_t43,
+      valovalor44 as energia_t44,
+      valovalor45 as energia_t45,
+      valovalor46 as energia_t46,
+      valovalor47 as energia_t47,
+      valovalor48 as energia_t48,
+      valovalor49 as energia_t49,
+      valovalor50 as energia_t50,
+      valovalor51 as energia_t51,
+      valovalor52 as energia_t52,
+      valovalor53 as energia_t53,
+      valovalor54 as energia_t54,
+      valovalor55 as energia_t55,
+      valovalor56 as energia_t56,
+      valovalor57 as energia_t57,
+      valovalor58 as energia_t58,
+      valovalor59 as energia_t59,
+      valovalor60 as energia_t60,
+      valovalor61 as energia_t61,
+      valovalor62 as energia_t62,
+      valovalor63 as energia_t63,
+      valovalor64 as energia_t64,
+      valovalor65 as energia_t65,
+      valovalor66 as energia_t66,
+      valovalor67 as energia_t67,
+      valovalor68 as energia_t68,
+      valovalor69 as energia_t69,
+      valovalor70 as energia_t70,
+      valovalor71 as energia_t71,
+      valovalor72 as energia_t72,
+      valovalor73 as energia_t73,
+      valovalor74 as energia_t74,
+      valovalor75 as energia_t75,
+      valovalor76 as energia_t76,
+      valovalor77 as energia_t77,
+      valovalor78 as energia_t78,
+      valovalor79 as energia_t79,
+      valovalor80 as energia_t80,
+      valovalor81 as energia_t81,
+      valovalor82 as energia_t82,
+      valovalor83 as energia_t83,
+      valovalor84 as energia_t84,
+      valovalor85 as energia_t85,
+      valovalor86 as energia_t86,
+      valovalor87 as energia_t87,
+      valovalor88 as energia_t88,
+      valovalor89 as energia_t89,
+      valovalor90 as energia_t90,
+      valovalor91 as energia_t91,
+      valovalor92 as energia_t92,
+      valovalor93 as energia_t93,
+      valovalor94 as energia_t94,
+      valovalor95 as energia_t95,
+      valovalor96 as energia_t96,
+      valovalorcm1 as cm_t1,
+      valovalorcm2 as cm_t2,
+      valovalorcm3 as cm_t3,
+      valovalorcm4 as cm_t4,
+      valovalorcm5 as cm_t5,
+      valovalorcm6 as cm_t6,
+      valovalorcm7 as cm_t7,
+      valovalorcm8 as cm_t8,
+      valovalorcm9 as cm_t9,
+      valovalorcm10 as cm_t10,
+      valovalorcm11 as cm_t11,
+      valovalorcm12 as cm_t12,
+      valovalorcm13 as cm_t13,
+      valovalorcm14 as cm_t14,
+      valovalorcm15 as cm_t15,
+      valovalorcm16 as cm_t16,
+      valovalorcm17 as cm_t17,
+      valovalorcm18 as cm_t18,
+      valovalorcm19 as cm_t19,
+      valovalorcm20 as cm_t20,
+      valovalorcm21 as cm_t21,
+      valovalorcm22 as cm_t22,
+      valovalorcm23 as cm_t23,
+      valovalorcm24 as cm_t24,
+      valovalorcm25 as cm_t25,
+      valovalorcm26 as cm_t26,
+      valovalorcm27 as cm_t27,
+      valovalorcm28 as cm_t28,
+      valovalorcm29 as cm_t29,
+      valovalorcm30 as cm_t30,
+      valovalorcm31 as cm_t31,
+      valovalorcm32 as cm_t32,
+      valovalorcm33 as cm_t33,
+      valovalorcm34 as cm_t34,
+      valovalorcm35 as cm_t35,
+      valovalorcm36 as cm_t36,
+      valovalorcm37 as cm_t37,
+      valovalorcm38 as cm_t38,
+      valovalorcm39 as cm_t39,
+      valovalorcm40 as cm_t40,
+      valovalorcm41 as cm_t41,
+      valovalorcm42 as cm_t42,
+      valovalorcm43 as cm_t43,
+      valovalorcm44 as cm_t44,
+      valovalorcm45 as cm_t45,
+      valovalorcm46 as cm_t46,
+      valovalorcm47 as cm_t47,
+      valovalorcm48 as cm_t48,
+      valovalorcm49 as cm_t49,
+      valovalorcm50 as cm_t50,
+      valovalorcm51 as cm_t51,
+      valovalorcm52 as cm_t52,
+      valovalorcm53 as cm_t53,
+      valovalorcm54 as cm_t54,
+      valovalorcm55 as cm_t55,
+      valovalorcm56 as cm_t56,
+      valovalorcm57 as cm_t57,
+      valovalorcm58 as cm_t58,
+      valovalorcm59 as cm_t59,
+      valovalorcm60 as cm_t60,
+      valovalorcm61 as cm_t61,
+      valovalorcm62 as cm_t62,
+      valovalorcm63 as cm_t63,
+      valovalorcm64 as cm_t64,
+      valovalorcm65 as cm_t65,
+      valovalorcm66 as cm_t66,
+      valovalorcm67 as cm_t67,
+      valovalorcm68 as cm_t68,
+      valovalorcm69 as cm_t69,
+      valovalorcm70 as cm_t70,
+      valovalorcm71 as cm_t71,
+      valovalorcm72 as cm_t72,
+      valovalorcm73 as cm_t73,
+      valovalorcm74 as cm_t74,
+      valovalorcm75 as cm_t75,
+      valovalorcm76 as cm_t76,
+      valovalorcm77 as cm_t77,
+      valovalorcm78 as cm_t78,
+      valovalorcm79 as cm_t79,
+      valovalorcm80 as cm_t80,
+      valovalorcm81 as cm_t81,
+      valovalorcm82 as cm_t82,
+      valovalorcm83 as cm_t83,
+      valovalorcm84 as cm_t84,
+      valovalorcm85 as cm_t85,
+      valovalorcm86 as cm_t86,
+      valovalorcm87 as cm_t87,
+      valovalorcm88 as cm_t88,
+      valovalorcm89 as cm_t89,
+      valovalorcm90 as cm_t90,
+      valovalorcm91 as cm_t91,
+      valovalorcm92 as cm_t92,
+      valovalorcm93 as cm_t93,
+      valovalorcm94 as cm_t94,
+      valovalorcm95 as cm_t95,
+      valovalorcm96 as cm_t96
+      FROM
+      gmm_valenergia ene
+      left join si_empresa emp on emp.emprcodi = ene.emprcodi
+      where ene.pericodi = (select pericodi from gmm_periodo where perianio = {0} and perimes = {1})
+      order by valanio desc, ene.valmes desc, emp.emprnomb desc, casddbbarra desc, medifecha  desc
+    </query>
+  </Sql>
+  <Sql>
+    <key>ConsultaParticipanteExistente</key>
+    <query>
+      SELECT distinct
+      EMP.EMPGCODI AS LISTEMPGCODI,
+      --cal.dcalcodi,
+      NVL(TRIM(NVL(SEMP.EMPRRAZSOCIAL,SEMP.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') AS LISTEMPRNOMB
+
+      FROM GMM_EMPRESA EMP
+      LEFT JOIN GMM_DATCALCULO CAL ON CAL.EMPGCODI=EMP.EMPGCODI AND CAL.TINSCODI !='DCP' AND  CAL.DATCALESTADO='1' -- AND DAT2.EMPGCODI = CAL.EMPGCODI AND DAT3.EMPGCODI = CAL.EMPGCODI AND DAT4.EMPGCODI = CAL.EMPGCODI AND CAL.TINSCODI !='DCP'
+      INNER JOIN GMM_PERIODO PER ON PER.PERICODI=CAL.PERICODI
+
+      JOIN SI_EMPRESA SEMP ON EMP.EMPRCODI = SEMP.EMPRCODI AND EMP.EMPGESTADO = 'H'
+      WHERE  EMP.EMPGCODI={0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ConsultaEstadoPeriodo</key>
+    <query>
+      select PERIESTADO from gmm_periodo
+      WHERE PERIANIO = {0}
+      AND PERIMES = {1}
+      order by 1 desc
+    </query>
+  </Sql>
+  <Sql>
+    <key>DelENTPRE</key>
+    <query>
+      delete from gmm_datcalculo where TINSCODI = 'ENTPRE' AND
+      dcalanio = {0} AND dcalmes = {1} AND pericodi = {2} AND emprcodi = {3}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SetENTPRE</key>
+    <query>
+      INSERT INTO gmm_datcalculo (DCALCODI, DCALVALOR, EMPRCODI,
+      PERICODI,TINSCODI, DCALANIO, DCALMES, DCALUSUCREACION, DCALFECCREACION)
+      VALUES ((SELECT NVL(MAX(DCALCODI),0) + 1 FROM gmm_datcalculo), (
+
+      select NVL(sum(
+      valenevaleneval1 + valenevaleneval2 + valenevaleneval3 + valenevaleneval4+
+      valenevaleneval5 + valenevaleneval6 + valenevaleneval7 + valenevaleneval8+
+      valenevaleneval9 + valenevaleneval10 + valenevaleneval11 + valenevaleneval12+
+      valenevaleneval13 + valenevaleneval14 + valenevaleneval15 + valenevaleneval16+
+      valenevaleneval17 + valenevaleneval18 + valenevaleneval19 + valenevaleneval20+
+      valenevaleneval21 + valenevaleneval22 + valenevaleneval23 + valenevaleneval24+
+      valenevaleneval25 + valenevaleneval26 + valenevaleneval27 + valenevaleneval28+
+      valenevaleneval29 + valenevaleneval30 + valenevaleneval31 + valenevaleneval32+
+      valenevaleneval33 + valenevaleneval34 + valenevaleneval35 + valenevaleneval36+
+      valenevaleneval37 + valenevaleneval38 + valenevaleneval39 + valenevaleneval40+
+      valenevaleneval41 + valenevaleneval42 + valenevaleneval43 + valenevaleneval44+
+      valenevaleneval45 + valenevaleneval46 + valenevaleneval47 + valenevaleneval48+
+      valenevaleneval49 + valenevaleneval50 + valenevaleneval51 + valenevaleneval52+
+      valenevaleneval53 + valenevaleneval54 + valenevaleneval55 + valenevaleneval56+
+      valenevaleneval57 + valenevaleneval58 + valenevaleneval59 + valenevaleneval60+
+      valenevaleneval61 + valenevaleneval62 + valenevaleneval63 + valenevaleneval64+
+      valenevaleneval65 + valenevaleneval66 + valenevaleneval67 + valenevaleneval68+
+      valenevaleneval69 + valenevaleneval70 + valenevaleneval71 + valenevaleneval72+
+      valenevaleneval73 + valenevaleneval74 + valenevaleneval75 + valenevaleneval76+
+      valenevaleneval77 + valenevaleneval78 + valenevaleneval79 + valenevaleneval80+
+      valenevaleneval81 + valenevaleneval82 + valenevaleneval83 + valenevaleneval84+
+      valenevaleneval85 + valenevaleneval86 + valenevaleneval87 + valenevaleneval88+
+      valenevaleneval89 + valenevaleneval90 + valenevaleneval91 + valenevaleneval92+
+      valenevaleneval93 + valenevaleneval94 + valenevaleneval95 + valenevaleneval96
+      ),0) from gmm_valenergiaentrega
+      where pericodi = {2}
+      and emprcodi = {4}
+      and extract(year from medifecha) || EXTRACT(month from medifecha) = '{3}'
+
+      ), {4},
+      {2}, 'ENTPRE', {0}, {1}, '{5}', SYSDATE)
+    </query>
+  </Sql>
+  
+  
+</Sqls>

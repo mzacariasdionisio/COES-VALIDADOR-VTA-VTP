@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(revicodi), 0) + 1 from ri_revision
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxIteracion</key>
+    <query>
+      select nvl(max(reviiteracion), 0) + 1
+      from
+      ri_revision
+      where revicodi = :revicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ri_revision(
+      revicodi,
+      reviiteracion,
+      reviestado,
+      emprcodi,
+      etrvcodi,
+      reviestadoregistro,
+      reviusucreacion,
+      revifeccreacion,
+      reviusumodificacion,
+      revifecmodificacion,
+      reviusurevision,
+      revifecrevision,
+      revifinalizado,
+      revifecfinalizado,
+      revinotificado,
+      revifecnotificado,
+      reviterminado,
+      revifecterminado,
+      revienviado,
+      revifecenviado
+      )
+      values(
+      :revicodi,
+      :reviiteracion,
+      :reviestado,
+      :emprcodi,
+      :etrvcodi,
+      :reviestadoregistro,
+      :reviusucreacion,
+      :revifeccreacion,
+      :reviusumodificacion,
+      :revifecmodificacion,
+      :reviusurevision,
+      :revifecrevision,
+      :revifinalizado,
+      :revifecfinalizado,
+      :revinotificado,
+      :revifecnotificado,
+      :reviterminado,
+      :revifecterminado,
+      :revienviado,
+      :revifecenviado
+      )
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ri_revision
+      set
+      reviusurevision = :reviusurevision,
+      revifecrevision = :revifecrevision,
+
+      revifinalizado = :revifinalizado,
+      revifecfinalizado = :revifecfinalizado,
+
+      revinotificado = :revinotificado,
+      revifecnotificado = :revifecnotificado,
+
+      reviterminado = :reviterminado,
+      revifecterminado = :revifecterminado,
+
+      revienviado= :revienviado,
+      revifecenviado = :revifecenviado,
+
+      reviusumodificacion = :reviusumodificacion,
+      revifecmodificacion = :revifecmodificacion,
+
+      reviestado = :reviestado
+
+      where
+      revicodi = :revicodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateEstadoRegistroInactivo</key>
+    <query>
+      update ri_revision
+      set
+      reviestadoregistro = 'I'
+      where
+      emprcodi = :emprcodi and etrvcodi= :etrvcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>Finalizar</key>
+    <query>
+      update ri_revision
+      set
+      revifinalizado = :revifinalizado,
+      reviiteracion = :reviiteracion,
+      reviestado = :reviestado,
+      revifecrevision = :revifecrevision,
+      reviusumodificacion = :reviusumodificacion,
+      revifecmodificacion = :revifecmodificacion,
+      reviusurevision = :reviusurevision
+      where
+      revicodi = :revicodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ri_revision
+      where
+      revicodi = :revicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      revicodi,
+      reviiteracion,
+      reviestado,
+      emprcodi,
+      etrvcodi,
+      reviusucreacion,
+      revifeccreacion,
+      reviusumodificacion,
+      revifecmodificacion,
+
+      reviusurevision,
+      revifecrevision,
+
+      revifinalizado,
+      revifecfinalizado,
+
+      revinotificado,
+      revifecnotificado,
+
+      reviterminado,
+      revifecterminado,
+
+      revienviado,
+      revifecenviado
+
+      from
+      ri_revision
+      where
+      revicodi = :revicodi
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      revicodi,
+      reviiteracion,
+      reviestado,
+      emprcodi,
+      etrvcodi,
+      reviusucreacion,
+      revifeccreacion,
+      reviusumodificacion,
+      revifecmodificacion,
+
+      reviusurevision,
+      revifecrevision,
+
+      revifinalizado,
+      revifecfinalizado,
+
+      revinotificado,
+      revifecnotificado,
+
+      reviterminado,
+      revifecterminado,
+
+      revienviado,
+      revifecenviado
+      from
+      ri_revision
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByEstadoAndTipEmp</key>
+    <query>
+      select
+      *
+      from(
+      select
+      em.emprcodi,
+      (select count(*) from RI_REvision R where R.emprcodi = em.emprcodi and R.ETRVCODI = 1 and R.REVIESTADOREGISTRO = 'A') as REVIITERACIONSGI,
+      (select count(*) from RI_REvision R where R.emprcodi = em.emprcodi and R.ETRVCODI = 2 and R.REVIESTADOREGISTRO = 'A') as REVIITERACIONDJR,
+      te.tipoemprdesc,
+      em.emprrazsocial,
+      em.emprnombrecomercial,
+      em.emprsigla,
+      em.emprfecinscripcion,
+      (select
+      case (REVIESTADO)
+      when 'PENDIENTE' then
+      cast((sysdate - REVIFECCREACION ) * (24) as int)
+      else
+      cast((REVIFECREVISION - REVIFECCREACION) * (24) as int)
+      end
+      from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as HorasSGI,
+      (select
+      case (REVIESTADO)
+      when 'PENDIENTE' then
+      cast((sysdate - REVIFECCREACION ) * (24) as int)
+      else
+      cast((REVIFECREVISION - REVIFECCREACION) * (24) as int)
+      end
+      from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as HorasDJR,
+
+      em.emprestado,
+
+      (select revicodi from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviCodiSGI,
+      (select revicodi from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviCodiDJR,
+
+      (select REVIFECREVISION from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as RevifecrevisionSGI,
+      (select REVIFECREVISION from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as RevifecrevisionDJR,
+
+      (select revifinalizado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviFinalizadoSGI,
+      (select revifinalizado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviFinalizadoDJR,
+
+      (select REVIFECFINALIZADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviFecFinalizadoSGI,
+      (select REVIFECFINALIZADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviFecFinalizadoDJR,
+
+      (select revinotificado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviNotificadoSGI,
+      (select revinotificado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviNotificadoDJR,
+
+      (select REVIFECNOTIFICADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviFecNotificadoSGI,
+      (select REVIFECNOTIFICADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviFecNotificadoDJR,
+
+      (select reviestado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviEstadoSGI,
+      (select reviestado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviEstadoDJR,
+
+      (select revienviado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviEnviadoSGI,
+      (select revienviado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviEnviadoDJR,
+
+      (select REVIFECENVIADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviFecEnviadoSGI,
+      (select REVIFECENVIADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviFecEnviadoDJR,
+
+      (select REVITERMINADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviTerminadoSGI,
+      (select REVITERMINADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviTerminadoDJR,
+
+      (select REVIFECTERMINADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) as ReviFecTerminadoSGI,
+      (select REVIFECTERMINADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) as ReviFecTerminadoDJR,
+
+
+
+      (row_number() over (order by em.emprcodi desc)) as r
+      from
+      si_empresa em
+--      inner join ri_revision rev on em.emprcodi = rev.emprcodi
+      inner join si_tipoempresa te on te.tipoemprcodi = em.tipoemprcodi
+      where
+      (select count(*) from ri_revision where emprcodi = em.EMPRCODI) > 0 and
+      (te.tipoemprcodi = {1} or {1} = 0) and em.EMPRESTADOREGISTRO like ('%{0}%') and
+      (upper(em.emprnomb) like upper('%{2}%') or upper(em.emprabrev) like upper('%{2}%') or '{2}' = '-1')
+      )
+      where (r >= ((({3}-2) * {4}) + 2) and r &lt; (({3} * {4}) + 2 )) or ({3} = -2 and {4} = -2)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListByEstadoAndTipEmp</key>
+    <query>
+      select distinct
+      count(*)
+      from
+      si_empresa em
+      inner join ri_revision rev on em.emprcodi = rev.emprcodi
+      inner join si_tipoempresa te on te.tipoemprcodi = em.tipoemprcodi
+      where
+      te.tipoemprcodi = {1} or {1} = 0 and em.EMPRESTADOREGISTRO like ('%{0}%') and
+      (upper(em.emprnomb) like upper('%{2}%') or upper(em.emprabrev) like upper('%{2}%') or '{2}' = '-1')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DarConformidad</key>
+    <query>
+      update ri_revision
+      set REVIENVIADO = 'S', REVIFECENVIADO = sysdate
+      where revicodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DarNotificar</key>
+    <query>
+      update ri_revision
+      set REVINOTIFICADO = 'S', REVIFECNOTIFICADO = sysdate
+      where revicodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DarTerminar</key>
+    <query>
+      update ri_revision
+      set REVITERMINADO = 'S', REVIFECTERMINADO = sysdate
+      where revicodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>RevAsistente</key>
+    <query>
+      update ri_revision
+      set REVIFINALIZADO = 'N', REVIFECFINALIZADO = null
+      where revicodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      revicodi,
+      reviiteracion,
+      reviestado,
+      emprcodi,
+      etrvcodi,
+      reviusucreacion,
+      revifeccreacion,
+      reviusumodificacion,
+      revifecmodificacion,
+
+      reviusurevision,
+      revifecrevision,
+
+      revifinalizado,
+      revifecfinalizado,
+
+      revinotificado,
+      revifecnotificado,
+
+      reviterminado,
+      revifecterminado,
+
+      revienviado,
+      revifecenviado
+      from
+      ri_revision
+    </query>
+  </Sql>
+</Sqls>

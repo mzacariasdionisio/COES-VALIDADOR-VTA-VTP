@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(iiccocodi), 0) + 1 from ind_ieodcuadro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ind_ieodcuadro(
+      iiccocodi,
+      iiccotipoindisp,
+      iiccopr,
+      iiccousucreacion,
+      iiccofeccreacion,
+      iiccousumodificacion,
+      iiccofecmodificacion,
+      iiccocomentario,
+      iccodi,
+      iiccoestado
+      )
+      values(
+      :iiccocodi,
+      :iiccotipoindisp,
+      :iiccopr,
+      :iiccousucreacion,
+      :iiccofeccreacion,
+      :iiccousumodificacion,
+      :iiccofecmodificacion,
+      :iiccocomentario,
+      :iccodi,
+      :iiccoestado
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ind_ieodcuadro
+      set
+      iiccousumodificacion = :iiccousumodificacion,
+      iiccofecmodificacion = :iiccofecmodificacion,
+      iiccoestado = :iiccoestado
+      where
+      iiccocodi = :iiccocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ind_ieodcuadro
+      where
+      iiccocodi = :iiccocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      ind_ieodcuadro
+      where
+      iiccocodi = :iiccocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      ind_ieodcuadro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListHistoricoByIccodi</key>
+    <query>
+      select
+      *
+      from
+      ind_ieodcuadro
+      where
+      iccodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      i.*,
+      e.ICHORINI,
+      e.ICHORFIN,
+      e.Icdescrip1,
+      e.Icdescrip2,
+      e.Icdescrip3,
+      e.equicodi,
+      eq.equiabrev,
+      eq.famcodi,
+      eq.areacodi,
+      eq2.equicodi as equipadre,
+      tipoarea.tareaabrev || ' ' || ar.areanomb as areadesc,
+      f.famabrev,
+      f.famnomb,
+      emp.emprcodi,
+      emp.emprnomb,
+      CLA.EVENCLASECODI,
+      cla.evenclasedesc,
+      CLA.EVENCLASEABREV,
+      gr.GRUPOTIPOCOGEN
+      from ind_ieodcuadro i
+      inner join eve_ieodcuadro e on e.iccodi = i.iccodi
+      INNER JOIN EVE_EVENCLASE CLA ON CLA.EVENCLASECODI = 1
+      inner join eq_equipo eq on eq.equicodi = e.equicodi
+      LEFT JOIN EQ_EQUIPO eq2 ON eq2.EQUICODI = (CASE WHEN EQ.FAMCODI in (4,5,37,39) THEN EQ.equicodi ELSE EQ.EQUIPADRE END)
+      left join pr_grupo gr on gr.grupocodi = eq.grupocodi
+      INNER JOIN EQ_AREA AR ON AR.AREACODI = EQ.AREACODI
+      inner join eq_tipoarea tipoarea on ar.tareacodi = tipoarea.tareacodi
+      INNER JOIN EQ_FAMILIA F ON F.FAMCODI = EQ.FAMCODI
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi --(case when coalesce(e.EMPRCODI, -1) > 0 then e.EMPRCODI else eq.emprcodi end)
+      where iiccoestado='A' and
+      (cla.EVENCLASECODI in ({4}) or '{4}' = '-1') and
+      (emp.emprcodi in ({2}) or '{2}' = '-1') and
+      (f.famcodi in ({3}) or '{3}' = '-1') and
+      e.ICHORINI >= to_date('{0}','YYYY-MM-DD') AND e.ICHORfin &lt; to_date('{1}','YYYY-MM-DD')
+    </query>
+  </Sql>
+</Sqls>

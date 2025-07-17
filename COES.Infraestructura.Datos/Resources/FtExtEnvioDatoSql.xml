@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ftedatcodi), 0) + 1 from ft_ext_envio_dato
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ft_ext_envio_dato(
+      ftedatcodi,
+      fteeqcodi,
+      fitcfgcodi,
+      ftedatvalor,
+      ftedatflagvalorconf,
+      ftedatcomentario,
+      ftedatflagsustentoconf,
+      ftedatflageditable,
+      ftedatflagrevisable,
+      ftedatflagmodificado
+      )
+      values(
+      :ftedatcodi,
+      :fteeqcodi,
+      :fitcfgcodi,
+      :ftedatvalor,
+      :ftedatflagvalorconf,
+      :ftedatcomentario,
+      :ftedatflagsustentoconf,
+      :ftedatflageditable,
+      :ftedatflagrevisable,
+      :ftedatflagmodificado
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ft_ext_envio_dato
+      set
+      fteeqcodi = :fteeqcodi,
+      fitcfgcodi = :fitcfgcodi,
+      ftedatvalor = :ftedatvalor,
+      ftedatflagvalorconf = :ftedatflagvalorconf,
+      ftedatcomentario = :ftedatcomentario,
+      ftedatflagsustentoconf = :ftedatflagsustentoconf,
+      ftedatflageditable= :ftedatflageditable,
+      ftedatflagrevisable= :ftedatflagrevisable,
+      ftedatflagmodificado = :ftedatflagmodificado
+      where
+      ftedatcodi = :ftedatcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateXVersion</key>
+    <query>
+      --setear valores por defecto para solicitud. Cuando es subsanación solo se aplica para modificación FT
+      update ft_ext_envio_dato
+      set
+      ftedatflagmodificado = 0,
+      ftedatflagrevisable = 'N'
+      where
+      FTEEQCODI in (select FTEEQCODI from FT_EXT_ENVIO_EQ where ftevercodi = {0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateXEquipo</key>
+    <query>
+      --setear valores por defecto para solicitud de integracion. Caso especial 1
+      update ft_ext_envio_dato
+      set
+      ftedatflagmodificado = 0,
+      ftedatflagrevisable = 'N'
+      where
+      FTEEQCODI in ({0})
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>UpdateXFtedatcodis</key>
+    <query>
+      update ft_ext_envio_dato
+      set
+      ftedatflagmodificado = 1,
+      ftedatflagrevisable = 'S'
+      where
+      ftedatcodi in ({0})
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ft_ext_envio_dato
+      where
+      ftedatcodi = :ftedatcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_envio_dato
+      where
+      ftedatcodi = :ftedatcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_envio_dato
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      d.*,
+      cfg.ftitcodi
+      from ft_ext_envio_dato d
+      inner join ft_ext_itemcfg cfg on cfg.fitcfgcodi = d.fitcfgcodi
+      where fteeqcodi in ({0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarParametros</key>
+    <query>
+      select
+      d.*,
+      (CASE WHEN c.concepcodi IS NULL THEN p.proptipo ELSE c.conceptipo END) AS tipoelemento,
+      c.concepcodi,
+      p.propcodi,
+      c.Concepabrev,
+      p.Propabrev,
+      ee.equicodi,
+      ee.grupocodi,
+      eq.famcodi,
+      fi.ftitcodi,
+      fi.ftitactivo
+      from ft_ext_envio_dato d
+      inner join ft_ext_envio_eq ee on ee.fteeqcodi = d.fteeqcodi
+      left join eq_equipo eq on eq.equicodi = ee.equicodi
+      inner join ft_ext_itemcfg cfg on cfg.fitcfgcodi = d.fitcfgcodi
+      inner join ft_fictecitem fi on fi.ftitcodi = cfg.ftitcodi
+      left join pr_concepto c on c.concepcodi = fi.concepcodi
+      left join eq_propiedad p on p.propcodi = fi.propcodi
+      where d.fteeqcodi in ({0})
+    </query>
+  </Sql>
+  
+</Sqls>

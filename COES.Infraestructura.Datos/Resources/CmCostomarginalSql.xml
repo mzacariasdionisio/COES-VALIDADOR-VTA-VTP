@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(cmgncodi), 0) + 1 from cm_costomarginal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cm_costomarginal(
+      cmgncodi,
+      cnfbarcodi,
+      cmgnenergia,
+      cmgncongestion,
+      cmgntotal,
+      cmgncorrelativo,
+      cmgnfecha,
+      cmgnusucreacion,
+      cmgnfeccreacion,
+      cmgndemanda,
+      cmgnreproceso,
+      cmgnoperativo
+      )
+      values(
+      :cmgncodi,
+      :cnfbarcodi,
+      :cmgnenergia,
+      :cmgncongestion,
+      :cmgntotal,
+      :cmgncorrelativo,
+      :cmgnfecha,
+      :cmgnusucreacion,
+      :cmgnfeccreacion,
+      :cmgndemanda,
+      :cmgnreproceso,
+      :cmgnoperativo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cm_costomarginal
+      set
+      cnfbarcodi = :cnfbarcodi,
+      cmgnenergia = :cmgnenergia,
+      cmgncongestion = :cmgncongestion,
+      cmgntotal = :cmgntotal,
+      cmgncorrelativo = :cmgncorrelativo,
+      cmgnfecha = :cmgnfecha,
+      cmgnusucreacion = :cmgnusucreacion,
+      cmgnfeccreacion = :cmgnfeccreacion,
+      cmgnoperativo = :cmgnoperativo
+      where
+      cmgncodi = :cmgncodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cm_costomarginal
+       where
+           cmgncodi = :cmgncodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      cmgncodi,
+      cnfbarcodi,
+      cmgnenergia,
+      cmgncongestion,
+      cmgntotal,
+      cmgncorrelativo,
+      cmgnfecha,
+      cmgnusucreacion,
+      cmgnfeccreacion,
+      cmgndemanda,
+      cmgnoperativo
+      from
+      cm_costomarginal
+      where
+      cmgncodi = :cmgncodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      cmgncodi,
+      cnfbarcodi,
+      cmgnenergia,
+      cmgncongestion,
+      cmgntotal,
+      cmgncorrelativo,
+      cmgnfecha,
+      cmgnusucreacion,
+      cmgnfeccreacion,
+      cmgndemanda,
+      cmgnoperativo
+      from
+      cm_costomarginal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      cmgncodi,
+      cnfbarcodi,
+      cmgnenergia,
+      cmgncongestion,
+      cmgntotal,
+      cmgncorrelativo,
+      cmgnfecha,
+      cmgnusucreacion,
+      cmgnfeccreacion,
+      cmgndemanda,
+      cmgnoperativo
+      from
+      cm_costomarginal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCorrelativo</key>
+    <query>
+      --select nvl(max(cmgncorrelativo), 0) from cm_costomarginal
+      select maxcount from fw_counter where tablename = 'CM_COSTOMARGINAL'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarCorrelativo</key>
+    <query>
+      update fw_counter set maxcount = :cmgncorrelativo where tablename = 'CM_COSTOMARGINAL'
+    </query>
+  </Sql>
+  
+
+  <Sql>
+    <key>ObtenerResultadoCostoMarginal</key>
+    <query>
+      select tabla.*,
+      case ver.cmveprtipoestimador
+      when 'P' then 'PSS/ODMS'
+      when 'T' then 'TNA'
+      else 'PSS/ODMS' end as tipoestimador,
+      case ver.cmveprtipoprograma
+      when 'N' then 'NCP-' || ver.cmveprvalor
+      when 'Y' then 'YUPANA-' || ver.topcodi
+      else 'NCP-' || ver.cmveprvalor
+      end as versionpdo,
+      ver.cmveprtipocorrida as tipoproceso,
+	  ver.cmveprversion
+      from
+      (select distinct cm.cmgncorrelativo, cm.cmgnfecha, cm.cmgnfeccreacion, cm.cmgnusucreacion from cm_costomarginal  cm
+      inner join cm_configbarra barra on cm.cnfbarcodi = barra.cnfbarcodi
+      where
+      cmgnfecha between to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('{0} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      and barra.cnfbarnodo != 'NOEXISTE'
+      ) tabla
+      left join cm_versionprograma ver on tabla.cmgncorrelativo = ver.cmgncorrelativo      
+      order by tabla.cmgnfeccreacion desc
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerResultadoCostoMarginalExtranet</key>
+		<query>
+			select tabla.*,
+			case ver.cmveprtipoestimador
+			when 'P' then 'PSS/ODMS'
+			when 'T' then 'TNA'
+			else 'PSS/ODMS' end as tipoestimador,
+			case ver.cmveprtipoprograma
+			when 'N' then 'NCP-' || ver.cmveprvalor
+			when 'Y' then 'YUPANA-' || ver.topcodi
+			else 'NCP-' || ver.cmveprvalor
+			end as versionpdo,
+			ver.cmveprtipocorrida as tipoproceso,
+			ver.cmveprversion
+			from
+			(select distinct cm.cmgncorrelativo, cm.cmgnfecha, to_char(cm.cmgnfecha, 'YYYY-MM-DD HH24:MI') cmgnfecha2, cm.cmgnfeccreacion, cm.cmgnusucreacion from cm_costomarginal  cm
+			inner join cm_configbarra barra on cm.cnfbarcodi = barra.cnfbarcodi
+			where
+			cmgnfecha between to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('{0} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+			and barra.cnfbarnodo != 'NOEXISTE'
+			) tabla
+			left join cm_versionprograma ver on tabla.cmgncorrelativo = ver.cmgncorrelativo
+			order by tabla.cmgnfecha2 desc, tabla.cmgnfeccreacion desc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerUltimosProcesosCM</key>
+		<query>
+			select tabla.*,
+			case ver.cmveprtipoestimador
+			when 'P' then 'PSS/ODMS'
+			when 'T' then 'TNA'
+			else 'PSS/ODMS' end as tipoestimador,
+			ver.topcodi,
+			case ver.cmveprtipoprograma
+			when 'N' then 'NCP-' || ver.cmveprvalor
+			when 'Y' then 'YUPANA-' || ver.topcodi
+			else 'NCP-' || ver.cmveprvalor
+			end as versionpdo
+			from
+			(select distinct cm.cmgncorrelativo, cm.cmgnfecha, cm.cmgnfeccreacion from cm_costomarginal  cm
+			inner join
+			(
+			select max(t.cmgncorrelativo) as correlativo from (
+			select distinct cm1.cmgncorrelativo, to_char(cmgnfecha, 'YYYY-MM-DD HH24:MI') as fecha from cm_costomarginal cm1
+			inner join cm_versionprograma ver on cm1.cmgncorrelativo = ver.cmgncorrelativo
+			where cm1.cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+			and cm1.cmgnfecha &lt;= to_date('{0} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+			) t
+			group by t.fecha
+			) tabla on cm.cmgncorrelativo = tabla.correlativo
+			inner join cm_configbarra barra on cm.cnfbarcodi = barra.cnfbarcodi
+			where
+			cmgnfecha between to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('{0} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+			and barra.cnfbarnodo != 'NOEXISTE'
+			) tabla
+			left join cm_versionprograma ver on tabla.cmgncorrelativo = ver.cmgncorrelativo
+			order by tabla.cmgnfecha asc
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>ObtenerResultadoCostoMarginalWeb</key>
+    <query>
+		select distinct cm.cmgncorrelativo, cm.cmgnfecha, cm.cmgnfeccreacion from cm_costomarginal  cm
+		inner join cm_configbarra barra on cm.cnfbarcodi = barra.cnfbarcodi
+		inner join cm_versionprograma ver on cm.cmgncorrelativo = ver.cmgncorrelativo
+		where  cmgnfecha between to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('{0} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+		and barra.cnfbarnodo != 'NOEXISTE' and ver.cmveprversion = {1}
+		--and cm.cmgnreproceso = 'N'
+		order by cm.cmgnfeccreacion desc
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerDatosCostoMarginalCorrida</key>
+    <query>
+      select
+      cm.*,
+      bar.cnfbarnodo,
+      bar.cnfbarnombre,
+      bar.cnfbarcoorx,
+      bar.cnfbarcoory,
+      bar.cnfbarindpublicacion,
+      bar.cnfbardefecto
+      from cm_costomarginal cm
+      inner join cm_configbarra bar on cm.cnfbarcodi = bar.cnfbarcodi
+      where cm.cmgncorrelativo = {0} and bar.cnfbarnombre != 'NOEXISTE'
+      order by bar.cnfbarnodo asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteCostosMarginales</key>
+    <query>      
+      select distinct
+      cm.*,
+      bar.cnfbarnodo,
+      bar.cnfbarnombre,
+      bar.cnfbarcoorx,
+      bar.cnfbarcoory,
+      bar.cnfbarindpublicacion,
+      bar.cnfbardefecto,
+      top.topnombre,
+      top.topcodi
+      from cm_costomarginal cm
+      inner join 
+      (
+      select max(t.cmgncorrelativo) as correlativo from (      
+     
+      select distinct cm1.cmgncorrelativo, to_char(cmgnfecha, 'YYYY-MM-DD HH24:MI') as fecha from cm_costomarginal cm1
+      inner join cm_versionprograma ver on cm1.cmgncorrelativo = ver.cmgncorrelativo
+      where cm1.cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+      and cm1.cmgnfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      and  cm1.cnfbarcodi != -1 and ver.cmveprtipoestimador = '{2}' and ver.cmveprtipoprograma = '{3}' and ver.cmveprversion = {4}
+
+      ) t
+      group by t.fecha
+      ) tabla on cm.cmgncorrelativo = tabla.correlativo
+      inner join cm_configbarra bar on cm.cnfbarcodi = bar.cnfbarcodi
+      inner join cm_versionprograma vp on  vp.cmgncorrelativo = cm.cmgncorrelativo
+      inner join cp_topologia top on top.topcodi = vp.topcodi
+      where  bar.cnfbarnombre != 'NOEXISTE'
+      and  cm.cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and cm.cmgnfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      order by bar.cnfbarnodo asc,cm.cmgnfecha asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteCostosMarginalesTR</key>
+    <query>
+      select distinct
+      cm.*,
+      bar.cnfbarnodo,
+      bar.cnfbarnombre,
+      bar.cnfbarcoorx,
+      bar.cnfbarcoory,
+      bar.cnfbarindpublicacion,
+      bar.cnfbardefecto
+      from cm_costomarginal cm
+      inner join
+      (
+      select max(t.cmgncorrelativo) as correlativo from (
+      select distinct cmgncorrelativo, to_char(cmgnfecha, 'YYYY-MM-DD HH24:MI') as fecha from cm_costomarginal
+      where cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and cmgnfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      and  cnfbarcodi != -1 and cmgnreproceso = 'N'
+      ) t
+      group by t.fecha
+      ) tabla on cm.cmgncorrelativo = tabla.correlativo
+      inner join cm_configbarra bar on cm.cnfbarcodi = bar.cnfbarcodi
+      where  bar.cnfbarnombre != 'NOEXISTE'
+      and  cm.cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and cm.cmgnfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      and cm.cmgnreproceso = 'N'
+      order by bar.cnfbarnodo asc,cm.cmgnfecha asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteCostosMarginalesWeb</key>
+    <query>
+      select distinct
+      cm.*,
+      bar.cnfbarnodo,
+      bar.cnfbarnombre,
+      bar.cnfbarcoorx,
+      bar.cnfbarcoory,
+      bar.cnfbarindpublicacion,
+      bar.cnfbardefecto
+      from cm_costomarginal cm
+      inner join
+      (
+      select max(t.cmgncorrelativo) as correlativo from (
+      
+      select distinct cm1.cmgncorrelativo, to_char(cmgnfecha, 'YYYY-MM-DD HH24:MI') as fecha from cm_costomarginal cm1
+      inner join cm_versionprograma ver on cm1.cmgncorrelativo = ver.cmgncorrelativo
+      where cm1.cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and cm1.cmgnfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      and  cm1.cnfbarcodi != -1 and cm1.cmgnreproceso = 'N' and ver.cmveprtipoestimador = 'T' and ver.cmveprtipoprograma = 'Y'
+
+      ) t
+      group by t.fecha
+      ) tabla on cm.cmgncorrelativo = tabla.correlativo
+      inner join cm_configbarra bar on cm.cnfbarcodi = bar.cnfbarcodi
+      where  bar.cnfbarnombre != 'NOEXISTE'
+      and  cm.cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and cm.cmgnfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      and (bar.cnfbardefecto = '{2}' or '{2}' = '-1')
+      and bar.cnfbarindpublicacion = 'S'
+      and cm.cmgnreproceso = 'N'
+      order by bar.cnfbarnodo asc,cm.cmgnfecha asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerIndicadorHora</key>
+    <query>
+      select case when to_char(cmgnfecha, 'HH24') = '23' and  to_char(cmgnfecha, 'MI') = '59' then 1 else 0 end as inidicador 
+      from cm_costomarginal where cmgncorrelativo = :cmgncorrelativo and rownum = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GrabarRepresentativo</key>
+    <query>
+      update wb_resumencm
+      set
+      rescmcorrelativo = :cmgncorrelativo,
+      rescmvalor = :cmgntotal,
+      rescmfecha = :cmgnfecha,
+      lastdate = sysdate
+      where rescmcodi = 0
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerResumenCM</key>
+    <query>
+      select
+      rescmfecha as cmgnfecha,
+      rescmcorrelativo as cmgncorrelativo,
+      rescmvalor as cmgntotal
+      from wb_resumencm
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EliminarCorridaCostoMarginal</key>
+    <query>
+      delete from cm_costomarginal where cmgncorrelativo = :cmgncorrelativo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerDatosCostoMarginalXPeriodos</key>
+    <query>
+      select
+      cm.*,
+      bar.cnfbarnodo,
+      bar.cnfbarnombre,
+      bar.cnfbarcoorx,
+      bar.cnfbarcoory,
+      bar.cnfbarindpublicacion
+      from cm_costomarginal cm
+      inner join cm_configbarra bar on cm.cnfbarcodi = bar.cnfbarcodi
+      where cm.cmgncorrelativo in (select distinct cmgncorrelativo from cm_costomarginal
+      where to_char(cmgnfecha, 'YYYY-MM-DD') = '{0}')
+      order by bar.cnfbarnodo asc, cm.cmgncorrelativo desc 
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerComparativoCM</key>
+		<query>
+			select distinct
+			bar.cnfbarcodi,
+			cm.cmgnfecha,
+			avg(cm.cmgntotal) as cmgntotal,
+			sum(cm.cmgndemanda) as cmgndemanda
+			from cm_costomarginal cm
+			inner join
+			(
+			select max(t.cmgncorrelativo) as correlativo from (
+
+			select distinct cm1.cmgncorrelativo, to_char(cmgnfecha, 'YYYY-MM-DD HH24:MI') as fecha from cm_costomarginal cm1
+			inner join cm_versionprograma ver on cm1.cmgncorrelativo = ver.cmgncorrelativo
+			inner join cm_configbarra cnf on cm1.cnfbarcodi = cnf.cnfbarcodi
+			where cm1.cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+			and cm1.cmgnfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+			and  (cm1.cnfbarcodi = {2} or ({2} = -1 and cnf.cnfbarcodi in (select distinct rel.cnfbarcodi from cm_barra_formula rel)))   and ver.cmveprtipoestimador = 'T' and ver.cmveprtipoprograma = 'Y'
+			) t
+			group by t.fecha
+			) tabla on cm.cmgncorrelativo = tabla.correlativo
+			inner join cm_configbarra bar on cm.cnfbarcodi = bar.cnfbarcodi
+			where  bar.cnfbarnombre != 'NOEXISTE' and (bar.cnfbarcodi = {2} or ({2} = -1 and bar.cnfbarcodi in (select distinct rel.cnfbarcodi from cm_barra_formula rel))) and bar.cnfbarestado = 'A'
+			and  cm.cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and cm.cmgnfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+			group by bar.cnfbarcodi, cm.cmgnfecha
+			order by cm.cmgnfecha asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerUltimosProcesosCMPorVersion</key>
+		<query>
+			select tabla.*,
+			case ver.cmveprtipoestimador
+			when 'P' then 'PSS/ODMS'
+			when 'T' then 'TNA'
+			else 'PSS/ODMS' end as tipoestimador,
+			ver.topcodi,
+			case ver.cmveprtipoprograma
+			when 'N' then 'NCP-' || ver.cmveprvalor
+			when 'Y' then 'YUPANA-' || ver.topcodi
+			else 'NCP-' || ver.cmveprvalor
+			end as versionpdo
+			from
+			(select distinct cm.cmgncorrelativo, cm.cmgnfecha, cm.cmgnfeccreacion from cm_costomarginal  cm
+			inner join
+			(
+			select max(t.cmgncorrelativo) as correlativo from (
+			select distinct cm1.cmgncorrelativo, to_char(cmgnfecha, 'YYYY-MM-DD HH24:MI') as fecha from cm_costomarginal cm1
+			inner join cm_versionprograma ver on cm1.cmgncorrelativo = ver.cmgncorrelativo
+			where cm1.cmgnfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+			and cm1.cmgnfecha &lt;= to_date('{0} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+			and ver.cmveprversion = {1}
+			) t
+			group by t.fecha
+			) tabla on cm.cmgncorrelativo = tabla.correlativo
+			inner join cm_configbarra barra on cm.cnfbarcodi = barra.cnfbarcodi
+			where
+			cmgnfecha between to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('{0} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+			and barra.cnfbarnodo != 'NOEXISTE'
+			) tabla
+			left join cm_versionprograma ver on tabla.cmgncorrelativo = ver.cmgncorrelativo and ver.cmveprversion = {1}
+			order by tabla.cmgnfecha asc
+		</query>
+	</Sql>
+
+</Sqls>

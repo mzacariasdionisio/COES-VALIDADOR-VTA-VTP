@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(mopvcodi), 0) + 1 from sma_modo_oper_val
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetNumVal</key>
+    <query>
+      select nvl(max(mopvgrupoval), 0) + 1 from sma_modo_oper_val
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into sma_modo_oper_val(
+      mopvcodi,
+      mopvusucreacion,
+      mopvfeccreacion,
+      mopvusumodificacion,
+      mopvfecmodificacion,
+      mopvgrupoval,
+      grupocodi,
+      mopvestado
+      )
+      values(
+      :mopvcodi,
+      :mopvusucreacion,
+      sysdate,
+      null,
+      null,
+      :mopvgrupoval,
+      :grupocodi,
+      'A'
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update sma_modo_oper_val
+      set
+      grupocodi = :grupocodi,
+      mopvusumodificacion = :mopvusumodificacion,
+      mopvfecmodificacion = sysdate
+      where
+      mopvcodi = :mopvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update sma_modo_oper_val
+      set
+      mopvusumodificacion = :mopvusumodificacion,
+      mopvfecmodificacion = sysdate,
+      mopvestado = 'X'
+      where
+      mopvcodi = :mopvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      moov.mopvcodi,
+      moov.mopvusucreacion,
+      moov.mopvfeccreacion,
+      moov.mopvusumodificacion,
+      moov.mopvfecmodificacion,
+      moov.mopvgrupoval,
+      moov.grupocodi,
+      moov.mopvestado,
+      urmo.gruponomb,
+      urmo.grupotipo,
+      urmo.urscodi,
+      urmo.ursnomb
+      from
+      sma_modo_oper_val moov, vw_sma_urs_modo_operacion urmo
+      where
+      moov.grupocodi = urmo.grupocodi and
+      mopvcodi = :mopvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      mopvcodi,
+      mopvusucreacion,
+      mopvfeccreacion,
+      mopvusumodificacion,
+      mopvfecmodificacion,
+      mopvgrupoval,
+      grupocodi,
+      mopvestado
+      from
+      sma_modo_oper_val
+      where
+      mopvestado = 'A'
+      and mopvgrupoval in (select V1.mopvgrupoval from sma_modo_oper_val V1 where V1.mopvestado = 'A' and V1.grupocodi in (
+      select regexp_substr(:grupocodi,'[^,]+', 1, level) from dual
+      connect by regexp_substr(:grupocodi, '[^,]+', 1, level) is not null))
+      order by mopvgrupoval, grupocodi
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListAll</key>
+    <query>
+      SELECT
+      moov.MOPVCODI,
+      moov.MOPVUSUCREACION,
+      moov.MOPVFECCREACION,
+      moov.MOPVUSUMODIFICACION,
+      moov.MOPVFECMODIFICACION,
+      moov.MOPVGRUPOVAL,
+      moov.GRUPOCODI,
+      moov.MOPVESTADO,
+      umop.GRUPONOMB,
+      umop.GRUPOTIPO,
+      umop.URSCODI,
+      umop.URSNOMB
+      FROM SMA_MODO_OPER_VAL moov ,VW_SMA_URS_MODO_OPERACION umop
+      where
+      mopvestado = 'A' and
+      moov.grupocodi = umop.grupocodi
+      order by mopvgrupoval, grupocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListMOVal</key>
+    <query>
+      select grupocodi, GRUPONOMB from VW_SMA_URS_MODO_OPERACION umop
+      where
+      umop.URSCODI = :urscodi and
+      grupocodi not in (
+      SELECT
+      moov.GRUPOCODI
+      FROM SMA_MODO_OPER_VAL moov
+      where
+      moov.mopvestado = 'A' and
+      moov.mopvgrupoval = :mopvgrupoval )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      mopvcodi,
+      mopvusucreacion,
+      mopvfeccreacion,
+      mopvusumodificacion,
+      mopvfecmodificacion,
+      mopvgrupoval,
+      grupocodi,
+      mopvestado
+      from
+      sma_modo_oper_val
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListMOValxUrs</key>
+    <query>
+      select
+      umop.urscodi,
+      srom.mopvgrupoval,
+      (LISTAGG(trim(srom.grupocodi), ',') WITHIN GROUP (ORDER BY srom.grupocodi)) as MOPVLISTMOVAL
+      from sma_modo_oper_val srom, VW_SMA_URS_MODO_OPERACION umop
+      where
+      srom.mopvestado = 'A' and
+      srom.grupocodi = umop.grupocodi and
+      umop.urscodi = :urscodi
+      group by umop.urscodi, srom.mopvgrupoval
+    </query>
+  </Sql>
+
+</Sqls>

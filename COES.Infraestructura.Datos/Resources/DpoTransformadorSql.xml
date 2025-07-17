@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(dpotnfcodi), 0) + 1 from dpo_transformador
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into dpo_transformador(
+      dpotnfcodi,
+      dpotnfcodiexcel,
+      dposubnombre,
+      emprnomb,
+      dpotnfusucreacion,
+      dpotnffeccreacion
+      )
+      values(
+      :dpotnfcodi,
+      :dpotnfcodiexcel,
+      :dposubnombre,
+      :emprnomb,
+      :dpotnfusucreacion,
+      :dpotnffeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update dpo_transformador
+      set
+      dposubnombre = :dposubnombre,
+      emprnomb = :emprnomb,
+      dpotnfusucreacion = :dpotnfusucreacion,
+      dpotnffeccreacion = :dpotnffeccreacion
+      where
+      dpotnfcodi = :dpotnfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from dpo_transformador
+      where
+      (dpotnfcodi = :dpotnfcodi or '0' = :dpotnfcodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      dpotnfcodi,
+      dpotnfcodiexcel,
+      dposubnombre,
+      emprnomb,
+      dpotnfusucreacion,
+      dpotnffeccreacion
+      from
+      dpo_transformador
+      where
+      dpotnfcodi = :dpotnfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      dpotnfcodi,
+      dpotnfcodiexcel,
+      dposubnombre,
+      emprnomb,
+      dpotnfusucreacion,
+      dpotnffeccreacion
+      from
+      dpo_transformador
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListTransformadorBySubestacion</key>
+    <query>
+      select
+      tab1.dpotnfcodi,
+      tab1.dpotnfcodiexcel,
+      tab2.dposubcodiexcel,
+      tab1.dposubnombre,
+      tab1.emprnomb
+      from
+      dpo_transformador tab1 inner join dpo_subestacion tab2
+      on tab1.dposubnombre = tab2.dposubnombre
+      where
+      tab2.dposubcodi = :dposubcodi
+      order by tab2.dposubnombre
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListTransformadorByList</key>
+    <query>
+      select
+      dpotnfcodi,
+      dpotnfcodiexcel,
+      dposubnombre,
+      emprnomb,
+      dpotnfusucreacion,
+      dpotnffeccreacion
+      from
+      dpo_transformador
+      where dpotnfcodi in ({0})
+      order by dpotnfcodiexcel
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListTransformadorByListExcel</key>
+    <query>
+      select
+      dpotnfcodi,
+      dpotnfcodiexcel,
+      dposubnombre,
+      emprnomb,
+      dpotnfusucreacion,
+      dpotnffeccreacion
+      from
+      dpo_transformador
+      where dpotnfcodiexcel in ({0})
+      order by dpotnfcodiexcel
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateTransformadoresSirpit</key>
+    <query>
+      MERGE INTO dpo_Transformador trns
+      USING (select d.DPODATTNFCODI, b.DPOBARCODIEXCEL, b.DPOBARNOMBRE, b.DPOBARTENSION
+      from dpo_datos96 d, dpo_barra b
+      where DPODATFECHA BETWEEN to_date('{0}', 'DD/Mm/YYYY') and to_date('{1}', 'DD/Mm/YYYY')
+      and b.DPOBARCODIEXCEL = d.dpodatbarcodi
+      GROUP BY d.DPODATTNFCODI, b.DPOBARCODIEXCEL, b.DPOBARNOMBRE, b.DPOBARTENSION) temp
+      ON (trns.DPOTNFCODIEXCEL = temp.DPODATTNFCODI)
+      WHEN MATCHED THEN
+      UPDATE SET trns.DPOBARCODIEXCEL = temp.DPOBARCODIEXCEL,
+      trns.DPOBARNOMBRE = temp.DPOBARNOMBRE,
+      trns.DPOBARTENSION = temp.DPOBARTENSION
+    </query>
+  </Sql>
+  
+</Sqls>

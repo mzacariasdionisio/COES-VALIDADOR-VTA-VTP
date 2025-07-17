@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(vcrarcodi), 0) + 1 from vcr_asignacionreserva
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vcr_asignacionreserva(
+      vcrarcodi,
+      vcrecacodi,
+      grupocodi,
+      gruponomb,
+      vcrarfecha,
+      vcrarrapbf,
+      vcrarprbf,
+      vcrarrama,
+      vcrarmpa,
+      vcrarramaursra,
+      vcrarasignreserva,
+      vcrarusucreacion,
+      vcrarfeccreacion,
+      vcrarrapbfbajar,
+      vcrarprbfbajar,
+      vcrarramabajar,
+      vcrarmpabajar,
+      vcrarramaursrabajar
+      )
+      values(
+      :vcrarcodi,
+      :vcrecacodi,
+      :grupocodi,
+      :gruponomb,
+      :vcrarfecha,
+      :vcrarrapbf,
+      :vcrarprbf,
+      :vcrarrama,
+      :vcrarmpa,
+      :vcrarramaursra,
+      :vcrarasignreserva,
+      :vcrarusucreacion,
+      :vcrarfeccreacion,
+      :vcrarrapbfbajar,
+      :vcrarprbfbajar,
+      :vcrarramabajar,
+      :vcrarmpabajar,
+      :vcrarramaursrabajar
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vcr_asignacionreserva
+      set
+      vcrecacodi = :vcrecacodi,
+      grupocodi = :grupocodi,
+      gruponomb = :gruponomb,
+      vcrarfecha = :vcrarfecha,
+      vcrarrapbf = :vcrarrapbf,
+      vcrarprbf = :vcrarprbf,
+      vcrarrama = :vcrarrama,
+      vcrarmpa = :vcrarmpa,
+      vcrarramaursra = :vcrarramaursra,
+      vcrarasignreserva = :vcrarasignreserva,
+      vcrarusucreacion = :vcrarusucreacion,
+      vcrarfeccreacion = :vcrarfeccreacion,
+      vcrarrapbfbajar = :vcrarrapbfbajar,
+      vcrarprbfbajar = :vcrarprbfbajar,
+      vcrarramabajar = :vcrarramabajar,
+      vcrarmpabajar = :vcrarmpabajar,
+      vcrarramaursrabajar = :vcrarramaursrabajar
+      where
+      vcrarcodi = :vcrarcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vcr_asignacionreserva
+      where vcrecacodi = :vcrecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select *
+      from vcr_asignacionreserva
+      where vcrarcodi = :vcrarcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select *
+      from vcr_asignacionreserva
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select *
+      from vcr_asignacionreserva
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPorMesURS</key>
+    <query>
+      select * from vcr_asignacionreserva
+      where vcrecacodi = :vcrecacodi and grupocodi = :grupocodi
+      order by vcrarfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ExportarReservaAsignadaSEV2020</key>
+    <query>
+      select
+      hora.rsfhorfecha, hora.rsfhorinicio, hora.rsfhorfin, grupo.gruponomb,
+      (sum(detalle.rsfdetvalaut) * 2) as rsfdetvalaut
+      from eve_rsfdetalle detalle
+      inner join eve_rsfhora hora on detalle.rsfhorcodi = hora.rsfhorcodi
+      inner join pr_grupo grupo on detalle.grupocodi = grupo.grupocodi
+      inner join eq_equipo eq on detalle.equicodi = eq.equicodi
+      where detalle.rsfdetvalaut is not null
+      and hora.rsfhorfecha >= to_date('{0}', 'YYYY-MM-DD')
+      and hora.rsfhorfecha &lt;= to_date('{1}', 'YYYY-MM-DD')
+      group by hora.rsfhorfecha, hora.rsfhorinicio, hora.rsfhorfin, grupo.gruponomb
+      order by hora.rsfhorfecha asc, hora.rsfhorinicio asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ExportarReservaAsignadaSEV</key>
+    <query>
+      select
+      hora.rsfhorfecha, hora.rsfhorinicio, hora.rsfhorfin, grupo.gruponomb,
+      sum(detalle.rsfdetsub) as rsfdetsub, sum(detalle.rsfdetbaj) as rsfdetbaj
+      from eve_rsfdetalle detalle
+      inner join eve_rsfhora hora on detalle.rsfhorcodi = hora.rsfhorcodi
+      inner join pr_grupo grupo on detalle.grupocodi = grupo.grupocodi
+      inner join eq_equipo eq on detalle.equicodi = eq.equicodi
+      inner join eve_rsfequivalencia equi on eq.equicodi = equi.equicodi
+      where hora.rsfhorfecha >= to_date('{0}', 'YYYY-MM-DD')
+      and hora.rsfhorfecha &lt;= to_date('{1}', 'YYYY-MM-DD')
+      and (equi.rsfequindicador is null or equi.rsfequindicador = '')
+      group by hora.rsfhorfecha, hora.rsfhorinicio, hora.rsfhorfin, grupo.gruponomb
+      order by hora.rsfhorfecha asc, hora.rsfhorinicio asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdEmpresa</key>
+    <query>
+      select nvl(sum(ar.vcrarasignreserva),0) as vcrarasignreserva
+      from vcr_asignacionreserva ar, trn_barra_urs bu
+      where ar.vcrecacodi = :vcrecacodi and ar.grupocodi = bu.grupocodi and bu.emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaOferta</key>
+    <query>
+      select * from vcr_asignacionreserva where vcrecacodi = :vcrecacodi and vcrarfecha = :fecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByMPA2020</key>
+    <query>
+      select nvl(max(vcrarmpa),0) as vcrarmpa
+      from vcr_asignacionreserva
+      where vcrecacodi = :vcrecacodi and vcrarfecha = :fecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByMPA</key>
+    <query>
+      select nvl(max(vcrarmpa),0) as vcrarmpa, nvl(max(vcrarmpabajar),0) as vcrarmpabajar
+      from vcr_asignacionreserva
+      where vcrecacodi = :vcrecacodi and vcrarfecha = :fecha
+    </query>
+  </Sql>
+</Sqls>

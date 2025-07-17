@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(cpatddcodi), 0) + 1 from cpa_total_demandadet
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cpa_total_demandadet
+      (
+      cpatddcodi,
+      cpatdcodi,
+      emprcodi,
+      cpatddtotenemwh,
+      cpatddtotenesoles,
+      cpatddtotpotmw,
+      cpatddtotpotsoles,
+      cpatddusucreacion,
+      cpatddfeccreacion
+      )
+      values
+      (
+      :cpatddcodi,
+      :cpatdcodi,
+      :emprcodi,
+      :cpatddtotenemwh,
+      :cpatddtotenesoles,
+      :cpatddtotpotmw,
+      :cpatddtotpotsoles,
+      :cpatddusucreacion,
+      :cpatddfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from cpa_total_demandadet where cpatddcodi = :cpatddcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      cpatddcodi,
+      cpatdcodi,
+      emprcodi,
+      cpatddtotenemwh,
+      cpatddtotenesoles,
+      cpatddtotpotmw,
+      cpatddtotpotsoles,
+      cpatddusucreacion,
+      cpatddfeccreacion
+      from
+      cpa_total_demandadet
+      order by
+      cpatddcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      cpatddcodi,
+      cpatdcodi,
+      emprcodi,
+      cpatddtotenemwh,
+      cpatddtotenesoles,
+      cpatddtotpotmw,
+      cpatddtotpotsoles,
+      cpatddusucreacion,
+      cpatddfeccreacion
+      from
+      cpa_total_demandadet
+      where
+      cpatddcodi = :cpatddcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByIdDemanda</key>
+    <query>
+      select
+      distinct
+      cpatotdemdet.cpatddcodi,
+      cpatotdemdet.cpatdcodi,
+      cpatotdemdet.emprcodi,
+      cpatotdemdet.cpatddtotenemwh,
+      cpatotdemdet.cpatddtotenesoles,
+      cpatotdemdet.cpatddtotpotmw,
+      cpatotdemdet.cpatddtotpotsoles,
+      cpatotdemdet.cpatddusucreacion,
+      cpatotdemdet.cpatddfeccreacion,
+      siem.emprnomb
+      from
+      cpa_empresa cpaemp
+      left join si_empresa siem on (cpaemp.emprcodi = siem.emprcodi)
+      left join cpa_total_demandadet cpatotdemdet on (cpaemp.emprcodi = cpatotdemdet.emprcodi)
+      where
+      cpatotdemdet.cpatdcodi = {0} and 
+      cpaemp.cpaempestado = 'A'
+      order by
+      siem.emprnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetLastEnvio</key>
+    <query>
+      select
+      siem.emprcodi,
+      siem.emprnomb,
+      cpatotdem.cpatdcodi,
+      cpatotdemdet.cpatddcodi,
+      cpatotdemdet.cpatddtotenemwh,
+      cpatotdemdet.cpatddtotenesoles,
+      cpatotdemdet.cpatddtotpotmw,
+      cpatotdemdet.cpatddtotpotsoles,
+      cpatotdemdet.cpatddusucreacion,
+      cpatotdemdet.cpatddfeccreacion
+      from
+      cpa_empresa cpaemp
+      join si_empresa siem on (cpaemp.emprcodi = siem.emprcodi)
+      left join cpa_total_demanda cpatotdem on (cpatotdem.cparcodi = cpaemp.cparcodi and 
+                                                cpatotdem.cpatdcodi = (select max(cpatdcodi) 
+                                                                       from cpa_total_demanda 
+                                                                       where cparcodi = {0} and 
+                                                                       cpatdtipo = '{1}' and 
+                                                                       cpatdmes = {2}))
+      left join cpa_total_demandadet cpatotdemdet on (cpaemp.emprcodi = cpatotdemdet.emprcodi and 
+                                                      cpatotdemdet.cpatdcodi = cpatotdem.cpatdcodi)
+      where
+      cpaemp.cparcodi = {0} and
+      cpaemp.cpaemptipo = '{1}' and
+      cpaemp.cpaempestado = 'A'
+      order by
+      siem.emprnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEnvioVacio</key>
+    <query>
+      select
+      distinct
+      null cpatddcodi,
+      null cpatdcodi,
+      cpaemp.emprcodi,
+      siem.emprnomb,
+      null cpatddtotenemwh,
+      null cpatddtotenesoles,
+      null cpatddtotpotmw,
+      null cpatddtotpotsoles,
+      null cpatddusucreacion,
+      null cpatddfeccreacion
+      from
+      cpa_empresa cpaemp
+      inner join si_empresa siem on (cpaemp.emprcodi = siem.emprcodi)
+      where
+      cpaemp.cparcodi = {0} and
+      cpaemp.cpaemptipo = '{1}' and
+      cpaemp.cpaempestado = 'A'
+      order by
+      siem.emprnomb
+    </query>
+  </Sql>
+
+<!-- CU17: INICIO -->
+	<Sql>
+		<key>ListLastByRevision</key>
+		<query>
+			select
+			emp.emprcodi,
+			emp.emprnomb,
+			td.cparcodi,
+			td.cpatdtipo,
+			td.cpatdmes,
+			tdd.cpatddcodi,
+			tdd.cpatdcodi,
+			tdd.cpatddtotenemwh,
+			tdd.cpatddtotenesoles,
+			tdd.cpatddtotpotmw,
+			tdd.cpatddtotpotsoles,
+			tdd.cpatddusucreacion,
+			tdd.cpatddfeccreacion
+			from
+			cpa_total_demanda td
+			inner join cpa_total_demandadet tdd on tdd.cpatdcodi = td.cpatdcodi
+			inner join si_empresa emp on emp.emprcodi = tdd.emprcodi
+			where
+			td.cpatdcodi in (
+			    select
+			    max(td2.cpatdcodi)
+			    from
+			    cpa_total_demanda td2
+			    where
+			    td2.cparcodi = {0} and
+			    td2.cpatdtipo in ('D', 'U') and
+			    td2.cpatdmes in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+			    group by
+			    td2.cparcodi, td2.cpatdtipo, td2.cpatdmes
+			)
+			order by emp.emprcodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListByCpatdcodi</key>
+		<query>
+			select
+			emp.emprcodi,
+			emp.emprnomb,
+			td.cparcodi,
+			td.cpatdtipo,
+			td.cpatdmes,
+			tdd.cpatddcodi,
+			tdd.cpatdcodi,
+			tdd.cpatddtotenemwh,
+			tdd.cpatddtotenesoles,
+			tdd.cpatddtotpotmw,
+			tdd.cpatddtotpotsoles,
+			tdd.cpatddusucreacion,
+			tdd.cpatddfeccreacion
+			from
+			cpa_total_demanda td
+			inner join cpa_total_demandadet tdd on tdd.cpatdcodi = td.cpatdcodi
+			inner join si_empresa emp on emp.emprcodi = tdd.emprcodi
+			where
+			td.cpatdcodi = {0}
+			order by emp.emprcodi
+		</query>
+	</Sql>
+<!-- CU17: FIN -->	
+</Sqls>

@@ -1,0 +1,283 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(pegrdcodi), 0) + 1 from vtp_peaje_egreso_detalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_peaje_egreso_detalle(
+      pegrdcodi,
+      pegrcodi,
+      emprcodi,
+      barrcodi,
+      pegrdtipousuario,
+      pegrdlicitacion,
+      pegrdpotecalculada,
+      pegrdpotedeclarada,
+      pegrdcalidad,
+      pegrdpreciopote,
+      pegrdpoteegreso,
+      pegrdpeajeunitario,
+      barrcodifco,
+      pegrdpoteactiva,
+      pegrdpotereactiva,
+      pegrdusucreacion,
+      pegrdfeccreacion,
+      pegrdpotecoincidente,
+      pegrdfacperdida,
+      coregecodvtp,
+      tipconcondi
+      )
+      values(
+      :pegrdcodi,
+      :pegrcodi,
+      :emprcodi,
+      :barrcodi,
+      :pegrdtipousuario,
+      :pegrdlicitacion,
+      :pegrdpotecalculada,
+      :pegrdpotedeclarada,
+      :pegrdcalidad,
+      :pegrdpreciopote,
+      :pegrdpoteegreso,
+      :pegrdpeajeunitario,
+      :barrcodifco,
+      :pegrdpoteactiva,
+      :pegrdpotereactiva,
+      :pegrdusucreacion,
+      :pegrdfeccreacion,
+      :pegrdpotecoincidente,
+      :pegrdfacperdida,
+      :coregecodvtp,
+      :tipconcondi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_peaje_egreso_detalle
+      set
+      pegrcodi=:pegrcodi,
+      emprcodi=:emprcodi,
+      barrcodi=:barrcodi,
+      pegrdtipousuario=:pegrdtipousuario,
+      pegrdlicitacion=:pegrdlicitacion,
+      pegrdpotecalculada=:pegrdpotecalculada,
+      pegrdpotedeclarada=:pegrdpotedeclarada,
+      pegrdcalidad=:pegrdcalidad,
+      pegrdpreciopote=:pegrdpreciopote,
+      pegrdpoteegreso=:pegrdpoteegreso,
+      pegrdpeajeunitario=:pegrdpeajeunitario,
+      barrcodifco=:barrcodifco,
+      pegrdpoteactiva=:pegrdpoteactiva,
+      pegrdpotereactiva=:pegrdpotereactiva,
+      pegrdusucreacion=:pegrdusucreacion,
+      pegrdfeccreacion=:pegrdfeccreacion
+      where
+      pegrdcodi=:pegrdcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_peaje_egreso_detalle
+      where pegrdcodi = :pegrdcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_peaje_egreso_detalle
+      where pegrcodi in (select pegrcodi from vtp_peaje_egreso where pericodi =:pericodi and recpotcodi =:recpotcodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      pegrdcodi,
+      pegrcodi,
+      emprcodi,
+      barrcodi,
+      pegrdtipousuario,
+      pegrdlicitacion,
+      pegrdpotecalculada,
+      pegrdpotedeclarada,
+      pegrdcalidad,
+      pegrdpreciopote,
+      pegrdpoteegreso,
+      pegrdpeajeunitario,
+      barrcodifco,
+      pegrdpoteactiva,
+      pegrdpotereactiva,
+      pegrdusucreacion,
+      pegrdfeccreacion
+      from vtp_peaje_egreso_detalle
+      where pegrdcodi = :pegrdcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      pegrdcodi,
+      pegrcodi,
+      emprcodi,
+      barrcodi,
+      pegrdtipousuario,
+      pegrdlicitacion,
+      pegrdpotecalculada,
+      pegrdpotedeclarada,
+      pegrdcalidad,
+      pegrdpreciopote,
+      pegrdpoteegreso,
+      pegrdpeajeunitario,
+      barrcodifco,
+      pegrdpoteactiva,
+      pegrdpotereactiva,
+      pegrdusucreacion,
+      pegrdfeccreacion
+      from
+      vtp_peaje_egreso_detalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select distinct a.*, b.emprnomb, c.barrnombre, d.barrnombre as barrnombrefco,
+		e.emprcodi as genemprcodi, a.emprcodi cliemprcodi,
+		a.barrcodi as barrcodisum, tipcon.tipconnombre,
+		(select vtp.codcncodivtp from vtp_codigo_consolidado vtp
+		where vtp.clicodi=a.emprcodi
+		and vtp.barrcodi=a.BARRCODI
+		and vtp.emprcodi=e.emprcodi
+		and upper(vtp.tipusunombre)=upper(a.pegrdtipousuario)
+		and vtp.codcncodivtp = a.coregecodvtp
+		and rownum=1
+		) as codcncodivtp
+		from vtp_peaje_egreso_detalle a
+		inner join VW_SI_EMPRESA b on a.emprcodi = b.emprcodi
+		inner join trn_barra c on a.barrcodi = c.barrcodi
+		inner join trn_barra d on a.barrcodifco = d.barrcodi
+		inner join vtp_peaje_egreso e on e.pegrcodi = a.pegrcodi
+		left outer join trn_tipo_contrato tipcon on tipcon.tipconcodi=a.tipconcondi
+		where e.pegrcodi=:pegrcodi
+		order by a.coregecodvtp
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaPeriodoAnterior</key>
+    <query>
+		select distinct a.*, b.emprnomb, c.barrnombre, d.barrnombre as barrnombrefco,
+		e.emprcodi as genemprcodi, a.emprcodi cliemprcodi,
+		a.barrcodi as barrcodisum, tipcon.tipconnombre,
+		(select vtp.codcncodivtp from vtp_codigo_consolidado vtp
+		where vtp.clicodi=a.emprcodi
+		and vtp.barrcodi=a.BARRCODI
+		and vtp.emprcodi=e.emprcodi
+		and upper(vtp.tipusunombre)=upper(a.pegrdtipousuario)
+		and rownum=1
+		) as codcncodivtp
+		from vtp_peaje_egreso_detalle a
+		inner join VW_SI_EMPRESA b on a.emprcodi = b.emprcodi
+		inner join trn_barra c on a.barrcodi = c.barrcodi
+		inner join trn_barra d on a.barrcodifco = d.barrcodi
+		inner join vtp_peaje_egreso e on e.pegrcodi = a.pegrcodi
+		left outer join trn_tipo_contrato tipcon on tipcon.tipconcodi=a.tipconcondi
+		where e.pegrcodi=(select pegrcodi from ( select vpe.*,row_number() over(order by vpe.pegrfeccreacion desc) as rn  from vtp_peaje_egreso vpe
+		where vpe.pericodi=:pericodi and vpe.emprcodi=:emprcodi and  vpe.pegrestado = 'SI') where rn=1)
+		order by a.coregecodvtp
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListView</key>
+    <query>
+      select distinct a.*, b.emprnomb, c.barrnombre, d.barrnombre as barrnombrefco
+      from vtp_peaje_egreso_detalle a
+      inner join VW_SI_EMPRESA b on a.emprcodi = b.emprcodi
+      inner join trn_barra c on a.barrcodi = c.barrcodi
+      inner join trn_barra d on a.barrcodifco = d.barrcodi
+      inner join vtp_peaje_egreso e on a.pegrcodi = a.pegrcodi
+      where a.pegrcodi=:pegrcodi
+      order by b.emprnomb, c.barrnombre
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdMinfo</key>
+    <query>
+      select * from vtp_peaje_egreso_detalle
+      where pegrcodi = :pegrcodi and emprcodi = :emprcodi and barrcodi = :barrcodi and pegrdtipousuario = :pegrdtipousuario
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigosByEmprcodi</key>
+    <query>
+		select distinct * from (
+		select
+		0 as pegrdcodi,
+		0 as pegrcodi,
+		a.clicodi as emprcodi,
+		a.barrcodi,
+		a.tipusunombre as pegrdtipousuario,
+		a.tipconnombre as pegrdlicitacion,
+		null as pegrdpotecalculada,
+		null as pegrdpotedeclarada,
+		'' as pegrdcalidad,
+		null as pegrdpreciopote,
+		null as pegrdpoteegreso,
+		null as pegrdpeajeunitario,
+		a.barrcodi as barrcodifco,
+		null as pegrdpoteactiva,
+		null as pegrdpotereactiva,
+		'' as pegrdusucreacion,
+		'' as pegrdfeccreacion,
+		a.codcncodivtp as coregecodvtp,
+		null as pegrdpotecoincidente,
+		null as pegrdfacperdida,
+		a.cliente as emprnomb,
+		a.barra as barrnombre,
+		a.barra as barrnombrefco,
+		null as coregecodi,
+		a.tipconcodi,
+		a.tipconnombre,
+		a.codcncodivtp
+		from vtp_codigo_consolidado_periodo ccp
+		inner join vtp_codigo_consolidado a
+		on a.codcncodivtp=ccp.codcncodivtp
+		inner join vtp_codigo_retiro_generado crg
+		on ccp.codcncodivtp=crg.coregecodvtp
+		inner join vtp_codigo_retiro_sol_det vcr
+		on vcr.coresdcodi=crg.coresdcodi
+		inner join trn_codigo_retiro_solicitud crs
+		on crs.coresocodi=vcr.coresocodi
+		where ccp.peridccodi=:pericodi and a.emprcodi=:emprcodi and ccp.CODCNPEESTADO in ('ACT') and crg.coregeestado in ('ACT')
+		AND NVL(to_char(crs.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+      AND NVL(to_char(crs.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+      order by a.codcncodivtp,a.empresa,a.cliente,a.barra)
+      order by 18 asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByPegrCodiAndCodVtp</key>
+    <query>
+      select * from vtp_peaje_egreso_detalle
+      where pegrcodi=:pegrcodi and coregecodvtp=:coregecodvtp
+    </query>
+  </Sql>
+</Sqls>

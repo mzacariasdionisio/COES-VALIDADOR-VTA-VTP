@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(potepcodi), 0) + 1 from vtp_empresa_pago
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_empresa_pago(
+      potepcodi,
+      pericodi,
+      recpotcodi,
+      potsecodi,
+      emprcodipago,
+      emprcodicobro,
+      potepmonto,
+      potepusucreacion,
+      potepfeccreacion
+      )
+      values(
+      :potepcodi,
+      :pericodi,
+      :recpotcodi,
+      :potsecodi,
+      :emprcodipago,
+      :emprcodicobro,
+      :potepmonto,
+      :potepusucreacion,
+      :potepfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_empresa_pago
+      set
+      pericodi = :pericodi,
+      recpotcodi = :recpotcodi,
+      potsecodi = :potsecodi,
+      emprcodipago = :emprcodipago,
+      emprcodicobro = :emprcodicobro,
+      potepmonto = :potepmonto,
+      potepusucreacion = :potepusucreacion,
+      potepfeccreacion = :potepfeccreacion
+      where potepcodi = :potepcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from vtp_empresa_pago
+       where potepcodi = :potepcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_empresa_pago where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from vtp_empresa_pago
+      where potepcodi = :potepcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vtp_empresa_pago
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPago</key>
+    <query>
+		SELECT DISTINCT * FROM (
+		select a.emprcodipago, --b.emprnomb as emprnombpago,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.emprcodipago) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.emprcodipago and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else b.emprnomb end as emprnombpago,
+		b.EMPRCODOSINERGMIN as Emprcodosinergminpago, B.EMPRRUC
+		from vtp_empresa_pago a join vw_trn_empresa_str b on a.emprcodipago = b.emprcodi
+		where a.pericodi = :pericodi
+		and a.recpotcodi = :recpotcodi)
+		order by 2
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListCobro</key>
+    <query>
+		select emprcodipago,
+		(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = ep.emprcodipago) as emprnombpago,
+		(select EMPRCODOSINERGMIN from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = ep.emprcodipago) as Emprcodosinergminpago,
+		emprcodicobro,
+		(select emprruc from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = ep.emprcodicobro) as emprruc,
+		(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = ep.emprcodicobro) as emprnombcobro,
+		(select EMPRCODOSINERGMIN from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = ep.emprcodicobro) as Emprcodosinergmincobro,
+		ep.potepmonto
+		from vtp_empresa_pago ep
+		where emprcodipago = :emprcodipago and emprcodipago != 0
+		and pericodi = :pericodi
+		and recpotcodi = :recpotcodi
+		order by 2, 4
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListCobroConsultaHistoricos</key>
+    <query>
+      select
+      0 as potepcodi,
+      vep.pericodi,
+      vep.recpotcodi,
+      0 as potsecodi,
+      0 as emprcodipago,
+      vep.emprcodicobro,
+      0 as potepmonto,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+      from VTP_EMPRESA_PAGO vep
+      inner join vtp_recalculo_potencia recp on vep.recpotcodi=recp.recpotcodi and vep.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vep.pericodi
+      inner join vw_trn_empresa_str emp on emp.emprcodi=vep.emprcodicobro
+      where vep.pericodi &gt;={0} and vep.pericodi &lt;={1}
+      and (vep.emprcodicobro = {2} or {2} = 0)
+      group by
+      vep.pericodi,
+      vep.recpotcodi,
+      vep.emprcodicobro,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+      order by 14
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select * from vtp_empresa_pago
+    </query>
+  </Sql>
+
+  <!--INICIO SEIOSEIN-->
+  <Sql>
+    <key>ObtenerListaEmpresaPago</key>
+    <query>
+      SELECT emp1.emprnomb emprnombcobro,
+      emp1.emprcodosinergmin emprcodosinergmincobro,
+      emp2.emprnomb emprnombpago,
+      emp2.emprcodosinergmin emprcodosinergminpago,
+      ep.*
+      FROM   vtp_empresa_pago ep
+      INNER JOIN vw_trn_empresa_str emp1 ON emp1.emprcodi = ep.emprcodicobro
+      INNER JOIN vw_trn_empresa_str emp2 ON emp2.emprcodi = ep.emprcodipago
+      WHERE  pericodi = :pericodi
+      AND recpotcodi = :recpotcodi
+      AND (emprcodipago = :emprcodipago OR :emprcodipago IS null )
+      AND emprcodipago > 0
+      AND (emprcodicobro = :emprcodicobro OR :emprcodicobro IS NULL)
+      AND emprcodicobro > 0
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEmpresaPagoByComparative</key>
+    <query>
+      select
+      vep.potepcodi,
+      vep.pericodi,
+      vep.recpotcodi,
+      vep.potsecodi,
+      vep.emprcodipago,
+      vep.emprcodicobro,
+      vep.potepmonto,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+      from VTP_EMPRESA_PAGO vep
+      inner join vtp_recalculo_potencia recp on vep.recpotcodi=recp.recpotcodi and vep.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vep.pericodi
+      inner join vw_trn_empresa_str emp on emp.emprcodi=vep.emprcodipago
+      where vep.pericodi>=:periinicio and vep.pericodi &lt;=:perifin
+      and (vep.emprcodipago = :emprcodi or :emprcodi = 0)
+      order by peri.perianio asc, peri.perimes asc, recpotcodi asc
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetEmpresaPagoHistoricoByComparative</key>
+    <query>
+      select
+      vep.potepcodi,
+      vep.pericodi,
+      vep.recpotcodi,
+      vep.potsecodi,
+      vep.emprcodipago,
+      vep.emprcodicobro,
+      vep.potepmonto,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+      from VTP_EMPRESA_PAGO vep
+      inner join vtp_recalculo_potencia recp on vep.recpotcodi=recp.recpotcodi and vep.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vep.pericodi
+      inner join vw_trn_empresa_str emp on emp.emprcodi=vep.emprcodicobro
+      where vep.pericodi>=:periinicio and vep.pericodi &lt;=:perifin
+      and (vep.emprcodicobro = :emprcodipago or :emprcodipago = 0)
+      order by peri.perianio asc, peri.perimes asc, recpotcodi asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetEmpresaPagoHistoricoByComparative2</key>
+    <query>
+      select
+      vep.potepcodi,
+      vep.pericodi,
+      vep.recpotcodi,
+      vep.potsecodi,
+      vep.emprcodipago,
+      vep.emprcodicobro,
+      vep.potepmonto,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+      from VTP_EMPRESA_PAGO vep
+      inner join vtp_recalculo_potencia recp on vep.recpotcodi=recp.recpotcodi and vep.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vep.pericodi
+      inner join vw_trn_empresa_str emp on emp.emprcodi=vep.emprcodicobro
+      where ((vep.pericodi=:periinicio and vep.recpotcodi=:recpotinicio)
+      or (vep.pericodi=:perifin and vep.recpotcodi=:recpotfin))
+      and (vep.emprcodipago = :emprcodi or :emprcodi = 0)
+      order by peri.perianio asc, peri.perimes asc, recpotcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEmpresaPagoByComparativeUnique</key>
+    <query>
+      select
+      0 as potepcodi,
+      vep.pericodi,
+      vep.recpotcodi,
+      vep.potsecodi,
+      vep.emprcodipago,
+      0 as emprcodicobro,
+      0 as potepmonto,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+      from VTP_EMPRESA_PAGO vep
+      inner join vtp_recalculo_potencia recp on vep.recpotcodi=recp.recpotcodi and vep.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vep.pericodi
+      inner join vw_trn_empresa_str emp on emp.emprcodi=vep.emprcodipago
+      where vep.pericodi>=:periinicio and vep.pericodi &lt;=:perifin
+      and (vep.emprcodipago = :emprcodi or :emprcodi = 0)
+      group by
+      vep.pericodi,
+      vep.recpotcodi,
+      vep.potsecodi,
+      vep.emprcodipago,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEmpresaPagoByHist</key>
+    <query>
+      select
+      vep.potepcodi,
+      vep.pericodi,
+      vep.recpotcodi,
+      vep.potsecodi,
+      vep.emprcodipago,
+      vep.emprcodicobro,
+      vep.potepmonto,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+      from VTP_EMPRESA_PAGO vep
+      inner join vtp_recalculo_potencia recp on vep.recpotcodi=recp.recpotcodi and vep.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vep.pericodi
+      inner join vw_trn_empresa_str emp on emp.emprcodi=vep.emprcodipago
+      where ((vep.pericodi=:periinicio and vep.recpotcodi=:recpotinicio)
+      or (vep.pericodi=:perifin and vep.recpotcodi=:recpotfin))
+      and (vep.emprcodipago = :emprcodi or :emprcodi = 0)
+      order by peri.perianio asc, peri.perimes asc, recpotcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEmpresaPagoByHistUnique</key>
+    <query>
+      select
+      0 as potepcodi,
+      vep.pericodi,
+      vep.recpotcodi,
+      vep.potsecodi,
+      vep.emprcodipago,
+      0 as emprcodicobro,
+      0 as potepmonto,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+      from VTP_EMPRESA_PAGO vep
+      inner join vtp_recalculo_potencia recp on vep.recpotcodi=recp.recpotcodi and vep.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vep.pericodi
+      inner join vw_trn_empresa_str emp on emp.emprcodi=vep.emprcodipago
+      where ((vep.pericodi=:periinicio and vep.recpotcodi=:recpotinicio)
+      or (vep.pericodi=:perifin and vep.recpotcodi=:recpotfin))
+      and (vep.emprcodipago = :emprcodi or :emprcodi = 0)
+      group by
+      vep.pericodi,
+      vep.recpotcodi,
+      vep.potsecodi,
+      vep.emprcodipago,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb
+    </query>
+  </Sql>
+  <!--FIN SEIOSEIN-->
+</Sqls>

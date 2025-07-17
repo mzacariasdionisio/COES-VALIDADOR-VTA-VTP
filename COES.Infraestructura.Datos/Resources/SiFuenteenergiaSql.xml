@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(fenergcodi), 0) + 1 from si_fuenteenergia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into si_fuenteenergia(
+      fenergcodi,
+      fenergabrev,
+      fenergnomb,
+      tgenercodi
+      )
+      values(
+      :fenergcodi,
+      :fenergabrev,
+      :fenergnomb,
+      :tgenercodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update si_fuenteenergia
+      set
+      fenergabrev = :fenergabrev,
+      fenergnomb = :fenergnomb,
+      tgenercodi = :tgenercodi,
+      fenercolor = :fenercolor,
+      osinergcodi = :osinergcodi,
+      estcomcodi = :estcomcodi,
+      tinfcoes = :tinfcoes,
+      tinfosi = :tinfosi
+      where
+      fenergcodi = :fenergcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      si_fuenteenergia
+      where
+      fenergcodi = :fenergcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      si_fuenteenergia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      fe.*,
+      tgener.tgenernomb,
+      t1.TIPOINFOABREV TINFCOESABREV,
+      t2.TIPOINFOABREV TINFOSIABREV,
+      t1.TIPOINFOdesc TINFCOESdesc,
+      t2.TIPOINFOdesc TINFOSIdesc
+      from
+      si_fuenteenergia fe
+      inner join si_tipogeneracion tgener on fe.tgenercodi = tgener.tgenercodi
+      left join SI_TIPOINFORMACION t1 on t1.TIPOINFOCODI = fe.TINFCOES
+      left join SI_TIPOINFORMACION t2 on t2.TIPOINFOCODI = fe.TINFOSI
+      where fe.fenergcodi > 0
+      order by fe.fenergnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TipoCombustibleXTipoCentral</key>
+    <query>
+      select distinct fe.fenergcodi, fe.fenergnomb,fe.fenergabrev,fe.tgenercodi,fe.fenercolor, fe.ESTCOMCODI, fe.Osinergcodi, fe.Tinfcoes, fe.Tinfosi
+      from eq_equipo eq
+      left join
+      ( 
+		      select fe.*, gp.grupocodi,gp2.grupocodi grupopadre,gp2.grupopadre grupopadre2 --gp.*
+		      from pr_grupo gp2 
+		      left join pr_grupo gp  on gp2.grupocodi = gp.grupopadre           
+		      left join si_fuenteenergia fe on gp.fenergcodi = fe.fenergcodi
+		      where (gp.grupocodi > 0 or gp2.grupopadre > 0) -- and (gp.grupocodi in (9) or gp2.grupocodi in (9) or gp2.grupopadre in (9))
+		      and fe.fenergcodi > 0
+      )fe on eq.grupocodi = fe.grupocodi or eq.grupocodi = fe.grupopadre or eq.grupocodi = fe.grupopadre2
+      where eq.famcodi in ({0}) 
+      and ('-1'='{1}' or eq.emprcodi in ({1}) )
+      and fe.fenergcodi > 0
+      order by fe.fenergnomb
+    </query>
+  </Sql>
+  
+  <!--INICIO PR5-->
+  <Sql>
+    <key>TipoCombustibleXEquipo</key>
+    <query>
+      select distinct fe.fenergcodi, fe.fenergnomb,fe.fenergabrev,fe.tgenercodi,fe.fenercolor, fe.ESTCOMCODI, fe.Osinergcodi, fe.Tinfcoes, fe.Tinfosi, GRUPOCOMB
+      from eq_equipo eq
+      left join
+      ( 
+		      select fe.*, gp.grupocodi,gp2.grupocodi grupopadre,gp2.grupopadre grupopadre2, gp.GRUPOCOMB --gp.*
+		      from pr_grupo gp2 
+		      left join pr_grupo gp  on gp2.grupocodi = gp.grupopadre           
+		      left join si_fuenteenergia fe on gp.fenergcodi = fe.fenergcodi
+		      where (gp.grupocodi > 0 or gp2.grupopadre > 0) -- and (gp.grupocodi in (9) or gp2.grupocodi in (9) or gp2.grupopadre in (9))
+		      and fe.fenergcodi > 0
+      )fe on eq.grupocodi = fe.grupocodi or eq.grupocodi = fe.grupopadre or eq.grupocodi = fe.grupopadre2
+      where eq.equicodi in ({0}) and fe.fenergcodi > 0
+      order by fe.fenergnomb
+    </query>
+  </Sql>
+  <!--FIN PR5-->
+
+</Sqls>

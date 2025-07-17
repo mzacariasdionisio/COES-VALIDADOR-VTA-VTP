@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(camenvcodi), 0) + 1 from me_cambioenvio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into me_cambioenvio(
+      camenvcodi,
+      ptomedicodi,
+      tipoinfocodi,
+      TPTOMEDICODI,
+      enviocodi,
+      CAMENVFECHA,
+      CAMENVDATOS,
+      CAMENVCOLVAR,
+      lastuser,
+      lastdate,
+      hojacodi
+      )
+      values(
+      :camenvcodi,
+      :ptomedicodi,
+      :tipoinfocodi,
+      :TPTOMEDICODI,
+      :enviocodi,
+      :CAMENVFECHA,
+      :CAMENVDATOS,
+      :CAMENVCOLVAR,
+      :lastuser,
+      :lastdate,
+      :hojacodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update me_cambioenvio
+      set
+      ptomedicodi = :ptomedicodi,
+      tipoinfocodi = :tipoinfocodi,
+      enviocodi = :enviocodi,
+      CAMENVFECHA = :CAMENVFECHA,
+      CAMENVDATOS = :CAMENVDATOS,
+      CAMENVCOLVAR = :CAMENVCOLVAR,
+      lastuser = :lastuser,
+      lastdate = :lastdate,
+      hojacodi = :hojacodi,
+      tptomedicodi = :tptomedicodi
+      where
+      camenvcodi = :camenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from me_cambioenvio
+      where enviocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      me_cambioenvio
+      where
+      enviocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      ce.*
+      from
+      me_cambioenvio ce
+      inner join me_envio env on env.enviocodi = ce.enviocodi
+      Where
+      ptomedicodi = {0} and  tipoinfocodi = {1} and env.formatcodi = {2} and CAMENVFECHA = to_date('{3}','YYYY-MM-DD')
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select env.*,case when ti2.tipoinfocodi is not null then pto.PTOMEDIELENOMB else pto.ptomedibarranomb end ptomedibarranomb
+      ,case when ti2.tipoinfocodi is not null then ti2.tipoinfoabrev else ti.tipoinfoabrev end tipoinfoabrev
+      , cb.* ,emp.emprabrev
+      from me_cambioenvio cb
+      inner join me_envio env on env.enviocodi = cb.enviocodi
+      inner join me_ptomedicion pto on pto.ptomedicodi = cb.ptomedicodi
+      inner join si_tipoinformacion ti on pto.tipoinfocodi = ti.tipoinfocodi
+      left join me_hojaptomed hoja on hoja.formatcodi = hoja.formatcodi and pto.ptomedicodi = hoja.ptomedicodi and hoja.TPTOMEDICODI = cb.TPTOMEDICODI
+      left join si_tipoinformacion ti2 on hoja.tipoinfocodi = ti2.tipoinfocodi
+      inner join si_empresa emp on emp.emprcodi = env.emprcodi
+      where (env.emprcodi in ({0}) or ('{0}' ='-1') ) and env.formatcodi = {1} and env.enviofechaperiodo = to_date('{2}','YYYY-MM-DD')
+      order by cb.ptomedicodi, env.enviocodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetAllCambioEnvio</key>
+    <query>
+      select cb1.*,gr.formatcodi from me_cambioenvio cb1
+      inner join(
+      select env.formatcodi,cb.ptomedicodi pto,CAMENVFECHA fecha ,max(cb.enviocodi) maxenv from me_cambioenvio cb
+      inner join me_envio env on env.enviocodi = cb.enviocodi
+      where (env.formatcodi = {0}  or ('{0}' ='-1'))  and (env.emprcodi = {4} or ('{4}' ='-1'))
+      and cb.CAMENVFECHA >= to_date('{1}','YYYY-MM-DD') and cb.CAMENVFECHA &lt;= to_date('{2}','YYYY-MM-DD')
+      <!--and env.enviocodi &lt;= {3}-->
+      and (env.enviocodi  = {3} or ('{3}' ='-1'))
+      group by formatcodi,ptomedicodi,CAMENVFECHA ) gr on gr.maxenv = cb1.enviocodi and gr.pto = cb1.ptomedicodi and cb1.CAMENVFECHA = gr.fecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetAllOrigenEnvio</key>
+    <query>
+      select cb.* from me_cambioenvio cb
+      inner join me_envio ev on ev.enviocodi = cb.enviocodi
+      where ev.formatcodi = {0} and ev.emprcodi = {1}
+      and cb.CAMENVFECHA >= to_date('{2}','YYYY-MM-DD') and cb.CAMENVFECHA &lt;= to_date('{3}','YYYY-MM-DD')
+      and ev.enviofechaperiodo &lt;= to_date('{4}','YYYY-MM-DD') and CAMENVCOLVAR is null
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByEnvio</key>
+    <query>
+      select cb.* from me_cambioenvio cb
+      where  cb.enviocodi  in ({0})
+    </query>
+  </Sql>
+
+  
+</Sqls>

@@ -1,0 +1,746 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from TRN_ENTREGA_RETIRO_TEMP
+      where EMPRCODI = :EMPRCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      begin
+      --CAMBIAMOS EL ESTADO DE LAS ENTREGAS A INACTIVO
+      update trn_trans_entrega set tentestado = 'INA', tentuseract = '{3}', tentfecact = sysdate 
+      where pericodi= {0} and tentversion = {1} and emprcodi = {2};
+      --CAMBIAMOS EL ESTADO DE LOS RETIROS A INACTIVO
+      update trn_trans_retiro set tretestado = 'INA', tretuseract = '{3}', tretfecact = sysdate 
+      where pericodi= {0} and tretversion = {1} and genemprcodi = {2};
+      end;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GrabarEntregaRetiro</key>
+    <query>
+      insert into TRN_ENTREGA_RETIRO_TEMP(
+      EMPRCODI,
+      NRODIA,
+      TIPODATO,
+      CODIGOBARRA,
+      PROMEDIO,
+      SUMADIA,
+      H1,
+      H2 ,
+      H3 ,
+      H4 ,
+      H5 ,
+      H6 ,
+      H7 ,
+      H8 ,
+      H9 ,
+      H10,
+      H11,
+      H12,
+      H13,
+      H14,
+      H15,
+      H16,
+      H17,
+      H18,
+      H19,
+      H20,
+      H21,
+      H22,
+      H23,
+      H24,
+      H25,
+      H26,
+      H27,
+      H28,
+      H29,
+      H30,
+      H31,
+      H32,
+      H33,
+      H34,
+      H35,
+      H36,
+      H37,
+      H38,
+      H39,
+      H40,
+      H41,
+      H42,
+      H43,
+      H44,
+      H45,
+      H46,
+      H47,
+      H48,
+      H49,
+      H50,
+      H51,
+      H52,
+      H53,
+      H54,
+      H55,
+      H56,
+      H57,
+      H58,
+      H59,
+      H60,
+      H61,
+      H62,
+      H63,
+      H64,
+      H65,
+      H66,
+      H67,
+      H68,
+      H69,
+      H70,
+      H71,
+      H72,
+      H73,
+      H74,
+      H75,
+      H76,
+      H77,
+      H78,
+      H79,
+      H80,
+      H81,
+      H82,
+      H83,
+      H84,
+      H85,
+      H86,
+      H87,
+      H88,
+      H89,
+      H90,
+      H91,
+      H92,
+      H93,
+      H94,
+      H95,
+      H96
+      )
+      values(
+      :EMPRCODI,
+      :NRODIA,
+      :TIPODATO,
+      :CODIGOBARRA,
+      :PROMEDIO,
+      :SUMADIA,
+      :H1,
+      :H2 ,
+      :H3 ,
+      :H4 ,
+      :H5 ,
+      :H6 ,
+      :H7 ,
+      :H8 ,
+      :H9 ,
+      :H10,
+      :H11,
+      :H12,
+      :H13,
+      :H14,
+      :H15,
+      :H16,
+      :H17,
+      :H18,
+      :H19,
+      :H20,
+      :H21,
+      :H22,
+      :H23,
+      :H24,
+      :H25,
+      :H26,
+      :H27,
+      :H28,
+      :H29,
+      :H30,
+      :H31,
+      :H32,
+      :H33,
+      :H34,
+      :H35,
+      :H36,
+      :H37,
+      :H38,
+      :H39,
+      :H40,
+      :H41,
+      :H42,
+      :H43,
+      :H44,
+      :H45,
+      :H46,
+      :H47,
+      :H48,
+      :H49,
+      :H50,
+      :H51,
+      :H52,
+      :H53,
+      :H54,
+      :H55,
+      :H56,
+      :H57,
+      :H58,
+      :H59,
+      :H60,
+      :H61,
+      :H62,
+      :H63,
+      :H64,
+      :H65,
+      :H66,
+      :H67,
+      :H68,
+      :H69,
+      :H70,
+      :H71,
+      :H72,
+      :H73,
+      :H74,
+      :H75,
+      :H76,
+      :H77,
+      :H78,
+      :H79,
+      :H80,
+      :H81,
+      :H82,
+      :H83,
+      :H84,
+      :H85,
+      :H86,
+      :H87,
+      :H88,
+      :H89,
+      :H90,
+      :H91,
+      :H92,
+      :H93,
+      :H94,
+      :H95,
+      :H96
+
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCodigosResultado</key>
+    <query>
+      select codigobarra, indbarra from TRN_ENTREGA_RETIRO_TEMP where emprcodi = :emprcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ProcesarInformacion</key>
+    <query>
+      --{0} emprecodi
+      --{1} pericodi
+      --{2} version
+      --{3} usuario
+      begin
+      -- ACTUALIZANDO MASIVAMENTE LOS DATOS
+      -- MARCANDO LOS CODIGOS DE ENTREGAS
+      MERGE
+      INTO    TRN_ENTREGA_RETIRO_TEMP TEMP
+      USING   (
+      select TRN.codentcodigo, trn.codentcodi, trn.emprcodi, trn.barrcodi, trn.equicodi
+      from trn_codigo_entrega trn
+      where
+      trn.codentestado = 'ACT'
+      and (trn.emprcodi = {0} or {0} = 0) and
+      (select to_char(perianiomes) from trn_periodo where pericodi = {1}) between
+      NVL(to_char(trn.codentfechainicio, 'YYYYMM'), '000000') and
+      NVL(to_char(trn.codentfechafin, 'YYYYMM'), '999999')
+      ) src
+      ON      (TEMP.CODIGOBARRA = src.CODENTCODIGO and temp.emprcodi = {0})
+      WHEN MATCHED THEN UPDATE
+      SET
+      TEMP.INDBARRA = 'E',
+      TEMP.ENTCODENTCODI = src.codentcodi,
+      TEMP.ENTEMPRCODI = src.emprcodi,
+      TEMP.ENTBARRCODI = src.barrcodi,
+      TEMP.ENTEQUICODI = src.equicodi;
+
+      -- ELIMINAMOS LOS DATOS DE ENTREGAS DE CABECERA Y DETALLE
+      delete from trn_trans_entrega_detalle where tentcodi in (
+      select tentcodi from trn_trans_entrega
+      where pericodi = {1} and tentversion = {2} and tentcodigo in (select TEMP.codigobarra from  TRN_ENTREGA_RETIRO_TEMP TEMP where temp.indbarra = 'E' and temp.emprcodi = {0} )
+      );
+
+      delete from trn_trans_entrega
+      where pericodi= {1} and tentversion = {2} and tentcodigo in (select TEMP.codigobarra from  TRN_ENTREGA_RETIRO_TEMP TEMP where temp.indbarra = 'E' and temp.emprcodi = {0});
+
+      --insertamos los datos de cabecera pero faltan grabar los datos de detalle
+      --falta obtener los codigos para grabar el detalle
+
+      MERGE
+      INTO    TRN_ENTREGA_RETIRO_TEMP TEMP
+      USING   (
+      select rownum + (SELECT MAX(TENTCODI) + 1 FROM trn_trans_entrega) as id, codigobarra from (
+      select distinct temp.codigobarra from
+      TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'E' and temp.emprcodi = {0}
+      ) t
+      ) SRC
+      ON      (TEMP.CODIGOBARRA = src.codigobarra and temp.emprcodi = {0})
+      WHEN MATCHED THEN UPDATE
+      SET  TEMP.CODCABECERA = SRC.ID;
+
+      -- INSERTAMOS LAS CABECERAS DE LA ENTREGA
+      INSERT INTO trn_trans_entrega (tentcodi, codentcodi, barrcodi, pericodi, emprcodi, equicodi, tentcodigo, tentversion, tenttipoinformacion, tentestado,
+      tentusername, tentfecins, tentfecact, trnenvcodi)
+      select distinct TEMP.CODCABECERA, temp.entcodentcodi, temp.entbarrcodi, {1} as pericodi, temp.ENTEMPRCODI as emprcodi , temp.entequicodi, temp.codigobarra, {2} as versioncodi,
+      temp.tipodato, 'ACT' as estado, '{3}' as usuario, sysdate as fecharegistro, sysdate as fechaact, NULL  from
+      TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'E' and temp.emprcodi = {0} ORDER BY 1 ASC;
+
+      -- INSERTAMOS EL DETALLE DE LAS ENTREGAS
+
+      --MARCANDO LOS CODIGOS DE RETITOS
+      MERGE
+      INTO  TRN_ENTREGA_RETIRO_TEMP TEMP
+      USING (
+      select TRN.tretcodigo, cast(genemprcodi as number(5)) as genemprcodi, barrcodi, tretcoresocoresccodi,cliemprcodi, trettabla
+      from vw_trn_codigo_retiro TRN
+      where
+      (select to_char(perianiomes) from trn_periodo where pericodi = {1}) between
+      NVL(to_char(TRN.fechainicio, 'YYYYMM'), '000000') and
+      NVL(to_char(TRN.fechafin, 'YYYYMM'), '999999')
+      ) src
+      ON  (TEMP.CODIGOBARRA = src.tretcodigo and temp.emprcodi = {0})
+      WHEN MATCHED THEN UPDATE
+      SET
+      TEMP.INDBARRA = 'R',
+      TEMP.RETgenemprcodi = src.genemprcodi,
+      TEMP.RETbarrcodi = src.barrcodi,
+      TEMP.RETtretcoresocoresccodi = src.tretcoresocoresccodi,
+      TEMP.RETcliemprcodi = src.cliemprcodi,
+      TEMP.RETtrettabla = src.trettabla;
+
+
+      -- ELIMINAMOS LOS DATOS DE RETIROS DE CABECERA Y DETALLE
+      delete from trn_trans_retiro_detalle where tretcodi in (
+      select tretcodi from trn_trans_retiro
+      where pericodi = {1} and tretversion = {2} and tretcodigo in
+      (select TEMP.codigobarra from  TRN_ENTREGA_RETIRO_TEMP TEMP where temp.indbarra = 'R' and temp.emprcodi = {0} )
+      );
+
+      delete from trn_trans_retiro
+      where pericodi= {1} and tretversion = {2} and
+      tretcodigo in (select TEMP.codigobarra from  TRN_ENTREGA_RETIRO_TEMP TEMP where temp.indbarra = 'R'  and temp.emprcodi = {0});
+
+      --INSERTANDO LOS DATOS EN CABECERA Y EN DETALLE
+
+      MERGE
+      INTO  TRN_ENTREGA_RETIRO_TEMP TEMP
+      USING   (
+      select rownum + (SELECT MAX(TRETCODI) + 1 FROM trn_trans_retiro) as id, codigobarra from (
+      select distinct temp.codigobarra from
+      TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'R' and temp.emprcodi = {0}
+      ) t
+      ) SRC
+      ON  (TEMP.CODIGOBARRA = src.codigobarra and temp.emprcodi = {0})
+      WHEN MATCHED THEN UPDATE
+      SET  TEMP.CODCABECERA = SRC.ID;
+
+      -- INSERTAMOS LAS CABECERAS DE LA ENTREGA
+      INSERT INTO trn_trans_retiro (tretcodi, pericodi, barrcodi, genemprcodi, cliemprcodi, trettabla, tretcoresocoresccodi,
+      tretcodigo, tretversion,trettipoinformacion, tretestado, tretusername, tretfecins, tretfecact, trnenvcodi )
+      select distinct TEMP.CODCABECERA, {1} as pericodi, temp.retbarrcodi, temp.retgenemprcodi, temp.retcliemprcodi, temp.rettrettabla, temp.rettretcoresocoresccodi,
+      temp.codigobarra, {2} as versioncodi, temp.tipodato, 'ACT' as estado, '{3}' as usuario, sysdate as fecharegistro, sysdate as fechaact, NULL
+      from
+      TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'R' and temp.emprcodi = {0} ORDER BY 1 ASC;
+
+      -- INSERTAMOS EL DETALLE DE ENTREGAS
+      insert into trn_trans_entrega_detalle(
+      tentcodi,tentdecodi,tentdeversion,tentdedia,
+      tentdepromediodia,tentdesumadia,tentde1,tentde2,tentde3,tentde4,
+      tentde5,tentde6,tentde7,tentde8,tentde9,tentde10,tentde11,tentde12,
+      tentde13,tentde14,tentde15,tentde16,tentde17,tentde18,tentde19,tentde20,
+      tentde21,tentde22,tentde23,tentde24,tentde25,tentde26,tentde27,tentde28,
+      tentde29,tentde30,tentde31,tentde32,tentde33,tentde34,tentde35,tentde36,
+      tentde37,tentde38,tentde39,tentde40,tentde41,tentde42,tentde43,tentde44,
+      tentde45,tentde46,tentde47,tentde48,tentde49,tentde50,tentde51,tentde52,
+      tentde53,tentde54,tentde55,tentde56,tentde57,tentde58,tentde59,tentde60,
+      tentde61,tentde62,tentde63,tentde64,tentde65,tentde66,tentde67,tentde68,
+      tentde69,tentde70,tentde71,tentde72,tentde73,tentde74,tentde75,tentde76,
+      tentde77,tentde78,tentde79,tentde80,tentde81,tentde82,tentde83,tentde84,
+      tentde85,tentde86,tentde87,tentde88,tentde89,tentde90,tentde91,tentde92,
+      tentde93,tentde94,tentde95,tentde96,tentdeusername,tentdefecins,tentdefecact
+      )
+      select
+      CODCABECERA, (rownum + (select max(tentdecodi) from trn_trans_entrega_detalle)) as id,
+      {2} as version,  nrodia, promedio, sumAdia,
+      h1,h2,h3,h4,h5,h6,h7,h8,
+      h9,h10,h11,h12,h13,h14,h15,h16,
+      h17,h18,h19,h20,h21,h22,h23,h24,
+      h25,h26,h27,h28,h29,h30,h31,h32,
+      h33,h34,h35,h36,h37,h38,h39,h40,
+      h41,h42,h43,h44,h45,h46,h47,h48,
+      h49,h50,h51,h52,h53,h54,h55,h56,
+      h57,h58,h59,h60,h61,h62,h63,h64,
+      h65,h66,h67,h68,h69,h70,h71,h72,
+      h73,h74,h75,h76,h77,h78,h79,h80,
+      h81,h82,h83,h84,h85,h86,h87,h88,
+      h89,h90,h91,h92,h93,h94,h95,h96,
+      '{3}', sysdate, sysdate
+      from TRN_ENTREGA_RETIRO_TEMP where indbarra = 'E' and emprcodi = {0};
+
+
+      -- INSERTAMOS EL DETALLE DE RETIROS
+      insert into trn_trans_retiro_detalle(
+      tretcodi, tretdecodi,tretdeversion,tretdedia,
+      tretdepromediodia,tretdesumadia,tretde1,tretde2,
+      tretde3,tretde4,tretde5,tretde6,tretde7,tretde8,tretde9,tretde10,
+      tretde11,tretde12,tretde13,tretde14,tretde15,tretde16,tretde17,tretde18,
+      tretde19,tretde20,tretde21,tretde22,tretde23,tretde24,tretde25,tretde26,
+      tretde27,tretde28,tretde29,tretde30,tretde31,tretde32,tretde33,tretde34,
+      tretde35,tretde36,tretde37,tretde38,tretde39,tretde40,tretde41,tretde42,
+      tretde43,tretde44,tretde45,tretde46,tretde47,tretde48,tretde49,tretde50,
+      tretde51,tretde52,tretde53,tretde54,tretde55,tretde56,tretde57,tretde58,
+      tretde59,tretde60,tretde61,tretde62,tretde63,tretde64,tretde65,tretde66,
+      tretde67,tretde68,tretde69,tretde70,tretde71,tretde72,tretde73,tretde74,
+      tretde75,tretde76,tretde77,tretde78,tretde79,tretde80,tretde81,tretde82,
+      tretde83,tretde84,tretde85,tretde86,tretde87,tretde88,tretde89,tretde90,
+      tretde91,tretde92,tretde93,tretde94,tretde95,tretde96,tretdeusername,tretdefecins,
+      tretdefecact
+      )
+      select
+      CODCABECERA, (rownum + (select max(tretdecodi) from trn_trans_retiro_detalle)) as id,
+      {2} as version,  nrodia, promedio, sumadia,
+      h1,h2,h3,h4,h5,h6,h7,h8,
+      h9,h10,h11,h12,h13,h14,h15,h16,
+      h17,h18,h19,h20,h21,h22,h23,h24,
+      h25,h26,h27,h28,h29,h30,h31,h32,
+      h33,h34,h35,h36,h37,h38,h39,h40,
+      h41,h42,h43,h44,h45,h46,h47,h48,
+      h49,h50,h51,h52,h53,h54,h55,h56,
+      h57,h58,h59,h60,h61,h62,h63,h64,
+      h65,h66,h67,h68,h69,h70,h71,h72,
+      h73,h74,h75,h76,h77,h78,h79,h80,
+      h81,h82,h83,h84,h85,h86,h87,h88,
+      h89,h90,h91,h92,h93,h94,h95,h96,
+      '{3}', sysdate, sysdate
+      from TRN_ENTREGA_RETIRO_TEMP where indbarra = 'R' and emprcodi = {0};
+      end;
+    </query>
+  </Sql>
+  
+  <!--ASSETEC 202001-->
+  <Sql>
+    <key>ProcesarInformacionEnvio</key>
+    <query>
+      --{0} emprecodi
+      --{1} pericodi
+      --{2} version
+      --{3} usuario
+      --{4} trnenvcodi
+      --{5} testado
+      begin
+      -- ACTUALIZANDO MASIVAMENTE LOS DATOS
+      -- MARCANDO LOS CODIGOS DE ENTREGAS
+      MERGE INTO trn_entrega_retiro_temp temp USING   ( SELECT
+      trn.codentcodigo,
+      trn.codentcodi,
+      trn.emprcodi,
+      trn.barrcodi,
+      trn.equicodi
+      FROM
+      trn_codigo_entrega trn
+      WHERE
+      trn.codentestado = 'ACT'
+      AND ( trn.emprcodi = {0} or {0} = 0) and
+      (select to_char(perianiomes) from trn_periodo where pericodi = {1}) between
+      NVL(to_char(trn.codentfechainicio, 'YYYYMM'), '000000') and
+      NVL(to_char(trn.codentfechafin, 'YYYYMM'), '999999')
+      ) src
+      ON      (TEMP.CODIGOBARRA = src.CODENTCODIGO and temp.emprcodi = {0})
+      WHEN MATCHED THEN UPDATE
+      SET
+      TEMP.INDBARRA = 'E',
+      TEMP.ENTCODENTCODI = src.codentcodi,
+      TEMP.ENTEMPRCODI = src.emprcodi,
+      TEMP.ENTBARRCODI = src.barrcodi,
+      TEMP.ENTEQUICODI = src.equicodi;
+
+      --insertamos los datos de cabecera pero faltan grabar los datos de detalle
+      --falta obtener los codigos para grabar el detalle
+      MERGE
+      INTO    TRN_ENTREGA_RETIRO_TEMP TEMP
+      USING   (
+      select rownum + (SELECT MAX(TENTCODI) + 1 FROM trn_trans_entrega) as id, codigobarra from (
+      select distinct temp.codigobarra from
+      TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'E' and temp.emprcodi = {0}
+      ) t
+      ) SRC
+      ON      (TEMP.CODIGOBARRA = src.codigobarra and temp.emprcodi = {0})
+      WHEN MATCHED THEN UPDATE
+      SET  TEMP.CODCABECERA = SRC.ID;
+
+      -- INSERTAMOS LAS CABECERAS DE LA ENTREGA
+      INSERT INTO trn_trans_entrega (tentcodi, codentcodi, barrcodi, pericodi, emprcodi, equicodi, tentcodigo, tentversion, tenttipoinformacion, tentestado,
+      tentusername, tentfecins, tentfecact, trnenvcodi)
+      select distinct TEMP.CODCABECERA, temp.entcodentcodi, temp.entbarrcodi, {1} as pericodi, temp.ENTEMPRCODI as emprcodi , temp.entequicodi, temp.codigobarra, {2} as versioncodi,
+      temp.tipodato, '{5}' as estado, '{3}' as usuario, sysdate as fecharegistro, sysdate as fechaact, {4}
+      from TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'E' and temp.emprcodi = {0} ORDER BY 1 ASC;
+
+      -- INSERTAMOS EL DETALLE DE LAS ENTREGAS
+
+      --MARCANDO LOS CODIGOS DE RETITOS
+      MERGE
+      INTO  TRN_ENTREGA_RETIRO_TEMP TEMP
+      USING (
+      select TRN.tretcodigo, cast(genemprcodi as number(5)) as genemprcodi, barrcodi, tretcoresocoresccodi,cliemprcodi, trettabla
+      from vw_trn_codigo_retiro TRN
+      where
+      (select to_char(perianiomes) from trn_periodo where pericodi = {1}) between
+      NVL(to_char(TRN.fechainicio, 'YYYYMM'), '000000') and
+      NVL(to_char(TRN.fechafin, 'YYYYMM'), '999999')
+      ) src
+      ON  (TEMP.CODIGOBARRA = src.tretcodigo and temp.emprcodi = {0})
+      WHEN MATCHED THEN UPDATE
+      SET
+      TEMP.INDBARRA = 'R',
+      TEMP.RETgenemprcodi = src.genemprcodi,
+      TEMP.RETbarrcodi = src.barrcodi,
+      TEMP.RETtretcoresocoresccodi = src.tretcoresocoresccodi,
+      TEMP.RETcliemprcodi = src.cliemprcodi,
+      TEMP.RETtrettabla = src.trettabla;
+
+      --INSERTANDO LOS DATOS EN CABECERA Y EN DETALLE
+
+      MERGE
+      INTO  TRN_ENTREGA_RETIRO_TEMP TEMP
+      USING   (
+      select rownum + (SELECT MAX(TRETCODI) + 1 FROM trn_trans_retiro) as id, codigobarra from (
+      select distinct temp.codigobarra from
+      TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'R' and temp.emprcodi = {0}
+      ) t
+      ) SRC
+      ON  (TEMP.CODIGOBARRA = src.codigobarra and temp.emprcodi = {0})
+      WHEN MATCHED THEN UPDATE
+      SET  TEMP.CODCABECERA = SRC.ID;
+
+      -- INSERTAMOS LAS CABECERAS DE LA ENTREGA
+      INSERT INTO trn_trans_retiro (tretcodi, pericodi, barrcodi, genemprcodi, cliemprcodi, trettabla, tretcoresocoresccodi,
+      tretcodigo, tretversion,trettipoinformacion, tretestado, tretusername, tretfecins, tretfecact, trnenvcodi)
+      select distinct TEMP.CODCABECERA, {1} as pericodi, temp.retbarrcodi, temp.retgenemprcodi, temp.retcliemprcodi, temp.rettrettabla, temp.rettretcoresocoresccodi,
+      temp.codigobarra, {2} as versioncodi, temp.tipodato, '{5}' as estado, '{3}' as usuario, sysdate as fecharegistro, sysdate as fechaact, {4}
+      from
+      TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'R' and temp.emprcodi = {0} ORDER BY 1 ASC;
+
+      -- INSERTAMOS EL DETALLE DE ENTREGAS
+      insert into trn_trans_entrega_detalle(
+      tentcodi,tentdecodi,tentdeversion,tentdedia,
+      tentdepromediodia,tentdesumadia,tentde1,tentde2,tentde3,tentde4,
+      tentde5,tentde6,tentde7,tentde8,tentde9,tentde10,tentde11,tentde12,
+      tentde13,tentde14,tentde15,tentde16,tentde17,tentde18,tentde19,tentde20,
+      tentde21,tentde22,tentde23,tentde24,tentde25,tentde26,tentde27,tentde28,
+      tentde29,tentde30,tentde31,tentde32,tentde33,tentde34,tentde35,tentde36,
+      tentde37,tentde38,tentde39,tentde40,tentde41,tentde42,tentde43,tentde44,
+      tentde45,tentde46,tentde47,tentde48,tentde49,tentde50,tentde51,tentde52,
+      tentde53,tentde54,tentde55,tentde56,tentde57,tentde58,tentde59,tentde60,
+      tentde61,tentde62,tentde63,tentde64,tentde65,tentde66,tentde67,tentde68,
+      tentde69,tentde70,tentde71,tentde72,tentde73,tentde74,tentde75,tentde76,
+      tentde77,tentde78,tentde79,tentde80,tentde81,tentde82,tentde83,tentde84,
+      tentde85,tentde86,tentde87,tentde88,tentde89,tentde90,tentde91,tentde92,
+      tentde93,tentde94,tentde95,tentde96,tentdeusername,tentdefecins,tentdefecact
+      )
+      select
+      CODCABECERA, (rownum + (select max(tentdecodi) from trn_trans_entrega_detalle)) as id,
+      {2} as version,  nrodia, promedio, sumAdia,
+      h1,h2,h3,h4,h5,h6,h7,h8,
+      h9,h10,h11,h12,h13,h14,h15,h16,
+      h17,h18,h19,h20,h21,h22,h23,h24,
+      h25,h26,h27,h28,h29,h30,h31,h32,
+      h33,h34,h35,h36,h37,h38,h39,h40,
+      h41,h42,h43,h44,h45,h46,h47,h48,
+      h49,h50,h51,h52,h53,h54,h55,h56,
+      h57,h58,h59,h60,h61,h62,h63,h64,
+      h65,h66,h67,h68,h69,h70,h71,h72,
+      h73,h74,h75,h76,h77,h78,h79,h80,
+      h81,h82,h83,h84,h85,h86,h87,h88,
+      h89,h90,h91,h92,h93,h94,h95,h96,
+      '{3}', sysdate, sysdate
+      from TRN_ENTREGA_RETIRO_TEMP where indbarra = 'E' and emprcodi = {0};
+
+      -- INSERTAMOS EL DETALLE DE RETIROS
+      insert into trn_trans_retiro_detalle(
+      tretcodi, tretdecodi,tretdeversion,tretdedia,
+      tretdepromediodia,tretdesumadia,tretde1,tretde2,
+      tretde3,tretde4,tretde5,tretde6,tretde7,tretde8,tretde9,tretde10,
+      tretde11,tretde12,tretde13,tretde14,tretde15,tretde16,tretde17,tretde18,
+      tretde19,tretde20,tretde21,tretde22,tretde23,tretde24,tretde25,tretde26,
+      tretde27,tretde28,tretde29,tretde30,tretde31,tretde32,tretde33,tretde34,
+      tretde35,tretde36,tretde37,tretde38,tretde39,tretde40,tretde41,tretde42,
+      tretde43,tretde44,tretde45,tretde46,tretde47,tretde48,tretde49,tretde50,
+      tretde51,tretde52,tretde53,tretde54,tretde55,tretde56,tretde57,tretde58,
+      tretde59,tretde60,tretde61,tretde62,tretde63,tretde64,tretde65,tretde66,
+      tretde67,tretde68,tretde69,tretde70,tretde71,tretde72,tretde73,tretde74,
+      tretde75,tretde76,tretde77,tretde78,tretde79,tretde80,tretde81,tretde82,
+      tretde83,tretde84,tretde85,tretde86,tretde87,tretde88,tretde89,tretde90,
+      tretde91,tretde92,tretde93,tretde94,tretde95,tretde96,tretdeusername,tretdefecins,
+      tretdefecact
+      )
+      select
+      CODCABECERA, (rownum + (select max(tretdecodi) from trn_trans_retiro_detalle)) as id,
+      {2} as version,  nrodia, promedio, sumadia,
+      h1,h2,h3,h4,h5,h6,h7,h8,
+      h9,h10,h11,h12,h13,h14,h15,h16,
+      h17,h18,h19,h20,h21,h22,h23,h24,
+      h25,h26,h27,h28,h29,h30,h31,h32,
+      h33,h34,h35,h36,h37,h38,h39,h40,
+      h41,h42,h43,h44,h45,h46,h47,h48,
+      h49,h50,h51,h52,h53,h54,h55,h56,
+      h57,h58,h59,h60,h61,h62,h63,h64,
+      h65,h66,h67,h68,h69,h70,h71,h72,
+      h73,h74,h75,h76,h77,h78,h79,h80,
+      h81,h82,h83,h84,h85,h86,h87,h88,
+      h89,h90,h91,h92,h93,h94,h95,h96,
+      '{3}', sysdate, sysdate
+      from TRN_ENTREGA_RETIRO_TEMP where indbarra = 'R' and emprcodi ={0}; END;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteListaEmpresas</key>
+    <query>
+      delete from TRN_ENTREGA_RETIRO_TEMP
+      where EMPRCODI in ({0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ProcesarInformacionModeloEnvio</key>
+    <query>
+      --{0} listaemprecodi
+      --{1} pericodi
+      --{2} version
+      --{3} usuario
+      --{4} trnenvcodi
+      --{5} testado
+      --{6} trnmodcodi
+      begin
+      -- ACTUALIZANDO MASIVAMENTE LOS DATOS
+      --MARCANDO LOS CODIGOS DE RETITOS
+      MERGE
+      INTO  TRN_ENTREGA_RETIRO_TEMP TEMP
+      USING (
+      select TRN.tretcodigo, cast(genemprcodi as number(5)) as genemprcodi, barrcodi, tretcoresocoresccodi,cliemprcodi, trettabla
+      from vw_trn_codigo_retiro TRN
+      where
+      (select to_char(perianiomes) from trn_periodo where pericodi = {1}) between
+      NVL(to_char(TRN.fechainicio, 'YYYYMM'), '000000') and
+      NVL(to_char(TRN.fechafin, 'YYYYMM'), '999999')
+      ) src
+      ON  (TEMP.CODIGOBARRA = src.tretcodigo and temp.emprcodi in ({0}))
+      WHEN MATCHED THEN UPDATE
+      SET
+      TEMP.INDBARRA = 'R',
+      TEMP.RETgenemprcodi = src.genemprcodi,
+      TEMP.RETbarrcodi = src.barrcodi,
+      TEMP.RETtretcoresocoresccodi = src.tretcoresocoresccodi,
+      TEMP.RETcliemprcodi = src.cliemprcodi,
+      TEMP.RETtrettabla = src.trettabla;
+
+      --INSERTANDO LOS DATOS EN CABECERA Y EN DETALLE
+
+      MERGE
+      INTO  TRN_ENTREGA_RETIRO_TEMP TEMP
+      USING   (
+      select rownum + (SELECT MAX(TRETCODI) + 1 FROM trn_trans_retiro) as id, codigobarra from (
+      select distinct temp.codigobarra from
+      TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'R' and temp.emprcodi in ({0})
+      ) t
+      ) SRC
+      ON  (TEMP.CODIGOBARRA = src.codigobarra and temp.emprcodi in ({0}))
+      WHEN MATCHED THEN UPDATE
+      SET  TEMP.CODCABECERA = SRC.ID;
+
+      -- INSERTAMOS LAS CABECERAS DE LOS RETIROS
+      INSERT INTO trn_trans_retiro (tretcodi, pericodi, barrcodi, genemprcodi, cliemprcodi, trettabla, tretcoresocoresccodi,
+      tretcodigo, tretversion,trettipoinformacion, tretestado, tretusername, tretfecins, tretfecact, trnenvcodi, trnmodcodi)
+      select distinct TEMP.CODCABECERA, {1} as pericodi, temp.retbarrcodi, temp.retgenemprcodi, temp.retcliemprcodi, temp.rettrettabla, temp.rettretcoresocoresccodi,
+      temp.codigobarra, {2} as versioncodi, temp.tipodato, '{5}' as estado, '{3}' as usuario, sysdate as fecharegistro, sysdate as fechaact, {4}, {6}
+      from
+      TRN_ENTREGA_RETIRO_TEMP temp
+      where temp.indbarra = 'R' and temp.emprcodi in ({0}) ORDER BY 1 ASC;
+
+      -- INSERTAMOS EL DETALLE DE RETIROS
+      insert into trn_trans_retiro_detalle(
+      tretcodi, tretdecodi,tretdeversion,tretdedia,
+      tretdepromediodia,tretdesumadia,tretde1,tretde2,
+      tretde3,tretde4,tretde5,tretde6,tretde7,tretde8,tretde9,tretde10,
+      tretde11,tretde12,tretde13,tretde14,tretde15,tretde16,tretde17,tretde18,
+      tretde19,tretde20,tretde21,tretde22,tretde23,tretde24,tretde25,tretde26,
+      tretde27,tretde28,tretde29,tretde30,tretde31,tretde32,tretde33,tretde34,
+      tretde35,tretde36,tretde37,tretde38,tretde39,tretde40,tretde41,tretde42,
+      tretde43,tretde44,tretde45,tretde46,tretde47,tretde48,tretde49,tretde50,
+      tretde51,tretde52,tretde53,tretde54,tretde55,tretde56,tretde57,tretde58,
+      tretde59,tretde60,tretde61,tretde62,tretde63,tretde64,tretde65,tretde66,
+      tretde67,tretde68,tretde69,tretde70,tretde71,tretde72,tretde73,tretde74,
+      tretde75,tretde76,tretde77,tretde78,tretde79,tretde80,tretde81,tretde82,
+      tretde83,tretde84,tretde85,tretde86,tretde87,tretde88,tretde89,tretde90,
+      tretde91,tretde92,tretde93,tretde94,tretde95,tretde96,tretdeusername,tretdefecins,
+      tretdefecact
+      )
+      select
+      CODCABECERA, (rownum + (select max(tretdecodi) from trn_trans_retiro_detalle)) as id,
+      {2} as version,  nrodia, promedio, sumadia,
+      h1,h2,h3,h4,h5,h6,h7,h8,
+      h9,h10,h11,h12,h13,h14,h15,h16,
+      h17,h18,h19,h20,h21,h22,h23,h24,
+      h25,h26,h27,h28,h29,h30,h31,h32,
+      h33,h34,h35,h36,h37,h38,h39,h40,
+      h41,h42,h43,h44,h45,h46,h47,h48,
+      h49,h50,h51,h52,h53,h54,h55,h56,
+      h57,h58,h59,h60,h61,h62,h63,h64,
+      h65,h66,h67,h68,h69,h70,h71,h72,
+      h73,h74,h75,h76,h77,h78,h79,h80,
+      h81,h82,h83,h84,h85,h86,h87,h88,
+      h89,h90,h91,h92,h93,h94,h95,h96,
+      '{3}', sysdate, sysdate
+      from TRN_ENTREGA_RETIRO_TEMP where indbarra = 'R' and emprcodi in ({0});
+      end;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCodigosModelo</key>
+    <query>
+      select codigobarra, indbarra from TRN_ENTREGA_RETIRO_TEMP where emprcodi in ({0})
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateRetirosInactivo</key>
+    <query>
+      UPDATE trn_trans_retiro SET TRETESTADO = 'INA'
+      WHERE TRETCODIGO IN ( SELECT TRETCODIGO FROM trn_trans_retiro WHERE TRNENVCODI = {0} ) AND TRNENVCODI !={0}
+      AND pericodi = {1}
+      AND tretversion = {2}
+    </query>
+  </Sql>
+</Sqls>

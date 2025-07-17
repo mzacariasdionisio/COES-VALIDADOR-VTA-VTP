@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ctgdetcodi), 0) + 1 from eq_categoria_det
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eq_categoria_det(
+      ctgdetcodi,
+      ctgcodi,
+      ctgdetnomb,
+      ctgdetestado,
+      ctgdetusucreacion,
+      ctgdetfeccreacion
+      )
+      values(
+      :ctgdetcodi,
+      :ctgcodi,
+      :ctgdetnomb,
+      :ctgdetestado,
+      :usuariocreacion,
+      SYSDATE
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eq_categoria_det set
+      ctgdetnomb = :ctgdetnomb,
+      ctgdetestado = :ctgdetestado,
+      ctgdetusumodificacion = :usuarioupdate,
+      ctgdetfecmodificacion = SYSDATE
+      where 
+      ctgdetcodi = :ctgdetcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from eq_categoria_det
+      where
+      ctgdetcodi = :ctgdetcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select ctgdet.ctgdetcodi,ctgdet.ctgcodi,ctgdet.ctgdetnomb,ctgdet.ctgdetestado, ctgdet.ctgdetusucreacion,ctgdet.ctgdetfeccreacion,ctgdet.ctgdetusumodificacion,ctgdet.ctgdetfecmodificacion
+      ,fam.FAMNOMB,ctg.CTGNOMB, ctgp.CTGCODI "CTGPADRECODI", ctgp.ctgnomb "CTGPADRENOMB",coalesce(ctgequi.cant_equipo,0) "total_equipo"
+      from eq_categoria_det ctgdet
+      inner join eq_categoria ctg on ctg.CTGCODI = ctgdet.CTGCODI
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp on  ctgp.CTGCODI =  ctg.CTGPADRE
+      left join (
+        select ctgdet1.CTGDETCODI,count(*) cant_equipo
+        from  eq_categoria_det ctgdet1
+        inner join EQ_CATEGORIA_EQUIPO ctgequi1
+        on ctgdet1.CTGDETCODI = ctgequi1.CTGDETCODI
+        group by ctgdet1.CTGDETCODI
+      )ctgequi  on ctgequi.CTGDETCODI = ctgdet.CTGDETCODI
+      where
+      ctgdet.ctgdetcodi = :ctgdetcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select ctgdet.ctgdetcodi,ctgdet.ctgcodi,ctgdet.ctgdetnomb,ctgdet.ctgdetestado, ctgdet.ctgdetusucreacion,ctgdet.ctgdetfeccreacion,ctgdet.ctgdetusumodificacion,ctgdet.ctgdetfecmodificacion
+      ,fam.FAMNOMB,ctg.CTGNOMB, ctgp.CTGCODI "CTGPADRECODI", ctgp.ctgnomb "CTGPADRENOMB"
+      from eq_categoria_det ctgdet
+      inner join eq_categoria ctg on ctg.CTGCODI = ctgdet.CTGCODI
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp on  ctgp.CTGCODI =  ctg.CTGPADRE
+      order by ctg.famcodi ,ctg.CTGNOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByCategoriaAndEstado</key>
+    <query>
+      select ctgdet.ctgdetcodi,ctgdet.ctgcodi,ctgdet.ctgdetnomb,ctgdet.ctgdetestado, ctgdet.ctgdetusucreacion,ctgdet.ctgdetfeccreacion,ctgdet.ctgdetusumodificacion,ctgdet.ctgdetfecmodificacion
+      ,fam.FAMNOMB,ctg.CTGNOMB, ctgp.CTGCODI "CTGPADRECODI", ctgp.ctgnomb "CTGPADRENOMB",coalesce(ctgequi.cant_equipo,0) "total_equipo"
+      from eq_categoria_det ctgdet
+      inner join eq_categoria ctg on ctg.CTGCODI = ctgdet.CTGCODI
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp on  ctgp.CTGCODI =  ctg.CTGPADRE
+      left join (
+      select ctgdet1.CTGDETCODI,count(*) cant_equipo
+      from  eq_categoria_det ctgdet1
+      inner join EQ_CATEGORIA_EQUIPO ctgequi1
+      on ctgdet1.CTGDETCODI = ctgequi1.CTGDETCODI
+      group by ctgdet1.CTGDETCODI
+      )ctgequi  on ctgequi.CTGDETCODI = ctgdet.CTGDETCODI
+      where (ctgdet.ctgcodi = {0} or '-2' = '{0}') and (ctgdet.ctgdetestado ='{1}'  or '-2' = '{1}')
+      order by ctg.famcodi ,ctg.CTGNOMB,ctgdet.ctgdetnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByCategoriaAndEstadoAndEmpresa</key>
+    <query>
+      select ctgdet.ctgdetcodi,ctgdet.ctgcodi,ctgdet.ctgdetnomb,ctgdet.ctgdetestado, ctgdet.ctgdetusucreacion,ctgdet.ctgdetfeccreacion,ctgdet.ctgdetusumodificacion,ctgdet.ctgdetfecmodificacion
+      ,fam.FAMNOMB,ctg.CTGNOMB, ctgp.CTGCODI "CTGPADRECODI", ctgp.ctgnomb "CTGPADRENOMB",coalesce(ctgequi.cant_equipo,0) "total_equipo"
+      from eq_categoria_det ctgdet
+      inner join eq_categoria ctg on ctg.CTGCODI = ctgdet.CTGCODI
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp on  ctgp.CTGCODI =  ctg.CTGPADRE
+      left join (
+        select ctgdet1.CTGDETCODI,e1.emprcodi,count(*) cant_equipo
+        from  eq_categoria_det ctgdet1
+        inner join EQ_CATEGORIA_EQUIPO ctgequi1 on ctgdet1.CTGDETCODI = ctgequi1.CTGDETCODI
+        inner join eq_equipo e1 on e1.equicodi = ctgequi1.equicodi
+        group by ctgdet1.CTGDETCODI,e1.emprcodi
+      )ctgequi  on ctgequi.CTGDETCODI = ctgdet.CTGDETCODI and ctgequi.emprcodi = {2}
+      where (ctgdet.ctgcodi = {0} or '-2' = '{0}') and (ctgdet.ctgdetestado ='{1}'  or '-2' = '{1}')
+      order by ctg.famcodi ,ctg.CTGNOMB,ctgdet.ctgdetnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from eq_categoria_det
+      where ctgcodi = {0}
+    </query>
+  </Sql>
+</Sqls>

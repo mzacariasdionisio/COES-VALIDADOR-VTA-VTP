@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(cmgrcodi), 0) + 1 from si_costomarginal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into si_costomarginal(
+      cmgrcodi,
+      barrcodi,
+      cmgrenergia,
+      cmgrcongestion,
+      cmgrtotal,
+      cmgrcorrelativo,
+      cmgrfecha,
+      cmgrusucreacion,
+      cmgrfeccreacion,
+      cmgrtcodi
+      )
+      values(
+      :cmgrcodi,
+      :barrcodi,
+      :cmgrenergia,
+      :cmgrcongestion,
+      :cmgrtotal,
+      :cmgrcorrelativo,
+      :cmgrfecha,
+      :cmgrusucreacion,
+      :cmgrfeccreacion,
+      :cmgrtcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update si_costomarginal
+      set
+      barrcodi = :barrcodi,
+      cmgrenergia = :cmgrenergia,
+      cmgrcongestion = :cmgrcongestion,
+      cmgrtotal = :cmgrtotal,
+      cmgrcorrelativo = :cmgrcorrelativo,
+      cmgrfecha = :cmgrfecha,
+      cmgrusucreacion = :cmgrusucreacion,
+      cmgrfeccreacion = :cmgrfeccreacion,
+      cmgrtcodi = :cmgrtcodi
+      where
+      cmgrcodi = :cmgrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from si_costomarginal
+      where
+      cmgrcodi = :cmgrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from si_costomarginal where cmgrcodi = :cmgrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select * from si_costomarginal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select b.BARRNOMBRE,b.osinergcodi,a.* from si_costomarginal a
+      inner join TRN_BARRA b on b.barrcodi = a.barrcodi and b.barrestado='ACT'
+      where a.cmgrfecha between to_date('{0}','YYYY-MM-DD') and to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and (a.barrcodi in({2}) or '-1'='{2}')
+      order by a.cmgrfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteSiCostomarginalXFecha</key>
+    <query>
+      delete from si_costomarginal
+      where cmgrfecha between to_date('{0}','YYYY-MM-DD') and to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaSiCostomarginalDet</key>
+    <query>
+      select * from si_costomarginal
+      where cmgrfecha = to_date('{0}','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+
+    <key>ProcesarTempCostoMarginal</key>
+
+    <query>
+      --{0} enviocodi
+      --{1} fecha inicio
+      --{2} fecha fin
+      --{3} usuario
+      declare
+      maxid NUMBER;
+      begin
+      -- Eliminamos los datos de si_costovariable
+      delete from si_costomarginal
+      where cmgrfecha between to_date('{1}','YYYY-MM-DD') and to_date('{2} 23:59:59','YYYY-MM-DD HH24:MI:SS');
+
+      select max(cmgrcodi) into maxid from si_costomarginal;
+      -- Insertamos datos en la tabla si_costomarginal proveniente de carga de datos por el usuario
+      -- almacenada temporalmente en si_costomarginaltemp
+      insert into si_costomarginal (cmgrcodi,barrcodi,cmgrenergia,cmgrcongestion,cmgrtotal,cmgrcorrelativo,cmgrfecha,cmgrusucreacion,cmgrfeccreacion,cmgrtcodi)
+      select rownum + maxid,barrcodi,cmgtenergia,cmgtcongestion,cmgttotal,cmgtcorrelativo,cmgtfecha,'{3}',sysdate,1 from si_costomarginaltemp
+      where enviocodi = {0};
+      end;
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteValoresNulos</key>
+    <query>
+      select barra.barrnombre,to_char(cmg.cmgrfecha, 'YYYY-MM-DD HH24:MI') as hora, cmg.* from si_costomarginal cmg
+      inner join trn_barra barra on cmg.barrcodi = barra.barrcodi
+      where
+      (cmg.cmgrfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and
+      cmg.cmgrfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')) and
+      (cmg.cmgrenergia is null or cmg.cmgrcongestion is null or cmg.cmgrtotal is null)
+      order by cmg.cmgrfecha asc, barra.barrnombre asc
+
+    </query>
+  </Sql>
+  
+    <!--SIOSEIN-->
+
+  <Sql>
+    <key>ObtenerCmgPromedioDiarioDeBarras</key>
+    <query>
+      select cm.barrcodi,tb.barrnombre,tb.osinergcodi,trunc(cm.cmgrfecha) cmgrfecha,round(avg(cm.cmgrenergia),6) cmgrenergia, round(avg(cm.cmgrtotal),6) cmgrtotal from si_costomarginal cm inner join
+      trn_barra tb on cm.barrcodi=tb.barrcodi and tb.barrestado='ACT'
+      where cm.cmgrfecha between to_date('{0}','YYYY-MM-DD') and to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS') and (cm.barrcodi in({2}) or '-1'='{2}')
+      group  by cm.barrcodi,tb.barrnombre,tb.osinergcodi,trunc(cm.cmgrfecha)
+    </query>
+
+  </Sql>
+
+
+  <!--END SIOSEIN-->
+  
+</Sqls>

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(pcancodi), 0) + 1 from me_ptomedcanal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into me_ptomedcanal(
+      pcancodi,
+      canalcodi,
+      ptomedicodi,
+      tipoinfocodi,
+      pcanestado,
+      pcanusucreacion,
+      pcanfeccreacion,
+      pcanfactor
+      )
+      values(
+      :pcancodi,
+      :canalcodi,
+      :ptomedicodi,
+      :tipoinfocodi,
+      :pcanestado,
+      :pcanusucreacion,
+      :pcanfeccreacion,
+      :pcanfactor
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update me_ptomedcanal
+      set
+      pcanestado = :pcanestado,
+      pcanusumodificacion = :pcanusumodificacion,
+      pcanfecmodificacion = :pcanfecmodificacion,
+      pcanfactor = :pcanfactor
+      where
+      canalcodi = :canalcodi
+      and ptomedicodi = :ptomedicodi
+      and tipoinfocodi = :tipoinfocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from me_ptomedcanal
+      where
+      canalcodi = :canalcodi
+      and ptomedicodi = :ptomedicodi
+      and tipoinfocodi = :tipoinfocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      ptocanal.*,
+      emp.emprnomb,eqp.equinomb as central,coalesce(eq.equinomb, eq.equiabrev) as equinomb, fam.famnomb, fam.famabrev,coalesce(pto.PTOMEDIDESC,pto.PTOMEDIELENOMB) PTOMEDIELENOMB,
+      canal.CANALNOMB,canal.CANALABREV,
+      zona.ZONANOMB,ptocanal.TIPOINFOCODI,info.TIPOINFOABREV
+      from me_ptomedcanal ptocanal
+      left join me_ptomedicion pto on ptocanal.ptomedicodi = pto.ptomedicodi
+      left join eq_equipo eq on eq.equicodi = pto.equicodi
+      left join eq_equipo eqp on eqp.EQUICODI = coalesce(eq.EQUIPADRE, -1)
+      left join eq_familia fam on fam.famcodi = eq.famcodi
+      left join si_empresa emp on emp.emprcodi = pto.emprcodi
+      left join TR_CANAL_SP7 canal on canal.canalcodi = ptocanal.canalcodi
+      left join TR_ZONA_SP7 zona on zona.ZONACODI = canal.ZONACODI
+      left join TR_EMPRESA_SP7 emp7 on emp7.EMPRCODI = zona.EMPRCODI
+      left join SI_TIPOINFORMACION info on info.TIPOINFOCODI = ptocanal.TIPOINFOCODI
+      where
+      ptocanal.canalcodi = :canalcodi
+      and ptocanal.ptomedicodi = :ptomedicodi
+      and ptocanal.tipoinfocodi = :tipoinfocodi
+      and PCANESTADO = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      me_ptomedcanal
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      me_ptomedcanal
+      where PCANESTADO = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarEquivalencia</key>
+    <query>
+      select
+      emp.emprcodi,emp.emprnomb,pto.ptomedicodi, TRIM(COALESCE(pto.ptomediDESC,  pto.ptomedielenomb)) ptomedielenomb,
+      case when eq.famcodi in (4,5,37,39) then eq.equicodi else eq.equipadre end as equipadre, tar.tareaabrev || ' ' || ar.areanomb as central,
+      eq.equicodi,coalesce(eq.equinomb, eq.equiabrev) as equinomb, eq.equiabrev, eq.famcodi, fam.famnomb, fam.famabrev,
+      ptocanal.canalcodi, ptocanal.pcanestado, ptocanal.Pcanfactor,ptocanal.TIPOINFOCODI,info.TIPOINFOABREV, org.ORIGLECTNOMBRE
+      from me_ptomedcanal ptocanal
+      left join me_ptomedicion pto on ptocanal.ptomedicodi = pto.ptomedicodi
+      left join eq_equipo eq on eq.equicodi = pto.equicodi
+      left join eq_area ar on ar.areacodi = eq.areacodi
+      left join eq_tipoarea tar on tar.tareacodi = ar.tareacodi
+      left join eq_equipo eqp on eqp.EQUICODI = coalesce(eq.EQUIPADRE, -1)
+      left join eq_familia fam on fam.famcodi = eq.famcodi
+      left join si_empresa emp on emp.emprcodi = eq.emprcodi
+      left join SI_TIPOINFORMACION info on info.TIPOINFOCODI = ptocanal.TIPOINFOCODI
+      left join ME_ORIGENLECTURA org on org.ORIGLECTCODI = pto.ORIGLECTCODI
+      where
+      ('-1' = '{0}' or emp.emprcodi in ({0}))
+      and ('-1' = '{1}' or org.ORIGLECTCODI in ({1}))
+      and ('-1' = '{2}' or ptocanal.tipoinfocodi in ({2}))
+      and ('-1' = '{3}' or fam.famcodi in ({3}))
+      and pto.ptomediestado &lt;> 'X' and ptocanal.PCANESTADO = 'A'
+      order by emp.emprnomb ,fam.famnomb, coalesce(eq.equinomb, eq.equiabrev) ,ptocanal.TIPOINFOCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEquivalencia</key>
+    <query>
+      Select *
+      from me_ptomedcanal
+      where
+      (ptomedicodi in ({0}) or '{0}' = '-1' )
+      and (tipoinfocodi = {1} or '{1}' = '-1' )
+      and PCANESTADO = 'A'
+    </query>
+  </Sql>
+</Sqls>

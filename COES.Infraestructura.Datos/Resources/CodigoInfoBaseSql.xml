@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select trn_codigo_infobase.*,
+      vw_eq_equipo_trn_coinfb.equinomb,
+      trn_barra.barrbarratransferencia,
+      vw_si_empresa.emprnomb
+      from trn_codigo_infobase left outer join vw_eq_equipo_trn_coinfb on vw_eq_equipo_trn_coinfb.equicodi = trn_codigo_infobase.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_infobase.barrcodi
+      left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_infobase.emprcodi
+      where (coinfbcodi = :coinfbcodi)
+    </query>
+  </Sql>
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_codigo_infobase
+      ( coinfbcodi, emprcodi, barrcodi, equicodi, coinfbcodigo, coinfbfechainicio, coinfbfechafin, coinfbestado, coinfbusername, coinfbfecins )
+      values ( :coinfbcodi, :emprcodi, :barrcodi, :equicodi, :coinfbcodigo, :coinfbfechainicio, :coinfbfechafin, :coinfbestado, :coinfbusername, :coinfbfecins )
+    </query>
+  </Sql>
+  <Sql>
+    <key>Update</key>
+    <query>
+      update trn_codigo_infobase set
+      emprcodi = :emprcodi,
+      barrcodi = :barrcodi,
+      equicodi = :equicodi,
+      coinfbcodigo = :coinfbcodigo,
+      coinfbfechainicio = :coinfbfechainicio,
+      coinfbfechafin = :coinfbfechafin,
+      coinfbestado = :coinfbestado,
+      coinfbfecact = :coinfbfecact
+      where coinfbcodi = :coinfbcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>delete from trn_codigo_infobase where coinfbcodi = :coinfbcodi</query>
+  </Sql>
+  <Sql>
+    <key>List</key>
+    <query>
+      select trn_codigo_infobase.*,
+      vw_eq_equipo_trn_coinfb.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+      from trn_codigo_infobase left outer join vw_eq_equipo_trn_coinfb on vw_eq_equipo_trn_coinfb.equicodi = trn_codigo_infobase.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_infobase.barrcodi
+      left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_infobase.emprcodi
+      order by vw_eq_equipo_trn_coinfb.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from (select trn_codigo_infobase.*,
+      vw_eq_equipo_trn_coinfb.equinomb,
+      trn_barra.barrbarratransferencia,
+      vw_si_empresa.emprnomb,
+      (row_number() over (order by vw_eq_equipo_trn_coinfb.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb)) as r
+      from trn_codigo_infobase left outer join vw_eq_equipo_trn_coinfb on vw_eq_equipo_trn_coinfb.equicodi = trn_codigo_infobase.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_infobase.barrcodi
+      left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_infobase.emprcodi
+      where (vw_si_empresa.emprnomb =:emprnomb  or :emprnomb is null)
+      and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+      and (vw_eq_equipo_trn_coinfb.equinomb =:equinomb or :equinomb is null)
+      and (trn_codigo_infobase.coinfbfechainicio &gt;=:coinfbfechainicio or :coinfbfechainicio is null)
+      and (trn_codigo_infobase.coinfbfechafin &lt;=:coinfbfechafin or :coinfbfechafin is null)
+      and (trn_codigo_infobase.coinfbestado =:coinfbestado or :coinfbestado is null)
+      and (trn_codigo_infobase.coinfbcodigo like '%'||:coinfbcodigo||'%' or :coinfbcodigo is null )
+      order by vw_eq_equipo_trn_coinfb.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+      )
+      where r >= (((:nropagina-1) * :pagesize) + 1) and r &lt; ((:nropagina * :pagesize) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRecords</key>
+    <query>
+      select count(*) as NroRegistros
+      from trn_codigo_infobase left outer join vw_eq_equipo_trn_coinfb on vw_eq_equipo_trn_coinfb.equicodi = trn_codigo_infobase.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_infobase.barrcodi
+      left outer join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_infobase.emprcodi
+      where (vw_si_empresa.emprnomb =:emprnomb  or :emprnomb is null)
+      and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+      and (vw_eq_equipo_trn_coinfb.equinomb =:equinomb or :equinomb is null)
+      and (trn_codigo_infobase.coinfbfechainicio &gt;=:coinfbfechainicio or :coinfbfechainicio is null)
+      and (trn_codigo_infobase.coinfbfechafin &lt;=:coinfbfechafin or :coinfbfechafin is null)
+      and (trn_codigo_infobase.coinfbestado =:coinfbestado or :coinfbestado is null)
+      and (trn_codigo_infobase.coinfbcodigo like '%'||:coinfbcodigo||'%' or :coinfbcodigo is null )
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetMaxId</key>
+    <query>select nvl(max(coinfbcodi), 0) + 1 from trn_codigo_infobase</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCodigoInfoBaseCodigo</key>
+    <query>
+      select trn_codigo_infobase.*, vw_eq_equipo_trn_coinfb.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+      from trn_codigo_infobase left outer join vw_eq_equipo_trn_coinfb on vw_eq_equipo_trn_coinfb.equicodi = trn_codigo_infobase.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_infobase.barrcodi
+      join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_infobase.emprcodi
+      where (coinfbcodigo = :coinfbcodigo)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CodigoInfoBaseVigenteByPeriodo</key>
+    <query>
+      select trn_codigo_infobase.*, vw_eq_equipo_trn_coinfb.equinomb, trn_barra.barrbarratransferencia, vw_si_empresa.emprnomb
+      from trn_codigo_infobase join vw_eq_equipo_trn_coinfb on vw_eq_equipo_trn_coinfb.equicodi = trn_codigo_infobase.equicodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_infobase.barrcodi
+      join vw_si_empresa on vw_si_empresa.emprcodi = trn_codigo_infobase.emprcodi
+      where coinfbcodigo = :coinfbcodigo
+      and trn_codigo_infobase.coinfbestado = 'ACT'
+      and NVL(to_char(trn_codigo_infobase.coinfbfechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :emprcodi)
+      and NVL(to_char(trn_codigo_infobase.coinfbfechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :emprcodi)
+    </query>
+  </Sql>
+</Sqls>

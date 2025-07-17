@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(rercdtcodi), 0) + 1 from rer_comparativo_det
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>select * from rer_comparativo_det where rercdtcodi = :rercdtcodi</query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into rer_comparativo_det
+      (
+      rercdtcodi,
+      rerccbcodi,
+      rerevacodi,
+      reresecodi,
+      rereeucodi,
+      rercdtfecha,
+      rercdthora,
+      rercdtmedfpm,
+      rercdtenesolicitada,
+      rercdteneestimada,
+      rercdtpordesviacion,
+      rercdtflag,
+      rercdtusucreacion,
+      rercdtfeccreacion,
+      rercdtusumodificacion,
+      rercdtfecmodificacion
+      )
+      values
+      (
+      :rercdtcodi,
+      :rerccbcodi,
+      :rerevacodi,
+      :reresecodi,
+      :rereeucodi,
+      :rercdtfecha,
+      :rercdthora,
+      :rercdtmedfpm,
+      :rercdtenesolicitada,
+      :rercdteneestimada,
+      :rercdtpordesviacion,
+      :rercdtflag,
+      :rercdtusucreacion,
+      :rercdtfeccreacion,
+      :rercdtusumodificacion,
+      :rercdtfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update rer_comparativo_det
+      set
+      rerccbcodi = :rerccbcodi,
+      rerevacodi = :rerevacodi,
+      reresecodi = :reresecodi,
+      rereeucodi = :rereeucodi,
+      rercdtfecha = :rercdtfecha,
+      rercdthora = :rercdthora,
+      rercdtmedfpm = :rercdtmedfpm,
+      rercdtenesolicitada = :rercdtenesolicitada,
+      rercdteneestimada = :rercdteneestimada,
+      rercdtpordesviacion = :rercdtpordesviacion,
+      rercdtflag = :rercdtflag,
+      rercdtusucreacion = :rercdtusucreacion,
+      rercdtfeccreacion = :rercdtfeccreacion,
+      rercdtusumodificacion = :rercdtusumodificacion,
+      rercdtfecmodificacion = :rercdtfecmodificacion
+      where
+      rercdtcodi = :rercdtcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from rer_comparativo_det where rercdtcodi = :rercdtcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByRerccbcodi</key>
+    <query>
+      delete from rer_comparativo_det where rerccbcodi = :rerccbcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from rer_comparativo_det order by rercdtcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      rer_comparativo_det
+      where
+      (-1 = {0} or rerevacodi = {0}) and
+      (-1 = {1} or reresecodi = {1}) and
+      (-1 = {2} or rereeucodi = {2})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEEDRByCriteria</key>
+    <query>
+      select
+      *
+      from
+      rer_comparativo_det
+      where
+      (-1 = {0} or rerevacodi = {0}) and
+      (-1 = {1} or reresecodi = {1}) and
+      (-1 = {2} or rereeucodi = {2}) and
+	  rercdtflag = 'D' ORDER BY rercdtcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListComparativoAprobadaValidadaByMes</key>
+    <query>
+	  select
+	  det.*,
+	  cent.emprcodi,
+	  cent.equicodi
+	  from rer_comparativo_det det
+	  inner join rer_evaluacion_solicitudedi soli on det.reresecodi = soli.reresecodi and upper(soli.rereseresestado) = 'APROBADA' and soli.rereseeliminado = 'NO'
+	  inner join rer_evaluacion eva on det.rerevacodi = eva.rerevacodi and upper(eva.rerevaestado) = 'V'
+	  inner join rer_central cent on soli.rercencodi = cent.rercencodi and upper(cent.rercenestado) = 'A'
+
+	  where
+	  upper(det.rercdtflag) = 'D' and
+	  ((
+       (det.rercdtfecha = to_date('{0}', 'dd/mm/YYYY') and det.rercdthora != '00:00') or
+       (det.rercdtfecha between to_date('{1}', 'dd/mm/YYYY') and to_date('{2}', 'dd/mm/YYYY')
+      ) or
+	   (det.rercdtfecha = to_date('{3}', 'dd/mm/YYYY') and det.rercdthora = '00:00')
+      )) and
+	  eva.rerevacodi 
+	  
+	  in (
+		select
+		t.rerevacodi
+		from
+		(
+		select
+		row_number() over(partition by i.ipericodi order by r.rerrevcodi desc, e.rerevacodi desc) as rn,
+		e.*,
+		r.rerrevnombre,
+		i.iperianio,
+		i.iperimes
+		from
+		rer_evaluacion e
+		inner join rer_revision r on r.rerrevcodi = e.rerrevcodi
+		inner join ind_periodo i on i.ipericodi = r.ipericodi
+		where
+		upper(e.rerevaestado) = 'V' and
+		upper(i.iperihorizonte) = 'M'
+		order by
+		i.iperianio, i.iperimes, r.rerrevcodi desc, e.rerevacodi desc
+		) t
+		where t.rn = 1
+	  )
+	</query>
+  </Sql>
+</Sqls>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(audppcodi), 0) + 1 from aud_audplanificada_proceso
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into aud_audplanificada_proceso(
+           audppcodi,
+           audpcodi,
+           proccodi,
+           audppactivo,
+           audpphistorico,
+           audppusucreacion,
+           audppfeccreacion,
+           audppusumodificacion,
+           audppfecmodificacion
+       )
+       values(
+           :audppcodi,
+           :audpcodi,
+           :proccodi,
+           :audppactivo,
+           :audpphistorico,
+           :audppusucreacion,
+           :audppfeccreacion,
+           :audppusumodificacion,
+           :audppfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update aud_audplanificada_proceso
+       set
+           audpcodi = :audpcodi,
+           proccodi = :proccodi,
+           audppactivo = :audppactivo,
+           audpphistorico = :audpphistorico,
+           audppusumodificacion = :audppusumodificacion,
+           audppfecmodificacion = :audppfecmodificacion
+       where
+           audppcodi = :audppcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update aud_audplanificada_proceso
+      set AUDPPACTIVO = '0', AUDPPHISTORICO = '1',
+      AUDPPUSUMODIFICACION = :AUDPPUSUMODIFICACION, AUDPPFECMODIFICACION = :AUDPPFECMODIFICACION
+      where
+      audppcodi = :audppcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByAudPlanificada</key>
+    <query>
+      update aud_audplanificada_proceso
+      set AUDPPACTIVO = '0', AUDPPHISTORICO = '1',
+      AUDPPUSUMODIFICACION = :AUDPPUSUMODIFICACION, AUDPPFECMODIFICACION = :AUDPPFECMODIFICACION
+      where
+      audpcodi = :audpcodi and
+      not exists(select * from sic.AUD_AUDITORIAPROCESO ap where ap.AUDIPACTIVO = '1' and ap.AUDPPCODI = aud_audplanificada_proceso.AUDPPCODI)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           audppcodi,
+           audpcodi,
+           proccodi,
+           audppactivo,
+           audpphistorico,
+           audppusucreacion,
+           audppfeccreacion,
+           audppusumodificacion,
+           audppfecmodificacion
+       from
+           aud_audplanificada_proceso
+       where
+           audpcodi = :audpcodi and proccodi = :proccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      pp.audppcodi,
+      pp.audpcodi,
+      pp.proccodi,
+      pp.audppactivo,
+      pp.audpphistorico,
+      pp.audppusucreacion,
+      pp.audppfeccreacion,
+      pp.audppusumodificacion,
+      pp.audppfecmodificacion,
+      p.procdescripcion,
+      p.areacodi
+      from
+      aud_proceso p
+      left join aud_audplanificada_proceso pp on pp.proccodi = p.proccodi and p.procactivo = '1'
+      where pp.audpcodi = {0} and pp.audppactivo = '1'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      pp.audppcodi,
+      pp.audpcodi,
+      pp.proccodi,
+      pp.audppactivo,
+      pp.audpphistorico,
+      pp.audppusucreacion,
+      pp.audppfeccreacion,
+      pp.audppusumodificacion,
+      pp.audppfecmodificacion,
+      p.procdescripcion
+      from
+      aud_proceso p
+      left join aud_audplanificada_proceso pp on pp.proccodi = p.proccodi and p.procactivo = '1'
+      where {0} p.areacodi in ({1}) and pp.audppactivo = '1'
+    </query>
+  </Sql>
+  
+</Sqls>

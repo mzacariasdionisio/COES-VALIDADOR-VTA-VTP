@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(plancodi), 0) + 1 from aud_planauditoria
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into aud_planauditoria(
+      plancodi,
+      planano,
+      plananovigencia,
+      planactivo,
+      planhistorico,
+      planusucreacion,
+      planfeccreacion,
+      planusumodificacion,
+      planfecmodificacion,
+      plancodigo
+      )
+      values(
+      :plancodi,
+      :planano,
+      :plananovigencia,
+      :planactivo,
+      :planhistorico,
+      :planusucreacion,
+      :planfeccreacion,
+      :planusumodificacion,
+      :planfecmodificacion,
+      :plancodigo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update aud_planauditoria
+      set
+      planano = :planano,
+      plananovigencia = :plananovigencia,
+      planhistorico = :planhistorico,
+      planusucreacion = :planusucreacion,
+      planfeccreacion = :planfeccreacion,
+      planusumodificacion = :planusumodificacion,
+      planfecmodificacion = :planfecmodificacion
+      where
+      plancodi = :plancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update aud_planauditoria
+      set planactivo = '0', planhistorico = '1',
+      planusumodificacion = :planusumodificacion, planfecmodificacion = :planfecmodificacion
+      where
+      plancodi = :plancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      plancodi,
+      plancodigo,
+      planano,
+      plananovigencia,
+      planactivo,
+      planhistorico,
+      planusucreacion,
+      planfeccreacion,
+      planusumodificacion,
+      planfecmodificacion
+      from
+      aud_planauditoria
+      where
+      plancodi = :plancodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      plancodi,
+      plancodigo,
+      planano,
+      plananovigencia,
+      planactivo,
+      planhistorico,
+      planusucreacion,
+      planfeccreacion,
+      planusumodificacion,
+      planfecmodificacion
+      from
+      aud_planauditoria
+      where planactivo = '1'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from
+      (select
+      plancodi,
+      plancodigo,
+      planano,
+      plananovigencia,
+      planactivo,
+      planhistorico,
+      planusucreacion,
+      planfeccreacion,
+      planusumodificacion,
+      planfecmodificacion,
+      (row_number() over (order by plancodi desc)) as r
+      from
+      aud_planauditoria
+      where (planactivo = {0} or {0} = -1) and (plananovigencia = '{1}' or '{1}' = '0') and planactivo = '1')
+      where (r >= ((({2}-1) * {3}) + 1) and r &lt; (({2} * {3}) + 1 )) or ({2} = -1 and {3} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNroRegistroBusqueda</key>
+    <query>
+      select
+      count(*) as contador
+      from
+      aud_planauditoria p
+      where (planactivo = {0} or {0} = -1) and (plananovigencia = '{1}' or '{1}' = '0') and planactivo = '1'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByPlanValidacion</key>
+    <query>
+      select
+      (
+      CASE
+          WHEN (SELECT COUNT(*) FROM AUD_AUDITORIAPROCESO apr where apr.AUDPPCODI = app.AUDPPCODI and apr.AUDIPACTIVO = '1') > 0
+            THEN 'No se puede eliminar, el Plan Auditoria tiene una Auditoria a Ejecutar relacionada'
+          ELSE '' END
+      ) ValidacionMensaje
+      from
+      aud_planauditoria p
+      inner join aud_auditoriaplanificada ap on p.plancodi = ap.plancodi and ap.AUDPDACTIVO = '1'
+      inner join aud_audplanificada_proceso app on ap.audpcodi = app.audpcodi and app.AUDPPACTIVO = '1'
+      where p.plancodi = {0} and p.PLANACTIVO = '1'
+    </query>
+  </Sql>
+  
+</Sqls>

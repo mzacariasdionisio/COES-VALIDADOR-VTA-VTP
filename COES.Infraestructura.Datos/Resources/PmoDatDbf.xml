@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      SELECT
+      DE.PMDBF5CODI,
+      DE.GRUPOCODI,
+      GR.GRUPOCODISDDP AS CODBARRA,
+      GR.GRUPONOMB AS NOMBARRA,
+      DE.PMDBF5LCOD,
+      DE.PMDBF5FECINI,
+      DE.PMBLOQCODI,
+      DE.PMDBF5CARGA,
+      DE.PMDBF5ICCO,
+      TO_CHAR(SE.SEMANAANHIO) || '-'|| LPAD(TO_CHAR(SE.SEMANANUM),2,'0') NROSEMANA
+      FROM PMO_DAT_DBF DE JOIN PR_GRUPO GR ON DE.GRUPOCODI = GR.GRUPOCODI
+      left join SI_SEMANA SE ON DE.PMDBF5FECINI=SE.SEMANAFECHA
+      WHERE PMPERICODI = {0}
+      and UPPER(GR.GRUPONOMB) LIKE '%{1}%'
+      ORDER BY GR.GRUPONOMB,DE.PMDBF5FECINI,DE.PMDBF5LCOD,DE.PMBLOQCODI
+
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetGrupo</key>
+    <query>
+      SELECT 
+	  GRUPOCODI, 
+	  GRUPOCODISDDP, 
+	  GRUPONOMB 
+	  FROM PR_GRUPO 
+	  where 
+	  CATECODI = :CATECODI
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetGrupoCodi</key>
+    <query>
+      SELECT 
+	  GRUPOCODI, 
+	  GRUPOCODISDDP, 
+	  GRUPONOMB 
+	  FROM PR_GRUPO 
+      where GRUPOCODISDDP = :GRUPOCODISDDP
+    </query>
+  </Sql>
+  
+  
+  <Sql>
+    <key>GetDat</key>
+    <query>
+      SELECT
+      LPAD(GR.GRUPOCODISDDP,5,' ') AS "BCod",
+      RPAD(TRIM(SUBSTR(GR.GRUPOABREV,1,12)),12,' ') AS "BusName",
+      LPAD(DE.PMDBF5LCOD,4,' ') AS "LCod",
+      TO_CHAR(DE.PMDBF5FECINI,'DD/MM/YYYY') AS "Fecha",
+      LPAD(DE.PMBLOQCODI,4,' ') AS "Llev",
+      LPAD(DE.PMDBF5CARGA,8,' ') AS "Load",
+      LPAD(DE.PMDBF5ICCO,4,' ') AS "Icca",
+      DE.PMDBF5CARGA,GR.GRUPOCODISDDP,DE.PMDBF5FECINI
+      FROM PMO_DAT_DBF DE JOIN PR_GRUPO GR ON DE.GRUPOCODI = GR.GRUPOCODI
+      WHERE PMPERICODI = :PMPERICODI
+      ORDER BY GR.GRUPOABREV,GR.GRUPOCODISDDP,DE.PMDBF5FECINI,DE.PMDBF5LCOD,DE.PMBLOQCODI
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetCount</key>
+    <query>
+       select count(*) as CANT from pmo_dat_dbf where pmpericodi = :pmpericodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+DELETE FROM PMO_DAT_DBF WHERE PMPERICODI = :PMPERICODI
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      SELECT NVL(MAX(PMDBF5CODI), 0) + 1 FROM PMO_DAT_DBF
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Save</key>
+    <query>
+      INSERT
+        INTO PMO_DAT_DBF
+      (
+        PMDBF5CODI, 
+		PMPERICODI, 
+		GRUPOCODI, 
+		PMDBF5LCOD, 
+		PMDBF5FECINI, 
+		PMBLOQCODI, 
+		PMDBF5CARGA, 
+		PMDBF5ICCO
+      )
+      VALUES
+      (
+        :PMDBF5CODI, 
+		:PMPERICODI, 
+		:GRUPOCODI, 
+		:PMDBF5LCOD, 
+		:PMDBF5FECINI, 
+		:PMBLOQCODI, 
+		:PMDBF5CARGA, 
+		:PMDBF5ICCO
+      )
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetDataBase</key>
+    <query>
+      select
+      en.ENVIOFECHA
+      ,GR.GRUPOCODI
+      ,case when pto.TPTOMEDICODI=55 then '1' when pto.TPTOMEDICODI=56 then '501' else '' end  as PMDBF5LCOD
+      ,me.medintfechaini as PMDBF5FECINI
+      ,me.MEDINTBLQNUMERO as PMBLOQCODI
+      ,0 as PMDBF5ICCO --Pendiente consulta
+      ,sum(me.MEDINTH1) as PMDBF5CARGA
+      from me_medicionxintervalo me
+      inner join me_envio en on me.enviocodi = en.enviocodi
+      inner join me_ptomedicion pto on pto.ptomedicodi = me.ptomedicodi
+      inner join PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      where  en.formatcodi  IN (74,76)
+      and me.medintfechaini >=to_date('{0}','YYYY-MM-DD HH24:MI')
+      and me.medintfechaini &lt; to_date('{1}','YYYY-MM-DD HH24:MI')
+      group by en.ENVIOFECHA,GR.GRUPOCODI,pto.TPTOMEDICODI,me.medintfechaini,me.MEDINTBLQNUMERO
+      order by en.ENVIOFECHA desc,GR.GRUPOCODI,pto.TPTOMEDICODI,me.medintfechaini,me.MEDINTBLQNUMERO asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>DeleteTmp</key>
+    <query>
+      DELETE FROM PMO_DAT_DBF_TMP WHERE PMPERICODI = :PMPERICODI
+    </query>
+  </Sql>
+
+<Sql>
+    <key>GetDataTmpByFilter</key>
+    <query>
+      SELECT
+      DE.PMDBF5CODI,
+      DE.GRUPOCODI,
+      GR.GRUPOCODISDDP AS CODBARRA,
+      GR.GRUPONOMB AS NOMBARRA,
+      DE.PMDBF5LCOD,
+      DE.PMDBF5FECINI,
+      DE.PMBLOQCODI,
+      DE.PMDBF5CARGA,
+      DE.PMDBF5ICCO,
+      TO_CHAR(SE.SEMANAANHIO) || '-'|| LPAD(TO_CHAR(SE.SEMANANUM),2,'0') NROSEMANA
+      FROM PMO_DAT_DBF_TMP DE JOIN PR_GRUPO GR ON DE.GRUPOCODI = GR.GRUPOCODI
+      left join SI_SEMANA SE ON DE.PMDBF5FECINI=SE.SEMANAFECHA
+      WHERE DE.PMPERICODI = {0}
+      and DE.GRUPOCODI = {1}
+      and DE.PMDBF5FECINI = to_date('{2}','YYYY-MM-DD HH24:MI')
+      and DE.PMBLOQCODI = {3}
+      and DE.PMDBF5LCOD = '{4}'
+      ORDER BY GR.GRUPONOMB,DE.PMDBF5FECINI,DE.PMDBF5LCOD,DE.PMBLOQCODI
+    </query>
+  </Sql>
+  
+    
+    
+  <Sql>
+    <key>SaveTmp</key>
+    <query>
+      INSERT
+        INTO PMO_DAT_DBF_TMP
+      (
+        PMDBF5CODI, 
+		PMPERICODI, 
+		GRUPOCODI, 
+		PMDBF5LCOD, 
+		PMDBF5FECINI, 
+		PMBLOQCODI, 
+		PMDBF5CARGA, 
+		PMDBF5ICCO
+      )
+      VALUES
+      (
+        :PMDBF5CODI, 
+		:PMPERICODI, 
+		:GRUPOCODI, 
+		:PMDBF5LCOD, 
+		:PMDBF5FECINI, 
+		:PMBLOQCODI, 
+		:PMDBF5CARGA, 
+		:PMDBF5ICCO
+      )
+    </query>
+  </Sql>
+
+<Sql>
+    <key>GetDataFinalProcesamiento</key>
+    <query>
+      select
+      tmp.PMPERICODI
+      ,rel.GRUPOCODI1 as GRUPOCODI
+      ,tmp.PMDBF5LCOD
+      ,tmp.PMDBF5FECINI
+      ,tmp.PMBLOQCODI
+      ,0 as PMDBF5ICCO --Pendiente consulta
+      ,sum(tmp.PMDBF5CARGA) as PMDBF5CARGA
+      from PMO_DAT_DBF_TMP tmp
+      join PR_GRUPORELASO rel on tmp.GRUPOCODI=rel.GRUPOCODI2 and rel.GRRDEFCODI=1
+      where tmp.PMPERICODI={0}
+      group by tmp.PMPERICODI,rel.GRUPOCODI1,tmp.PMDBF5FECINI,tmp.PMDBF5LCOD,tmp.PMBLOQCODI
+      order by rel.GRUPOCODI1,tmp.PMDBF5FECINI,tmp.PMDBF5LCOD,tmp.PMBLOQCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      UPDATE PMO_DAT_DBF
+      SET
+      PMPERICODI = :PMPERICODI,
+      GRUPOCODI = :GRUPOCODI,
+      PMDBF5LCOD = :PMDBF5LCOD,
+      PMDBF5FECINI = :PMDBF5FECINI,
+      PMBLOQCODI = :PMBLOQCODI,
+      PMDBF5CARGA = :PMDBF5CARGA,
+      PMDBF5ICCO = :PMDBF5ICCO      
+      WHERE
+      PMDBF5CODI = :PMDBF5CODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CompletarBarrasModelo</key>
+    <query>
+
+      DECLARE
+        V_PMPERICODI NUMBER:=:V_PMPERICODI_VAL;
+        V_CONT NUMBER;
+
+      BEGIN
+
+        select nvl(max(PMDBF5CODI),0) INTO V_CONT from PMO_DAT_DBF;
+
+        insert into PMO_DAT_DBF(PMDBF5CODI, PMPERICODI,  GRUPOCODI, PMDBF5LCOD, PMDBF5FECINI,     PMBLOQCODI, PMDBF5CARGA, PMDBF5ICCO)
+        select rownum+V_CONT,V_PMPERICODI,grupocodi,PMDBF5LCOD,pmdbf5fecini,pmbloqcodi,0,0 from
+        (select distinct g13.grupocodi,case when pto.TPTOMEDICODI=55 then '1' when pto.TPTOMEDICODI=56 then '501' else '' end  as PMDBF5LCOD
+        from pr_grupo g13 join pr_gruporelaso rel on g13.grupocodi = rel.grupocodi1 and rel.grrdefcodi = 1
+        join pr_grupo g10 on rel.grupocodi2 = g10.grupocodi
+        join me_ptomedicion pto on g10.grupocodi = pto.grupocodi
+        ) gr,
+        (select distinct pmdbf5fecini from PMO_DAT_DBF where PMPERICODI=V_PMPERICODI) fi,
+        (select distinct pmbloqcodi from PMO_DAT_DBF where PMPERICODI=V_PMPERICODI) bl
+        where not exists (select 1 from PMO_DAT_DBF x where x.PMPERICODI=V_PMPERICODI
+        and x.grupocodi = gr.grupocodi
+        and x.PMDBF5LCOD = gr.PMDBF5LCOD
+        and x.pmdbf5fecini = fi.pmdbf5fecini
+        and x.pmbloqcodi = bl.pmbloqcodi);
+
+      END;
+    </query>
+  </Sql>
+
+
+</Sqls>

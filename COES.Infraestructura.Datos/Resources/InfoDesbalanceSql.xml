@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8" ?> 
+<Sqls>
+  <Sql>
+    <key>GetByListaBarrasTrans</key>
+    <query>
+      select tinfb.barrcodi, barr.barrbarratransferencia
+      from trn_trans_infobase tinfb join trn_barra barr on tinfb.barrcodi = barr.barrcodi
+      where tinfb.pericodi = :pericodi and tinfb.tinfbversion = :version
+      group by tinfb.barrcodi, barr.barrbarratransferencia
+      Order by barr.barrbarratransferencia
+    </query>
+  </Sql>
+ 
+  <Sql>
+    <key>GetByListaInfoDesbalanceByBarra</key>
+    <query>
+      select barrcodi, barrbarratransferencia, dia, sum(energiadesbalance) as energiadesbalance, sum(energiaentrega) as energiaentrega, sum(energiaretiro) as energiaretiro
+      from (
+      select tinfb.barrcodi, barr.barrbarratransferencia, tinfbd.tinfbdedia as dia, sum(tinfbd.tinfbdesumadia) as energiadesbalance, 0 as energiaentrega, 0 as energiaretiro
+      from trn_trans_infobase tinfb join trn_barra barr on tinfb.barrcodi = barr.barrcodi
+      join trn_trans_infobase_detalle tinfbd on tinfb.tinfbcodi = tinfbd.tinfbcodi
+      where tinfb.pericodi = :pericodi and tinfb.tinfbversion = :version and barr.barrcodi = :barrcodi
+      group by tinfb.barrcodi, barr.barrbarratransferencia, tinfbd.tinfbdedia
+      UNION
+      select tent.barrcodi, barr.barrbarratransferencia, tentde.tentdedia as dia, 0 as energiadesbalance, sum(tentde.tentdesumadia) as energiaentrega, 0 as energiaretiro
+      from trn_trans_entrega tent join trn_barra barr on tent.barrcodi = barr.barrcodi
+      join trn_trans_entrega_detalle tentde on tent.tentcodi = tentde.tentcodi
+      join trn_trans_infobase tinfb on tent.barrcodi = tinfb.barrcodi
+      where tent.pericodi = :pericodi and tent.tentversion = :version and barr.barrcodi = :barrcodi
+      and tent.pericodi = tinfb.pericodi and tent.tentversion = tinfb.tinfbversion
+      group by tent.barrcodi, barr.barrbarratransferencia, tentde.tentdedia
+      UNION
+      select tret.barrcodi, barr.barrbarratransferencia, tretde.tretdedia as dia, 0 as energiadesbalance, 0 as energiaentrega, sum(tretde.tretdesumadia) as energiaretiro
+      from trn_trans_retiro tret join trn_barra barr on tret.barrcodi = barr.barrcodi
+      join trn_trans_retiro_detalle tretde on tret.tretcodi = tretde.tretcodi
+      join trn_trans_infobase tinfb on tret.barrcodi = tinfb.barrcodi
+      where tret.pericodi = :pericodi and tret.tretversion = :version and barr.barrcodi = :barrcodi
+      and tret.pericodi = tinfb.pericodi and tret.tretversion = tinfb.tinfbversion
+      group by tret.barrcodi, barr.barrbarratransferencia, tretde.tretdedia
+      ) t
+      group by barrcodi, barrbarratransferencia, dia
+      order by dia
+    </query>
+  </Sql>
+</Sqls>

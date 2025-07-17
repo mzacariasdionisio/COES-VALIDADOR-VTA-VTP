@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(reqicodi), 0) + 1 from aud_requerimiento_inform
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into aud_requerimiento_inform(
+           reqicodi,
+           progaecodi,
+           tabcdcodiestado,
+           percodiresponsable,
+           archcodirequerimiento,
+           reqiplazo,
+           reqirequerimiento,
+           reqifechasolicitada,
+           reqifechapresentada,
+           reqiactivo,
+           reqihistorico,
+           reqiusuregistro,
+           reqifecregistro,
+           reqiusumodificacion,
+           reqifecmodificacion
+       )
+       values(
+           :reqicodi,
+           :progaecodi,
+           :tabcdcodiestado,
+           :percodiresponsable,
+           :archcodirequerimiento,
+           :reqiplazo,
+           :reqirequerimiento,
+           :reqifechasolicitada,
+           :reqifechapresentada,
+           :reqiactivo,
+           :reqihistorico,
+           :reqiusuregistro,
+           :reqifecregistro,
+           :reqiusumodificacion,
+           :reqifecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update aud_requerimiento_inform
+       set
+           progaecodi = :progaecodi,
+           tabcdcodiestado = :tabcdcodiestado,
+           percodiresponsable = :percodiresponsable,
+           archcodirequerimiento = :archcodirequerimiento,
+           reqiplazo = :reqiplazo,
+           reqirequerimiento = :reqirequerimiento,
+           reqifechasolicitada = :reqifechasolicitada,
+           reqifechapresentada = :reqifechapresentada,
+           reqiactivo = :reqiactivo,
+           reqihistorico = :reqihistorico,
+           reqiusuregistro = :reqiusuregistro,
+           reqifecregistro = :reqifecregistro,
+           reqiusumodificacion = :reqiusumodificacion,
+           reqifecmodificacion = :reqifecmodificacion
+       where
+           reqicodi = :reqicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from aud_requerimiento_inform
+       where
+           reqicodi = :reqicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           reqicodi,
+           progaecodi,
+           tabcdcodiestado,
+           percodiresponsable,
+           archcodirequerimiento,
+           reqiplazo,
+           reqirequerimiento,
+           reqifechasolicitada,
+           reqifechapresentada,
+           reqiactivo,
+           reqihistorico,
+           reqiusuregistro,
+           reqifecregistro,
+           reqiusumodificacion,
+           reqifecmodificacion
+       from
+           aud_requerimiento_inform
+       where
+           reqicodi = :reqicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           reqicodi,
+           progaecodi,
+           tabcdcodiestado,
+           percodiresponsable,
+           archcodirequerimiento,
+           reqiplazo,
+           reqirequerimiento,
+           reqifechasolicitada,
+           reqifechapresentada,
+           reqiactivo,
+           reqihistorico,
+           reqiusuregistro,
+           reqifecregistro,
+           reqiusumodificacion,
+           reqifecmodificacion
+       from
+           aud_requerimiento_inform
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerNroRegistroBusquedaByAuditoria</key>
+    <query>
+      select
+      count(*) as contador
+      from
+      aud_requerimiento_inform ri
+      inner join AUD_PROGAUDI_ELEMENTO pe on ri.PROGAECODI = pe.PROGAECODI
+      inner join AUD_PROGRAMAAUDITORIA pa on pa.PROGACODI = pe.PROGACODI
+      left join si_persona p on ri.percodiresponsable = p.percodi
+      where (pa.AUDICODI = {0} or {0} = 0) and (ri.TABCDCODIESTADO = {1} or {1} = 0) and p.usercode = {2} and ri.reqiactivo = '1'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaByAuditoria</key>
+    <query>
+      select * from (
+      select
+      ri.reqicodi,
+      ri.progaecodi,
+      ri.tabcdcodiestado,
+      ri.percodiresponsable,
+      ri.archcodirequerimiento,
+      ri.reqiplazo,
+      ri.reqirequerimiento,
+      ri.reqifechasolicitada,
+      ri.reqifechapresentada,
+      ri.reqiactivo,
+      ri.reqihistorico,
+      ri.reqiusuregistro,
+      ri.reqifecregistro,
+      ri.reqiusumodificacion,
+      ri.reqifecmodificacion,
+      e.elemcodigo,
+      e.elemdescripcion,
+      d.TABCDDESCRIPCION estadodescripcion,
+      p.usercode,
+      (row_number() over (order by ri.reqicodi desc)) as r
+      from
+      aud_requerimiento_inform ri
+      inner join AUD_PROGAUDI_ELEMENTO pe on ri.PROGAECODI = pe.PROGAECODI
+      inner join aud_elemento e on pe.elemcodi = e.elemcodi
+      inner join AUD_PROGRAMAAUDITORIA pa on pa.PROGACODI = pe.PROGACODI
+      inner join AUD_TABLACODIGO_DETALLE d on d.TABCDCODI = ri.TABCDCODIESTADO
+      left join si_persona p on ri.percodiresponsable = p.percodi
+      where (pa.AUDICODI = {0} or {0} = 0) and (ri.TABCDCODIESTADO = {1} or {1} = 0)
+      order by ri.reqicodi desc)
+      where (r >= ((({2}-1) * {3}) + 1) and r &lt; (({2} * {3}) + 1 )) or ({2} = -1 and {3} = -1)
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      ri.reqicodi,
+      ri.progaecodi,
+      ri.tabcdcodiestado,
+      ri.percodiresponsable,
+      ri.archcodirequerimiento,
+      ri.reqiplazo,
+      ri.reqirequerimiento,
+      ri.reqifechasolicitada,
+      ri.reqifechapresentada,
+      ri.reqiactivo,
+      ri.reqihistorico,
+      ri.reqiusuregistro,
+      ri.reqifecregistro,
+      ri.reqiusumodificacion,
+      ri.reqifecmodificacion,
+      e.elemcodigo,
+      e.elemdescripcion,
+      d.TABCDDESCRIPCION estadodescripcion,
+      (select count(*) from AUD_REQUERIMIENTOINFO_ARCHIVO ra where ra.reqicodi = ri.reqicodi) tieneArchivo
+      from
+      aud_requerimiento_inform ri
+      inner join AUD_PROGAUDI_ELEMENTO pe on ri.progaecodi = pe.progaecodi
+      inner join aud_elemento e on pe.elemcodi = e.elemcodi
+      inner join AUD_TABLACODIGO_DETALLE d on d.TABCDCODI = ri.TABCDCODIESTADO
+      where ri.progaecodi = :progaecodi
+    </query>
+  </Sql>
+</Sqls>

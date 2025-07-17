@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      SELECT NVL(MAX(AMPLICODI), 0) + 1 FROM me_ampliacionfecha
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into me_ampliacionfecha(
+      amplicodi,
+      amplifecha,
+      emprcodi,
+      formatcodi,
+      amplifechaplazo,
+      lastuser,
+      lastdate
+      )
+      values(
+      :amplicodi,
+      :amplifecha,
+      :emprcodi,
+      :formatcodi,
+      :amplifechaplazo,
+      :lastuser,
+      :lastdate
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update me_ampliacionfecha
+      set
+      amplifechaplazo = to_date('{0}','YYYY-MM-DD HH24:MI:SS'),
+      lastuser = '{1}',
+      lastdate = to_date('{2}','YYYY-MM-DD HH24:MI:SS')
+      where
+      amplifecha = to_date('{3}','YYYY-MM-DD HH24:MI:SS') and
+      emprcodi = {4} and
+      formatcodi = {5}
+    </query>
+  </Sql>  
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from me_ampliacionfecha
+      where
+      amplicodi = :amplicodi
+    </query>
+  </Sql>
+
+  <!--<Sql>
+    <key>GetById</key>
+    <query>
+      select am.* from me_ampliacionfecha am
+      inner join (
+      select max(lastdate) fechamax,amplifecha,emprcodi,formatcodi from me_ampliacionfecha
+      group by emprcodi,formatcodi,amplifecha ) fecmax on fecmax.fechamax = am.lastdate and
+      fecmax.emprcodi = am.emprcodi and fecmax.formatcodi = am.formatcodi
+      where
+      am.amplifecha = to_date('{0}','YYYY-MM-DD') and am.emprcodi = {1} and am.formatcodi = {2}
+    </query>
+  </Sql>-->
+  
+    <Sql>
+    <key>GetById</key>
+    <query>
+      select am.*,f.FORMATNOMBRE,f.FORMATDIAFINPLAZO,f.FORMATDIAPLAZO,emp.Emprnomb from me_ampliacionfecha am
+      inner join (
+      select max(lastdate) fechamax,amplifecha,emprcodi,formatcodi from me_ampliacionfecha
+      group by emprcodi,formatcodi,amplifecha ) fecmax on fecmax.fechamax = am.lastdate and
+      fecmax.emprcodi = am.emprcodi and fecmax.formatcodi = am.formatcodi inner join me_formato f
+      on f.FORMATCODI=am.FORMATCODI inner join SI_EMPRESA emp on emp.EMPRCODI=am.EMPRCODI
+      where
+      am.amplifecha = to_date('{0}','YYYY-MM-DD') and am.emprcodi = {1} and am.formatcodi = {2}
+    </query>
+  </Sql> 
+
+  <Sql>
+    <key>ListaAmpliacion</key>
+    <query>
+      select am.*,f.formatnombre,e.emprnomb from me_ampliacionfecha am
+      inner join me_formato f on f.formatcodi = am.formatcodi
+      inner join si_empresa e on e.emprcodi = am.emprcodi
+      inner join (
+      select max(lastdate) fechamax,amplifecha,emprcodi,formatcodi from me_ampliacionfecha
+      group by emprcodi,formatcodi,amplifecha ) fecmax on fecmax.fechamax = am.lastdate and
+      fecmax.emprcodi = am.emprcodi and fecmax.formatcodi = am.formatcodi
+      where
+      am.lastdate >= to_date('{0}','YYYY-MM-DD') and
+      am.lastdate &lt; to_date('{1}','YYYY-MM-DD')
+      and am.emprcodi = {2} and am.formatcodi = {3}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaAmpliacionMultiple</key>
+    <query>
+      select am.*,f.formatnombre,e.emprnomb from me_ampliacionfecha am
+      inner join me_formato f on f.formatcodi = am.formatcodi
+      inner join si_empresa e on e.emprcodi = am.emprcodi
+      where
+      am.amplifechaplazo >= to_date('{0}','YYYY-MM-DD') and
+      am.amplifechaplazo &lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and (am.emprcodi in ({2}) or '{2}' = '-1') and (am.formatcodi in ({3}) or '{3}' = '-1')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select am.*,f.formatnombre,e.emprnomb
+      from
+      ME_AMPLIACIONFECHA  am
+      inner join me_formato f on f.formatcodi = am.formatcodi
+      inner join si_empresa e on e.emprcodi = am.emprcodi
+      where ('{0}'='-1' or am.FORMATCODI in ({0}) ) and
+      ('{1}'='-1' or am.EMPRCODI in ({1}) ) and
+      am.AMPLIFECHA = TO_DATE('{2}', 'YYYY-MM-DD')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateById</key>
+    <query>
+      update me_ampliacionfecha
+      set
+      amplifechaplazo = to_date('{0}','YYYY-MM-DD HH24:MI:SS'),
+      lastuser = '{1}',
+      lastdate = to_date('{2}','YYYY-MM-DD HH24:MI:SS'),
+      amplifecha = to_date('{3}','YYYY-MM-DD HH24:MI:SS')
+      where
+      amplicodi = {4}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetAmpliacionNow</key>
+    <query>
+      select A.* from me_ampliacionfecha A
+      inner join me_formato F on A.FORMATCODI = F.FORMATCODI
+      where A.amplifecha = to_date('{1}','dd/mm/yyyy hh:mi:ss a.m.' , 'nls_date_language=american')
+      and emprcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaAmpliacionFiltro</key>
+    <query>
+      SELECT ext.* FROM (
+      SELECT ROWNUM as item, QD.*
+      FROM (
+      select am.*,f.formatnombre,  f.formatdiafinplazo, f.formatdiaplazo, e.emprnomb from me_ampliacionfecha am
+      inner join me_formato f on f.formatcodi = am.formatcodi
+      inner join si_empresa e on e.emprcodi = am.emprcodi
+      {0}
+      order by am.amplifechaplazo DESC
+      )QD
+      WHERE ROWNUM &#60;= {1}
+      ) ext
+      WHERE ext.item >= {2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaAmpliacionCount</key>
+    <query>
+      select NVL(COUNT(am.emprcodi),0) AS Q_REGISTROS
+      from me_ampliacionfecha am
+      inner join me_formato f on f.formatcodi = am.formatcodi
+      inner join si_empresa e on e.emprcodi = am.emprcodi
+      {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaEmpresasAmpliacionPlazo</key>
+    <query>
+      SELECT EMPRCODI, EMPRNOMB, nvl(emprrazsocial,EMPRNOMB) EMPRRAZSOCIAL
+      FROM SI_EMPRESA WHERE TIPOEMPRCODI IN (2, 4) AND EMPRESTADO = 'A' ORDER BY EMPRNOMB
+    </query>
+  </Sql>
+
+</Sqls>

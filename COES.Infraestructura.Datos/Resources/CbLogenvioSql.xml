@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(logenvcodi), 0) + 1 from cb_logenvio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cb_logenvio(
+      logenvcodi,
+      estenvcodi,
+      cbenvcodi,
+      logenvusucreacion,
+      logenvfeccreacion,
+      logenvobservacion,
+      logenvfecrecepcion,
+      logenvfeclectura,
+      logenvusurecepcion,
+      logenvusulectura,
+      logenvplazo
+      )
+      values(
+      :logenvcodi,
+      :estenvcodi,
+      :cbenvcodi,
+      :logenvusucreacion,
+      :logenvfeccreacion,
+      :logenvobservacion,
+      :logenvfecrecepcion,
+      :logenvfeclectura,
+      :logenvusurecepcion,
+      :logenvusulectura,
+      :logenvplazo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cb_logenvio
+      set
+      estenvcodi = :estenvcodi,
+      cbenvcodi = :cbenvcodi,
+      logenvusucreacion = :logenvusucreacion,
+      logenvfeccreacion = :logenvfeccreacion,
+      logenvobservacion = :logenvobservacion,
+      logenvfecrecepcion = :logenvfecrecepcion,
+      logenvfeclectura = :logenvfeclectura,
+      logenvusurecepcion = :logenvusurecepcion,
+      logenvusulectura = :logenvusulectura,
+      logenvplazo = :logenvplazo
+      where
+      logenvcodi = :logenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from cb_logenvio
+      where
+      logenvcodi = :logenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      cb_logenvio
+      where
+      logenvcodi = :logenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      cb_logenvio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      le.*, em.emprnomb
+      from
+      cb_logenvio le
+      inner join cb_envio e on e.cbenvcodi = le.cbenvcodi
+      inner join si_empresa em on em.emprcodi = e.emprcodi
+
+      where le.cbenvcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByEnviosYEstado</key>
+    <query>
+      select
+      *
+      from
+      cb_logenvio
+      where cbenvcodi in ({0}) and estenvcodi in ({1})
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetLogGaseososPorEmpresaYRango</key>
+    <query>
+      select DISTINCT le.*, ee.estenvnomb from  cb_logenvio le
+      inner join cb_envio en on en.cbenvcodi = le.cbenvcodi
+      inner join ext_estado_envio ee on ee.estenvcodi = le.estenvcodi
+      where
+      en.estcomcodi = 3 and
+      en.cbenvtipoenvio = 2 and
+      (en.emprcodi in ({0}) or '{0}' = '-1') and
+      TO_DATE (en.cbenvfechaperiodo) >=  TO_DATE('{1}','DD/MM/YYYY') AND
+      TO_DATE (en.cbenvfechaperiodo) &lt;=  TO_DATE('{2}','DD/MM/YYYY')
+    </query>
+  </Sql>
+</Sqls>

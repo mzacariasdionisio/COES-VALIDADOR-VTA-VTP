@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(potsecodi), 0) + 1 from vtp_saldo_empresa
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_saldo_empresa(potsecodi, pericodi, recpotcodi, emprcodi,
+      potseingreso, potseegreso, potsesaldoanterior, potsesaldo, potseajuste, potseusucreacion, potsefeccreacion)
+      values(:potsecodi, :pericodi, :recpotcodi, :emprcodi,
+      :potseingreso, :potseegreso, :potsesaldoanterior, :potsesaldo, :potseajuste, :potseusucreacion, :potsefeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_saldo_empresa
+      set
+      potsesaldoreca = :potsesaldoreca,
+      potsepericodidest = :potsepericodidest
+      where potsecodi = :potsecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdatePeriodoDestino</key>
+    <query>
+      update vtp_saldo_empresa
+      set potsepericodidest = :potsepericodidest
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_saldo_empresa where potsecodi = :potsecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_saldo_empresa where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from vtp_saldo_empresa where potsecodi = :potsecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdSaldo</key>
+    <query>
+		select :pericodi as pericodi, :recpotcodi as recpotcodi, :emprcodi as emprcodi, sum(potseingreso) as potseingreso, sum(potseegreso) as potseegreso, sum(potsesaldoanterior) as potsesaldoanterior, sum(potsesaldo) as potsesaldo, sum(potsesaldoreca) as potsesaldoreca from vtp_saldo_empresa
+		where pericodi = :pericodi and recpotcodi = :recpotcodi --and emprcodi = :emprcodi
+		and (emprcodi = :emprcodi or emprcodi in (select v.emprcodiorigen
+		from vw_si_migracion v
+		left join vw_si_migracion v1 on v1.emprcodiorigen = v.emprcodidestino
+		where nvl(v1.emprcodidestino,v.emprcodidestino) = :emprcodi or v.emprcodidestino = :emprcodi))
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdSaldoGeneral</key>
+    <query>
+		select a.* from vtp_saldo_empresa a
+		where a.pericodi = :pericodi and a.recpotcodi = :recpotcodi and
+		--(a.emprcodi = :emprcodi or a.emprcodi in (select ant.emprcodiant from vtp_cambio_empresa ant where ant.emprcodi = :emprcodi ))
+		(a.emprcodi = :emprcodi or a.emprcodi in (select ant.emprcodiorigen from vw_si_migracion ant where ant.emprcodidestino = :emprcodi ))
+	</query>
+  </Sql>
+  
+  <Sql>
+    <key>GetSaldoAnterior</key>
+    <query>
+		select nvl(sum(potsesaldoreca), 0) from vtp_saldo_empresa
+		where potsepericodidest = :potsepericodidest
+		and (emprcodi = :emprcodi or emprcodi in (select v.emprcodiorigen
+		from vw_si_migracion v
+		left join vw_si_migracion v1 on v1.emprcodiorigen = v.emprcodidestino
+		where nvl(v1.emprcodidestino,v.emprcodidestino) = :emprcodi or v.emprcodidestino = :emprcodi))
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+		select se.emprcodi
+		--,( select emprnomb from vw_trn_empresa_str e where se.emprcodi = e.emprcodi) as emprnomb
+		, case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = se.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = se.emprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = se.pericodi and recacodi = se.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = se.emprcodi) end as emprnomb
+		, 0 as potsecodi
+		, se.pericodi
+		, se.recpotcodi
+		, SUM(se.potseingreso) as potseingreso
+		, SUM(se.potseegreso) as potseegreso
+		, SUM(se.potsesaldoanterior) as potsesaldoanterior
+		, SUM(se.potsesaldo) as potsesaldo
+		, SUM(se.POTSESALDORECA) as POTSESALDORECA
+		, se.potsepericodidest
+		, se.potseusucreacion
+		, se.potsefeccreacion
+		, se.potseajuste
+		from vtp_saldo_empresa se
+		where pericodi = :pericodi and recpotcodi = :recpotcodi
+		group by se.emprcodi
+		--, se.potsecodi
+		, se.pericodi
+		, se.recpotcodi
+		, se.potsepericodidest
+		, se.potseusucreacion
+		, se.potsefeccreacion
+		, se.potseajuste
+		order by 2
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListCalculaSaldo</key>
+    <query>
+
+		select t1.emprcodi, case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = t1.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = t1.emprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = t1.pericodi and recacodi = t1.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = t1.emprcodi) end as emprnomb,
+		potseingreso, potseegreso, potsesaldo
+		from (
+		select t.emprcodi,pericodi,recpotcodi, sum(t.ingreso) as potseingreso, sum(t.egreso) as potseegreso, (sum(t.ingreso) - sum(t.egreso)) as potsesaldo
+		from(
+		select ip.emprcodi, ip.potipimporte as ingreso, 0 as egreso,pericodi,recpotcodi from vtp_ingreso_potencia ip where pericodi = :pericodi and recpotcodi = :recpotcodi
+		union
+		select pe.emprcodi, 0 as ingreso, pe.pagegrpagoegreso as egreso,pericodi,recpotcodi from vtp_pago_egreso pe where pericodi = :pericodi and recpotcodi = :recpotcodi) t
+		group by t.emprcodi,pericodi,recpotcodi) t1
+		order by 2
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select * from vtp_saldo_empresa
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPositiva</key>
+    <query>
+      select --(select emprnomb from vw_trn_empresa_str e where se.emprcodi = e.emprcodi) as emprnomb, 
+	  case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = se.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = se.emprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = se.pericodi and recacodi = se.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = se.emprcodi) end as emprnomb,
+	  se.*,
+      (select sum(potsesaldo + potsesaldoanterior + potseajuste) from vtp_saldo_empresa where (potsesaldo + potsesaldoanterior + potseajuste) &lt; 0 and pericodi = :pericodi and recpotcodi = :recpotcodi) as potsetotalsaldopositivo
+      from vtp_saldo_empresa se
+      where (se.potsesaldo + se.potsesaldoanterior + se.potseajuste) &gt; 0 and se.pericodi = :pericodi and se.recpotcodi = :recpotcodi
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListNegativa</key>
+    <query>
+		select --(select emprnomb from vw_trn_empresa_str e where se.emprcodi = e.emprcodi) as emprnomb,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = se.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = se.emprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = se.pericodi and recacodi = se.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = se.emprcodi) end as emprnomb,
+		se.*
+		from vtp_saldo_empresa se
+		where (se.potsesaldo + se.potsesaldoanterior + se.potseajuste) &lt; 0 and se.pericodi = :pericodi and se.recpotcodi = :recpotcodi
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPeriodosDestino</key>
+    <query>
+      select p.pericodi, p.perianio, p.perimes, p.perinombre
+      from vtp_saldo_empresa se, trn_periodo p 
+      where p.pericodi = se.pericodi
+      and se.potsepericodidest = :potsepericodidest
+      group by p.pericodi, p.perianio, p.perimes, p.perinombre
+      order by p.perianio, p.perimes
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetSaldoEmpresaPeriodo</key>
+    <query>
+      <!--select se.emprcodi, (select emprnomb from vw_trn_empresa_str e where se.emprcodi = e.emprcodi) as emprnomb,
+      se.potsepericodidest, (select perinombre from trn_periodo where pericodi = se.pericodi) as perinombre, se.potsesaldoreca 
+      from vtp_saldo_empresa se
+      where se.emprcodi = :emprcodi and se.pericodi = :pericodi and potsepericodidest = :potsepericodidest
+      ASSETEC 20201211-->
+
+      select emprcodi, emprnomb, potsepericodidest, perinombre, SUM(potsesaldoreca)as potsesaldoreca from (
+      select
+      :emprcodi as emprcodi
+      , (select emprnomb from vw_trn_empresa_str e where emprcodi = :emprcodi) as emprnomb
+      ,t.potsepericodidest
+      , t.perinombre
+      , t.potsesaldoreca
+      from(
+      select
+      se.potsepericodidest
+      , (select perinombre from trn_periodo where pericodi = se.pericodi) as perinombre
+      ,(se.potsesaldoreca)
+      from vtp_saldo_empresa se
+      where (se.emprcodi = :emprcodi or se.emprcodi in (select m.EMPRCODIORIGEN from VW_SI_MIGRACION m where m.EMPRCODIDESTINO=:emprcodi) )
+      and se.pericodi = :pericodi
+      and potsepericodidest = :potsepericodidest
+      ) t
+      ) t2
+      group by emprcodi, emprnomb, potsepericodidest, perinombre
+    </query>
+  </Sql>
+</Sqls>

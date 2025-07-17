@@ -1,0 +1,439 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vce_comp_bajaefic(
+      crcbetipocalc,
+      crcbecompensacion,
+      crcbecvt,
+      crcbecvnc,
+      crcbecvc,
+      crcbeconsumo,
+      crcbepotencia,
+      crcbehorfin,
+      crcbehorini,
+      subcausacodi,
+      grupocodi,
+      pecacodi
+      )
+      values(
+      :crcbetipocalc,
+      :crcbecompensacion,
+      :crcbecvt,
+      :crcbecvnc,
+      :crcbecvc,
+      :crcbeconsumo,
+      :crcbepotencia,
+      :crcbehorfin,
+      :crcbehorini,
+      :subcausacodi,
+      :grupocodi,
+      :pecacodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vce_comp_bajaefic
+      set
+      crcbetipocalc = :crcbetipocalc,
+      crcbecompensacion = :crcbecompensacion,
+      crcbecvt = :crcbecvt,
+      crcbecvnc = :crcbecvnc,
+      crcbecvc = :crcbecvc,
+      crcbeconsumo = :crcbeconsumo,
+      crcbepotencia = :crcbepotencia
+      where
+      crcbehorfin = :crcbehorfin and
+      crcbehorini = :crcbehorini and
+      subcausacodi = :subcausacodi and
+      grupocodi = :grupocodi and
+      pecacodi = :pecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vce_comp_bajaefic
+      where
+      crcbehorfin = :crcbehorfin and
+      crcbehorini = :crcbehorini and
+      subcausacodi = :subcausacodi and
+      grupocodi = :grupocodi and
+      pecacodi = :pecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      crcbetipocalc,
+      crcbecompensacion,
+      crcbecvt,
+      crcbecvnc,
+      crcbecvc,
+      crcbeconsumo,
+      crcbepotencia,
+      crcbehorfin,
+      crcbehorini,
+      subcausacodi,
+      grupocodi,
+      pecacodi
+      from
+      vce_comp_bajaefic
+      where
+      crcbehorfin = :crcbehorfin and
+      crcbehorini = :crcbehorini and
+      subcausacodi = :subcausacodi and
+      grupocodi = :grupocodi and
+      pecacodi = :pecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      crcbetipocalc,
+      crcbecompensacion,
+      crcbecvt,
+      crcbecvnc,
+      crcbecvc,
+      crcbeconsumo,
+      crcbepotencia,
+      crcbehorfin,
+      crcbehorini,
+      subcausacodi,
+      grupocodi,
+      pecacodi
+      from
+      vce_comp_bajaefic
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      crcbetipocalc,
+      crcbecompensacion,
+      crcbecvt,
+      crcbecvnc,
+      crcbecvc,
+      crcbeconsumo,
+      crcbepotencia,
+      crcbehorfin,
+      crcbehorini,
+      subcausacodi,
+      grupocodi,
+      pecacodi
+      from
+      vce_comp_bajaefic
+    </query>
+  </Sql>
+  
+  <!--NETC-->
+  <!-- VERSION 03-->
+  <Sql>
+    <key>ListCompensacionesRegulares</key>
+    <query>
+      SELECT (CASE WHEN EQ.EMPRCODI IS NULL  THEN '_NO DEFINIDO' ELSE EMP.EMPRNOMB END) AS EMPRNOMB,
+      OP.SUBCAUSADESC, TRIM(MO.GRUPONOMB) AS GRUPONOMB,
+      BE.CRCBEHORINI, BE.CRCBEHORFIN, BE.CRCBEPOTENCIA, BE.CRCBECONSUMO, BE.CRCBECVC, BE.CRCBECVNC, BE.CRCBECVT,
+      BE.CRCBECOMPENSACION, BE.GRUPOCODI, BE.SUBCAUSACODI, BE.PECACODI
+      FROM VCE_COMP_BAJAEFIC BE
+      JOIN PR_GRUPO MO ON BE.GRUPOCODI = MO.GRUPOCODI
+      JOIN PR_GRUPO GG ON MO.GRUPOPADRE = GG.GRUPOCODI
+      LEFT JOIN
+      (SELECT GRUPOCODI, EMPRCODI, MAX(EQUIPADRE) EQUIPADRE
+      FROM EQ_EQUIPO
+      WHERE FAMCODI IN (2,3) AND NVL(GRUPOCODI,-1) != -1  AND EQUIESTADO = 'A'
+      GROUP BY GRUPOCODI, EMPRCODI
+      UNION
+      SELECT GRUPOCODI, EMPRCODI, MAX(EQUIPADRE) EQUIPADRE
+      FROM EQ_EQUIPO
+      WHERE FAMCODI IN (2,3) AND NVL(GRUPOCODI,-1) != -1  AND EQUIESTADO = 'B'
+      AND GRUPOCODI NOT IN (SELECT DISTINCT GRUPOCODI
+      FROM EQ_EQUIPO
+      WHERE FAMCODI IN (2,3) AND NVL(GRUPOCODI,-1) != -1 AND EQUIESTADO = 'A' )
+      GROUP BY GRUPOCODI, EMPRCODI
+      )EQ ON MO.GRUPOPADRE = EQ.GRUPOCODI
+      LEFT JOIN EQ_EQUIPO CG ON  EQ.EQUIPADRE = CG.EQUICODI -- CENTRAL
+      LEFT JOIN SI_EMPRESA EMP ON EQ.EMPRCODI = EMP.EMPRCODI
+      JOIN EVE_SUBCAUSAEVENTO OP ON BE.SUBCAUSACODI = OP.SUBCAUSACODI
+      WHERE BE.PECACODI = {0} AND BE.GRUPOCODI NOT IN (263,264)
+      {1}
+      ORDER BY OP.SUBCAUSADESC, MO.GRUPONOMB, BE.CRCBEHORINI
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListModoOperacion</key>
+    <query>
+      SELECT DISTINCT GRUPOCODI FROM VCE_COMP_REGULAR_DET
+      WHERE pecacodi = {0}
+      AND SUBCAUSACODI IS NOT NULL AND SUBCAUSACODI &lt;> 101
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListMedicion</key>
+    <query>
+      SELECT pecacodi,
+      GRUPOCODI,
+      CRDETHORA,
+      CRDETVALOR,
+      SUBCAUSACODI,
+      CRDETCVT,
+      CRDETCMG,
+      CRDETCOMPENSACION,
+      CRDETCVTBAJAEFIC FROM VCE_COMP_REGULAR_DET
+      WHERE pecacodi = {0}
+      AND GRUPOCODI = {1}
+      UNION
+      SELECT pecacodi,{1},ADD_MONTHS(TO_DATE(PERIANIOMES,'YYYYMM'),1)+1
+      ,NULL,NULL,NULL,NULL,NULL,NULL
+      FROM TRN_PERIODO PE JOIN VCE_PERIODO_CALCULO PC ON PE.PERICODI = PC.PERICODI WHERE PECACODI = {0}
+      ORDER BY 3
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetPeriodoCompensacion</key>
+    <query>
+      SELECT PC.*,PE.PERIANIO,PE.PERIMES FROM VCE_PERIODO_CALCULO PC JOIN TRN_PERIODO PE ON PC.PERICODI = PE.PERICODI WHERE pecacodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetDatCalculo</key>
+    <query>
+      SELECT * FROM VCE_DATCALCULO DC1 WHERE pecacodi = {0} AND GRUPOCODI = {1}
+      AND CRDCGFECMOD = (SELECT MAX(CRDCGFECMOD)
+      FROM VCE_DATCALCULO DC2 WHERE DC2.pecacodi = DC1.pecacodi AND DC2.GRUPOCODI = DC1.GRUPOCODI
+      AND DC2.CRDCGFECMOD &lt;= TO_DATE('{2}','DD/MM/YYYY'))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteCompensacionManual</key>
+    <query>
+      DELETE FROM VCE_COMP_BAJAEFIC WHERE pecacodi = {0} AND CRCBETIPOCALC = 'M'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByVersion</key>
+    <query>
+      DELETE FROM VCE_COMP_BAJAEFIC WHERE pecacodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>DeleteByVersionTipoCalculoAutomatico</key>
+    <query>
+      DELETE FROM VCE_COMP_BAJAEFIC WHERE pecacodi = {0} AND  CRCBETIPOCALC IS NULL OR CRCBETIPOCALC != 'M'
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>SaveManual</key>
+    <query>
+      INSERT INTO VCE_COMP_BAJAEFIC(
+      pecacodi,
+      GRUPOCODI,
+      SUBCAUSACODI,
+      CRCBEHORINI,
+      CRCBEHORFIN,
+      CRCBEPOTENCIA,
+      CRCBECONSUMO,
+      CRCBECVC,
+      CRCBECVNC,
+      CRCBECVT,
+      CRCBECOMPENSACION,
+      CRCBETIPOCALC
+      )
+      VALUES(
+      :pecacodi,
+      :GRUPOCODI,
+      :SUBCAUSACODI,
+      :CRCBEHORINI,
+      :CRCBEHORFIN,
+      :CRCBEPOTENCIA,
+      :CRCBECONSUMO,
+      :CRCBECVC,
+      :CRCBECVNC,
+      :CRCBECVT,
+      :CRCBECOMPENSACION,
+      :CRCBETIPOCALC
+      )
+    </query>
+  </Sql>
+
+<!-- Listados de Compensaciones por Operacion -->
+  <Sql>
+    <key>ListCompensacionOperacionInflexibilidad</key>
+    <query>
+      SELECT EMP.EMPRNOMB, RMO.GRUPONOMB, RMO.MinimaCarga, RMO.PruebaPR25, NULL AS PAGOCUENTA, RMO.TOTALMODO, REM.TOTALEMP
+      FROM (
+      SELECT MOP.EMPRCODI, MOP.GRUPONOMB,
+      SUM( CASE WHEN COM.SUBCAUSACODI = 102 THEN COM.CRCBECOMPENSACION END) AS MinimaCarga,
+      SUM( CASE WHEN COM.SUBCAUSACODI = 114 THEN COM.CRCBECOMPENSACION END) AS PruebaPR25,
+      SUM( COM.CRCBECOMPENSACION) AS TOTALMODO
+      FROM VCE_COMP_BAJAEFIC COM JOIN PR_GRUPO MOP ON COM.GRUPOCODI = MOP.GRUPOCODI
+      WHERE COM.PECACODI = {0} AND COM.SUBCAUSACODI IN (102,114)
+      GROUP BY MOP.EMPRCODI , MOP.GRUPONOMB
+      ) RMO
+      LEFT JOIN
+      (SELECT MOP.EMPRCODI, MIN(MOP.GRUPONOMB) AS GRUPONOMB, SUM(COM.CRCBECOMPENSACION) AS TOTALEMP
+      FROM VCE_COMP_BAJAEFIC COM JOIN PR_GRUPO MOP ON COM.GRUPOCODI = MOP.GRUPOCODI
+      WHERE COM.PECACODI = {0} AND COM.SUBCAUSACODI IN (102,114)
+      GROUP BY MOP.EMPRCODI) REM  ON RMO.EMPRCODI = REM.EMPRCODI AND RMO.GRUPONOMB = REM.GRUPONOMB
+      LEFT JOIN SI_EMPRESA EMP ON RMO.EMPRCODI = EMP.EMPRCODI
+      ORDER BY 1,REPLACE(RMO.GRUPONOMB,' ','X')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCompensacionOperacionSeguridad</key>
+    <query>
+      SELECT EMP.EMPRNOMB, RMO.GRUPONOMB, RMO.SEGURIDAD, REM.TOTALEMP
+      FROM (
+      SELECT MOP.EMPRCODI, MOP.GRUPONOMB,
+      SUM( CASE WHEN COM.SUBCAUSACODI = 105 THEN COM.CRCBECOMPENSACION END) AS SEGURIDAD
+      FROM VCE_COMP_BAJAEFIC COM JOIN PR_GRUPO MOP ON COM.GRUPOCODI = MOP.GRUPOCODI
+      WHERE COM.PECACODI = {0} AND COM.SUBCAUSACODI IN (105)
+      GROUP BY MOP.EMPRCODI , MOP.GRUPONOMB
+      ) RMO
+      LEFT JOIN
+      (SELECT MOP.EMPRCODI, MIN(MOP.GRUPONOMB) AS GRUPONOMB,
+      SUM(COM.CRCBECOMPENSACION) AS TOTALEMP
+      FROM VCE_COMP_BAJAEFIC COM JOIN PR_GRUPO MOP ON COM.GRUPOCODI = MOP.GRUPOCODI
+      WHERE COM.PECACODI = {0} AND COM.SUBCAUSACODI IN (105)
+      GROUP BY MOP.EMPRCODI) REM  ON RMO.EMPRCODI = REM.EMPRCODI AND RMO.GRUPONOMB = REM.GRUPONOMB
+      LEFT JOIN SI_EMPRESA EMP ON RMO.EMPRCODI = EMP.EMPRCODI
+      ORDER BY 1,REPLACE(RMO.GRUPONOMB,' ','X')
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListCompensacionOperacionRSF</key>
+    <query>
+      SELECT EMP.EMPRNOMB, RMO.GRUPONOMB, RMO.RSF, RMO.RESERVAESP, REM.TOTALEMP
+      FROM (
+      SELECT MOP.EMPRCODI, MOP.GRUPONOMB,
+      SUM( CASE WHEN COM.SUBCAUSACODI = 320 THEN COM.CRCBECOMPENSACION END) AS RSF,
+      SUM( CASE WHEN COM.SUBCAUSACODI = 315 THEN COM.CRCBECOMPENSACION END) AS RESERVAESP,
+      SUM( COM.CRCBECOMPENSACION) AS TOTALMODO
+      FROM VCE_COMP_BAJAEFIC COM JOIN PR_GRUPO MOP ON COM.GRUPOCODI = MOP.GRUPOCODI
+      WHERE COM.PECACODI = {0} AND COM.SUBCAUSACODI IN (320,315)
+      GROUP BY MOP.EMPRCODI , MOP.GRUPONOMB
+      ) RMO
+      LEFT JOIN
+      (SELECT MOP.EMPRCODI, MIN(MOP.GRUPONOMB) AS GRUPONOMB, 
+      SUM(COM.CRCBECOMPENSACION) AS TOTALEMP
+      FROM VCE_COMP_BAJAEFIC COM JOIN PR_GRUPO MOP ON COM.GRUPOCODI = MOP.GRUPOCODI
+      WHERE COM.PECACODI = {0} AND COM.SUBCAUSACODI IN (320,315)
+      GROUP BY MOP.EMPRCODI) REM  ON RMO.EMPRCODI = REM.EMPRCODI AND RMO.GRUPONOMB = REM.GRUPONOMB
+      LEFT JOIN SI_EMPRESA EMP ON RMO.EMPRCODI = EMP.EMPRCODI
+      ORDER BY 1,REPLACE(RMO.GRUPONOMB,' ','X')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCompensacionRegulacionTension</key>
+    <query>
+      SELECT EMP.EMPRNOMB, RMO.GRUPONOMB, RMO.TENSION, REM.TOTALEMP
+      FROM (
+      SELECT MOP.EMPRCODI, MOP.GRUPONOMB,
+      SUM( CASE WHEN COM.SUBCAUSACODI = 103 THEN COM.CRCBECOMPENSACION END) AS TENSION
+      FROM VCE_COMP_BAJAEFIC COM JOIN PR_GRUPO MOP ON COM.GRUPOCODI = MOP.GRUPOCODI
+      WHERE COM.PECACODI = {0} AND COM.SUBCAUSACODI IN (103)
+      GROUP BY MOP.EMPRCODI , MOP.GRUPONOMB
+      ) RMO
+      LEFT JOIN
+      (SELECT MOP.EMPRCODI, MIN(MOP.GRUPONOMB) AS GRUPONOMB,
+      SUM(COM.CRCBECOMPENSACION) AS TOTALEMP
+      FROM VCE_COMP_BAJAEFIC COM JOIN PR_GRUPO MOP ON COM.GRUPOCODI = MOP.GRUPOCODI
+      WHERE COM.PECACODI = {0} AND COM.SUBCAUSACODI IN (103)
+      GROUP BY MOP.EMPRCODI) REM  ON RMO.EMPRCODI = REM.EMPRCODI AND RMO.GRUPONOMB = REM.GRUPONOMB
+      LEFT JOIN SI_EMPRESA EMP ON RMO.EMPRCODI = EMP.EMPRCODI
+      ORDER BY 1,REPLACE(RMO.GRUPONOMB,' ','X')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveFromOtherVersion</key>
+    <query>
+      INSERT INTO VCE_COMP_BAJAEFIC(
+      PECACODI, GRUPOCODI, SUBCAUSACODI, CRCBEHORINI, CRCBEHORFIN, CRCBEPOTENCIA,
+      CRCBECONSUMO, CRCBECVC, CRCBECVNC, CRCBECVT, CRCBECOMPENSACION, CRCBETIPOCALC
+      )
+      SELECT {0}, GRUPOCODI, SUBCAUSACODI, CRCBEHORINI, CRCBEHORFIN, CRCBEPOTENCIA,
+      CRCBECONSUMO, CRCBECVC, CRCBECVNC, CRCBECVT, CRCBECOMPENSACION, CRCBETIPOCALC
+      FROM VCE_COMP_BAJAEFIC
+      WHERE PECACODI = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCompensacionOperacionMME</key>
+    <query>
+      SELECT (CASE WHEN EQ.EMPRCODI IS NULL  THEN '_NO DEFINIDO' ELSE EMP.EMPRNOMB END) AS EMPRNOMB,
+      TRIM(MO.GRUPONOMB) AS GRUPONOMB,
+      {1}
+      SUM(CE.CRDETCOMPENSACION) AS TOTAL
+      FROM
+      (
+      SELECT CE.PECACODI, CE.GRUPOCODI,CE.SUBCAUSACODI, ROUND(SUM(CE.CRDETCOMPENSACION),2) AS CRDETCOMPENSACION
+      FROM VCE_COMP_REGULAR_DET CE
+      WHERE CE.PECACODI = {0}  AND CE.SUBCAUSACODI IS NOT NULL
+      GROUP BY CE.PECACODI, CE.GRUPOCODI,CE.SUBCAUSACODI
+      )CE
+      INNER JOIN PR_GRUPO MO ON CE.GRUPOCODI = MO.GRUPOCODI
+      INNER JOIN PR_GRUPO GG ON MO.GRUPOPADRE = GG.GRUPOCODI
+      LEFT JOIN
+      (SELECT GRUPOCODI, EMPRCODI, MAX(EQUIPADRE) EQUIPADRE
+      FROM EQ_EQUIPO
+      WHERE FAMCODI IN (2,3) AND NVL(GRUPOCODI,-1) != -1  AND EQUIESTADO = 'A'
+      GROUP BY GRUPOCODI, EMPRCODI
+      UNION
+      SELECT GRUPOCODI, EMPRCODI, MAX(EQUIPADRE) EQUIPADRE
+      FROM EQ_EQUIPO
+      WHERE FAMCODI IN (2,3) AND NVL(GRUPOCODI,-1) != -1  AND EQUIESTADO = 'B'
+      AND GRUPOCODI NOT IN (SELECT DISTINCT GRUPOCODI
+      FROM EQ_EQUIPO
+      WHERE FAMCODI IN (2,3) AND NVL(GRUPOCODI,-1) != -1 AND EQUIESTADO = 'A' )
+      GROUP BY GRUPOCODI, EMPRCODI
+      )EQ ON MO.GRUPOPADRE = EQ.GRUPOCODI
+      LEFT JOIN EQ_EQUIPO CG ON  EQ.EQUIPADRE = CG.EQUICODI -- CENTRAL
+      LEFT JOIN SI_EMPRESA EMP ON EQ.EMPRCODI = EMP.EMPRCODI
+      WHERE PECACODI = {0}
+      GROUP BY (CASE WHEN EQ.EMPRCODI IS NULL  THEN '_NO DEFINIDO' ELSE EMP.EMPRNOMB END),TRIM(MO.GRUPONOMB)
+      ORDER BY 2
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCompensacionDiarioMME</key>
+    <query>
+      SELECT TRUNC(CRDETHORA) AS "DIA",SC.SUBCAUSADESC as "CALIFICACION"
+      {1}
+
+      FROM VCE_COMP_REGULAR_DET CT JOIN EVE_SUBCAUSAEVENTO SC ON CT.SUBCAUSACODI = SC.SUBCAUSACODI
+      WHERE PECACODI = {0} AND CT.SUBCAUSACODI != 106 AND CT.SUBCAUSACODI != 122
+      GROUP BY TRUNC(CRDETHORA),SC.SUBCAUSADESC
+      ORDER BY 1,2
+
+    </query>
+  </Sql>
+  
+</Sqls>
+

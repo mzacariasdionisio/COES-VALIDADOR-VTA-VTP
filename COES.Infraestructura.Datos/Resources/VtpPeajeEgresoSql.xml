@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(pegrcodi), 0) + 1 from vtp_peaje_egreso
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_peaje_egreso(
+        pegrcodi,
+        pericodi,
+        recpotcodi,
+        emprcodi,
+        pegrestado,
+        pegrplazo,
+        pegrusucreacion,
+        pegrfeccreacion
+      )
+      values(
+        :pegrcodi,
+        :pericodi,
+        :recpotcodi,
+        :emprcodi,
+        :pegrestado,
+        :pegrplazo,
+        :pegrusucreacion,
+        :pegrfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_peaje_egreso
+      set pegrestado=:pegrestado,
+      pegrusumodificacion=:pegrusumodificacion,
+      pegrfecmodificacion=:pegrfecmodificacion 
+      where pegrcodi = :pegrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_peaje_egreso
+      where pegrcodi = :pegrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_peaje_egreso
+      where pericodi =:pericodi and recpotcodi =:recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select pe.*, emp.emprnomb from vtp_peaje_egreso pe inner join
+      ( select emprcodi, emprnomb from si_empresa union all select infadicodi as emprcodi, infadinomb as emprnomb from trn_infoadicional_det where infadiestado = 'I')
+      emp on pe.emprcodi = emp.emprcodi
+      where pe.pegrcodi = :pegrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vtp_peaje_egreso
+      where pegrestado = 'SI' and pericodi =:pericodi and recpotcodi =:recpotcodi
+      Order by pegrfeccreacion desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListView</key>
+    <query>
+      select * from vtp_peaje_egreso
+      where emprcodi=:emprcodi and pericodi =:pericodi and recpotcodi =:recpotcodi
+      Order by pegrfeccreacion desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReportePorEmpresa</key>
+    <query>
+		select pe.*, emp.emprnomb from vtp_peaje_egreso pe inner join
+		( select emprcodi, emprnomb from si_empresa union all select infadicodi as emprcodi, infadinomb as emprnomb from trn_infoadicional_det where infadiestado = 'I')
+		emp on pe.emprcodi = emp.emprcodi
+		where pe.pericodi = :pericodi  and pe.recpotcodi = :recpotcodi
+		Order by emp.emprnomb asc,  pe.pegrfeccreacion desc
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from vtp_peaje_egreso
+      where emprcodi = :emprcodi and pericodi = :pericodi and recpotcodi = :recpotcodi and pegrestado = 'SI'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateByCriteria</key>
+    <query>
+      update vtp_peaje_egreso
+      set pegrestado='NO'
+      where emprcodi=:emprcodi and pericodi =:pericodi and recpotcodi =:recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListConsulta</key>
+    <query>
+		select pe.*, emp.emprnomb from vtp_peaje_egreso pe inner join
+		( select emprcodi, emprnomb from si_empresa union all select infadicodi as emprcodi, infadinomb as emprnomb from trn_infoadicional_det where infadiestado = 'I') emp
+		on pe.emprcodi = emp.emprcodi
+		where pe.pericodi =:pericodi and pe.recpotcodi =:recpotcodi
+		and (pe.emprcodi=:emprcodi or 0=:emprcodi)
+		and (pe.pegrplazo = :pegrplazo or 'X' = :pegrplazo)
+		and (pe.pegrestado = :pegrestado or 'X' = :pegrestado)
+		Order by emp.emprnomb, pe.pegrcodi desc
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetPreviusPeriod</key>
+    <query>
+      select * from (select * from vtp_peaje_egreso
+      where pericodi=:pericodi and PEGRESTADO='SI'  and emprcodi =:emprcodi and recpotcodi > 1
+      order by 1 desc)
+      where rownum=1
+    </query>
+  </Sql>
+</Sqls>

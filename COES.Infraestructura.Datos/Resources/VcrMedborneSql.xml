@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(vcrmebcodi), 0) + 1 from vcr_medborne
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into vcr_medborne(
+           vcrmebcodi,
+           vcrecacodi,
+           emprcodi,
+           equicodicen,
+           equicodiuni,
+           vcrmebfecha,
+           vcrmebptomed,
+           vcrmebpotenciamed,
+           vcrmebusucreacion,
+           vcrmebfeccreacion,
+           vcrmebpotenciamedgrp,
+           vcrmebpresencia
+       )
+       values(
+           :vcrmebcodi,
+           :vcrecacodi,
+           :emprcodi,
+           :equicodicen,
+           :equicodiuni,
+           :vcrmebfecha,
+           :vcrmebptomed,
+           :vcrmebpotenciamed,
+           :vcrmebusucreacion,
+           :vcrmebfeccreacion,
+           :vcrmebpotenciamedgrp,
+           :vcrmebpresencia
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update vcr_medborne
+       set
+           vcrecacodi = :vcrecacodi,
+           emprcodi = :emprcodi,
+           equicodicen = :equicodicen,
+           equicodiuni = :equicodiuni,
+           vcrmebfecha = :vcrmebfecha,
+           vcrmebptomed = :vcrmebptomed,
+           vcrmebpotenciamed = :vcrmebpotenciamed,
+           vcrmebusucreacion = :vcrmebusucreacion,
+           vcrmebfeccreacion = :vcrmebfeccreacion,
+           vcrmebpotenciamedgrp = :vcrmebpotenciamedgrp,
+           vcrmebpresencia = :vcrmebpresencia
+       where
+           vcrmebcodi = :vcrmebcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vcr_medborne where vcrecacodi = :vcrecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select * from vcr_medborne
+       where vcrmebcodi = :vcrmebcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select * 
+       from vcr_medborne
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select * 
+       from vcr_medborne
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListDistintos</key>
+    <query>
+      select distinct emprcodi, equicodicen, equicodiuni
+      from vcr_medborne where vcrecacodi = :vcrecacodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListDiaSinUnidExonRSF</key>
+    <query>
+      select mb.*
+      from vcr_medborne mb, vcr_unidadexonerada ue
+      where mb.vcrecacodi = :vcrecacodi and mb.vcrmebfecha = :vcrmebfecha
+      and mb.vcrecacodi = ue.vcrecacodi and mb.emprcodi = ue.emprcodi
+      and mb.equicodicen = ue.equicodicen and mb.equicodiuni = ue.equicodiuni and ue.vcruexonerar = 'N'
+      order by mb.emprcodi, mb.equicodicen, mb.equicodiuni
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListMes</key>
+    <query>
+      select (select se.emprnomb from si_empresa se where se.emprcodi = mb.emprcodi) as emprnomb,
+      (select eq.equinomb from eq_equipo eq where eq.equicodi = mb.equicodicen) as equinombcen,
+      (select eq.equinomb from eq_equipo eq where eq.equicodi = mb.equicodiuni) as equinombuni,
+      mb.emprcodi, mb.equicodicen, mb.equicodiuni, mbci.vcmbciconsiderar,  sum(mb.vcrmebpotenciamed) as vcrmebpotenciamed, 
+      sum(mb.vcrmebpresencia) as vcrmebpresencia
+      from vcr_medborne mb, vcr_medbornecargoincp mbci
+      where mb.vcrecacodi = :vcrecacodi
+      and mb.vcrecacodi = mbci.vcrecacodi and mb.emprcodi = mbci.emprcodi
+      and mb.equicodicen = mbci.equicodicen and mb.equicodiuni = mbci.equicodiuni
+      group by 1,2,3, mb.emprcodi, mb.equicodicen, mb.equicodiuni, mbci.vcmbciconsiderar
+      order by 1,2,3
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListMesConsiderados</key>
+    <query>
+      select mb.emprcodi, (select emprnomb from si_empresa se where se.emprcodi = mb.emprcodi) empresa ,
+      mb.equicodicen, (select equinomb from eq_equipo eq where eq.equicodi = mb.equicodicen) central,
+      mb.equicodiuni, (select equinomb from eq_equipo eq where eq.equicodi = mb.equicodiuni) unidad,
+      cinc.vcrciincumplsrvrsf as vcrmebpotenciamedgrp,
+      sum(mb.vcrmebpotenciamed) as vcrmebpotenciamed
+      from vcr_medborne mb, vcr_medbornecargoincp mbci, vcr_cargoincumpl cinc
+      where mb.vcrecacodi = :vcrecacodi
+      and mb.vcrecacodi = mbci.vcrecacodi and mb.emprcodi = mbci.emprcodi
+      and mb.equicodicen = mbci.equicodicen and mb.equicodiuni = mbci.equicodiuni and mbci.vcmbciconsiderar = 'S'
+      and mb.vcrecacodi = cinc.vcrecacodi and mb.equicodiuni = cinc.equicodi
+      group by mb.emprcodi, mb.equicodicen, mb.equicodiuni, cinc.vcrciincumplsrvrsf
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListMesConsideradosTotales</key>
+    <query>
+      select mb.emprcodi, mb.equicodicen, mb.equicodiuni,  sum(mb.vcrmebpotenciamed) as vcrmebpotenciamed
+      from vcr_medborne mb
+      where mb.vcrecacodi = :vcrecacodi
+      group by mb.emprcodi, mb.equicodicen, mb.equicodiuni
+      order by mb.emprcodi, mb.equicodicen, mb.equicodiuni
+    </query>
+  </Sql>
+  <!--ASSETEC 202012-->
+  <Sql>
+    <key>TotalUnidNoExonRSF</key>
+    <query>
+      select sum(mb.vcrmebpotenciamed) as vcrmebpotenciamed
+      from vcr_medborne mb, vcr_unidadexonerada ue
+      where mb.vcrecacodi = :vcrecacodi
+      and mb.vcrecacodi = ue.vcrecacodi and mb.emprcodi = ue.emprcodi
+      and mb.equicodicen = ue.equicodicen and mb.equicodiuni = ue.equicodiuni and ue.vcruexonerar = 'N'
+    </query>
+  </Sql>
+  
+</Sqls>

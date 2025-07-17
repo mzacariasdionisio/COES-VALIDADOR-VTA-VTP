@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(rcesqucodi), 0) + 1 from rca_esquema_unifilar
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into rca_esquema_unifilar(
+           rcesqucodi,
+           emprcodi,
+           equicodi,
+           rcesqudocumento,
+           rcesqufecharecepcion,
+           rcesquestado,
+           rcesqunombarchivo,
+           rcesquestregistro,
+           rcesquusucreacion,
+           rcesqufeccreacion,
+           rcesquusumodificacion,
+           rcesqufecmodificacion,
+           rcesquorigen,
+           rcesqunombarchivodatos
+       )
+       values(
+           :rcesqucodi,
+           :emprcodi,
+           :equicodi,
+           :rcesqudocumento,
+           :rcesqufecharecepcion,
+           :rcesquestado,
+           :rcesqunombarchivo,
+           :rcesquestregistro,
+           :rcesquusucreacion,
+           :rcesqufeccreacion,
+           :rcesquusumodificacion,
+           :rcesqufecmodificacion,
+           :rcesquorigen,
+           :rcesqunombarchivodatos
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update rca_esquema_unifilar
+       set
+           emprcodi = :emprcodi,
+           equicodi = :equicodi,
+           rcesqudocumento = :rcesqudocumento,
+           rcesqufecharecepcion = :rcesqufecharecepcion,
+           rcesquestado = :rcesquestado,
+           rcesqunombarchivo = :rcesqunombarchivo,
+            rcesqunombarchivodatos = :rcesqunombarchivodatos,
+           rcesquestregistro = :rcesquestregistro,
+           rcesquusucreacion = :rcesquusucreacion,
+           rcesqufeccreacion = :rcesqufeccreacion,
+           rcesquusumodificacion = :rcesquusumodificacion,
+           rcesqufecmodificacion = :rcesqufecmodificacion
+          
+       where
+           rcesqucodi = :rcesqucodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update rca_esquema_unifilar
+      set rcesquestregistro='0'
+      where
+      rcesqucodi = :rcesqucodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           rcesqucodi,
+           emprcodi,
+           equicodi,
+           rcesqudocumento,
+           rcesqufecharecepcion,
+           rcesquestado,
+           rcesqunombarchivo,
+           rcesquestregistro,
+           rcesquusucreacion,
+           rcesqufeccreacion,
+           rcesquusumodificacion,
+           rcesqufecmodificacion
+       from
+           rca_esquema_unifilar
+       where
+           rcesqucodi = :rcesqucodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           rcesqucodi,
+           emprcodi,
+           equicodi,
+           rcesqudocumento,
+           rcesqufecharecepcion,
+           rcesquestado,
+           rcesqunombarchivo,
+           rcesquestregistro,
+           rcesquusucreacion,
+           rcesqufeccreacion,
+           rcesquusumodificacion,
+           rcesqufecmodificacion
+       from
+           rca_esquema_unifilar
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           rcesqucodi,
+           emprcodi,
+           equicodi,
+           rcesqudocumento,
+           rcesqufecharecepcion,
+           rcesquestado,
+           rcesqunombarchivo,
+           rcesquestregistro,
+           rcesquusucreacion,
+           rcesqufeccreacion,
+           rcesquusumodificacion,
+           rcesqufecmodificacion
+       from
+           rca_esquema_unifilar
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListFiltroExcel</key>
+    <query>
+      select
+      EUN.rcesqucodi,
+      EUN.emprcodi,
+      EMP.emprrazsocial,
+      EMP.tipoemprcodi,
+      EUN.equicodi,
+      EQU.equinomb,
+      EQA.areaabrev,
+      EQA.areanomb,
+      EQU.osinergcodi,
+      rcesqudocumento,
+      EUN.rcesqufecharecepcion,
+      rcesquestado,
+      rcesqunombarchivo,
+      rcesquestregistro,
+      rcesquusucreacion,
+      rcesqufeccreacion,
+      rcesquusumodificacion,
+      rcesqufecmodificacion
+      from
+      rca_esquema_unifilar EUN
+      JOIN (SELECT EMPRCODI,NVL(EQUICODI,0)AS EQUICODI,MAX(RCESQUFECHARECEPCION) AS RCESQUFECHARECEPCION FROM RCA_ESQUEMA_UNIFILAR WHERE RCESQUORIGEN = {1} GROUP BY EMPRCODI,EQUICODI) RES
+      ON EUN.EMPRCODI = RES.EMPRCODI AND NVL(EUN.EQUICODI,0) = RES.EQUICODI AND EUN.RCESQUFECHARECEPCION = RES.RCESQUFECHARECEPCION
+      inner join si_empresa EMP on EMP.emprcodi=EUN.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=EUN.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      rcesquestregistro = '1' {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListHistorial</key>
+    <query>
+      select
+      rcesqucodi,
+      EUN.emprcodi,
+      EMP.emprrazsocial,
+      EMP.tipoemprcodi,
+      EUN.equicodi,
+      EQU.equinomb,
+      EQU.osinergcodi,
+      EQA.areaabrev,
+      EQA.areanomb,
+      rcesqudocumento,
+      rcesqufecharecepcion,
+      rcesquestado,
+      rcesqunombarchivo,
+      rcesquestregistro,
+      rcesquusucreacion,
+      rcesqufeccreacion,
+      rcesquusumodificacion,
+      rcesqufecmodificacion
+      from
+      rca_esquema_unifilar EUN
+      inner join si_empresa EMP on EMP.emprcodi=EUN.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=EUN.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      rcesquestregistro = '1' {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ObtenerPorCodigo</key>
+    <query>
+      select
+        rcesqucodi,
+        EUN.emprcodi,
+        EMP.emprrazsocial,
+        EMP.tipoemprcodi,
+        EUN.equicodi,
+        EQU.equinomb,
+        EQA.areaabrev,
+        EQA.areanomb,
+        EQU.osinergcodi,
+        rcesqudocumento,
+        rcesqufecharecepcion,
+        rcesquestado,
+        rcesqunombarchivo,
+        rcesquestregistro,
+        rcesquusucreacion,
+        rcesqufeccreacion,
+        rcesquusumodificacion,
+        rcesqufecmodificacion,
+        rcesqunombarchivodatos
+      from
+      rca_esquema_unifilar EUN
+      inner join si_empresa EMP on EMP.emprcodi=EUN.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=EUN.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      rcesqucodi = :rcesqucodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListFiltro</key>
+    <query>
+      SELECT ext.* FROM (
+      SELECT ROWNUM as item, QD.*
+      FROM (
+      select
+      EUN.rcesqucodi,
+      EUN.emprcodi,
+      EMP.emprrazsocial,
+      EMP.tipoemprcodi,
+      EUN.equicodi,
+      EQU.equinomb,
+      EQA.areaabrev,
+      EQA.areanomb,
+      EQU.osinergcodi,
+      rcesqudocumento,
+      EUN.rcesqufecharecepcion,
+      rcesquestado,
+      rcesqunombarchivo,
+      rcesquestregistro,
+      rcesquusucreacion,
+      rcesqufeccreacion,
+      rcesquusumodificacion,
+      rcesqufecmodificacion
+      from
+      rca_esquema_unifilar EUN
+      JOIN (SELECT EMPRCODI,NVL(EQUICODI,0)AS EQUICODI,MAX(RCESQUFECHARECEPCION) AS RCESQUFECHARECEPCION FROM RCA_ESQUEMA_UNIFILAR WHERE RCESQUORIGEN = {1} GROUP BY EMPRCODI,EQUICODI) RES
+      ON EUN.EMPRCODI = RES.EMPRCODI AND NVL(EUN.EQUICODI,0) = RES.EQUICODI AND EUN.RCESQUFECHARECEPCION = RES.RCESQUFECHARECEPCION
+      inner join si_empresa EMP on EMP.emprcodi=EUN.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=EUN.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      rcesquestregistro = '1' {0}
+      )QD
+      WHERE ROWNUM &#60;= {2}
+      ) ext
+      WHERE ext.item >= {3}
+
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListFiltroCount</key>
+    <query>
+      select
+      NVL(COUNT(*),0) AS Q_REGISTROS
+      from
+      rca_esquema_unifilar EUN
+      JOIN (SELECT EMPRCODI,NVL(EQUICODI,0)AS EQUICODI,MAX(RCESQUFECHARECEPCION) AS RCESQUFECHARECEPCION FROM RCA_ESQUEMA_UNIFILAR WHERE RCESQUORIGEN = {1} GROUP BY EMPRCODI,EQUICODI) RES
+      ON EUN.EMPRCODI = RES.EMPRCODI AND NVL(EUN.EQUICODI,0) = RES.EQUICODI AND EUN.RCESQUFECHARECEPCION = RES.RCESQUFECHARECEPCION
+      inner join si_empresa EMP on EMP.emprcodi=EUN.emprcodi
+      left join eq_equipo EQU on EQU.equicodi=EUN.equicodi
+      left join eq_area EQA on EQA.areacodi=EQU.areacodi
+      where
+      rcesquestregistro = '1' {0}
+    </query>
+  </Sql>
+  
+</Sqls>

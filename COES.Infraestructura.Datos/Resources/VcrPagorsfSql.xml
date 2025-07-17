@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(vcprsfcodi), 0) + 1 from vcr_pagorsf
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into vcr_pagorsf(
+           vcprsfcodi,
+           vcrecacodi,
+           equicodi,
+           vcprsfpagorsf,
+           vcprsfusucreacion,
+           vcprsffeccreacion
+       )
+       values(
+           :vcprsfcodi,
+           :vcrecacodi,
+           :equicodi,
+           :vcprsfpagorsf,
+           :vcprsfusucreacion,
+           :vcprsffeccreacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update vcr_pagorsf
+       set
+           vcrecacodi = :vcrecacodi,
+           equicodi = :equicodi,
+           vcprsfpagorsf = :vcprsfpagorsf,
+           vcprsfusucreacion = :vcprsfusucreacion,
+           vcprsffeccreacion = :vcprsffeccreacion
+       where
+           vcprsfcodi = :vcprsfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vcr_pagorsf
+      where vcrecacodi = :vcrecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           vcprsfcodi,
+           vcrecacodi,
+           equicodi,
+           vcprsfpagorsf,
+           vcprsfusucreacion,
+           vcprsffeccreacion
+       from
+           vcr_pagorsf
+       where
+           vcprsfcodi = :vcprsfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           vcprsfcodi,
+           vcrecacodi,
+           equicodi,
+           vcprsfpagorsf,
+           vcprsfusucreacion,
+           vcprsffeccreacion
+       from
+           vcr_pagorsf
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           vcprsfcodi,
+           vcrecacodi,
+           equicodi,
+           vcprsfpagorsf,
+           vcprsfusucreacion,
+           vcprsffeccreacion
+       from
+           vcr_pagorsf
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdUnidad2020</key>
+    <query>
+      select ap.vcrapasignpagorsf, rp.vcrpereduccpagoeje, (ap.vcrapasignpagorsf + rp.vcrpereduccpagoeje) as vcprsfpagorsf
+      from
+      (select nvl(sum(vcrapasignpagorsf),0) as vcrapasignpagorsf from vcr_asignacionpago where vcrecacodi =:vcrecacodi and equicodiuni =:equicodi) ap,
+      (select nvl(sum(vcrpereduccpagoeje), 0) as vcrpereduccpagoeje from vcr_reduccpagoeje where vcrecacodi =:vcrecacodi and equicodi =:equicodi)rp
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdUnidad</key>
+    <query>
+      select nvl(sum(vcrapasignpagorsf),0) as vcprsfpagorsf from vcr_asignacionpago where vcrecacodi =:vcrecacodi and equicodiuni =:equicodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByIdUnidadPorEmpresa</key>
+    <query>
+      select nvl(sum(vcrapasignpagorsf),0) as vcprsfpagorsf from vcr_asignacionpago where vcrecacodi =:vcrecacodi and equicodiuni =:equicodi and emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByMigracionEquiposPorEmpresaOrigenxDestino</key>
+    <query>
+		select nvl(sum(vcrapasignpagorsf),0) as vcprsfpagorsf from vcr_asignacionpago asp
+		inner join SI_HISEMPEQ sh on sh.equicodi = asp.equicodiuni and sh.emprcodi = asp.emprcodi
+		where asp.vcrecacodi ={0} and asp.emprcodi ={1}
+		and equicodiuni in(select distinct(equicodiuni) from vcr_asignacionpago where vcrecacodi ={0} and emprcodi ={2})
+	</query>
+  </Sql>
+	
+</Sqls>

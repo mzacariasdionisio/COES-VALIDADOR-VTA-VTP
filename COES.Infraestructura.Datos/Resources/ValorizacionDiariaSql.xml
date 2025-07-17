@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  
+<Sql>
+    <key>ListByFilter</key>
+    <query>
+		select v.VALOFECHA,
+		e.EMPRNOMB,
+		v.VALOCODI, v.VALOMR, v.VALOPRECIOPOTENCIA,
+		v.VALODEMANDACOES, v.VALOFACTORREPARTO, v.VALOPORCENTAJEPERDIDA,
+		v.VALOFRECTOTAL, v.VALOOTROSEQUIPOS, v.VALOCOSTOFUERABANDA,v.VALOCO,v.VALORA,
+		v.VALOOFMAX,v.VALOCOMPCOSTOSOPER,v.VALOCOMPTERMRT,v.VALOESTADO,v.VALOUSUCREACION,
+		v.VALOFECCREACION, v.VALOUSUMODIFICACION,v.VALOFECMODIFICACION, vd.EMPRCODI, vd.VALDCODI,
+		vd.VALDRETIRO,vd.VALDENTREGA, vd.VALDPFIRREMUN, vd.VALDDEMANDACOINCIDENTE,
+		vd.VALDMONCAPACIDAD, vd.VALDPEAJEUNI, vd.VALDFACTORP, vd.VALDPAGOIO, vd.VALDPAGOSC,
+		vd.VALDFPGM, vd.VALDMCIO, vd.VALDPDSC, vd.VALDCARGOCONSUMO,
+		vd.VALDAPORTESADICIONAL, vd.VALDUSUCREACION,vd.VALDFECCREACION,vd.VALDUSUMODIFICACION,vd.VALDFECMODIFICACION
+		FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd on  v.valocodi=vd.valocodi inner join si_empresa e on vd.emprcodi=e.emprcodi
+		WHERE v.valoestado = 'A' and (vd.emprcodi = '{0}' or '0' ='{0}') and v.VALOFECHA>= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and v.VALOFECHA&lt;TO_DATE('{2} 23:59:59', 'YYYY/MM/DD hh24:mi:ss') order by v.valofecha desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPagedByFilter</key>
+    <query>
+      SELECT * from (
+      select v.VALOFECHA,
+      e.EMPRNOMB,
+      v.VALOCODI, v.VALOMR, v.VALOPRECIOPOTENCIA,
+      v.VALODEMANDACOES, v.VALOFACTORREPARTO, v.VALOPORCENTAJEPERDIDA,
+      v.VALOFRECTOTAL, v.VALOOTROSEQUIPOS, v.VALOCOSTOFUERABANDA,v.VALOCO,v.VALORA,
+      v.VALOOFMAX,v.VALOCOMPCOSTOSOPER,v.VALOCOMPTERMRT,v.VALOESTADO,v.VALOUSUCREACION,
+      v.VALOFECCREACION, v.VALOUSUMODIFICACION,v.VALOFECMODIFICACION, vd.EMPRCODI, vd.VALDCODI,
+      vd.VALDRETIRO,vd.VALDENTREGA, vd.VALDPFIRREMUN, vd.VALDDEMANDACOINCIDENTE,
+      vd.VALDMONCAPACIDAD, vd.VALDPEAJEUNI, vd.VALDFACTORP, vd.VALDPAGOIO, vd.VALDPAGOSC,
+      vd.VALDFPGM, vd.VALDMCIO, vd.VALDPDSC, vd.VALDCARGOCONSUMO,
+      vd.VALDAPORTESADICIONAL, vd.VALDUSUCREACION,vd.VALDFECCREACION,vd.VALDUSUMODIFICACION,vd.VALDFECMODIFICACION,
+      (row_number() over (order by v.valofecha desc)) as r FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd on  v.valocodi=vd.valocodi inner join si_empresa e on vd.emprcodi=e.emprcodi
+      WHERE v.valoestado = 'A' and (vd.emprcodi = '{0}' or '0' ='{0}')  and v.VALOFECHA>= to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and v.VALOFECHA&lt;TO_DATE('{2} 23:59:59', 'YYYY/MM/DD  hh24:mi:ss') order by v.valofecha desc
+      )where (r >= ((({3}-1) * {4}) + 1) and r&lt;= (({3} * {4}) + 1 )) or ({3} = -1 and {4}= -1)
+    </query>
+  </Sql>
+
+
+  <!--Reporte Valorizaciones Diarias-->
+  <Sql>
+    <key>ListMontoCalculadoPorMes</key>
+    <query>
+		select
+		vd.Emprcodi,
+		e.Emprnomb,
+		vd.Valddemandacoincidente,
+		vd.Valdpfirremun,
+		v.Valomr,
+		v.Valopreciopotencia,
+		vd.Valdpeajeuni,
+		v.Valofecha
+		FROM vtd_valorizacion v inner join vtd_valorizaciondetalle vd on vd.valocodi=v.valocodi inner join si_empresa e on e.emprcodi=vd.emprcodi
+		WHERE v.valoestado = 'A' and v.valocodi=(select max(v.valocodi) from vtd_valorizacion v inner join vtd_valorizaciondetalle vd on vd.valocodi=v.valocodi where v.VALOFECHA>= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and v.VALOFECHA&lt;TO_DATE('{1} 23:59:59', 'YYYY/MM/DD hh24:mi:ss') and vd.emprcodi={2} ) and vd.emprcodi={2} order by v.valofecha desc
+    </query>
+  </Sql>
+
+
+</Sqls>

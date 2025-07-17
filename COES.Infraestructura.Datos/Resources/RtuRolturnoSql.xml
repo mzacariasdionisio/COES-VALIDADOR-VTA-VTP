@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(rturolcodi), 0) + 1 from rtu_rolturno
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into rtu_rolturno(
+		rturolcodi,
+		rturolusucreacion,
+		rturolfeccreacion,
+		rturolusumodificacion,
+		rturolfecmodificacion,
+		rturolanio,
+		rturolmes
+		)
+		values(
+		:rturolcodi,
+		:rturolusucreacion,
+		:rturolfeccreacion,
+		:rturolusumodificacion,
+		:rturolfecmodificacion,
+		:rturolanio,
+		:rturolmes
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update rtu_rolturno
+      set
+      rturolusucreacion = :rturolusucreacion,
+      rturolfeccreacion = :rturolfeccreacion,
+      rturolusumodificacion = :rturolusumodificacion,
+      rturolfecmodificacion = :rturolfecmodificacion,
+      rturolanio = :rturolanio,
+      rturolmes = :rturolmes
+      where
+      rturolcodi = :rturolcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		declare
+		p_idrolturno number := :rturolcodi;
+		begin
+
+		delete from rtu_rolturno_actividad
+		where rtudetcodi in (select detalle.rtudetcodi from rtu_rolturno_detalle detalle where detalle.rturolcodi = p_idrolturno );
+
+		delete from rtu_rolturno_detalle where rturolcodi = p_idrolturno;
+
+		end;
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+		select *
+		from
+		rtu_rolturno
+		where
+		rturolanio = {0} and rturolmes = {1}
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select *
+      from
+      rtu_rolturno
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select *
+      from
+      rtu_rolturno
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerEstructura</key>
+		<query>
+			select
+			rol.rturolusucreacion,
+			rol.rturolfeccreacion,
+			rol.rturolusumodificacion,
+			rol.rturolfecmodificacion,
+			rol.rturolcodi,
+			rol.rturolanio,
+			rol.rturolmes,
+			detalle.rtudetnrodia as rtunrodia,
+			detalle.rtudetmodtrabajo as rtumodtrabajo,
+			detalle.percodi,
+			actividad.rtuactcodi as actcodi,
+			actividad.rtuactabreviatura as actnombre
+			from
+			rtu_rolturno rol
+			inner join rtu_rolturno_detalle detalle on rol.rturolcodi = detalle.rturolcodi
+			inner join rtu_rolturno_actividad rolactividad on rolactividad.rtudetcodi = detalle.rtudetcodi
+			inner join rtu_actividad actividad on rolactividad.rtuactcodi = actividad.rtuactcodi
+			where rol.rturolanio = {0} and rol.rturolmes = {1}
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerDatosPorFecha</key>
+		<query>
+      select
+      per.percodi,
+      per.pernomb || ' ' || per.perapellido as pernombre,
+      tipresp.rturesrol as actnombre,
+      act.RTUACTABREVIATURA
+      from rtu_rolturno_actividad ract
+      inner join rtu_actividad act on ract.rtuactcodi = act.rtuactcodi
+      inner join rtu_tiporesponsabilidad tipresp on act.rturescodi = tipresp.rturescodi
+      inner join rtu_rolturno_detalle det on ract.rtudetcodi = det.rtudetcodi
+      inner join si_persona per on det.percodi = per.percodi
+      inner join rtu_rolturno tur on det.rturolcodi = tur.rturolcodi
+      where
+      tur.rturolanio = {0} and
+      tur.rturolmes = {1} and
+      det.rtudetnrodia = {2} and
+      (tipresp.rturesreporte = {3} or tipresp.rturesrol = 'A')
+    </query>
+	</Sql>
+	
+</Sqls>

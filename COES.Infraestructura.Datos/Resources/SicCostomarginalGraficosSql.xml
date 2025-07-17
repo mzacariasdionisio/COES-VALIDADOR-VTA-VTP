@@ -1,0 +1,357 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>ListarBarrasPorCostoMarginal</key>
+    <query>
+
+      SELECT
+      DISTINCT
+      BAR.barrCodi
+      ,BAR.barrNombre
+      FROM(
+      SELECT BARRCODI
+      FROM trn_costo_marginal
+      WHERE PERICODI=:pericodi
+      AND COSMARVERSION=:version
+      AND COSMARDIA BETWEEN {0} AND {1}
+      UNION
+      SELECT BARRCODI
+      FROM TRN_COSTO_MARGINAL_CONGENE
+      WHERE PERICODI=:pericodi
+      AND CONGENEVERSION=:version
+      AND CONGENEDIA BETWEEN  {0} AND {1}
+      ) TBL
+      INNER JOIN trn_barra BAR
+      ON TBL.BARRCODI=BAR.BARRCODI
+      ORDER BY BAR.barrNombre ASC
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarBarrasPorCostoMarginalProm</key>
+    <query>
+      SELECT
+      DISTINCT
+      BAR.barrCodi
+      ,BAR.barrNombre
+      FROM(
+      SELECT CMG.BARRCODI
+      FROM trn_costo_marginal  CMG
+      INNER JOIN TRN_PERIODO PER
+      ON CMG.PERICODI=PER.PERICODI
+      WHERE  per.PERIANIO BETWEEN {0} AND {3}
+      AND per.PERIMES     BETWEEN {1} AND {4}
+      AND CMG.COSMARDIA   BETWEEN {2} AND {5}
+      UNION
+      SELECT   cmg.barrcodi
+      FROM TRN_COSTO_MARGINAL_CONGENE  CMG
+      INNER JOIN TRN_PERIODO PER
+      ON CMG.PERICODI=PER.PERICODI
+      WHERE  per.PERIANIO BETWEEN {0} AND {3}
+      AND per.PERIMES     BETWEEN {1} AND {4}
+      AND CMG.CONGENEDIA  BETWEEN {2} AND {5}
+      )tbl
+      INNER JOIN trn_barra BAR
+      ON TBL.BARRCODI=BAR.BARRCODI
+      ORDER BY BAR.barrNombre ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarBarrasPorCostoMarginalMensual</key>
+    <query>
+      SELECT
+      DISTINCT
+      BAR.barrCodi
+      ,BAR.barrNombre
+      FROM(
+      SELECT CMG.BARRCODI
+      FROM trn_costo_marginal  CMG
+      INNER JOIN TRN_PERIODO PER
+      ON CMG.PERICODI=PER.PERICODI
+      WHERE  per.pericodi between {0} and {1}
+      UNION
+      SELECT   cmg.barrcodi
+      FROM TRN_COSTO_MARGINAL_CONGENE  CMG
+      INNER JOIN TRN_PERIODO PER
+      ON CMG.PERICODI=PER.PERICODI
+      WHERE  per.pericodi between {0} and {1}
+      )tbl
+      INNER JOIN trn_barra BAR
+      ON TBL.BARRCODI=BAR.BARRCODI
+      ORDER BY BAR.barrNombre ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCostoMarginalTotalPorBarras</key>
+    <query>
+      SELECT barrcodi
+      ,TO_CHAR(CMGRFECHA,'dd/mm/yyyy')||'_'||cmgrcorrelativo FechaColumna
+      ,CMGRTOTAL
+      FROM si_costomarginal
+      WHERE  BARRCODI in({0})
+      AND CMGRFECHA between to_date('{1}','YYYY-MM-DD') and to_date('{2}  23:59:59','YYYY-MM-DD HH24:MI:SS')
+      ORDER BY CMGRFECHA ASC
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarCostoMarginalTotalPorBarras_NEW</key>
+    <query>
+
+      SELECT *
+      FROM trn_costo_marginal
+      WHERE PERICODI=:pericodi
+      AND COSMARVERSION=:version
+      AND  BARRCODI in({0})
+      AND COSMARDIA BETWEEN  {1} AND {2}
+      ORDER BY COSMARDIA
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarCostoMarginalCongestionPorBarras</key>
+    <query>
+      SELECT barrcodi
+      ,TO_CHAR(CMGRFECHA,'dd/mm/yyyy')||'_'||cmgrcorrelativo FechaColumna
+      ,CMGRCONGESTION
+      FROM si_costomarginal
+      WHERE  BARRCODI in({0})
+      AND CMGRFECHA between to_date('{1}','YYYY-MM-DD') and to_date('{2}  23:59:59','YYYY-MM-DD HH24:MI:SS')
+      ORDER BY CMGRFECHA ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCostoMarginalCongestionPorBarras_New</key>
+    <query>
+      SELECT *
+      FROM trn_costo_marginal_congene
+      WHERE PERICODI=:pericodi
+      AND CONGENEVERSION=:version
+      AND  BARRCODI in({0})
+      AND CONGENEDIA BETWEEN  {1} AND {2}
+      AND TIPCOSTO=:tipcosto
+      ORDER BY CONGENEDIA
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCostoMarginalEnergiaPorBarras</key>
+    <query>
+      SELECT barrcodi
+      ,TO_CHAR(CMGRFECHA,'dd/mm/yyyy')||'_'||cmgrcorrelativo FechaColumna
+      ,CMGRENERGIA
+      FROM si_costomarginal
+      WHERE  BARRCODI in({0})
+      AND CMGRFECHA between to_date('{1}','YYYY-MM-DD') and to_date('{2}  23:59:59','YYYY-MM-DD HH24:MI:SS')
+      ORDER BY CMGRFECHA ASC
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarCostoMarginalDesviacion</key>
+    <query>
+      SELECT
+      * FROM(
+      SELECT
+      1,
+      SUM(cosmar1),SUM(cosmar3),SUM(cosmar5),SUM(cosmar7),SUM(cosmar9),
+      SUM(cosmar11),SUM(cosmar13),SUM(cosmar15),SUM(cosmar17),SUM(cosmar19),
+      SUM(cosmar21),SUM(cosmar23),SUM(cosmar25),SUM(cosmar27),SUM(cosmar29),
+      SUM(cosmar31),SUM(cosmar33),SUM(cosmar35),SUM(cosmar37),SUM(cosmar39),
+      SUM( cosmar41),SUM(cosmar43),SUM(cosmar45),SUM(cosmar47),SUM(cosmar49),
+      SUM(cosmar51),SUM(cosmar53),SUM(cosmar55),SUM(cosmar57),SUM(cosmar59),
+      SUM(cosmar61),SUM(cosmar63),SUM(cosmar65),SUM(cosmar67),SUM(cosmar69),
+      SUM(cosmar71),SUM(cosmar73),SUM(cosmar75),SUM(cosmar77),SUM(cosmar79),
+      SUM( cosmar81),SUM(cosmar83),SUM(cosmar85),SUM(cosmar87),SUM(cosmar89),
+      SUM(cosmar91),SUM(cosmar93),SUM(cosmar95)
+      FROM trn_costo_marginal
+      WHERE PERICODI = {0}
+      AND COSMARVERSION in({1})
+      AND BARRCODI in({2})
+      AND COSMARDIA IN({3})
+      UNION
+      SELECT
+      2,
+      SUM(cosmar1),SUM(cosmar3),SUM(cosmar5),SUM(cosmar7),SUM(cosmar9),
+      SUM(cosmar11),SUM(cosmar13),SUM(cosmar15),SUM(cosmar17),SUM(cosmar19),
+      SUM(cosmar21),SUM(cosmar23),SUM(cosmar25),SUM(cosmar27),SUM(cosmar29),
+      SUM(cosmar31),SUM(cosmar33),SUM(cosmar35),SUM(cosmar37),SUM(cosmar39),
+      SUM( cosmar41),SUM(cosmar43),SUM(cosmar45),SUM(cosmar47),SUM(cosmar49),
+      SUM(cosmar51),SUM(cosmar53),SUM(cosmar55),SUM(cosmar57),SUM(cosmar59),
+      SUM(cosmar61),SUM(cosmar63),SUM(cosmar65),SUM(cosmar67),SUM(cosmar69),
+      SUM(cosmar71),SUM(cosmar73),SUM(cosmar75),SUM(cosmar77),SUM(cosmar79),
+      SUM( cosmar81),SUM(cosmar83),SUM(cosmar85),SUM(cosmar87),SUM(cosmar89),
+      SUM(cosmar91),SUM(cosmar93),SUM(cosmar95)
+      FROM trn_costo_marginal
+      WHERE PERICODI = {4}
+      AND COSMARVERSION in({5})
+      AND BARRCODI in({6})
+      AND COSMARDIA IN({7})
+      ) TBL
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCostoMarginalCongestionDesviacion</key>
+    <query>
+      SELECT
+      * FROM(
+      SELECT
+      1,
+      SUM(congene1),SUM(congene2),SUM(congene3),SUM(congene4),SUM(congene5),
+      SUM(congene6),SUM(congene7),SUM(congene8),SUM(congene9),SUM(congene10),
+      SUM(congene11),SUM(congene12),SUM(congene13),SUM(congene14),SUM(congene15),
+      SUM( congene16),SUM(congene17),SUM(congene18),SUM(congene19),SUM(congene20),
+      SUM(congene21),SUM(congene22),SUM(congene23),SUM(congene24),SUM(congene25),
+      SUM(congene26),SUM(congene27),SUM(congene28),SUM(congene29),SUM(congene30),
+      SUM(congene31),SUM(congene32),SUM(congene33),SUM(congene34),SUM(congene35),
+      SUM(congene36),SUM(congene37),SUM(congene38),SUM(congene39),SUM(congene40),
+      SUM(congene41),SUM(congene42),SUM(congene43),SUM(congene44),SUM(congene45),
+      SUM(congene46),SUM(congene47),SUM(congene48)
+      FROM trn_costo_marginal_congene
+      WHERE PERICODI = {0}
+      AND congeneVERSION in({1})
+      AND BARRCODI in({2})
+      AND congeneDIA IN({3})
+      AND tipCosto=:tipCosto
+      UNION
+      SELECT
+      2,
+      SUM(congene1),SUM(congene2),SUM(congene3),SUM(congene4),SUM(congene5),
+      SUM(congene6),SUM(congene7),SUM(congene8),SUM(congene9),SUM(congene10),
+      SUM(congene11),SUM(congene12),SUM(congene13),SUM(congene14),SUM(congene15),
+      SUM( congene16),SUM(congene17),SUM(congene18),SUM(congene19),SUM(congene20),
+      SUM(congene21),SUM(congene22),SUM(congene23),SUM(congene24),SUM(congene25),
+      SUM(congene26),SUM(congene27),SUM(congene28),SUM(congene29),SUM(congene30),
+      SUM(congene31),SUM(congene32),SUM(congene33),SUM(congene34),SUM(congene35),
+      SUM(congene36),SUM(congene37),SUM(congene38),SUM(congene39),SUM(congene40),
+      SUM(congene41),SUM(congene42),SUM(congene43),SUM(congene44),SUM(congene45),
+      SUM(congene46),SUM(congene47),SUM(congene48)
+      FROM trn_costo_marginal_congene
+      WHERE PERICODI = {4}
+      AND congeneVERSION in({5})
+      AND BARRCODI in({6})
+      AND congeneDIA IN({7})
+      AND tipCosto=:tipCosto
+      ) TBL
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>ListarPromedioMarginalTotalDiario</key>
+    <query>
+      SELECT *
+      FROM (
+      SELECT TO_DATE(per.PERIANIO||'-'||PER.PERIMES||'-'||CMG.COSMARDIA,'YYYY-MM-DD') CMGRFECHA
+      ,COSMARPROMEDIODIA
+      ,BARRCODI
+      FROM trn_costo_marginal  CMG
+      INNER JOIN TRN_PERIODO PER
+      ON CMG.PERICODI=PER.PERICODI
+      WHERE  BARRCODI in({0})
+      -- NO ES RECOMEN
+      AND COSMARVERSION IN (
+      SELECT max(cosmarversion)
+      FROM   trn_costo_marginal  CIN
+      WHERE  CIN.PERICODI=CMG.PERICODI)
+      )TBL
+      WHERE CMGRFECHA between to_date('{1}','YYYY-MM-DD') and to_date('{2} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      ORDER BY CMGRFECHA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPromedioMarginalTotalMensual</key>
+    <query>
+      SELECT TO_DATE(per.PERIANIO||'-'||PER.PERIMES||'-'||1,'YYYY-MM-DD') CMGRFECHA
+      ,BARRCODI
+      , TO_CHAR(AVG(cosmarpromediodia),'fm99999999.999999999')  cosmarpromedio
+      FROM trn_costo_marginal  CMG
+      INNER JOIN TRN_PERIODO PER
+      ON CMG.PERICODI=PER.PERICODI
+      WHERE  BARRCODI in({0})
+      AND COSMARVERSION IN (
+      SELECT max(cosmarversion)
+      FROM   trn_costo_marginal  CIN
+      WHERE  CIN.PERICODI=CMG.PERICODI)
+      AND CMG.PERICODI BETWEEN {1} AND {2}
+      GROUP BY TO_DATE(per.PERIANIO||'-'||PER.PERIMES||'-'||1,'YYYY-MM-DD')
+      ,BARRCODI
+      ORDER BY CMGRFECHA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPromedioMarginalCongeneMensual</key>
+    <query>
+      SELECT TO_DATE(per.PERIANIO||'-'||PER.PERIMES||'-'||1,'YYYY-MM-DD') CMGRFECHA
+      ,BARRCODI
+      ,TO_CHAR(AVG(congenepromedio),'fm99999999.999999999')  cosmarpromedio
+      FROM TRN_COSTO_MARGINAL_CONGENE  CMG
+      INNER JOIN TRN_PERIODO PER
+      ON CMG.PERICODI=PER.PERICODI
+      WHERE  BARRCODI in({0})
+      AND congeneVERSION IN (
+      SELECT max(congeneversion)
+      FROM   TRN_COSTO_MARGINAL_CONGENE  CIN
+      WHERE  CIN.PERICODI=CMG.PERICODI)
+      AND CMG.PERICODI BETWEEN {1} AND {2}
+      AND CMG.TIPCOSTO={3}
+      GROUP BY TO_DATE(per.PERIANIO||'-'||PER.PERIMES||'-'||1,'YYYY-MM-DD')
+      ,BARRCODI
+      ORDER BY CMGRFECHA
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarPromedioMarginalCongeneDiario</key>
+    <query>
+      SELECT TO_DATE(per.PERIANIO||'-'||PER.PERIMES||'-'||CMG.CONGENEDIA,'YYYY-MM-DD') CMGRFECHA
+      ,BARRCODI
+      ,congenepromedio cosmarpromedio
+      FROM TRN_COSTO_MARGINAL_CONGENE  CMG
+      INNER JOIN TRN_PERIODO PER
+      ON CMG.PERICODI=PER.PERICODI
+      WHERE  BARRCODI in({0})
+      AND congeneVERSION IN (
+      SELECT max(congeneversion)
+      FROM   TRN_COSTO_MARGINAL_CONGENE  CIN
+      WHERE  CIN.PERICODI=CMG.PERICODI)
+      AND TO_DATE(per.PERIANIO||'-'||PER.PERIMES||'-'||CMG.CONGENEDIA,'YYYY-MM-DD') BETWEEN to_date('{1}','YYYY-MM-DD') and to_date('{2} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      AND CMG.TIPCOSTO={3}
+
+      ORDER BY CMGRFECHA
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarBarrasPorCodigo</key>
+    <query>
+      SELECT barrcodi
+      ,barrNombre
+      FROM trn_barra
+      WHERE  BARRCODI in({0})
+      ORDER BY BARRNOMBRE ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarBarrasPorCodigo</key>
+    <query>
+      SELECT barrcodi
+      ,barrNombre
+      FROM trn_barra
+      WHERE  BARRCODI in({0})
+      ORDER BY BARRNOMBRE ASC
+    </query>
+  </Sql>
+
+</Sqls>

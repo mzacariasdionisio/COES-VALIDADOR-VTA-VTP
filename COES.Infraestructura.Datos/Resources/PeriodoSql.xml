@@ -1,0 +1,239 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+  <Sql>
+    <key>GetById</key>
+    <query>select * from trn_periodo where pericodi = :pericodi</query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_periodo
+      (
+      pericodi, perinombre, perianio, perimes, perianiomes, recanombre, perifechavalorizacion,
+      perifechalimite, perihoralimite, perifechaobservacion, periestado, periusername, perifecins, periformnuevo
+      )
+      values
+      (
+      :pericodi, :perinombre, :perianio, :perimes, :perianiomes, :recanombre, :perifechavalorizacion,
+      :perifechalimite, :perihoralimite, :perifechaobservacion, :periestado, :periusername, :perifecins, :periformnuevo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update trn_periodo
+      set
+      perinombre = :perinombre,
+      perianio = :perianio,
+      perimes = :perimes,
+      perianiomes = :perianiomes,
+      recanombre = :recanombre,
+      perifechavalorizacion = :perifechavalorizacion,
+      perifechalimite = :perifechalimite,
+      perihoralimite=:perihoralimite,
+      perifechaobservacion = :perifechaobservacion,
+      periestado = :periestado,
+      perifecact = :perifecact,
+      periformnuevo = :periformnuevo
+      where pericodi = :pericodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetFirstPeriodoFormatNew</key>
+    <query>
+      SELECT MIN(PERICODI) FROM trn_periodo WHERE PERIFORMNUEVO=1
+    </query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_periodo where pericodi = :pericodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from trn_periodo
+      order by perianio desc, perimes desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPeriodoPotencia</key>
+    <query>
+      select * from trn_periodo
+      where pericodi in (
+      select pericodi from vtp_recalculo_potencia pot where pot.recpotestado != 'Abierto'
+      )
+      order by perianio desc, perimes desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from trn_periodo where (perinombre like '%' + :perinombre + '%' or :perinombre is null)
+      order by perianio desc, perimes desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByAnioMes</key>
+    <query>
+      select * from trn_periodo where perianiomes = :perianiomes
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(pericodi), 0) + 1 from trn_periodo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetNumRegistros</key>
+    <query>
+      select sum(numreg) as numreg from (
+      select count(*) as numreg from trn_factor_perdida where pericodi = :pericodi
+      union
+      select count(*) as numreg from trn_ing_compensacion where pericodi = :pericodi
+      union
+      select count(*) as numreg from trn_ing_potencia where pericodi = :pericodi
+      union
+      select count(*) as numreg from trn_ing_retirosc where pericodi = :pericodi
+      union
+      select count(*) as numreg from trn_tramite where pericodi = :pericodi
+      union
+      select count(*) as numreg from trn_trans_entrega where pericodi = :pericodi
+      union
+      select count(*) as numreg from trn_trans_retiro where pericodi = :pericodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarByEstado</key>
+    <query>
+      select * from trn_periodo
+      where pericodi in ( select pericodi from trn_recalculo where recaestado = :periestado )
+      order by perianio desc, perimes desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarByEstadoPublicarCerrado</key>
+    <query>
+      select * from trn_periodo
+      where pericodi in ( select pericodi from trn_recalculo where recaestado in ('Publicar', 'Cerrado') )
+      order by perianio desc, perimes desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>BuscarPeriodoAnterior</key>
+    <query>
+      select anterior.*
+      from trn_periodo actual join trn_periodo anterior on actual.perianiomes > anterior.perianiomes
+      where actual.pericodi = :pericodi
+      Order by anterior.perianiomes desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPeriodosFuturos</key>
+    <query>
+      select * from trn_periodo where perianiomes > (select perianiomes from trn_periodo where pericodi = :pericodi)
+      order by perianio desc, perimes desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPeriodoDTR</key>
+    <query>
+      select mesx as pericodi, mm as perimes, yyyy as perianio from dtr_meses where mm = :perimes and yyyy = :perianio
+    </query>
+  </Sql>
+  
+  <!-- Inicio de Agregado - Sistema de Compensaciones-->
+  <Sql>
+    <key>ListarPeriodosTC</key>
+    <query>
+      SELECT PERICODI,
+      PERINOMBRE,
+      PERIANIO,
+      PERIMES,
+      PERIANIOMES,
+      PERIFECHAVALORIZACION,
+      PERIFECHALIMITE,
+      PERIHORALIMITE,
+      PERIFECHAOBSERVACION,
+      PERIESTADO,
+      RECANOMBRE,
+      PERIUSERNAME,
+      PERIFECINS,
+      PERIFECACT
+      FROM TRN_PERIODO ORDER BY PERIANIOMES DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPeriodosCompensacion</key>
+    <query>
+      SELECT PE.PERICODI,PE.PERINOMBRE,PE.PERIANIO,PE.PERIMES,PE.PERIANIOMES,PE.PERIESTADO,PE.RECANOMBRE, PE.PERIINFORME
+      ,PC.PECANOMBRE,PC.PECAVERSIONCOMP,PC.PECAVERSIONVTEA,RECA.RECANOMBRE AS RECANOMBRECOMP,PC.PECAESTREGISTRO, CASE PC.PECAESTREGISTRO WHEN '1' THEN 'En proceso' WHEN '0' THEN 'Cerrado' END PECADSCESTADO
+      FROM TRN_PERIODO PE LEFT JOIN (SELECT PERICODI,MAX(PECAVERSIONCOMP) PECAVERSIONCOMP FROM VCE_PERIODO_CALCULO GROUP BY PERICODI) UPC ON PE.PERICODI = UPC.PERICODI
+      LEFT JOIN VCE_PERIODO_CALCULO PC ON UPC.PERICODI = PC.PERICODI AND UPC.PECAVERSIONCOMP = PC.PECAVERSIONCOMP
+      LEFT JOIN TRN_RECALCULO RECA ON PC.PERICODI = RECA.PERICODI AND PC.PECAVERSIONVTEA = RECA.RECACODI
+      ORDER BY PE.PERIANIOMES DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPeriodoByIdProcesa</key>
+    <query>
+      select pericodi
+      , perinombre
+      , perianio
+      , perimes
+      , perianiomes
+      , perifechavalorizacion
+      , perifechalimite
+      , perihoralimite
+      , perifechaobservacion
+      , periestado
+      , recanombre
+      , periusername
+      , perifecins
+      , perifecact
+      , to_date(perianiomes, 'YYYYMM') as fechaini
+      , add_months(to_date(perianiomes, 'YYYYMM'), 1) as fechafin
+      from trn_periodo
+      where pericodi = :pericodi
+    </query>
+  </Sql>
+  <!--Fin de Agregado - Sistema de Compensaciones -->
+
+  <!--2018.Setiembre - Agregados por ASSETEC-->
+  <Sql>
+    <key>GetPKTrnContador</key>
+    <query>
+      select trncntcontador from trn_contador where trncnttabla = :trncnttabla and trncntcolumna = :trncntcolumna for update
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdatePKTrnContador</key>
+    <query>
+      update trn_contador 
+      set trncntcontador = :trncntcontador 
+      where trncnttabla = :trncnttabla and trncntcolumna = :trncntcolumna
+    </query>
+  </Sql>
+</Sqls>
+

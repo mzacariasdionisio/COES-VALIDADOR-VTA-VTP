@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(revacodi), 0) + 1 from ft_ext_envio_revarea
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into ft_ext_envio_revarea(
+           revacodi,
+           revaestadoronda1,
+           revahtmlronda1,
+           revaestadoronda2,
+           revahtmlronda2,
+           ftevercodi
+       )
+       values(
+           :revacodi,
+           :revaestadoronda1,
+           :revahtmlronda1,
+           :revaestadoronda2,
+           :revahtmlronda2,
+           :ftevercodi
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update ft_ext_envio_revarea
+       set
+           revaestadoronda1 = :revaestadoronda1,
+           revahtmlronda1 = :revahtmlronda1,
+           revaestadoronda2 = :revaestadoronda2,
+           revahtmlronda2 = :revahtmlronda2,
+           ftevercodi = :ftevercodi
+       where
+           revacodi = :revacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from ft_ext_envio_revarea
+       where
+           revacodi = :revacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeletePorGrupo</key>
+    <query>
+      delete from ft_ext_envio_revarea
+      where
+      revacodi in ({0})
+    </query>
+  </Sql>
+
+   <Sql>
+    <key>DeletePorIds</key>
+    <query>
+      delete from ft_ext_envio_revarea
+      where revacodi in ({0})
+      
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarRelacionesPorVersionAreaYEquipo</key>
+    <query>
+
+      select ear.* from ft_ext_envio_revarea ear
+      inner join ft_ext_envio_reldatorevarea reldo on reldo.revacodi = ear.revacodi
+      inner join ft_ext_envio_area ena on ena.envarcodi = reldo.envarcodi
+      inner join ft_ext_envio_dato eda on eda.ftedatcodi = reldo.ftedatcodi
+
+      where ear.ftevercodi = {0}
+      and ena.faremcodi = {1}
+      and eda.fteeqcodi = {2}
+      
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarRelacionesContenidoPorVersionArea</key>
+    <query>
+
+      select ear.* from ft_ext_envio_revarea ear
+      inner join ft_ext_envio_relreqrevarea relrq on relrq.revacodi = ear.revacodi
+      inner join ft_ext_envio_area ena on ena.envarcodi = relrq.envarcodi
+
+      where ear.ftevercodi = {0}
+      and relrq.ftevercodi = {0}
+      and ena.faremcodi = {1}
+
+
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           revacodi,
+           revaestadoronda1,
+           revahtmlronda1,
+           revaestadoronda2,
+           revahtmlronda2,
+           ftevercodi
+       from
+           ft_ext_envio_revarea
+       where
+           revacodi = :revacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           revacodi,
+           revaestadoronda1,
+           revahtmlronda1,
+           revaestadoronda2,
+           revahtmlronda2,
+           ftevercodi
+       from
+           ft_ext_envio_revarea
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           revacodi,
+           revaestadoronda1,
+           revahtmlronda1,
+           revaestadoronda2,
+           revahtmlronda2,
+           ftevercodi
+       from
+           ft_ext_envio_revarea
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorDatos</key>
+    <query>
+      select
+      rev.*,
+      rel.revadcodi,
+      rel.ftedatcodi,
+      eqenv.FTEEQCODI,
+      icfg.FTITCODI
+      from ft_ext_envio_revarea rev
+      inner join ft_ext_envio_reldatorevarea rel on rel.revacodi = rev.revacodi
+      inner join FT_EXT_ENVIO_DATO datoeq on datoeq.ftedatcodi = rel.ftedatcodi
+      inner join FT_EXT_ITEMCFG icfg on icfg.FITCFGCODI = datoeq.FITCFGCODI
+      inner join FT_EXT_ENVIO_EQ eqenv on eqenv.FTEEQCODI = datoeq.FTEEQCODI
+      inner join FT_EXT_ENVIO_VERSION ver on ver.FTEVERCODI = eqenv.FTEVERCODI
+      where ver.FTEVERCODI = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorRequisitos</key>
+    <query>
+      select
+      rev.*,
+      rel.FTEREQCODI,
+      reqenv.FEVRQCODI
+      from ft_ext_envio_revision rev
+      inner join ft_ext_envio_relreqrev rel on rel.ftrevcodi = rev.ftrevcodi
+      inner join FT_EXT_ENVIO_REQ reqenv on reqenv.FTEREQCODI = rel.FTEREQCODI
+      inner join FT_EXT_ENVIO_VERSION ver on ver.FTEVERCODI = reqenv.FTEVERCODI
+      where ver.FTEVERCODI = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorModoOp</key>
+    <query>
+      select
+      rev.*,
+      rel.FTEEQCODI
+      from ft_ext_envio_revision rev
+      inner join ft_ext_envio_releeqrev rel on rel.ftrevcodi = rev.ftrevcodi
+      inner join FT_EXT_ENVIO_EQ eqenv on eqenv.FTEEQCODI = rel.FTEEQCODI
+      inner join FT_EXT_ENVIO_VERSION ver on ver.FTEVERCODI = eqenv.FTEVERCODI
+      where ver.FTEVERCODI = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListarRevisionPorAreaVersionYDatos</key>
+    <query>
+      SELECT REVA.*,RELDA.REVADCODI, RELDA.FTEDATCODI,EQENV.FTEEQCODI, ICFG.FTITCODI, ENA.FAREMCODI, ENA.ENVARESTADO FROM FT_EXT_ENVIO_REVAREA REVA
+      INNER JOIN FT_EXT_ENVIO_RELDATOREVAREA RELDA ON RELDA.REVACODI = REVA.REVACODI
+      INNER JOIN FT_EXT_ENVIO_AREA ENA ON ENA.ENVARCODI = RELDA.ENVARCODI
+      INNER JOIN FT_EXT_ENVIO_DATO DATOEQ ON DATOEQ.FTEDATCODI = RELDA.FTEDATCODI
+      INNER JOIN FT_EXT_ITEMCFG ICFG ON ICFG.FITCFGCODI = DATOEQ.FITCFGCODI
+      INNER JOIN FT_EXT_ENVIO_EQ EQENV ON EQENV.FTEEQCODI = DATOEQ.FTEEQCODI
+
+      WHERE ENA.FAREMCODI in ({0})
+      AND ENA.FTEVERCODI = {1}
+      AND RELDA.FTEVERCODI = {1}
+      AND RELDA.FTEDATCODI in ({2})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarRevisionPorAreaVersionYReq</key>
+    <query>
+      SELECT REVA.*, RELRA.FTEREQCODI, ENA.FAREMCODI, ENA.ENVARESTADO FROM FT_EXT_ENVIO_REVAREA REVA
+      INNER JOIN FT_EXT_ENVIO_RELREQREVAREA RELRA ON RELRA.REVACODI = REVA.REVACODI
+      INNER JOIN FT_EXT_ENVIO_AREA ENA ON ENA.ENVARCODI = RELRA.ENVARCODI
+      INNER JOIN FT_EXT_ENVIO_REQ ER ON ER.FTEREQCODI = RELRA.FTEREQCODI
+
+      WHERE ENA.FAREMCODI in ({0})
+      AND ENA.FTEVERCODI = {1}
+      AND RELRA.FTEVERCODI = {1}
+      AND RELRA.FTEREQCODI in ({2})
+    </query>
+  </Sql>
+
+  
+  
+
+</Sqls>

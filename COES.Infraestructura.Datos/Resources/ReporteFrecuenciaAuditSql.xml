@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+	<Sql>
+		<key>GetFrecuenciasAudit</key>
+		<query>
+			select id, gpscodi, to_char(fechainicial, 'dd/MM/yyyy HH24:mi:ss') as fechainicial,
+			to_char(fechafinal, 'dd/MM/yyyy HH24:mi:ss') as fechafinal,
+			to_char(fecha, 'dd/MM/yyyy HH24:mi:ss') as fecha, usuario,
+			to_char(fechareversa, 'dd/MM/yyyy HH24:mi:ss') as fechareversa, usuarioreversa,
+			filasafectadas from sic.FRECUENCIAS_AUDIT_CAB where gpscodi={0} order by 1</query>
+	</Sql>
+	<Sql>
+		<key>GetFrecuenciaAudit</key>
+		<query>select * from sic.FRECUENCIAS_AUDIT_CAB where id={0} order by 1</query>
+	</Sql>
+	<Sql>
+		<key>Save</key>
+		<query>
+			DECLARE
+			P_INICIO DATE:= to_date('{0}', 'dd/MM/yyyy HH24:Mi:ss');
+			P_FIN DATE:= to_date('{1}', 'dd/MM/yyyy HH24:Mi:ss');
+			P_CODI NUMBER :={2};
+			P_USU VARCHAR2(60) := '{3}';
+			P_ID NUMBER:= 0;
+			P_MENSAJE VARCHAR2(200);
+			v_sql_query varchar2(2000);
+			BEGIN
+			select nvl((SELECT max(ID) FROM sic.FRECUENCIAS_AUDIT_CAB),0)+1 into P_ID from dual;
+
+			insert into sic.FRECUENCIAS_AUDIT_CAB(ID, GPSCODI, FECHAINICIAL, FECHAFINAL, USUARIO)
+			values(P_ID, P_CODI, P_INICIO, P_FIN, P_USU);
+
+			insert into sic.FRECUENCIAS_AUDIT_DET(id, fecha, valor)
+			select * from
+			(select P_ID, to_date(
+			to_char(FECHAHORA, 'dd/MM/yyyy HH24:mi') || decode(length(SEC), 2, replace(SEC, 'H', ':0'), replace(SEC, 'H', ':')), 'dd/MM/yyyy HH24:mi:ss') as FECHA,
+			VALUE
+			from(
+			SELECT FECHAHORA,
+			H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+			H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+			H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+			H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+			H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+			H51, H52, H53, H54, H55, H56, H57, H58, H59
+			FROM sic.F_LECTURA
+			WHERE GPSCODI = P_CODI AND
+			FECHAHORA BETWEEN TRUNC(P_INICIO, 'MI')  AND TRUNC(P_FIN, 'MI')
+			ORDER BY FECHAHORA)
+			unpivot(
+			value
+			for SEC in
+			(H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+			H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+			H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+			H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+			H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+			H51, H52, H53, H54, H55, H56, H57, H58, H59)))
+			WHERE FECHA BETWEEN P_INICIO AND P_FIN;
+
+			UPDATE sic.FRECUENCIAS_AUDIT_CAB SET FILASAFECTADAS=
+			(select count(1) from sic.FRECUENCIAS_AUDIT_DET where ID=P_ID)
+			WHERE ID=P_ID;
+
+			FOR A IN (select 'UPDATE sic.F_LECTURA set '||a||' where FECHAHORA=TO_DATE('''||f||''',''DD/MM/YYYY HH24:mi'') and GPSCODI='||gpscodi S
+			from (
+			select id,to_char(fecha,'DD/MM/YYYY HH24:mi')F
+			,LISTAGG('H'||EXTRACT(SECOND FROM CAST(FECHA AS TIMESTAMP))||'=NULL',',')a
+			from  sic.FRECUENCIAS_AUDIT_DET B
+			where ID=P_ID
+			group by id,to_char(fecha,'DD/MM/YYYY HH24:mi'))a inner join sic.FRECUENCIAS_AUDIT_CAB b on a.id=b.id) LOOP
+			v_sql_query:=A.S;
+			EXECUTE IMMEDIATE v_sql_query;
+			END LOOP;
+
+			update SIC.F_LECTURA dest set
+			dest.MINIMO = null,dest.MAXIMO=null,dest.VSF =null,dest.DESV =null,dest.NUM=0
+			where exists (select 1 from sic.FRECUENCIAS_AUDIT_CAB a
+			where a.GPSCODI = dest.GPSCODI and id=P_ID
+			and dest.FECHAHORA between TRUNC(a.FECHAINICIAL, 'MI') and
+			TRUNC(a.FECHAFINAL, 'MI'));
+
+			MERGE INTO SIC.F_LECTURA dest
+			USING (select FECHAHORA,GPSCODI,max(VALUE)MAXIMO, min(VALUE)MINIMO,
+			round(POWER(SUM(POWER(VALUE, 2))/count(1), 0.5)-60,5) VSF,round((sum(value)-(count(1)*60))/60,5) DESV,count(VALUE) NUM
+			from(select l.*
+			from SIC.F_LECTURA l
+			inner join sic.FRECUENCIAS_AUDIT_CAB a
+			on a.GPSCODI = l.GPSCODI
+			where id=P_ID
+			and l.FECHAHORA between TRUNC(a.FECHAINICIAL, 'MI') and
+			TRUNC(a.FECHAFINAL, 'MI') ORDER BY FECHAHORA)
+			unpivot(
+			value
+			for SEC in
+			(H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+			H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+			H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+			H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+			H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+			H51, H52, H53, H54, H55, H56, H57, H58, H59))
+			group by FECHAHORA,GPSCODI) orig
+			ON (dest.FECHAHORA = orig.FECHAHORA and dest.GPSCODI = orig.GPSCODI)
+			WHEN MATCHED THEN
+			UPDATE SET dest.MINIMO = orig.MINIMO,
+			dest.MAXIMO = orig.MAXIMO,
+			dest.VSF = orig.VSF,
+			dest.DESV = orig.DESV,
+			dest.NUM=orig.NUM;
+			COMMIT;
+
+			END;
+		</query>
+	</Sql>
+	<Sql>
+		<key>Eliminar</key>
+		<query>
+			DECLARE
+			P_USU VARCHAR2(60):='{0}';
+			P_ID NUMBER:='{1}';
+			v_sql_query varchar2(2000);
+			begin
+			UPDATE sic.FRECUENCIAS_AUDIT_CAB SET FECHAREVERSA=sysdate,USUARIOREVERSA=P_USU
+			where ID=P_ID;
+
+			FOR A IN (select 'UPDATE sic.F_LECTURA set '||a||' where FECHAHORA=TO_DATE('''||f||''',''DD/MM/YYYY HH24:mi'') and GPSCODI='||gpscodi S
+			from (
+			select id,to_char(fecha,'DD/MM/YYYY HH24:mi')F
+			,LISTAGG('H'||EXTRACT(SECOND FROM CAST(FECHA AS TIMESTAMP))||'='||replace(VALOR,',','.'), ',')a
+			from  sic.FRECUENCIAS_AUDIT_DET B
+			where ID=P_ID
+			group by id,to_char(fecha,'DD/MM/YYYY HH24:mi'))a inner join sic.FRECUENCIAS_AUDIT_CAB b on a.id=b.id) LOOP
+			v_sql_query:=A.S;
+			EXECUTE IMMEDIATE v_sql_query;
+			END LOOP;
+
+			update SIC.F_LECTURA dest set
+			dest.MINIMO = null,dest.MAXIMO=null,dest.VSF =null,dest.DESV =null,dest.NUM=0
+			where exists (select 1 from sic.FRECUENCIAS_AUDIT_CAB a
+			where a.GPSCODI = dest.GPSCODI and id=P_ID
+			and dest.FECHAHORA between TRUNC(a.FECHAINICIAL, 'MI') and
+			TRUNC(a.FECHAFINAL, 'MI'));
+
+			MERGE INTO SIC.F_LECTURA dest
+			USING (select FECHAHORA,GPSCODI,max(VALUE)MAXIMO, min(VALUE)MINIMO,
+			round(POWER(SUM(POWER(VALUE, 2))/count(1), 0.5)-60,5) VSF,round((sum(value)-(count(1)*60))/60,5) DESV,count(VALUE) NUM
+			from(select l.*
+			from SIC.F_LECTURA l
+			inner join sic.FRECUENCIAS_AUDIT_CAB a
+			on a.GPSCODI = l.GPSCODI
+			where id=P_ID
+			and l.FECHAHORA between TRUNC(a.FECHAINICIAL, 'MI') and
+			TRUNC(a.FECHAFINAL, 'MI') ORDER BY FECHAHORA)
+			unpivot(
+			value
+			for SEC in
+			(H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+			H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+			H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+			H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+			H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+			H51, H52, H53, H54, H55, H56, H57, H58, H59))
+			group by FECHAHORA,GPSCODI) orig
+			ON (dest.FECHAHORA = orig.FECHAHORA and dest.GPSCODI = orig.GPSCODI)
+			WHEN MATCHED THEN
+			UPDATE SET dest.MINIMO = orig.MINIMO,
+			dest.MAXIMO = orig.MAXIMO,
+			dest.VSF = orig.VSF,
+			dest.DESV = orig.DESV,
+			dest.NUM=orig.NUM;
+			COMMIT;
+			end;
+		</query>
+	</Sql>
+</Sqls>

@@ -1,0 +1,240 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(rerldtcodi), 0) + 1 from vtp_codigo_retiro_rel_det
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_codigo_retiro_rel_det
+      (rerldtcodi ,retrelcodi,genemprcodivtea,cliemprcodivtea,barrcodivtea,coresocodvtea,
+      genemprcodivtp,cliemprcodivtp,barrcodivtp,coresocodvtp,
+      rerldtestado,rerldtusucreacion,rerldtfeccreacion)
+      values
+      (:rerldtcodi ,:retrelcodi,:genemprcodivtea,:cliemprcodivtea,:barrcodivtea,:coresocodvtea,
+      :genemprcodivtp,:cliemprcodivtp,:barrcodivtp,:coresocodvtp,
+      :rerldtestado,:rerldtusucreacion,:rerldtfeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_codigo_retiro_rel_det
+      where retrelcodi=:retrelcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarRelacionDetalleCodigoRetiros</key>
+    <query>
+      select
+      rdt.retrelcodi
+      ,rdt.rerldtcodi
+      ,tpvtea.tipconnombre         tipocontratovtea
+      ,tusuvtea.tipusunombre       tipousuariovtea
+      ,tsolvtea.coresocodigo       codigovtea
+      ,tpvtp.tipconnombre          tipocontratovtp
+      ,tusuvtp.tipusunombre        tipousuariovtp
+      ,tgn.coregecodvtp            codigovtp
+      from  vtp_codigo_retiro_rel_det  rdt
+      inner join trn_tipo_contrato         tpvtea
+      on  rdt.tipconcodivtea=tpvtea.tipconcodi
+      inner join trn_tipo_contrato         tpvtp
+      on  rdt.tipconcodivtp=tpvtp.tipconcodi
+      inner join trn_tipo_usuario          tusuvtea
+      on  rdt.tipusuvtea=tusuvtea.tipusucodi
+      inner join trn_tipo_usuario          tusuvtp
+      on  rdt.tipusuvtp=tusuvtp.tipusucodi
+      inner join trn_codigo_retiro_solicitud tsolvtea
+      on  rdt.coresocodvtea=tsolvtea.coresocodi
+      inner join vtp_codigo_retiro_generado tgn
+      on  rdt.coresocodvtp=tgn.coregecodi
+      where rdt.retrelcodi in(@idArray)
+      order by rdt.retrelcodi desc
+      ,tpvtea.tipconnombre
+      ,tusuvtea.tipusunombre
+      ,tsolvtea.coresocodigo
+      ,tpvtp.tipconnombre
+      ,tusuvtp.tipusunombre
+      ,tgn.coregecodvtp
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarRelacionDetalle</key>
+    <query>
+      select *
+      from (
+      SELECT row_number() over ( order by retrelcodi desc) as fila, tbl.*
+      from (
+      select
+      rdt.retrelcodi
+      ,rdt.rerldtcodi
+      ,emprvtea.emprnomb           genemprnombvtea
+      ,clievtea.emprnomb           cliemprnombvtea
+      ,tpvtea.tipconnombre         tipocontratovtea
+      ,tusuvtea.tipusunombre       tipousuariovtea
+      ,barravtea.barrnombre        barrnombvtea
+      ,tsolvtea.coresocodigo       codigovtea
+      ,emprvtp.emprnomb            genemprnombvtp
+      ,clievtp.emprnomb            cliemprnombvtp
+      ,tpvtp.tipconnombre          tipocontratovtp
+      ,tusuvtp.tipusunombre        tipousuariovtp
+      ,barravtp.barrnombre         barrnombvtp
+      ,tgn.coregecodvtp            codigovtp
+      ,rrl.RETRELVARI
+      from vtp_codigo_retiro_relacion      rrl
+      left join vtp_codigo_retiro_rel_det  rdt on rrl.retrelcodi= det.retrelcodi
+      left join vw_si_empresa              emprvtea on rdt.genemprcodivtea=emprvtea.emprcodi
+      left join vw_si_empresa              emprvtp on rdt.genemprcodivtp=emprvtp.emprcodi
+      left join vw_si_empresa              clievtea on rdt.cliemprcodivtea=clievtea.emprcodi
+      left join vw_si_empresa              clievtp on rdt.cliemprcodivtp=clievtp.emprcodi
+      left join trn_barra               barravtea on rdt.barrcodivtea=barravtea.barrcodi
+      left join trn_barra               barravtp on rdt.barrcodivtp=barravtp.barrcodi
+      left join trn_codigo_retiro_solicitud tsolvtea on  rdt.coresocodvtea=tsolvtea.coresocodi
+      left join vtp_codigo_retiro_generado tgn on  rdt.coresocodvtp=tgn.coregecodi
+      left join vtp_codigo_consolidado codvtp on tgn.coregecodvtp=codvtp.codcncodivtp
+      left join trn_tipo_contrato         tpvtea on  tsolvtea.tipconcodi=tpvtea.tipconcodi
+      left join trn_tipo_contrato         tpvtp on  codvtp.tipconcodi=tpvtp.tipconcodi
+      left join trn_tipo_usuario          tusuvtea on  tsolvtea.tipusucodi=tusuvtea.tipusucodi
+      left join trn_tipo_usuario          tusuvtp on  codvtp.tipusucodi=tusuvtp.tipusucodi
+
+      where
+      (det.genemprcodivtea = :genemprcodi or det.genemprcodivtp = :genemprcodi or :genemprcodi is null)
+      and (det.cliemprcodivtea=:cliemprcodi or det.cliemprcodivtp=:cliemprcodi or :cliemprcodi is null)
+      and (det.barrcodivtea=:barrcoditra or :barrcoditra is null)
+      and (det.barrcodivtp=:barrcodisum or :barrcodisum is null)
+      and (vtea.tipconcodi=:tipconcodi or codvtp.tipconcodi=:tipconcodi or :tipconcodi is null)
+      and (vtea.tipusucodi=:tipusucodi or codvtp.tipusucodi=:tipusucodi or :tipusucodi is null)
+      and (vtea.coresocodigo = :codigo or vtp.coregecodvtp = :codigo or :codigo is null)
+      and rrl.retelestado=:retelestado ) tbl
+      )
+      where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize)
+    </query>
+  </Sql>
+  
+
+  <Sql>
+    <key>ListarRelacionDetalle_old</key>
+    <query>
+      select
+      rdt.retrelcodi
+      ,rdt.rerldtcodi
+      ,emprvtea.emprnomb           genemprnombvtea
+      ,clievtea.emprnomb           cliemprnombvtea
+      ,tpvtea.tipconnombre         tipocontratovtea
+      ,tusuvtea.tipusunombre       tipousuariovtea
+      ,barravtea.barrnombre        barrnombvtea
+      ,tsolvtea.coresocodigo       codigovtea
+      ,emprvtp.emprnomb            genemprnombvtp
+      ,clievtp.emprnomb            cliemprnombvtp
+      ,tpvtp.tipconnombre          tipocontratovtp
+      ,tusuvtp.tipusunombre        tipousuariovtp
+      ,barravtp.barrnombre         barrnombvtp
+      ,tgn.coregecodvtp            codigovtp
+      from  vtp_codigo_retiro_rel_det  rdt
+      left join vw_si_empresa              emprvtea on rdt.genemprcodivtea=emprvtea.emprcodi
+      left join vw_si_empresa              emprvtp on rdt.genemprcodivtp=emprvtp.emprcodi
+      left join vw_si_empresa              clievtea on rdt.cliemprcodivtea=clievtea.emprcodi
+      left join vw_si_empresa              clievtp on rdt.cliemprcodivtp=clievtp.emprcodi
+      left join trn_barra               barravtea on rdt.barrcodivtea=barravtea.barrcodi
+      left join trn_barra               barravtp on rdt.barrcodivtp=barravtp.barrcodi
+      left join trn_codigo_retiro_solicitud tsolvtea on  rdt.coresocodvtea=tsolvtea.coresocodi
+      left join vtp_codigo_retiro_generado tgn on  rdt.coresocodvtp=tgn.coregecodi
+      left join vtp_codigo_consolidado codvtp on tgn.coregecodvtp=codvtp.codcncodivtp
+      left join trn_tipo_contrato         tpvtea on  tsolvtea.tipconcodi=tpvtea.tipconcodi
+      left join trn_tipo_contrato         tpvtp on  codvtp.tipconcodi=tpvtp.tipconcodi
+      left join trn_tipo_usuario          tusuvtea on  tsolvtea.tipusucodi=tusuvtea.tipusucodi
+      left join trn_tipo_usuario          tusuvtp on  codvtp.tipusucodi=tusuvtp.tipusucodi
+      where rdt.retrelcodi in(@idArray)
+      order by rdt.retrelcodi desc
+      ,tpvtea.tipconnombre
+      ,tusuvtea.tipusunombre
+      ,tsolvtea.coresocodigo
+      ,tpvtp.tipconnombre
+      ,tusuvtp.tipusunombre
+      ,tgn.coregecodvtp
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      rdt.retrelcodi
+      ,rdt.rerldtcodi
+      ,rdt.genemprcodivtea
+      ,emprvtea.emprnomb           genemprnombvtea
+      ,rdt.cliemprcodivtea
+      ,clievtea.emprnomb           cliemprnombvtea
+      ,tpvtea.tipconnombre         tipocontratovtea
+      ,tusuvtea.tipusunombre       tipousuariovtea
+      ,rdt.barrcodivtea
+      ,barravtea.barrnombre        barrnombvtea
+      ,rdt.coresocodvtea
+      ,tsolvtea.coresocodigo       codigovtea
+      ,rdt.genemprcodivtp
+      ,emprvtp.emprnomb            genemprnombvtp
+      ,rdt.cliemprcodivtp
+      ,clievtp.emprnomb            cliemprnombvtp
+      ,tpvtp.tipconnombre          tipocontratovtp
+      ,tusuvtp.tipusunombre        tipousuariovtp
+      ,rdt.barrcodivtp
+      ,barravtp.barrnombre         barrnombvtp
+      ,rdt.coresocodvtp
+      ,tgn.coregecodvtp            codigovtp
+      from  vtp_codigo_retiro_rel_det  rdt
+      left join vw_si_empresa              emprvtea on rdt.genemprcodivtea=emprvtea.emprcodi
+      left join vw_si_empresa              emprvtp on rdt.genemprcodivtp=emprvtp.emprcodi
+      left join vw_si_empresa              clievtea on rdt.cliemprcodivtea=clievtea.emprcodi
+      left join vw_si_empresa              clievtp on rdt.cliemprcodivtp=clievtp.emprcodi
+      left join trn_barra               barravtea on rdt.barrcodivtea=barravtea.barrcodi
+      left join trn_barra               barravtp on rdt.barrcodivtp=barravtp.barrcodi
+      left join trn_codigo_retiro_solicitud tsolvtea on  rdt.coresocodvtea=tsolvtea.coresocodi
+      left join vtp_codigo_retiro_generado tgn on  rdt.coresocodvtp=tgn.coregecodi
+      left join vtp_codigo_consolidado codvtp on tgn.coregecodvtp=codvtp.codcncodivtp
+      left join trn_tipo_contrato         tpvtea on  tsolvtea.tipconcodi=tpvtea.tipconcodi
+      left join trn_tipo_contrato         tpvtp on  codvtp.tipconcodi=tpvtp.tipconcodi
+      left join trn_tipo_usuario          tusuvtea on  tsolvtea.tipusucodi=tusuvtea.tipusucodi
+      left join trn_tipo_usuario          tusuvtp on  codvtp.tipusucodi=tusuvtp.tipusucodi
+      where rdt.retrelcodi = :retrelcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetRelacionDetallePorVTEA</key>
+    <query>
+      select det.rerldtcodi
+      ,det.retrelcodi
+      from vtp_codigo_retiro_rel_det det
+      inner join vtp_codigo_retiro_relacion cab on det.retrelcodi=cab.retrelcodi
+      where coresocodvtea=:coresocodvtea
+      and cab.retelestado='ACT'
+    </query>
+  </Sql>
+  <Sql>
+    <key>ExisteVTEA</key>
+    <query>
+      select count(1) from vtp_codigo_retiro_rel_det det
+      inner join vtp_codigo_retiro_relacion cab on det.retrelcodi=cab.retrelcodi
+      where coresocodvtea=:coresocodvtea
+      and cab.retelestado='ACT'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ExisteVTP</key>
+    <query>
+      select count(1) from vtp_codigo_retiro_rel_det det
+      inner join vtp_codigo_retiro_relacion cab on det.retrelcodi=cab.retrelcodi
+      where coresocodvtp=:coresocodvtp
+      and cab.retelestado='ACT'
+    </query>
+  </Sql>
+
+</Sqls>

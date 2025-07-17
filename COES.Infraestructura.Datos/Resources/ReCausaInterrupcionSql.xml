@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(recintcodi), 0) + 1 from re_causa_interrupcion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into re_causa_interrupcion(
+           recintcodi,
+           retintcodi,
+           recintnombre,
+           recintestado,
+           recintusucreacion,
+           recintfeccreacion,
+           recintusumodificacion,
+           recintfecmodificacion
+       )
+       values(
+           :recintcodi,
+           :retintcodi,
+           :recintnombre,
+           :recintestado,
+           :recintusucreacion,
+           :recintfeccreacion,
+           :recintusumodificacion,
+           :recintfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update re_causa_interrupcion
+       set
+           retintcodi = :retintcodi,
+           recintnombre = :recintnombre,
+           recintestado = :recintestado,
+           recintusucreacion = :recintusucreacion,
+           recintfeccreacion = :recintfeccreacion,
+           recintusumodificacion = :recintusumodificacion,
+           recintfecmodificacion = :recintfecmodificacion
+       where
+           recintcodi = :recintcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from re_causa_interrupcion
+       where
+           recintcodi = :recintcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           recintcodi,
+           retintcodi,
+           recintnombre,
+           recintestado,
+           recintusucreacion,
+           recintfeccreacion,
+           recintusumodificacion,
+           recintfecmodificacion
+       from
+           re_causa_interrupcion
+       where
+           recintcodi = :recintcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           recintcodi,
+           retintcodi,
+           recintnombre,
+           recintestado,
+           recintusucreacion,
+           recintfeccreacion,
+           recintusumodificacion,
+           recintfecmodificacion
+       from
+           re_causa_interrupcion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select causa.*,
+		tipo.retintnombre,
+		(select ind.reindki from re_indicador_periodo ind where ind.recintcodi = causa.recintcodi and ind.repercodi = {0}) as reindki,
+		(select ind.reindni from re_indicador_periodo ind where ind.recintcodi = causa.recintcodi and ind.repercodi = {0}) as reindni
+		from re_causa_interrupcion causa
+		inner join re_tipo_interrupcion tipo
+		on causa.retintcodi = tipo.retintcodi
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerConfiguracion</key>
+		<query>
+			select
+			causa.recintcodi,
+			causa.retintcodi,
+			causa.recintnombre,
+			causa.recintestado,
+			causa.recintusucreacion,
+			causa.recintfeccreacion,
+			causa.recintusumodificacion,
+			causa.recintfecmodificacion,
+			tipo.retintnombre,
+			(select count(*) from re_interrupcion_suministro interrup where interrup.recintcodi = causa.recintcodi) as indicadoredicion
+			from
+			re_causa_interrupcion causa
+			inner join re_tipo_interrupcion tipo on causa.retintcodi = tipo.retintcodi
+			where causa.retintcodi = {0}
+			order by causa.recintnombre
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerCausasInterrupcionUtilizadosPorPeriodo</key>
+		<query>
+			select distinct causa.*
+			from re_causa_interrupcion causa
+			inner join re_interrupcion_suministro inter on causa.recintcodi = inter.recintcodi
+			where inter.repercodi = {0} and inter.emprcodi = {1}
+		</query>
+	</Sql>
+	
+</Sqls>

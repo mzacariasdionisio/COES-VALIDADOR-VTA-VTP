@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+<Sql>
+    <key>GetDat</key>
+    <query>
+      SELECT LPAD(BA.PMGND5STG,4,' ') AS "Stg"
+      ,LPAD(BA.PMGND5SCN,4,' ') AS "Scn"
+      ,LPAD(BA.PMBLOQCODI,4,' ') AS "LBlk"
+      ,BA.GRUPOCODI
+      ,LPAD(ES.PMGND5PU,12,' ') AS "PU" ,
+      PMGND5PU
+      FROM ( SELECT * FROM (SELECT DISTINCT ES.PMGND5STG
+      FROM PMO_DAT_GND ES JOIN PR_GRUPO GR ON ES.GRUPOCODI = GR.GRUPOCODI where PMPERICODI = :PMPERICODI) D1
+      ,(SELECT DISTINCT ES.PMGND5SCN
+      FROM PMO_DAT_GND ES JOIN PR_GRUPO GR ON ES.GRUPOCODI = GR.GRUPOCODI where PMPERICODI = :PMPERICODI) D2
+      ,(SELECT DISTINCT ES.PMBLOQCODI
+      FROM PMO_DAT_GND ES JOIN PR_GRUPO GR ON ES.GRUPOCODI = GR.GRUPOCODI where PMPERICODI = :PMPERICODI) D3
+      ,(SELECT DISTINCT GR.GRUPOCODI
+      FROM PMO_DAT_GND ES JOIN PR_GRUPO GR ON ES.GRUPOCODI = GR.GRUPOCODI where PMPERICODI = :PMPERICODI) D4
+      ) BA
+      LEFT JOIN PMO_DAT_GND ES ON BA.PMGND5STG = ES.PMGND5STG AND BA.PMGND5SCN = ES.PMGND5SCN
+      AND BA.PMBLOQCODI = ES.PMBLOQCODI AND BA.GRUPOCODI= ES.GRUPOCODI AND ES.PMPERICODI = :PMPERICODI
+      ORDER BY to_number(BA.PMGND5STG), BA.PMGND5SCN, BA.PMBLOQCODI, BA.GRUPOCODI
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetCabeceras</key>
+    <query>
+      --SELECT DISTINCT GR.GRUPOCODI,GR.GRUPOABREV
+      SELECT DISTINCT ES.GRUPOCODI,TRIM(PTO.PTOMEDIDESC) AS GRUPOABREV
+      FROM PMO_DAT_GND ES
+      --JOIN PR_GRUPO GR ON ES.GRUPOCODI = GR.GRUPOCODI
+      LEFT JOIN ME_PTOMEDICION PTO ON ES.GRUPOCODI = PTO.GRUPOCODI AND PTO.PTOMEDIESTADO='A' AND PTO.TIPOINFOCODI=3  AND PTO.ORIGLECTCODI=22--AND TPTOMEDICODI in (66,67)
+      WHERE ES.PMPERICODI = :PMPERICODI
+      --ORDER BY GR.GRUPOCODI
+      ORDER BY ES.GRUPOCODI
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetCount</key>
+    <query>
+        select count(*) as CANT from pmo_dat_gnd where pmpericodi = :PMPERICODI
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+      
+      SELECT DAT.PMGND5CODI,DAT.GRUPOCODI
+      --,GR.GRUPOCODISDDP,GR.GRUPONOMB
+      ,PTO.CODREF AS GRUPOCODISDDP,TRIM(PTO.PTOMEDIDESC) AS GRUPONOMB
+      ,DAT.PMGND5STG,DAT.PMGND5SCN,DAT.PMBLOQCODI, DAT.PMGND5PU
+      FROM PMO_DAT_GND DAT 
+      --JOIN PR_GRUPO GR ON DAT.GRUPOCODI = GR.GRUPOCODI
+      LEFT JOIN ME_PTOMEDICION PTO ON DAT.GRUPOCODI = PTO.GRUPOCODI AND PTO.PTOMEDIESTADO='A' AND PTO.TIPOINFOCODI=3  AND PTO.ORIGLECTCODI=22--AND TPTOMEDICODI in (66,67)
+      WHERE PMPERICODI = {0}      
+      --ORDER BY GR.GRUPONOMB,DAT.PMGND5STG,DAT.PMBLOQCODI
+      ORDER BY PTO.PTOMEDIDESC,to_number(DAT.PMGND5STG),DAT.PMBLOQCODI      
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListByCentral</key>
+    <query>
+      SELECT DAT.PMGND5CODI,DAT.GRUPOCODI
+      --,GR.GRUPOCODISDDP,GR.GRUPONOMB
+      ,PTO.CODREF AS GRUPOCODISDDP,TRIM(PTO.PTOMEDIDESC) AS GRUPONOMB
+      ,DAT.PMGND5STG,DAT.PMGND5SCN,DAT.PMBLOQCODI, DAT.PMGND5PU
+      FROM PMO_DAT_GND DAT 
+      --JOIN PR_GRUPO GR ON DAT.GRUPOCODI = GR.GRUPOCODI
+      LEFT JOIN ME_PTOMEDICION PTO ON DAT.GRUPOCODI = PTO.GRUPOCODI AND PTO.PTOMEDIESTADO='A' AND PTO.TIPOINFOCODI=3  AND PTO.ORIGLECTCODI=22--AND TPTOMEDICODI in (66,67)
+      WHERE PMPERICODI = {0}
+      --and GR.GRUPOCODI = {1}
+      and DAT.GRUPOCODI = {1}      
+      --ORDER BY GR.GRUPONOMB,DAT.PMGND5STG,DAT.PMBLOQCODI
+      ORDER BY PTO.PTOMEDIDESC,to_number(DAT.PMGND5STG),DAT.PMBLOQCODI
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+      DELETE FROM PMO_DAT_GND WHERE PMPERICODI = {0}      
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCentral</key>
+    <query>
+      DELETE FROM PMO_DAT_GND WHERE PMPERICODI = {0}
+      AND GRUPOCODI IN (SELECT GRUPOCODI FROM PR_GRUPO WHERE GRUPOCODI = {1} )
+    </query>
+  </Sql>
+  
+  
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      SELECT NVL(MAX(PMGND5CODI), 0) + 1 FROM PMO_DAT_GND
+    </query>
+  </Sql>
+  <Sql>
+    <key>Save</key>
+    <query>
+      INSERT
+        INTO PMO_DAT_GND
+      (
+        PMGND5CODI,
+		PMGND5STG,
+		PMGND5SCN,
+		PMBLOQCODI,
+		GRUPOCODI,
+		PMGND5PU,
+		PMPERICODI
+      )
+      VALUES
+      (
+        :PMGND5CODI, 
+		:PMGND5STG, 
+		:PMGND5SCN, 
+		:PMBLOQCODI, 
+		:GRUPOCODI,
+		:PMGND5PU,
+		:PMPERICODI
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetDataProcesamiento</key>
+    <query>
+      select T.ENVIOFECHA,T.GRUPOCODI,T.PMGND5STG,T.PMGND5SCN,T.PMBLOQCODI
+      ,CASE WHEN PI.POT_INST is not null and PI.POT_INST&lt;>0 then
+      T.PMGND5PU/PI.POT_INST ELSE NULL END AS PMGND5PU
+      from
+      (select
+      en.ENVIOFECHA
+      ,GR.GRUPOCODI
+      ,se.SEMANANUM as PMGND5STG
+      ,1 as PMGND5SCN --Pendiente consulta
+      ,me.MEDINTBLQNUMERO as PMBLOQCODI
+      ,sum(me.MEDINTH1) as PMGND5PU
+      from me_medicionxintervalo me
+      inner join me_envio en on me.enviocodi = en.enviocodi
+      inner join me_ptomedicion pto on pto.ptomedicodi = me.ptomedicodi
+      inner join PR_GRUPO GR ON PTO.GRUPOCODI = GR.GRUPOCODI
+      inner JOIN si_semana se on me.MEDINTFECHAINI=se.SEMANAFECHA
+      where  en.formatcodi  =78
+      and me.medintfechaini >=to_date('{0}','YYYY-MM-DD HH24:MI')
+      and me.medintfechaini &lt; to_date('{1}','YYYY-MM-DD HH24:MI')
+      group by en.ENVIOFECHA,GR.GRUPOCODI,se.SEMANANUM,me.MEDINTBLQNUMERO
+      order by en.ENVIOFECHA desc,GR.GRUPOCODI,se.SEMANANUM,me.MEDINTBLQNUMERO asc
+      ) T
+      left join
+      (
+      SELECT GR.GRUPOCODI, DAT.FORMULADAT AS POT_INST
+      FROM PR_GRUPODAT DAT, PR_GRUPO GR,
+      (SELECT GRUPOCODI,CONCEPCODI, MAX(FECHADAT) AS FECHAMAX FROM PR_GRUPODAT WHERE DELETED = 0 AND CONCEPCODI IN (87,88)
+      AND FECHADAT &lt;=  TO_DATE('{2}','YYYY-MM-DD HH24:MI')
+      GROUP BY GRUPOCODI,CONCEPCODI) VI
+      WHERE DAT.DELETED = 0 AND DAT.GRUPOCODI = VI.GRUPOCODI
+      AND DAT.CONCEPCODI= VI.CONCEPCODI AND DAT.FECHADAT=VI.FECHAMAX
+      and gr.tipogenerrer = 'S'
+      AND GR.GRUPOCODI = VI.GRUPOCODI
+      ) PI on T.GRUPOCODI=PI.GRUPOCODI
+      order by T.ENVIOFECHA desc,T.GRUPOCODI,T.PMGND5STG,T.PMBLOQCODI asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetDataByFilter</key>
+    <query>
+      SELECT DAT.PMGND5CODI,DAT.GRUPOCODI,GR.GRUPOCODISDDP,GR.GRUPONOMB,DAT.PMGND5STG,DAT.PMGND5SCN,DAT.PMBLOQCODI, DAT.PMGND5PU
+      FROM PMO_DAT_GND DAT JOIN PR_GRUPO GR ON DAT.GRUPOCODI = GR.GRUPOCODI
+      WHERE DAT.PMPERICODI = {0}
+      and DAT.GRUPOCODI={1}
+      and DAT.PMGND5STG='{2}'
+      and DAT.PMBLOQCODI={3}
+      ORDER BY GR.GRUPONOMB,DAT.PMGND5STG,DAT.PMBLOQCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCentralesByPeriodo</key>
+    <query>
+      SELECT GR.grupocodi,TRIM(GRUPONOMB) ||' ('||TRIM(NVL(PTO.PTOMEDIDESC,'NO DEFINIDO'))||')' AS GRUPONOMB
+      from pr_grupo GR
+      LEFT JOIN ME_PTOMEDICION PTO ON GR.GRUPOCODI = PTO.GRUPOCODI AND PTO.PTOMEDIESTADO='A' AND PTO.TIPOINFOCODI=3  AND PTO.ORIGLECTCODI=22--AND TPTOMEDICODI in (66,67)
+      where GR.grupocodi in (
+      SELECT grupocodi from PMO_DAT_GND 
+      where PMPERICODI={0}
+      )
+      order by GRUPONOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CompletarUnidadesGenModelo</key>
+    <query>
+
+      DECLARE
+        V_PMPERICODI NUMBER:=:V_PMPERICODI_VAL;
+        V_CONT NUMBER;
+
+      BEGIN
+
+        select nvl(max(PMGND5CODI),0) INTO V_CONT from PMO_DAT_GND;
+
+        insert into PMO_DAT_GND(PMGND5CODI, PMGND5STG,PMGND5SCN, PMBLOQCODI,  GRUPOCODI,   PMGND5PU, PMPERICODI)
+        select rownum+V_CONT,PMGND5STG,PMGND5SCN,PMBLOQCODI,  GRUPOCODI,   NULL, V_PMPERICODI
+        from
+        (SELECT GRUPOCODI FROM PR_GRUPO GR
+        WHERE GR.CATECODI IN (5) AND TRIM(GR.GRUPOESTADO) in ('A','P') AND GR.TIPOGENERRER = 'S'
+        UNION
+        SELECT GRUPOCODI FROM PR_GRUPO GR
+        WHERE GR.CATECODI IN (2) AND GR.GRUPOACTIVO='S' AND GR.TIPOGENERRER = 'S'
+        ) gr,
+        (select distinct PMGND5STG from PMO_DAT_GND where PMPERICODI=V_PMPERICODI) SE,
+        (select distinct PMGND5SCN from PMO_DAT_GND where PMPERICODI=V_PMPERICODI) ES,
+        (select distinct pmbloqcodi from PMO_DAT_GND where PMPERICODI=V_PMPERICODI) BL
+        where not exists (select 1 from PMO_DAT_GND x where x.PMPERICODI=V_PMPERICODI
+        and x.grupocodi = gr.grupocodi
+        and x.PMGND5STG = SE.PMGND5STG
+        and x.PMGND5SCN = ES.PMGND5SCN
+        and x.pmbloqcodi = bl.pmbloqcodi);
+
+      END;
+    </query>
+  </Sql>
+  
+</Sqls>
+  

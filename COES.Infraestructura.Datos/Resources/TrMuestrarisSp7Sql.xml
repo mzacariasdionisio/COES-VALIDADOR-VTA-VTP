@@ -1,0 +1,200 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into tr_muestraris_sp7(
+           canalcodi,
+           canalfecha,
+           canalcalidad,
+           canalfhora,
+           canalfhora2,
+           canalnomb,
+           canaliccp,
+           emprcodi,
+           canalvalor,
+           estado,
+           muerisusucreacion,
+           muerisfeccreacion,
+           muerisusumodificacion,
+           muerisfecmodificacion
+       )
+       values(
+           :canalcodi,
+           :canalfecha,
+           :canalcalidad,
+           :canalfhora,
+           :canalfhora2,
+           :canalnomb,
+           :canaliccp,
+           :emprcodi,
+           :canalvalor,
+           :estado,
+           :muerisusucreacion,
+           :muerisfeccreacion,
+           :muerisusumodificacion,
+           :muerisfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update tr_muestraris_sp7
+       set
+           canalcalidad = :canalcalidad,
+           canalfhora = :canalfhora,
+           canalfhora2 = :canalfhora2,
+           canalnomb = :canalnomb,
+           canaliccp = :canaliccp,
+           emprcodi = :emprcodi,
+           canalvalor = :canalvalor,
+           estado = :estado,
+           muerisusucreacion = :muerisusucreacion,
+           muerisfeccreacion = :muerisfeccreacion,
+           muerisusumodificacion = :muerisusumodificacion,
+           muerisfecmodificacion = :muerisfecmodificacion
+       where
+           canalcodi = :canalcodi and
+           canalfecha = :canalfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from tr_muestraris_sp7
+       where
+           canalcodi = :canalcodi and
+           canalfecha = :canalfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           canalcodi,
+           canalfecha,
+           canalcalidad,
+           canalfhora,
+           canalfhora2,
+           canalnomb,
+           canaliccp,
+           emprcodi,
+           canalvalor,
+           estado,
+           muerisusucreacion,
+           muerisfeccreacion,
+           muerisusumodificacion,
+           muerisfecmodificacion
+       where
+           canalcodi = :canalcodi and
+           canalfecha = :canalfecha
+       from
+           tr_muestraris_sp7
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           canalcodi,
+           canalfecha,
+           canalcalidad,
+           canalfhora,
+           canalfhora2,
+           canalnomb,
+           canaliccp,
+           emprcodi,
+           canalvalor,
+           estado,
+           muerisusucreacion,
+           muerisfeccreacion,
+           muerisusumodificacion,
+           muerisfecmodificacion
+       from
+           tr_muestraris_sp7
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           canalcodi,
+           canalfecha,
+           canalcalidad,
+           canalfhora,
+           canalfhora2,
+           canalnomb,
+           canaliccp,
+           emprcodi,
+           canalvalor,
+           estado,
+           muerisusucreacion,
+           muerisfeccreacion,
+           muerisusumodificacion,
+           muerisfecmodificacion
+       from
+           tr_muestraris_sp7
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetMuestraRis</key>
+    <query>
+      select
+      R.canaliccp as CanalIccp,trim(R.canalnomb) as  canalnomb, to_char(r.CANALFECHA,'DD/MM/YYYY HH24:MI') as fecharep, r.canalcalidad,
+      to_char(r.CANALFHORA,'DD/MM/YYYY HH24:MI:SS.FF3') as HoraEmpresa,
+      to_char(r.CANALFHORA2,'DD/MM/YYYY HH24:MI:SS.FF3') as HoraCoes,
+      (SELECT TCS7.CALNOMB FROM TR_CALIDADICCP_SP7 TCS7 WHERE TCS7.CALCODI = r.canalcalidad fetch first 1 row only) AS CALIDAD2,
+      case when trunc(r.CANALFHORA2)- trunc(r.CANALFHORA)>0 then 1
+      when (extract(hour from (r.CANALFHORA2 - r.CANALFHORA)) *60*60+
+      extract(minute from (r.CANALFHORA2- r.CANALFHORA)) *60 +
+      extract(second from (r.CANALFHORA2- r.CANALFHORA)))>5 and r.canalnomb like '%/Status%' then 1
+      when (extract(hour from (r.CANALFHORA2 - r.CANALFHORA)) *60*60+
+      extract(minute from (r.CANALFHORA2- r.CANALFHORA)) *60 +
+      extract(second from (r.CANALFHORA2- r.CANALFHORA)))>7 and r.canalnomb like '%/MvMoment%' then 1
+      when r.CANALFHORA > r.CANALFHORA2 + NUMTODSINTERVAL( 50 / 1000, 'SECOND' ) then -1
+      else 0 end as DELTA ,
+      r.canalvalor,r.estado
+      from tr_muestraris_sp7 r
+      where r.emprcodi = {0}
+      and r.canaliccp is not null order by 1 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMuestraRis2</key>
+  <query>
+    select
+    R.canaliccp as CanalIccp,trim(R.canalnomb) as  canalnomb, to_char(r.CANALFECHA,'DD/MM/YYYY HH24:MI') as fecharep,
+    to_char(r.CANALFHORA,'DD/MM/YYYY HH24:MI:SS') as HoraEmpresa,
+    to_char(r.CANALFHORA2,'DD/MM/YYYY HH24:MI:SS') as HoraCoes,
+    (SELECT TCS7.CALNOMB FROM TR_CALIDADICCP_SP7 TCS7 WHERE TCS7.CALCODI = r.canalcalidad fetch first 1 row only) AS CALIDAD2,
+    case  when trunc((r.CANALFHORA2 - r.CANALFHORA)*1440*60,4) > 7 then 1
+    when   0 > trunc((r.CANALFHORA2 - r.CANALFHORA)*1440*60,4)  then -1
+    else 0 end as DELTA,
+    r.canalvalor,r.estado
+    from tr_muestraris_sp7 r
+    where r.emprcodi = {0}
+    and r.canaliccp is not null order by 1 asc
+  </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPaginado</key>
+    <query>
+      select count(*) as contador
+      from tr_muestraris_sp7 r
+      where r.emprcodi = {0}
+      and r.canaliccp is not null order by 1 asc;
+    </query>
+  </Sql>
+  
+</Sqls>

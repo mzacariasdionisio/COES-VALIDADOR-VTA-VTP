@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(potipcodi), 0) + 1 from vtp_ingreso_potencia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_ingreso_potencia(potipcodi, pericodi, recpotcodi, emprcodi,
+      potipimporte, potipporcentaje, potipusucreacion, potipfeccreacion)
+      values(:potipcodi, :pericodi, :recpotcodi, :emprcodi,
+      :potipimporte, :potipporcentaje, :potipusucreacion, :potipfeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_ingreso_potencia
+      set
+      pericodi = :pericodi,
+      recpotcodi = :recpotcodi,
+      emprcodi = :emprcodi,
+      potipimporte = :potipimporte,
+      potipporcentaje = :potipporcentaje,
+      potipusucreacion = :potipusucreacion,
+      potipfeccreacion = :potipfeccreacion
+      where
+      potipcodi = :potipcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_ingreso_potencia
+      where potipcodi = :potipcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_ingreso_potencia
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from vtp_ingreso_potencia
+      where potipcodi = :potipcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vtp_ingreso_potencia
+    </query>
+  </Sql>
+
+  <!--ASSETEC 20190627: muestra si la empresa tiene un saldo asignado de otro periodo
+  <Sql>
+    <key>ListEmpresa</key>
+    <query>
+      select (select emprnomb from vw_trn_empresa_str e where ip.emprcodi = e.emprcodi) as emprnomb, ip.*
+      from vtp_ingreso_potencia ip
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+      order by 1
+    </query>
+  </Sql>-->
+
+  <Sql>
+    <key>ListEmpresa</key>
+    <query>
+      select (select emprnomb from vw_trn_empresa_str e where ip.emprcodi = e.emprcodi) as emprnomb, ip.*,
+      (select nvl(sum(it.ingtarsaldo),0) from vtp_ingreso_tarifario it where emprcodingpot = ip.emprcodi and it.ingtarpericodidest = ip.pericodi)  as potipsaldoanterior
+      from vtp_ingreso_potencia ip
+      where ip.pericodi = :pericodi and recpotcodi = :recpotcodi
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from vtp_ingreso_potencia
+    </query>
+  </Sql>
+</Sqls>

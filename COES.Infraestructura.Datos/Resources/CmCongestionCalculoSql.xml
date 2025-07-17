@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(cmcongcodi), 0) + 1 from cm_congestion_calculo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cm_congestion_calculo(
+           cmcongcodi,
+           configcodi,
+           grulincodi,
+           regsegcodi,
+           cmconfecha,
+           cmcongperiodo,
+           cmgncorrelativo,
+           cmconglimite,
+           cmcongenvio,
+           cmcongrecepcion,
+           cmcongcongestion,
+           cmconggenlimite,
+           cmconggeneracion,
+           cmcongusucreacion,
+           cmcongfeccreacion,
+           cmcongusumodificacion,
+           cmcongfecmodificacion
+       )
+       values(
+           :cmcongcodi,
+           :configcodi,
+           :grulincodi,
+           :regsegcodi,
+           :cmconfecha,
+           :cmcongperiodo,
+           :cmgncorrelativo,
+           :cmconglimite,
+           :cmcongenvio,
+           :cmcongrecepcion,
+           :cmcongcongestion,
+           :cmconggenlimite,
+           :cmconggeneracion,
+           :cmcongusucreacion,
+           :cmcongfeccreacion,
+           :cmcongusumodificacion,
+           :cmcongfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cm_congestion_calculo
+       set
+           configcodi = :configcodi,
+           grulincodi = :grulincodi,
+           regsegcodi = :regsegcodi,
+           cmconfecha = :cmconfecha,
+           cmcongperiodo = :cmcongperiodo,
+           cmgncorrelativo = :cmgncorrelativo,
+           cmconglimite = :cmconglimite,
+           cmcongenvio = :cmcongenvio,
+           cmcongrecepcion = :cmcongrecepcion,
+           cmcongcongestion = :cmcongcongestion,
+           cmconggenlimite = :cmconggenlimite,
+           cmconggeneracion = :cmconggeneracion,
+           cmcongusucreacion = :cmcongusucreacion,
+           cmcongfeccreacion = :cmcongfeccreacion,
+           cmcongusumodificacion = :cmcongusumodificacion,
+           cmcongfecmodificacion = :cmcongfecmodificacion
+       where
+           cmcongcodi = :cmcongcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		delete from cm_congestion_calculo
+		where
+		to_date(to_char(cmconfecha, 'YYYY-MM-DD'), 'YYYY-MM-DD')= to_date('{0}', 'YYYY-MM-DD') and  cmcongperiodo = {1}
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           cmcongcodi,
+           configcodi,
+           grulincodi,
+           regsegcodi,
+           cmconfecha,
+           cmcongperiodo,
+           cmgncorrelativo,
+           cmconglimite,
+           cmcongenvio,
+           cmcongrecepcion,
+           cmcongcongestion,
+           cmconggenlimite,
+           cmconggeneracion,
+           cmcongusucreacion,
+           cmcongfeccreacion,
+           cmcongusumodificacion,
+           cmcongfecmodificacion
+       from
+           cm_congestion_calculo
+       where
+           cmcongcodi = :cmcongcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           cmcongcodi,
+           configcodi,
+           grulincodi,
+           regsegcodi,
+           cmconfecha,
+           cmcongperiodo,
+           cmgncorrelativo,
+           cmconglimite,
+           cmcongenvio,
+           cmcongrecepcion,
+           cmcongcongestion,
+           cmconggenlimite,
+           cmconggeneracion,
+           cmcongusucreacion,
+           cmcongfeccreacion,
+           cmcongusumodificacion,
+           cmcongfecmodificacion
+       from
+           cm_congestion_calculo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           cmcongcodi,
+           configcodi,
+           grulincodi,
+           regsegcodi,
+           cmconfecha,
+           cmcongperiodo,
+           cmgncorrelativo,
+           cmconglimite,
+           cmcongenvio,
+           cmcongrecepcion,
+           cmcongcongestion,
+           cmconggenlimite,
+           cmconggeneracion,
+           cmcongusucreacion,
+           cmcongfeccreacion,
+           cmcongusumodificacion,
+           cmcongfecmodificacion
+       from
+           cm_congestion_calculo
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerRegistroCongestion</key>
+		<query>
+			-- Congestiones registradas en el modulo de congestiones manuales
+			select
+			config.configcodi, null as grulincodi, null as regsegcodi,
+			case equipo.famcodi when 8 then 'CS - Línea' when 9 then 'CS - Trafo 2D' when 10 then 'CS - Trafo 3D' else '' end as famnomb,
+			trim(tipoarea.tareaabrev)||' '||trim(area.areanomb)||' ('||trim(equipo.equiabrev)||' - '||trim(equipo.equinomb)||')' equinomb,
+			congestion.congesfecinicio, congestion.congesfecfin, 1 as tipo
+			from pr_congestion congestion
+			inner join eq_congestion_config config on congestion.configcodi = config.configcodi
+			inner join eq_equipo equipo on config.equicodi = equipo.equicodi
+			inner join eq_area area on equipo.areacodi = area.areacodi
+			inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+			where congestion.congesfecinicio >= to_date('{0} 00:00', 'YYYY-MM-DD HH24:MI') and
+			congestion.congesfecfin &lt;= to_date('{0} 23:59', 'YYYY-MM-DD HH24:MI') and congestion.indtipo = 'S'
+			union all
+			select
+			null as configcodi, grupo.grulincodi, null as regsegcodi,
+			'CC - Grupo Línea' as famnomb,
+			grupo.grulinnombre as equinomb,
+			congestion.congesfecinicio, congestion.congesfecfin, 2 as tipo
+			from pr_congestion congestion
+			inner join eq_grupo_linea grupo on congestion.grulincodi = grupo.grulincodi
+			where congestion.congesfecinicio >= to_date('{0} 00:00', 'YYYY-MM-DD HH24:MI') and
+			congestion.congesfecfin &lt;= to_date('{0} 23:59', 'YYYY-MM-DD HH24:MI') and congestion.indtipo = 'C'
+			union all
+			select
+			null as configcodi, null as grulincodi, region.regsegcodi,
+			'RS - Región Seguridad' as famnomb,
+			region.regsegnombre as equinomb,
+			congestion.congesfecinicio, congestion.congesfecfin, 3 as tipo
+			from pr_congestion congestion
+			inner join cm_regionseguridad region on congestion.regsegcodi = region.regsegcodi
+			where congestion.congesfecinicio >= to_date('{0} 00:00', 'YYYY-MM-DD HH24:MI') and
+			congestion.congesfecfin &lt;= to_date('{0} 23:59', 'YYYY-MM-DD HH24:MI') and congestion.indtipo = 'R'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerCongestionProceso</key>
+		<query>
+			select congestion.*,
+			case equipo.famcodi when 8 then 'CS - Línea' when 9 then 'CS - Trafo 2D' when 10 then 'CS - Trafo 3D' else '' end as famnomb,
+			trim(tipoarea.tareaabrev)||' '||trim(area.areanomb)||' ('||trim(equipo.equiabrev)||' - '||trim(equipo.equinomb)||')' equinomb, 1 as tipo
+			from cm_congestion_calculo congestion
+			inner join eq_congestion_config config on congestion.configcodi = config.configcodi
+			inner join eq_equipo equipo on config.equicodi = equipo.equicodi
+			inner join eq_area area on equipo.areacodi = area.areacodi
+			inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+			where congestion.configcodi is not null and
+			congestion.cmconfecha >= to_date('{0} 00:00', 'YYYY-MM-DD HH24:MI') and
+			congestion.cmconfecha &lt;= to_date('{0} 23:59', 'YYYY-MM-DD HH24:MI')
+			union all
+			select congestion.*,
+			'CC - Grupo Línea' as famnomb,
+			grupo.grulinnombre as equinomb, 2 as tipo
+			from cm_congestion_calculo congestion
+			inner join eq_grupo_linea grupo on congestion.grulincodi = grupo.grulincodi
+			where congestion.grulincodi is not null and
+			congestion.cmconfecha >= to_date('{0} 00:00', 'YYYY-MM-DD HH24:MI') and
+			congestion.cmconfecha &lt;= to_date('{0} 23:59', 'YYYY-MM-DD HH24:MI')
+			union all
+			select congestion.*,
+			'RS - Región Seguridad' as famnomb,
+			region.regsegnombre as equinomb, 3 as tipo
+			from cm_congestion_calculo congestion
+			inner join cm_regionseguridad region on congestion.regsegcodi = region.regsegcodi
+			where congestion.regsegcodi is not null and
+			congestion.cmconfecha >= to_date('{0} 00:00', 'YYYY-MM-DD HH24:MI') and
+			congestion.cmconfecha &lt;= to_date('{0} 23:59', 'YYYY-MM-DD HH24:MI')
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerCongestionPorLinea</key>
+		<query>
+			select * from cm_congestion_calculo cong where cong.cmconfecha >= to_date('{0} 00:00','YYYY-MM-DD HH24:MI')
+			and cong.cmconfecha &lt;= to_date('{0} 23:59','YYYY-MM-DD HH24:MI') and
+			cong.configcodi = (select config.configcodi from eq_congestion_config config where trim(config.nombretna1) = '{1}')
+		</query>
+	</Sql>
+	
+</Sqls>

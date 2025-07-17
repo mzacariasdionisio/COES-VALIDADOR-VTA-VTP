@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(crevencodi), 0) + 1 from cr_evento
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      creve.crevencodi,
+      creve.afecodi,
+      creve.crespecialcodi,
+      creve.lastdate,
+      creve.lastuser,
+      'EV-'||lpad(afeve.afecorr,3,'0')||'-'||afeve.afeanio  codigoevento,
+      to_char(eve.evenini,'dd/mm/yyyy hh24:mi:ss')  fechaevento,
+      eve.evenasunto nombreevento,
+      decode((select count(*) from af_reclamo Z where Z.tipcodi=17 and Z.afecodi=afeve.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=11 and Z.afecodi=afeve.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=10 and Z.afecodi=afeve.afecodi),0,'','RECONSIDERACION'),'APELACION'),'ARBITRAJE') impugnacion,
+      afeve.afeitdecfechaelab,
+      eve.evendescctaf
+      from cr_evento  creve
+      inner join af_evento afeve on creve.afecodi = afeve.afecodi
+      inner join eve_evento eve on afeve.evencodi = eve.evencodi
+      left join cr_casos_especiales caes on creve.crespecialcodi = caes.crespecialcodi
+      where creve.crevencodi = :crevencodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cr_evento
+      set crespecialcodi = :crespecialcodi
+      where crevencodi = :crevencodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cr_evento (CREVENCODI,AFECODI, LASTDATE, LASTUSER)
+      values (:CREVENCODI,:AFECODI, :LASTDATE, :LASTUSER)
+    </query>
+  </Sql>
+  <Sql>
+    <key>List</key>
+    <query>
+      SELECT
+      *
+      FROM (
+      SELECT DISTINCT
+      CREVE.CREVENCODI,
+      'EV-'||LPAD(AFEVE.AFECORR,3,'0')||'-'||AFEVE.AFEANIO  CODIGO,
+      TO_CHAR(EVE.EVENINI,'dd/mm/yyyy hh24:mi')  FECHA_EVENTO,
+      EVE.EVENASUNTO NOMBRE_EVENTO,
+      case when CREVE.CRESPECIALCODI = 0 then '' else CAES.CREDESCRIPCION end CASO_ESPECIAL,
+      decode((select count(*) from af_reclamo Z where Z.tipcodi=17 and Z.afecodi=afeve.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=11 and Z.afecodi=afeve.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=10 and Z.afecodi=afeve.afecodi),0,'','RECONSIDERACION'),'APELACION'),'ARBITRAJE')IMPUGNACION,
+      EVE.EVENDESC DESCRIPCION_EVE_EVENTO,
+      AFEVE.AFEITDECFECHAELAB,
+      EVE.EVENDESCCTAF,
+      AFEVE.AFEANIO,
+      AFEVE.AFECORR
+      FROM CR_EVENTO  CREVE
+      INNER JOIN AF_EVENTO AFEVE ON CREVE.AFECODI = AFEVE.AFECODI
+      INNER JOIN EVE_EVENTO EVE ON AFEVE.EVENCODI = EVE.EVENCODI
+      LEFT JOIN CR_ETAPA_EVENTO ETAPEVE ON CREVE.CREVENCODI = ETAPEVE.CREVENCODI
+      LEFT JOIN CR_CASOS_ESPECIALES CAES ON CREVE.CRESPECIALCODI = CAES.CRESPECIALCODI
+      LEFT JOIN CR_ETAPA_CRITERIO ECRD ON ETAPEVE.CRETAPACODI = ECRD.CRETAPACODI
+      WHERE
+      eve.EVENINI>=to_date('{0} 00:00:00','dd/mm/yyyy hh24:mi:ss')
+      AND eve.EVENINI &lt;= to_date('{1} 23:59:59','dd/mm/yyyy hh24:mi:ss')
+      AND ( '{5}' = 0 or caes.CRESPECIALCODI= '{5}' )
+      AND ( '{6}' = 'N' or decode((select count(*) from af_reclamo Z where Z.tipcodi=17 and Z.afecodi=CREVE.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=11 and Z.afecodi=CREVE.afecodi),0, decode((select count(*) from af_reclamo Z where Z.tipcodi=10 and Z.afecodi=CREVE.afecodi),0,'','RECONSIDERACION'),'APELACION'),'ARBITRAJE') ='{6}')
+      AND {8}
+      ) A
+      INNER JOIN (
+      SELECT 'EV-'||LPAD(AFEVENTO.AFECORR,3,'0')||'-'||AFEVENTO.AFEANIO CODIGO,
+      AFEVENTO.EVENCODI,
+      EVE.EMPRCODI
+      FROM AF_EVENTO AFEVENTO
+      INNER JOIN EVE_EVENTO EVE ON AFEVENTO.EVENCODI = EVE.EVENCODI
+      WHERE eve.EVENINI>=to_date('{0} 00:00:00','dd/mm/yyyy hh24:mi:ss')
+      AND eve.EVENINI &lt;= to_date('{1} 23:59:59','dd/mm/yyyy hh24:mi:ss')
+      ) B
+      ON A.CODIGO = B.CODIGO
+      WHERE ('{2}' = 0 OR B.EMPRCODI = '{2}')
+      ORDER BY A.AFEANIO ||'-'|| LPAD(A.AFECORR,3,'0') DESC
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByAfecodi</key>
+    <query>
+      select
+      crevencodi,
+      afecodi,
+      crespecialcodi,
+      lastdate,
+      lastuser
+      from cr_evento
+      where afecodi = :afecodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete cr_evento where crevencodi = :crevencodi
+    </query>
+  </Sql>
+</Sqls>

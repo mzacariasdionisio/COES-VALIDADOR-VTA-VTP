@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(topcodi), 0) + 1 from cp_topologia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cp_topologia(
+      topcodi,
+      topnombre,
+      topfecha,
+      topinicio,
+      tophorizonte,
+      lastuser,
+      lastdate,
+      tophora,
+      topdiasproc,
+      toptipo,
+      topiniciohora,
+      topsinrsf,
+      fverscodi,
+      avercodi
+      )
+      values(
+      :topcodi,
+      :topnombre,
+      :topfecha,
+      :topinicio,
+      :tophorizonte,
+      :lastuser,
+      :lastdate,
+      :tophora,
+      :topdiasproc,
+      :toptipo,
+      :topiniciohora,
+      :topsinrsf,
+      :fverscodi,
+      :avercodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cp_topologia
+      set
+      topnombre = :topnombre,
+      topfecha = :topfecha,
+      topinicio = :topinicio,
+      tophorizonte = :tophorizonte,
+      lastuser = :lastuser,
+      lastdate = :lastdate,
+      tophora = :tophora,
+      topdiasproc = :topdiasproc,
+      toptipo = :toptipo,
+      topiniciohora = :topiniciohora,
+      topsinrsf = :topsinrsf
+      where
+      topcodi = :topcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from cp_topologia
+      where
+      topcodi = :topcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      cp_topologia
+      where
+      topcodi = :topcodi
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from cp_topologia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from
+      cp_topologia
+      where
+      topfecha >= to_date('{0}','YYYY-MM-DD') and topfecha &lt;= to_date('{1}','YYYY-MM-DD') and toptipo = {2}
+    </query>
+  </Sql>
+ 
+  <Sql>
+    <key>GetByIdRsf</key>
+    <query>
+      select
+      *
+      from
+      cp_topologia
+      where
+      topsinrsf = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListNombre</key>
+    <query>
+      select * from cp_topologia where Upper(topnombre) like '%{0}%'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerTopologiaFinal</key>
+    <query>
+      select * from cp_topologia where topfecha=TO_DATE('{0}', 'YYYY-MM-DD') and toptipo in({1}) and topfinal=1 and topsinrsf &lt;=0
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListReprogramados</key>
+    <query>
+      select * from cp_topologia tp
+      inner join cp_reprograma rp on rp.TOPCODI2 = tp.topcodi
+      where rp.topcodi1 = {0} ORDER by  rp.REPROGORDEN
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEscenarioPorDia</key>
+    <query>
+      select * from cp_topologia where topfecha = to_date('{0}','YYYY-MM-DD') and toptipo in ( 1, 3)
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ObtenerEscenarioPorDiaConsulta</key>
+    <query>
+
+      select tb.* from (
+      select
+      TOPCODI,
+      TOPNOMBRE,
+      TOPFECHA,
+      TOPHORIZONTE,
+      LASTUSER,
+      LASTDATE,
+      TOPHORA,
+      TOPTIPO,
+      TOPUSERFINAL,
+      TOPFECHAFINAL,
+      TOPUSERSICOES,
+      TOPFECHASICOES,
+      TOPINICIO,
+      TOPDIASPROC,
+      TOPINICIOHORA,
+      TOPSINRSF,
+      Topuserdespacho,
+      Topfechadespacho,
+      (select t.topfinal from cp_topologia t where t.topcodi = tabla.final) as topfinal
+      from (
+      select
+      top.TOPCODI,
+      top.TOPNOMBRE,
+      top.TOPFECHA,
+      top.TOPHORIZONTE,
+      top.LASTUSER,
+      top.LASTDATE,
+      top.TOPHORA,
+      top.TOPTIPO,
+      top.topfinal,
+      case top.toptipo
+      when 1 then top.topcodi
+      when 3
+      then (select cp.topcodi1 from cp_reprograma cp where cp.topcodi2 = top.topcodi)
+      else 0 end as final,
+      top.TOPUSERFINAL,
+      top.TOPFECHAFINAL,
+      top.TOPUSERSICOES,
+      top.TOPFECHASICOES,
+      top.TOPINICIO,
+      top.TOPDIASPROC,
+      top.TOPINICIOHORA,
+      top.TOPSINRSF,
+      top.Topuserdespacho,
+      top.Topfechadespacho
+      from cp_topologia top where topfecha = to_date('{0}','YYYY-MM-DD') and toptipo in ( 1, 3)) tabla) tb
+      where ( '1' = '{1}' and tb.topfinal = 1) or ('0' = '{1}')
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerTipoRestricciones</key>
+    <query>
+      select srestcodi as topcodi, srestnombre as topnombre from cp_subrestriccion cp order by trim(cp.srestnombre) asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerUltimoEscenarioReprogramado</key>
+    <query>
+      select rpg.reprogorden, t.* from cp_topologia t inner join cp_reprograma rpg on t.topcodi = rpg.topcodi2 where topcodi in (
+      select max(topcodi2) topcodi from cp_reprograma
+      where topcodi1 in (select topcodi from cp_topologia where
+      toptipo = 1 and topfinal = 1 and topsinrsf = 0 and
+      topfecha = to_date('{0}','YYYY-MM-DD')))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEscenarioReprograma</key>
+    <query>
+      select top.* from cp_topologia top where top.topcodi in (
+          select distinct cp.topcodi2 from cp_reprograma cp
+          where cp.topcodi1 in 
+          (
+              select topcodi from cp_topologia where
+              toptipo = 1 and topfinal = 1 and topsinrsf = 0 
+              and topfecha = to_date('{0}','YYYY-MM-DD')
+          )
+      )
+    </query>
+  </Sql>
+<!--INICIO IMME-->
+  <Sql>
+    <key>ListaTopFinalDiario</key>
+    <query>
+      select * from cp_topologia where
+      toptipo = 1 and topfinal = 1 and topsinrsf = 0 and
+      topfecha >= to_date('{0}','YYYY-MM-DD') and topfecha &lt;= to_date('{1}','YYYY-MM-DD')
+    </query>
+  </Sql>
+    <!--FIN IMME-->
+</Sqls>

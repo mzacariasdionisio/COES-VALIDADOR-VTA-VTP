@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(stgenrcodi), 0) + 1 from st_generador
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into st_generador(
+      stgenrcodi,
+      strecacodi,
+      emprcodi,
+      stgenrusucreacion,
+      stgenrfeccreacion
+      )
+      values(
+      :stgenrcodi,
+      :strecacodi,
+      :emprcodi,
+      :stgenrusucreacion,
+      :stgenrfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update st_generador
+      set
+      strecacodi = :strecacodi,
+      emprcodi = :emprcodi,
+      stgenrusucreacion = :stgenrusucreacion,
+      stgenrfeccreacion = :stgenrfeccreacion
+      where
+      stgenrcodi = :stgenrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from st_generador
+      where
+      stgenrcodi = :stgenrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteVersion</key>
+    <query>
+      delete from st_generador
+      where
+      strecacodi = :strecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select st.*,(select e.emprnomb from si_empresa e where e.emprcodi = st.emprcodi) as emprnomb 
+      from st_generador st where st.stgenrcodi = :stgenrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select (select emprnomb from si_empresa e where e.emprcodi = t.emprcodi) as emprnomb, t.*
+      from st_generador t LEFT JOIN st_recalculo r
+      on t.strecacodi = r.strecacodi
+      where t.strecacodi = :strecacodi
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from st_generador
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByStGeneradorVersion</key>
+    <query>
+      select * from st_generador where strecacodi = :strecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByStGeneradorReporte</key>
+    <query>
+      select e.emprnomb, eq.equinomb, b.barrnombre
+      from st_generador g, si_empresa e, st_centralgen cg, eq_equipo eq, trn_barra b
+      where g.strecacodi = :strecacodi
+      and g.emprcodi = e.emprcodi
+      and g.stgenrcodi = cg.stgenrcodi
+      and cg.equicodi = eq.equicodi
+      and cg.barrcodi = b.barrcodi
+      order by 1, 2, 3
+    </query>
+  </Sql>
+
+</Sqls>

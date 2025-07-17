@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(emggencodi), 0) + 1 from ems_generacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ems_generacion(
+      emggencodi,
+      emsgenfecha,
+      equicodi,
+      emsgenoperativo,
+      emsgenvalor,
+      emsgenpotmax,
+      emsgenusucreacion,
+      emsgenfeccreacion
+      )
+      values(
+      :emggencodi,
+      :emsgenfecha,
+      :equicodi,
+      :emsgenoperativo,
+      :emsgenvalor,
+      :emsgenpotmax,
+      :emsgenusucreacion,
+      :emsgenfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ems_generacion
+      set
+      emsgenfecha = :emsgenfecha,
+      equicodi = :equicodi,
+      emsgenoperativo = :emsgenoperativo,
+      emsgenvalor = :emsgenvalor,
+      emsgenpotmax = :emsgenpotmax,
+      emsgenusucreacion = :emsgenusucreacion,
+      emsgenfeccreacion = :emsgenfeccreacion
+      where
+      emggencodi = :emggencodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from ems_generacion
+       where
+           emggencodi = :emggencodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      emggencodi,
+      emsgenfecha,
+      equicodi,
+      emsgenoperativo,
+      emsgenvalor,
+      emsgenpotmax,
+      emsgenusucreacion,
+      emsgenfeccreacion
+      from
+      ems_generacion
+      where
+      emggencodi = :emggencodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      emggencodi,
+      emsgenfecha,
+      equicodi,
+      emsgenoperativo,
+      emsgenvalor,
+      emsgenpotmax,
+      emsgenusucreacion,
+      emsgenfeccreacion
+      from
+      ems_generacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      emggencodi,
+      emsgenfecha,
+      equicodi,
+      emsgenoperativo,
+      emsgenvalor,
+      emsgenpotmax,
+      emsgenusucreacion,
+      emsgenfeccreacion
+      from
+      ems_generacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerSupervisionDemanda</key>
+    <query>
+      select tabla.*, fuente.tgenercodi from
+      (select grupocodi, indice, sum(emsgenvalor) as emsgenvalor  from (
+      select
+      eq.grupocodi,
+      to_number(to_char(a.emsgenfecha, 'HH24') * 4 )+ to_number(to_char(a.emsgenfecha, 'MI') / 15 ) as indice,
+      a.emsgenvalor
+      from ems_generacion a
+      inner join eq_relacion b on a.equicodi = b.equicodi
+      inner join eq_equipo eq on b.equicodi = eq.equicodi
+      where
+      (a.emsgenfecha >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.emsgenfecha &lt; to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      and b.indrvarte = 'S' and b.estadorvarte = 'A' and b.nombarra is not null and b.idgener is not null
+      and to_number(to_char(a.emsgenfecha, 'MI')) / 15 in (0,1,2,3)
+      )
+      group by grupocodi, indice) tabla
+      inner join pr_grupo grupo on tabla.grupocodi = grupo.grupocodi
+      inner join si_fuenteenergia fuente on grupo.fenergcodi = fuente.fenergcodi
+    </query>
+  </Sql>
+  
+</Sqls>

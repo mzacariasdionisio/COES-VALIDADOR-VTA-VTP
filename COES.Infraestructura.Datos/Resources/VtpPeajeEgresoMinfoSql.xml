@@ -1,0 +1,488 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(pegrmicodi), 0) + 1 from vtp_peaje_egreso_minfo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_peaje_egreso_minfo(
+      pegrmicodi,
+      pegrcodi,
+      pericodi,
+      recpotcodi,
+      genemprcodi,
+      pegrdcodi,
+      cliemprcodi,
+      barrcodi,
+      pegrmitipousuario,
+      pegrmilicitacion,
+      pegrmipotecalculada,
+      pegrmipotedeclarada,
+      pegrmicalidad,
+      pegrmipreciopote,
+      pegrmipoteegreso,
+      pegrmipeajeunitario,
+      barrcodifco,
+      pegrmipoteactiva,
+      pegrmipotereactiva,
+      pegrmiusucreacion,
+      pegrmifeccreacion,
+      pegrmipotecoincidente,
+      pegrmifacperdida,
+      coregecodvtp,
+      tipconcondi
+      )
+      values(
+      :pegrmicodi,
+      :pegrcodi,
+      :pericodi,
+      :recpotcodi,
+      :genemprcodi,
+      :pegrdcodi,
+      :cliemprcodi,
+      :barrcodi,
+      :pegrmitipousuario,
+      :pegrmilicitacion,
+      :pegrmipotecalculada,
+      :pegrmipotedeclarada,
+      :pegrmicalidad,
+      :pegrmipreciopote,
+      :pegrmipoteegreso,
+      :pegrmipeajeunitario,
+      :barrcodifco,
+      :pegrmipoteactiva,
+      :pegrmipotereactiva,
+      :pegrmiusucreacion,
+      :pegrmifeccreacion,
+      :pegrmipotecoincidente,
+      :pegrmifacperdida,
+      :coregecodvtp,
+      :tipconcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_peaje_egreso_minfo
+      set
+      pegrcodi=:pegrcodi,
+      pericodi=:pericodi,
+      recpotcodi=:recpotcodi,
+      genemprcodi=:genemprcodi,
+      pegrdcodi=:pegrdcodi,
+      cliemprcodi=:cliemprcodi,
+      barrcodi=:cliemprcodi,
+      pegrmitipousuario=:pegrmitipousuario,
+      pegrmilicitacion=:pegrmilicitacion,
+      pegrmipotecalculada=:pegrmipotecalculada,
+      pegrmipotedeclarada=:pegrmipotedeclarada,
+      pegrmicalidad=:pegrmicalidad,
+      pegrmipreciopote=:pegrmipreciopote,
+      pegrmipoteegreso=:pegrmipoteegreso,
+      pegrmipeajeunitario=:pegrmipeajeunitario,
+      barrcodifco=:barrcodifco,
+      pegrmipoteactiva=:pegrmipoteactiva,
+      pegrmipotereactiva=:pegrmipotereactiva,
+      pegrmiusucreacion=:pegrmiusucreacion,
+      pegrmifeccreacion=:pegrmifeccreacion
+      where
+      pegrmicodi=:pegrmicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query> delete from vtp_peaje_egreso_minfo where pegrmicodi = :pegrmicodi </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      pegrmicodi,
+      pegrcodi,
+      pericodi,
+      recpotcodi,
+      genemprcodi,
+      pegrdcodi,
+      cliemprcodi,
+      barrcodi,
+      pegrmitipousuario,
+      pegrmilicitacion,
+      pegrmipotecalculada,
+      pegrmipotedeclarada,
+      pegrmicalidad,
+      pegrmipreciopote,
+      pegrmipoteegreso,
+      pegrmipeajeunitario,
+      barrcodifco,
+      pegrmipoteactiva,
+      pegrmipotereactiva,
+      pegrmiusucreacion,
+      pegrmifeccreacion
+      from vtp_peaje_egreso_minfo
+      where pegrmicodi = :pegrmicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from vtp_peaje_egreso_minfo
+      where pericodi=:pericodi and recpotcodi=:recpotcodi
+      order by pegrmiusucreacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select --b.emprnomb as genemprnombre,c.emprnomb as cliemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.genemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.genemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.genemprcodi) end as genemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.cliemprcodi) end as cliemprnombre,
+		d.barrnombre, e.barrnombre as barrnombrefco, a.*,
+		a.pegrmipotecoincidente as pegrdpotecoincidente, a.pegrmifacperdida as pegrdfacperdida, nvl(tipcon.tipconcodi,0) as tipconcodi, tipcon.tipconnombre as tipconnombre
+		from vtp_peaje_egreso_minfo a
+		--inner join vw_si_empresa b on  a.genemprcodi= b.emprcodi
+		--inner join vw_si_empresa c on a.cliemprcodi= c.emprcodi
+		inner join trn_barra d on a.barrcodi = d.barrcodi
+		inner join trn_barra e  on a.barrcodifco =e.barrcodi
+		left outer join trn_tipo_contrato tipcon on tipcon.TIPCONCODI=a.TIPCONCONDI
+		where pericodi=:pericodi and recpotcodi=:recpotcodi
+		order by 1,2,3,4
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaVista</key>
+    <query>
+		select --b.emprnomb as genemprnombre,c.emprnomb as cliemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.genemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.genemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.genemprcodi) end as genemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.cliemprcodi) end as cliemprnombre,
+		d.barrnombre, e.barrnombre as barrnombrefco,
+		a.pegrcodi as pegrmicodi, a.pegrcodi, pericodi, recpotcodi, a.genemprcodi, a.pegrdcodi, a.cliemprcodi,
+		a.barrcodi, a.pegrmitipousuario, a.pegrmilicitacion, a.pegrmipotecalculada, a.pegrmipotedeclarada, a.pegrmicalidad,
+		a.pegrmipreciopote, a.pegrmipoteegreso, a.pegrmipeajeunitario, a.barrcodifco, a.pegrmipoteactiva, a.pegrmipotereactiva,
+		a.pegrmiusucreacion, a.pegrmifeccreacion,
+		a.pegrdpotecoincidente, a.pegrdfacperdida, a.coregecodvtp, a.tipconcodi, tipcon.tipconnombre
+		from vw_vtp_peaje_egreso a
+		--inner join vw_si_empresa b on  a.genemprcodi = b.emprcodi
+		--inner join vw_si_empresa c on a.cliemprcodi = c.emprcodi
+		inner join trn_barra d on a.barrcodi = d.barrcodi
+		inner join trn_barra e on a.barrcodifco = e.barrcodi
+		left outer join trn_tipo_contrato tipcon on a.tipconcodi=tipcon.tipconcodi
+		where pericodi=:pericodi and recpotcodi=:recpotcodi
+		and (a.genemprcodi = :genemprcodi or :genemprcodi = 0)
+		and (a.cliemprcodi = :cliemprcodi or :cliemprcodi = 0)
+		and (a.barrcodi = :barrcodi or :barrcodi = 0)
+		and (a.barrcodifco = :barrcodifco or :barrcodifco = 0)
+		and (a.pegrmitipousuario = :pegrmitipousuario or :pegrmitipousuario = '*')
+		and (a.pegrmilicitacion = :pegrmilicitacion or :pegrmilicitacion = '*')
+		and (a.pegrmicalidad = :pegrmicalidad or a.pegrmicalidad = :pegrmiusucreacion or :pegrmicalidad = '*')
+		order by 1, 2,3, 4
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaInfoFaltante</key>
+    <query>
+		select --b.emprnomb as genemprnombre,c.emprnomb as cliemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.genemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.genemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.genemprcodi) end as genemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.cliemprcodi) end as cliemprnombre,
+		d.barrnombre, a.pegrmitipousuario, a.pegrmilicitacion
+		from vw_vtp_peaje_egreso a
+		--inner join vw_si_empresa b on  a.genemprcodi= b.emprcodi
+		--inner join vw_si_empresa c on a.cliemprcodi= c.emprcodi
+		inner join trn_barra d on a.barrcodi = d.barrcodi
+		where pericodi=:barrcodi and recpotcodi=:barrcodifco
+		minus
+		select --b.emprnomb as genemprnombre,c.emprnomb as cliemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.genemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.genemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.genemprcodi) end as genemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.cliemprcodi) end as cliemprnombre,
+		d.barrnombre, a.pegrmitipousuario, a.pegrmilicitacion
+		from vw_vtp_peaje_egreso a
+		--inner join vw_si_empresa b on  a.genemprcodi= b.emprcodi
+		--inner join vw_si_empresa c on a.cliemprcodi= c.emprcodi
+		inner join trn_barra d on a.barrcodi = d.barrcodi
+		where pericodi=:pericodi and recpotcodi=:recpotcodi
+		order by 1, 2, 3
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListCabecera</key>
+    <query>
+		select genemprcodi, genemprnombre from (
+		select distinct a.genemprcodi, bc.emprnomb as genemprnombre,a.genemprcodi as empresa
+		from vw_vtp_peaje_egreso a
+		inner join vw_si_empresa bc on a.genemprcodi = bc.emprcodi
+		where a.pericodi=:pericodi and a.recpotcodi = :recpotcodi
+		union
+		--select distinct a.emprcodi as genemprcodi, b.emprnomb as genemprnombre
+		--from trn_ing_retirosc a
+		--inner join vw_si_empresa b on a.emprcodi = b.emprcodi
+		--where a.pericodi=:pericodi and a.ingrscversion = :recpotcodi
+		select t.genemprcodi, bx.emprnomb as genemprnombre, t.emprcodiorigen as empresa
+		from (
+		select distinct nvl(m.emprcodidestino,ab.emprcodi) genemprcodi, nvl(m.emprcodiorigen,ab.emprcodi) emprcodiorigen
+		from trn_ing_retirosc ab
+		left join vw_si_migracion m on m.emprcodiorigen = ab.emprcodi
+		where ab.pericodi=:pericodi and ab.ingrscversion = :recpotcodi
+		) t inner join vw_si_empresa bx on bx.emprcodi = t.genemprcodi
+		union
+		select distinct nvl(m.emprcodidestino,ax.emprcodipeaje) as genemprcodi, trim(b.emprnomb) as genemprnombre, nvl(m.emprcodiorigen,ax.emprcodipeaje) as empresa
+		from vtp_peaje_empresa_pago ax
+		inner join si_empresa b on ax.emprcodipeaje = b.emprcodi and b.emprestado = 'A'
+		left join vw_si_migracion m on m.emprcodiorigen = ax.emprcodipeaje
+		where ax.pempagpericodidest=:pericodi
+		)
+		where genemprcodi = empresa
+		order by 2
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresa</key>
+    <query>
+		select 0 as pegrmicodi, a.*, --b.emprnomb as genemprnombre, e.emprnomb as cliemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.genemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.genemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.genemprcodi) end as genemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.cliemprcodi) end as cliemprnombre,
+		c.barrnombre, d.barrnombre as barrnombrefco
+		from vw_vtp_peaje_egreso a
+		--inner join vw_si_empresa b on a.genemprcodi = b.emprcodi
+		--inner join vw_si_empresa e on a.cliemprcodi = e.emprcodi
+		inner join trn_barra c on a.barrcodi = c.barrcodi
+		inner join trn_barra d on a.barrcodifco = d.barrcodi
+		where a.pericodi=:pericodi and a.recpotcodi = :recpotcodi and genemprcodi = :genemprcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresaRecalculo</key>
+    <query>
+		select 0 as pegrmicodi, a.*, --b.emprnomb as genemprnombre, e.emprnomb as cliemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.genemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.genemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.genemprcodi) end as genemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.cliemprcodi) end as cliemprnombre,
+		c.barrnombre, d.barrnombre as barrnombrefco
+		from vw_vtp_peaje_egreso a
+		--inner join vw_si_empresa b on a.genemprcodi = b.emprcodi
+		--inner join vw_si_empresa e on a.cliemprcodi = e.emprcodi
+		inner join trn_barra c on a.barrcodi = c.barrcodi
+		inner join trn_barra d on a.barrcodifco = d.barrcodi
+		where a.pericodi=:pericodi and a.recpotcodi = :recpotcodi and genemprcodi = :genemprcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListPotenciaValor</key>
+    <query>
+		select t.emprcodi as genemprcodi, --(select emprnomb from vw_si_empresa e where e.emprcodi = t.emprcodi) as genemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = t.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = t.emprcodi and info.fechacorte &lt;= (select recpotfeccreacion from vtp_recalculo_potencia where pericodi = :pericodi and recpotcodi = :recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = t.emprcodi) end as genemprnombre,
+		sum(t.bipotencia) as pegrmipotecalculada, sum(t.lipotencia) as pegrmipotedeclarada, sum(t.scpotencia) as pegrmipreciopote,
+		sum(t.bivalor) as pegrmipoteegreso, sum(t.livalor) as pegrmipeajeunitario, sum(t.scvalor) as pegrmipoteactiva
+		from (
+		select pe.genemprcodi as emprcodi,
+		sum(pe.pegrmipoteegreso) as bipotencia, 0 as lipotencia, 0 as scpotencia,
+		sum(pe.pegrmipoteegreso * pe.pegrmipreciopote) as bivalor, 0 as livalor, 0 as scvalor
+		from vw_vtp_peaje_egreso pe
+		where UPPER(pegrmilicitacion) = 'NO' and pericodi = :pericodi and recpotcodi = :recpotcodi
+		group by pe.genemprcodi
+		union
+		select pe.genemprcodi as emprcodi,
+		0 as bipotencia, sum(pe.pegrmipoteegreso) as lipotencia, 0 as scpotencia,
+		0 as bivalor, sum(pe.pegrmipoteegreso * pe.pegrmipreciopote) as livalor, 0 as scvalor
+		from vw_vtp_peaje_egreso pe
+		where UPPER(pegrmilicitacion) = 'SI' and pericodi = :pericodi and recpotcodi = :recpotcodi
+		group by pe.genemprcodi
+		union
+		--select rp.emprcodi,
+		--0 as bipotencia, 0 as lipotencia, sum(rp.ingrscimporte * egreso) as scpotencia,
+		--0 as bivalor, 0 as livalor, sum(rp.ingrscimporte * valor) as scvalor
+		--from trn_ing_retirosc rp, (select sum(rpscpoteegreso) as egreso, sum(rpscpreciopote * rpscpoteegreso) as valor
+		--from vtp_retiro_potesc rpsc
+		--where pericodi = :pericodi
+		--and recpotcodi = :recpotcodi) t
+		--where pericodi = :pericodi and rp.ingrscversion in (select recacodi from vtp_recalculo_potencia where pericodi = :pericodi and recpotcodi = :recpotcodi)
+		--group by rp.emprcodi
+		select nvl(pe.emprcodi, nvl(t.emprcodidestino, t.emprcodi)) emprcodi,
+		bipotencia, lipotencia, scpotencia, bivalor, livalor, scvalor
+		from (
+		select rp.emprcodi,si.emprcodidestino,
+		0 as bipotencia, 0 as lipotencia,
+		sum(rp.ingrscimportevtp * (select sum(rpscpoteegreso) as egreso from vtp_retiro_potesc rpsc where pericodi = :pericodi and recpotcodi = :recpotcodi)) as scpotencia,
+		0 as bivalor, 0 as livalor, sum(rp.ingrscimportevtp * (select sum(rpscpreciopote * rpscpoteegreso) as valor from vtp_retiro_potesc rpsc where pericodi = :pericodi and recpotcodi = :recpotcodi)) as scvalor
+		from trn_ing_retirosc rp
+		left join vw_si_migracion si on si.emprcodiorigen = rp.emprcodi
+		where pericodi = :pericodi and rp.ingrscversion in (select recacodi from vtp_recalculo_potencia where pericodi = :pericodi and recpotcodi = :recpotcodi)
+		group by rp.emprcodi,si.emprcodidestino) t
+		left join vtp_peaje_empresa pe on pe.pericodi = :pericodi and recpotcodi = :recpotcodi and (pe.emprcodi = t.emprcodi or pe.emprcodi = t.emprcodidestino)
+		) t
+		group by t.emprcodi
+		order by 2
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>delete from vtp_peaje_egreso_minfo where pericodi = :pericodi and recpotcodi=:recpotcodi </query>
+  </Sql>
+
+  <!--ASSETEC 202002-->
+  <Sql>
+    <key>ListCabeceraRecalculo</key>
+    <query>
+		select distinct a.genemprcodi, --b.emprnomb as genemprnombre
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.genemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.genemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.genemprcodi) end as genemprnombre
+		from vw_vtp_peaje_egreso a
+		--inner join vw_si_empresa b on a.genemprcodi = b.emprcodi
+		where a.pericodi=:pericodi and a.recpotcodi = :recpotcodi
+		order by 2
+	</query>
+  </Sql>
+
+  <!--FORMATO NUEVO 202102-->
+  <Sql>
+    <key>ListarCodigosVTP</key>
+    <query>
+      select * from VTP_CODIGO_CONSOLIDADO
+      where emprcodi=:emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigosByCriteria</key>
+    <query>
+      select distinct * from (
+      select
+      a.empresa as genemprnombre,
+      a.cliente as cliemprnombre,
+      a.barra as barrnombre,
+      a.barra as barrnombrefco,
+      0 as pegrmicodi,
+      0 as pegrcodi,
+      0 pericodi,
+      0 as recpotcodi,
+      a.emprcodi as genemprcodi,
+      0 as pegrdcodi,
+      a.clicodi as cliemprcodi,
+      a.barrcodi,
+      a.tipusunombre as pegrmitipousuario,
+      a.tipconnombre as pegrmilicitacion,
+      null as pegrmipotecalculada,
+      null as pegrmipotedeclarada,
+      '' as pegrmicalidad,
+      null as pegrmipreciopote,
+      null as pegrmipoteegreso,
+      null as pegrmipeajeunitario,
+      a.barrcodi as barrcodifco,
+      null as pegrmipoteactiva,
+      null as pegrmipotereactiva,
+      '' as pegrmiusucreacion,
+      '' as pegrmifeccreacion,
+      null as pegrdpotecoincidente,
+      null as pegrdfacperdida,
+      a.codcncodivtp as coregecodvtp,
+      a.tipconcodi,
+      a.tipconnombre
+      from vtp_codigo_consolidado_periodo ccp
+      inner join VTP_CODIGO_CONSOLIDADO a on a.codcncodivtp=ccp.codcncodivtp inner join vtp_codigo_retiro_generado crg on ccp.codcncodivtp=crg.coregecodvtp
+      inner join vtp_codigo_retiro_sol_det vcr on vcr.coresdcodi=crg.coresdcodi inner join trn_codigo_retiro_solicitud crs on crs.coresocodi=vcr.coresocodi
+      where ccp.CODCNPEESTADO in ('ACT') and crg.coregeestado in ('ACT') and
+      NVL(to_char(crs.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+      AND NVL(to_char(crs.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+      AND (a.emprcodi = :genemprcodi or :genemprcodi = 0)
+      and (a.clicodi = :cliemprcodi or :cliemprcodi = 0)
+      and (a.barrcodi = :barrcodi or :barrcodi = 0)
+      and (a.tipusunombre = :pegrmitipousuario or :pegrmitipousuario = '*')
+      and ccp.peridccodi=:pericodi
+      and (a.tipconnombre = :tipconnombre or :tipconnombre = '*')
+      order by a.empresa, a.cliente, a.barra)
+      order by 28
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaVistaNuevo</key>
+    <query>
+		select --b.emprnomb as genemprnombre, c.emprnomb as cliemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.genemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.genemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.genemprcodi) end as genemprnombre,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.cliemprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.cliemprcodi) end as cliemprnombre,
+		d.barrnombre, e.barrnombre as barrnombrefco,
+		a.pegrcodi as pegrmicodi, a.pegrcodi, pericodi, recpotcodi, a.genemprcodi, a.pegrdcodi, a.cliemprcodi,
+		a.barrcodi, a.pegrmitipousuario, a.pegrmilicitacion, a.pegrmipotecalculada, a.pegrmipotedeclarada, a.pegrmicalidad,
+		a.pegrmipreciopote, a.pegrmipoteegreso, a.pegrmipeajeunitario, a.barrcodifco, a.pegrmipoteactiva, a.pegrmipotereactiva,
+		a.pegrmiusucreacion, a.pegrmifeccreacion,
+		a.pegrdpotecoincidente, a.pegrdfacperdida, a.coregecodvtp, a.tipconcodi, tipcon.tipconnombre
+		from vw_vtp_peaje_egreso a
+		--inner join vw_si_empresa b on  a.genemprcodi = b.emprcodi
+		--inner join vw_si_empresa c on a.cliemprcodi = c.emprcodi
+		inner join trn_barra d on a.barrcodi = d.barrcodi
+		inner join trn_barra e on a.barrcodifco = e.barrcodi
+		left outer join trn_tipo_contrato tipcon on a.tipconcodi=tipcon.tipconcodi
+		where pericodi=:pericodi and recpotcodi=:recpotcodi
+		and (a.genemprcodi = :genemprcodi or :genemprcodi = 0)
+		and (a.cliemprcodi = :cliemprcodi or :cliemprcodi = 0)
+		and (a.barrcodi = :barrcodi or :barrcodi = 0)
+		and (a.pegrmitipousuario = :pegrmitipousuario or :pegrmitipousuario = '*')
+		and (tipcon.tipconnombre = :pegrmilicitacion or :pegrmilicitacion = '*')
+		and (a.pegrmicalidad = :pegrmicalidad or a.pegrmicalidad = :pegrmiusucreacion or :pegrmicalidad = '*')
+		order by 1,2,3,4
+	</query>
+  </Sql>
+  
+</Sqls>

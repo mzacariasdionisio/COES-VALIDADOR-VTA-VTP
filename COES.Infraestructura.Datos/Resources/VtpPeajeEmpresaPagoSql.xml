@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(pempagcodi), 0) + 1 from vtp_peaje_empresa_pago
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_peaje_empresa_pago(pempagcodi, pericodi, recpotcodi, emprcodipeaje,
+      pingcodi, emprcodicargo, pempagtransmision, pempagpeajepago,
+      pempagsaldoanterior, pempagajuste, pempagpericodidest, pempagusucreacion, pempagfeccreacion)
+      values(:pempagcodi, :pericodi, :recpotcodi, :emprcodipeaje,
+      :pingcodi, :emprcodicargo, :pempagtransmision, :pempagpeajepago,
+      :pempagsaldoanterior, :pempagajuste, :pempagpericodidest, :pempagusucreacion, :pempagfeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_peaje_empresa_pago
+      set
+      pempagsaldo = :pempagsaldo,
+      pempagpericodidest = :pempagpericodidest
+      where pempagcodi = :pempagcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdatePeriodoDestino</key>
+    <query>
+      update vtp_peaje_empresa_pago
+      set pempagpericodidest = :pempagpericodidest
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_peaje_empresa_pago where pempagcodi = :pempagcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_peaje_empresa_pago where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * where from vtp_peaje_empresa_pago pempagcodi = :pempagcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPeajePago</key>
+    <query>
+		select distinct a.emprcodipeaje, --b.emprnomb as emprnombpeaje
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.emprcodipeaje) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.emprcodipeaje and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.emprcodipeaje) end as emprnombpeaje,
+		b.emprruc
+		from vtp_peaje_empresa_pago a join vw_trn_empresa_str b on a.emprcodipeaje = b.emprcodi
+		where a.pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI')
+		and a.pericodi = :pericodi
+		and a.recpotcodi = :recpotcodi
+		order by 2
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListPeajeCobro</key>
+    <query>
+		select emprcodipeaje,
+		--(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodipeaje) as emprnombpeaje,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = pep.emprcodipeaje) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = pep.emprcodipeaje and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = pep.pericodi and recacodi = pep.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = pep.emprcodipeaje) end as emprnombpeaje,
+		(select EMPRCODOSINERGMIN from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodipeaje) as Emprcodosinergminpeaje,
+		emprcodicargo,
+		--(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as emprnombcargo,
+		(select emprruc from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = emprcodicargo) as emprruc,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = pep.emprcodicargo) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = pep.emprcodicargo and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = pep.pericodi and recacodi = pep.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = pep.emprcodicargo) end as emprnombcargo,
+		(select EMPRCODOSINERGMIN from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as Emprcodosinergmincargo,
+		 pep.pingcodi, pep.pempagpeajepago, pep.pempagsaldoanterior, pep.pempagsaldo, pep.pempagajuste,
+		 ping.pingtipo,ping.Pingnombre
+		from vtp_peaje_empresa_pago pep
+		left join vtp_peaje_ingreso ping on ping.pericodi = pep.pericodi and ping.recpotcodi = pep.recpotcodi and ping.pingcodi = pep.pingcodi
+		where pep.pempagtransmision = 'SI'
+		and pep.pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI')
+		and pep.emprcodipeaje = :emprcodipeaje and pep.emprcodipeaje != 0
+		and pep.pericodi = :pericodi
+		and pep.recpotcodi = :recpotcodi
+		order by 2, 4, pep.pingcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListPeajeCobroHistoricos</key>
+    <query>
+		select emprcodipeaje, --(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodipeaje) as emprnombpeaje,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = pep.emprcodipeaje) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = pep.emprcodipeaje and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = pep.pericodi and recacodi = pep.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = pep.emprcodipeaje) end as emprnombpeaje,
+		emprcodicargo, --(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as emprnombcargo,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = pep.emprcodicargo) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = pep.emprcodicargo and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = pep.pericodi and recacodi = pep.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = pep.emprcodicargo) end as emprnombcargo,
+		pep.pingcodi, pep.pempagpeajepago, pep.pempagsaldoanterior, pep.pempagsaldo, pep.pempagajuste
+		from vtp_peaje_empresa_pago pep
+		where pempagtransmision in ('SI','NO')
+		and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI')
+		and emprcodipeaje = :emprcodipeaje and emprcodipeaje != 0
+		and pericodi = :pericodi
+		and recpotcodi = :recpotcodi
+		order by 2, 4, pep.pingcodi
+	</query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListPeajeCobroSelect</key>
+    <query>
+		select distinct
+		emprcodicargo, --(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as emprnombcargo,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = pep.emprcodicargo) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = pep.emprcodicargo and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = pep.pericodi and recacodi = pep.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = pep.emprcodicargo) end as emprnombcargo,
+		pep.pingcodi, pep.pempagpeajepago, pep.pempagsaldoanterior, pep.pempagsaldo, pep.pempagajuste
+		from vtp_peaje_empresa_pago pep
+		where pempagtransmision in ('SI','NO')
+		and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI') and PEMPAGPEAJEPAGO=0 and PEMPAGSALDOANTERIOR=0
+		and pericodi = :pericodi
+		and recpotcodi = :recpotcodi
+		order by 2, 4, pep.pingcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListPeajeCobroNoTransm</key>
+    <query>
+		select emprcodipeaje, (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodipeaje) as emprnombpeaje,
+		(select EMPRCODOSINERGMIN from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodipeaje) as Emprcodosinergminpeaje,
+		emprcodicargo, (select emprruc from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as emprruc,
+		(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as emprnombcargo,
+		(select EMPRCODOSINERGMIN from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as Emprcodosinergmincargo,
+		pep.pingcodi, pep.pempagpeajepago, pep.pempagsaldoanterior, pep.pempagsaldo, pep.pempagajuste,
+		ping.pingtipo,ping.Pingnombre
+		from vtp_peaje_empresa_pago pep
+		left join vtp_peaje_ingreso ping on ping.pericodi = pep.pericodi and ping.recpotcodi = pep.recpotcodi and ping.pingcodi = pep.pingcodi
+		where pep.pempagtransmision = 'NO'
+		and pep.pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI' and emprcodi is not null)
+		and pep.emprcodipeaje = :emprcodipeaje and pep.emprcodipeaje != 0
+		and pep.pericodi = :pericodi
+		and pep.recpotcodi = :recpotcodi
+		order by 2, 4, pep.pingcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListPeajeCobroReparto</key>
+    <query>
+      select emprcodipeaje, (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodipeaje) as emprnombpeaje,
+      emprcodicargo, (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as emprnombcargo,
+      pep.pingcodi, pep.pempagpeajepago, pep.pempagsaldoanterior, pep.pempagsaldo, pep.pempagajuste
+      from vtp_peaje_empresa_pago pep
+      where pempagtransmision = 'NO'
+      and pingcodi in (select pingcodi from vtp_peaje_ingreso where pep.pericodi = pericodi and pep.recpotcodi = recpotcodi and  pingpago = 'SI' and rrpecodi = :rrpecodi)
+      and emprcodipeaje = :emprcodipeaje and emprcodipeaje != 0
+      and pericodi = :pericodi
+      and recpotcodi = :recpotcodi
+      order by 2, 4, pep.pingcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetSaldoAnterior</key>
+    <query>
+      select nvl(sum(pempagsaldo), 0) from vtp_peaje_empresa_pago
+      where pempagpericodidest = :pempagpericodidest and pingcodi = :pingcodi
+      and (emprcodipeaje = :emprcodipeaje or emprcodipeaje in (select m1.emprcodiorigen from vw_si_migracion m1 where m1.emprcodidestino = :emprcodipeaje ))
+      and (emprcodicargo = :emprcodicargo or emprcodicargo in (select m2.emprcodiorigen from vw_si_migracion m2 where m2.emprcodidestino = :emprcodicargo ))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdSaldo</key>
+    <query>
+		select * from vtp_peaje_empresa_pago
+		where pericodi = :pericodi and recpotcodi = :recpotcodi
+		and pingcodi = :pingcodi
+		--and emprcodipeaje = :emprcodipeaje and emprcodicargo = :emprcodicargo
+		and (emprcodipeaje = :emprcodipeaje or emprcodipeaje in (select v.emprcodiorigen From vw_si_migracion v left join vw_si_migracion v1 on v1.emprcodiorigen = v.emprcodidestino where nvl(v1.emprcodidestino,v.emprcodidestino) = :emprcodipeaje or v.emprcodidestino = :emprcodipeaje))
+		and (emprcodicargo = :emprcodicargo or emprcodicargo in (select v2.emprcodiorigen From vw_si_migracion v2 left join vw_si_migracion v3 on v3.emprcodiorigen = v2.emprcodidestino where nvl(v3.emprcodidestino,v2.emprcodidestino) = :emprcodicargo or v2.emprcodidestino = :emprcodicargo))
+	</query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select * from vtp_peaje_empresa_pago
+    </query>
+  </Sql>
+  
+    <!--SIOSEIN-->
+  <Sql>
+    <key>ObtenerListPeajeEmpresaPago</key>
+    <query>
+      select b.emprnomb           emprnombpeaje,
+             b.emprcodosinergmin  emprcodosinergminpeaje,
+             b2.emprnomb          emprnombcargo,
+             b2.emprcodosinergmin emprcodosinergmincargo,
+             c.pingtipo,
+             c.pingnombre,
+             a.*
+      from   vtp_peaje_empresa_pago a
+             inner join si_empresa b on a.emprcodipeaje = b.emprcodi
+             inner join si_empresa b2 on a.emprcodicargo = b2.emprcodi
+             inner join vtp_peaje_ingreso c on c.pingcodi = a.pingcodi and c.pericodi = a.pericodi and c.recpotcodi = a.recpotcodi and c.pingpago = 'SI'
+      where  pempagtransmision = :pempagtransmision
+             and a.pericodi = :pericodi
+             and a.recpotcodi = :recpotcodi
+             and a.emprcodipeaje > 0
+             and ( a.emprcodipeaje = :emprcodipeaje or :emprcodipeaje is null ) 
+    </query>
+  </Sql>
+
+
+
+  <Sql>
+    <key>GetPeajeEmpresaPagoByComparative</key>
+    <query>
+      select
+      vtp.pempagcodi,
+      vtp.pericodi,
+      vtp.recpotcodi,
+      vtp.emprcodipeaje,
+      vtp.emprcodicargo,
+      vtp.pempagpeajepago,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb as emprnombpeaje,
+      emp2.emprnomb as emprnombcargo
+      from vtp_peaje_empresa_pago vtp
+      inner join vtp_recalculo_potencia recp on vtp.recpotcodi=recp.recpotcodi and vtp.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vtp.pericodi
+      inner join si_empresa emp on emp.emprcodi=vtp.emprcodipeaje
+      inner join si_empresa emp2 on emp2.emprcodi=vtp.emprcodicargo
+      where vtp.pericodi>=:periinicio and vtp.pericodi &lt;=:perifin
+      and (vtp.emprcodipeaje = :emprcodipeaje or :emprcodipeaje = 0)
+      and (vtp.emprcodicargo = :emprcodicargo or :emprcodicargo = 0)
+      order by peri.perianio asc, peri.perimes asc, recpotcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetPeajeEmpresaPagoByComparativeUnique</key>
+    <query>
+      select
+      0 as pempagcodi,
+      0 as pericodi,
+      0 as recpotcodi,
+      vtp.emprcodipeaje,
+      vtp.emprcodicargo,
+      0 as pempagpeajepago,
+      '' as recpotnombre,
+      '' as perinombre,
+      0 as perianio,
+      0 as perimes,
+      0 as perianiomes,
+      '' as recanombre,
+      emp.emprnomb as emprnombpeaje,
+      emp2.emprnomb as emprnombcargo
+      from vtp_peaje_empresa_pago vtp
+      inner join vtp_recalculo_potencia recp on vtp.recpotcodi=recp.recpotcodi and vtp.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vtp.pericodi
+      inner join si_empresa emp on emp.emprcodi=vtp.emprcodipeaje
+      inner join si_empresa emp2 on emp2.emprcodi=vtp.emprcodicargo
+      where vtp.pericodi>=:periinicio and vtp.pericodi &lt;=:perifin
+      and (vtp.emprcodipeaje = :emprcodipeaje or :emprcodipeaje = 0)
+      and (vtp.emprcodicargo = :emprcodicargo or :emprcodicargo = 0)
+      group by
+      vtp.emprcodipeaje,
+      vtp.emprcodicargo,
+      emp.emprnomb,
+      emp2.emprnomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetPeajeEmpresaPagoByCompHist</key>
+    <query>
+      select
+      vtp.pempagcodi,
+      vtp.pericodi,
+      vtp.recpotcodi,
+      vtp.emprcodipeaje,
+      vtp.emprcodicargo,
+      vtp.pempagpeajepago,
+      recp.recpotnombre,
+      peri.perinombre,
+      peri.perianio,
+      peri.perimes,
+      peri.perianiomes,
+      peri.recanombre,
+      emp.emprnomb as emprnombpeaje,
+      emp2.emprnomb as emprnombcargo
+      from vtp_peaje_empresa_pago vtp
+      inner join vtp_recalculo_potencia recp on vtp.recpotcodi=recp.recpotcodi and vtp.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vtp.pericodi
+      inner join si_empresa emp on emp.emprcodi=vtp.emprcodipeaje
+      inner join si_empresa emp2 on emp2.emprcodi=vtp.emprcodicargo
+      where ((vtp.pericodi=:periinicio and vtp.recpotcodi=:recpotinicio)
+      or (vtp.pericodi=:perifin and vtp.recpotcodi=:recpotfin))
+      and (vtp.emprcodipeaje = :emprcodipeaje or :emprcodipeaje = 0)
+      order by peri.perianio asc, peri.perimes asc, recpotcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetPeajeEmpresaPagoByCompHistUnique</key>
+    <query>
+      select
+      0 as pempagcodi,
+      0 as pericodi,
+      0 as recpotcodi,
+      vtp.emprcodipeaje,
+      vtp.emprcodicargo,
+      0 as pempagpeajepago,
+      '' as recpotnombre,
+      '' as perinombre,
+      0 as perianio,
+      0 as perimes,
+      0 as perianiomes,
+      '' as recanombre,
+      emp.emprnomb as emprnombpeaje,
+      emp2.emprnomb as emprnombcargo
+      from vtp_peaje_empresa_pago vtp
+      inner join vtp_recalculo_potencia recp on vtp.recpotcodi=recp.recpotcodi and vtp.pericodi=recp.pericodi
+      inner join trn_periodo peri on peri.pericodi=vtp.pericodi
+      inner join si_empresa emp on emp.emprcodi=vtp.emprcodipeaje
+      inner join si_empresa emp2 on emp2.emprcodi=vtp.emprcodicargo
+      where ((vtp.pericodi=:periinicio and vtp.recpotcodi=:recpotinicio)
+      or (vtp.pericodi=:perifin and vtp.recpotcodi=:recpotfin))
+      and (vtp.emprcodipeaje = :emprcodipeaje or :emprcodipeaje = 0)
+      group by
+      vtp.emprcodipeaje,
+      vtp.emprcodicargo,
+      emp.emprnomb,
+      emp2.emprnomb
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetPeajeEmpresaPagoByEmprCodiAndRecPotCodi</key>
+    <query>
+      select emprcodipeaje, (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodipeaje) as emprnombpeaje,
+      emprcodicargo, (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as emprnombcargo,
+      pep.pingcodi, pep.pempagpeajepago, pep.pempagsaldoanterior, pep.pempagsaldo, pep.pempagajuste
+      from vtp_peaje_empresa_pago pep
+      where pempagtransmision in ('SI','NO')
+      and pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI')
+      and EMPRCODICARGO=:EMPRCODICARGO
+      and pericodi =: PERICODI
+      and recpotcodi = :RECPOTCODI and pingcodi=:pingcodi
+      order by 2, 4, pep.pingcodi
+    </query>
+  </Sql>
+
+  <!--END SIOSEIN-->
+  
+  <!--CU21-->
+  <Sql>
+    <key>GetByCargoPrima</key>
+    <query>
+      select emprcodicargo, (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = pep.emprcodicargo) as emprnombcargo,
+      ping.pingtipo,ping.pingnombre,
+      sum(pep.pempagpeajepago + pep.pempagsaldoanterior + pep.pempagajuste) as pempagsaldo
+      from vtp_peaje_empresa_pago pep
+      join vtp_peaje_ingreso ping on ping.pericodi = pep.pericodi and ping.recpotcodi = pep.recpotcodi and ping.pingcodi = pep.pingcodi and ping.Pingnombre = :pingnombre
+      where pep.pempagtransmision = 'NO'
+      and pep.pingcodi in (select pingcodi from vtp_peaje_ingreso where pingpago = 'SI' and emprcodi is not null)
+      and pep.pericodi = :pericodi
+      and pep.recpotcodi = :recpotcodi
+      group by emprcodicargo, pingtipo, pingnombre
+    </query>
+  </Sql>
+</Sqls>

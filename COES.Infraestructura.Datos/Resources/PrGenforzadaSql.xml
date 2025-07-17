@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(genforcodi), 0) + 1 from pr_genforzada
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into pr_genforzada(
+      genforcodi,
+      relacioncodi,
+      genforinicio,
+      genforfin,
+      genforsimbolo,
+      subcausacodi,
+      lastdate,
+      lastuser
+      )
+      values(
+      :genforcodi,
+      :relacioncodi,
+      :genforinicio,
+      :genforfin,
+      :genforsimbolo,
+      :subcausacodi,
+      :lastdate,
+      :lastuser
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update pr_genforzada
+      set
+      relacioncodi = :relacioncodi,
+      genforinicio = :genforinicio,
+      genforfin = :genforfin,
+      genforsimbolo = :genforsimbolo,
+      subcausacodi = :subcausacodi,
+      lastdate = :lastdate,
+      lastuser = :lastuser
+      where
+      genforcodi = :genforcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from pr_genforzada
+       where
+           genforcodi = :genforcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      relacioncodi,
+      genforcodi,
+      genforinicio,
+      genforfin,
+      genforsimbolo,
+      subcausacodi,
+      lastdate,
+      lastuser
+      from
+      pr_genforzada
+      where
+      genforcodi = :genforcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      relacioncodi,
+      genforcodi,
+      genforinicio,
+      genforfin,
+      genforsimbolo,
+      subcausacodi,
+      lastdate,
+      lastuser
+      from
+      pr_genforzada
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      generacion.relacioncodi,
+      generacion.genforcodi,
+      generacion.genforinicio,
+      generacion.genforfin,
+      generacion.genforsimbolo,
+      generacion.subcausacodi,
+      generacion.lastdate,
+      generacion.lastuser,
+      tipoarea.tareaabrev || ' ' || area.areanomb || ' ' || equipo.equiabrev  || ' - '  || relacion.nombarra  || ' ' || relacion.idgener as equinomb,
+      relacion.nombarra,
+      relacion.idgener,
+      (select sc.subcausadesc from eve_subcausaevento sc where sc.subcausacodi = generacion.subcausacodi) as subcausadesc
+      from
+      pr_genforzada generacion
+      inner join eq_relacion relacion on generacion.relacioncodi = relacion.relacioncodi
+      inner join eq_equipo equipo on relacion.equicodi = equipo.equicodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      where
+      ((generacion.genforinicio >=  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and generacion.genforinicio &lt;  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+       (generacion.genforfin >  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and generacion.genforfin &lt;=  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+       (generacion.genforinicio &lt;  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and generacion.genforfin >  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerGeneracionForzadaProceso</key>
+    <query>
+      select distinct grupocodi, equicodi, subcausacmg, codbarra, idgener, nombarra, nombretna from (
+      --select distinct eq.grupocodi, eq.equicodi,sc.subcausacmg, er.codbarra, er.idgener, er.nombarra
+      --from eve_horaoperacion ho inner join eq_equipo eq on ho.equicodi = eq.equicodi
+      --inner join eve_subcausaevento sc on ho.subcausacodi = sc.subcausacodi
+      --inner join eq_relacion er on er.equicodi = eq.equicodi
+      --where ho.subcausacodi not in ( 101 )and
+      --ho.hophorini &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI') and
+      --ho.hophorfin >= to_date('{0}', 'YYYY-MM-DD HH24:MI')
+      --union all
+      select equipo.grupocodi, equipo.equicodi, subcausa.subcausacmg, relacion.codbarra, relacion.idgener, relacion.nombarra, relacion.nombretna
+      from pr_genforzada forzada
+      inner join eq_relacion relacion on forzada.relacioncodi = relacion.relacioncodi
+      inner join eq_equipo equipo on relacion.equicodi = equipo.equicodi
+      inner join eve_subcausaevento subcausa on forzada.subcausacodi = subcausa.subcausacodi
+      where
+      forzada.genforinicio &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI') and
+      forzada.genforfin >= to_date('{0}', 'YYYY-MM-DD HH24:MI')
+      union all
+      select equipo.grupocodi, equipo.equicodi, subcausa.subcausacmg, relacion.codbarra, relacion.idgener, relacion.nombarra, relacion.nombretna
+      from
+      pr_genforzada_maestro maestro
+      inner join eq_relacion relacion on maestro.relacioncodi = relacion.relacioncodi
+      inner join eq_equipo equipo on relacion.equicodi = equipo.equicodi
+      inner join eve_subcausaevento subcausa on maestro.subcausacodi = subcausa.subcausacodi)
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerGeneracionForzadaProcesoV2</key>
+		<query>
+			select distinct grupocodi, equicodi, subcausacmg, codbarra, idgener, nombarra, nombretna from (			
+			select equipo.grupocodi, equipo.equicodi, subcausa.subcausacmg, relacion.codbarra, relacion.idgener, relacion.nombarra, relacion.nombretna
+			from pr_genforzada forzada
+			inner join eq_relacion relacion on forzada.relacioncodi = relacion.relacioncodi
+			inner join eq_equipo equipo on relacion.equicodi = equipo.equicodi
+			inner join eve_subcausaevento subcausa on forzada.subcausacodi = subcausa.subcausacodi
+			where
+			forzada.genforinicio &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI') and
+			forzada.genforfin >= to_date('{0}', 'YYYY-MM-DD HH24:MI')
+			union all
+			select equipo.grupocodi, equipo.equicodi, subcausa.subcausacmg, relacion.codbarra, relacion.idgener, relacion.nombarra, relacion.nombretna
+			from
+			pr_genforzada_maestro maestro
+			inner join eq_relacion relacion on maestro.relacioncodi = relacion.relacioncodi
+			inner join eq_equipo equipo on relacion.equicodi = equipo.equicodi
+			inner join eve_subcausaevento subcausa on maestro.subcausacodi = subcausa.subcausacodi
+			where maestro.genfortipo != '1'
+			)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerUnidadesPasada</key>
+		<query>
+			select distinct grupocodi, equicodi, subcausacmg, codbarra, idgener, nombarra, nombretna from (
+			select equipo.grupocodi, equipo.equicodi, subcausa.subcausacmg, relacion.codbarra, relacion.idgener, relacion.nombarra, relacion.nombretna
+			from
+			pr_genforzada_maestro maestro
+			inner join eq_relacion relacion on maestro.relacioncodi = relacion.relacioncodi
+			inner join eq_equipo equipo on relacion.equicodi = equipo.equicodi
+			inner join eve_subcausaevento subcausa on maestro.subcausacodi = subcausa.subcausacodi
+			where maestro.genfortipo = '1'
+			)
+		</query>
+	</Sql>
+  
+</Sqls>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(cnffrmcodi), 0) + 1 from prn_configuracionformula
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetIdByCodigoFecha</key>
+    <query>
+      select * from prn_configuracionformula where cnffrmformula = {0} and cnffrmfecha = to_date('{1}', 'DD/MM/YYYY')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into prn_configuracionformula(
+      cnffrmcodi,
+      cnffrmformula,
+      cnffrmdiapatron,
+      cnffrmfecha,
+      cnffrmferiado,
+      cnffrmatipico,
+      cnffrmveda,
+      cnffrmpatron,
+      cnffrmdefecto,
+      cnffrmdepauto,
+      cnffrmcargamax,
+      cnffrmcargamin,
+      cnffrmtolerancia,
+      cnffrmusucreacion,
+      cnffrmfeccreacion
+      )
+      values(
+      :cnffrmcodi,
+      :cnffrmformula,
+      :cnffrmdiapatron,
+      :cnffrmfecha,
+      :cnffrmferiado,
+      :cnffrmatipico,
+      :cnffrmveda,
+      :cnffrmpatron,
+      :cnffrmdefecto,
+      :cnffrmdepauto,
+      :cnffrmcargamax,
+      :cnffrmcargamin,
+      :cnffrmtolerancia,
+      :cnffrmusucreacion,
+      :cnffrmfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update prn_configuracionformula
+      set
+      cnffrmformula = :cnffrmformula,
+      cnffrmdiapatron = :cnffrmdiapatron,
+      cnffrmferiado = :cnffrmferiado,
+      cnffrmatipico = :cnffrmatipico,
+      cnffrmveda = :cnffrmveda,
+      cnffrmpatron = :cnffrmpatron,
+      cnffrmdefecto = :cnffrmdefecto,
+      cnffrmdepauto = :cnffrmdepauto,
+      cnffrmcargamax = :cnffrmcargamax,
+      cnffrmcargamin = :cnffrmcargamin,
+      cnffrmtolerancia = :cnffrmtolerancia,
+      cnffrmusumodificacion = :cnffrmusumodificacion,
+      cnffrmfecmodificacion = :cnffrmfecmodificacion
+      where cnffrmcodi = :cnffrmcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+        cnffrmcodi,
+        ptomedicodi,
+        cnffrmfecha,
+        cnffrmferiado,
+        cnffrmatipico,
+        cnffrmveda,
+        cnffrmdepauto,
+        cnffrmcargamax,
+        cnffrmcargamin,
+        cnffrmtolerancia
+      from prn_configuracionformula
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from prn_configuracionformula
+      where cnffrmcodi = :cnffrmcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+        cnffrmcodi,
+        ptomedicodi,
+        cnffrmfecha,
+        cnffrmferiado,
+        cnffrmatipico,
+        cnffrmveda,
+        cnffrmdepauto,
+        cnffrmcargamax,
+        cnffrmcargamin,
+        cnffrmtolerancia
+      from prn_configuracionformula
+      where cnffrmcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListConfiguracionFormulaByFiltros</key>
+    <query>
+      select
+      tab1.cnffrmcodi,
+      tab1.ptomedicodi,
+      case
+      when tab2.ptomedidesc is null then tab2.ptomedielenomb
+      else tab2.ptomedidesc end as Ptomedidesc,
+      tab1.cnffrmfecha,
+      tab1.cnffrmferiado,
+      tab1.cnffrmatipico,
+      tab1.cnffrmveda,
+      tab1.cnffrmdepauto,
+      tab1.cnffrmcargamax,
+      tab1.cnffrmcargamin,
+      tab1.cnffrmtolerancia
+      from prn_configuracionformula tab1 join me_ptomedicion tab2
+      on tab1.ptomedicodi = tab2.ptomedicodi
+      where tab1.cnffrmfecha between to_date('{0}', 'DD/MM/YYYY')  and to_date('{1}', 'DD/MM/YYYY') and tab1.ptomedicodi in ({2})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetParametrosByIdFecha</key>
+    <query>
+      select * from prn_configuracionformula where cnffrmformula = :ptomedicodi and cnffrmfecha = :cnffrmfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ParametrosFormulasList</key>
+    <query>
+      select
+      tab1.cnffrmcodi,
+      <!--case
+      when tab2.ptomedidesc is null then tab2.ptomedielenomb
+      else tab2.ptomedidesc end as Ptomedidesc,-->
+      tab1.cnffrmformula,
+      tab1.cnffrmdiapatron,
+      tab2.prruabrev,
+      tab1.cnffrmfecha,
+      tab1.cnffrmferiado,
+      tab1.cnffrmatipico,
+      tab1.cnffrmveda,
+      tab1.cnffrmpatron,
+      tab1.cnffrmdefecto,
+      tab1.cnffrmdepauto,
+      tab1.cnffrmcargamax,
+      tab1.cnffrmcargamin,
+      tab1.cnffrmtolerancia
+      from prn_configuracionformula tab1 join me_perfil_rule tab2
+      on tab1.cnffrmformula = tab2.prrucodi
+      where 
+	  tab1.cnffrmfecha between to_date('{0}', 'DD/MM/YYYY') and 
+	  to_date('{1}', 'DD/MM/YYYY') and
+	  tab1.cnffrmformula in ({2}) and
+	  tab2.prruactiva = 'S'
+    </query>
+  </Sql>
+</Sqls>

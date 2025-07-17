@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(rerevacodi), 0) + 1 from rer_evaluacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxNumVersion</key>
+    <query>
+      select
+      nvl(max(rerevanumversion), 0) + 1
+      from
+      rer_evaluacion
+      where
+      rerrevcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByRevisionAndLastNumVersion</key>
+    <query>
+      select
+        *
+      from
+        rer_evaluacion
+      where
+        rerrevcodi = {0} and
+        rownum = 1
+      order by
+        rerevanumversion desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+        p.iperinombre,
+        r.rerrevnombre,
+        e.*
+      from
+        rer_evaluacion e
+        inner join rer_revision r on r.rerrevcodi = e.rerrevcodi
+        inner join ind_periodo p on p.ipericodi = r.ipericodi
+      where
+        rerevacodi = :rerevacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into rer_evaluacion
+      (
+      rerevacodi, 
+      rerrevcodi, 
+      rerevanumversion, 
+      rerevaestado, 
+      rerevausucreacion, 
+      rerevafeccreacion, 
+      rerevausumodificacion, 
+      rerevafecmodificacion
+      )
+      values
+      (
+      :rerevacodi, 
+      :rerrevcodi, 
+      :rerevanumversion, 
+      :rerevaestado, 
+      :rerevausucreacion, 
+      :rerevafeccreacion, 
+      :rerevausumodificacion, 
+      :rerevafecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update rer_evaluacion
+      set
+      rerrevcodi = :rerrevcodi,
+      rerevanumversion = :rerevanumversion,
+      rerevaestado = :rerevaestado,
+      rerevausucreacion = :rerevausucreacion,
+      rerevafeccreacion = :rerevafeccreacion,
+      rerevausumodificacion = :rerevausumodificacion,
+      rerevafecmodificacion = :rerevafecmodificacion
+      where
+      rerevacodi = :rerevacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstado</key>
+    <query>
+      update rer_evaluacion
+      set
+      rerevaestado = :rerevaestado,
+      rerevausumodificacion = :rerevausumodificacion,
+      rerevafecmodificacion = :rerevafecmodificacion
+      where
+      rerevacodi = :rerevacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstadoAGenerado</key>
+    <query>
+      update rer_evaluacion
+      set
+      rerevaestado = 'G',
+      rerevausumodificacion = :rerevausumodificacion,
+      rerevafecmodificacion = :rerevafecmodificacion
+      where
+      rerrevcodi = :rerrevcodi and
+      upper(rerevaestado) = 'V'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from rer_evaluacion where rerevacodi = :rerevacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select 
+      * 
+      from 
+      rer_evaluacion 
+      order by 
+      rerevacodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+        p.iperinombre,
+        r.rerrevnombre,
+        e.*
+      from
+        rer_evaluacion e
+        inner join rer_revision r on r.rerrevcodi = e.rerrevcodi
+        inner join ind_periodo p on p.ipericodi = r.ipericodi
+      where
+        (-1 = {0} or e.rerrevcodi = {0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetNextNumVersion</key>
+    <query>
+      select 
+        nvl(max(rerevanumversion), 0) + 1 
+      from 
+        rer_evaluacion
+      where 
+        rerrevcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetUltimaByEstadoEvaluacionByAnioTarifario</key>
+    <query>
+      select t.* from
+      (
+        select
+          row_number() over(partition by i.ipericodi order by r.rerrevcodi desc, e.rerevacodi desc) as rn,
+          e.*,
+          r.rerrevnombre,
+          i.iperianio,
+          i.iperimes
+        from
+          rer_evaluacion e
+          inner join rer_revision r on r.rerrevcodi = e.rerrevcodi
+          inner join ind_periodo i on i.ipericodi = r.ipericodi
+        where
+          upper(e.rerevaestado) = '{0}' and
+          ((i.iperianio = {1} and i.iperimes in (5,6,7,8,9,10,11,12)) or
+          (i.iperianio = {2} and i.iperimes in (1,2,3,4))) and
+          upper(i.iperihorizonte) = 'M'
+        order by
+          i.iperianio, i.iperimes, r.rerrevcodi desc, e.rerevacodi desc
+      ) t
+      where t.rn = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCantidadEvaluacionValidado</key>
+    <query>
+      select
+      count(*)
+      from
+      rer_evaluacion
+      where
+      rerrevcodi = {0} and
+      rerevaestado = 'V'
+    </query>
+  </Sql>
+
+</Sqls>

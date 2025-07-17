@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  
+  <sql>
+    <key>UpdateByResultDate</key>
+    <query>
+      update VTD_CARGOSENEREAC
+      SET      
+      CAERDELETED=:CAERDELETED
+      WHERE
+      CAERFECHA=:CAERFECHA AND
+      EMPRCODI=:EMPRCODI;
+    </query>
+  </sql>
+
+  <sql>
+    <key>GetMontoFromDate</key>
+    <query>
+      SELECT CAERMONTO FROM VTD_CARGOSENEREAC WHERE TRUNC(CAERFECHA)=:CAERFECHA;
+    </query>
+  </sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      SELECT * FROM VTD_CARGOSENEREAC where Caercodi = :Caercodi and caerfecha=:caerfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(Caercodi), 0) + 1 from VTD_CARGOSENEREAC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into VTD_CARGOSENEREAC
+      (
+      CAERCODI,
+      EMPRCODI,
+      CAERFECHA,
+      CAERMONTO,
+      CAERDELETED,
+      CAERSUCREACION,
+      CAERFECCREACION,
+      CAERUSUMODIFICACION,
+      CAERFECMODIFICACION
+      )
+      values
+      (
+      :caercodi,
+      :emprcodi,
+      :caerfecha,
+      :caermonto,
+      :caerdeleted,
+      :caersucreacion,
+      :caerfeccreacion,
+      :caerusumodificacion,
+      :caerfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update VTD_CARGOSENEREAC
+      set
+      CAERCODI=:caercodi,
+      CAERFECHA=:caerfecha,
+      CAERMONTO=:caermonto,
+      CAERDELETED=:caerdeleted,
+      CAERSUCREACION=:caersucreacion,
+      CAERFECCREACION=:caerfeccreacion,
+      CAERUSUMODIFICACION=:lastdate,
+      CAERFECMODIFICACION=:caerfecmodificacion
+      where
+      caercodi = :caercodi and caerfecha=:caerfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update VTD_CARGOSENEREAC set caerdeleted = 1 where emprcodi = :emprcodi and trunc(caerfecha) = :caerfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select a.caercodi, a.emprcodi, a.caerfecha, a.caermonto, a.caerdeleted, a.caersucreacion, a.caerfeccreacion, a.caerusumodificacion, a.caerfecmodificacion, e.emprnomb
+      from VTD_CARGOSENEREAC a
+      inner join si_empresa e on a.emprcodi = e.emprcodi
+      where a.CAERDELETED = 0
+      and a.CAERFECHA in (
+      select max(caerfecha) fecha from VTD_CARGOSENEREAC group by emprcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByDate</key>
+    <query>
+      select a.caercodi, a.emprcodi, a.caerfecha, a.caermonto, a.caerdeleted, a.caersucreacion, a.caerfeccreacion, a.caerusumodificacion, a.caerfecmodificacion, e.emprnomb
+      from VTD_CARGOSENEREAC a
+      inner join si_empresa e on a.emprcodi = e.emprcodi
+      where a.CAERDELETED = 0
+      and a.CAERFECHA in (
+      select max(caerfecha) fecha from VTD_CARGOSENEREAC where caerfecha &lt;= :CAERFECHA and caerfecha >= TO_DATE('{0}','YYYY-MM-DD') group by emprcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMontoByEmpresa</key>
+    <query>
+      SELECT CAERMONTO from
+      (select CAERMONTO, CAERFECHA
+      from VTD_CARGOSENEREAC a
+      where a.CAERDELETED = 0
+      and a.EMPRCODI = {0} and
+      a.CAERFECHA &lt;= TO_DATE('{1}','YYYY-MM-DD')
+      order by a.CAERFECHA desc)
+      where rownum=1
+    </query>
+  </Sql>
+
+</Sqls>

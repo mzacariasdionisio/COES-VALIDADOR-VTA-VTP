@@ -1,0 +1,642 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using COES.Dominio.DTO.Sic;
+using COES.Base.Core;
+
+namespace COES.Infraestructura.Datos.Helper.Sic
+{
+    /// <summary>
+    /// Clase que contiene el mapeo de la tabla EPR_EQUIPO
+    /// </summary>
+    public class EprEquipoHelper : HelperBase
+    {
+        public EprEquipoHelper(): base(Consultas.EprEquipoSql)
+        {
+        }
+
+        public void ObtenerMetaDatos(IDataReader dr, ref Dictionary<int, MetadataDTO> metadatos)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+            {
+                metadatos.Add(i, new MetadataDTO
+                {
+                    FieldName = dr.GetName(i),
+                    TipoDato = dr.GetFieldType(i)
+                });
+            }
+        }
+        public EprEquipoDTO Create(IDataReader dr)
+        {
+            EprEquipoDTO entity = new EprEquipoDTO();
+
+            int iEpequicodi = dr.GetOrdinal(this.Epequicodi);
+            if (!dr.IsDBNull(iEpequicodi)) entity.Epequicodi = Convert.ToInt32(dr.GetValue(iEpequicodi));
+
+            int iEquicodi = dr.GetOrdinal(this.Equicodi);
+            if (!dr.IsDBNull(iEquicodi)) entity.Equicodi = Convert.ToInt32(dr.GetValue(iEquicodi));
+
+            int iEpequinomb = dr.GetOrdinal(this.Epequinomb);
+            if (!dr.IsDBNull(iEpequinomb)) entity.Epequinomb = Convert.ToString(dr.GetValue(iEpequinomb));
+
+
+            int iEpequiestregistro = dr.GetOrdinal(this.Epequiestregistro);
+            if (!dr.IsDBNull(iEpequiestregistro)) entity.Epequiestregistro = dr.GetValue(iEpequiestregistro).ToString();
+
+            int iEpequiusucreacion = dr.GetOrdinal(this.Epequiusucreacion);
+            if (!dr.IsDBNull(iEpequiusucreacion)) entity.Epequiusucreacion = dr.GetValue(iEpequiusucreacion).ToString();
+
+            int iEpequifeccreacion = dr.GetOrdinal(this.Epequifeccreacion);
+            if (!dr.IsDBNull(iEpequifeccreacion)) entity.Epequifeccreacion = Convert.ToDateTime(dr.GetValue(iEpequifeccreacion));
+
+            int iEpequiusumodificacion = dr.GetOrdinal(this.Epequiusumodificacion);
+            if (!dr.IsDBNull(iEpequiusumodificacion)) entity.Epequiusumodificacion = dr.GetValue(iEpequiusumodificacion).ToString();
+
+            int iEpequifecmodificacion = dr.GetOrdinal(this.Epequifecmodificacion);
+            if (!dr.IsDBNull(iEpequifecmodificacion)) entity.Epequifecmodificacion = Convert.ToDateTime(dr.GetValue(iEpequifecmodificacion));
+
+            if (validaColumna(dr, this.Epequiflagsev))
+            {
+                int iEpequiflagsev = dr.GetOrdinal(this.Epequiflagsev);
+                if (!dr.IsDBNull(iEpequiflagsev)) entity.Epequiflagsev = dr.GetValue(iEpequiflagsev).ToString();
+            }
+
+            return entity;
+        }
+
+        //GESPROTEC - 20241029
+        #region GESPROTECT
+        bool validaColumna(IDataReader dr, string columnName)
+        {
+            for (int i = 0; i < dr.FieldCount; i++)
+            {
+                if (dr.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        #endregion
+
+        #region Mapeo de Campos
+        public string Epequicodi = "EPEQUICODI";
+        public string Equicodi = "EQUICODI";
+        public string Epequinomb = "EPEQUINOMB";
+        public string Epequiestregistro = "EPEQUIESTREGISTRO";
+        public string Epequiusucreacion = "EPEQUIUSUCREACION";
+        public string Epequifeccreacion = "EPEQUIFECCREACION";
+
+        public string Epequiusumodificacion = "EPEQUIUSUMODIFICACION";
+        public string Epequifecmodificacion = "EPEQUIFECMODIFICACION";
+        public string Epequiflagsev = "EPEQUIFLAGSEV";
+        #endregion
+
+        #region
+        public string Equicodipadre = "EQUICODIPADRE";
+        public string Equinomb = "EQUINOMB";
+        public string Nivel = "NIVEL";
+
+        public string AreaNomb = "AREANOMB";
+        public string EmprNomb = "EMPRNOMB";
+        public string PosicionNucleoTc = "POSICION_NUCLEO_TC";
+        public string PickUp = "PICK_UP";
+        
+        #endregion
+
+        #region parametros
+        public string Areacodi = "AREACODI";
+        public string Idzona = "AREACODIZONA";
+        public string Ubicacion = "UBICACION";
+        public string IdUbicacion = "ID_UBICACION";
+        public string EmprCodi = "EMPRCODI";
+        
+
+        #endregion
+
+        #region Campos Paginacion
+        public static string MaxRowToFetch = "MAXROWTOFETCH";
+        public static string MinRowToFetch = "MINROWTOFETCH";
+
+        #endregion
+
+        #region parametrosSp
+        
+        public string EquicodiRele = "EQUICODI_RELE";
+        public string IdCelda= "ID_CELDA";
+        public string IdProyecto = "ID_PROYECTO";
+        public string Codigo = "CODIGO";
+        public string Fecha = "FECHA";
+        public string IdTitular = "ID_TITULAR";
+        public string Tension = "TENSION";
+        public string IdSistermaRele = "ID_SISTEMA_RELE";
+        public string IdMarca = "ID_MARCA";
+        public string Modelo = "MODELO";
+        public string IdTipoUso = "ID_TIPO_USO";
+        public string RtcPrimario = "RTC_PRIMARIO";
+        public string RtcSecundario = "RTC_SECUNDARIO";
+        public string RttPrimario = "RTT_PRIMARIO";
+        public string RttSecundario = "RTT_SECUNDARIO";
+        public string ProtCondinables = "PROT_CONDINABLES";
+        public string SincroCheckActivo = "SINCRO_CHECK_ACTIVO";
+        public string IdInterruptor = "ID_INTERRUPTOR";
+        public string DeltaTension = "DELTA_TENSION";
+        public string DeltaAngulo = "DELTA_ANGULO";
+        public string DeltaFrecuencia = "DELTA_FRECUENCIA";
+        public string SobreCCheckActivo = "SOBRE_C_CHECK_ACTIVO";
+        public string SobreCI = "SOBRE_C_I";
+        public string SobreTCheckActivo = "SOBRE_T_CHECK_ACTIVO";
+        public string SobreTU = "SOBRE_T_U";
+        public string SobreTT = "SOBRE_T_T";
+        public string SobreTUU = "SOBRE_T_UU";
+        public string SobreTTT = "SOBRE_T_TT";
+        public string PmuCheckActivo = "PMU_CHECK_ACTIVO";
+        public string PmuAccion = "PMU_ACCION";
+        public string IdInterruptorMS = "ID_INTERRUPTOR_MANDO_SINCRO";
+        public string IdMandoSincronizado = "ID_MANDO_SINCRONIZADO";
+        public string MedidaMitigacion = "MEDIDA_MITIGACION";
+        public string ReleTorsImpl = "RELE_TORS_IMPL";
+        public string RelePmuAccion = "RELE_PMU_ACCION";
+        public string RelePmuImpl = "RELE_PMU_IMPL";
+
+
+        public string IdLinea = "ID_LINEA";
+        public string IdArea = "ID_AREA";
+        public string CapacidadA = "CAPACIDAD_A";
+        public string CapacidadMva = "CAPACIDAD_MVA";
+        public string IdCelda2 = "ID_CELDA_2";
+        public string IdBancoCondensador = "ID_BANCO_CONDENSADOR";
+        public string CapacTransCond1Porcen = "CAPAC_TRANS_COND_1_PORCEN";
+        public string CapacTransCond1Min = "CAPAC_TRANS_COND_1_MIN";
+        public string CapacTransCond1A = "CAPAC_TRANS_COND_1_A";
+        public string CapacTransCond2Porcen = "CAPAC_TRANS_COND_2_PORCEN";
+        public string CapacTransCond2Min = "CAPAC_TRANS_COND_2_MIN";
+        public string CapacTransCond2A = "CAPAC_TRANS_COND_2_A";
+        public string CapacidadTransmisionA = "CAPACIDAD_TRANSMISION_A";
+        public string CapacidadTransmisionMVA = "CAPACIDAD_TRANSMISION_MVA";
+        public string LimiteSegCoes = "LIMITE_SEG_COES";
+        public string FactorLimitanteCalc = "FACTOR_LIMITANTE_CALC";
+        public string FactorLimitanteFinal = "FACTOR_LIMITANTE_FINAL";
+        public string Observaciones = "OBSERVACIONES";
+        public string UsuarioAuditoria = "USUARIO_AUDITORIA";
+
+        public string CapacidadMvar = "CAPACIDAD_MVAR";
+
+        public string Longitud = "LONGITUD";
+        public string CeldaPosicionNucleoTc = "CELDA_1_POSICION_NUCLEO_TC";
+        public string CeldaPickUp = "CELDA_1_PICK_UP";
+
+        public string Celda2PosicionNucleoTc = "CELDA_2_POSICION_NUCLEO_TC";
+        public string Celda2PickUp = "CELDA_2_PICK_UP";
+        public string BancoCondensadorSerieCapacidadA = "BANCO_CONDEN_SERIE_CAPACIDAD_A";
+        public string BancoCondensadorSerieCapacidadMVAR = "BANCO_CONDEN_SERIE_CAPACIDAD_MVAR";
+
+        #endregion
+
+        #region ListEquipoProtGrilla
+        public string Sistema = "SISTEMA";
+        public string Celda = "CELDA";
+        public string Marca = "MARCA";
+        public string TipoUso = "TIPOUSO";
+        public string Estado = "ESTADO";
+        public string NombSubestacion = "NOMB_SUBESTACION";
+        #endregion
+
+        #region ListEquipoProtGrilla
+        public string ProyectoNomb = "PROYECTONOMB";
+        public string ProyectoDesc = "PROYECTODESC";
+        #endregion
+
+        #region EquipamientoModificado
+        public string Epproycodi = "EPPROYCODI";
+        public string SubestacionNomb = "SUBESTACION";
+        public string Rele = "RELE";
+        public string SistemaRele = "SISTEMA_RELE";
+        public string MemoriaCalculo = "MEMORIA_CALCULO";
+        public string Accion = "ACCION";
+        public string ProyectoCreador = "PROYECTO_CREADOR";
+        public string Fechacreacionstr = "FECHA_CREACIONSTR";
+        public string Fechamodificacionstr = "FECHA_MODIFICACIONSTR";
+        public string ProyectoActualizador = "PROYECTO_ACTUALIZADOR";
+        public string EquiAbrev = "EQUIABREV";
+        public string Subestacion1 = "SUBESTACION_1";
+        public string Subestacion2 = "SUBESTACION_2";
+
+        #endregion
+
+        #region ZipHistorialCambio
+        public string Zona = "ZONA";
+        public string NombreArchivo = "NOMBREARCHIVO";
+        public string Tipo = "TIPO";
+        #endregion
+
+        #region Validacion de Eliminacion 
+        public string NroEquipos = "NRO_EQUIPOS";
+        #endregion
+
+        #region Reactor
+        public string IdReactor = "ID_REACTOR";
+        public string IdCelda1 = "ID_CELDA_1";
+        public string CapacidadTransmisionAComent = "CAPACIDAD_TRANSMISION_A_COMENT";
+        public string CapacidadTransmisionMvar = "CAPACIDAD_TRANSMISION_MVAR";
+        public string CapacidadTransmisionMvarComent = "CAPACIDAD_TRANSMISION_MVAR_COMENT";
+        public string FactorLimitanteCalcComent = "FACTOR_LIMIANTE_CALC_COMENT";
+        public string FactorLimitanteFinalComent = "FACTOR_LIMITANTE_FINAL_COMENT";
+        #endregion
+
+        #region Transformador
+        public string IdTransformador = "ID_TRANSFORMADOR";
+        public string D1IdCelda = "D1_ID_CELDA";
+        public string D1CapacidadOnanMva = "D1_CAPACIDAD_ONAN_MVA";
+        public string D1CapacidadOnanMvaComent = "D1_CAPACIDAD_ONAN_MVA_COMENT";
+        public string D1CapacidadOnafMva = "D1_CAPACIDAD_ONAF_MVA";
+        public string D1CapacidadOnafMvaComent = "D1_CAPACIDAD_ONAF_MVA_COMENT";
+        public string D1CapacidadMva = "D1_CAPACIDAD_MVA";
+        public string D1CapacidadMvaComent = "D1_CAPACIDAD_MVA_COMENT";
+        public string D1CapacidadA = "D1_CAPACIDAD_A";
+        public string D1CapacidadAComent = "D1_CAPACIDAD_A_COMENT";
+        public string D1PosicionTcA = "D1_POSICION_TC_A";
+        public string D1PosicionPickUpA = "D1_POSICION_PICK_UP_A";
+        public string D1CapacidadTransmisionA = "D1_CAPACIDAD_TRANSMISION_A";
+        public string D1CapacidadTransmisionAComent = "D1_CAPACIDAD_TRANSMISION_A_COMENT";
+        public string D1CapacidadTransmisionMva = "D1_CAPACIDAD_TRANSMISION_MVA";
+        public string D1CapacidadTransmisionMvaComent = "D1_CAPACIDAD_TRANSMISION_MVA_COMENT";
+        public string D1FactorLimitanteCalc = "D1_FACTOR_LIMITANTE_CALC";
+        public string D1FactorLimitanteCalcComent = "D1_FACTOR_LIMITANTE_CALC_COMENT";
+        public string D1FactorLimitanteFinal = "D1_FACTOR_LIMTANTE_FINAL";
+        public string D1FactorLimitanteFinalComent = "D1_FACTOR_LIMTANTE_FINAL_COMENT";
+        public string D2IdCelda = "D2_ID_CELDA";
+        public string D2CapacidadOnanMva = "D2_CAPACIDAD_ONAN_MVA";
+        public string D2CapacidadOnanMvaComent = "D2_CAPACIDAD_ONAN_MVA_COMENT";
+        public string D2CapacidadOnafMva = "D2_CAPACIDAD_ONAF_MVA";
+        public string D2CapacidadOnafMvaComent = "D2_CAPACIDAD_ONAF_MVA_COMENT";
+        public string D2CapacidadMva = "D2_CAPACIDAD_MVA";
+        public string D2CapacidadMvaComent = "D2_CAPACIDAD_MVA_COMENT";
+        public string D2CapacidadA = "D2_CAPACIDAD_A";
+        public string D2CapacidadAComent = "D2_CAPACIDAD_A_COMENT";
+        public string D2PosicionTcA = "D2_POSICION_TC_A";
+        public string D2PosicionPickUpA = "D2_POSICION_PICK_UP_A";
+        public string D2CapacidadTransmisionA = "D2_CAPACIDAD_TRANSMISION_A";
+        public string D2CapacidadTransmisionAComent = "D2_CAPACIDAD_TRANSMISION_A_COMENT";
+        public string D2CapacidadTransmisionMva = "D2_CAPACIDAD_TRANSMISION_MVA";
+        public string D2CapacidadTransmisionMvaComent = "D2_CAPACIDAD_TRANSMISION_MVA_COMENT";
+        public string D2FactorLimitanteCalc = "D2_FACTOR_LIMITANTE_CALC";
+        public string D2FactorLimitanteCalcComent = "D2_FACTOR_LIMITANTE_CALC_COMENT";
+        public string D2FactorLimitanteFinal = "D2_FACTOR_LIMITANTE_FINAL";
+        public string D2FactorLimitanteFinalComent = "D2_FACTOR_LIMITANTE_FINAL_COMENT";
+        public string D3IdCelda = "D3_ID_CELDA";
+        public string D3CapacidadOnanMva = "D3_CAPACIDAD_ONAN_MVA";
+        public string D3CapacidadOnanMvaComent = "D3_CAPACIDAD_ONAN_MVA_COMENT";
+        public string D3CapacidadOnafMva = "D3_CAPACIDAD_ONAF_MVA";
+        public string D3CapacidadOnafMvaComent = "D3_CAPACIDAD_ONAF_MVA_COMENT";
+        public string D3CapacidadMva = "D3_CAPACIDAD_MVA";
+        public string D3CapacidadMvaComent = "D3_CAPACIDAD_MVA_COMENT";
+        public string D3CapacidadA = "D3_CAPACIDAD_A";
+        public string D3CapacidadAComent = "D3_CAPACIDAD_A_COMENT";
+        public string D3PosicionTcA = "D3_POSICION_TC_A";
+        public string D3PosicionPickUpA = "D3_POSICION_PICK_UP_A";
+        public string D3CapacidadTransmisionA = "D3_CAPACIDAD_TRANSMISION_A";
+        public string D3CapacidadTransmisionAComent = "D3_CAPACIDAD_TRANSMISION_A_COMENT";
+        public string D3CapacidadTransmisionMva = "D3_CAPACIDAD_TRANSMISION_MVA";
+        public string D3CapacidadTransmisionMvaComent = "D3_CAPACIDAD_TRANSMISION_MVA_COMENT";
+        public string D3FactorLimitanteCalc = "D3_FACTOR_LIMITANTE_CALC";
+        public string D3FactorLimitanteCalcComent = "D3_FACTOR_LIMITANTE_CALC_COMENT";
+        public string D3FactorLimitanteFinal = "D3_FACTOR_LIMITANTE_FINAL";
+        public string D3FactorLimitanteFinalComent = "D3_FACTOR_LIMITANTE_FINAL_COMENT";
+
+        public string D4IdCelda = "D4_ID_CELDA";
+        public string D4CapacidadOnanMva = "D4_CAPACIDAD_ONAN_MVA";
+        public string D4CapacidadOnanMvaComent = "D4_CAPACIDAD_ONAN_MVA_COMENT";
+        public string D4CapacidadOnafMva = "D4_CAPACIDAD_ONAF_MVA";
+        public string D4CapacidadOnafMvaComent = "D4_CAPACIDAD_ONAF_MVA_COMENT";
+        public string D4CapacidadMva = "D4_CAPACIDAD_MVA";
+        public string D4CapacidadMvaComent = "D4_CAPACIDAD_MVA_COMENT";
+        public string D4CapacidadA = "D4_CAPACIDAD_A";
+        public string D4CapacidadAComent = "D4_CAPACIDAD_A_COMENT";
+        public string D4PosicionTcA = "D4_POSICION_TC_A";
+        public string D4PosicionPickUpA = "D4_POSICION_PICK_UP_A";
+        public string D4CapacidadTransmisionA = "D4_CAPACIDAD_TRANSMISION_A";
+        public string D4CapacidadTransmisionAComent = "D4_CAPACIDAD_TRANSMISION_A_COMENT";
+        public string D4CapacidadTransmisionMva = "D4_CAPACIDAD_TRANSMISION_MVA";
+        public string D4CapacidadTransmisionMvaComent = "D4_CAPACIDAD_TRANSMISION_MVA_COMENT";
+        public string D4FactorLimitanteCalc = "D4_FACTOR_LIMITANTE_CALC";
+        public string D4FactorLimitanteCalcComent = "D4_FACTOR_LIMITANTE_CALC_COMENT";
+        public string D4FactorLimitanteFinal = "D4_FACTOR_LIMITANTE_FINAL";
+        public string D4FactorLimitanteFinalComent = "D4_FACTOR_LIMITANTE_FINAL_COMENT";
+
+        #endregion
+
+        #region Celda Acoplamiento
+        public string CapacidadAComent = "CAPACIDAD_A_COMENT";
+        public string CapacidadMvarComent = "CAPACIDAD_MVAR_COMENT";
+        #endregion
+
+        public string Resultado = "RESULTADO";
+        public string ListArbol
+        {
+            get { return GetSqlXml("ListArbol"); }
+        }
+
+        public string ListCelda
+        {
+            get { return GetSqlXml("ListCelda"); }
+        }
+
+        public string ListInterruptor
+        {
+            get { return GetSqlXml("ListInterruptor"); }
+        }
+
+        public string SaveRele
+        {
+            get { return GetSqlXml("SaveRele"); }
+        }
+
+        public string UpdateRele
+        {
+            get { return GetSqlXml("UpdateRele"); }
+        }
+
+        public string ListEquipoProtGrilla
+        {
+            get { return GetSqlXml("ListEquipoProtGrilla"); }
+        }
+
+        public string ReporteEquipoProtGrilla
+        {
+            get { return GetSqlXml("ReporteEquipoProtGrilla"); }
+        }
+
+        public string ArchivoZipHistarialCambio
+        {
+            get { return GetSqlXml("ArchivoZipHistarialCambio"); }
+        }
+
+        public string ReporteEquipoProtGrillaProyecto
+        {
+            get { return GetSqlXml("ReporteEquipoProtGrillaProyecto"); }
+        }
+
+        public string GetByIdEquipoProtec
+        {
+            get { return GetSqlXml("GetByIdEquipoProtec"); }
+        }
+
+        public string GetIdCelda
+        {
+            get { return GetSqlXml("GetIdCelda"); }
+        }
+        public string ListLineaTiempo
+        {
+            get { return GetSqlXml("ListLineaTiempo"); }
+        }
+
+        public string ListEquipamientoModificado
+        {
+            get { return GetSqlXml("ListEquipamientoModificado"); }
+        }
+
+        public string SqlCantidadEquipoSGOCOESEliminar
+        {
+            get { return GetSqlXml("SqlCantidadEquipoSGOCOESEliminar"); }
+        }
+        
+        public string GetDetalleArbolEquipoProteccion
+        {
+            get { return GetSqlXml("GetDetalleArbolEquipoProteccion"); }
+        }
+
+        public string ListReleSincronismo
+        {
+            get { return GetSqlXml("ListReleSincronismo"); }
+        }
+
+        public string ListBuscarCeldaAcoplamiento
+        {
+            get { return GetSqlXml("ListBuscarCeldaAcoplamiento"); } 
+        }
+
+        public string SqlRegistrarLinea
+        {
+            get { return GetSqlXml("SqlRegistrarLinea"); }
+        }
+
+        #region GESTPROTEC Evaluación
+        public string ListCeldaEvaluacion
+        {
+            get { return GetSqlXml("ListCeldaEvaluacion"); }
+        }
+        public string ListBancoEvaluacion
+        {
+            get { return GetSqlXml("ListBancoEvaluacion"); }
+        }
+        public string GetIdLineaIncluir
+        {
+            get { return GetSqlXml("GetIdLineaIncluir"); }
+        }
+        public string ListLineaEvaluacionPrincipal
+        {
+            get { return GetSqlXml("ListLineaEvaluacionPrincipal"); }
+        }
+        
+        #endregion
+        public string ListBuscarReactor
+        {
+            get { return GetSqlXml("ListBuscarReactor"); }
+        }
+
+        public string ListBuscarTransformador
+        {
+            get { return GetSqlXml("ListBuscarTransformador"); }
+        }
+
+        public string ListTransformadores
+        {
+            get { return GetSqlXml("ListTransformadores"); }
+        }
+
+        public string ListTransversalConsultarEquipo
+        {
+            get { return GetSqlXml("ListTransversalConsultarEquipo"); }
+        }
+
+        public string SqlObtenerTransversalHistorialActualizacion
+        {
+            get { return GetSqlXml("ObtenerTransversalHistorialActualizacion"); }
+        }
+
+        public string SqlListTransversalActualizaciones
+        {
+            get { return GetSqlXml("ListTransversalActualizaciones"); }
+        }
+
+        public string SqlListTransversalPropiedadesActualizadas
+        {
+            get { return GetSqlXml("ListTransversalPropiedadesActualizadas"); }
+        }
+
+        public string SqlRegistrarReactor
+        {
+            get { return GetSqlXml("SqlRegistrarReactor"); }
+        }
+
+        public string SqlRegistrarTransformador
+        {
+            get { return GetSqlXml("SqlRegistrarTransformador"); }
+        }
+
+        public string SqlListReactor
+        {
+            get { return GetSqlXml("SqlListReactor"); }
+        }
+
+        public string SqlObtenerReactorPorId
+        {
+            get { return GetSqlXml("SqlObtenerReactorPorId"); }
+        }
+
+        public string SqlListCeldaAcoplamiento
+        {
+            get { return GetSqlXml("SqlListCeldaAcoplamiento"); }
+        }
+
+        public string SqlObtenerCeldaAcoplamientoPorId
+        {
+            get { return GetSqlXml("SqlObtenerCeldaAcoplamientoPorId"); }
+        }
+
+        public string SqlListReleSobretension
+        {
+            get { return GetSqlXml("SqlListReleSobretension"); }
+        }
+
+        public string SqlListReleMandoSincronizado
+        {
+            get { return GetSqlXml("SqlListReleMandoSincronizado"); }
+        }
+
+        public string SqlListReleTorcional
+        {
+            get { return GetSqlXml("SqlListReleTorcional"); }
+        }
+
+        public string SqlListRelePMU
+        {
+            get { return GetSqlXml("SqlListRelePMU"); }
+        }
+
+        public string SqlListTransformador
+        {
+            get { return GetSqlXml("SqlListTransformador"); }
+        }
+
+        public string SqlObtenerTransformadorPorId
+        {
+            get { return GetSqlXml("SqlObtenerTransformadorPorId"); }
+        }
+
+        public string SqlRegistrarCeldaAcoplamiento
+        {
+            get { return GetSqlXml("SqlRegistrarCeldaAcoplamiento"); }
+        }
+        public string SqlObtenerEquipoPorId
+        {
+            get { return GetSqlXml("SqlObtenerEquipoPorId"); }
+        }
+        public string SqlObtenerListaInterruptorPorAreacodi
+        {
+            get { return GetSqlXml("SqlObtenerListaInterruptorPorAreacodi"); }
+        }
+        public string SqlObtenerCabeceraEquipoPorId
+        {
+            get { return GetSqlXml("SqlObtenerCabeceraEquipoPorId"); }
+        }
+        
+        public string SqlListReporteLimiteCapacidad
+        {
+            get { return GetSqlXml("SqlListReporteLimiteCapacidad"); }
+        }
+        public string SqlObtenerReporteLimiteCapacidadPorId
+        {
+            get { return GetSqlXml("SqlObtenerReporteLimiteCapacidadPorId"); }
+        }
+
+        public string SqlObtenerMaxIdReporteLimiteCapacidad
+        {
+            get { return GetSqlXml("SqlObtenerMaxIdReporteLimiteCapacidad"); }
+        }
+
+        public string SqlActualizarReporteLimiteCapacidad
+        {
+            get { return GetSqlXml("SqlActualizarReporteLimiteCapacidad"); }
+        }
+
+        public string SqlGuardarReporteLimiteCapacidad
+        {
+            get { return GetSqlXml("SqlGuardarReporteLimiteCapacidad"); }
+        }
+        public string SqlEliminarReporteLimiteCapacidad
+        {
+            get { return GetSqlXml("SqlEliminarReporteLimiteCapacidad"); }
+        }
+
+        public string SqlAgregarEliminarArchivoReporteLimiteCapacidad
+        {
+            get { return GetSqlXml("SqlAgregarEliminarArchivoReporteLimiteCapacidad"); }
+        }
+
+        public string SqlObtenerMaxRevision
+        {
+            get { return GetSqlXml("SqlObtenerMaxRevision"); }
+        }
+
+        public string SqlObtenerFechaReportePorId
+        {
+            get { return GetSqlXml("SqlObtenerFechaReportePorId"); }
+        }
+
+
+
+        #region GESPROTECT - Exportacion Datos Reles
+
+        public string ListReleSincronismoReporte
+        {
+            get { return GetSqlXml("ListReleSincronismoReporte"); }
+        }
+
+        public string ListReleSobreTensionReporte
+        {
+            get { return GetSqlXml("ListReleSobretensionReporte"); }
+        }
+
+        public string ListReleMandoSincronizadoReporte
+        {
+            get { return GetSqlXml("ListReleMandoSincronizadoReporte"); }
+        }
+
+        public string ListReleTorsionalReporte
+        {
+            get { return GetSqlXml("ListReleTorsionalReporte"); }
+        }
+
+        public string ListRelePmuReporte
+        {
+            get { return GetSqlXml("ListRelePmuReporte"); }
+        }
+
+        public string SqlObtenerDatoCelda
+        {
+            get { return GetSqlXml("SqlObtenerDatoCelda"); }
+        }
+        
+
+        #endregion
+
+        public string SqlExcluirEquipoProtecciones
+        {
+            get { return GetSqlXml("SqlExcluirEquipoProtecciones"); }
+        }
+
+
+    }
+}

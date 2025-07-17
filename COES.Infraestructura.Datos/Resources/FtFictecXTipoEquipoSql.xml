@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(fteqcodi), 0) + 1 from ft_fictecxtipoequipo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ft_fictecxtipoequipo(
+      fteqcodi,
+      fteqnombre,
+      famcodi,
+      catecodi,
+      ftequsucreacion,
+      ftequsumodificacion,
+      fteqfecmodificacion,
+      fteqfeccreacion,
+      fteqpadre,
+      fteqestado,
+      fteqflagext,
+      fteqfecvigenciaext,
+      fteqflagmostrarcoment,
+      fteqflagmostrarsust,
+      fteqflagmostrarfech,
+      ftequsumodificacionasig,
+      fteqfecmodificacionasig
+      )
+      values(
+      :fteqcodi,
+      :fteqnombre,
+      :famcodi,
+      :catecodi,
+      :ftequsucreacion,
+      :ftequsumodificacion,
+      :fteqfecmodificacion,
+      :fteqfeccreacion,
+      :fteqpadre,
+      :fteqestado,
+      :fteqflagext,
+      :fteqfecvigenciaext,
+      :fteqflagmostrarcoment,
+      :fteqflagmostrarsust,
+      :fteqflagmostrarfech,
+      :ftequsumodificacionasig,
+      :fteqfecmodificacionasig
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ft_fictecxtipoequipo
+      set
+      fteqnombre = :fteqnombre,
+      famcodi = :famcodi,
+      catecodi = :catecodi,
+      ftequsucreacion = :ftequsucreacion,
+      ftequsumodificacion = :ftequsumodificacion,
+      fteqfecmodificacion = :fteqfecmodificacion,
+      fteqfeccreacion = :fteqfeccreacion,
+      fteqpadre = :fteqpadre,
+      fteqestado = :fteqestado,
+      fteqflagext = :fteqflagext,
+      fteqfecvigenciaext = :fteqfecvigenciaext,
+      fteqflagmostrarcoment = :fteqflagmostrarcoment,
+      fteqflagmostrarsust = :fteqflagmostrarsust,
+      fteqflagmostrarfech = :fteqflagmostrarfech,
+      ftequsumodificacionasig = :ftequsumodificacionasig,
+      fteqfecmodificacionasig = :fteqfecmodificacionasig
+
+      where
+      fteqcodi = :fteqcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update ft_fictecxtipoequipo
+      set
+      ftequsumodificacion = :ftequsumodificacion,
+      fteqfecmodificacion = :fteqfecmodificacion,
+      fteqestado = 'B'
+      where
+      fteqcodi = :fteqcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      ft.*, fam.famnomb, cat.CATENOMB
+      from ft_fictecxtipoequipo ft
+      left join eq_familia fam on ft.famcodi = fam.famcodi
+      left join pr_categoria cat on ft.CATECODI = cat.CATECODI
+      where ft.fteqcodi = :fteqcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select ft.*
+      from ft_fictecxtipoequipo ft
+      where ft.fteqestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select ft.*, fam.famnomb, cat.CATENOMB, famp.famcodi famcodipadre, famp.famnomb famnombpadre, catp.catecodi catecodipadre, catp.CATENOMB CATENOMBpadre, ftp.FTEQNOMBRE FTEQNOMBREpadre
+      from ft_fictecxtipoequipo ft
+      left join eq_familia fam on ft.famcodi = fam.famcodi
+      left join pr_categoria cat on ft.CATECODI = cat.CATECODI
+      left join ft_fictecxtipoequipo ftp on ftp.fteqcodi = ft.fteqpadre
+      left join eq_familia famp on ftp.famcodi = famp.famcodi
+      left join pr_categoria catp on ftp.CATECODI = catp.CATECODI
+      where ('{0}' = '-1' or ft.fteqestado = '{0}' )
+      order by ft.fteqestado,(case when ft.fteqpadre is null then fam.famnomb else famp.famnomb end ) ,fam.famnomb, cat.CATENOMB , upper(ft.FTEQNOMBRE)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByFteccodi</key>
+    <query>
+      select feq.*, fam.famnomb, cat.CATENOMB
+      from ft_fictecxtipoequipo feq
+      left join eq_familia fam on feq.famcodi = fam.famcodi
+      left join pr_categoria cat on feq.CATECODI = cat.CATECODI
+      inner join FT_FICTECDET det on det.FTEQCODI = feq.FTEQCODI
+      inner join FT_FICHATECNICA ft on ft.FTECCODI = det.FTECCODI
+      where ft.FTECCODI = {0} and feq.fteqestado = 'A'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListAllByFteccodi</key>
+    <query>
+      
+      select feq.*, fam.famnomb, cat.CATENOMB
+      from ft_fictecxtipoequipo feq
+      left join eq_familia fam on feq.famcodi = fam.famcodi
+      left join pr_categoria cat on feq.CATECODI = cat.CATECODI
+      inner join FT_FICTECDET det on det.FTEQCODI = feq.FTEQCODI
+      inner join FT_FICHATECNICA ft on ft.FTECCODI = det.FTECCODI
+      where ft.FTECCODI = {0} and feq.fteqestado = 'A'
+      
+      union 
+      
+      select feqh.* , fam.famnomb, cat.CATENOMB
+      from ft_fictecxtipoequipo feqh
+      inner join ft_fictecxtipoequipo feq on feq.FTEQCODI = feqh.FTEQPADRE
+      left join eq_familia fam on feqh.famcodi = fam.famcodi
+      left join pr_categoria cat on feqh.CATECODI = cat.CATECODI
+      inner join FT_FICTECDET det on det.FTEQCODI = feq.FTEQCODI
+      inner join FT_FICHATECNICA ft on ft.FTECCODI = det.FTECCODI
+      where ft.FTECCODI = {0} and feqh.fteqestado = 'A'
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListByFteqpadre</key>
+    <query>
+      select * from
+      (
+      select distinct feq.*, fam.famnomb, cat.CATENOMB
+      from ft_fictecxtipoequipo feq
+      left join eq_familia fam on feq.famcodi = fam.famcodi
+      left join pr_categoria cat on feq.CATECODI = cat.CATECODI
+      inner join FT_FICTECDET det on det.FTEQCODI = feq.FTEQPADRE
+      inner join FT_FICHATECNICA ft on ft.FTECCODI = det.FTECCODI
+      where feq.FTEQPADRE = {0} and feq.fteqestado = 'A'
+      )
+      order by fteqestado ,famnomb, CATENOMB , FTEQNOMBRE
+    </query>
+  </Sql>
+</Sqls>

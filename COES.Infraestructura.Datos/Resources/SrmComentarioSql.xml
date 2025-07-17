@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(srmcomcodi), 0) + 1 from srm_comentario
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into srm_comentario(
+      srmcomcodi,
+      srmreccodi,
+      usercode,
+      emprcodi,
+      srmcomfechacoment,
+      srmcomgruporespons,
+      srmcomcomentario,
+      srmcomactivo,
+      srmcomusucreacion,
+      srmcomfeccreacion,
+      srmcomusumodificacion,
+      srmcomfecmodificacion
+      )
+      values(
+      :srmcomcodi,
+      :srmreccodi,
+      :usercode,
+      :emprcodi,
+      :srmcomfechacoment,
+      :srmcomgruporespons,
+      :srmcomcomentario,
+      :srmcomactivo,
+      :srmcomusucreacion,
+      :srmcomfeccreacion,
+      :srmcomusumodificacion,
+      :srmcomfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update srm_comentario
+      set
+      srmreccodi = :srmreccodi,
+      usercode = :usercode,
+      emprcodi = :emprcodi,
+      srmcomfechacoment = :srmcomfechacoment,
+      srmcomgruporespons = :srmcomgruporespons,
+      srmcomcomentario = :srmcomcomentario,
+      srmcomactivo = :srmcomactivo,
+      srmcomusucreacion = :srmcomusucreacion,
+      srmcomfeccreacion = :srmcomfeccreacion,
+      srmcomusumodificacion = :srmcomusumodificacion,
+      srmcomfecmodificacion = :srmcomfecmodificacion
+      where
+      srmcomcodi = :srmcomcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from srm_comentario
+      where
+      srmcomcodi = :srmcomcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      srmcomcodi,
+      srmreccodi,
+      usercode,
+      emprcodi,
+      srmcomfechacoment,
+      srmcomgruporespons,
+      srmcomcomentario,
+      srmcomactivo,
+      srmcomusucreacion,
+      srmcomfeccreacion,
+      srmcomusumodificacion,
+      srmcomfecmodificacion
+      from
+      srm_comentario
+      where
+      srmcomcodi = :srmcomcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      srmcomcodi,
+      srmreccodi,
+      usercode,
+      emprcodi,
+      srmcomfechacoment,
+      srmcomgruporespons,
+      srmcomcomentario,
+      srmcomactivo,
+      srmcomusucreacion,
+      srmcomfeccreacion,
+      srmcomusumodificacion,
+      srmcomfecmodificacion
+      from
+      srm_comentario
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      srmcomcodi,
+      srmreccodi,
+      usercode,
+      emprcodi,
+      srmcomfechacoment,
+      srmcomgruporespons,
+      srmcomcomentario,
+      srmcomactivo,
+      srmcomusucreacion,
+      srmcomfeccreacion,
+      srmcomusumodificacion,
+      srmcomfecmodificacion
+      from
+      srm_comentario
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListado</key>
+    <query>
+      select
+      *
+      from (
+      select srmcomcodi,srmcomfechacoment,srmcomgruporespons,
+      (case when srmcomgruporespons='C' then (select username from fw_user z where z.usercode=a.usercode) else '' end) username,
+      (case when srmcomgruporespons='A' then (select emprnomb from si_empresa z where z.emprcodi=a.emprcodi) else '' end) emprnomb,
+      srmcomcomentario,srmcomusucreacion,srmcomfeccreacion,
+      srmcomusumodificacion,srmcomfecmodificacion,srmcomactivo,
+      (row_number() over (order by srmcomfechacoment)) as r
+      from srm_comentario a, srm_recomendacion b, eve_evento c
+      where a.srmreccodi=b.srmreccodi and b.evencodi=c.evencodi and c.deleted='N' and a.srmreccodi={0} and a.srmcomactivo='{1}'
+      order by srmcomfechacoment
+      )
+      where (r >= ((({2}-1) * {3}) + 1) and r &lt; (({2} * {3}) + 1 )) or ({2} = -1 and {3} = -1)
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>TotalRegistros</key>
+    <query>
+      select count(*) from srm_comentario a, srm_recomendacion b, eve_evento c
+      where a.srmreccodi=b.srmreccodi and b.evencodi=c.evencodi and c.deleted='N' and a.srmreccodi={0} and a.srmcomactivo='{1}'
+    </query>
+  </Sql>
+</Sqls>

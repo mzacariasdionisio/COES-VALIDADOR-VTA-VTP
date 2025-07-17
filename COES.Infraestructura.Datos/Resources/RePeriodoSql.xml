@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(repercodi), 0) + 1 from re_periodo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into re_periodo(
+           repercodi,
+           reperanio,
+           repertipo,
+           repernombre,
+           reperpadre,
+           reperrevision,
+           reperfecinicio,
+           reperfecfin,
+           reperestado,
+           reperorden,
+           repertcambio,
+           reperfactorcomp,
+           reperusucreacion,
+           reperfeccreacion,
+           reperusumodificacion,
+           reperfecmodificacion
+       )
+       values(
+           :repercodi,
+           :reperanio,
+           :repertipo,
+           :repernombre,
+           :reperpadre,
+           :reperrevision,
+           :reperfecinicio,
+           :reperfecfin,
+           :reperestado,
+           :reperorden,
+           :repertcambio,
+           :reperfactorcomp,
+           :reperusucreacion,
+           :reperfeccreacion,
+           :reperusumodificacion,
+           :reperfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update re_periodo
+       set
+           reperanio = :reperanio,
+           repertipo = :repertipo,
+           repernombre = :repernombre,
+           reperpadre = :reperpadre,
+           reperrevision = :reperrevision,
+           reperfecinicio = :reperfecinicio,
+           reperfecfin = :reperfecfin,
+           reperestado = :reperestado,
+           reperorden = :reperorden,
+           repertcambio = :repertcambio,
+           reperfactorcomp = :reperfactorcomp,
+           --reperusucreacion = :reperusucreacion,
+           --reperfeccreacion = :reperfeccreacion,
+           reperusumodificacion = :reperusumodificacion,
+           reperfecmodificacion = :reperfecmodificacion
+       where
+           repercodi = :repercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		update re_periodo
+		set reperestado = 'E'
+		where
+		repercodi = :repercodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           repercodi,
+           reperanio,
+           repertipo,
+           repernombre,
+           reperpadre,
+           reperrevision,
+           reperfecinicio,
+           reperfecfin,
+           reperestado,
+           reperorden,
+           repertcambio,
+           reperfactorcomp,
+           reperusucreacion,
+           reperfeccreacion,
+           reperusumodificacion,
+           reperfecmodificacion
+       from
+           re_periodo
+       where
+           repercodi = :repercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           repercodi,
+           reperanio,
+           repertipo,
+           repernombre,
+           reperpadre,
+           reperrevision,
+           reperfecinicio,
+           reperfecfin,
+           reperestado,
+           reperorden,
+           repertcambio,
+           reperfactorcomp,
+           reperusucreacion,
+           reperfeccreacion,
+           reperusumodificacion,
+           reperfecmodificacion
+       from
+           re_periodo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		per.repercodi,
+		per.reperanio,
+		case per.repertipo when 'S' then 'Semestral' when 'T' then 'Trimestral' else '' end as repertipo,
+		per.repernombre,
+		per.reperpadre,
+		per.reperrevision,
+		per.reperfecinicio,
+		per.reperfecfin,
+		case per.reperestado when 'A' then 'Activo' when 'I' then 'Inactivo' else '' end as reperestado,
+		per.reperorden,
+		per.repertcambio,
+		per.reperfactorcomp,
+		per.reperusucreacion,
+		per.reperfeccreacion,
+		per.reperusumodificacion,
+		per.reperfecmodificacion,
+		(select padre.repernombre from re_periodo padre where padre.repercodi = per.reperpadre) as repernombrepadre
+		from
+		re_periodo per
+		where (per.reperanio >= {0} and per.reperanio &lt;= {1}) and (per.reperestado = '{2}' or '{2}' = '-1') and (per.reperestado != 'E')
+		order by per.reperanio desc, per.reperorden asc
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerPeriodosPadre</key>
+		<query>
+			select
+			repercodi,
+			reperanio,
+			repertipo,
+			repernombre,
+			reperpadre,
+			reperrevision,
+			reperfecinicio,
+			reperfecfin,
+			reperestado,
+			reperorden,
+			repertcambio,
+			reperfactorcomp,
+			reperusucreacion,
+			reperfeccreacion,
+			reperusumodificacion,
+			reperfecmodificacion
+			from
+			re_periodo
+			where reperanio = {0} and repertipo = 'S' and reperrevision = 'N' and reperestado = 'A'
+			order by reperorden asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ValidarNombre</key>
+		<query>
+			select count(*) from re_periodo
+			where (repernombre = '{0}' and reperestado = 'A' and {1} = 0) or (repernombre = '{0}' and reperestado = 'A' and {1} != 0 and repercodi != {1})
+		</query>
+	</Sql>
+
+
+	<Sql>
+		<key>ObtenerPeriodosCercanos</key>
+		<query>
+			select * from re_periodo
+			where reperpadre = 0 and repertipo = 'S'  and reperestado = 'A' and reperanio &lt;= {0} and repercodi != {1}
+			order by reperfecinicio desc
+		</query>
+	</Sql>
+	
+</Sqls>

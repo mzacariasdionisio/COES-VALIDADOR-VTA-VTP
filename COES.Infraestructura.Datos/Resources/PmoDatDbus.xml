@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      SELECT
+      BR.PMDBUSCODI,
+      GR.GRUPOCODISDDP,
+      GR.GRUPONOMB,
+      BR.PMDBUSIDSISTEMA,
+      BR.PMDBUSNROSECGEN,
+      CASE WHEN GE.CATECODI IN (2,3) THEN 2 WHEN GE.CATECODI=5 THEN 1 ELSE NULL END AS "Tg",
+      --GE.GRUPOCODISDDP CODCENTRAL,
+      PGE.CODREF CODCENTRAL,
+      --GE.GRUPONOMB AS NOMBCENTRAL,
+      trim(PGE.PTOMEDIDESC) NOMBCENTRAL,
+      BR.PMDBUSNROAREA
+      FROM PMO_DAT_DBUS BR
+      JOIN PR_GRUPO GR ON BR.GRUPOCODI = GR.GRUPOCODI
+      LEFT JOIN PR_GRUPO GE ON BR.PMDBUSCENGRUPOCODI = GE.GRUPOCODI
+      LEFT JOIN ME_PTOMEDICION PGE ON BR.PMDBUSCENGRUPOCODI = PGE.GRUPOCODI AND PGE.TIPOINFOCODI=3 AND PGE.PTOMEDIESTADO='A'  AND PGE.ORIGLECTCODI=22
+      ORDER BY GR.GRUPOCODISDDP,BR.PMDBUSNROSECGEN
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetDat</key>
+    <query>
+      SELECT
+      LPAD(GR.GRUPOCODISDDP,5,' ') AS "Num",
+      LPAD(0,2,' ') AS "Tp",
+      RPAD(TRIM(SUBSTR(GR.GRUPONOMB,1,12)),12,' ') AS "NombreB",
+      BR.PMDBUSIDSISTEMA as "Id",
+      LPAD(BR.PMDBUSNROSECGEN,3,' ') as "Numeral",
+      CASE WHEN GE.CATECODI IN (2,3) THEN 2 WHEN GE.CATECODI=5 THEN 1 ELSE NULL END AS "Tg",
+      --LPAD(GE.GRUPOCODISDDP,4,' ') AS "Plnt",
+      LPAD(PGE.CODREF,4,' ') AS "Plnt",
+      --RPAD(TRIM(SUBSTR(GE.GRUPONOMB,1,12)),12,' ') AS "NombreGener",
+      RPAD(TRIM(SUBSTR(PGE.PTOMEDIDESC,1,12)),12,' ') AS "NombreGener",
+      LPAD(BR.PMDBUSNROAREA,4,' ') AS "Area",
+      '     ' AS "per1",
+      '     ' AS "Ploa1",
+      '     ' AS "Pind1",
+      '     ' AS "PerF1",
+      '     ' AS "per2",
+      '     ' AS "Ploa2",
+      '     ' AS "Pind2",
+      '     ' AS "PerF2",
+      '     ' AS "per3",
+      '     ' AS "Ploa3",
+      '     ' AS "Pind3",
+      '     ' AS "PerF3",
+      '     ' AS "per4",
+      '     ' AS "Ploa4",
+      '     ' AS "Pind4",
+      '     ' AS "PerF4",
+      '     ' AS "per5",
+      '     ' AS "Ploa5",
+      '     ' AS "Pind5",
+      '     ' AS "PerF5",
+      LPAD(0,4,' ') AS "Icca"
+      FROM PMO_DAT_DBUS BR
+      JOIN PR_GRUPO GR ON BR.GRUPOCODI = GR.GRUPOCODI
+      LEFT JOIN PR_GRUPO GE ON BR.PMDBUSCENGRUPOCODI = GE.GRUPOCODI
+      LEFT JOIN ME_PTOMEDICION PGE ON BR.PMDBUSCENGRUPOCODI = PGE.GRUPOCODI AND PGE.TIPOINFOCODI=3 AND PGE.PTOMEDIESTADO='A'  AND PGE.ORIGLECTCODI=22
+      ORDER BY GR.GRUPOCODISDDP,BR.PMDBUSNROSECGEN
+    </query>
+  </Sql>
+  
+<Sql>
+    <key>GetCount</key>
+    <query>
+       select count(*) as CANT from pmo_dat_dbus
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GenerateDat</key>
+    <query>
+       DECLARE V_CONT INTEGER;
+
+BEGIN
+SELECT COUNT(*) INTO V_CONT FROM PMO_DAT_DBUS;
+      IF V_CONT = 0 THEN
+        INSERT INTO PMO_DAT_DBUS(PMDBUSCODI,GRUPOCODI,PMDBUSIDSISTEMA,PMDBUSNROSECGEN,PMDBUSCENGRUPOCODI,PMDBUSNROAREA)
+        SELECT ROWNUM,GR.GRUPOCODI,'pe',GE.GRRASOSECUENCIA,GE.GRUPOCODI2,GE.GRRASOTAG
+        FROM PR_GRUPO GR LEFT JOIN PR_GRUPORELASO GE ON GR.GRUPOCODI = GE.GRUPOCODI1 AND GE.GRRDEFCODI IN (2,3)
+        WHERE GR.CATECODI = 13;
+      END IF;
+END;
+    </query>
+  </Sql>
+ 
+</Sqls>

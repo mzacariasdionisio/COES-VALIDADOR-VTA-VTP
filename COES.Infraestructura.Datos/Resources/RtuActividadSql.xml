@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(rtuactcodi), 0) + 1 from rtu_actividad
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into rtu_actividad(
+		rtuactcodi,
+		rtuactdescripcion,
+		rtuactabreviatura,
+		rtuactestado,
+		rtuactreporte,
+		rturescodi,
+		rtuactusucreacion,
+		rtuactfeccreacion,
+		rtuactusumodificacion,
+		rtuactfecmodificacion
+		)
+		values(
+		:rtuactcodi,
+		:rtuactdescripcion,
+		:rtuactabreviatura,
+		:rtuactestado,
+		:rtuactreporte,
+		:rturescodi,
+		:rtuactusucreacion,
+		:rtuactfeccreacion,
+		:rtuactusumodificacion,
+		:rtuactfecmodificacion
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+		update rtu_actividad
+		set
+		rtuactdescripcion = :rtuactdescripcion,
+		rtuactabreviatura = :rtuactabreviatura,
+		rtuactestado = :rtuactestado,
+		rtuactreporte = :rtuactreporte,
+		rturescodi = :rturescodi,
+		rtuactusumodificacion = :rtuactusumodificacion,
+		rtuactfecmodificacion = :rtuactfecmodificacion
+		where
+		rtuactcodi = :rtuactcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		update rtu_actividad
+		set rtuactestado = 'E',
+		rtuactusumodificacion = :rtuactusumodificacion,
+		rtuactfecmodificacion = sysdate
+		where
+		rtuactcodi = :rtuactcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select *
+      from
+      rtu_actividad
+      where
+      rtuactcodi = :rtuactcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+		select *
+		from
+		rtu_actividad
+		where rtuactestado != 'E'
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		a.rtuactcodi,
+		a.rtuactdescripcion,
+		a.rtuactabreviatura,
+		case a.rtuactestado when 'A' then 'Activo' when 'I' then 'Inactivo' else '' end as rtuactestado,
+		case a.rtuactreporte when 'P' then 'PDO/PDI' when 'D' then 'Descansos' else '' end as  rtuactreporte,
+		a.rturescodi,
+		(select r.rturesdescripcion from rtu_tiporesponsabilidad r where r.rturescodi = a.rturescodi ) as rturesdescripcion,
+		a.rtuactusucreacion,
+		a.rtuactfeccreacion,
+		a.rtuactusumodificacion,
+		a.rtuactfecmodificacion
+		from
+		rtu_actividad a
+		where a.rtuactestado != 'E'
+		order by a.rtuactabreviatura
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerTiposReponsables</key>
+		<query>
+			select
+			rturescodi as rtuactcodi ,
+			rturesdescripcion as rtuactdescripcion
+			from rtu_tiporesponsabilidad
+			order by 2 asc
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerActividadPorTipoInforme</key>
+		<query>
+			select act.*, tip.rturesrol
+			from
+			rtu_actividad act
+			inner join rtu_tiporesponsabilidad tip on act.rturescodi = tip.rturescodi			
+			where tip.rturesreporte = {0}
+		</query>
+	</Sql>
+	
+</Sqls>

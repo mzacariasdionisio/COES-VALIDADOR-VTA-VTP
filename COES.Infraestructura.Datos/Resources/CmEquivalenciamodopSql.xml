@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(equimocodi), 0) + 1 from cm_equivalenciamodop
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cm_equivalenciamodop(
+           equimocodi,
+           grupocodi,
+           equimonombrencp,
+           equimousucreacion,
+           equimofeccreacion,
+           equimousumodificacion,
+           equimofecmodificacion
+       )
+       values(
+           :equimocodi,
+           :grupocodi,
+           :equimonombrencp,
+           :equimousucreacion,
+           :equimofeccreacion,
+           :equimousumodificacion,
+           :equimofecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cm_equivalenciamodop
+       set
+           grupocodi = :grupocodi,
+           equimonombrencp = :equimonombrencp,
+           equimousucreacion = :equimousucreacion,
+           equimofeccreacion = :equimofeccreacion,
+           equimousumodificacion = :equimousumodificacion,
+           equimofecmodificacion = :equimofecmodificacion
+       where
+           equimocodi = :equimocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cm_equivalenciamodop
+       where
+           equimocodi = :equimocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           equimocodi,
+           grupocodi,
+           equimonombrencp,
+           equimousucreacion,
+           equimofeccreacion,
+           equimousumodificacion,
+           equimofecmodificacion
+       from
+           cm_equivalenciamodop
+       where
+           equimocodi = :equimocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      equiv.equimocodi,
+      equiv.grupocodi,
+      equiv.equimonombrencp,
+      equiv.equimousucreacion,
+      equiv.equimofeccreacion,
+      equiv.equimousumodificacion,
+      equiv.equimofecmodificacion,
+      grupo.gruponomb
+      from
+      cm_equivalenciamodop equiv inner join pr_grupo grupo on equiv.grupocodi = grupo.grupocodi
+      where equiv.grupocodi is not null and equiv.equimonombrencp is not null
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+        a.grupocodi, a.gruponomb,b.equimocodi,b.equimonombrencp,equimousucreacion,
+        equimofeccreacion, equimousumodificacion, equimofecmodificacion
+      from
+        pr_grupo a
+      left
+      join cm_equivalenciamodop b
+        on a.grupocodi = b.grupocodi
+      where catecodi =2 and grupoactivo='S'
+      order by
+        a.gruponomb
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListado</key>
+    <query>
+      select
+      *
+      from (
+      select a.equimocodi,b.grupocodi,b.gruponomb,a.equimonombrencp,a.equimousucreacion,a.equimofeccreacion,a.equimousumodificacion,a.equimofecmodificacion, (row_number() over (order by a.equimocodi desc)) as r from cm_equivalenciamodop a, pr_grupo b where (b.grupocodi= a.grupocodi) and (a.grupocodi={0} or {0} = 0)
+      order by a.equimocodi desc
+      )
+      where (r >= ((({1}-1) * {2}) + 1) and r &lt; (({1} * {2}) + 1 )) or ({1} = -1 and {2} = -1)
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>TotalRegistros</key>
+    <query>
+      select count(*) from cm_equivalenciamodop a,pr_grupo b where (b.grupocodi= a.grupocodi) and (a.grupocodi={0} or {0} = 0)
+    </query>
+  </Sql>
+</Sqls>

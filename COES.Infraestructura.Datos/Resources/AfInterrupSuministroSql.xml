@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(intsumcodi), 0) + 1 from af_interrup_suministro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into af_interrup_suministro(
+           enviocodi,
+           intsummwred,
+           intsummwfin,
+           intsumsuministro,
+           intsumobs,
+           intsumnumetapa,
+           intsumduracion,
+           intsumfuncion,
+           intsumfechainterrfin,
+           intsumfechainterrini,
+           intsummw,
+           intsumsubestacion,
+           intsumempresa,
+           intsumzona,
+           intsumcodi,
+           afecodi,
+           intsumfeccreacion,
+           intsumusucreacion,
+           intsumestado
+       )
+       values(
+           :enviocodi,
+           :intsummwred,
+           :intsummwfin,
+           :intsumsuministro,
+           :intsumobs,
+           :intsumnumetapa,
+           :intsumduracion,
+           :intsumfuncion,
+           :intsumfechainterrfin,
+           :intsumfechainterrini,
+           :intsummw,
+           :intsumsubestacion,
+           :intsumempresa,
+           :intsumzona,
+           :intsumcodi,
+           :afecodi,
+           :intsumfeccreacion,
+           :intsumusucreacion,
+           :intsumestado
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update af_interrup_suministro
+       set
+           enviocodi = :enviocodi,
+           intsummwred = :intsummwred,
+           intsummwfin = :intsummwfin,
+           intsumsuministro = :intsumsuministro,
+           intsumobs = :intsumobs,
+           intsumnumetapa = :intsumnumetapa,
+           intsumduracion = :intsumduracion,
+           intsumfuncion = :intsumfuncion,
+           intsumfechainterrfin = :intsumfechainterrfin,
+           intsumfechainterrini = :intsumfechainterrini,
+           intsummw = :intsummw,
+           intsumsubestacion = :intsumsubestacion,
+           intsumempresa = :intsumempresa,
+           intsumzona = :intsumzona,
+           afecodi = :afecodi,
+           intsumfeccreacion = :intsumfeccreacion,
+           intsumusucreacion = :intsumusucreacion,
+           intsumestado = :intsumestado
+       where
+           intsumcodi = :intsumcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from af_interrup_suministro
+       where
+           intsumcodi = :intsumcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           enviocodi,
+           intsummwred,
+           intsummwfin,
+           intsumsuministro,
+           intsumobs,
+           intsumnumetapa,
+           intsumduracion,
+           intsumfuncion,
+           intsumfechainterrfin,
+           intsumfechainterrini,
+           intsummw,
+           intsumsubestacion,
+           intsumempresa,
+           intsumzona,
+           intsumcodi,
+           afecodi,
+           intsumfeccreacion,
+           intsumusucreacion,
+           intsumestado
+       where
+           intsumcodi = :intsumcodi
+       from
+           af_interrup_suministro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           enviocodi,
+           intsummwred,
+           intsummwfin,
+           intsumsuministro,
+           intsumobs,
+           intsumnumetapa,
+           intsumduracion,
+           intsumfuncion,
+           intsumfechainterrfin,
+           intsumfechainterrini,
+           intsummw,
+           intsumsubestacion,
+           intsumempresa,
+           intsumzona,
+           intsumcodi,
+           afecodi,
+           intsumfeccreacion,
+           intsumusucreacion,
+           intsumestado
+       from
+           af_interrup_suministro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select intsum.*
+      from af_interrup_suministro intsum
+      INNER JOIN me_envio en ON intsum.enviocodi = en.enviocodi
+      where intsum.afecodi = {0} AND en.emprcodi = {1} and en.fdatcodi= {2} and intsum.enviocodi = {3}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerUltimoEnvio</key>
+    <query>
+      SELECT *
+      FROM   af_interrup_suministro
+      WHERE  enviocodi = (SELECT Max(af.enviocodi) FROM   af_interrup_suministro af
+      INNER JOIN me_envio en ON af.enviocodi = en.enviocodi WHERE  afecodi = {0} AND emprcodi = {1} and fdatcodi= {2})
+      AND (intsumestado = 1)
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListarReporteExtranetCTAF</key>
+    <query>
+		SELECT  ev.EVENCODI,ev.EVENINI,env.emprcodi,emp.emprnomb,emp.emprnomb,env.fdatcodi,
+		(SELECT ERACMFSUMINISTRADOR FROM AF_ERACMF_EVENTO WHERE RTRIM(LTRIM(ERACMFEMPRNOMB)) = RTRIM(LTRIM(EMP.emprnomb)) AND EVENCODI= ev.EVENCODI AND ROWNUM = 1)ERACMFSUMINISTRADOR,
+		intsum.*,
+		(select distinct AFEMPRNOMB from af_empresa af_emp where af_emp.emprcodi =emp.emprcodi) AFEMPRNOMB
+		FROM (select * from AF_EVENTO where AFECODI = '{0}') af
+		inner join EVE_EVENTO ev on ev.EVENCODI = AF.EVENCODI
+		inner join AF_INTERRUP_SUMINISTRO intsum on intsum.AFECODI=af.afecodi
+		inner join me_envio env on env.enviocodi = intsum.enviocodi
+		inner join si_empresa emp on emp.emprcodi = env.emprcodi
+		inner join SI_FUENTEDATOS fdat on fdat.fdatcodi = env.fdatcodi
+		WHERE af.AFECODI = {0} AND ('{1}'='-1' or emp.emprcodi = {1}) and env.fdatcodi = {2} and intsum.INTSUMESTADO  =1
+	</query>
+  </Sql>
+
+
+  <Sql>
+    <key>UpdateAEstadoBaja</key>
+    <query>
+      update af_interrup_suministro
+      set
+      intsumestado = 0
+      where
+      AFECODI = {0} AND ENVIOCODI IN 
+      (
+          SELECT ENV.ENVIOCODI FROM af_interrup_suministro I
+          INNER JOIN ME_ENVIO ENV ON ENV.ENVIOCODI = I.ENVIOCODI
+          WHERE I.AFECODI = {0} AND ENV.EMPRCODI = {1} and ENV.FDATCODI = {2}
+      )
+    </query>
+  </Sql>
+	<Sql>
+		<key>ListarReporteInterrupcionesCTAF</key>
+		<query>
+			SELECT ev.EVENCODI,ev.EVENINI, env.emprcodi,emp.emprnomb,emp.emprnomb,env.fdatcodi,intsum.*
+			FROM (select * from AF_EVENTO where AFEANIO = '{0}' and AFECORR='{1}') af
+			inner join EVE_EVENTO ev on ev.EVENCODI = AF.EVENCODI
+			inner join AF_INTERRUP_SUMINISTRO intsum on intsum.AFECODI=af.afecodi
+			inner join me_envio env on env.enviocodi = intsum.enviocodi
+			inner join si_empresa emp on emp.emprcodi = env.emprcodi
+			inner join SI_FUENTEDATOS fdat on fdat.fdatcodi = env.fdatcodi
+			WHERE ('{2}'='-1' or emp.emprcodi = {2}) and env.fdatcodi = {3} and intsum.INTSUMESTADO  = 1
+		</query>
+	</Sql>
+</Sqls>

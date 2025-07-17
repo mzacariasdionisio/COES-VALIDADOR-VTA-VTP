@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(ingtarcodi), 0) + 1 from vtp_ingreso_tarifario
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_ingreso_tarifario(ingtarcodi, pericodi, recpotcodi, pingcodi, emprcodiping,
+      ingtartarimensual, emprcodingpot, ingtarporcentaje, ingtarimporte,
+      ingtarsaldoanterior, ingtarajuste, ingtarusucreacion, ingtarfeccreacion)
+      values(:ingtarcodi, :pericodi, :recpotcodi, :pingcodi, :emprcodiping,
+      :ingtartarimensual, :emprcodingpot, :ingtarporcentaje, :ingtarimporte,
+      :ingtarsaldoanterior, :ingtarajuste, :ingtarusucreacion, :ingtarfeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_ingreso_tarifario
+      set
+      ingtarsaldo = :ingtarsaldo,
+      ingtarpericodidest = :ingtarpericodidest
+      where ingtarcodi = :ingtarcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdatePeriodoDestino</key>
+    <query>
+      update vtp_ingreso_tarifario
+      set ingtarpericodidest = :ingtarpericodidest
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from vtp_ingreso_tarifario
+       where ingtarcodi = :ingtarcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_ingreso_tarifario where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from vtp_ingreso_tarifario where ingtarcodi = :ingtarcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdSaldo</key>
+    <query>
+      select * from vtp_ingreso_tarifario
+      where pericodi = :pericodi and recpotcodi = :recpotcodi
+      and pingcodi = :pingcodi and emprcodiping = :emprcodiping and emprcodingpot = :emprcodingpot
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaIngresoTarifarioSaldo</key>
+    <query>
+		select a.* from vtp_ingreso_tarifario a
+		where a.pericodi = :pericodi and a.recpotcodi = :recpotcodi
+		and a.pingcodi = :pingcodi and a.emprcodiping = :emprcodiping and
+		--(a.emprcodingpot = :emprcodingpot or a.emprcodingpot in (select ant.emprcodiant from vtp_cambio_empresa ant where ant.emprcodi = :emprcodingpot ))
+		(a.emprcodingpot = :emprcodingpot or a.emprcodingpot in (select ant.emprcodiorigen from vw_si_migracion ant where ant.emprcodidestino = :emprcodingpot ))
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetSaldoAnterior</key>
+    <query>
+      select nvl(sum(ingtarsaldo), 0) from vtp_ingreso_tarifario
+      where ingtarpericodidest = :ingtarpericodidest and pingcodi = :pingcodi
+      and (emprcodiping = :emprcodiping or emprcodiping in (select m1.emprcodiorigen from vw_si_migracion m1 where m1.emprcodidestino = :emprcodiping ))
+      and (emprcodingpot = :emprcodingpot or emprcodingpot in (select m2.emprcodiorigen from vw_si_migracion m2 where m2.emprcodidestino = :emprcodingpot ))
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+       select * from vtp_ingreso_tarifario
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresaPago</key>
+    <query>
+		select distinct a.emprcodingpot, --b.emprnomb as emprnombingpot
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = a.emprcodingpot) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = a.emprcodingpot and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = a.pericodi and recacodi = a.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = a.emprcodingpot) end as emprnombingpot,
+		b.emprruc
+		from vtp_ingreso_tarifario a join vw_trn_empresa_str b on a.emprcodingpot = b.emprcodi
+		where a.pericodi = :pericodi
+		and a.recpotcodi = :recpotcodi
+		order by 2
+	</query>
+  </Sql>
+  
+  <Sql>
+    <key>ListEmpresaCobro</key>
+    <query>
+		select emprcodingpot,
+		(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = it.emprcodingpot) as emprnombingpot,
+		(select EMPRCODOSINERGMIN from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = it.emprcodingpot) as Emprcodosinergminingpot,
+		emprcodiping, (select emprruc from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = it.emprcodiping) as emprruc,
+		(select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = it.emprcodiping) as emprnombping,
+		(select EMPRCODOSINERGMIN from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = it.emprcodiping) as Emprcodosinergminping,
+		it.pingcodi, it.ingtarimporte, it.ingtarsaldoanterior, it.ingtarsaldo, it.ingtarajuste
+		from vtp_ingreso_tarifario it
+		where emprcodingpot = :emprcodingpot and emprcodingpot > 0
+		and pericodi = :pericodi
+		and recpotcodi = :recpotcodi
+		order by 2, 4, it.pingcodi
+	</query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select * from vtp_ingreso_tarifario
+    </query>
+  </Sql>
+
+  <!--SIOSEIN 2-->
+  
+  <Sql>
+    <key>ListEmpresaCobroParaMultEmprcodingpot</key>
+    <query>
+      select emprcodingpot, (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = it.emprcodingpot) as emprnombingpot,
+      emprcodiping, (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = it.emprcodiping) as emprnombping,
+      it.pingcodi, it.ingtarimporte, it.ingtarsaldoanterior, it.ingtarsaldo, it.ingtarajuste
+      from vtp_ingreso_tarifario it
+      where emprcodingpot in({0}) and emprcodingpot > 0
+      and pericodi = {1}
+      and recpotcodi = {2}
+      order by 2, 4, it.pingcodi
+    </query>
+  </Sql>
+  
+  <!--END SIOSEIN 2-->
+</Sqls>

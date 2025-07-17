@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(LOGPCODI), 0) + 1 from VTD_LOGPROCESO
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into VTD_LOGPROCESO(
+      LOGPCODI,
+      VALOCODI,
+      LOGPFECHA,
+      LOGPHORAINICIO,
+      LOGPHORAFIN,
+      LOGPLOG,
+      LOGPTIPO,
+      LOGPESTADO,
+      LOGPUSUCREACION,
+      LOGPFECCREACION,
+      LOGPUSUMODIFICACION,
+      LOGPFECMODIFICACION
+      )
+      values(
+      :LOGPCODI,
+      :VALOCODI,
+      :LOGPFECHA,
+      :LOGPHORAINICIO,
+      :LOGPHORAFIN,
+      :LOGPLOG,
+      :LOGPTIPO,
+      :LOGPESTADO,
+      :LOGPUSUCREACION,
+      :LOGPFECCREACION,
+      :LOGPUSUMODIFICACION,
+      :LOGPFECMODIFICACION
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update VTD_LOGPROCESO
+      set
+      VALOCODI = :VALOCODI,
+      LOGPFECHA = :LOGPFECHA,
+      LOGPHORAINICIO = :LOGPHORAINICIO,
+      LOGPHORAFIN = :LOGPHORAFIN,
+      LOGPLOG = :LOGPLOG,
+      LOGPTIPO = :LOGPTIPO,
+      LOGPESTADO = :LOGPESTADO,
+      LOGPUSUCREACION = :LOGPUSUCREACION,
+      LOGPFECCREACION = :LOGPFECCREACION,
+      LOGPUSUMODIFICACION=:LOGPUSUMODIFICACION,
+      LOGPFECMODIFICACION=:LOGPFECMODIFICACION
+      where
+      LOGPCODI = :LOGPCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from
+      VTD_LOGPROCESO
+      where
+      LOGPCODI = :LOGPCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      LOGPCODI,
+      VALOCODI,
+      LOGPFECHA,
+      LOGPHORAINICIO,
+      LOGPHORAFIN,
+      LOGPLOG,
+      LOGPTIPO,
+      LOGPESTADO,
+      LOGPUSUCREACION,
+      LOGPFECCREACION,
+      LOGPUSUMODIFICACION,
+      LOGPFECMODIFICACION
+      from
+      VTD_LOGPROCESO
+      where
+      LOGPCODI = :LOGPCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      LOGPCODI,
+      VALOCODI,
+      LOGPFECHA,
+      LOGPHORAINICIO,
+      LOGPHORAFIN,
+      LOGPLOG,
+      LOGPTIPO,
+      LOGPESTADO,
+      LOGPUSUCREACION,
+      LOGPFECCREACION,
+      LOGPUSUMODIFICACION,
+      LOGPFECMODIFICACION
+      from
+      VTD_LOGPROCESO order by VALOCODI desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      LOGPCODI,
+      VALOCODI,
+      LOGPFECHA,
+      LOGPHORAINICIO,
+      LOGPHORAFIN,
+      LOGPLOG,
+      LOGPTIPO,
+      LOGPESTADO,
+      LOGPUSUCREACION,
+      LOGPFECCREACION,
+      LOGPUSUMODIFICACION,
+      LOGPFECMODIFICACION
+      from
+      VTD_LOGPROCESO
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListByDate</key>
+    <query>
+      select
+      lp.LOGPCODI,
+      lp.VALOCODI,
+      lp.LOGPFECHA,
+      lp.LOGPHORAINICIO,
+      lp.LOGPHORAFIN,
+      lp.LOGPLOG,
+      lp.LOGPTIPO,
+      lp.LOGPESTADO,
+      lp.LOGPUSUCREACION,
+      lp.LOGPFECCREACION,
+      lp.LOGPUSUMODIFICACION,
+      lp.LOGPFECMODIFICACION,
+      v.VALOFECHA
+      from
+      VTD_LOGPROCESO lp inner join VTD_VALORIZACION v on lp.valocodi=v.valocodi
+      where V.VALOESTADO = 'A' and
+      TRUNC(v.valofecha) = to_date('{0}','YYYY-MM-DD') order by lp.VALOCODI desc, lp.logpfecha desc
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetListPagedByDate</key>
+    <query>
+      SELECT * from (
+      select
+      lp.LOGPCODI,
+      lp.VALOCODI,
+      lp.LOGPFECHA,
+      lp.LOGPHORAINICIO,
+      lp.LOGPHORAFIN,
+      lp.LOGPLOG,
+      lp.LOGPTIPO,
+      lp.LOGPESTADO,
+      lp.LOGPUSUCREACION,
+      lp.LOGPFECCREACION,
+      lp.LOGPUSUMODIFICACION,
+      lp.LOGPFECMODIFICACION,
+      v.VALOFECHA,
+      (row_number() over (order by lp.VALOCODI desc)) as r FROM VTD_LOGPROCESO lp inner join VTD_VALORIZACION v on lp.valocodi=v.valocodi
+      WHERE V.VALOESTADO = 'A' and TRUNC(v.valofecha) = to_date('{0}','YYYY-MM-DD') order by lp.VALOCODI desc, lp.logpfecha desc
+      )where (r >= ((({1}-1) * {2}) + 1) and r&lt;= (({1} * {2}) + 1 )) or ({1} = -1 and {2}= -1)
+    </query>
+  </Sql>
+
+
+</Sqls>

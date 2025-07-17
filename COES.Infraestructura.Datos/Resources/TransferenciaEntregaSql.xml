@@ -1,0 +1,284 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetById</key>
+    <query></query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_trans_entrega(
+      tentcodi, codentcodi , barrcodi ,pericodi ,emprcodi ,equicodi ,tentcodigo ,tentversion ,tenttipoinformacion ,tentestado ,tentusername , tentfecins
+      )
+      values
+      (:tentcodi,:codentcodi,:barrcodi,:pericodi,:emprcodi,:equicodi,:tentcodigo,:tentversion,:tenttipoinformacion,
+      :tentestado,:tentusername,:tentfecins)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_trans_entrega
+      where pericodi= :pericodi
+      and tentversion =:tentrversion
+      and tentcodigo = :tentcodigo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteListaTransferenciaEntrega</key>
+    <query>
+      delete from trn_trans_entrega where pericodi= :pericodi and tentversion =:tentrversion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select tentcodigo,
+      (select emprnomb from vw_si_empresa where  vw_si_empresa.emprcodi = trn_trans_entrega.emprcodi) as emprnombre,
+      (select equinomb from vw_eq_central_generacion where   vw_eq_central_generacion.equicodi = trn_trans_entrega.equicodi) as centgenenombre,
+      trn_barra.barrbarratransferencia,
+      tenttipoinformacion,
+      ( select sum(
+      tentde1 +tentde2+
+      tentde3+
+      tentde4+
+      tentde5+
+      tentde6+
+      tentde7+
+      tentde8+
+      tentde9+
+      tentde10+
+      tentde11+
+      tentde12+
+      tentde13+
+      tentde14+
+      tentde15+
+      tentde16+
+      tentde17+
+      tentde18+
+      tentde19+
+      tentde20+
+      tentde21+
+      tentde22+
+      tentde23+
+      tentde24+
+      tentde25+
+      tentde26+
+      tentde27+
+      tentde28+
+      tentde29+
+      tentde30+
+      tentde31+
+      tentde32+
+      tentde33+
+      tentde34+
+      tentde35+
+      tentde36+
+      tentde37+
+      tentde38+
+      tentde39+
+      tentde40+
+      tentde41+
+      tentde42+
+      tentde43+
+      tentde44+
+      tentde45+
+      tentde46+
+      tentde47+
+      tentde48+
+      tentde49+
+      tentde50+
+      tentde51+
+      tentde52+
+      tentde53+
+      tentde54+
+      tentde55+
+      tentde56+
+      tentde57+
+      tentde58+
+      tentde59+
+      tentde60+
+      tentde61+
+      tentde62+
+      tentde63+
+      tentde64+
+      tentde65+
+      tentde66+
+      tentde67+
+      tentde68+
+      tentde69+
+      tentde70+
+      tentde71+
+      tentde72+
+      tentde73+
+      tentde74+
+      tentde75+
+      tentde76+
+      tentde77+
+      tentde78+
+      tentde79+
+      tentde80+
+      tentde81+
+      tentde82+
+      tentde83+
+      tentde84+
+      tentde85+
+      tentde86+
+      tentde87+
+      tentde88+
+      tentde89+
+      tentde90+
+      tentde91+
+      tentde92+
+      tentde93+
+      tentde94+
+      tentde95+
+      tentde96)
+      from trn_trans_entrega_detalle  where  trn_trans_entrega_detalle.tentcodi =trn_trans_entrega.tentcodi
+
+      )as total
+      from trn_trans_entrega  join trn_barra  on  trn_barra.barrcodi = trn_trans_entrega.barrcodi
+      where tentestado = 'ACT' and
+      (emprcodi = :emprcodi or :emprcodi is null or :emprcodi = 0) and
+      (pericodi= :pericodi or :pericodi is null)  and
+      (tentversion = :tentversion or :tentversion is null) and
+      (trn_trans_entrega.barrcodi = :barrcodi or :barrcodi is null or :barrcodi = 0)
+      order by tentcodigo asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetTransferenciaEntregaByCodigo</key>
+    <query>
+      select * from trn_trans_entrega where tentestado = 'ACT' and (emprcodi = :emprcodi or :emprcodi = 0) and pericodi = :pericodi and tentversion = :tentversion and tentcodigo = :tentcodigo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(tentcodi), 0) + 1 from trn_trans_entrega
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByPeriodoVersion</key>
+    <query>
+      select * from trn_trans_entrega where tentestado = 'ACT' and pericodi = :pericodi and (tentversion = :tentversion or -1=:tentversion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMinId</key>
+    <query>
+      select nvl(min(tentcodi), 0) - 2 from trn_trans_entrega
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CopiarEntregas</key>
+    <query>
+      Insert into trn_trans_entrega (tentcodi,pericodi,tentversion,
+      codentcodi,barrcodi,emprcodi,equicodi,tentcodigo,tenttipoinformacion,tentestado,tentusername,tentfecins,tentfecact)
+      select (:tentcodi - rownum) as tentcodi, :pericodi, :tentversion <!--iVersionNew-->,
+		codentcodi,barrcodi,
+		--emprcodi,
+		nvl((select v.emprcodidestino from sic.vw_si_migracion v where v.emprcodiorigen = t.emprcodi or v.emprcodidestino = t.emprcodi order by v.migracodi desc FETCH FIRST 1 ROWS ONLY),t.emprcodi),
+		equicodi,tentcodigo,tenttipoinformacion,tentestado,tentusername,sysdate,sysdate
+		from trn_trans_entrega t where tentestado = 'ACT' and pericodi = :pericodi and tentversion = :barrcodi <!--Old-->
+      order by tentcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CopiarTemporal</key>
+    <query>
+      insert into trn_tmp_equiv (idnuevo, idanterior)
+      select :tentcodi - rownum as idnuevo, tentcodi as idanterior
+      from trn_trans_entrega where tentestado = 'ACT' and pericodi = :pericodi and tentversion = :barrcodi <!--iVersionOld-->
+      order by tentcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CopiarEntregasDetalle</key>
+    <query>
+      insert into trn_trans_entrega_detalle (tentcodi,tentdecodi,tentdeversion,
+      tentdedia,tentdepromediodia,tentdesumadia,
+      tentde1,tentde2,tentde3,tentde4,tentde5,tentde6,tentde7,tentde8,tentde9,tentde10,
+      tentde11,tentde12,tentde13,tentde14,tentde15,tentde16,tentde17,tentde18,tentde19,tentde20,
+      tentde21,tentde22,tentde23,tentde24,tentde25,tentde26,tentde27,tentde28,tentde29,tentde30,
+      tentde31,tentde32,tentde33,tentde34,tentde35,tentde36,tentde37,tentde38,tentde39,tentde40,
+      tentde41,tentde42,tentde43,tentde44,tentde45,tentde46,tentde47,tentde48,tentde49,tentde50,
+      tentde51,tentde52,tentde53,tentde54,tentde55,tentde56,tentde57,tentde58,tentde59,tentde60,
+      tentde61,tentde62,tentde63,tentde64,tentde65,tentde66,tentde67,tentde68,tentde69,tentde70,
+      tentde71,tentde72,tentde73,tentde74,tentde75,tentde76,tentde77,tentde78,tentde79,tentde80,
+      tentde81,tentde82,tentde83,tentde84,tentde85,tentde86,tentde87,tentde88,tentde89,tentde90,
+      tentde91,tentde92,tentde93,tentde94,tentde95,tentde96,tentdeusername,tentdefecins,tentdefecact)
+      --select tmp.idnuevo, (:emprcodi <!--iTransEntrDetCodi--> - rownum) as tentdecodi, :tentversion <!--iVersionNew-->,
+      --tentdedia,tentdepromediodia,tentdesumadia,
+      --tentde1,tentde2,tentde3,tentde4,tentde5,tentde6,tentde7,tentde8,tentde9,tentde10,
+      --tentde11,tentde12,tentde13,tentde14,tentde15,tentde16,tentde17,tentde18,tentde19,tentde20,
+      --tentde21,tentde22,tentde23,tentde24,tentde25,tentde26,tentde27,tentde28,tentde29,tentde30,
+      --tentde31,tentde32,tentde33,tentde34,tentde35,tentde36,tentde37,tentde38,tentde39,tentde40,
+      --tentde41,tentde42,tentde43,tentde44,tentde45,tentde46,tentde47,tentde48,tentde49,tentde50,
+      --tentde51,tentde52,tentde53,tentde54,tentde55,tentde56,tentde57,tentde58,tentde59,tentde60,
+      --tentde61,tentde62,tentde63,tentde64,tentde65,tentde66,tentde67,tentde68,tentde69,tentde70,
+      --tentde71,tentde72,tentde73,tentde74,tentde75,tentde76,tentde77,tentde78,tentde79,tentde80,
+      --tentde81,tentde82,tentde83,tentde84,tentde85,tentde86,tentde87,tentde88,tentde89,tentde90,
+      --tentde91,tentde92,tentde93,tentde94,tentde95,tentde96,tentdeusername,sysdate,sysdate
+      --from trn_trans_entrega_detalle ed inner join trn_tmp_equiv tmp on ed.tentcodi = tmp.idanterior and ed.tentdeversion = :barrcodi <!--iVersionOld-->
+	  --order by tmp.idnuevo
+		select ret2.tentcodi,((select min(tentdecodi) from trn_trans_entrega_detalle) - rownum) as id,
+		:tentversion,det.tentdedia, tentdepromediodia,tentdesumadia,tentde1,tentde2,
+		tentde3,tentde4,tentde5,tentde6,tentde7,tentde8,tentde9,tentde10,
+		tentde11,tentde12,tentde13,tentde14,tentde15,tentde16,tentde17,tentde18,
+		tentde19,tentde20,tentde21,tentde22,tentde23,tentde24,tentde25,tentde26,
+		tentde27,tentde28,tentde29,tentde30,tentde31,tentde32,tentde33,tentde34,
+		tentde35,tentde36,tentde37,tentde38,tentde39,tentde40,tentde41,tentde42,
+		tentde43,tentde44,tentde45,tentde46,tentde47,tentde48,tentde49,tentde50,
+		tentde51,tentde52,tentde53,tentde54,tentde55,tentde56,tentde57,tentde58,
+		tentde59,tentde60,tentde61,tentde62,tentde63,tentde64,tentde65,tentde66,
+		tentde67,tentde68,tentde69,tentde70,tentde71,tentde72,tentde73,tentde74,
+		tentde75,tentde76,tentde77,tentde78,tentde79,tentde80,tentde81,tentde82,
+		tentde83,tentde84,tentde85,tentde86,tentde87,tentde88,tentde89,tentde90,
+		tentde91,tentde92,tentde93,tentde94,tentde95,tentde96,tentdeusername,sysdate,sysdate
+		from trn_trans_entrega_detalle det
+		inner join trn_trans_entrega ret on det.tentcodi = ret.tentcodi and ret.pericodi = :pericodi and ret.tentversion = :barrcodi and tentestado = 'ACT'
+		inner join trn_trans_entrega ret2 on ret2.tentcodigo = ret.tentcodigo and ret2.tentcodi in (select tentcodi from trn_trans_entrega where pericodi = :pericodi and tentversion = :tentversion)
+	</query>
+  </Sql>
+  <!--ASSETEC 202001-->
+  <Sql>
+    <key>GetTransferenciaEntregaByCodigoEnvio</key>
+    <query>
+      select * from trn_trans_entrega
+      where (emprcodi = :emprcodi or :emprcodi = 0)
+      and pericodi = :pericodi
+      and tentversion = :tentversion
+      and (trnenvcodi = :trnenvcodi or :trnenvcodi = 0)
+      and tentcodigo = :tentcodigo
+      order by tentcodi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstadoINA</key>
+    <query>
+      update trn_trans_entrega set tentestado = 'INA', tentusercoes = '{4}', tentfeccoes = sysdate
+      where pericodi = {0} and tentversion = {1} and codentcodi in ({2}) and emprcodi = {3}
+    </query>
+  </Sql>
+</Sqls>

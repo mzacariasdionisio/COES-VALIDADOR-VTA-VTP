@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(cmbarecodi), 0) + 1 from cm_barra_relacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into cm_barra_relacion(
+		cmbarecodi,
+		barrcodi,
+		cnfbarcodi,
+		cmbaretipreg,
+		barrcodi2,
+		cmbaretiprel,
+		configcodi,
+		cmbarevigencia,
+		cmbareexpira,
+		cmbareestado,
+		cmbareusucreacion,
+		cmbarefeccreacion,
+		cmbareusumodificacion,
+		cmbarefecmodificacion,
+		cnfbarcodi2,
+		cmbarereporte
+		)
+		values(
+		:cmbarecodi,
+		:barrcodi,
+		:cnfbarcodi,
+		:cmbaretipreg,
+		:barrcodi2,
+		:cmbaretiprel,
+		:configcodi,
+		:cmbarevigencia,
+		:cmbareexpira,
+		:cmbareestado,
+		:cmbareusucreacion,
+		:cmbarefeccreacion,
+		:cmbareusumodificacion,
+		:cmbarefecmodificacion,
+		:cnfbarcodi2,
+		:cmbarereporte
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+		update cm_barra_relacion
+		set
+		barrcodi = :barrcodi,
+		cnfbarcodi = :cnfbarcodi,
+		cmbaretipreg = :cmbaretipreg,
+		barrcodi2 = :barrcodi2,
+		cmbaretiprel = :cmbaretiprel,
+		configcodi = :configcodi,
+		cmbarevigencia = :cmbarevigencia,
+		cmbareexpira = :cmbareexpira,
+		cmbareestado = :cmbareestado,
+		cmbareusumodificacion = :cmbareusumodificacion,
+		cmbarefecmodificacion = :cmbarefecmodificacion,
+		cnfbarcodi2 = :cnfbarcodi2,
+		cmbarereporte = :cmbarereporte
+		where
+		cmbarecodi = :cmbarecodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		update cm_barra_relacion
+		set
+		cmbareestado = 'E'
+		where
+		cmbarecodi = :cmbarecodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+		select
+		cmbarecodi,
+		barrcodi,
+		cnfbarcodi,
+		cmbaretipreg,
+		barrcodi2,
+		cmbaretiprel,
+		configcodi,
+		cmbarevigencia,
+		cmbareexpira,
+		cmbareestado,
+		cmbareusucreacion,
+		cmbarefeccreacion,
+		cmbareusumodificacion,
+		cmbarefecmodificacion,
+		cnfbarcodi2,
+		cmbarereporte
+		from
+		cm_barra_relacion
+		where
+		cmbarecodi = :cmbarecodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+		select
+		cmbarecodi,
+		barrcodi,
+		cnfbarcodi,
+		cmbaretipreg,
+		barrcodi2,
+		cmbaretiprel,
+		configcodi,
+		cmbarevigencia,
+		cmbareexpira,
+		cmbareestado,
+		cmbareusucreacion,
+		cmbarefeccreacion,
+		cmbareusumodificacion,
+		cmbarefecmodificacion,
+		cnfbarcodi2,
+		cmbarereporte
+		from
+		cm_barra_relacion
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select rel.*,
+		barr.barrnombre,
+		case rel.cmbaretiprel when '0' then 'Conocida' when '1' then 'Desconocida' when '2' then 'Adicional' when '3' then 'Conocida / Desconocida' else '' end as tiporelacion,
+		conf.cnfbarnombre,
+		barr2.barrnombre as barrnombre2,
+		eq.equinomb
+		from cm_barra_relacion rel
+		inner join trn_barra barr on rel.barrcodi = barr.barrcodi
+		inner join (
+		select cm.barrcodi, cm.cmbaretipreg, max(cm.cmbarevigencia) as fechamax from cm_barra_relacion cm
+		where cm.cmbarevigencia &lt;= to_date('{0}', 'YYYY-MM-DD') and cm.cmbareestado = 'A'
+		group by cm.barrcodi, cm.cmbaretipreg
+		)maximo on rel.barrcodi = maximo.barrcodi and rel.cmbaretipreg = maximo.cmbaretipreg and rel.cmbarevigencia = maximo.fechamax
+		left join cm_configbarra conf on rel.cnfbarcodi = conf.cnfbarcodi
+		left join trn_barra barr2 on rel.barrcodi2 = barr2.barrcodi
+		left join eq_congestion_config con on rel.configcodi = con.configcodi
+		left join eq_equipo eq on eq.equicodi = con.equicodi
+		where rel.cmbareestado = 'A'
+		order by rel.cmbaretipreg
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerPorBarra</key>
+		<query>
+			select
+			cmbarecodi,
+			barrcodi,
+			cnfbarcodi,
+			cmbaretipreg,
+			barrcodi2,
+			cmbaretiprel,
+			configcodi,
+			cmbarevigencia,
+			cmbareexpira,
+			cmbareestado,
+			cmbareusucreacion,
+			cmbarefeccreacion,
+			cmbareusumodificacion,
+			cmbarefecmodificacion,
+			cnfbarcodi2,
+			cmbarereporte
+			from
+			cm_barra_relacion
+			where
+			cmbareestado = 'A' and cmbaretipreg = '{0}' and barrcodi = {1}
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerHistorico</key>
+		<query>
+			select rel.*,
+			barr.barrnombre,
+			case rel.cmbaretiprel when '0' then 'Conocida' when '1' then 'Desconocida' when '2' then 'Adicional' else '' end as tiporelacion,
+			conf.cnfbarnombre,
+			barr2.barrnombre as barrnombre2,
+			eq.equinomb
+			from cm_barra_relacion rel
+			inner join trn_barra barr on rel.barrcodi = barr.barrcodi
+			left join cm_configbarra conf on rel.cnfbarcodi = conf.cnfbarcodi
+			left join trn_barra barr2 on rel.barrcodi2 = barr2.barrcodi
+			left join eq_congestion_config con on rel.configcodi = con.configcodi
+			left join eq_equipo eq on eq.equicodi = con.equicodi
+			where rel.cmbareestado = 'A' and rel.barrcodi = {0} and rel.cmbaretipreg = '{1}'
+			order by rel.cmbarevigencia
+		</query>
+	</Sql>
+	
+</Sqls>

@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(solicodi), 0) + 1 from ri_solicitud
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ri_solicitud(
+      solicodi,
+      soliestado,
+      soliestadointerno,
+      solienviado,
+      emprcodi,
+      solifecsolicitud,
+      soliusucreacion,
+      solifeccreacion,
+      soliusumodificacion,
+      solifecmodificacion,
+      tisocodi,
+      solifecproceso,
+      soliususolicitud,
+      soliusuproceso,
+      solinotificado
+      )
+      values(
+      :solicodi,
+      :soliestado,
+      :soliestadointerno,
+      :solienviado,
+      :emprcodi,
+      :solifecsolicitud,
+      :soliusucreacion,
+      :solifeccreacion,
+      :soliusumodificacion,
+      :solifecmodificacion,
+      :tisocodi,
+      :solifecproceso,
+      :soliususolicitud,
+      :soliusuproceso,
+      'N'
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ri_solicitud
+      set
+      soliestado = :soliestado,
+      soliestadointerno = : soliestadointerno,
+      solienviado = :solienviado,
+      emprcodi = :emprcodi,
+      solifecsolicitud = :solifecsolicitud,
+      soliusucreacion = :soliusucreacion,
+      solifeccreacion = :solifeccreacion,
+      soliusumodificacion = :soliusumodificacion,
+      solifecmodificacion = :solifecmodificacion,
+      tisocodi = :tisocodi,
+      solifecproceso = :solifecproceso,
+      soliususolicitud = :soliususolicitud,
+      soliusuproceso = :soliusuproceso
+      where
+      solicodi = :solicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ri_solicitud
+      where
+      solicodi = :solicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      solicodi,
+      soliestado,
+      soliestadointerno,
+      solienviado,
+      emprcodi,
+      solifecsolicitud,
+      soliusucreacion,
+      solifeccreacion,
+      soliusumodificacion,
+      solifecmodificacion,
+      tisocodi,
+      solifecproceso,
+      soliususolicitud,
+      soliusuproceso,
+      soliobservacion
+      from
+      ri_solicitud
+      where
+      solicodi = :solicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      solicodi,
+      soliestado,
+      soliestadointerno,
+      solienviado,
+      emprcodi,
+      solifecsolicitud,
+      soliusucreacion,
+      solifeccreacion,
+      soliusumodificacion,
+      solifecmodificacion,
+      tisocodi,
+      solifecproceso,
+      soliususolicitud,
+      soliusuproceso
+      from
+      ri_solicitud
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPend</key>
+    <query>
+		select
+		*
+		from (
+		select
+		emp.emprcodi,
+		so.solicodi,
+		so.TISOCODI,
+		ti.TISONOMBRE,
+		emp.EMPRRAZSOCIAL,
+		emp.EMPRNOMBRECOMERCIAL,
+		emp.EMPRSIGLA,
+		so.solifecsolicitud,
+
+		case (so.solienviado)
+		when 'S' then
+		cast((SOLIFECENVIADO - solifecsolicitud) * (24) as int)
+		else
+		cast((sysdate - solifecsolicitud ) * (24) as int)
+		end as horas,
+
+		so.soliestado,
+		so.solienviado,
+		so.soliestadointerno,
+
+		so.solifecenviado,
+		so.solinotificado,
+		so.solifecnotificado,
+
+		(row_number() over (order by so.solicodi desc)) as r
+		from RI_SOLICITUD so
+		inner join RI_TIPOSOLICITUD ti on so.TISOCODI = ti.TISOCODI
+		inner join SI_EMPRESA emp on so.EMPRCODI = emp.EMPRCODI
+		where so.soliestado like '%{0}%')
+		where (r >= ((({1}-1) * {2}) + 1) and r &lt; (({1} * {2}) + 1 )) or ({1} = -1 and {2} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListPend</key>
+    <query>
+      select
+      count(*)
+      from RI_SOLICITUD so
+      inner join RI_TIPOSOLICITUD ti on so.TISOCODI = ti.TISOCODI
+      inner join SI_EMPRESA emp on so.EMPRCODI = emp.EMPRCODI
+      where so.soliestado like '%{0}%'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPendporEmpresa</key>
+    <query>
+		select
+		*
+		from (
+		select
+		emp.emprcodi,
+		so.solicodi,
+		so.TISOCODI,
+		ti.TISONOMBRE,
+		emp.EMPRRAZSOCIAL,
+		emp.EMPRNOMBRECOMERCIAL,
+		emp.EMPRSIGLA,
+		so.solifecsolicitud,
+
+		case (so.solienviado)
+		when 'S' then
+		cast((SOLIFECENVIADO - solifecsolicitud) * (24) as int)
+		else
+		cast((sysdate - solifecsolicitud ) * (24) as int)
+		end as horas,
+
+		so.soliestado,
+		so.solienviado,
+		so.soliestadointerno,
+
+		so.solifecenviado,
+		so.solinotificado,
+		so.solifecnotificado,
+
+		(row_number() over (order by so.solicodi desc)) as r
+		from RI_SOLICITUD so
+		inner join RI_TIPOSOLICITUD ti on so.TISOCODI = ti.TISOCODI
+		inner join SI_EMPRESA emp on so.EMPRCODI = emp.EMPRCODI
+		where so.soliestado like '%{0}%' and emp.EMPRCODI = {3})
+		where (r >= ((({1}-1) * {2}) + 1) and r &lt; (({1} * {2}) + 1 )) or ({1} = -1 and {2} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListPendporEmpresa</key>
+    <query>
+      select
+      count(*)
+      from RI_SOLICITUD so
+      inner join RI_TIPOSOLICITUD ti on so.TISOCODI = ti.TISOCODI
+      inner join SI_EMPRESA emp on so.EMPRCODI = emp.EMPRCODI
+      where so.soliestado like '%{0}%' and emp.EMPRCODI = {1}
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>DarConformidad</key>
+    <query>
+      update ri_solicitud
+      set
+      soliestadointerno = 'APROBADO_FISICA',
+      soliestado = 'APROBADO_FISICA',      
+      solienviado = 'S', solifecenviado = SYSDATE
+      where solicodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DarNotificar</key>
+    <query>
+      update ri_solicitud
+      set
+      soliestadointerno = CASE WHEN (SOLIESTADOINTERNO = 'DENEGADO') THEN 'DENEGADO' ELSE 'APROBADO_DIGITAL' END,
+      soliestado = CASE WHEN (SOLIESTADOINTERNO = 'DENEGADO') THEN 'DENEGADO' ELSE 'APROBADO_DIGITAL' END,
+      SOLINOTIFICADO = 'S', SOLIFECNOTIFICADO = SYSDATE
+      where solicodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>FinalizarSolicitud</key>
+    <query>
+      update ri_solicitud
+      set
+      soliestadointerno = :soliestadointerno,
+      soliobservacion = :soliobservacion,
+      SOLINOTIFICADO = 'N'
+      where
+      solicodi = :solicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarFechaProcesoSolicitud</key>
+    <query>
+      update ri_solicitud
+      set
+      solifecproceso = :solifecproceso,
+      soliusuproceso = :soliusuproceso
+      where
+      solicodi = :solicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      solicodi,
+      soliestado,
+      soliestadointerno,
+      solienviado,
+      emprcodi,
+      solifecsolicitud,
+      soliusucreacion,
+      solifeccreacion,
+      soliusumodificacion,
+      solifecmodificacion,
+      tisocodi,
+      solifecproceso,
+      soliususolicitud,
+      soliusuproceso
+      from
+      ri_solicitud
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SolicitudEnCurso</key>
+    <query>
+      select count(*)  from ri_solicitud where soliestado = 'PENDIENTE' and emprcodi={0} and tisocodi={1}
+    </query>
+  </Sql>
+
+</Sqls>

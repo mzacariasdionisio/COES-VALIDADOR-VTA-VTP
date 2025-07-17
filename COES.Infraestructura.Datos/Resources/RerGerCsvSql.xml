@@ -1,0 +1,243 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(regercodi), 0) + 1 from rer_gercsv
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into rer_gercsv
+      (
+      regercodi,
+      resddpcodi,
+      regergndarchivo,
+      regerhidarchivo,
+      regerusucreacion,
+      regerfeccreacion
+      )
+      values
+      (
+      :regercodi,
+      :resddpcodi,
+      :regergndarchivo,
+      :regerhidarchivo,
+      :regerusucreacion,
+      :regerfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      UPDATE rer_gercsv
+      SET
+      regercodi = :regercodi,
+      resddpcodi = :resddpcodi,
+      regergndarchivo = :regergndarchivo,
+      regerhidarchivo = :regerhidarchivo,
+      regerusucreacion = :regerusucreacion,
+      regerfeccreacion = :regerfeccreacion
+      WHERE
+      regercodi = :regercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      DELETE FROM rer_gercsv WHERE regercodi = :regercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      SELECT
+      regercodi,
+      resddpcodi,
+      regergndarchivo,
+      regerhidarchivo,
+      regerusucreacion,
+      regerfeccreacion
+      FROM
+      rer_gercsv
+      ORDER BY
+      regercodi ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      SELECT
+      regercodi,
+      resddpcodi,
+      regergndarchivo,
+      regerhidarchivo,
+      regerusucreacion,
+      regerfeccreacion
+      FROM
+      rer_gercsv
+      WHERE
+      regercodi = :regercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      SELECT
+      regercodi,
+      resddpcodi,
+      regergndarchivo,
+      regerhidarchivo,
+      regerusucreacion,
+      regerfeccreacion
+      FROM
+      rer_gercsv
+      where
+      (-1 = {0} or regercodi = {0})
+    </query>
+  </Sql>
+  
+  
+
+  <Sql>
+    <key>TruncateTablaTemporal</key>
+    <query>
+      truncate table {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>InsertTablaTemporal</key>
+    <query>
+      insert into rer_leccsv_temp
+      (
+      rerfecinicio,
+      reretapa,
+      rerserie,
+      rerbloque,
+      rercentrsddp,
+      rervalor,
+      rertipcsv
+      )
+      values
+      (
+      :rerfecinicio,
+      :reretapa,
+      :rerserie,
+      :rerbloque,
+      :rercentrsddp,
+      :rervalor,
+      :rertipcsv
+      )
+    </query>
+  </Sql>
+
+  <!--<Sql>
+    <key>ListTablaTemporal</key>
+    <query>
+      select rercentrsddp, rertipcsv, rerfecinicio, reretapa, rerbloque, rervalor
+      from rer_leccsv_temp
+      where rercentrsddp = '{0}'
+      order by rercentrsddp, rertipcsv, rerfecinicio, reretapa, rerbloque
+    </query>
+  </Sql>-->
+
+  <!--Control de cambios 2024-02-01-->
+  <Sql>
+    <key>ListTablaTemporal</key>
+    <query>
+      select rercentrsddp, rertipcsv, rerfecinicio, reretapa, rerbloque, sum(rervalor) as rervalor
+      from rer_leccsv_temp
+      where rercentrsddp = '{0}'
+      group by rercentrsddp, rertipcsv, rerfecinicio, reretapa, rerbloque
+      order by rercentrsddp, rertipcsv, rerfecinicio, reretapa, rerbloque
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEquiposEmpresasCentralesRer</key>
+    <query>
+      <!--ASSETEC 20250210: cambio en el SQL, para evitar equipos repetidos
+      select rercencodi, emprcodi, equicodi
+      from rer_central
+      where rercenestado = 'A'
+      group by rercencodi, emprcodi, equicodi-->
+      select max(rercencodi) rercencodi, emprcodi, equicodi
+      from rer_central
+      where rercenestado = 'A' 
+      group by emprcodi, equicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPtosMedicionCentralesPmpo</key>
+    <query>
+      select ptomedicodi
+      from rer_central_pmpo
+      where rercencodi = {0}
+    </query>
+  </Sql>
+
+	<!-- ASSETEC: 20250128, se cambio el nombre del punto de medición por que no coinciden con los archivos SDDP
+<Sql>
+  <key>GetByCentralesSddp</key>
+  <query>
+    select p.emprcodi, p.equicodi, c.sddpnomb
+    from
+    pmo_sddp_codigo c
+    inner join pmo_sddp_tipo t on t.tsddpcodi = c.tsddpcodi
+    left join me_ptomedicion p on p.ptomedicodi = c.ptomedicodi
+    where p.ptomedicodi = {0}
+  </query>
+</Sql>-->
+	
+  <Sql>
+	<key>GetByCentralesSddp</key>
+	<query>
+	  select p.emprcodi, p.equicodi, trim(p.ptomedidesc) as sddpnomb
+	  from
+      pmo_sddp_codigo c
+	  inner join pmo_sddp_tipo t on t.tsddpcodi = c.tsddpcodi
+	  left join me_ptomedicion p on p.ptomedicodi = c.ptomedicodi
+	  where p.ptomedicodi = {0}
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListPtoMedicionCentralesRer</key>
+    <query>
+      select ptomedicodi
+      from rer_central
+      where rercenestado = 'A'
+      group by ptomedicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListTablaCMTemporal</key>
+    <query>
+      select * from rer_insumo_cm_temp
+      where ptomedicodi = {0}
+      order by rerfecinicio,reretapa,rerbloque
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListTablaCMTemporalDia</key>
+    <query>
+      select * from rer_insumo_dia_temp
+      where ptomedicodi = {0} and rerinddiafecdia between to_date('{1}', 'DD/MM/YYYY') and to_date('{2}', 'DD/MM/YYYY')
+      order by rerinddiafecdia
+    </query>
+  </Sql>
+</Sqls>
+

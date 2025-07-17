@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+	<Sql>
+		<key>GetMaxId</key>
+		<query>
+      select nvl(max(PRNAUXCODI), 0) + 1 from PRN_SERVICIOSAUXILIARES
+    </query>
+	</Sql>
+
+	<Sql>
+		<key>Save</key>
+		<query>
+      insert into PRN_SERVICIOSAUXILIARES(
+      PRNAUXCODI,
+      GRUPOCODI,
+      PRRUCODI,
+      PRNAUXFLAGESMANUAL,
+      H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+      H11,H12, H13, H14, H15, H16, H17, H18, H19, H20,
+      H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+      H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+      H41, H42, H43, H44, H45, H46, H47, H48
+      )
+      values(
+      :PRNAUXCODI,
+      :GRUPOCODI,
+      :PRRUCODI,
+      :PRNAUXFLAGESMANUAL,
+      :H1, :H2, :H3, :H4, :H5, :H6, :H7, :H8, :H9, :H10,
+      :H11,:H12, :H13, :H14, :H15, :H16, :H17, :H18, :H19, :H20,
+      :H21, :H22, :H23, :H24, :H25, :H26, :H27, :H28, :H29, :H30,
+      :H31, :H32, :H33, :H34, :H35, :H36, :H37, :H38, :H39, :H40,
+      :H41, :H42, :H43, :H44, :H45, :H46, :H47, :H48
+      )
+    </query>
+	</Sql>
+
+	<Sql>
+		<key>Delete</key>
+		<query>
+      delete from PRN_SERVICIOSAUXILIARES
+      where
+      PRNAUXCODI = :PRNAUXCODI
+    </query>
+	</Sql>
+
+	<Sql>
+		<key>List</key>
+		<query>
+		select
+		prdtrncodi,
+		prdtrnetqnomb,
+		grupocodi,
+		prdtrnperdida,
+		prnvercodi,
+		prdtrnusucreacion,
+		prdtrnfechacreacion,
+		prdtrnusumodificacion,
+		prdtrnfechamodificacion
+		from 
+		prn_prdtransversal
+	</query>
+	</Sql>
+	
+	<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+	<Sql>
+		<key>GetServiciosAuxiliaresByGrupo</key>
+		<query>
+			select
+				sa.*,
+				pr.prrucodi,
+				pr.prruabrev
+			from
+				prn_serviciosauxiliares sa
+				inner join me_perfil_rule pr on (sa.prrucodi = pr.prrucodi)
+			where
+				sa.grupocodi = :grupocodi
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListBarraFormulas</key>
+		<query>
+			select
+				gr.grupocodi,
+				gr.gruponomb,
+				formulas.prrucodi,
+				nvl(formulas.prruabrev, ' ') prruabrev
+			from
+				pr_grupo gr
+				left join prn_serviciosauxiliares saux on (gr.grupocodi = saux.grupocodi)
+				left join
+				(
+					select
+						prrucodi,
+						prruabrev
+					from
+						me_perfil_rule
+					where
+						prruabrev like 'PRN_%' and
+						prruactiva = 'S'
+				) formulas on (saux.prrucodi = formulas.prrucodi)
+			where
+				gr.grupocodi in (select distinct prnredbarracp from prn_reduccionred where prnvercodi = (select prnvercodi from prn_version where prnverestado = 'A'))
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListFormulas</key>
+		<query>
+			select
+			prrucodi Prrucodi,
+			prruabrev Prruabrev
+			from
+			me_perfil_rule
+			where
+			prruabrev like 'PRN_%' and prruactiva = 'S'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListFormulasRelaciones</key>
+		<query>
+			select
+				prrucodi Prrucodi,
+				prruabrev Prruabrev
+			from
+				me_perfil_rule
+			where 
+				prruabrev like 'PRN_%' and prruactiva = 'S' and
+				prrucodi not in (select prrucodi from prn_serviciosauxiliares where grupocodi = :grupocodi)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>DeleteRelaciones</key>
+		<query>
+			delete from prn_serviciosauxiliares
+			where
+			grupocodi = :grupocodi
+		</query>
+	</Sql>
+	<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+</Sqls>

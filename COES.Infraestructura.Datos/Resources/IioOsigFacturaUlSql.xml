@@ -1,0 +1,257 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from IIO_OSIG_FACTURA_UL
+      where
+      psiclicodi = :psiclicodi and TRIM(ULFACTCODEMPRESA) = TRIM(:ulfactcodempresa)
+    </query>
+  </Sql>
+  <Sql>
+    <key>DeleteIioFactura</key>
+    <query>
+      delete from IIO_FACTURA
+      where
+      psiclicodi = {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetMaxIdIioLogImportacion</key>
+    <query>
+      select nvl(max(ulogcodi), 0) + 1 as correlativo
+      from iio_log_importacion
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateOsigFactura</key>
+    <query>
+      UPDATE IIO_OSIG_FACTURA_UL tmp
+      SET tmp.PTOMEDICODI = (
+      SELECT pto.PTOMEDICODI
+      FROM ME_PTOMEDICION pto
+      , EQ_EQUIPO eqp
+      WHERE pto.EQUICODI = eqp.EQUICODI
+      AND eqp.FAMCODI = 45
+      AND eqp.EQUIESTADO IN ('A', 'B')
+      AND eqp.OSINERGCODI = tmp.ULFACTCODSUMINISTRO
+      AND pto.ORIGLECTCODI = 19
+      AND pto.PTOMEDIESTADO = 'A'
+      AND pto.EMPRCODI = tmp.EMPRCODI
+
+      )
+      WHERE tmp.PSICLICODI = :PSICLICODI AND NVL(tmp.PTOMEDICODI,0) = 0  AND TRIM(tmp.ULFACTCODEMPRESA) IN ({0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateOsigFacturaEmpresa</key>
+    <query>
+      UPDATE IIO_OSIG_FACTURA_UL tmp
+      SET tmp.EMPRCODI = (
+      SELECT EMPRCODI
+      FROM SI_EMPRESA E
+      WHERE  E.EMPRESTADO = 'A'
+      AND E.EMPRCODOSINERGMIN = tmp.ULFACTCODEMPRESA
+      )
+      WHERE tmp.PSICLICODI = :PSICLICODI  AND NVL(tmp.EMPRCODI,0) = 0 {0}
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into IIO_OSIG_FACTURA_UL(
+      psiclicodi,
+      ulfactcodempresa,
+      ulfactcodsuministro,
+      ulfactmesfacturado,
+      ulfactcodbrg,
+      ulfactcodpuntosuministro,
+      ulfactcodareademanda,
+      ulfactpagavad,
+      ulfactprecenergbrghp,
+      ulfactprecenergbrgfp,
+      ulfactprecpotenbrg,
+      ulfactconsenergactvhpps,
+      ulfactconsenergactvfpps,
+      ulfactmaxdemhpps,
+      ulfactmaxdemfpps,
+      ulfactpeajetransmprin,
+      ulfactpeajetransmsec,
+      ulfactfpmpoten,
+      ulfactfpmenerg,
+      ulfactfactgeneracion,
+      ulfactfacttransmprin,
+      ulfactfacttransmsec,
+      ulfactfactdistrib,
+      ulfactfactexcesopoten,
+      ulfactfacturaciontotal,
+      ulfactconsenergreacps,
+      ulfactppmt,
+      ulfactpemt,
+      ulfactfactptoref,
+      ulfactvadhp,
+      ulfactvadfp,
+      ulfactcargoelectrificarural,
+      ulfactotrosconceptosnoafecigv,
+      ulfactotrosconceptosafectoigv,
+      emprcodi,
+      ptomedicodi,
+      ulfactusucreacion,
+      ulfactfeccreacion
+      )
+      values (
+      :psiclicodi,
+      :ulfactcodempresa,
+      :ulfactcodsuministro,
+      :ulfactmesfacturado,
+      :ulfactcodbrg,
+      :ulfactcodpuntosuministro,
+      :ulfactcodareademanda,
+      :ulfactpagavad,
+      :ulfactprecenergbrghp,
+      :ulfactprecenergbrgfp,
+      :ulfactprecpotenbrg,
+      :ulfactconsenergactvhpps,
+      :ulfactconsenergactvfpps,
+      :ulfactmaxdemhpps,
+      :ulfactmaxdemfpps,
+      :ulfactpeajetransmprin,
+      :ulfactpeajetransmsec,
+      :ulfactfpmpoten,
+      :ulfactfpmenerg,
+      :ulfactfactgeneracion,
+      :ulfactfacttransmprin,
+      :ulfactfacttransmsec,
+      :ulfactfactdistrib,
+      :ulfactfactexcesopoten,
+      :ulfactfacturaciontotal,
+      :ulfactconsenergreacps,
+      :ulfactppmt,
+      :ulfactpemt,
+      :ulfactfactptoref,
+      :ulfactvadhp,
+      :ulfactvadfp,
+      :ulfactcargoelectrificarural,
+      :ulfactotrosconceptosnoafecigv,
+      :ulfactotrosconceptosafectoigv,
+      :emprcodi,
+      :ptomedicodi,
+      :ulfactusucreacion,
+      :ulfactfeccreacion
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>ValidarPuntoMedicion</key>
+    <query>
+      SELECT ULFACTCODSUMINISTRO FROM IIO_OSIG_FACTURA_UL
+      WHERE PSICLICODI = :PSICLICODI AND (PTOMEDICODI IS NULL OR PTOMEDICODI = 0) {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>SaveIioFactura</key>
+    <query>
+      INSERT INTO IIO_FACTURA(PSICLICODI,EMPRCODI,EQUICODI,UFACMESFACTURADO,UFACCODBRG,UFACCODPUNTOSUMINISTRO,UFACIDAREADEMANDA,
+      UFACPAGAVAD,UFACPRECENERGBRGHP,UFACPRECENERGBRGFP,UFACPRECPOTENBRG,UFACCONSENERGACTVHPPS,UFACCONSENERGACTVFPPS,UFACMAXDEMHPPS,
+      UFACMAXDEMFPPS,UFACPEAJETRANSMPRIN,UFACPEAJETRANSMSEC,UFACFPMPOTEN,UFACFPMENERG,UFACFACTGENERACION,UFACFACTTRANSMPRIN,
+      UFACFACTTRANSMSEC,UFACFACTDISTRIB,UFACFACTEXCESOPOTEN,UFACFACTURACIONTOTAL,UFACCONSENERGREACPS,UFACPPMT,UFACPEMT,UFACFACTPTOREF,
+      UFACVADHP,UFACVADFP,UFACCARGOELECTRIFICACIONRURAL,UFACOTROSCONCEPTOSNOAFECTOIGV,UFACOTROSCONCEPTOSAFECTOIGV, PTOMEDICODI)
+      SELECT PSICLICODI,F.EMPRCODI,P.EQUICODI,ULFACTMESFACTURADO,ULFACTBARRCODIBRG,ULFACTBARRCODIPTOSUMIN,ULFACTCODAREADEMANDA,
+      ULFACTPAGAVAD,ULFACTPRECENERGBRGHP,ULFACTPRECENERGBRGFP,ULFACTPRECPOTENBRG,ULFACTCONSENERGACTVHPPS,ULFACTCONSENERGACTVFPPS,ULFACTMAXDEMHPPS,
+      ULFACTMAXDEMFPPS,ULFACTPEAJETRANSMPRIN,ULFACTPEAJETRANSMSEC,ULFACTFPMPOTEN,ULFACTFPMENERG,ULFACTFACTGENERACION,ULFACTFACTTRANSMPRIN,
+      ULFACTFACTTRANSMSEC,ULFACTFACTDISTRIB,ULFACTFACTEXCESOPOTEN,ULFACTFACTURACIONTOTAL,ULFACTCONSENERGREACPS,ULFACTPPMT,ULFACTPEMT,ULFACTFACTPTOREF,
+      ULFACTVADHP,ULFACTVADFP,ULFACTCARGOELECTRIFICARURAL,ULFACTOTROSCONCEPTOSNOAFECIGV,ULFACTOTROSCONCEPTOSAFECTOIGV, F.PTOMEDICODI
+      FROM IIO_OSIG_FACTURA_UL F JOIN ME_PTOMEDICION P ON P.PTOMEDICODI = F.PTOMEDICODI
+      WHERE PSICLICODI = :PSICLICODI AND F.PTOMEDICODI > 0  {0} 
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ValidarPuntoMedicion</key>
+    <query>
+      SELECT ULFACTCODSUMINISTRO FROM IIO_OSIG_FACTURA_UL
+      WHERE PSICLICODI = :PSICLICODI AND (PTOMEDICODI IS NULL OR PTOMEDICODI = 0) {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>RegistrarLogimportacionPorEmpresa</key>
+    <query>
+      insert into iio_log_importacion(ulogcodi,ulogusucreacion,ulogfeccreacion,ulogproceso, ulogtablaafectada,
+      ulognroregistrosafectados,ulogmensaje,psiclicodi,ulogtablacoes,ulogidregistrocoes,ulogtipoincidencia,rcimcodi)
+      select {0}+rownum,t.* from (
+      select '{1}',sysdate,'SICLI',ULFACTCODEMPRESA as tablaafectada,count(*),'No se ha encontrado la empresa con codigo '|| '''' || ULFACTCODEMPRESA || '''' ,
+      '{2}','SI_EMPRESA',ULFACTCODEMPRESA,2, MAX(ci.RCIMCODI)
+      from iio_osig_factura_ul f  join iio_control_importacion ci
+      on ci.psiclicodi = f.psiclicodi AND TRIM(ci.rtabcodi) = '{3}' AND TRIM(rcimempresa) = TRIM(ULFACTCODEMPRESA)
+      where f.psiclicodi = :psiclicodi and (f.emprcodi is null OR f.emprcodi = 0)
+      AND ULFACTCODEMPRESA IN ({4})
+      group by ULFACTCODEMPRESA) t
+    </query>
+  </Sql>
+  <Sql>
+    <key>RegistrarLogimportacionPtoMedicion</key>
+    <query>
+      insert into iio_log_importacion(ulogcodi,ulogusucreacion,ulogfeccreacion,ulogproceso, ulogtablaafectada,
+      ulognroregistrosafectados,ulogmensaje,psiclicodi,ulogtablacoes,ulogidregistrocoes,ulogtipoincidencia,rcimcodi)
+      select {0}+rownum,t.* from (
+      select '{1}',sysdate,'SICLI',ULFACTCODEMPRESA as tablaafectada,count(*),'No se encontro el Punto de Medicion para el cliente:  '||  ULFACTCODSUMINISTRO ,
+      '{2}','SI_EMPRESA',ulfactcodsuministro,1, MAX(ci.RCIMCODI)
+      from iio_osig_factura_ul f  join iio_control_importacion ci
+      on ci.psiclicodi = f.psiclicodi AND TRIM(ci.rtabcodi) = '{3}' AND TRIM(rcimempresa) = TRIM(ULFACTCODEMPRESA)
+      where f.psiclicodi = :psiclicodi and (f.ptomedicodi is null OR f.ptomedicodi = 0)
+      AND ULFACTCODEMPRESA IN ({4})
+      group by ULFACTCODEMPRESA, ULFACTCODSUMINISTRO) t
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarControlImportacionNoOK</key>
+    <query>
+      UPDATE IIO_CONTROL_IMPORTACION SET RCIMESTADOIMPORTACION = 0
+      WHERE TRIM(RCIMEMPRESA) IN ({0}) AND PSICLICODI = :psiclicodi AND TRIM(RTABCODI) = '{1}'
+      AND (NVL(RCIMNROREGISTROS,0) &#60;> NVL(RCIMNROREGISTROSCOES,0)
+      OR EXISTS (SELECT * FROM iio_log_importacion I WHERE RCIMCODI = IIO_CONTROL_IMPORTACION.RCIMCODI)
+      )
+    </query>
+  </Sql>
+  
+<Sql>
+    <key>ActualizarControlImportacionOK</key>
+    <query>
+     UPDATE IIO_CONTROL_IMPORTACION SET RCIMESTADOIMPORTACION = 1
+     WHERE TRIM(RCIMEMPRESA) IN ({0}) AND PSICLICODI = :psiclicodi AND TRIM(RTABCODI) = '{1}'
+     AND RCIMNROREGISTROS = RCIMNROREGISTROSCOES
+     AND NOT EXISTS (SELECT * FROM iio_log_importacion I WHERE RCIMCODI = IIO_CONTROL_IMPORTACION.RCIMCODI )
+    </query>
+  </Sql>
+  <Sql>
+    <key>ActualizarCantidadRegistrosImportacionCoes</key>
+    <query>
+       UPDATE IIO_CONTROL_IMPORTACION
+       SET  RCIMNROREGISTROSCOES = RCIMNROREGISTROS
+       WHERE PSICLICODI = {0} AND TRIM(RTABCODI) = TRIM('{1}') AND TRIM(RCIMEMPRESA) IN ({2})
+    </query>
+  </Sql>
+
+<Sql>
+    <key>ActualizarPeriodoFechaSincCoes</key>
+    <query>
+      update iio_periodo_sicli
+      set psiclifecsincronizacion = sysdate
+      where psiclicodi = :psiclicodi
+    </query>
+  </Sql>
+
+<Sql>
+    <key>ValidarTablaEmpresas</key>
+    <query>
+      select NVL(count(*),0) as Registros from iio_control_importacion 
+      where psiclicodi = :psiclicodi and nvl(rcimestadoimportacion,0) = 0
+      and TRIM(rtabcodi)='TMP_CLI_TABLA05'
+    </query>
+  </Sql>
+</Sqls>

@@ -1,0 +1,183 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select pecacodi, 
+      pericodi,
+      pecaversioncomp,
+      pecanombre,
+      pecaversionvtea,
+      pecatipocambio,
+      pecaestregistro,
+      pecausucreacion,
+      pecafeccreacion,
+      pecausumodificacion,
+      pecafecmodificacion,
+      pecamotivo
+      from vce_periodo_calculo where pecacodi = :pecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vce_periodo_calculo
+      (
+      pecacodi, pericodi, pecaversioncomp, pecanombre, pecaversionvtea, pecatipocambio,
+      pecaestregistro, pecausucreacion, pecafeccreacion, pecamotivo
+
+      )
+      values
+      (
+      :precacodi, :pericodi, :pecaversioncomp, :pecanombre, :pecaversionvtea, :pecatipocambio,
+      :pecaestregistro, :pecausucreacion, :pecafeccreacion, :pecamotivo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vce_periodo_calculo
+      set
+      pecaversioncomp = :pecaversioncomp,
+      pecanombre = : pecanombre,
+      pecaversionvtea = :pecaversionvtea,
+      pecatipocambio = :pecatipocambio,
+      pecaestregistro = :pecaestregistro,
+      pecausumodificacion = :pecausumodificacion,
+      pecafecmodificacion = :pecafecmodificacion,
+      pecamotivo = :pecamotivo
+      where pecacodi = :pecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vce_periodo_calculo where pecacodi = :pecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+		<key>List</key>
+		<query>
+      select pec.pecacodi, pec.pericodi, per.perinombre,per.perianio, per.perimes, per.perianiomes,
+      pec.pecaversioncomp, pec.pecanombre, pec.pecaversionvtea, pec.pecatipocambio,
+      pec.pecaestregistro, pec.motivo
+      from vce_periodo_calculo pec
+      left join trn_periodo per
+      on pec.pericodi = per.pericodi
+      order by per.perianiomes desc, pec.pecaversioncomp desc
+    </query>
+	</Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select pec.pecacodi, pec.pericodi, per.perinombre,per.perianio, per.perimes, per.perianiomes,
+      pec.pecaversioncomp, pec.pecanombre, pec.pecaversionvtea, pec.pecatipocambio,
+      pec.pecaestregistro, pec.motivo
+      from vce_periodo_calculo pec
+      left join trn_periodo per
+      on pec.pericodi = per.pericodi
+      where  (per.perinombre like '%' + :perinombre + '%' or :perinombre is null)
+      order by per.perianiomes desc, pec.pecaversioncomp desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByAnioMes</key>
+    <query>
+      select pec.pecacodi, pec.pericodi, per.perinombre,per.perianio, per.perimes, per.perianiomes,
+      pec.pecaversioncomp, pec.pecanombre, pec.pecaversionvtea, pec.pecatipocambio,
+      pec.pecaestregistro, pec.motivo
+      from vce_periodo_calculo pec
+      left join trn_periodo per
+      on pec.pericodi = per.pericodi
+      where per.perianiomes = :perianiomes
+      order by pec.pecaversioncomp desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdPeriodo</key>
+    <query>
+      select pc.pecacodi, pc.pericodi, pecaversioncomp, pecanombre, pc.pecaversionvtea, pecatipocambio,pc.pecamotivo,
+      pecaestregistro, pecausucreacion, pecafeccreacion, pecausumodificacion, pecafecmodificacion, reca.recanombre, p.periestado
+      from vce_periodo_calculo pc left join trn_recalculo reca ON reca.pericodi = pc.pericodi and pc.pecaversionvtea = reca.recacodi
+      left join trn_periodo p ON pc.pericodi = p.pericodi
+      where pc.pericodi = :pericodi
+      order by pecaversioncomp desc
+    </query>
+  </Sql>
+  <Sql>
+    <key>NroCalculosActivosPeriodo</key>
+    <query>
+      SELECT COUNT(*) FROM VCE_PERIODO_CALCULO WHERE PERICODI = {0} AND PECAESTREGISTRO = '1'
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(pecacodi), 0) + 1 from vce_periodo_calculo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetIdAnteriorCalculo</key>
+    <query>
+      SELECT PR.PECACODI FROM VCE_PERIODO_CALCULO PR
+      JOIN (
+      SELECT PCB.PERICODI, MAX(PCB.PECAVERSIONCOMP) AS PECAVERSIONCOMP
+      FROM VCE_PERIODO_CALCULO PC JOIN VCE_PERIODO_CALCULO PCB ON PC.PERICODI = PCB.PERICODI
+      WHERE PC.PECACODI = {0} AND PCB.PECAVERSIONCOMP &lt; PC.PECAVERSIONCOMP
+      GROUP BY PCB.PERICODI) ULT ON PR.PERICODI = ULT.PERICODI AND PR.PECAVERSIONCOMP = ULT.PECAVERSIONCOMP
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetIdAnteriorConfig</key>
+    <query>
+      SELECT NVL(MAX(PECACODI),0) AS PECACODI
+      FROM VCE_PERIODO_CALCULO
+      WHERE PERICODI IN (
+      SELECT MAX(PERICODI)
+      FROM VCE_PERIODO_CALCULO
+      WHERE PERICODI &lt; {0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetPeriodo</key>
+    <query>
+      select pe.pericodi,pe.perianiomes
+      from vce_periodo_calculo pc join trn_periodo pe on pc.pericodi = pe.pericodi where pc.pecacodi= :pecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetPeriodoMaximo</key>
+    <query>
+
+      select max(pecacodi) from vce_periodo_calculo pc
+      where pericodi &lt; {0} and exists (select 1 from vce_datcalculo ca where ca.pecacodi= pc.pecacodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateCompensacionInforme</key>
+    <query>
+      update trn_periodo
+      set
+      periinforme = :periinforme
+      where pericodi = :pericodi
+    </query>
+  </Sql>
+  
+</Sqls>
+

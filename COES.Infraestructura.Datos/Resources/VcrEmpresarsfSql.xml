@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(vcersfcodi), 0) + 1 from vcr_empresarsf
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vcr_empresarsf(
+      vcersfcodi,
+      vcrecacodi,
+      emprcodi,
+      vcersfresvnosumins,
+      vcersftermsuperavit,
+      vcersfcostoportun,
+      vcersfcompensacion,
+      vcersfasignreserva,
+      vcersfpagoincumpl,
+      vcersfpagorsf,
+      vcersfusucreacion,
+      vcersffeccreacion
+      )
+      values(
+      :vcersfcodi,
+      :vcrecacodi,
+      :emprcodi,
+      :vcersfresvnosumins,
+      :vcersftermsuperavit,
+      :vcersfcostoportun,
+      :vcersfcompensacion,
+      :vcersfasignreserva,
+      :vcersfpagoincumpl,
+      :vcersfpagorsf,
+      :vcersfusucreacion,
+      :vcersffeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vcr_empresarsf
+      set
+      vcrecacodi = :vcrecacodi,
+      emprcodi = :emprcodi,
+      vcersfresvnosumins = :vcersfresvnosumins,
+      vcersftermsuperavit = :vcersftermsuperavit,
+      vcersfcostoportun = :vcersfcostoportun,
+      vcersfcompensacion = :vcersfcompensacion,
+      vcersfasignreserva = :vcersfasignreserva,
+      vcersfpagoincumpl = :vcersfpagoincumpl,
+      vcersfpagorsf = :vcersfpagorsf,
+      vcersfusucreacion = :vcersfusucreacion,
+      vcersffeccreacion = :vcersffeccreacion
+      where
+      vcersfcodi = :vcersfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vcr_empresarsf
+      where vcrecacodi = :vcrecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from vcr_empresarsf
+      where vcersfcodi = :vcersfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select (select emprnomb from si_empresa e where e.emprcodi = ersf.emprcodi) emprnomb, ersf.*
+      from vcr_empresarsf ersf
+      where ersf.vcrecacodi = :vcrecacodi
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select *
+      from vcr_empresarsf
+    </query>
+  </Sql>
+  <!--ASSETEC 20190215-->
+  <Sql>
+    <key>GetByIdTotalMes</key>
+    <query>
+      select ts.vcersfresvnosumins, ts.vcersftermsuperavit, co.vcersfcostoportun, cm.vcersfcompensacion, ar.vcersfasignreserva, ci.vcersfpagoincumpl, p.vcersfpagorsf
+      from
+      (select nvl(sum(vcrtsresrvnosumn),0) as vcersfresvnosumins, nvl(sum(vcrtssuperavit + vcrtsdeficit),0) as vcersftermsuperavit
+      from vcr_termsuperavit where vcrecacodi = :vcrecacodi and grupocodi in (select grupocodi from trn_barra_urs where emprcodi = :emprcodi)) ts,
+      (select nvl(sum(vcrcopcosto),0) as vcersfcostoportun from vcr_costoportunidad where vcrecacodi = :vcrecacodi and grupocodi in (select grupocodi from trn_barra_urs where emprcodi = :emprcodi)) co,
+      (select (nvl(sum(vcmpopporrsf),0) + nvl(sum(vcmpopbajaefic),0)) as vcersfcompensacion from vcr_cmpensoper where vcrecacodi = :vcrecacodi and grupocodi in (select grupocodi from trn_barra_urs where emprcodi = :emprcodi)) cm,
+      (select nvl(sum(vcrarasignreserva),0) as vcersfasignreserva from vcr_asignacionreserva where vcrecacodi = :vcrecacodi and grupocodi in (select grupocodi from trn_barra_urs where emprcodi = :emprcodi)) ar,
+      (select nvl(sum(vcrcicarginctransf),0) as vcersfpagoincumpl from vcr_cargoincumpl where vcrecacodi = :vcrecacodi and equicodi in (select equicodi from eq_equipo where emprcodi = :emprcodi)) ci,
+      (select nvl(sum(vcprsfpagorsf),0) as vcersfpagorsf from vcr_pagorsf where vcrecacodi = :vcrecacodi and equicodi in (select equicodi from eq_equipo where emprcodi = :emprcodi)) p
+    </query>
+  </Sql>
+</Sqls>

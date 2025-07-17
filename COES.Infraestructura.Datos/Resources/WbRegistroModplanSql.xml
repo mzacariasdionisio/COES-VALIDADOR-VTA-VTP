@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(regmodcodi), 0) + 1 from wb_registro_modplan
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into wb_registro_modplan(
+      regmodcodi,
+      regmodplan,
+      regmodversion,
+      regmodusuario,
+      regmodfecha,
+      vermplcodi,
+      emprcodi,
+      regmodtipo,
+      arcmplcodi
+      )
+      values(
+      :regmodcodi,
+      :regmodplan,
+      :regmodversion,
+      :regmodusuario,
+      :regmodfecha,
+      :vermplcodi,
+      :emprcodi,
+      :regmodtipo,
+      :arcmplcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update wb_registro_modplan
+      set
+      regmodplan = :regmodplan,
+      regmodversion = :regmodversion,
+      regmodusuario = :regmodusuario,
+      regmodfecha = :regmodfecha,
+      vermplcodi = :vermplcodi,
+      regmodtipo = :regmodtipo
+      where
+      regmodcodi = :regmodcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from wb_registro_modplan
+       where
+           regmodcodi = :regmodcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      regmodcodi,
+      regmodplan,
+      regmodversion,
+      regmodusuario,
+      regmodfecha,
+      vermplcodi,
+      regmodtipo
+      from
+      wb_registro_modplan
+      where
+      regmodcodi = :regmodcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      regmodcodi,
+      regmodplan,
+      regmodversion,
+      regmodusuario,
+      regmodfecha,
+      vermplcodi,
+      regmodtipo
+      from
+      wb_registro_modplan
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      wb.regmodcodi,
+      wb.regmodplan,
+      wb.regmodversion,
+      wb.regmodusuario,
+      wb.regmodfecha,
+      wb.vermplcodi,
+      emp.emprnomb,
+      wb.regmodtipo
+      from
+      wb_registro_modplan wb
+      inner join si_empresa emp on wb.emprcodi = emp.emprcodi
+      where
+      wb.regmodfecha >= to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and
+      wb.regmodfecha &lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      order by wb.regmodfecha desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporte</key>
+    <query>
+      select
+      wb.regmodcodi,
+      (select ver1.vermpldesc from wb_version_modplan ver1 where ver1.vermplcodi = ver.vermplpadre) as regmodplan,
+      ver.vermpldesc as regmodversion,
+      wb.regmodusuario,
+      wb.regmodfecha,
+      wb.vermplcodi,
+      wb.regmodtipo,
+      emp.emprnomb
+      from
+      wb_registro_modplan wb
+      --inner join fw_user usu on wb.regmodusuario = usu.userlogin
+      inner join si_empresa emp on wb.emprcodi = emp.emprcodi
+      inner join wb_version_modplan ver on wb.vermplcodi = ver.vermplcodi
+      where
+      wb.vermplcodi = :vermplcodi and wb.regmodtipo = :regmodtipo
+      order by wb.regmodfecha desc
+    </query>
+  </Sql>
+  
+  
+</Sqls>

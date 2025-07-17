@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(aporcodi), 0) + 1 from dai_aportante
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into dai_aportante(
+           aporcodi,
+           emprcodi,
+           prescodi,
+           tabcdcodiestado,
+           aporporcentajeparticipacion,
+           apormontoparticipacion,
+           aporaniosinaporte,
+           aporliquidado,
+           aporusuliquidacion,
+           aporfecliquidacion,
+           aporactivo,
+           aporusucreacion,
+           aprofeccreacion,
+           aporusumodificacion,
+           aporfecmodificacion
+       )
+       values(
+           :aporcodi,
+           :emprcodi,
+           :prescodi,
+           :tabcdcodiestado,
+           :aporporcentajeparticipacion,
+           :apormontoparticipacion,
+           :aporaniosinaporte,
+           :aporliquidado,
+           :aporusuliquidacion,
+           :aporfecliquidacion,
+           :aporactivo,
+           :aporusucreacion,
+           :aprofeccreacion,
+           :aporusumodificacion,
+           :aporfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update dai_aportante
+       set
+           prescodi = :prescodi,
+           tabcdcodiestado = :tabcdcodiestado,
+           aporaniosinaporte = :aporaniosinaporte,
+           aporliquidado = :aporliquidado,
+           aporusuliquidacion = :aporusuliquidacion,
+           aporfecliquidacion = :aporfecliquidacion,
+           aporusumodificacion = :aporusumodificacion,
+           aporfecmodificacion = :aporfecmodificacion
+       where
+           aporcodi = :aporcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from dai_aportante
+       where
+           aporcodi = :aporcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByPresupuesto</key>
+    <query>
+      update dai_aportante
+      set APORACTIVO = '0', APORUSUMODIFICACION = :APORUSUMODIFICACION, APORFECMODIFICACION = :APORFECMODIFICACION
+      where
+      PRESCODI = :PRESCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      a.aporcodi,
+      a.emprcodi,
+      a.prescodi,
+      a.tabcdcodiestado,
+      a.aporporcentajeparticipacion,
+      a.apormontoparticipacion,
+      a.aporaniosinaporte,
+      a.aporliquidado,
+      a.aporusuliquidacion,
+      a.aporfecliquidacion,
+      a.aporactivo,
+      a.aporusucreacion,
+      a.aprofeccreacion,
+      a.aporusumodificacion,
+      a.aporfecmodificacion,
+      e.EMPRNOMB,
+      e.EMPRRAZSOCIAL,
+      e.EMPRRUC
+      from
+      dai_aportante a
+      inner join si_empresa e on a.emprcodi = e.emprcodi
+      where
+      aporcodi = :aporcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+      a.aporcodi,
+      a.emprcodi,
+      a.prescodi,
+      a.tabcdcodiestado,
+      a.aporporcentajeparticipacion,
+      a.apormontoparticipacion,
+      a.aporaniosinaporte,
+      a.aporliquidado,
+      a.aporusuliquidacion,
+      a.aporfecliquidacion,
+      a.aporactivo,
+      a.aporusucreacion,
+      a.aprofeccreacion,
+      a.aporusumodificacion,
+      a.aporfecmodificacion,
+      e.EMPRNOMB,
+      e.EMPRRAZSOCIAL,
+      e.EMPRRUC,
+      d.TIPOEMPRDESC tipoEmpresa,
+      de.TABDDESCRIPCION estadoAportante,
+      1 estado
+      from
+      dai_aportante a
+      inner join si_empresa e on a.emprcodi = e.emprcodi
+      inner join si_tipoempresa d on e.TIPOEMPRCODI = d.TIPOEMPRCODI
+      inner join DAI_TABLACODIGO_DETALLE de on a.tabcdcodiestado = de.TABDCODI
+      where a.aporactivo = '1' 
+      order by e.EMPRNOMB
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListCuadroDevolucion</key>
+    <query>
+      select Emprcodi, EMPRNOMB, EMPRRAZSOCIAL, EMPRRUC, tipoEmpresa, caleinteres, caleinteresigv, caleinteres+caleinteresigv totalinteresesigv, amortizacion, caleinteres+caleinteresigv+amortizacion total from (select
+      a.emprcodi,
+      e.EMPRNOMB,
+      e.EMPRRAZSOCIAL,
+      e.EMPRRUC,
+      d.TIPOEMPRDESC tipoEmpresa,
+      1 estado,
+      sum(nvl(cp.caleinteres, 0)) caleinteres,
+      sum(nvl(cp.caleinteres,0)) * {0} caleinteresigv,
+      sum(nvl(cp.caleamortizacion, 0)) amortizacion
+      from
+      dai_aportante a
+      inner join si_empresa e on a.emprcodi = e.emprcodi
+      inner join si_tipoempresa d on e.TIPOEMPRCODI = d.TIPOEMPRCODI
+      inner join DAI_TABLACODIGO_DETALLE de on a.tabcdcodiestado = de.TABDCODI
+      left join dai_calendariopago cp on cp.aporcodi = a.aporcodi and cp.caleactivo = '1' and cp.caleanio = {1} and cp.TABCDCODIESTADO = {2}
+      where a.aporactivo = '1'
+      group by a.emprcodi,
+      e.EMPRNOMB,
+      e.EMPRRAZSOCIAL,
+      e.EMPRRUC,
+      d.TIPOEMPRDESC
+      order by e.EMPRNOMB)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      a.aporcodi,
+      a.emprcodi,
+      a.prescodi,
+      a.tabcdcodiestado,
+      a.aporporcentajeparticipacion,
+      a.apormontoparticipacion,
+      a.aporaniosinaporte,
+      a.aporliquidado,
+      a.aporusuliquidacion,
+      a.aporfecliquidacion,
+      a.aporactivo,
+      a.aporusucreacion,
+      a.aprofeccreacion,
+      a.aporusumodificacion,
+      a.aporfecmodificacion,
+      e.EMPRNOMB,
+      e.EMPRRAZSOCIAL,
+      e.EMPRRUC,
+      d.TIPOEMPRDESC tipoEmpresa,
+      de.TABDDESCRIPCION estadoAportante,
+      1 estado
+      from
+      dai_aportante a
+      inner join si_empresa e on a.emprcodi = e.emprcodi
+      inner join si_tipoempresa d on e.TIPOEMPRCODI = d.TIPOEMPRCODI
+      inner join DAI_TABLACODIGO_DETALLE de on a.tabcdcodiestado = de.TABDCODI
+      where a.aporactivo = '1' and prescodi = {0} {1}
+      order by e.EMPRNOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaAportanteLiquidacion</key>
+    <query>
+      select
+      a.aporcodi,
+      a.emprcodi,
+      a.prescodi,
+      a.tabcdcodiestado,
+      a.aporporcentajeparticipacion,
+      a.apormontoparticipacion,
+      a.aporaniosinaporte,
+      a.aporliquidado,
+      a.aporusuliquidacion,
+      a.aporfecliquidacion,
+      a.aporactivo,
+      a.aporusucreacion,
+      a.aprofeccreacion,
+      a.aporusumodificacion,
+      a.aporfecmodificacion,
+      e.EMPRNOMB,
+      e.EMPRRAZSOCIAL,
+      e.EMPRRUC,
+      d.TIPOEMPRDESC tipoEmpresa,
+      de.TABDDESCRIPCION estadoAportante,
+      1 estado
+      from
+      dai_aportante a
+      inner join si_empresa e on a.emprcodi = e.emprcodi
+      inner join si_tipoempresa d on e.TIPOEMPRCODI = d.TIPOEMPRCODI
+      inner join DAI_TABLACODIGO_DETALLE de on a.tabcdcodiestado = de.TABDCODI
+      where a.aporactivo = '1' and exists(select * from DAI_CALENDARIOPAGO cp where cp.caleactivo = '1' and cp.aporcodi = a.aporcodi {1}) and prescodi = {0}
+      order by e.EMPRNOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaAportanteCronograma</key>
+    <query>
+      select
+      a.aporcodi,
+      a.emprcodi,
+      a.prescodi,
+      a.tabcdcodiestado,
+      a.aporporcentajeparticipacion,
+      a.apormontoparticipacion,
+      a.aporaniosinaporte,
+      a.aporliquidado,
+      a.aporusuliquidacion,
+      a.aporfecliquidacion,
+      a.aporactivo,
+      a.aporusucreacion,
+      a.aprofeccreacion,
+      a.aporusumodificacion,
+      a.aporfecmodificacion,
+      e.EMPRNOMB,
+      e.EMPRRAZSOCIAL,
+      e.EMPRRUC,
+      d.TIPOEMPRDESC tipoEmpresa,
+      de.TABDDESCRIPCION estadoAportante,
+      1 estado
+      from
+      dai_aportante a
+      inner join dai_presupuesto pres on a.prescodi = pres.prescodi
+      inner join si_empresa e on a.emprcodi = e.emprcodi
+      inner join si_tipoempresa d on e.TIPOEMPRCODI = d.TIPOEMPRCODI
+      inner join DAI_TABLACODIGO_DETALLE de on a.tabcdcodiestado = de.TABDCODI
+      where a.aporactivo = '1' and exists(select * from DAI_CALENDARIOPAGO cp where cp.caleactivo = '1' and cp.aporcodi = a.aporcodi {1} and cp.caleanio = {0})
+      order by e.EMPRNOMB
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteriaAniosCronograma</key>
+    <query>
+      select distinct cp.caleanio from DAI_CALENDARIOPAGO cp
+      inner join DAI_APORTANTE a on cp.aporcodi = a.aporcodi
+      where (a.prescodi = {0} or {0} = 0) and cp.caleactivo = '1' {1}
+      order by cp.caleanio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaFinalizar</key>
+    <query>
+      select
+      a.aporcodi
+      from
+      dai_aportante a
+      inner join si_empresa e on a.emprcodi = e.emprcodi
+      inner join si_tipoempresa d on e.TIPOEMPRCODI = d.TIPOEMPRCODI
+      inner join DAI_TABLACODIGO_DETALLE de on a.tabcdcodiestado = de.TABDCODI
+      inner join DAI_CALENDARIOPAGO cp on a.aporcodi = cp.aporcodi
+      where a.aporactivo = '1' and cp.caleactivo = '1' and cp.Tabcdcodiestado = {0} and a.prescodi = {1} and a.emprcodi = {2}
+      order by e.EMPRNOMB
+    </query>
+  </Sql>
+  
+</Sqls>

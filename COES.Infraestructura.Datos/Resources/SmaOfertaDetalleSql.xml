@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ofdecodi), 0) + 1 from sma_oferta_detalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into sma_oferta_detalle(
+      urscodi,
+      ofdehorainicio,
+      ofdehorafin,
+      ofdeprecio,
+      ofdepotofer,
+      ofdedusucreacion,
+      ofdefeccreacion,
+      ofdemoneda,
+      ofdeusumodificacion,
+      ofdefecmodificacion,
+      ofdecodi,
+      ofercodi,
+      ofdetipo
+      )
+      values(
+      :urscodi,
+      :ofdehorainicio,
+      :ofdehorafin,
+      :ofdeprecio,
+      :ofdepotofer,
+      :ofdedusucreacion,
+      sysdate,
+      :ofdemoneda,
+      null,
+      null,
+      :ofdecodi,
+      :ofercodi,
+      :ofdetipo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update sma_oferta_detalle
+      set
+      urscodi = :urscodi,
+      ofdehorainicio = :ofdehorainicio,
+      ofdehorafin = :ofdehorafin,
+      ofdeprecio = :ofdeprecio,
+      ofdemoneda = :ofdemoneda,
+      ofdeusumodificacion = :ofdeusumodificacion,
+      ofdefecmodificacion = sysdate,
+      ofercodi = :ofercodi
+      where
+      ofdecodi = :ofdecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdatePrecio</key>
+    <query>
+      update sma_oferta_detalle
+      set
+      ofdeprecio = :ofdeprecio,
+      ofdefecmodificacion = :ofdefecmodificacion,
+      ofdeusumodificacion = :ofdeusumodificacion
+      where
+      ofdecodi = :ofdecodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from sma_oferta_detalle
+       where
+           ofdecodi = :ofdecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      where
+      ofdecodi = :ofdecodi
+      from
+      sma_oferta_detalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           *
+       from
+           sma_oferta_detalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select count(*) from
+      (
+      select so.ofercodi, so.ofertipo, sd.urscodi , so.oferestado
+      from sma_oferta so, sma_oferta_detalle sd
+      where so.ofercodi = sd.ofercodi
+      and so.ofertipo = 0
+      and so.oferestado = 'A'
+      and sd.urscodi = :urscodi
+      group by so.ofercodi, so.ofertipo, sd.urscodi , so.oferestado
+      )
+    </query>
+  </Sql>
+
+  <!--FIT-Aplicativo VTD-->
+
+  <Sql>
+    <key>ListByDate</key>
+    <query>
+      select
+      smadet.urscodi,
+      smadet.ofdehorainicio,
+      smadet.ofdehorafin,
+      smadet.ofdeprecio,
+      smadet.ofdedusucreacion,
+      smadet.ofdefeccreacion,
+      smadet.ofdemoneda,
+      smadet.ofdeusumodificacion,
+      smadet.ofdefecmodificacion,
+      smadet.ofdecodi,
+      smadet.ofercodi,
+      '' as ofdetipo,-- smadet.ofdetipo,
+      gr.gruponomb
+      from
+      sma_oferta_detalle smadet
+      inner join sma_oferta ofe on smadet.ofercodi = ofe.ofercodi
+      inner join pr_grupo gr on  smadet.urscodi = gr.grupocodi
+      where
+      ofe.oferfuente = 'E' and
+      ofe.oferfechainicio >= to_date('{0}', 'YYYY-MM-DD') and ofe.oferfechainicio &lt;= to_date('{1}', 'YYYY-MM-DD')
+      and ('-1'='{2}' or ofe.ofertipo = {2})
+      and ('-1'='{3}' or ofe.oferestado = '{3}')
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListByDateTipo</key>
+    <query>
+      select
+      smadet.urscodi,
+      smadet.ofdehorainicio,
+      smadet.ofdehorafin,
+      smadet.ofdeprecio,
+      smadet.ofdedusucreacion,
+      smadet.ofdefeccreacion,
+      smadet.ofdemoneda,
+      smadet.ofdeusumodificacion,
+      smadet.ofdefecmodificacion,
+      smadet.ofdecodi,
+      smadet.ofercodi,
+      smadet.ofdetipo,
+      gr.gruponomb, 
+      ofe.oferfuente,
+      smadet.ofdepotofer
+      from
+      sma_oferta_detalle smadet
+      inner join sma_oferta ofe on smadet.ofercodi = ofe.ofercodi
+      inner join pr_grupo gr on  smadet.urscodi = gr.grupocodi
+      where
+      ofe.oferfechainicio >= to_date('{0}', 'YYYY-MM-DD') and ofe.oferfechainicio &lt;= to_date('{1}', 'YYYY-MM-DD')
+      and ('-1'='{2}' or ofe.ofertipo = {2})
+      and ('-1'='{3}' or ofe.oferestado = '{3}')
+    </query>
+  </Sql>
+  <!--FIN Aplicativo VTD-->
+
+  <Sql>
+    <key>ListarPorOfertas</key>
+    <query>
+      select * from sma_oferta_detalle
+      where ofercodi in ({0})
+    </query>
+  </Sql>
+  
+
+</Sqls>

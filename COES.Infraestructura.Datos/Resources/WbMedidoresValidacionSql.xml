@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(medivalcodi), 0) + 1 from wb_medidores_validacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into wb_medidores_validacion(
+           medivalcodi,
+           ptomedicodimed,
+           ptomedicodidesp,
+           lastuser,
+           lastdate,
+           indestado
+       )
+       values(
+           :medivalcodi,
+           :ptomedicodimed,
+           :ptomedicodidesp,
+           :lastuser,
+           :lastdate,
+           :indestado
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update wb_medidores_validacion
+       set
+           ptomedicodimed = :ptomedicodimed,
+           ptomedicodidesp = :ptomedicodidesp,
+           lastuser = :lastuser,
+           lastdate = :lastdate,
+           indestado = :indestado
+       where
+           medivalcodi = :medivalcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from wb_medidores_validacion
+       where
+           medivalcodi = :medivalcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           medivalcodi,
+           ptomedicodimed,
+           ptomedicodidesp,
+           lastuser,
+           lastdate,
+           indestado
+       where
+           medivalcodi = :medivalcodi
+       from
+           wb_medidores_validacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select punto.ptomedicodi,
+      tipoarea.tareaabrev || ' ' || area.areanomb as central, equipo.equiabrev as equinomb, empresa.emprnomb as emprnomb,
+      punto.ptomediestado
+      from me_ptomedicion punto
+      inner join eq_equipo equipo on punto.equicodi = equipo.equicodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      where punto.ptomedicodi in (select distinct ptomedicodimed from wb_medidores_validacion)
+      or punto.ptomedicodi in (select distinct ptomedicodidesp from wb_medidores_validacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select distinct emp.emprnomb, emp.emprcodi,
+      gr.grupocodi,
+      gr.gruponomb,
+      gr.grupoabrev,
+      mv.ptomedicodidesp,
+      mv.ptomedicodimed
+      from wb_medidores_validacion mv inner join me_ptomedicion pto on mv.ptomedicodidesp = pto.ptomedicodi
+      inner join pr_grupo gr on pto.grupocodi = gr.grupocodi
+      inner join si_empresa emp on gr.emprcodi = emp.emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerPuntosPorEmpresa</key>
+    <query>
+      select tipoarea.tareaabrev || ' ' || area.areanomb as central, equipo.equiabrev as equinomb, punto.ptomedicodi from me_ptomedicion  punto
+      inner join eq_equipo equipo on punto.equicodi = equipo.equicodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on area.tareacodi = tipoarea.tareacodi
+      where origlectcodi = {0} and equipo.emprcodi = {1} 
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarExistencia</key>
+    <query>
+      select count(*) from wb_medidores_validacion
+      where ptomedicodimed = :ptomedicodimed and ptomedicodidesp = :ptomedicodidesp
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerRelaciones</key>
+    <query>
+      select validacion.* from wb_medidores_validacion validacion
+      inner join me_ptomedicion punto on validacion.ptomedicodimed = punto.ptomedicodi
+      where punto.emprcodi = {0} or  {0} = -1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresaGrafico</key>
+    <query>
+      select distinct empresa.emprcodi, empresa.emprnomb
+      from me_ptomedicion punto
+      inner join eq_equipo equipo on punto.equicodi = equipo.equicodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join wb_medidores_validacion validacion on punto.ptomedicodi = validacion.ptomedicodimed
+      where empresa.emprestado = 'A'  and punto.ptomediestado = 'A'
+      order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerGrupoGrafico</key>
+    <query>
+      select distinct
+      grupo.gruponomb, grupo.grupocodi
+      from me_ptomedicion punto
+      inner join pr_grupo grupo on punto.grupocodi = grupo.grupocodi
+      inner join eq_equipo equipo on punto.equicodi = equipo.equicodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      inner join wb_medidores_validacion validacion on punto.ptomedicodi = validacion.ptomedicodimed
+      where empresa.emprestado = 'A' and (empresa.emprcodi = '{0}' or '{0}' = '-1')
+    </query>
+  </Sql>
+  
+</Sqls>

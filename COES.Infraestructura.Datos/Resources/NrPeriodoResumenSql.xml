@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(nrperrcodi), 0) + 1 from nr_periodo_resumen
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into nr_periodo_resumen(
+           nrperrcodi,
+           nrpercodi,
+           nrcptcodi,
+           nrperrnumobservacion,
+           nrperrobservacion,
+           nrperreliminado,
+           nrperrusucreacion,
+           nrperrfeccreacion,
+           nrperrusumodificacion,
+           nrperrfecmodificacion
+       )
+       values(
+           :nrperrcodi,
+           :nrpercodi,
+           :nrcptcodi,
+           :nrperrnumobservacion,
+           :nrperrobservacion,
+           :nrperreliminado,
+           :nrperrusucreacion,
+           :nrperrfeccreacion,
+           :nrperrusumodificacion,
+           :nrperrfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update nr_periodo_resumen
+       set
+           nrpercodi = :nrpercodi,
+           nrcptcodi = :nrcptcodi,
+           nrperrnumobservacion = :nrperrnumobservacion,
+           nrperrobservacion = :nrperrobservacion,
+           nrperreliminado = :nrperreliminado,
+           nrperrusucreacion = :nrperrusucreacion,
+           nrperrfeccreacion = :nrperrfeccreacion,
+           nrperrusumodificacion = :nrperrusumodificacion,
+           nrperrfecmodificacion = :nrperrfecmodificacion
+       where
+           nrperrcodi = :nrperrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from nr_periodo_resumen
+       where
+           nrperrcodi = :nrperrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           nrperrcodi,
+           nrpercodi,
+           nrcptcodi,
+           nrperrnumobservacion,
+           nrperrobservacion,
+           nrperreliminado,
+           nrperrusucreacion,
+           nrperrfeccreacion,
+           nrperrusumodificacion,
+           nrperrfecmodificacion
+       from
+           nr_periodo_resumen
+       where
+           nrperrcodi = :nrperrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdPeriodoConcepto</key>
+    <query>
+      select
+      nrperrcodi,
+      nrpercodi,
+      nrcptcodi,
+      nrperrnumobservacion,
+      nrperrobservacion,
+      nrperreliminado,
+      nrperrusucreacion,
+      nrperrfeccreacion,
+      nrperrusumodificacion,
+      nrperrfecmodificacion
+      from
+      nr_periodo_resumen
+      where
+      nrpercodi = :nrpercodi
+      and
+      nrcptcodi= :nrcptcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           nrperrcodi,
+           nrpercodi,
+           nrcptcodi,
+           nrperrnumobservacion,
+           nrperrobservacion,
+           nrperreliminado,
+           nrperrusucreacion,
+           nrperrfeccreacion,
+           nrperrusumodificacion,
+           nrperrfecmodificacion
+       from
+           nr_periodo_resumen
+    </query>
+  </Sql>
+
+  
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           nrperrcodi,
+           nrpercodi,
+           nrcptcodi,
+           nrperrnumobservacion,
+           nrperrobservacion,
+           nrperreliminado,
+           nrperrusucreacion,
+           nrperrfeccreacion,
+           nrperrusumodificacion,
+           nrperrfecmodificacion
+       from
+           nr_periodo_resumen
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListado</key>
+    <query>
+      select
+      *
+      from (
+        select b.nrsmodcodi,b.nrsmodnombre,c.nrpercodi,c.nrpermes,
+        (select count(*) 
+        from nr_periodo_resumen z, nr_concepto y, nr_submodulo x, nr_periodo w 
+        where z.nrcptcodi=y.nrcptcodi and z.nrpercodi=w.nrpercodi and x.nrsmodcodi=y.nrsmodcodi and y.nrsmodcodi=b.nrsmodcodi
+        and z.nrperrnumobservacion&lt;0 and w.nrpercodi=c.nrpercodi
+      ) pendiente,
+      (select count(*)
+      from nr_periodo_resumen z, nr_concepto y, nr_submodulo x, nr_periodo w
+      where z.nrcptcodi=y.nrcptcodi and z.nrpercodi=w.nrpercodi and x.nrsmodcodi=y.nrsmodcodi and y.nrsmodcodi=b.nrsmodcodi
+      and z.nrperrnumobservacion>0 and w.nrpercodi=c.nrpercodi
+      ) observaciones,
+      (select count(*)
+      from nr_periodo_resumen z, nr_concepto y, nr_submodulo x, nr_periodo w
+      where z.nrcptcodi=y.nrcptcodi and z.nrpercodi=w.nrpercodi and x.nrsmodcodi=y.nrsmodcodi and y.nrsmodcodi=b.nrsmodcodi
+      and z.nrperrnumobservacion=0 and w.nrpercodi=c.nrpercodi
+      ) terminado,
+      (select count(*) from nr_concepto z where z.nrsmodcodi=b.nrsmodcodi) proceso,
+      max(d.nrperrfecmodificacion) nrperrfecmodificacion,
+      (row_number() over (order by c.nrpermes desc)) as r
+      from nr_concepto a, nr_submodulo b, nr_periodo c, nr_periodo_resumen d
+      where  a.nrsmodcodi=b.nrsmodcodi and  c.nrpercodi=d.nrpercodi and d.nrcptcodi=a.nrcptcodi
+      and (a.nrsmodcodi={0} or {0} = 0)
+      and (nrperreliminado='{1}' or ('{1}'='T'))
+      and
+      (
+      (c.nrpermes >= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and c.nrpermes &lt; to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      )
+      group by b.nrsmodcodi,b.nrsmodnombre,c.nrpermes,c.nrpercodi
+      order by b.nrsmodcodi,b.nrsmodnombre,c.nrpermes desc,c.nrpercodi    
+      )
+      where (r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )) or ({4} = -1 and {5} = -1)
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>TotalRegistros</key>
+    <query>
+      select b.nrsmodcodi,b.nrsmodnombre,c.nrpercodi,c.nrpermes
+      from nr_concepto a, nr_submodulo b, nr_periodo c, nr_periodo_resumen d
+      where  a.nrsmodcodi=b.nrsmodcodi and  c.nrpercodi=d.nrpercodi and d.nrcptcodi=a.nrcptcodi
+      and (a.nrsmodcodi={0} or {0} = 0)
+      and (nrperreliminado='{1}' or ('{1}'='T'))
+      and
+      (
+      (c.nrpermes >= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and c.nrpermes &lt; to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      )
+      group by b.nrsmodcodi,b.nrsmodnombre,c.nrpermes,c.nrpercodi
+      order by b.nrsmodcodi,b.nrsmodnombre,c.nrpermes,c.nrpercodi
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListSubModuloPeriodo</key>
+    <query>
+      select a.nrcptcodi, a.nrcptabrev, a.nrcptdescripcion,
+        (select count(z.nrperrnumobservacion) from nr_periodo_resumen z where z.nrcptcodi=a.nrcptcodi and z.nrperrnumobservacion &lt; 0 
+        and nrpercodi={1} ) pendiente,
+        (select count(z.nrperrnumobservacion) from nr_periodo_resumen z where z.nrcptcodi=a.nrcptcodi and z.nrperrnumobservacion>0 
+        and nrpercodi={1} ) observaciones,
+        (select count(z.nrperrnumobservacion) from nr_periodo_resumen z where z.nrcptcodi=a.nrcptcodi and z.nrperrnumobservacion=0 
+        and nrpercodi={1} ) terminado,
+        (select count(z.nrperrnumobservacion) from nr_periodo_resumen z where z.nrcptcodi=a.nrcptcodi and z.nrperrnumobservacion=0 
+        and nrpercodi={1} ) terminado,
+        (select max(z.nrperrusumodificacion) from nr_periodo_resumen z where z.nrcptcodi=a.nrcptcodi 
+        and nrpercodi={1} ) nrperrusumodificacion,
+        (select max(z.nrperrfecmodificacion) from nr_periodo_resumen z where z.nrcptcodi=a.nrcptcodi 
+        and nrpercodi={1} ) nrperrfecmodificacion
+      from nr_concepto a, nr_submodulo b
+        where a.nrsmodcodi=b.nrsmodcodi
+        and b.nrsmodcodi={0}
+    </query>
+  </Sql>
+
+
+
+
+</Sqls>

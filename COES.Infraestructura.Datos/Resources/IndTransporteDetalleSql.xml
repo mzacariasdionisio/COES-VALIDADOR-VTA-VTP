@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(tnsdetcodi), 0) + 1 from ind_transporte_detalle
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ind_transporte_detalle(
+      tnsdetcodi,
+      cpctnscodi,
+      emprcodi,
+      emprnombalter,
+      tnsdetfecha,
+      tnsdetcntadquirida,
+      tnsdetprctransferencia,
+      tnsdetptosuministro,
+      tnsdetcompraventa,
+      tnsdetusucreacion,
+      tnsdetfeccreacion
+      )
+      values(
+      :tnsdetcodi,
+      :cpctnscodi,
+      :emprcodi,
+      :emprnombalter,
+      :tnsdetfecha,
+      :tnsdetcntadquirida,
+      :tnsdetprctransferencia,
+      :tnsdetptosuministro,
+      :tnsdetcompraventa,
+      :tnsdetusucreacion,
+      :tnsdetfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListTransporteDetalle</key>
+    <query>
+      select
+      case
+        when t1.tnsdetcompraventa = 1 then 'ADQUIRIDA'
+        when t1.tnsdetcompraventa = 3 then 'ADQUIRIDA-G'
+        when t1.tnsdetcompraventa = 4 then 'VENTA-G'
+        else 'VENTA'
+      end as tnsdetDescripcion,
+      t1.tnsdetfecha,
+      t2.emprnomb,
+      t1.emprnombalter,
+      t1.tnsdetptosuministro,
+      t1.tnsdetcntadquirida,
+      t1.tnsdetprctransferencia
+      from ind_transporte_detalle t1 join si_empresa t2
+      on t1.emprcodi = t2.emprcodi
+      where cpctnscodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCapacidadTransporte</key>
+    <query>
+      delete from ind_transporte_detalle where cpctnscodi = :cpctnscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ReporteIncumplimientoByPeriodo</key>
+    <query>
+      SELECT
+          to_char(FechaCompra, 'DD/MM/YYYY') as FechaCumplimiento,
+          e1.emprnomb EmpresaCompra,
+          CantidadCompra,
+          e2.emprnomb EmpresaVenta,
+          CantidadVenta
+      FROM (
+            select t1.empr_a EmpresaC1, t2.empr_a EmpresaC2, t1.tnsdetcntadquirida CantidadCompra, t1.tnsdetfecha FechaCompra,
+            t2.tnsdetfecha FechaVenta, t1.empr_a EmpresaV1, t2.empr_a EmpresaV2, t2.tnsdetcntadquirida CantidadVenta
+            from
+            (select ct.emprcodi as Empr_A,
+            td.tnsdetfecha,  td.tnsdetptosuministro, td.tnsdetcompraventa, td.emprcodi as Emp_B, td.tnsdetcntadquirida
+            from ind_capacidad_transporte ct, ind_transporte_detalle td
+            where ct.ipericodi = {0} and ct.cpctnscodi = td.cpctnscodi and td.tnsdetcompraventa = 3
+            order by ct.emprcodi, td.emprcodi, td.tnsdetfecha) t1,
+            (select ct.emprcodi as Empr_A,
+            td.tnsdetfecha,  td.tnsdetptosuministro, td.tnsdetcompraventa, td.emprcodi as Emp_B, td.tnsdetcntadquirida
+            from ind_capacidad_transporte ct, ind_transporte_detalle td
+            where ct.ipericodi = {0} and ct.cpctnscodi = td.cpctnscodi and td.tnsdetcompraventa = 4
+            order by ct.emprcodi, td.emprcodi, td.tnsdetfecha) t2
+            where t1.tnsdetfecha = t2.tnsdetfecha
+            and t1.empr_a = t2.emp_b and t1.emp_b = t2.empr_a
+            ) TABLA
+      JOIN si_empresa e1 on tabla.empresac1 = e1.emprcodi
+      JOIN si_empresa e2 on tabla.empresac1 = e2.emprcodi
+      WHERE TABLA.CantidadCompra != TABLA.CantidadVenta
+      ORDER BY TABLA.FechaCompra
+    </query>
+  </Sql>
+</Sqls>

@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eq_propequi(
+      propcodi,
+      equicodi,
+      fechapropequi,
+      propequideleted,
+      valor,
+      propequiobservacion,
+      propequiusucreacion,
+      propequifeccreacion,
+      propequiusumodificacion,
+      propequifecmodificacion,
+      propequisustento,
+      propequicheckcero,
+      propequicomentario,
+      lastuser
+      )
+      values(
+      :propcodi,
+      :equicodi,
+      :fechapropequi,
+      :propequideleted,
+      :valor,
+      :propequiobservacion,
+      :propequiusucreacion,
+      :propequifeccreacion,
+      :propequiusumodificacion,
+      :propequifecmodificacion,
+      :propequisustento,
+      :propequicheckcero,
+      :propequicomentario,
+      :lastuser
+      )
+    </query>
+  </Sql>
+	<Sql>
+		<key>SaveCambioEstado</key>
+		<query>
+			insert into eq_propequi(
+			propcodi,
+			equicodi,
+			fechapropequi,
+			propequideleted,
+			valor,
+			propequiobservacion,
+			propequiusucreacion,
+			propequifeccreacion,
+			propequiusumodificacion,
+			propequifecmodificacion,
+			propequisustento,
+			propequicheckcero,
+			propequicomentario,
+			lastuser,
+			epproycodi
+			)
+			values(
+			:propcodi,
+			:equicodi,
+			:fechapropequi,
+			:propequideleted,
+			:valor,
+			:propequiobservacion,
+			:propequiusucreacion,
+			SYSDATE,
+			:propequiusumodificacion,
+			:propequifecmodificacion,
+			:propequisustento,
+			:propequicheckcero,
+			:propequicomentario,
+			:lastuser,
+			:epproycodi
+			)
+		</query>
+	</Sql>
+	<Sql>
+		<key>SaveCambioEstadoFn</key>
+		<query>
+			DECLARE
+			v_id_rele                    NUMBER:= :equicodi;
+			v_id_nuevo_estado            NUMBER:= :valor;
+			v_id_proyecto                NUMBER:= :epproycodi;
+			v_fecha                      DATE := TO_DATE(:fechapropequi, 'DD/MM/YYYY');
+			v_motivo                     VARCHAR2(2000):= :propequicomentario;
+			v_usuario_auditoria          VARCHAR2(50):= :lastuser;
+
+			v_resultado					 VARCHAR2(1000);
+			BEGIN
+			v_resultado := pkg_protecciones.fn_cambiar_estado_rele(
+			v_id_rele,
+			v_id_nuevo_estado,
+			v_id_proyecto,
+			v_fecha,
+			v_motivo,
+			v_usuario_auditoria
+			);
+
+			SELECT v_resultado INTO :RESULTADO FROM DUAL;
+
+			END;
+		</query>
+	</Sql>
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eq_propequi
+      set
+      valor = :valor,
+      Propequiobservacion = :propequiobservacion,
+      Propequideleted = :propequideleted2,
+      Propequiusucreacion = :propequiusucreacion,
+      Propequifeccreacion = :propequifeccreacion,
+      Propequiusumodificacion = :propequiusumodificacion,
+      Propequifecmodificacion = :propequifecmodificacion,
+      propequisustento = :propequisustento,
+      Propequicheckcero = :Propequicheckcero,
+      Propequicomentario = :Propequicomentario,
+      Lastuser = :Lastuser
+      where
+      propcodi = :propcodi and
+      equicodi = :equicodi and
+      fechapropequi = :fechapropequi and
+      propequideleted = :propequideleted
+    </query>
+  </Sql>
+	<Sql>
+		<key>UpdateCambioEstado</key>
+		<query>
+			update eq_propequi
+			set
+			valor = :valor,
+			Propequiobservacion = :propequiobservacion,
+			Propequideleted = :propequideleted2,
+			Propequiusucreacion = :propequiusucreacion,
+			Propequifeccreacion = :propequifeccreacion,
+			Propequiusumodificacion = :propequiusumodificacion,
+			Propequifecmodificacion = SYSDATE,
+			propequisustento = :propequisustento,
+			Propequicheckcero = :Propequicheckcero,
+			Propequicomentario = :Propequicomentario,
+			Lastuser = :Lastuser,
+			epproycodi = :epproycodi
+			where
+			propcodi = :propcodi and
+			equicodi = :equicodi and
+			fechapropequi = :fechapropequi and
+			propequideleted = :propequideleted
+		</query>
+	</Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from eq_propequi
+      where
+      propcodi = :propcodi and
+      equicodi = :equicodi and
+      fechapropequi = :fechapropequi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update aud_eq_propequi
+			set USERAUDITORIA = :propequiusumodificacion
+			where
+			propcodi = :propcodi and
+			equicodi = :equicodi and
+			fechapropequi = :fechapropequi
+			and ACTIONAUDITORIA = 'DELETE'
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      eq_propequi
+      where
+      propcodi = :propcodi and
+      equicodi = :equicodi and
+      fechapropequi = :fechapropequi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      eq_propequi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      eq_propequi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EliminarHistorico</key>
+    <query>
+      delete from eq_propequi
+      where
+      propcodi = :propcodi and
+      equicodi = :equicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlValoresPropiedadesVigentes</key>
+    <query>
+      select * from (
+      SELECT dat.*,
+      prop.propnomb, prop.propunidad, prop.propfile, prop.orden, prop.PROPOCULTOCOMENTARIO,
+      si.emprcodi,
+      si.emprnomb,
+      eq.equinomb,
+      eq.equiabrev,
+      eq.equiestado,
+      eq.grupocodi,
+      f.famcodi,
+      f.famnomb,
+      tipoarea.tareaabrev || ' ' || ar.areanomb as areadesc,
+      ROW_NUMBER() OVER(PARTITION BY dat.propcodi, dat.equicodi ORDER BY dat.PROPCODI,dat.EQUICODI,dat.FECHAPROPEQUI DESC) AS NUM
+      FROM eq_propequi dat
+      inner join eq_propiedad prop on dat.propcodi = prop.propcodi
+      inner join eq_equipo eq on dat.equicodi = eq.equicodi
+      left JOIN EQ_AREA AR ON AR.AREACODI = EQ.AREACODI
+      left join eq_tipoarea tipoarea on ar.tareacodi = tipoarea.tareacodi
+      inner join si_empresa si on eq.emprcodi = si.emprcodi
+      inner join eq_familia f on f.famcodi = eq.famcodi
+      where ('-1'='{4}' or prop.propcodi in ({4}) )
+      and ('-1'='{1}' or dat.equicodi in ({1}) )
+      and dat.fechapropequi &lt;= to_date('{0}','YYYY-MM-DD')
+      and dat.PROPEQUIDELETED = 0
+      and ('{2}' = '-1' or prop.famcodi in ({2}, 0) ) --propiedades del tipo de equipo y generales
+      and upper(prop.propnomb) like '%{5}%'
+      and ('-1'='{6}' or prop.PROPFICHAOFICIAL='{6}' )
+      AND ('{3}' = '-1' or si.EMPRCODI IN ({3}) )
+      AND ('{2}' = '-1' or f.FAMCODI IN ({2}) )
+      ) where num = 1
+      order by coalesce(ORDEN, 10000)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlValoresPropiedadesVigentesPaginado</key>
+    <query>
+      select
+      *
+      from (
+      select
+      '{0}' EQUICODI,
+      prop.PROPCODI,
+      prop.propnomb,
+      fn_sdatoactualpropiedad({0}, prop.propcodi) VALOR,
+      prop.PROPUNIDAD,
+      FN_SFECHADATOACTUALPROPIEDAD({0}, prop.propcodi) FECHAPROPEQUI,
+      FN_SUSUARIODATOACTUALPROPIEDAD({0}, prop.propcodi) LASTUSER,
+      FN_SOBSERVACIONACTUALPROPIEDAD({0}, prop.propcodi) PROPEQUIOBSERVACION,
+      FN_SUSUARIODATOCREACPROPIEDAD ({0}, prop.propcodi) PROPEQUIUSUCREACION,
+      FN_SFECHADATOCREACPROPIEDAD({0}, prop.propcodi) PROPEQUIFECCREACION,
+      (row_number() over (order by prop.propnomb)) as r
+      from eq_propiedad prop
+      where (prop.famcodi={1} or prop.famcodi=0)
+      and prop.propvisible='S'
+      and upper(prop.propnomb) like '%{4}%'
+      order by prop.orden asc
+      )
+      where r >= ((({2}-1) * {3}) + 1) and r &lt; (({2} * {3}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlTotalValoresPropiedadesVigentesPaginado</key>
+    <query>
+      select
+      count(*)
+      from eq_propiedad prop
+      where prop.famcodi={0}
+      and upper(prop.propnomb) like '%{1}%'
+      and prop.propvisible='S'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SqlHistoricoPropiedad</key>
+    <query>
+      select * from eq_propequi
+      where (equicodi={0} or '{0}'='-1')
+      and ('{1}'='-1' or propcodi in ({1}))
+      order by fechapropequi desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetValorPropiedad</key>
+    <query>
+      SELECT * FROM eq_propequi pe
+      inner join (SELECT MAX(FECHAPROPEQUI) fecmax FROM EQ_PROPEQUI  WHERE propcodi = {0} AND equicodi = {1})
+      maxprop on maxprop.fecmax = pe.fechapropequi
+      where pe.propcodi = {0} and pe.equicodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerValorPropiedadEquipoFecha</key>
+    <query>
+      select
+      nvl(valor,'') valor
+      from
+      eq_propequi z
+      where
+      propcodi={0} and equicodi={1}
+      and fechapropequi=
+      (select max(fechapropequi) from eq_propequi a where fechapropequi&lt;to_date('{2}','dd/mm/yyyy')+1
+      and a.propcodi=z.propcodi and a.equicodi=z.equicodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>PropiedadesVigentesEquipoCopiar</key>
+    <query>
+      select
+      prop.PROPCODI,
+      fn_sdatoactualpropiedad({0}, prop.propcodi) VALOR
+      from eq_propiedad prop
+      where prop.famcodi = (select eq.famcodi from eq_equipo eq where eq.equicodi = {0}) and fn_sdatoactualpropiedad({0}, prop.propcodi) is not null
+    </query>
+  </Sql>
+
+  <!--INICIO SIOSEIN-->
+
+  <Sql>
+    <key>GetPotEfectivaAndPotInstaladaPorUnidad</key>
+    <query>
+      SELECT  EQ.EQUICODI, EQ.EQUINOMB, EQ.FAMCODI, PRO.PROPCODI, PRO.PROPNOMB, PRQ.VALOR, PRQ.FECHAPROPEQUI
+      FROM EQ_PROPEQUI PRQ
+      INNER JOIN EQ_PROPIEDAD PRO ON PRO.PROPCODI = PRQ.PROPCODI
+      INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI = PRQ.EQUICODI
+      INNER JOIN EQ_FAMILIA FA ON FA.FAMCODI = EQ.FAMCODI
+      WHERE ('{0}' = '-1' or PRQ.EQUICODI IN ({0})) and prq.PROPEQUIDELETED = 0
+      AND PRO.PROPCODI IN (1530,1563,164,319,46,1710,1602,49,197,301,299)
+    </query>
+  </Sql>
+
+  <!--SIOSEIN-->
+
+  <!--region NotificacionesCambiosEquipamiento-->
+  <Sql>
+    <key>PropiedadesModificadas</key>
+    <query>
+      select
+      prop.propnomb,
+      eq.equinomb,
+      eq.equiabrev,
+      f.famcodi,
+      f.famnomb,
+      eq.equicodi,
+      eq.equiestado,
+      prop.propcodi,
+      propequi.*,
+      si.emprcodi,
+      si.emprnomb
+      from eq_propequi propequi inner join eq_propiedad prop on propequi.propcodi = prop.propcodi
+      inner join eq_equipo eq on propequi.equicodi = eq.equicodi
+      inner join si_empresa si on eq.emprcodi = si.emprcodi
+      left join  eq_familia f on f.famcodi = eq.famcodi
+      WHERE ('{0}' = '-1' or si.EMPRCODI IN ({0}))
+      AND ('{1}' = '-1' or f.FAMCODI IN ({1}))
+      AND coalesce(propequi.propequifecmodificacion, propequi.PROPEQUIFECCREACION) >=  to_date('{2}', 'DD-MM-YYYY HH24:MI')
+      and coalesce(propequi.propequifecmodificacion, propequi.PROPEQUIFECCREACION) &lt;=  to_date('{3}', 'DD-MM-YYYY HH24:MI')
+    </query>
+  </Sql>
+  <!--region NotificacionesCambiosEquipamiento -->
+
+  <!--INICIO numerales datos base -->
+  <Sql>
+    <key>ListaDatosBase_5_6_5</key>
+    <query>
+      SELECT t.Equinomb,T.OSIGRUPOCODI, e.FECHAPROPEQUI, E.EQUICODI, E.VALOR
+      FROM EQ_PROPEQUI E,EQ_EQUIPO t
+      WHERE E.PROPCODI = 188
+      AND e.equicodi = t.Equicodi
+      ORDER BY E.EQUICODI, E.FECHAPROPEQUI ASC
+    </query>
+  </Sql>
+
+  <!--FIN numerales datos base -->
+
+  <!--Ficha técnica inicio-->
+  <Sql>
+    <key>ListarEquipoConValorModificado</key>
+    <query>
+      SELECT * FROM
+      (
+          select
+          prop.equicodi,
+          EQ.EQUIESTADO,
+          eq.equinomb,
+          emp.emprcodi,
+          EMP.EMPRNOMB,
+          ar.areanomb,
+          eq.famcodi,
+          prop.FECHAPROPEQUI,
+          ROW_NUMBER() OVER(PARTITION BY prop.equicodi,prop.FECHAPROPEQUI ORDER BY prop.equicodi,prop.FECHAPROPEQUI DESC) AS NUM
+          from eq_propequi prop
+          inner join eq_propiedad p on prop.propcodi = p.propcodi
+          inner join eq_equipo eq on eq.equicodi = prop.equicodi
+          INNER JOIN EQ_AREA ar on ar.areacodi = eq.areacodi
+          INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+          where prop.fechapropequi BETWEEN to_date('{0}','YYYY-MM-DD') AND  to_date('{1}','YYYY-MM-DD')
+          AND prop.propequideleted = 0
+          and prop.propcodi in ({2})
+          and p.famcodi in ({3})
+          AND EQ.EQUIESTADO &lt;> 'X'
+          group by prop.equicodi,EQ.EQUIESTADO,eq.equinomb,emp.emprcodi,EMP.EMPRNOMB,ar.areanomb,eq.famcodi,prop.FECHAPROPEQUI
+      )
+      WHERE NUM = 1
+    </query>
+  </Sql>
+  <!--Ficha técnica fin-->
+  
+	<!--GestProtect inicio-->
+	<Sql>
+		<key>GetIdCambioEstado</key>
+		<query>
+			with ult_fec_modif as (
+			SELECT p.equicodi,max(p.fechapropequi) as fechapropequi
+			FROM eq_propequi p
+			WHERE p.equicodi = :equicodi
+			and p.epproycodi is not null
+			group by p.equicodi
+			)
+			,ult_fec_estado as (
+			SELECT p.equicodi,max(p.fechapropequi) as fechapropequi
+			FROM eq_propequi p
+			WHERE p.equicodi = :equicodi
+			and p.propcodi = 3304
+			group by p.equicodi
+			)
+			,data_prop AS (
+			SELECT max(p.fechapropequi) as fechapropequi
+			,nvl(max(epproycodi),0) as epproycodi
+			,max(propequicomentario) as propequicomentario
+			FROM eq_propequi p join ult_fec_modif u on p.equicodi = u.equicodi and p.fechapropequi = u.fechapropequi
+			WHERE p.epproycodi is not null
+			)
+			,data_estado AS (
+			SELECT max(p.valor) as valor
+			FROM eq_propequi p join ult_fec_estado u on p.equicodi = u.equicodi and p.fechapropequi = u.fechapropequi
+			WHERE p.propcodi = 3304
+			)
+			select p.fechapropequi,e.valor,p.epproycodi,p.propequicomentario
+			from data_prop p, data_estado e
+		</query>
+    </Sql>
+	<!--GestProtect fin -->
+	
+</Sqls>

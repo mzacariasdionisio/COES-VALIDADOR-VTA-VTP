@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      gps.gpscodi,
+      gps.emprcodi,
+      gps.equicodi,
+      gps.nombre,
+      gps.gpsoficial,
+      DECODE(gps.gpsoficial,'S','SI', 'NO') AS oficial,
+      gps.gpsosinerg,
+      gps.gpsestado,
+      DECODE(gps.gpsestado,'A','ACTIVO', 'BAJA') AS ESTADO,
+      gps.gpstipo,
+      gps.gpsgenalarma,
+      DECODE(gps.gpsgenalarma,'S','SI', 'NO') AS GENALARMA,
+      gps.gpsfeccreacion,
+      gps.gpsusucreacion,
+      gps.gpsfecmodifica,
+      gps.gpsusumodifica,
+      gps.rutafile
+      from sic.me_gps gps
+      WHERE gps.gpscodi=:GPSCODI
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetListaCombobox</key>
+    <query>
+      SELECT PERIDCCODI
+      ,PERIDCNOMBRE
+      FROM TRN_PERIODO_DECLARACION
+      ORDER BY  PERIDCCODI DESC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaEquipoGPS</key>
+    <query>
+      SELECT
+      gps.gpscodi,
+      gps.emprcodi,
+      emp.emprnomb as empresa,
+      gps.equicodi,
+      gps.nombre,
+      gps.gpsoficial,
+      DECODE(gps.gpsoficial,'S','SI', 'NO') AS oficial,
+      gps.gpsosinerg,
+      gps.gpsestado,
+      DECODE(gps.gpsestado,'A','ACTIVO', 'BAJA') AS ESTADO,
+      gps.gpstipo,
+      gps.gpsgenalarma,
+      DECODE(gps.gpsgenalarma,'S','SI', 'NO') AS GENALARMA,
+      gps.gpsfeccreacion,
+      gps.gpsusucreacion,
+      gps.gpsfecmodifica,
+      gps.gpsusumodifica,
+      gps_resp.nombre as respaldo,
+      gps.rutafile
+      from sic.me_gps gps
+      left join SIC.VW_SI_EMPRESA emp on
+      gps.emprcodi=emp.emprcodi
+      left join sic.me_gps gps_resp
+      on gps.equicodi=gps_resp.gpscodi
+      WHERE gps.gpsestado not in ('E')
+      ORDER BY gpscodi ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaEquipoGPSPorFiltro</key>
+    <query>
+      SELECT
+      gps.gpscodi,
+      gps.emprcodi,
+      emp.emprnomb as empresa,
+      gps.equicodi,
+      gps.nombre,
+      gps.gpsoficial,
+      DECODE(gps.gpsoficial,'S','SI', 'NO') AS oficial,
+      gps.gpsosinerg,
+      gps.gpsestado,
+      DECODE(gps.gpsestado,'A','ACTIVO', 'BAJA') AS ESTADO,
+      gps.gpstipo,
+      gps.gpsgenalarma,
+      DECODE(gps.gpsgenalarma,'S','SI', 'NO') AS GENALARMA,
+      gps.gpsfeccreacion,
+      gps.gpsusucreacion,
+      gps.gpsfecmodifica,
+      gps.gpsusumodifica,
+      gps_resp.nombre as respaldo,
+      gps.rutafile
+      from sic.me_gps gps
+      left join SIC.VW_SI_EMPRESA emp on
+      gps.emprcodi=emp.emprcodi
+      left join sic.me_gps gps_resp
+      on gps.equicodi=gps_resp.gpscodi
+      WHERE gps.gpsestado not in ('E')
+      AND gps.gpsestado='A'
+      and ({0}=0 or gps.gpscodi={0})
+      and (nvl('{1}','X')='X' or gps.gpsoficial='{1}')
+      ORDER BY gpscodi ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetUltimoCodigoGenerado</key>
+    <query>
+      select max(gpscodi) + 1 as codigo from sic.me_gps where gpscodi not in (98, 99)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarNombreEquipoGPS</key>
+    <query>
+      DECLARE
+      P_NOMBRE  VARCHAR2(50):=:NOMBRE;
+      P_CODI    NUMBER :=:GPSCODI;
+      P_RESULTADO NUMBER:=0;
+      begin
+      select count(*) INTO P_RESULTADO from  sic.me_gps
+      where trim(upper(nombre))=trim(upper(P_NOMBRE)) and gpscodi!=P_CODI 
+      and gpsestado in ('A', 'B');
+      SELECT P_RESULTADO INTO :RESULTADO FROM DUAL;
+      end;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveUpdate</key>
+    <query>
+
+      DECLARE
+      P_GPSCODI NUMBER :=:GPSCODI;
+      P_EMPRCODI NUMBER :=:EMPRCODI;
+      P_EQUICODI  NUMBER :=:EQUICODI;
+      P_NOMBRE VARCHAR2(50) :=:NOMBRE;
+      P_GPSOFICIAL VARCHAR2(1) :=:GPSOFICIAL;
+      P_GPSOSINERG VARCHAR2(7) :=:GPSOSINERG;
+      P_GPSESTADO VARCHAR2(1) :=:GPSESTADO;
+      P_GPSTIPO VARCHAR2(50) :=:GPSTIPO;
+      P_GPSGENALARMA VARCHAR2(1) :=:GPSGENALARMA;
+      P_GPSUSUCREACION VARCHAR2(20) :=:GPSUSUCREACION;
+      P_RUTAFILE VARCHAR(500) :=:RUTAFILE;
+      P_MENSAJE VARCHAR2(500):=NULL;
+      P_CODMAX NUMBER:=0;
+
+      BEGIN
+
+      IF P_GPSCODI = 0
+      THEN
+
+      SELECT MAX(GPSCODI)  INTO  P_CODMAX FROM sic.me_gps where gpscodi not in (98, 99);
+
+      IF P_CODMAX=97 THEN
+      P_CODMAX := 99;
+      END IF;
+
+      INSERT INTO sic.me_gps
+      (GPSCODI,
+      EMPRCODI,
+      EQUICODI,
+      NOMBRE,
+      GPSOFICIAL,
+      GPSOSINERG,
+      GPSESTADO,
+      GPSTIPO,
+      GPSGENALARMA,
+      GPSFECCREACION,
+      GPSUSUCREACION,
+      RUTAFILE
+      )
+      VALUES(P_CODMAX +1
+      ,P_EMPRCODI
+      ,P_EQUICODI
+      ,P_NOMBRE
+      ,P_GPSOFICIAL
+      ,P_GPSOSINERG
+      ,P_GPSESTADO
+      ,P_GPSTIPO
+      ,P_GPSGENALARMA
+      ,SYSDATE
+      ,P_GPSUSUCREACION
+      ,P_RUTAFILE);
+
+
+
+      ELSE
+
+
+      UPDATE sic.me_gps
+      SET EMPRCODI=P_EMPRCODI,
+      EQUICODI = P_EQUICODI,
+      NOMBRE = P_NOMBRE,
+      GPSOFICIAL = P_GPSOFICIAL,
+      GPSOSINERG = P_GPSOSINERG,
+      GPSTIPO = P_GPSTIPO,
+      GPSGENALARMA = P_GPSGENALARMA,
+      GPSESTADO = P_GPSESTADO,
+      GPSFECMODIFICA=SYSDATE,
+      GPSUSUMODIFICA=P_GPSUSUCREACION,
+      RUTAFILE=P_RUTAFILE
+      WHERE GPSCODI=P_GPSCODI;
+
+
+
+      END IF;
+
+
+      SELECT P_MENSAJE INTO :MENSAJE FROM DUAL;
+      END;
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+
+      DECLARE
+      P_GPSCODI NUMBER :=:GPSCODI;
+      P_GPSESTADO VARCHAR2(1) :=:GPSESTADO;
+      P_GPSUSUCREACION VARCHAR2(20) :=:GPSUSUCREACION;
+      P_MENSAJE VARCHAR2(500):=NULL;
+
+      BEGIN
+
+      UPDATE sic.me_gps
+      SET
+      GPSESTADO=P_GPSESTADO,
+      GPSFECELIMINA=SYSDATE,
+      GPSUSUELIMINA=P_GPSUSUCREACION
+      WHERE GPSCODI=P_GPSCODI;
+
+
+      SELECT P_MENSAJE INTO :MENSAJE FROM DUAL;
+      END;
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetNumRegistrosPorEquipo</key>
+    <query>
+      select count(*) as num_registros from sic.F_LECTURA where GPSCODI={0}
+    </query>
+  </Sql>
+
+
+</Sqls>

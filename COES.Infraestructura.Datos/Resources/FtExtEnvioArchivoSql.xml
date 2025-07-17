@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ftearccodi), 0) + 1 from ft_ext_envio_archivo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ft_ext_envio_archivo(
+      ftearccodi,
+      ftearcnombreoriginal,
+      ftearcnombrefisico,
+      ftearcorden,
+      ftearcestado,
+      ftearcflagsustentoconf,
+      ftearctipo
+      )
+      values(
+      :ftearccodi,
+      :ftearcnombreoriginal,
+      :ftearcnombrefisico,
+      :ftearcorden,
+      :ftearcestado,
+      :ftearcflagsustentoconf,
+      :ftearctipo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ft_ext_envio_archivo
+      set
+      ftearcestado = :ftearcestado,
+      ftearcflagsustentoconf = :ftearcflagsustentoconf
+      where
+      ftearccodi = :ftearccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ft_ext_envio_archivo
+      where
+      ftearccodi = :ftearccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeletePorIds</key>
+    <query>
+      delete from ft_ext_envio_archivo
+      where ftearccodi in ({0})
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListarRelacionesPorVersionAreaYEquipo</key>
+    <query>
+
+      select aa.* from ft_ext_envio_archivo aa
+      inner join ft_ext_envio_relrevareaarchivo raa on raa.ftearccodi = aa.ftearccodi
+      inner join ft_ext_envio_revarea ear on ear.revacodi = raa.revacodi
+      inner join ft_ext_envio_reldatorevarea reldo on reldo.revacodi = ear.revacodi
+      inner join ft_ext_envio_area ena on ena.envarcodi = reldo.envarcodi
+      inner join ft_ext_envio_dato eda on eda.ftedatcodi = reldo.ftedatcodi
+
+      where ear.ftevercodi = {0}
+      and ena.faremcodi = {1}
+      and eda.fteeqcodi = {2}
+      
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarRelacionesContenidoPorVersionArea</key>
+    <query>
+
+      select aa.* from ft_ext_envio_archivo aa
+      inner join ft_ext_envio_relrevareaarchivo raa on raa.ftearccodi = aa.ftearccodi
+      inner join ft_ext_envio_revarea ear on ear.revacodi = raa.revacodi
+      inner join ft_ext_envio_relreqrevarea relrq on relrq.revacodi = ear.revacodi
+      inner join ft_ext_envio_area ena on ena.envarcodi = relrq.envarcodi
+
+      where ear.ftevercodi = {0}
+      and relrq.ftevercodi = {0}
+      and ena.faremcodi = {1}
+
+    </query>
+  </Sql>
+  
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_envio_archivo
+      where
+      ftearccodi = :ftearccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_envio_archivo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByVersionYReq</key>
+    <query>
+      select
+      arch.*,
+      rel.FTEREQCODI,
+      reqenv.FEVRQCODI
+      from ft_ext_envio_archivo arch
+      inner join FT_EXT_ENVIO_RELREQARCHIVO rel on rel.ftearccodi = arch.ftearccodi
+      inner join FT_EXT_ENVIO_REQ reqenv on reqenv.FTEREQCODI = rel.FTEREQCODI
+      inner join FT_EXT_ENVIO_VERSION ver on ver.FTEVERCODI = reqenv.FTEVERCODI
+      where ver.FTEVERCODI = {0} and arch.FTEARCESTADO = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByVersionYEq</key>
+    <query>
+      select
+      arch.*,
+      rel.FTEEQCODI
+      from ft_ext_envio_archivo arch
+      inner join FT_EXT_ENVIO_RELMODOARCHIVO rel on rel.ftearccodi = arch.ftearccodi
+      inner join FT_EXT_ENVIO_EQ eqenv on eqenv.FTEEQCODI = rel.FTEEQCODI
+      inner join FT_EXT_ENVIO_VERSION ver on ver.FTEVERCODI = eqenv.FTEVERCODI
+      where ver.FTEVERCODI = {0} and arch.FTEARCESTADO = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByVersionYDato</key>
+    <query>
+      select
+      arch.*,
+      rel.FTERDACODI,
+      rel.ftedatcodi,
+      eqenv.FTEEQCODI
+      from ft_ext_envio_archivo arch
+      inner join FT_EXT_ENVIO_RELDATOARCHIVO rel on rel.ftearccodi = arch.ftearccodi
+      inner join FT_EXT_ENVIO_DATO datoeq on datoeq.ftedatcodi = rel.ftedatcodi
+      inner join FT_EXT_ENVIO_EQ eqenv on eqenv.FTEEQCODI = datoeq.FTEEQCODI
+      inner join FT_EXT_ENVIO_VERSION ver on ver.FTEVERCODI = eqenv.FTEVERCODI
+      where ver.FTEVERCODI = {0} and arch.FTEARCESTADO = 1
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_envio_archivo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorIds</key>
+    <query>
+      select * 
+      from ft_ext_envio_archivo arch
+      where ftearccodi in ({0}) and arch.FTEARCESTADO = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByRevision</key>
+    <query>
+      select
+      arch.*,
+      rev.ftrevcodi
+      from ft_ext_envio_archivo arch
+      inner join FT_EXT_ENVIO_RELREVARCHIVO rel on rel.ftearccodi = arch.ftearccodi
+      inner join FT_EXT_ENVIO_REVISION rev on rev.ftrevcodi = rel.ftrevcodi
+      where rev.ftrevcodi in  ({0}) and arch.FTEARCESTADO = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByRevisionAreas</key>
+    <query>
+      select
+      arch.*,
+      rev.revacodi
+      from ft_ext_envio_archivo arch
+      inner join FT_EXT_ENVIO_RELREVAREAARCHIVO rel on rel.ftearccodi = arch.ftearccodi
+      inner join FT_EXT_ENVIO_REVAREA rev on rev.revacodi = rel.revacodi
+      where rev.revacodi in  ({0}) and arch.FTEARCESTADO = 1
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListByVersionAreas</key>
+    <query>
+      select * from ft_ext_envio_archivo ear 
+      inner join ft_ext_envio_relrevareaarchivo rela on rela.ftearccodi = ear.ftearccodi
+      inner join ft_ext_envio_version ever on ever.ftevercodi = rela.ftevercodi
+
+      where ever.ftevercodi in ({0})
+    </query>
+  </Sql>
+  
+
+</Sqls>

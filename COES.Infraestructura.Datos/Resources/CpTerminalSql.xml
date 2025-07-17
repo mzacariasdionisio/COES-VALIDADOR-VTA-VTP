@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           termcodi,
+           termnombre,
+           ttermcodi,
+           recurcodi,
+           nodocodi,
+           topcodi          
+       from
+           cp_terminal
+    </query>
+  </Sql>
+
+ 
+  <Sql>
+    <key>GetNodoTopologico</key>
+    <query>
+      select max(tn.recurcodi) recurcodi from cp_terminal tp
+      inner join cp_terminal tn on tn.nodocodi = tp.nodocodi
+      where tp.recurcodi = {0} and tp.ttermcodi = {1} and tn.ttermcodi = {2} and
+      tp.topcodi = {3} and tn.topcodi = {3}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearCopia</key>
+    <query>
+      insert into cp_terminal (termcodi,termnombre,ttermcodi,recurcodi,nodocodi,topcodi,lastuser,lastdate)
+      SELECT termcodi, termnombre,ttermcodi,b.recurcodi,nodocodi, {1},a.lastuser,a.lastdate
+      FROM CP_TERMINAL a,cp_recurso b
+      where a.topcodi = {0} and b.topcodi = {0} and a.recurcodi = b.recurcodi
+      and b.recurorigen = 0
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearCopiaNodoConectividad</key>
+    <query>
+      insert into CP_NODOCONECTIVIDAD (nodocodi,nodonombre,topcodi,lastuser,lastdate)
+      SELECT distinct n.nodocodi, nodonombre, {1},n.lastuser,n.lastdate
+      FROM CP_NODOCONECTIVIDAD n
+      inner join cp_terminal t on t.nodocodi = n.nodocodi and t.topcodi = {0}
+      inner join cp_recurso r on r.recurcodi = t.recurcodi and r.topcodi = {0}
+      where n.topcodi = {0} and r.recurorigen = 0
+    </query>
+  </Sql>
+
+</Sqls>

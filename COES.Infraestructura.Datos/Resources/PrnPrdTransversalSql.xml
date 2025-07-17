@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(PRDTRNCODI), 0) + 1 from PRN_PRDTRANSVERSAL
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into PRN_PRDTRANSVERSAL(
+      PRDTRNCODI,
+      PRDTRNETQNOMB,
+      GRUPOCODI,
+      PRNVERCODI,
+      PRRUCODI,
+      PRDTRNFLAGESMANUAL,
+      H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+      H11,H12, H13, H14, H15, H16, H17, H18, H19, H20,
+      H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+      H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+      H41, H42, H43, H44, H45, H46, H47, H48
+      )
+      values(
+      :PRDTRNCODI,
+      :PRDTRNETQNOMB,
+      :GRUPOCODI,
+      :PRNVERCODI,
+      :PRRUCODI,
+      :PRDTRNFLAGESMANUAL,
+      :H1, :H2, :H3, :H4, :H5, :H6, :H7, :H8, :H9, :H10,
+      :H11,:H12, :H13, :H14, :H15, :H16, :H17, :H18, :H19, :H20,
+      :H21, :H22, :H23, :H24, :H25, :H26, :H27, :H28, :H29, :H30,
+      :H31, :H32, :H33, :H34, :H35, :H36, :H37, :H38, :H39, :H40,
+      :H41, :H42, :H43, :H44, :H45, :H46, :H47, :H48
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      PRDTRNCODI,
+      PRDTRNETQNOMB,
+      GRUPOCODI,
+      PRNVERCODI,
+      PRRUCODI,
+      PRDTRNFLAGESMANUAL,
+      H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+      H11,H12, H13, H14, H15, H16, H17, H18, H19, H20,
+      H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+      H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+      H41, H42, H43, H44, H45, H46, H47, H48
+      from PRN_PRDTRANSVERSAL
+    </query>
+  </Sql>
+	
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from PRN_PRDTRANSVERSAL
+      where
+      prdtrncodi = :prdtrncodi
+    </query>
+  </Sql>
+	
+  <Sql>
+    <key>DeleteByName</key>
+    <query>
+      delete from PRN_PRDTRANSVERSAL
+      where
+      PRDTRNETQNOMB = :PRDTRNETQNOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetRelacionesPorNombre</key>
+    <query>
+      select
+      PRDTRNCODI,
+      PRDTRNETQNOMB,
+      GRUPOCODI,
+      PRNVERCODI,
+      PRRUCODI,
+      PRDTRNFLAGESMANUAL,
+      H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+      H11,H12, H13, H14, H15, H16, H17, H18, H19, H20,
+      H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+      H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+      H41, H42, H43, H44, H45, H46, H47, H48
+      FROM PRN_PRDTRANSVERSAL
+      where
+      PRDTRNETQNOMB = :PRDTRNETQNOMB      
+    </query>
+  </Sql>
+	
+  <Sql>
+    <key>GetPerdidaPorBarraCP</key>
+    <query>
+      select
+      nvl(sum(pt.prdtrnperdida), 0) PRDTRNPERDIDA
+      from
+      prn_prdtransversal pt
+      join prn_version vr on pt.prnvercodi = vr.prnvercodi
+      and (vr.prnverestado = 'A')
+      where
+      pt.grupocodi = :grupocodi      
+    </query>
+  </Sql>
+	
+	<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+	<Sql>
+		<key>ListaBarrasPerdidasTransversales</key>
+		<query>
+			select t1.grupocodi, t1.gruponomb from pr_grupo t1
+			right join prn_prdtransversal t2 on t1.grupocodi = t2.grupocodi
+			inner join prn_version t3 on t3.prnvercodi = t2.prnvercodi where t3.prnverestado = 'A'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ListPerdidasTransvBarraFormulas</key>
+		<query>
+      select
+      pt.prdtrncodi,
+      pt.prdtrnetqnomb,
+      pt.grupocodi,
+      gr.gruponomb,
+      pt.prnvercodi,
+      pt.prrucodi,
+      pt.prdtrnflagesmanual,
+      formulas.prruabrev
+      from
+      prn_prdtransversal pt
+      inner join pr_grupo gr on (pt.grupocodi = gr.grupocodi)
+      inner join prn_version ver on (pt.prnvercodi = ver.prnvercodi)
+      left join
+      (
+      select
+      prrucodi, prruabrev
+      from
+      me_perfil_rule
+      where
+      prruabrev like 'PRN_%' and
+      prruactiva = 'S'
+      ) formulas on (pt.prrucodi = formulas.prrucodi)
+    </query>
+	</Sql>
+
+
+	<Sql>
+		<key>ListBarrasPerdidasTransversales</key>
+		<query>
+			select
+			    grupocodi,
+			    gruponomb
+			from
+			    pr_grupo
+			where
+			    grupocodi in (select distinct prnredbarracp from prn_reduccionred where prnvercodi = (select prnvercodi from prn_version where prnverestado = 'A')) and
+				grupocodi not in (select grupocodi from prn_prdtransversal where prdtrncodi = :prdtrncodi)
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetPerdidasTransversalesByNombre</key>
+		<query>
+			select
+			    pt.*,
+			    pr.prrucodi,
+			    pr.prruabrev,
+			    g.gruponomb
+			from
+			    prn_prdtransversal pt
+			    inner join pr_grupo g on (pt.grupocodi = g.grupocodi)
+			    inner join me_perfil_rule pr on (pt.prrucodi = pr.prrucodi)
+			where
+			    pt.prdtrnetqnomb = :prdtrnetqnomb
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>DeleteRelaciones</key>
+		<query>
+			delete from prn_prdtransversal
+			where
+			prdtrnetqnomb = :prdtrnetqnomb
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>ObtenerPerdidaPorBarraCP</key>
+    <query>
+      select
+      pt.grupocodi,
+      pt.prrucodi,
+      pt.prdtrnflagesmanual,
+      pt.H1, pt.H2, pt.H3, pt.H4, pt.H5,
+      pt.H6, pt.H7, pt.H8, pt.H9, pt.H10,
+      pt.H11, pt.H12, pt.H13, pt.H14, pt.H15,
+      pt.H16, pt.H17, pt.H18, pt.H19, pt.H20,
+      pt.H21, pt.H22, pt.H23, pt.H24, pt.H25,
+      pt.H26, pt.H27, pt.H28, pt.H29, pt.H30,
+      pt.H31, pt.H32, pt.H33, pt.H34, pt.H35,
+      pt.H36, pt.H37, pt.H38, pt.H39, pt.H40,
+      pt.H41, pt.H42, pt.H43, pt.H44, pt.H45,
+      pt.H46, pt.H47, pt.H48
+      from
+      prn_prdtransversal pt
+      join prn_version vr on pt.prnvercodi = vr.prnvercodi
+      and (vr.prnverestado = 'A')
+      where
+      pt.grupocodi = {0}
+    </query>
+  </Sql>
+	<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+
+</Sqls>

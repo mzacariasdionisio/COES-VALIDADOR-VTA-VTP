@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(tpriecodi), 0) + 1 from sio_tablaprie
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into sio_tablaprie(
+      tpriecodi,
+      tpriedescripcion,
+      tpriefechaplazo,
+      areacode,
+      tprieabrev,
+      tprieusumodificacion,
+      tpriefecmodificacion,
+      tprieusucreacion,
+      tpriequery,
+      tpriefeccreacion,
+      tprieresolucion,
+      tpriefechacierre,
+      tpriecodtablaosig
+      )
+      values(
+      :tpriecodi,
+      :tpriedscripcion,
+      :tpriefechaplazo,
+      :areacodi,
+      :tprieabrev,
+      :tprieusumodificacion,
+      :tpriefecmodificacion,
+      :tprieusucreacion,
+      :tpriequery,
+      :tprieffeccreacion,
+      :tprieresolucion,
+      :tpriefechacierre,
+      :tpriecodtablaosig
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update sio_tablaprie
+      set
+      tpriedescripcion = '{1}',
+      tpriefechaplazo = to_date('{2}','YYYY-MM-DD'),
+      areacode = {3},
+      tprieabrev = '{4}',
+      tprieusumodificacion = '{5}',
+      tpriefecmodificacion = to_date('{6}','YYYY-MM-DD')
+      where
+      tpriecodi = {0}
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from sio_tablaprie
+      where
+      tpriecodi = :tpriecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      sio_tablaprie
+      where
+      tpriecodi = :tpriecodi
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      prie.*, ar.areaabrev
+      from
+      sio_tablaprie prie
+      inner join fw_area ar on  ar.areacode = prie.areacode
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from sio_tablaprie
+    </query>
+  </Sql>
+
+  <!-- INICIO SIOSEIN-->
+  <Sql>
+    <key>SqlGetByPeriodo</key>
+    <query>
+      SELECT
+      tp.* ,
+      coalesce(cblast.CABPRITIENEREGISTROS, 0)as CABPRITIENEREGISTROS,
+      coalesce(cbmax.total, 0) as cantidadversion
+      FROM
+      sio_tablaprie tp
+      left join (
+          SELECT cb.tpriecodi, count(*) total
+          FROM sio_cabeceradet cb 
+          where cb.cabpriperiodo=TO_DATE('{0}', 'YYYY-MM-DD') and cb.CABPRIVERSION > 0
+          group by cb.tpriecodi
+      ) cbmax on tp.tpriecodi=cbmax.tpriecodi
+      left join (
+          SELECT cb.*,
+          (row_number() over (PARTITION BY cb.tpriecodi order by cb.tpriecodi asc, cb.CABPRIVERSION desc)) as r
+          FROM sio_cabeceradet cb 
+          where cb.cabpriperiodo=TO_DATE('{0}', 'YYYY-MM-DD') and cb.CABPRIVERSION > 0
+      ) cblast on tp.tpriecodi=cblast.tpriecodi and cblast.r = 1
+
+      order by tp.tpriecodi
+    </query>
+  </Sql>
+  <!-- FIN SIOSEIN-->
+
+</Sqls>

@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cp_recurso(
+           recurconsideragams,
+           recurfamsic,
+           recurlogico,
+           recurformula,
+           recurtoescenario,
+           recurorigen3,
+           recurorigen2,
+           topcodi,
+           catcodi,
+           lastdate,
+           lastuser,
+           recurestado,
+           tablasicoes,
+           recurcodisicoes,
+           recurorigen,
+           recurpadre,
+           recurnombre,
+           recurcodi
+       )
+       values(
+           :recurconsideragams,
+           :recurfamsic,
+           :recurlogico,
+           :recurformula,
+           :recurtoescenario,
+           :recurorigen3,
+           :recurorigen2,
+           :topcodi,
+           :catcodi,
+           :lastdate,
+           :lastuser,
+           :recurestado,
+           :tablasicoes,
+           :recurcodisicoes,
+           :recurorigen,
+           :recurpadre,
+           :recurnombre,
+           :recurcodi
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cp_recurso
+       set
+           recurconsideragams = :recurconsideragams,
+           recurfamsic = :recurfamsic,
+           recurlogico = :recurlogico,
+           recurformula = :recurformula,
+           recurtoescenario = :recurtoescenario,
+           recurorigen3 = :recurorigen3,
+           recurorigen2 = :recurorigen2,
+           catcodi = :catcodi,
+           lastdate = :lastdate,
+           lastuser = :lastuser,
+           recurestado = :recurestado,
+           tablasicoes = :tablasicoes,
+           recurcodisicoes = :recurcodisicoes,
+           recurorigen = :recurorigen,
+           recurpadre = :recurpadre,
+           recurnombre = :recurnombre
+       where
+           topcodi = :topcodi and
+           recurcodi = :recurcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cp_recurso
+       where
+           topcodi = :topcodi and
+           recurcodi = :recurcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           recurconsideragams,
+           recurfamsic,
+           recurlogico,
+           recurformula,
+           recurtoescenario,
+           recurorigen3,
+           recurorigen2,
+           topcodi,
+           catcodi,
+           lastdate,
+           lastuser,
+           recurestado,
+           tablasicoes,
+           recurcodisicoes,
+           recurorigen,
+           recurpadre,
+           recurnombre,
+           recurcodi
+       where
+           topcodi = :topcodi and
+           recurcodi = :recurcodi
+       from
+           cp_recurso
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           recurconsideragams,
+           recurfamsic,
+           recurlogico,
+           recurformula,
+           recurtoescenario,
+           recurorigen3,
+           recurorigen2,
+           topcodi,
+           catcodi,
+           lastdate,
+           lastuser,
+           recurestado,
+           tablasicoes,
+           recurcodisicoes,
+           recurorigen,
+           recurpadre,
+           recurnombre,
+           recurcodi
+       from
+           cp_recurso
+    </query>
+  </Sql>
+
+<Sql>
+    <key>ObtenerPorTopologiaYCategoria</key>
+    <query>
+      WITH rel_embalse_central_turbinado 
+         AS (SELECT rela.recurcodi1, --Embalse
+                    rela.recurcodi2, --Central
+                    rec.recurcodisicoes  recurcodisicoes1, 
+                    rec2.recurcodisicoes recurcodisicoes2 
+             FROM   cp_relacion rela 
+                    inner join cp_recurso rec ON rec.recurcodi = rela.recurcodi1 AND rec.topcodi = {0} AND rec.catcodi = 19 AND rec.recurcodisicoes > 0 and rec.recurestado=1
+                    inner join cp_recurso rec2 ON rec2.recurcodi = rela.recurcodi2 AND rec2.topcodi = {0} AND rec2.catcodi = 4  and rec2.recurestado=1
+             WHERE  rela.cptrelcodi = 1 AND rela.topcodi = {0}) 
+      ,
+      embalse_propiedad as(
+      SELECT relembcen.recurcodisicoes2 equipadre, 
+           Trim(eq.equinomb) equinomb, 
+           rec.recurcodi, 
+           rec.recurnombre, 
+           rec.recurcodisicoes, 
+           propr.fechaproprecur,
+           propr.propcodi, 
+           propr.valor 
+      FROM   rel_embalse_central_turbinado relembcen  
+           inner join cp_recurso rec ON relembcen.recurcodi1 = rec.recurcodi and rec.topcodi = {0} and rec.recurestado=1
+           inner join cp_proprecurso propr ON rec.recurcodi = propr.recurcodi AND propr.topcodi = {0} AND (propr.propcodi IN ({1}) or '-1'='{1}')
+           left join eq_equipo eq ON eq.equicodi = relembcen.recurcodisicoes2)
+      ,embalse_propiedad_last AS (
+           SELECT emb.*, 
+                  ROW_NUMBER() OVER( PARTITION BY equipadre,recurcodisicoes,propcodi ORDER BY fechaproprecur desc) AS NUM 
+           FROM   embalse_propiedad emb
+      ) 
+      SELECT * FROM   embalse_propiedad_last WHERE  num = 1 
+    </query>
+  </Sql> 
+    
+  <Sql>
+    <key>ObtenerListaRelacionBarraCentral</key>
+    <query>
+      SELECT rec.recurcodi recurcodicentral,rec.recurcodisicoes recurcodisicoescentral,rec2.recurcodi recurcodibarra,rec2.recurcodisicoes recurcodisicoesbarra
+      FROM   cp_recurso rec
+      inner join cp_terminal ter ON ter.recurcodi = rec.recurcodi AND ter.topcodi = {0} AND ter.ttermcodi in (5)
+      inner join cp_terminal ter2 ON ter2.nodocodi = ter.nodocodi AND ter2.topcodi = {0} AND ter2.ttermcodi = 3
+      inner join cp_recurso rec2 ON rec2.recurcodi = ter2.recurcodi AND rec2.topcodi = {0}
+      WHERE rec.topcodi = {0}
+      union all
+      select 0 as recurcodicentral, 1195 as  recurcodisicoescentral, 342 as  recurcodibarra, 0 as recurcodisicoesbarra from dual
+      union all
+      select 0 as recurcodicentral, 1196 as  recurcodisicoescentral, 342 as  recurcodibarra, 0 as recurcodisicoesbarra from dual
+      union all
+      select 0 as recurcodicentral, 15563 as  recurcodisicoescentral, 379 as  recurcodibarra, 0 as recurcodisicoesbarra from dual
+      union all
+      select 0 as recurcodicentral, 17965 as  recurcodisicoescentral, 698 as  recurcodibarra, 0 as recurcodisicoesbarra from dual
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaUrsEmpresaAnexo5</key>
+    <query>
+      select rec.*,pr.grupocodi gequicodi,pr.gruponomb gequinomb
+      ,(select max(e.emprnomb)  from pr_grupo p,si_empresa e where  grupourspadre  = rec.recurcodisicoes and e.emprcodi = p.emprcodi) emprnomb,
+      (select max(gpp.gruponomb) from pr_grupo g
+      inner join pr_grupo gp on gp.grupocodi = g.grupopadre
+      inner join pr_grupo gpp on gpp.grupocodi = gp.grupopadre
+      where g.grupourspadre = rec.recurcodisicoes ) centralnomb,
+      --------- Maximo
+      (select Maximo from (
+      select recurcodi,RECURCODIDET,propcodi,Maximo,ROW_NUMBER() OVER(PARTITION BY recurcodi  ORDER BY recurcodi,Maximo DESC) AS NUM from (
+      select gr.recurcodi,gr.RECURCODIDET,prop.propcodi, TO_NUMBER(REPLACE( prop.valor, '.', ','), '999999999999D999999999999', 'NLS_NUMERIC_CHARACTERS='',.''') Maximo
+
+      from
+      (
+      select p.* from cp_proprecurso p
+      inner join (
+      select recurcodi,propcodi,max(fechaproprecur) maxfecha  from cp_proprecurso  where topcodi = {0}
+      group by recurcodi,propcodi  ) maxProp on maxProp.propcodi in (85,64) and p.propcodi = maxProp.propcodi and p.recurcodi = maxprop.recurcodi
+      and p.topcodi = {0} and maxProp.maxfecha = p.fechaproprecur
+      )
+      prop
+      inner join cp_gruporecurso gr on gr.recurcodidet = prop.recurcodi and gr.topcodi = {0}
+      where prop.propcodi in (85,64) and prop.topcodi = {0}
+      )
+      ) a
+      where a.Num = 1 and a.recurcodi = rec.recurcodi) Ursmax
+      -- MInimo
+      ,(select TO_NUMBER(REPLACE( pr.valor, '.', ','), '999999999999D999999999999', 'NLS_NUMERIC_CHARACTERS='',.''')  from cp_proprecurso pr
+      inner join (
+      select recurcodi,propcodi,max(fechaproprecur) maxfecha  from cp_proprecurso p  where topcodi = {0}
+      group by recurcodi,propcodi  ) maxProp on maxProp.propcodi in (84,61) and pr.propcodi = maxProp.propcodi and pr.recurcodi = maxprop.recurcodi
+      and pr.topcodi = {0} and maxProp.maxfecha = pr.fechaproprecur
+
+      where pr.recurcodi = (
+      select recurcodidet from (
+      select recurcodi,RECURCODIDET,propcodi,Maximo,ROW_NUMBER() OVER(PARTITION BY recurcodi  ORDER BY recurcodi,Maximo DESC) AS NUM from (
+      select gr.recurcodi,gr.RECURCODIDET,prop.propcodi, TO_NUMBER(REPLACE( prop.valor, '.', ','), '999999999999D999999999999', 'NLS_NUMERIC_CHARACTERS='',.''') Maximo
+
+      from
+      (
+      select p.* from cp_proprecurso p
+      inner join (
+      select recurcodi,propcodi,max(fechaproprecur) maxfecha  from cp_proprecurso p  where topcodi = {0}
+      group by recurcodi,propcodi  ) maxProp on maxProp.propcodi in (85,64) and p.propcodi = maxProp.propcodi and p.recurcodi = maxprop.recurcodi
+      and p.topcodi = {0} and maxProp.maxfecha = p.fechaproprecur
+      )
+      prop
+      inner join cp_gruporecurso gr on gr.recurcodidet = prop.recurcodi and gr.topcodi = {0}
+      where prop.propcodi in (85,64) and prop.topcodi = {0}
+      )
+      ) a
+      where a.Num = 1 and a.recurcodi = rec.recurcodi) ) Ursmin
+      --
+      from cp_recurso rec
+      left join  pr_grupo pr on pr.grupocodi = rec.recurcodisicoes and pr.catecodi = {1}
+      where rec.topcodi = {0} and rec.catcodi = {2} and rec.recurestado = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarRecursoxTopologia</key>
+    <query>
+      select * from cp_recurso where topcodi = {0} and recurestado = 1
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListaCategoria</key>
+    <query>
+      select * from cp_categoria
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarLinea01</key>
+    <query>
+      Select z.*,recBO.Recurnombre RecNodoTopOrigen,recBO.recurcodi RecNodoTopOrigenID,recBD.Recurnombre
+      RecNodoTopDestino,recbd.recurcodi RecNodoTopDestinoID
+      from cp_recurso z
+      inner join cp_terminal terLO on terLO.recurcodi = z.recurcodi and terLO.Ttermcodi = 1 and terLO.Topcodi = {1}
+      inner join cp_nodoconectividad nOr on nOr.Nodocodi = terLO.Nodocodi and nOr.Topcodi = {1}
+      inner join cp_terminal terBO on terBO.nodocodi = nOr.nodocodi and terBO.Ttermcodi = 3 and terBO.Topcodi = {1}
+      inner join cp_recurso recBO on recBO.Recurcodi = terBO.Recurcodi and recBO.Topcodi = {1}
+      inner join cp_terminal terLD on terLD.recurcodi = z.recurcodi and terLD.Ttermcodi = 2 and terLD.Topcodi = {1}
+      inner join cp_nodoconectividad nDe on nDe.Nodocodi = terLD.Nodocodi and nDe.Topcodi = {1}
+      inner join cp_terminal terBD on terBD.nodocodi = nDe.nodocodi and terBD.Ttermcodi = 3 and terBD.Topcodi = {1}
+      inner join cp_recurso recBD on recBD.Recurcodi = terBD.Recurcodi and recBD.Topcodi = {1}
+      INNER JOIN CP_CATEGORIA cat ON z.CATCODI = cat.CATCODI
+      where z.CATCODI = {0} and z.recurestado = 1 and z.topcodi = {1} and
+      (
+      z.recurorigen in (0,1) and z.recurcodi not in (select a.recurcodi from cp_detvariacion a,cp_variacion b
+      where a.variaccodi = b.variaccodi and b.topcodi = {1} and b.variacestado = 1 and a.detvaraccion = 1)
+      )
+      or ( z.recurorigen = 2 and z.recurcodi in (select a.recurcodi from cp_detvariacion a,cp_variacion b
+      where a.variaccodi = b.variaccodi and b.topcodi = {1} and b.variacestado = 1 and a.detvaraccion = 0 ) )
+      ORDER BY z.recurcodi desc
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarLinea02</key>
+    <query>
+      Select z.*,recBO.Recurnombre RecNodoTopOrigen,recBO.recurcodi RecNodoTopOrigenID,recBD.Recurnombre
+      RecNodoTopDestino,recbd.recurcodi RecNodoTopDestinoID
+      from cp_recurso z
+      inner join cp_terminal terLO on terLO.recurcodi = z.recurcodi and terLO.Ttermcodi = 1 and terLO.Topcodi = {1}
+      inner join cp_nodoconectividad nOr on nOr.Nodocodi = terLO.Nodocodi and nOr.Topcodi = {1}
+      inner join cp_terminal terBO on terBO.nodocodi = nOr.nodocodi and terBO.Ttermcodi = 3 and terBO.Topcodi = {1}
+      inner join cp_recurso recBO on recBO.Recurcodi = terBO.Recurcodi and recBO.Topcodi = {1}
+      inner join cp_terminal terLD on terLD.recurcodi = z.recurcodi and terLD.Ttermcodi = 2 and terLD.Topcodi = {1}
+      inner join cp_nodoconectividad nDe on nDe.Nodocodi = terLD.Nodocodi and nDe.Topcodi = {1}
+      inner join cp_terminal terBD on terBD.nodocodi = nDe.nodocodi and terBD.Ttermcodi = 3 and terBD.Topcodi = {1}
+      inner join cp_recurso recBD on recBD.Recurcodi = terBD.Recurcodi and recBD.Topcodi = {1}
+      INNER JOIN CP_CATEGORIA cat ON z.CATCODI = cat.CATCODI
+      where z.CATCODI = {0} and z.recurestado = 1 and z.topcodi = {1} and z.recurorigen in (0,1)
+      ORDER BY z.recurcodi desc
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>RecursoxCategoriaGrupo</key>
+    <query>
+      Select pr.gruponomb recurnombsicoes, r.recurnombre nombre,r.*
+      FROM CP_RECURSO r
+      Left JOIN PR_GRUPO pr on pr.grupocodi = r.recurcodisicoes
+      WHERE  r.CATCODI = {0} and r.topcodi = {1} and
+      r.recurorigen = {2} and r.recurestado = {3}
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>RecursoxCategoria2</key>
+    <query>
+      select '' recurnombsicoes, r.recurnombre nombre,r.*
+      FROM CP_RECURSO r
+      WHERE r.CATCODI = {0} and r.topcodi = {1} and
+      r.recurorigen = {2} and r.recurestado = {3}
+      order by nombre
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      cp_recurso
+      where
+      topcodi = {0} and recurcodi in ({1})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>RecursoxCategoria4</key>
+    <query>
+      select  r.*, t2.recurcodi Recidnodo
+      FROM CP_RECURSO r
+      inner join cp_terminal t on t.recurcodi = r.recurcodi and t.topcodi ={1}
+      inner join cp_terminal t2 on t2.nodocodi = t.nodocodi and t2.topcodi = {1}
+      WHERE r.CATCODI = {0} and r.topcodi = {1} and
+      r.recurorigen = 0 and r.recurestado = 1 and t.ttermcodi = {2} and t2.ttermcodi = {3}
+
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaModosXNodoT</key>
+    <query>
+      select r.* ,
+      (select TN.recurcodi from cp_terminal tp
+      inner join cp_terminal tn on tn.nodocodi = tp.nodocodi
+      where tp.recurcodi =   r.recurpadre
+      and tp.ttermcodi = {7} and tn.ttermcodi = {8} and
+      tp.topcodi = {1} and tn.topcodi = {1}) Recidnodo
+      FROM CP_RECURSO r
+      INNER JOIN CP_CATEGORIA C ON r.CATCODI = C.CATCODI
+      WHERE r.catcodi = {0} and r.topcodi = {1} and
+      r.recurorigen = {2} and r.recurestado = {3} and recurcodi not in
+      (
+      select recurcodi from cp_detvariacion d
+      inner join cp_variacion v on v.variaccodi = d.variaccodi
+      where d.detvaraccion = {4} and v.topcodi = {1} and v.variacestado = {3}
+      )
+      UNION
+      (select r.* ,
+      (select TN.recurcodi from cp_terminal tp
+      inner join cp_terminal tn on tn.nodocodi = tp.nodocodi
+      where tp.recurcodi =   r.recurpadre
+      and tp.ttermcodi = {7} and tn.ttermcodi = {8} and
+      tp.topcodi = {1} and tn.topcodi = {1}) Recidnodo
+      FROM CP_RECURSO r
+      INNER JOIN CP_CATEGORIA C ON r.CATCODI = C.CATCODI
+      WHERE r.CATCODI = {0} and r.topcodi = {1} and r.recurorigen = {5} and
+      r.recurestado = {3} and recurcodi in
+      (select recurcodi from cp_detvariacion d
+      inner join cp_variacion v on v.variaccodi = d.variaccodi
+      where d.detvaraccion = {6} and v.topcodi = {1}
+      and v.variacestado = {3}
+      )
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EquiposConecANodoTop</key>
+    <query>
+      select rec.*,rec2.recurcodi recurcodiconec,rec2.catcodi catcodiconec  from cp_recurso rec
+      inner join cp_terminal ter on ter.recurcodi = rec.recurcodi and ter.topcodi = {0}
+      inner join cp_terminal ter2 on ter2.nodocodi = ter.nodocodi and ter2.topcodi = {0}
+      inner join cp_recurso rec2 on rec2.recurcodi = ter2.recurcodi and rec2.topcodi = {0}
+      where rec.catcodi = 7 and rec.topcodi = {0} and rec.recurestado = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearCopia</key>
+    <query>
+      insert into cp_recurso (recurcodi,recurnombre,recurpadre,recurorigen,recurcodisicoes,
+      tablasicoes,catcodi,recurestado,topcodi,lastuser,lastdate,recurorigen2,recurorigen3,recurtoescenario,recurformula,recurconsideragams,recurlogico,	recurfamsic )
+      SELECT recurcodi  , recurnombre,recurpadre,
+      recurorigen,recurcodisicoes,tablasicoes,catcodi, recurestado,{1},lastuser,lastdate,recurorigen2,recurorigen3,recurtoescenario,
+      recurformula,recurconsideragams ,recurlogico,	recurfamsic
+      FROM CP_RECURSO where topcodi = {0} and recurorigen = 0
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerEmbalsesYupana</key>
+		<query>
+			select * from cp_recurso where topcodi = 0 and recurestado = 1 and catcodi = 19
+		</query>
+	</Sql>
+  
+</Sqls>

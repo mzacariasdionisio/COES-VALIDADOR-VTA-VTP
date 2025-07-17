@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(nrpccodi), 0) + 1 from nr_potenciaconsigna
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into nr_potenciaconsigna(
+           nrpccodi,
+           nrsmodcodi,
+           grupocodi,
+           nrpcfecha,
+           nrpceliminado,
+           nrpcusucreacion,
+           nrpcfeccreacion,
+           nrpcusumodificacion,
+           nrpcfecmodificacion
+       )
+       values(
+           :nrpccodi,
+           :nrsmodcodi,
+           :grupocodi,
+           :nrpcfecha,
+           :nrpceliminado,
+           :nrpcusucreacion,
+           :nrpcfeccreacion,
+           :nrpcusumodificacion,
+           :nrpcfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update nr_potenciaconsigna
+       set
+           nrsmodcodi = :nrsmodcodi,
+           grupocodi = :grupocodi,
+           nrpcfecha = :nrpcfecha,
+           nrpceliminado = :nrpceliminado,
+           nrpcusucreacion = :nrpcusucreacion,
+           nrpcfeccreacion = :nrpcfeccreacion,
+           nrpcusumodificacion = :nrpcusumodificacion,
+           nrpcfecmodificacion = :nrpcfecmodificacion
+       where
+           nrpccodi = :nrpccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from nr_potenciaconsigna
+       where
+           nrpccodi = :nrpccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           nrpccodi,
+           nrsmodcodi,
+           grupocodi,
+           nrpcfecha,
+           nrpceliminado,
+           nrpcusucreacion,
+           nrpcfeccreacion,
+           nrpcusumodificacion,
+           nrpcfecmodificacion
+       from
+           nr_potenciaconsigna
+       where
+           nrpccodi = :nrpccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           nrpccodi,
+           nrsmodcodi,
+           grupocodi,
+           nrpcfecha,
+           nrpceliminado,
+           nrpcusucreacion,
+           nrpcfeccreacion,
+           nrpcusumodificacion,
+           nrpcfecmodificacion
+       from
+           nr_potenciaconsigna
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           nrpccodi,
+           nrsmodcodi,
+           grupocodi,
+           nrpcfecha,
+           nrpceliminado,
+           nrpcusucreacion,
+           nrpcfeccreacion,
+           nrpcusumodificacion,
+           nrpcfecmodificacion
+       from
+           nr_potenciaconsigna
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListado</key>
+    <query>
+      select
+      *
+      from (
+        select 
+            a.nrpccodi,
+            b.nrsmodcodi,
+            c.grupocodi,
+            a.nrpcfecha,
+            a.nrpceliminado,
+            a.nrpcusucreacion,
+            a.nrpcfeccreacion,
+            a.nrpcusumodificacion,
+            a.nrpcfecmodificacion, 
+            b.nrsmodnombre,
+            c.gruponomb,
+            (row_number() over (order by c.gruponomb, a.nrpcfecha)) as r 
+        from 
+            nr_potenciaconsigna a, 
+            nr_submodulo b, 
+            pr_grupo c 
+        where 
+            (b.nrsmodcodi= a.nrsmodcodi) and 
+            (a.nrsmodcodi={0} or {0} = 0) and 
+            (c.grupocodi= a.grupocodi) and 
+            (a.grupocodi={1} or {1} = 0) and
+            (a.nrpceliminado='{4}' or '{4}'='T')
+      and
+      (
+      (a.nrpcfecha >= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.nrpcfecha &lt; to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      )
+      order by c.gruponomb, a.nrpcfecha
+      )
+      where (r >= ((({5}-1) * {6}) + 1) and r &lt; (({5} * {6}) + 1 )) or ({5} = -1 and {6} = -1)
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>TotalRegistros</key>
+    <query>
+      select 
+          count(*) 
+      from 
+          nr_potenciaconsigna a,
+          nr_submodulo b,
+          pr_grupo c 
+      where 
+          (b.nrsmodcodi= a.nrsmodcodi) and 
+          (a.nrsmodcodi={0} or {0} = 0) and 
+          (c.grupocodi= a.grupocodi) and 
+          (a.grupocodi={1} or {1} = 0) and
+          (a.nrpceliminado='{4}' or '{4}'='T')
+      and 
+      (
+      (a.nrpcfecha >= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.nrpcfecha &lt; to_date('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      )
+    </query>
+  </Sql>
+</Sqls>

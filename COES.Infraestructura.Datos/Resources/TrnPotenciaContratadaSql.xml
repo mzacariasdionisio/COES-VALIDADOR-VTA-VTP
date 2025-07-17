@@ -1,0 +1,935 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <!-- ASSETEC 2019-11-->
+
+  <!-- METODOS BASICOS-->
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(trnpctcodi), 0) + 1 from trn_potencia_contratada
+    </query>
+  </Sql>
+
+  <!-- ASSETEC 2019-11-->
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_potencia_contratada (
+      trnpctcodi,
+      pericodi,
+      emprcodi,
+      coresocodi,
+      TrnPctPtoSumins,
+      TrnPctTotalMwFija,
+      TrnPctHpMwFija,
+      TrnPctHfpMwFija,
+      TrnPctTotalMwVariable,
+      TrnPctHpMwFijaVariable,
+      TrnPctHfpMwFijaVariable,
+      TrnPctComeObs,
+      TrnPctUserNameIns,
+      TrnPctFecIns)
+      values (
+      :trnpctcodi,
+      :pericodi,
+      :emprcodi,
+      :coresocodi,
+      :TrnPctPtoSumins,
+      :TrnPctTotalMwFija,
+      :TrnPctHpMwFija,
+      :TrnPctHfpMwFija,
+      :TrnPctTotalMwVariable,
+      :TrnPctHpMwFijaVariable,
+      :TrnPctHfpMwFijaVariable,
+      :TrnPctComeObs,
+      :TrnPctUserNameIns,
+      :TrnPctFecIns
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_potencia_contratada where pericodi = :pericodi and emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      crt.coresocodigo,
+      crt.genemprcodi,
+      crt.cliemprcodi,
+      crt.tipconcodi,
+      crt.tipusucodi,
+      crt.barrcodi,
+      crt.coresofechainicio,
+      crt.coresofechafin,
+      empgen.emprnomb as emprnomb,
+      empcli.emprnomb as clinombre,
+      bar.barrbarratransferencia,
+      tc.tipconnombre,
+      tu.tipusunombre,
+      '' as perinombre,
+      pc.*
+      from
+      trn_codigo_retiro_solicitud crt
+      left outer join si_empresa empgen on (empgen.emprcodi = crt.genemprcodi)
+      left outer join si_empresa empcli on (empcli.emprcodi = crt.cliemprcodi)
+      inner join trn_barra bar  on (bar.barrcodi = crt.barrcodi)
+      inner join trn_tipo_contrato tc on (tc.tipconcodi = crt.tipconcodi)
+      inner join trn_tipo_usuario tu on (tu.tipusucodi = crt.tipusucodi)
+      left join trn_potencia_contratada pc on (crt.coresocodi= pc.coresocodi and pc.pericodi = :pericodi)
+      where
+      crt.coresoestado = 'ASI' and
+      crt.coresoobservacion = 'SOLBAJANO' and
+      (crt.genemprcodi = :emprcodi or 0 = :emprcodi) and
+      (crt.cliemprcodi = :emprcodi or 0 = :emprcodi) and
+      (crt.barrcodi = :barrcodi or 0 = :barrcodi) and
+      NVL(to_char(crt.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi) and
+      NVL(to_char(crt.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      order by
+      empgen.emprnomb,
+      empcli.emprnomb,
+      bar.barrbarratransferencia,
+      crt.coresocodigo
+    </query>
+  </Sql>
+
+  <!-- METODOS ADICIONALES-->
+  <!--assetec 20200604-->
+  <Sql>
+    <key>CopiarPotenciasContratadasByPeriodo</key>
+    <query>
+		insert into trn_potencia_contratada (trnpctcodi, pericodi, emprcodi, coresocodi,
+		trnpctptosumins, trnpcttotalmwfija, trnpcthpmwfija, trnpcthfpmwfija,
+		trnpcttotalmwvariable, trnpcthpmwfijavariable, trnpcthfpmwfijavariable, trnpctcomeobs,
+		trnpctusernameins, trnpctfecins)
+		select (:trnpctcodi + rownum) as trnpctcodi,  :pericodi,
+		--emprcodi,
+		nvl((select distinct v.emprcodidestino from sic.vw_si_migracion v where v.emprcodiorigen = pc.emprcodi or v.emprcodidestino = pc.emprcodi order by v.migracodi desc FETCH FIRST 1 ROWS ONLY),pc.emprcodi) emprcodi,
+		coresocodi,trnpctptosumins, trnpcttotalmwfija, trnpcthpmwfija, trnpcthfpmwfija,
+		trnpcttotalmwvariable, trnpcthpmwfijavariable, trnpcthfpmwfijavariable, trnpctcomeobs,
+		:trnpctusernameins, sysdate
+		from trn_potencia_contratada pc where pc.pericodi = :emprcodi order by trnpctcodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByPeriodo</key>
+    <query>
+      delete from trn_potencia_contratada where pericodi = :pericodi
+    </query>
+  </Sql>
+  <!-- METODOS ADICIONALES-->
+  <!--assetec 20200604-->
+
+  <Sql>
+    <key>GenerarCodigosAgrupadosReservados</key>
+    <query>
+      DECLARE
+      P_CAGRUSERREGI  VARCHAR2(200):=:TrnPctUsernameIns;
+      p_codigoAgrupado NUMBER(20):=0;
+      BEGIN
+      INSERT INTO TRN_POTENCIA_CONTRATADA_AGR (PCAGRUSERREGI,PCAGRFECREGI,PCAGRESTADO ) VALUES(P_CAGRUSERREGI,SYSDATE,'ACT') returning TRNPCAGRP INTO p_codigoAgrupado;
+      select p_codigoAgrupado INTO :CodigoAgrupado from dual;
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>GenerarPotenciasAgrupadas</key>
+    <query>
+      DECLARE
+      P_PERICODI   NUMBER:=:PERICODI;
+      p_coresocodiAux number := :CoresoCodi;
+      p_coregecodiAux number := :CoregeCodi;
+      p_coresocodiAuxFirst number := :CoresoCodiFirst;
+      p_coregecodiAuxFirst number := :CoregeCodiFirst;
+      p_numeroOrden   number := :TrnpcNumord;
+      p_codigoAgrupado number:= :TrnpCagrp;
+      p_tipoCasoAgrupado varchar2(10):=:TrnnpcCodicas;
+      p_codigoCasoAgrupado number:=0;
+
+      BEGIN
+
+
+      SELECT  max(trnpcagrp)   INTO p_codigoAgrupado
+      FROM   TRN_POTENCIA_CONTRATADA
+      WHERE CORESOCODI=p_coresocodiAuxFirst
+      AND (coregecodi=p_coregecodiAuxFirst OR p_coregecodiAuxFirst IS NULL)
+      AND TRNPCNUMORD=1
+      AND  TRNPCESTADO='ACT'
+      AND NVL(PERIDCCODI,PERICODI)=p_PERICODI;
+
+      IF(p_codigoAgrupado IS NULL)
+      THEN
+      SELECT  NVL(MAX(trnpcagrp),0)+1  INTO p_codigoAgrupado
+      FROM   TRN_POTENCIA_CONTRATADA;
+      -- WHERE CORESOCODI=p_coresocodiAux
+      --and coregecodi=p_coregecodiAux
+      -- AND  TRNPCESTADO='ACT';
+      END IF;
+
+
+
+      SELECT TIPCASCODI INTO p_codigoCasoAgrupado
+      FROM VTP_TIPO_CASO_AGR
+      WHERE  TIPCASABREV =p_tipoCasoAgrupado;
+
+      UPDATE TRN_POTENCIA_CONTRATADA
+      SET  TRNPCAGRP=p_codigoAgrupado
+      ,TRNPCNUMORD= p_numeroOrden
+      ,TRNPCCODICAS=p_codigoCasoAgrupado
+      ,TrnPctUserNameIns ='testMDP'||TO_CHAR(sysdate, 'hh:mi')
+      WHERE CORESOCODI=p_coresocodiAux
+      AND (coregecodi=p_coregecodiAux OR p_coregecodiAux IS NULL)
+      AND TRNPCESTADO='ACT'
+      AND NVL(PERIDCCODI,PERICODI)=p_PERICODI;
+
+      SELECT p_codigoAgrupado INTO :CodigoAgrupado from dual;
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListaGrupoAsociadoVTA</key>
+    <query>
+      --============================================================
+      -- RECUPERAR SI LOS VTA Y SUS CODIGOS HIJOS ASOCIADOS
+      --============================================================
+
+      SELECT AGRH.CORESOCODI
+      ,AGRP.CORESOCODI CORESOCODIPARENT
+      FROM TRN_POTENCIA_CONTRATADA AGRH
+      INNER JOIN (
+      SELECT  TRNPCAGRP
+      ,CORESOCODI
+      FROM TRN_POTENCIA_CONTRATADA
+      WHERE CORESOCODI IN({0})
+      AND TRNPCESTADO='ACT'
+      AND NVL(PERICODI,PERIDCCODI)={1}
+      ) AGRP
+      ON  AGRH.TRNPCAGRP=AGRP.TRNPCAGRP
+      ORDER BY TRNPCNUMORD ASC
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DesagruparPotencias</key>
+    <query>
+
+		DECLARE
+		P_PERICODI   NUMBER:=:PERICODI;
+		p_coresocodiAux number := :CoresoCodi;
+		p_coregecodiAux number := :CoregeCodi;
+		p_codigoAgrupado NUMBER:=0;
+		p_tipoCasoAgrupado varchar2(10):= :TrnnpcCodicas;
+		p_omitirCargaExcel NUMBER :=:OmitirExcel;
+		BEGIN
+
+		IF(p_tipoCasoAgrupado='AGRVTP')
+		THEN
+		SELECT  TRNPCAGRP INTO p_codigoAgrupado
+		FROM TRN_POTENCIA_CONTRATADA
+		WHERE TRNPCAGRP IS NOT NULL
+		AND CORESOCODI=p_coresocodiAux
+		AND COREGECODI=p_coregecodiAux
+		AND TRNPCESTADO='ACT'
+		AND NVL(PERIDCCODI,PERICODI)=p_PERICODI;
+		END IF;
+
+		IF(p_tipoCasoAgrupado='AGRVTA')
+		THEN
+		SELECT
+		NVL(
+		(
+		SELECT DISTINCT TRNPCAGRP
+		FROM TRN_POTENCIA_CONTRATADA
+		WHERE TRNPCAGRP IS NOT NULL
+		AND CORESOCODI=p_coresocodiAux
+		AND TRNPCESTADO='ACT'
+		AND NVL(PERIDCCODI,PERICODI)=p_PERICODI
+		),-1)
+		INTO p_codigoAgrupado
+		FROM DUAL;
+
+		END IF;
+
+
+		IF(p_omitirCargaExcel=0)
+		THEN
+
+		IF(NVL(p_codigoAgrupado,0)>0)
+		THEN
+		UPDATE TRN_POTENCIA_CONTRATADA
+		SET TRNPCAGRP=null,
+		TRNPCNUMORD=null,
+		TRNPCCODICAS =null,
+		TRNPCTTOTALMWFIJA=CASE WHEN TRNPCEXCEL=1 THEN NULL ELSE TRNPCTTOTALMWFIJA END,
+		TRNPCTHPMWFIJA=CASE WHEN TRNPCEXCEL=1 THEN NULL ELSE TRNPCTHPMWFIJA  END,
+		TRNPCTHFPMWFIJA=CASE WHEN TRNPCEXCEL=1 THEN NULL ELSE TRNPCTHFPMWFIJA  END,
+		TRNPCTTOTALMWVARIABLE=CASE WHEN TRNPCEXCEL=1 THEN NULL ELSE TRNPCTTOTALMWVARIABLE  END,
+		TRNPCTHPMWFIJAVARIABLE=CASE WHEN TRNPCEXCEL=1 THEN NULL ELSE TRNPCTHPMWFIJAVARIABLE  END,
+		TRNPCTHFPMWFIJAVARIABLE=CASE WHEN TRNPCEXCEL=1 THEN NULL ELSE TRNPCTHFPMWFIJAVARIABLE  END,
+		TRNPCTCOMEOBS=CASE WHEN TRNPCEXCEL=1 THEN NULL ELSE TRNPCTCOMEOBS  END,
+		TRNPCEXCEL=NULL
+		WHERE TRNPCAGRP=p_codigoAgrupado
+		AND PERIDCCODI=P_PERICODI;
+		END IF;
+
+		END IF;
+
+
+
+		IF(p_omitirCargaExcel=1)
+		THEN
+
+		IF(NVL(p_codigoAgrupado,0)>0)
+		THEN
+		UPDATE TRN_POTENCIA_CONTRATADA
+		SET TRNPCAGRP=null,
+		TRNPCNUMORD=null,
+		TRNPCCODICAS =null,
+		TRNPCEXCEL=NULL
+		WHERE TRNPCAGRP=p_codigoAgrupado
+		AND PERIDCCODI=P_PERICODI;
+		END IF;
+
+		END IF;
+
+		END;
+	</query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarPotencias</key>
+    <query>
+		select
+		bsm.barrcodi,
+		bsm.barrnombre,
+		potcn.trnpctcodi                            as trnpctcodi,
+		potcn.coresocodi                            as coresocodipotcn,
+		potcn.coregecodi                            as coregecodipotcn,
+		potcn.trnpcagrp                             as trnpcagrp,
+		potcn.trnpcnumord                           as trnpcnumordm,
+		potcn.trnpccodicas                          as trnpccodicas,
+		potcn.trnpcttotalmwfija                     as trnpcttotalmwfija ,
+		potcn.trnpcthpmwfija                        as trnpcthpmwfija,
+		potcn.trnpcthfpmwfija                       as trnpcthfpmwfija,
+		potcn.trnpcttotalmwvariable                 as trnpcttotalmwvariable,
+		potcn.trnpcthpmwfijavariable                as trnpcthpmwfijavariable,
+		potcn.trnpcthfpmwfijavariable               as trnpcthfpmwfijavariable,
+		casagr.TIPCASABREV                          as TIPCASABREV,
+		CASE WHEN ptcnprimerVTA.coresocodi=potcn.coresocodi
+		OR ptcnprimerVTA.coresocodi IS NULL
+		THEN  1
+		ELSE 0
+		END                                         as esPrimerRegistro,
+		potcn.trnpctptosumins
+		from TRN_POTENCIA_CONTRATADA  potcn
+		left join VTP_TIPO_CASO_AGR       casagr on potcn.TRNPCCODICAS= casagr.TIPCASCODI
+		left join  VTP_CODIGO_RETIRO_GENERADO    codgene on potcn.coregecodi=codgene.coregecodi
+		left join  vtp_codigo_retiro_sol_det  cdrt on codgene.coresdcodi=cdrt.coresdcodi
+		left join trn_barra bsm  on bsm.barrcodi = cdrt.barrcodisum
+		left join TRN_POTENCIA_CONTRATADA ptcnprimerVTA
+		on potcn.TRNPCAGRP=ptcnprimerVTA.TRNPCAGRP and  ptcnprimerVTA.TRNPCNUMORD=1
+		where potcn.coresocodi = :coresocodi
+		and potcn.trnpcEstado='ACT'
+		and NVL(potcn.PERIDCCODI,potcn.PERICODI) =:pericodi
+	</query>
+  </Sql>
+  <Sql>
+		<key>ListarPotenciasAprobar</key>
+		<query>
+			select
+			bsm.barrcodi,
+			bsm.barrnombre,
+			potcn.trnpctcodi                            as trnpctcodi,
+			potcn.coresocodi                            as coresocodipotcn,
+			potcn.coregecodi                            as coregecodipotcn,
+			potcn.trnpcagrp                             as trnpcagrp,
+			potcn.trnpcnumord                           as trnpcnumordm,
+			potcn.trnpccodicas                          as trnpccodicas,
+			potcn.trnpcttotalmwfija                     as trnpcttotalmwfija ,
+			potcn.trnpcthpmwfija                        as trnpcthpmwfija,
+			potcn.trnpcthfpmwfija                       as trnpcthfpmwfija,
+			potcn.trnpcttotalmwvariable                 as trnpcttotalmwvariable,
+			potcn.trnpcthpmwfijavariable                as trnpcthpmwfijavariable,
+			potcn.trnpcthfpmwfijavariable               as trnpcthfpmwfijavariable,
+			casagr.TIPCASABREV                          as TIPCASABREV,
+			CASE WHEN ptcnprimerVTA.coresocodi=potcn.coresocodi
+			OR ptcnprimerVTA.coresocodi IS NULL
+			THEN  1
+			ELSE 0
+			END                                         as esPrimerRegistro,
+			potcn.trnpctptosumins
+			from TRN_POTENCIA_CONTRATADA_APR  potcn
+			left join VTP_TIPO_CASO_AGR       casagr on potcn.TRNPCCODICAS= casagr.TIPCASCODI
+			left join  VTP_CODIGO_RETIRO_GENERADO    codgene on potcn.coregecodi=codgene.coregecodi
+			left join  vtp_codigo_retiro_sol_det  cdrt on codgene.coresdcodi=cdrt.coresdcodi
+			left join trn_barra bsm  on bsm.barrcodi = cdrt.barrcodisum
+			left join TRN_POTENCIA_CONTRATADA ptcnprimerVTA
+			on potcn.TRNPCAGRP=ptcnprimerVTA.TRNPCAGRP and  ptcnprimerVTA.TRNPCNUMORD=1
+			where potcn.coresocodi = :coresocodi
+			and potcn.trnpcEstado='ACT'
+			and NVL(potcn.PERIDCCODI,potcn.PERICODI) =:pericodi
+		</query>
+  </Sql>
+  <Sql>
+    <key>ListarEnvios</key>
+    <query>
+      SELECT TrnPcEnvCodi
+      ,TRNPCENVUSUARIO
+      ,TRNPCENVFECHARE
+      ,TRNPCENVHORARE
+      FROM TRN_POTENCIA_CONTRATADA_ENVIOS
+      WHERE PERICODI=:PERICODI
+    </query>
+  </Sql>
+  <Sql>
+    <key>SaveRegistrosExcelEnvio</key>
+    <query>
+      DECLARE
+      p_TRNPCENVCODI                NUMBER:=null;
+      p_PERICODI                    number:=:PeriCodi;
+      p_TRNPCTUSERNAMEINS           VARCHAR2(300):=:TrnPctUsernameIns;
+      BEGIN
+      INSERT INTO TRN_POTENCIA_CONTRATADA_ENVIOS(PERICODI,TRNPCENVUSUARIO,TRNPCENVFECHARE,TRNPCENVHORARE,TRNPCENVESTADO)VALUES(p_PERICODI,p_TRNPCTUSERNAMEINS,SYSDATE,to_char(SYSDATE, 'hh24:mm:ss'),'ACT') returning TRNPCENVCODI into p_TRNPCENVCODI;
+      SELECT p_TRNPCENVCODI INTO :TrnPcEnvCodi from dual;
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>SaveRegistrosExcel</key>
+    <query>
+      DECLARE
+      p_PERICODI                    number:=:PeriCodi;
+      p_TRNPCTCODI                  number:=0;
+      p_EMPRCODI                    number:=0;
+      p_BARRNOMBRE                  VARCHAR2(1000):='';
+      p_coresocodiAux               number := :CoresoCodi;
+      p_coregecodiAux               number := :CoregeCodi;
+      p_codigoAgrupado              NUMBER:=0;
+      p_tipoCasoAgrupado            varchar2(10):= :TrnnpcCodicas;
+      p_TRNPCTTOTALMWFIJA           NUMBER:=:TrnPctTotalMWFija;
+      p_TRNPCTHPMWFIJA              NUMBER:=:TrnPctHPMWFija;
+      p_TRNPCTHFPMWFIJA             NUMBER:=:TrnPctHFPMWFija;
+      p_TRNPCTTOTALMWVARIABLE       NUMBER:=:TrnPctTotalMWVariable;
+      p_TRNPCTHPMWFIJAVARIABLE      NUMBER:=:TrnPctHPMWFijaVariable;
+      p_TRNPCTHFPMWFIJAVARIABLE     NUMBER:=:TrnPctHFPMWFijaVariable;
+      p_TRNPCTCOMEOBS               VARCHAR2(1000):=:TrnPctComeObs;
+      p_TRNPCTUSERNAMEINS           VARCHAR2(300):=:TrnPctUsernameIns;
+      p_TRNPCENVCODI                NUMBER:=:TrnPcEnvCodi;
+      BEGIN
+      IF(p_tipoCasoAgrupado='AGRVTP')
+      THEN
+      SELECT(
+      SELECT  TRNPCAGRP
+      FROM TRN_POTENCIA_CONTRATADA
+      WHERE TRNPCAGRP IS NOT NULL
+      AND CORESOCODI=p_coresocodiAux
+      AND COREGECODI=p_coregecodiAux
+      AND TRNPCESTADO='ACT'
+      AND NVL(PERIDCCODI,PERICODI)=p_PERICODI
+      )
+      INTO p_codigoAgrupado
+      FROM DUAL;
+      END IF;
+
+      IF(p_tipoCasoAgrupado='AGRVTA')
+      THEN
+      SELECT(
+      SELECT  TRNPCAGRP
+      FROM TRN_POTENCIA_CONTRATADA
+      WHERE TRNPCAGRP IS NOT NULL
+      AND CORESOCODI=p_coresocodiAux
+      AND TRNPCESTADO='ACT'
+      AND COREGECODI IS NULL  --- Solucion a data historica dasaji*
+      AND NVL(PERIDCCODI,PERICODI)=p_PERICODI
+      ) INTO p_codigoAgrupado
+      from dual;
+
+      END IF;
+
+      IF(NVL(p_codigoAgrupado,0)>0)
+      THEN
+      UPDATE TRN_POTENCIA_CONTRATADA
+      SET TRNPCTTOTALMWFIJA=p_TRNPCTTOTALMWFIJA,
+      TRNPCTHPMWFIJA=p_TRNPCTHPMWFIJA,
+      TRNPCTHFPMWFIJA=p_TRNPCTHFPMWFIJA,
+      TRNPCTTOTALMWVARIABLE=p_TRNPCTTOTALMWVARIABLE,
+      TRNPCTHPMWFIJAVARIABLE=p_TRNPCTHPMWFIJAVARIABLE,
+      TRNPCTHFPMWFIJAVARIABLE=p_TRNPCTHFPMWFIJAVARIABLE,
+      TRNPCTCOMEOBS=p_TRNPCTCOMEOBS,
+      TRNPCEXCEL=1,
+      TRNPCTUSERNAMEINS=p_TRNPCTUSERNAMEINS,
+      TRNPCENVCODI=p_TRNPCENVCODI
+      WHERE TRNPCAGRP=p_codigoAgrupado;
+      END IF;
+
+      IF(NVL(p_codigoAgrupado,0)=0)
+      THEN
+
+      IF(p_tipoCasoAgrupado='AGRVTA')
+      THEN
+      SELECT(
+      SELECT TRNPCTCODI
+      FROM TRN_POTENCIA_CONTRATADA
+      WHERE  CORESOCODI=p_coresocodiAux
+      AND TRNPCESTADO='ACT'
+      AND COREGECODI IS NULL  --- Solucion a data historica dasaji*
+      AND NVL(PERIDCCODI,PERICODI)=p_PERICODI
+      )
+      INTO p_TRNPCTCODI
+      FROM DUAL;
+      END IF;
+
+      IF(p_tipoCasoAgrupado='AGRVTP')
+      THEN
+      SELECT(
+      SELECT TRNPCTCODI
+      FROM TRN_POTENCIA_CONTRATADA
+      WHERE  CORESOCODI=p_coresocodiAux
+      AND COREGECODI=p_coregecodiAux
+      AND TRNPCESTADO='ACT'
+      --AND COREGECODI IS NULL
+      AND NVL(PERIDCCODI,PERICODI)=p_PERICODI
+      )
+      INTO p_TRNPCTCODI
+      FROM DUAL;
+      END IF;
+
+
+      UPDATE trn_codigo_retiro_solicitud
+      SET TRNPCTIPOPOTENCIA =CASE WHEN p_tipoCasoAgrupado='AGRVTA' THEN 1 WHEN p_tipoCasoAgrupado='AGRVTP' THEN 2 END
+      WHERE CORESOCODI=p_coresocodiAux;
+
+      IF(p_TRNPCTCODI is null)
+      THEN
+
+      SELECT NVL(MAX(TRNPCTCODI),0)+1 INTO p_TRNPCTCODI
+      FROM TRN_POTENCIA_CONTRATADA;
+
+      SELECT
+      GENEMPRCODI
+      ,BAR.BARRNOMBRE
+      INTO p_EMPRCODI
+      ,p_BARRNOMBRE
+      FROM TRN_CODIGO_RETIRO_SOLICITUD     RSL
+      INNER JOIN TRN_BARRA   BAR
+      ON RSL.BARRCODI=BAR.BARRCODI
+      WHERE coresocodi=p_coresocodiAux;
+
+
+      Insert into TRN_POTENCIA_CONTRATADA
+      (
+      PERIDCCODI,
+      EMPRCODI,
+      CORESOCODI,
+      TRNPCTCODI,
+      TRNPCTPTOSUMINS,
+      TRNPCTTOTALMWFIJA,
+      TRNPCTHPMWFIJA,
+      TRNPCTHFPMWFIJA,
+      TRNPCTTOTALMWVARIABLE,
+      TRNPCTHPMWFIJAVARIABLE,
+      TRNPCTHFPMWFIJAVARIABLE,
+      TRNPCTCOMEOBS,
+      TRNPCTUSERNAMEINS,
+      TRNPCTFECINS,
+      COREGECODI,
+      TRNPCAGRP,
+      TRNPCNUMORD,
+      TRNPCCODICAS,
+      TRNPCESTADO,
+      TRNPCENVCODI)
+      values (p_PERICODI
+      ,p_EMPRCODI
+      ,p_coresocodiAux
+      ,p_TRNPCTCODI
+      ,p_BARRNOMBRE
+      ,p_TRNPCTTOTALMWFIJA
+      ,p_TRNPCTHPMWFIJA
+      ,p_TRNPCTHFPMWFIJA
+      ,p_TRNPCTTOTALMWVARIABLE
+      ,p_TRNPCTHPMWFIJAVARIABLE
+      ,p_TRNPCTHFPMWFIJAVARIABLE
+      ,p_TRNPCTCOMEOBS
+      ,p_TRNPCTUSERNAMEINS
+      ,to_date(sysdate,'DD/MM/RR')
+      ,CASE WHEN NVL(p_coregecodiAux,0)=0 THEN NULL ELSE p_coregecodiAux END
+      ,null
+      ,null
+      ,null
+      ,'ACT'
+      ,p_TRNPCENVCODI);
+      --END IF;
+      elsif(p_TRNPCTCODI is not null)
+      THEN
+      UPDATE TRN_POTENCIA_CONTRATADA
+      SET TRNPCTTOTALMWFIJA=p_TRNPCTTOTALMWFIJA,
+      TRNPCTHPMWFIJA=p_TRNPCTHPMWFIJA,
+      TRNPCTHFPMWFIJA=p_TRNPCTHFPMWFIJA,
+      TRNPCTTOTALMWVARIABLE=p_TRNPCTTOTALMWVARIABLE,
+      TRNPCTHPMWFIJAVARIABLE=p_TRNPCTHPMWFIJAVARIABLE,
+      TRNPCTHFPMWFIJAVARIABLE=p_TRNPCTHFPMWFIJAVARIABLE,
+      TRNPCTCOMEOBS=p_TRNPCTCOMEOBS,
+      TRNPCENVCODI=p_TRNPCENVCODI,
+      --TRNPCEXCEL=1,
+      TRNPCTUSERNAMEINS=p_TRNPCTUSERNAMEINS,
+      TRNPCESTADO='ACT'
+      WHERE TRNPCTCODI=p_TRNPCTCODI;
+      END IF;
+      END IF;
+
+
+
+      END;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveRegistrosPotencia</key>
+    <query>
+		DECLARE
+		p_PERICODI                    number:=:PeriCodi;
+		p_TRNPCTCODI                  number:=0;
+		p_EMPRCODI                    number:=0;
+		p_BARRNOMBRE                  VARCHAR2(1000):='';
+		p_coresocodiAux               number := :CoresoCodi;
+		p_coregecodiAux               number := :CoregeCodi;
+		p_codigoAgrupado              NUMBER:=0;
+		p_tipoCasoAgrupado            varchar2(10):= :TrnnpcCodicas;
+		p_TRNPCTTOTALMWFIJA           NUMBER:=:TrnPctTotalMWFija;
+		p_TRNPCTHPMWFIJA              NUMBER:=:TrnPctHPMWFija;
+		p_TRNPCTHFPMWFIJA             NUMBER:=:TrnPctHFPMWFija;
+		p_TRNPCTTOTALMWVARIABLE       NUMBER:=:TrnPctTotalMWVariable;
+		p_TRNPCTHPMWFIJAVARIABLE      NUMBER:=:TrnPctHPMWFijaVariable;
+		p_TRNPCTHFPMWFIJAVARIABLE     NUMBER:=:TrnPctHFPMWFijaVariable;
+		p_TRNPCTCOMEOBS               VARCHAR2(1000):=:TrnPctComeObs;
+		p_TRNPCTUSERNAMEINS           VARCHAR2(300):=:TrnPctUsernameIns;
+		p_TRNPCENVCODI                NUMBER:=:TrnPcEnvCodi;
+		BEGIN
+
+
+
+		IF(p_tipoCasoAgrupado='AGRVTA')
+		THEN
+		SELECT(
+		SELECT TRNPCTCODI
+		FROM TRN_POTENCIA_CONTRATADA
+		WHERE  CORESOCODI=p_coresocodiAux
+		AND TRNPCESTADO='ACT'
+		AND COREGECODI IS NULL
+		AND NVL(PERIDCCODI,PERICODI)=p_PERICODI
+		)
+		INTO p_TRNPCTCODI
+		FROM DUAL;
+		END IF;
+
+		IF(p_tipoCasoAgrupado='AGRVTP')
+		THEN
+		SELECT(
+		SELECT TRNPCTCODI
+		FROM TRN_POTENCIA_CONTRATADA
+		WHERE  CORESOCODI=p_coresocodiAux
+		AND COREGECODI=p_coregecodiAux
+		AND NVL(PERIDCCODI,PERICODI)=p_PERICODI
+		--  AND TRNPCESTADO='ACT'
+		)
+		INTO p_TRNPCTCODI
+		FROM DUAL;
+		END IF;
+
+
+		UPDATE trn_codigo_retiro_solicitud
+		SET TRNPCTIPOPOTENCIA =CASE WHEN p_tipoCasoAgrupado='AGRVTA' THEN 1 WHEN p_tipoCasoAgrupado='AGRVTP' THEN 2 END
+		WHERE CORESOCODI=p_coresocodiAux;
+
+		--UPDATE trn_codigo_retiro_solicitud
+		--SET CORESOESTAPR = 'PEN'
+		--WHERE CORESOCODI=p_coresocodiAux AND CORESOESTADO='ACT';
+
+		IF(p_TRNPCTCODI is null)
+		THEN
+
+		SELECT NVL(MAX(TRNPCTCODI),0)+1 INTO p_TRNPCTCODI
+		FROM TRN_POTENCIA_CONTRATADA;
+
+		SELECT
+		GENEMPRCODI
+		,BAR.BARRNOMBRE
+		INTO p_EMPRCODI
+		,p_BARRNOMBRE
+		FROM TRN_CODIGO_RETIRO_SOLICITUD     RSL
+		INNER JOIN TRN_BARRA   BAR
+		ON RSL.BARRCODI=BAR.BARRCODI
+		WHERE coresocodi=p_coresocodiAux;
+
+		Insert into TRN_POTENCIA_CONTRATADA
+		(
+		PERIDCCODI,
+		EMPRCODI,
+		CORESOCODI,
+		TRNPCTCODI,
+		TRNPCTPTOSUMINS,
+		TRNPCTTOTALMWFIJA,
+		TRNPCTHPMWFIJA,
+		TRNPCTHFPMWFIJA,
+		TRNPCTTOTALMWVARIABLE,
+		TRNPCTHPMWFIJAVARIABLE,
+		TRNPCTHFPMWFIJAVARIABLE,
+		TRNPCTCOMEOBS,
+		TRNPCTUSERNAMEINS,
+		TRNPCTFECINS,
+		COREGECODI,
+		TRNPCAGRP,
+		TRNPCNUMORD,
+		TRNPCCODICAS,
+		TRNPCESTADO,
+		TRNPCENVCODI)
+		values (p_PERICODI
+		,p_EMPRCODI
+		,p_coresocodiAux
+		,p_TRNPCTCODI
+		,p_BARRNOMBRE
+		,p_TRNPCTTOTALMWFIJA
+		,p_TRNPCTHPMWFIJA
+		,p_TRNPCTHFPMWFIJA
+		,p_TRNPCTTOTALMWVARIABLE
+		,p_TRNPCTHPMWFIJAVARIABLE
+		,p_TRNPCTHFPMWFIJAVARIABLE
+		,p_TRNPCTCOMEOBS
+		,p_TRNPCTUSERNAMEINS
+		,to_date(sysdate,'DD/MM/RR')
+		,CASE WHEN NVL(p_coregecodiAux,0)=0 THEN NULL ELSE p_coregecodiAux END
+		,null
+		,null
+		,null
+		,'ACT'
+		,p_TRNPCENVCODI);
+		--END IF;
+		elsif(p_TRNPCTCODI is not null)
+		THEN
+		UPDATE TRN_POTENCIA_CONTRATADA
+		SET TRNPCTTOTALMWFIJA=p_TRNPCTTOTALMWFIJA,
+		TRNPCTHPMWFIJA=p_TRNPCTHPMWFIJA,
+		TRNPCTHFPMWFIJA=p_TRNPCTHFPMWFIJA,
+		TRNPCTTOTALMWVARIABLE=p_TRNPCTTOTALMWVARIABLE,
+		TRNPCTHPMWFIJAVARIABLE=p_TRNPCTHPMWFIJAVARIABLE,
+		TRNPCTHFPMWFIJAVARIABLE=p_TRNPCTHFPMWFIJAVARIABLE,
+		TRNPCTCOMEOBS=p_TRNPCTCOMEOBS,
+		TRNPCENVCODI=p_TRNPCENVCODI,
+		--TRNPCEXCEL=1,
+		TRNPCTUSERNAMEINS=p_TRNPCTUSERNAMEINS,
+		TRNPCESTADO='ACT'
+		WHERE TRNPCTCODI=p_TRNPCTCODI;
+		END IF;
+
+		END;
+	</query>
+
+  </Sql>
+
+	<Sql>
+		<key>SaveRegistrosPotenciaAprobar</key>
+		<query>
+			DECLARE
+			p_PERICODI                    number:=:PeriCodi;
+			p_TRNPCTCODI                  number:=0;
+			p_EMPRCODI                    number:=0;
+			p_BARRNOMBRE                  VARCHAR2(1000):='';
+			p_coresocodiAux               number := :CoresoCodi;
+			p_coregecodiAux               number := :CoregeCodi;
+			p_codigoAgrupado              NUMBER:=0;
+			p_tipoCasoAgrupado            varchar2(10):= :TrnnpcCodicas;
+			p_TRNPCTTOTALMWFIJA           NUMBER:=:TrnPctTotalMWFija;
+			p_TRNPCTHPMWFIJA              NUMBER:=:TrnPctHPMWFija;
+			p_TRNPCTHFPMWFIJA             NUMBER:=:TrnPctHFPMWFija;
+			p_TRNPCTTOTALMWVARIABLE       NUMBER:=:TrnPctTotalMWVariable;
+			p_TRNPCTHPMWFIJAVARIABLE      NUMBER:=:TrnPctHPMWFijaVariable;
+			p_TRNPCTHFPMWFIJAVARIABLE     NUMBER:=:TrnPctHFPMWFijaVariable;
+			p_TRNPCTCOMEOBS               VARCHAR2(1000):=:TrnPctComeObs;
+			p_TRNPCTUSERNAMEINS           VARCHAR2(300):=:TrnPctUsernameIns;
+			p_TRNPCENVCODI                NUMBER:=:TrnPcEnvCodi;
+			BEGIN
+
+
+			--UPDATE trn_codigo_retiro_solicitud
+			--SET CORESOESTAPR='APR', COESUSERAPR=p_TRNPCTUSERNAMEINS, CORESOFECAPR=SYSDATE
+			--WHERE CORESOCODI=p_coresocodiAux AND CORESOESTAPR='PEN';
+
+
+			IF(p_tipoCasoAgrupado='AGRVTA')
+			THEN
+			SELECT(
+			SELECT TRNPCTCODI
+			FROM TRN_POTENCIA_CONTRATADA_APR
+			WHERE  CORESOCODI=p_coresocodiAux
+			AND TRNPCESTADO='ACT'
+			AND COREGECODI IS NULL
+			AND NVL(PERIDCCODI,PERICODI)=p_PERICODI
+			)
+			INTO p_TRNPCTCODI
+			FROM DUAL;
+			END IF;
+
+			IF(p_tipoCasoAgrupado='AGRVTP')
+			THEN
+			SELECT(
+			SELECT TRNPCTCODI
+			FROM TRN_POTENCIA_CONTRATADA_APR
+			WHERE  CORESOCODI=p_coresocodiAux
+			AND COREGECODI=p_coregecodiAux
+			AND NVL(PERIDCCODI,PERICODI)=p_PERICODI
+			--  AND TRNPCESTADO='ACT'
+			)
+			INTO p_TRNPCTCODI
+			FROM DUAL;
+			END IF;
+
+
+			--UPDATE trn_codigo_retiro_solicitud
+			--SET TRNPCTIPOPOTENCIA =CASE WHEN p_tipoCasoAgrupado='AGRVTA' THEN 1 WHEN p_tipoCasoAgrupado='AGRVTP' THEN 2 END
+			--, CORESOESTAPR = 'PEN', CORESOESTAPR='APR', COESUSERAPR=p_TRNPCTUSERNAMEINS, CORESOFECAPR=SYSDATE
+			--WHERE CORESOCODI=p_coresocodiAux;
+
+			IF(p_TRNPCTCODI is null)
+			THEN
+
+			SELECT NVL(MAX(TRNPCTCODI),0)+1 INTO p_TRNPCTCODI
+			FROM TRN_POTENCIA_CONTRATADA_APR;
+
+			SELECT
+			GENEMPRCODI
+			,BAR.BARRNOMBRE
+			INTO p_EMPRCODI
+			,p_BARRNOMBRE
+			FROM TRN_CODIGO_RETIRO_SOLICITUD     RSL
+			INNER JOIN TRN_BARRA   BAR
+			ON RSL.BARRCODI=BAR.BARRCODI
+			WHERE coresocodi=p_coresocodiAux;
+
+			UPDATE trn_codigo_retiro_solicitud
+			SET CORESOESTAPR = 'PEN'
+			WHERE CORESOCODI=p_coresocodiAux AND CORESOESTADO='ACT';
+
+			Insert into TRN_POTENCIA_CONTRATADA_APR
+			(
+			PERIDCCODI,
+			EMPRCODI,
+			CORESOCODI,
+			TRNPCTCODI,
+			TRNPCTPTOSUMINS,
+			TRNPCTTOTALMWFIJA,
+			TRNPCTHPMWFIJA,
+			TRNPCTHFPMWFIJA,
+			TRNPCTTOTALMWVARIABLE,
+			TRNPCTHPMWFIJAVARIABLE,
+			TRNPCTHFPMWFIJAVARIABLE,
+			TRNPCTCOMEOBS,
+			TRNPCTUSERNAMEINS,
+			TRNPCTFECINS,
+			COREGECODI,
+			TRNPCAGRP,
+			TRNPCNUMORD,
+			TRNPCCODICAS,
+			TRNPCESTADO,
+			TRNPCENVCODI)
+			values (p_PERICODI
+			,p_EMPRCODI
+			,p_coresocodiAux
+			,p_TRNPCTCODI
+			,p_BARRNOMBRE
+			,p_TRNPCTTOTALMWFIJA
+			,p_TRNPCTHPMWFIJA
+			,p_TRNPCTHFPMWFIJA
+			,p_TRNPCTTOTALMWVARIABLE
+			,p_TRNPCTHPMWFIJAVARIABLE
+			,p_TRNPCTHFPMWFIJAVARIABLE
+			,p_TRNPCTCOMEOBS
+			,p_TRNPCTUSERNAMEINS
+			,to_date(sysdate,'DD/MM/RR')
+			,CASE WHEN NVL(p_coregecodiAux,0)=0 THEN NULL ELSE p_coregecodiAux END
+			,null
+			,null
+			,null
+			,'ACT'
+			,p_TRNPCENVCODI);
+			--END IF;
+			elsif(p_TRNPCTCODI is not null)
+			THEN
+
+			UPDATE trn_codigo_retiro_solicitud
+			SET CORESOESTAPR = 'PEN'
+			WHERE CORESOCODI=p_coresocodiAux AND CORESOESTADO='ACT';
+
+			UPDATE TRN_POTENCIA_CONTRATADA_APR
+			SET TRNPCTTOTALMWFIJA=p_TRNPCTTOTALMWFIJA,
+			TRNPCTHPMWFIJA=p_TRNPCTHPMWFIJA,
+			TRNPCTHFPMWFIJA=p_TRNPCTHFPMWFIJA,
+			TRNPCTTOTALMWVARIABLE=p_TRNPCTTOTALMWVARIABLE,
+			TRNPCTHPMWFIJAVARIABLE=p_TRNPCTHPMWFIJAVARIABLE,
+			TRNPCTHFPMWFIJAVARIABLE=p_TRNPCTHFPMWFIJAVARIABLE,
+			TRNPCTCOMEOBS=p_TRNPCTCOMEOBS,
+			TRNPCENVCODI=p_TRNPCENVCODI,
+			--TRNPCEXCEL=1,
+			TRNPCTUSERNAMEINS=p_TRNPCTUSERNAMEINS,
+			TRNPCESTADO='ACT'
+			WHERE TRNPCTCODI=p_TRNPCTCODI;
+			END IF;
+
+			END;
+		</query>
+
+	</Sql>
+
+	<Sql>
+		<key>AprobarSolicitudCambios</key>
+		<query>
+			UPDATE trn_codigo_retiro_solicitud
+			SET CORESOESTAPR='APR', COESUSERAPR=:TrnPctUsernameIns, CORESOFECAPR=SYSDATE
+			WHERE CORESOCODI=:CoresoCodi AND CORESOESTAPR='PEN'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>RechazarSolicitudCambios</key>
+		<query>
+			UPDATE trn_codigo_retiro_solicitud
+			SET CORESOESTAPR='REC', COESUSERAPR=:TrnPctUsernameIns, CORESOFECAPR=SYSDATE
+			WHERE CORESOCODI=:CoresoCodi AND CORESOESTAPR='PEN'
+		</query>
+	</Sql>
+	
+  <Sql>
+    <key>DesactivarPotencias</key>
+    <query>
+      update trn_potencia_contratada
+      set trnpcEstado='INA'
+      ,TRNPCAGRP=NULL
+      ,TRNPCNUMORD=NULL
+
+      ,TRNPCCODICAS=NULL
+      where coresocodi=:coresocodi
+      and NVL(PERIDCCODI,PERICODI) =:pericodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>DesactivarPotenciasPorBarrSum</key>
+    <query>
+      update trn_potencia_contratada
+      set trnpcEstado='INA'
+      ,TRNPCAGRP=NULL
+      ,TRNPCNUMORD=NULL
+      ,TRNPCCODICAS=NULL
+      where coresocodi=:coresocodi
+      and coregecodi=:coregecodi
+      and NVL(PERIDCCODI,PERICODI) =:pericodi
+    </query>
+  </Sql>
+
+</Sqls>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cp_relacion(
+      recurcodi1,
+      recurcodi2 ,
+      cptrelcodi ,
+      topcodi,
+      cprelval1 ,
+      cprelusucreacion ,
+      cprelfeccreacion ,
+      cprelusumodificacion ,
+      cprelfecmodificacion ,
+      cprelval2
+      )
+      values(
+      :recurcodi1,
+      :recurcodi2 ,
+      :cptrelcodi ,
+      :topcodi,
+      :cprelval1 ,
+      :cprelusucreacion ,
+      :cprelfeccreacion ,
+      :cprelusumodificacion ,
+      :cprelfecmodificacion ,
+      :cprelval2
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cp_relacion
+      set
+      cprelval1 = :cprelval1,
+      cprelusucreacion = :cprelusucreacion,
+      cprelfeccreacion = :cprelfeccreacion ,
+      cprelusumodificacion = :cprelusumodificacion,
+      cprelfecmodificacion = :cprelfecmodificacion,
+      cprelval2 = :cprelval2,
+      where
+      recurcodi1 = :recurcodi1 and
+      recurcodi2 = :recurcodi2 and
+      cptrelcodi = :cptrelcodi and
+      topcodi = :topcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from cp_relacion
+      where
+      recurcodi1 = :recurcodi1 and
+      recurcodi2 = :recurcodi2 and
+      cptrelcodi = :cptrelcodi and
+      topcodi = :topcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteAllTipo</key>
+    <query>
+      delete from cp_relacion
+      where
+      recurcodi1 = :recurcodi1 and
+      cptrelcodi = :cptrelcodi and
+      topcodi = :topcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>DeleteAll</key>
+    <query>
+      delete from cp_relacion
+      where
+      recurcodi1 = :recurcodi1 and
+      topcodi = :topcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteEscenario</key>
+    <query>
+      delete from cp_relacion
+      where
+      topcodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select *
+      from
+      cp_relacion
+      where
+      recurcodi1 = :recurcodi1 and
+      recurcodi2 = :recurcodi2 and
+      cptrelcodi = :cptrelcodi and
+      topcodi = :topcodi
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select rel.*,rec2.catcodi,rec1.catcodi catcodi1,rec2.recurconsideragams from cp_relacion rel
+      inner join cp_recurso rec2 on rec2.recurcodi = rel.recurcodi2 and rec2.topcodi = {0}
+      inner join cp_recurso rec1 on rec1.recurcodi = rel.recurcodi1 and rec1.topcodi = {0}
+      where
+      rel.topcodi = {0} and
+      (rel.cptrelcodi in ({1}) or '{1}' = '-1') and rec2.recurestado = 1 and rec1.recurestado = 1
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerDependencias</key>
+    <query>
+      select gr.* from cp_relacion gr
+      inner join cp_recurso rec on rec.recurcodi = gr.recurcodi1
+      where gr.recurcodi2 = {0} and gr.topcodi = {1} and rec.topcodi = {1} and rec.recurestado = 1
+    </query>
+  </Sql>
+ 
+
+  <Sql>
+    <key>CrearCopia</key>
+    <query>
+      insert into cp_relacion(cptrelcodi , topcodi, recurcodi1, recurcodi2 , cprelval1 , cprelval2 , cprelusucreacion , cprelfeccreacion ,cprelusumodificacion ,cprelfecmodificacion )
+      select cptrelcodi , {1}, recurcodi1, recurcodi2 , cprelval1 , cprelval2 , cprelusucreacion , cprelfeccreacion ,cprelusumodificacion ,cprelfecmodificacion
+      from cp_relacion rel
+      where rel.topcodi = {0} and rel.recurcodi1 in (select recurcodi from cp_recurso where topcodi = {1} and recurestado = 1) and
+      rel.recurcodi2 in (select recurcodi from cp_recurso where topcodi = {1} and recurestado = 1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select  rel.*,rec2.catcodi,rec2.recurnombre from cp_relacion rel
+      inner join cp_recurso rec on rec.recurcodi = rel.recurcodi1 and rec.topcodi = {2}
+      inner join cp_recurso rec2 on rec2.recurcodi = rel.recurcodi2 and rec2.topcodi = {2}
+      where rel.recurcodi1 = {0} and rel.cptrelcodi in ({1}) and rec.recurestado = 1 and
+      rec2.recurestado = 1 and rel.topcodi = {2}
+    </query>
+  </Sql>
+  
+</Sqls>

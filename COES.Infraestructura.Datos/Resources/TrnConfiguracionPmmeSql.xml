@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(confconcodi), 0) + 1 from trn_configuracion_pmme
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_configuracion_pmme(
+      confconcodi,
+      ptomedicodi,
+      emprcodi,
+      fechavigencia,
+      vigencia,
+      lastuser,
+      lastdate
+      )
+      values(
+      :confconcodi,
+      :ptomedicodi,
+      :emprcodi,
+      :fechavigencia,
+      :vigencia,
+      :lastuser,
+      :lastdate
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      cpt.confconcodi,
+      cpt.ptomedicodi,
+      cpt.emprcodi,
+      emp.emprnomb,
+      ptm.ptoconexion || ' - ' || ((select nvl(coalesce(emprnomb, emprrazsocial), 'NO DEFINIDO') from si_empresa where emprcodi = ptm.clientecodi)) || '- ' || ptm.ptomedicodi ptomedidesc,
+      cpt.fechavigencia,
+      case when cpt.vigencia = 'S' then 'Vigente'
+      when cpt.vigencia = 'N' then 'No Vigente'
+      end
+      as vigencia,
+      cpt.lastuser,
+      cpt.lastdate
+      from sic.trn_configuracion_pmme cpt
+      inner join sic.si_empresa emp on cpt.emprcodi = emp.emprcodi
+      inner join sic.me_ptomedicion ptm on cpt.ptomedicodi = ptm.ptomedicodi
+      where (cpt.emprcodi = {0} or 0='{0}') and
+      (cpt.fechavigencia >=  to_date('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and cpt.fechavigencia &lt;= to_date('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS'))
+      and estado = 'A'
+    </query>
+  </Sql>
+  <Sql>
+    <key>ValidarExistencia</key>
+    <query>
+      select count(*) from sic.trn_configuracion_pmme
+      where ptomedicodi = :ptomedicodi and emprcodi = :emprcodi and vigencia = :vigencia and estado = 'A'
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListxEmpresa</key>
+    <query>
+      select
+      cpt.confconcodi,
+      cpt.ptomedicodi,
+      cpt.emprcodi,
+      cpt.fechavigencia,
+      cpt.vigencia,
+      cpt.lastuser,
+      cpt.lastdate
+      from sic.trn_configuracion_pmme cpt
+      where cpt.emprcodi = {0} and cpt.estado = 'A'
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListTrnConfiguracionxVigencia</key>
+    <query>
+      select confconcodi,ptomedicodi, emprcodi, fechavigencia, vigencia, lastuser, lastdate from sic.trn_configuracion_pmme
+      where emprcodi = {0} and ptomedicodi = {1} and vigencia = '{2}' and estado = 'A'
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      confconcodi,
+      ptomedicodi,
+      emprcodi,
+      fechavigencia,
+      vigencia,
+      lastuser,
+      lastdate
+      from trn_configuracion_pmme
+      where confconcodi = :confconcodi and estado = 'A'
+    </query>
+  </Sql>
+  <Sql>
+    <key>Update</key>
+    <query>
+      update trn_configuracion_pmme
+      set
+      ptomedicodi = :ptomedicodi,
+      emprcodi= :emprcodi,
+      fechavigencia = :fechavigencia,
+      vigencia =:vigencia,
+      lastuser =:lastuser,
+      lastdate =:lastdate
+      where
+      confconcodi = :confconcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update trn_configuracion_pmme
+      set
+      estado = :estado
+      where
+      confconcodi = :confconcodi
+    </query>
+  </Sql>
+</Sqls>  

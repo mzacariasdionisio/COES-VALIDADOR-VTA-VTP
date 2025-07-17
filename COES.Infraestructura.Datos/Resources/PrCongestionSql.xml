@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(congescodi), 0) + 1 from pr_congestion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into pr_congestion(
+      congescodi,
+      congesfecinicio,
+      congesfecfin,
+      configcodi,
+      grulincodi,
+      indtipo,
+      lastuser,
+      lastdate,
+      congesmotivo,
+      iccodi,
+      regsegcodi,
+      hopcodi
+      )
+      values(
+      :congescodi,
+      :congesfecinicio,
+      :congesfecfin,
+      :configcodi,
+      :grulincodi,
+      :indtipo,
+      :lastuser,
+      :lastdate,
+      :congesmotivo,
+      :iccodi,
+      :regsegcodi,
+      :hopcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update pr_congestion
+      set
+      congesfecinicio = :congesfecinicio,
+      congesfecfin = :congesfecfin,
+      configcodi = :configcodi,
+      grulincodi = :grulincodi,
+      indtipo = :indtipo,
+      lastuser = :lastuser,
+      lastdate = :lastdate,
+      congesmotivo = :congesmotivo,
+      iccodi = :iccodi,
+      regsegcodi = :regsegcodi,
+      hopcodi = :hopcodi
+      where
+      congescodi = :congescodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from pr_congestion
+      where
+      congescodi = :congescodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      congescodi,
+      congesfecinicio,
+      congesfecfin,
+      configcodi,
+      grulincodi,
+      indtipo,
+      lastuser,
+      lastdate,
+      congesmotivo,
+      iccodi,
+      regsegcodi,
+      hopcodi
+      from
+      pr_congestion
+      where
+      congescodi = :congescodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      congescodi,
+      congesfecinicio,
+      congesfecfin,
+      configcodi,
+      grulincodi,
+      indtipo,
+      lastuser,
+      lastdate,
+      congesmotivo,
+      iccodi,
+      regsegcodi,
+      hopcodi
+      from
+      pr_congestion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      congescodi,
+      congesfecinicio,
+      congesfecfin,
+      configcodi,
+      grulincodi,
+      indtipo,
+      lastuser,
+      lastdate,
+      congesmotivo,
+      iccodi,
+      regsegcodi,
+      hopcodi
+      from
+      pr_congestion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCongestionSimple</key>
+    <query>
+      select
+      congestion.congescodi,
+      congestion.congesfecinicio,
+      congestion.congesfecfin,
+      congestion.configcodi,
+      config.nodobarra1 as nombarra1,
+      config.nodobarra2 as nombarra2,
+      --congestion.congesflujo,
+      congestion.grulincodi,
+      congestion.indtipo,
+      congestion.lastuser,
+      congestion.lastdate,
+      congestion.congesmotivo,
+      congestion.iccodi,
+      congestion.regsegcodi,
+      empresa.emprnomb,
+      tipoarea.tareaabrev || ' ' || area.areanomb || ' ' || equipo.equiabrev  as equinomb
+      from
+      pr_congestion congestion
+      inner join eq_congestion_config config on congestion.configcodi = config.configcodi
+      inner join eq_equipo equipo on config.equicodi = equipo.equicodi
+      inner join eq_area area on equipo.areacodi = area.areacodi
+      inner join eq_tipoarea tipoarea on tipoarea.tareacodi = area.tareacodi
+      inner join si_empresa empresa on equipo.emprcodi = empresa.emprcodi
+      where
+      congestion.indtipo = 'S' and
+      ((congestion.congesfecinicio >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecinicio &lt; TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+      (congestion.congesfecfin > TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecfin &lt;= TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+      (congestion.congesfecinicio &lt; TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecfin > TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')))
+      order by congestion.congesfecinicio desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCongestionConjunto</key>
+    <query>
+      select
+      congestion.congescodi,
+      congestion.congesfecinicio,
+      congestion.congesfecfin,
+      congestion.configcodi,
+      --congestion.nombarra1,
+      --congestion.nombarra2,
+      --congestion.congesflujo,
+      congestion.grulincodi,
+      congestion.indtipo,
+      congestion.lastuser,
+      congestion.lastdate,
+      congestion.congesmotivo,
+      congestion.iccodi,
+      congestion.regsegcodi,
+      grupo.grulinnombre
+      from
+      pr_congestion congestion
+      inner join eq_grupo_linea grupo on congestion.grulincodi = grupo.grulincodi
+      where
+      congestion.indtipo = 'C' and
+      ((congestion.congesfecinicio >=  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecinicio &lt;  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+      (congestion.congesfecfin >  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecfin &lt;=  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+      (congestion.congesfecinicio &lt;  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecfin >  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')))
+      order by congestion.congesfecinicio desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCongestionRegistro</key>
+    <query>
+      select config.equicodi, config.configcodi, config.nodobarra1, config.nodobarra2, config.nodobarra3,
+      congestion.congesfecinicio, congestion.congesfecfin, equipo.famcodi, config.idems, config.nombretna1, config.nombretna2, config.nombretna3, equipo.equinomb
+      from pr_congestion congestion
+      inner join eq_congestion_config config on congestion.configcodi = config.configcodi
+      inner join eq_equipo equipo on equipo.equicodi = config.equicodi
+      where congestion.congesfecinicio &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI') and
+      congestion.congesfecfin >= to_date('{0}', 'YYYY-MM-DD HH24:MI')
+      and congestion.indtipo = 'S'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCongestionConjuntoRegistro</key>
+    <query>
+      select distinct
+      config.configcodi,
+      enlace.grulincodi,
+      config.nodobarra1,
+      config.nodobarra2,
+      config.nodobarra3,
+      config.nombretna1,
+      equipo.famcodi,
+      config.idems
+      from pr_congestion congestion
+	  inner join eq_grupo_linea glin on congestion.grulincodi = glin.grulincodi
+      inner join cm_conjuntoenlace enlace on congestion.grulincodi = enlace.grulincodi
+      inner join eq_congestion_config config on enlace.configcodi = config.configcodi
+      inner join eq_equipo equipo on equipo.equicodi = config.equicodi
+      where
+      congestion.congesfecinicio &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI') and
+      congestion.congesfecfin >= to_date('{0}', 'YYYY-MM-DD HH24:MI')  and
+      congestion.indtipo = 'C' and glin.grulintipo = '{1}'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCongestionRegionSeguridad</key>
+    <query>
+      select distinct     
+      region.regsegcodi,
+      region.regsegvalorm,
+      region.regsegdirec,
+      region.regsegnombre
+      from pr_congestion congestion
+      inner join cm_regionseguridad region on congestion.regsegcodi = region.regsegcodi
+      where
+      congestion.congesfecinicio &lt;= to_date('{0}', 'YYYY-MM-DD HH24:MI') and
+      congestion.congesfecfin >= to_date('{0}', 'YYYY-MM-DD HH24:MI')  and
+      congestion.indtipo = 'R'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCongestion</key>
+    <query>
+		select
+		congestion.congescodi,
+		congestion.congesfecinicio,
+		congestion.congesfecfin,
+		congestion.configcodi,
+		congestion.grulincodi,
+		congestion.indtipo,
+		congestion.lastuser,
+		congestion.lastdate,
+		congestion.congesmotivo,
+		congestion.iccodi,
+		congestion.regsegcodi,
+    congestion.hopcodi,
+		(select grupo.grulintipo from eq_grupo_linea grupo where grupo.grulincodi = congestion.grulincodi) as grulintipo
+		from
+		pr_congestion congestion
+		where
+		((congestion.congesfecinicio >= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecinicio &lt; TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1) and
+		(congestion.congesfecfin > TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')))
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListaCongestionConjunto</key>
+    <query>
+      select
+      congestion.congescodi,
+      congestion.congesfecinicio,
+      congestion.congesfecfin,
+      congestion.grulincodi,
+      ar.areacodi,
+      congestion.configcodi,
+      congestion.indtipo,
+      congestion.lastuser,
+      congestion.lastdate,
+      congestion.congesmotivo,
+      congestion.iccodi,
+      congestion.regsegcodi,
+      congestion.hopcodi,
+      (case when congestion.grulincodi > 0 then grupo.nombrencp else eq.equiabrev end) as equinomb,
+      (case when congestion.grulincodi > 0 then grupo.grulinnombre else ar.areanomb end) as grulinnombre,
+      ar2.AREANOMB,
+      region.REGSEGNOMBRE,
+      fa.famabrev,
+      ( select trim(a.areanomb) from eq_area a inner join eq_arearel arel on arel.areapadre = a.areacodi where a.anivelcodi = 1 and  arel.areacodi = eq.areacodi ) AreaOperativa
+      from
+      pr_congestion congestion
+      left join eq_grupo_linea grupo on congestion.grulincodi = grupo.grulincodi
+      left join eq_congestion_config config on config.configcodi = congestion.configcodi
+      left join eq_equipo eq on eq.equicodi = config.equicodi
+      left join eq_area ar on ar.areacodi = eq.areacodi
+      left join eq_familia fa on fa.famcodi = eq.famcodi
+      left join eq_area ar2 on ar2.areacodi = ar.areapadre
+      left join cm_regionseguridad region on congestion.REGSEGCODI = region.REGSEGCODI
+      where (congestion.indtipo = '{2}' or '-1'='{2}') and
+      ((congestion.congesfecinicio >=  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecinicio &lt;  TO_DATE('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')) or
+      (congestion.congesfecfin >  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecfin &lt;=  TO_DATE('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')) or
+      (congestion.congesfecinicio &lt;  TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecfin >  TO_DATE('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')))
+      order by congestion.congesfecinicio desc
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>VerificarExistenciaCongestion</key>
+		<query>
+			select count(*) from
+			pr_congestion congestion where congestion.configcodi = {0} and
+			(
+			(congestion.congesfecinicio >=  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecinicio &lt;  TO_DATE('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')) or
+			(congestion.congesfecfin >  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecfin &lt;=  TO_DATE('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')) or
+			(congestion.congesfecinicio &lt;  TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and congestion.congesfecfin >  TO_DATE('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')))
+		</query>
+	</Sql>
+  
+</Sqls>

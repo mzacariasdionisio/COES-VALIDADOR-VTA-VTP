@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into pr_grupo_equipo_val(
+      grupocodi,
+      concepcodi,
+      equicodi,
+      greqvafechadat,
+      greqvaformuladat,
+      greqvadeleted,
+      greqvausucreacion,
+      greqvafeccreacion,
+      greqvausumodificacion,
+      greqvafecmodificacion,
+      greqvacomentario,
+      greqvasustento,
+      greqvacheckcero
+      )
+      values(
+      :grupocodi,
+      :concepcodi,
+      :equicodi,
+      :greqvafechadat,
+      :greqvaformuladat,
+      :greqvadeleted,
+      :greqvausucreacion,
+      :greqvafeccreacion,
+      :greqvausumodificacion,
+      :greqvafecmodificacion,
+      :greqvacomentario,
+      :greqvasustento,
+      :greqvacheckcero
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update pr_grupo_equipo_val
+      set
+      greqvaformuladat = :greqvaformuladat,
+      greqvadeleted = :greqvadeleted2,
+      greqvausumodificacion = :greqvausumodificacion,
+      greqvafecmodificacion = :greqvafecmodificacion,
+      greqvacomentario =:greqvacomentario,
+      greqvasustento = :greqvasustento,
+      greqvacheckcero = :greqvacheckcero
+      where
+      grupocodi = :grupocodi and
+      concepcodi = :concepcodi and
+      equicodi = :equicodi and
+      greqvafechadat = :greqvafechadat and
+      greqvadeleted = :greqvadeleted
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from pr_grupo_equipo_val
+      where
+      grupocodi = :grupocodi and
+      concepcodi = :concepcodi and
+      equicodi = :equicodi and
+      greqvafechadat = :greqvafechadat and
+      greqvadeleted = :greqvadeleted
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      pr_grupo_equipo_val
+      where
+      grupocodi = :grupocodi and
+      concepcodi = :concepcodi and
+      equicodi = :equicodi and
+      greqvafechadat = :greqvafechadat and
+      greqvadeleted = :greqvadeleted
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      pr_grupo_equipo_val
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      pr_grupo_equipo_val
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetValorPropiedadDetalle</key>
+    <query>
+      select * from PR_GRUPO_EQUIPO_VAL gre
+      inner join (SELECT MAX(greqvafechadat) fecmax FROM PR_GRUPO_EQUIPO_VAL  WHERE concepcodi = {1} AND grupocodi = {0})
+      maxprop on maxprop.fecmax = gre.greqvafechadat
+      where gre.grupocodi ={0} and gre.concepcodi = {1}
+    </query>
+  </Sql>
+
+  <!--Pruebas aleatorias-->
+  <Sql>
+    <key>GetValorPropiedadDetalleEquipo</key>
+    <query>
+      select * from PR_GRUPO_EQUIPO_VAL gre
+      inner join (SELECT MAX(greqvafechadat) fecmax FROM PR_GRUPO_EQUIPO_VAL  WHERE concepcodi = {1} AND equicodi = {0} and greqvafechadat&lt;=to_date('{2}','YYYY-MM-DD'))
+      maxprop on maxprop.fecmax = gre.greqvafechadat
+      where gre.equicodi ={0} and gre.concepcodi = {1}
+      order by gre.greqvafechadat desc
+    </query>
+  </Sql>
+  <!--Fin Pruebas aleatorias-->
+
+  <Sql>
+    <key>SqlHistoricoValores</key>
+    <query>
+      select c.concepabrev, c.Conceppadre, gd.*
+      from PR_GRUPO_EQUIPO_VAL gd
+      inner join pr_concepto c on gd.concepcodi=c.concepcodi
+      where (gd.concepcodi in ({0}))
+      and ('{1}'='-1' or gd.equicodi in ({1}) )
+      and ('{2}'='-1' or gd.grupocodi in ({2}) )
+      order by gd.greqvafechadat desc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ParametrosConfiguracionPorFecha</key>
+    <query>
+      select * from
+      (
+          SELECT
+          CNP.Conceppadre,
+          CNP.CONCEPABREV,
+          gd.*,
+          row_number() over (partition by gd.GRUPOCODI, gd.equicodi, gd.concepcodi order by gd.GRUPOCODI,gd.equicodi,gd.concepcodi,GREQVADELETED, greqvafechadat desc) as num
+          FROM PR_GRUPO_EQUIPO_VAL gd
+          inner join PR_CONCEPTO CNP on cnp.concepcodi = gd.concepcodi
+          where greqvafechadat &lt;= TO_DATE('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS') AND GREQVADELETED = 0
+          and (gd.CONCEPCODI in ({1}) or '-1' = '{1}')
+          and (gd.GRUPOCODI in ({2}) or '-1' = '{2}')
+          and (gd.equicodi in ({3}) or '-1' = '{3}')
+      )
+      where num = 1
+    </query>
+  </Sql>
+  
+</Sqls>

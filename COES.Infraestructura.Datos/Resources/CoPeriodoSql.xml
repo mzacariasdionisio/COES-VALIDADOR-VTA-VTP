@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(copercodi), 0) + 1 from co_periodo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into co_periodo(
+           copercodi,
+           coperanio,
+           copermes,
+           copernomb,
+           coperestado,
+           coperusucreacion,
+           copperfeccreacion,
+           copperusumodificacion,
+           copperfecmodificacion
+       )
+       values(
+           :copercodi,
+           :coperanio,
+           :copermes,
+           :copernomb,
+           :coperestado,
+           :coperusucreacion,
+           :copperfeccreacion,
+           :copperusumodificacion,
+           :copperfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update co_periodo
+       set
+           coperanio = :coperanio,
+           copermes = :copermes,
+           copernomb = :copernomb,
+           coperestado = :coperestado,
+           coperusucreacion = :coperusucreacion,
+           copperfeccreacion = :copperfeccreacion,
+           copperusumodificacion = :copperusumodificacion,
+           copperfecmodificacion = :copperfecmodificacion
+       where
+           copercodi = :copercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       update co_periodo
+       set coperestado = 'E'
+       where
+           copercodi = :copercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           copercodi,
+           coperanio,
+           copermes,
+           copernomb,
+           coperestado,
+           coperusucreacion,
+           copperfeccreacion,
+           copperusumodificacion,
+           copperfecmodificacion
+       from
+           co_periodo
+       where
+           copercodi = :copercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           copercodi,
+           coperanio,
+           copermes,
+           copernomb,
+           coperestado,
+           coperusucreacion,
+           copperfeccreacion,
+           copperusumodificacion,
+           copperfecmodificacion
+       from
+           co_periodo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      per.copercodi,
+      per.coperanio,
+      per.copermes,
+      per.copernomb,
+      case per.coperestado when 'A' then 'Abierto' when 'P' then 'En proceso' when 'C' then 'Cerrado' when 'E' then 'Eliminado' else '' end as coperestado ,
+      per.coperusucreacion,
+      per.copperfeccreacion,
+      per.copperusumodificacion,
+      per.copperfecmodificacion,
+      (select ver.coverdesc from co_version ver where ver.copercodi = per.copercodi and ver.coverestado = 'A' and 
+      ver.coverfeccreacion = (select max(ver1.coverfeccreacion) from co_version ver1 where ver1.copercodi = per.copercodi) and rownum = 1) as ultimaversion
+      from
+      co_periodo per
+      where (per.coperanio = {0} or {0} = -1 ) and per.coperestado != 'E'
+      order by per.coperanio, per.copermes desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarExistencia</key>
+    <query>
+      select count(*) from co_periodo
+      where coperanio = :coperanio and copermes = :copermes and coperestado != 'E'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMensualByFecha</key>
+    <query>
+      SELECT V.COVERDESC, P.* FROM CO_PERIODO P
+      INNER JOIN CO_VERSION V ON V.COPERCODI = P.COPERCODI
+      WHERE (V.COVEBACODI = 3 OR V.COVEBACODI = 2) AND P.COPERESTADO = 'A' AND V.COVERESTADO = 'A'
+      AND V.COVERFECINICIO &lt;= to_date('{0}', 'DD/MM/YYYY') AND V.COVERFECFIN >= to_date('{0}', 'DD/MM/YYYY')
+    </query>
+  </Sql>
+  
+</Sqls>

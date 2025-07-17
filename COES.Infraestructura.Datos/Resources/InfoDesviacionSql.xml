@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetByListaCodigo</key>
+    <query>
+      select tent.tentcodigo as codigo, se.emprnomb as generador, '' as cliente, count(tentde.tentdecodi) as nrodia, sum(tentde.tentdesumadia) as Energia
+      from trn_trans_entrega tent join trn_trans_entrega_detalle tentde on tent.tentcodi = tentde.tentcodi
+      join vw_si_empresa se on tent.emprcodi = se.emprcodi
+      where tent.pericodi = :pericodi and tent.tentversion = :version and barrcodi = :barrcodi
+      group by tent.tentcodigo, se.emprnomb
+      UNION
+      select tret.tretcodigo as codigo, ge.emprnomb as generador, ce.emprnomb as cliente, count(tretde.tretdecodi) as nrodia, sum(tretde.tretdesumadia) as Energia
+      from trn_trans_retiro tret join trn_trans_retiro_detalle tretde on tret.tretcodi = tretde.tretcodi
+      join vw_si_empresa ge on tret.genemprcodi = ge.emprcodi
+      join vw_si_empresa ce on tret.cliemprcodi = ce.emprcodi
+      where tret.pericodi = :pericodi and tret.tretversion = :version and barrcodi = :barrcodi
+      group by tret.tretcodigo, ge.emprnomb, ce.emprnomb
+      order by 1, 2, 3
+    </query>
+  </Sql>
+  
+  <Sql>
+  <key>GetByEnergiaByBarraCodigo</key>
+  <query>
+    select tent.tentcodigo as codigo, se.emprnomb as generador, '' as cliente, count(tentde.tentdecodi) as nrodia, sum(tentde.tentdesumadia) as Energia
+    from trn_trans_entrega tent join trn_trans_entrega_detalle tentde on tent.tentcodi = tentde.tentcodi
+    join vw_si_empresa se on tent.emprcodi = se.emprcodi
+    where tent.pericodi = :pericodi and tent.tentversion = :version and barrcodi = :barrcodi and tent.tentcodigo = :codigo
+    group by tent.tentcodigo, se.emprnomb
+    UNION
+    select tret.tretcodigo as codigo, ge.emprnomb as generador, ce.emprnomb as cliente, count(tretde.tretdecodi) as nrodia, sum(tretde.tretdesumadia) as Energia
+    from trn_trans_retiro tret join trn_trans_retiro_detalle tretde on tret.tretcodi = tretde.tretcodi
+    join vw_si_empresa ge on tret.genemprcodi = ge.emprcodi
+    join vw_si_empresa ce on tret.cliemprcodi = ce.emprcodi
+    where tret.pericodi = :pericodi and tret.tretversion = :version and barrcodi = :barrcodi and tret.tretcodigo = :codigo
+    group by tret.tretcodigo, ge.emprnomb, ce.emprnomb
+  </query>
+  </Sql>
+</Sqls>

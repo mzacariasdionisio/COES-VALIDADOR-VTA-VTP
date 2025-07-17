@@ -1,0 +1,406 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select cp.idcopia, cp.gpscodi_origen, cp.gpscodi_destino,
+		cp.fechahora_inicio,
+		cp.fechahora_fin,
+		cp.motivo,
+		cp.estado,
+		cp.feccreacion,
+		cp.usucreacion,
+		cp.fecelimina,
+		cp.usuelimina
+      from sic.f_copia_lectura cp
+      WHERE cp.idcopia=:IDCOPIA
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+		select nvl(max(idcopia), 0) + 1 from sic.f_copia_lectura
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaCopiarInformacion</key>
+    <query>
+		select cp.idcopia, cp.gpscodi_origen, cp.gpscodi_destino,
+		gps_ori.nombre as gpsdesc_origen,
+		gps_dest.nombre as gpsdesc_destino,
+		TO_CHAR(cp.fechahora_inicio,'dd/MM/yyyy HH24:mi:ss') as fechahora_inicio,
+		TO_CHAR(cp.fechahora_fin,'dd/MM/yyyy HH24:mi:ss') as fechahora_fin,
+		cp.motivo,
+		cp.estado,
+		TO_CHAR(cp.feccreacion,'dd/MM/yyyy HH24:mi:ss') as feccreacion,
+		cp.usucreacion,
+		TO_CHAR(cp.fecelimina,'dd/MM/yyyy HH24:mi:ss') as fecelimina,
+		cp.usuelimina from sic.f_copia_lectura cp left join sic.me_gps gps_ori
+		on cp.gpscodi_origen=gps_ori.gpscodi
+		left join sic.me_gps gps_dest
+		on cp.gpscodi_destino=gps_dest.gpscodi
+		WHERE
+		cp.feccreacion BETWEEN to_date('{0} 00:00:00', 'DD/MM/YYYY HH24:MI:SS')
+		AND to_date('{1} 23:59:59', 'DD/MM/YYYY HH24:MI:SS')
+		and ({2}=0 or cp.gpscodi_origen={2})
+		and ({3}=0 or cp.gpscodi_destino={3})
+		order by cp.feccreacion desc
+	</query>
+  </Sql>
+
+  
+  <Sql>
+    <key>SaveAnt2</key>
+    <query>
+		DECLARE
+		P_IDCOPIA NUMBER :=:IDCOPIA;
+		P_GPSCODI_ORIGEN NUMBER :=:GPSCODI_ORIGEN;
+		P_GPSCODI_DESTINO NUMBER :=:GPSCODI_DESTINO;
+		P_FECHAHORA_INICIO  DATETIME :=:FECHAHORA_INICIO;
+		P_FECHAHORA_FIN  DATETIME :=:FECHAHORA_FIN;
+		P_MOTIVO VARCHAR2(400) :=:MOTIVO;
+		P_ESTADO VARCHAR2(1) :=:ESTADO;
+		P_USUCREACION VARCHAR2(20) :=:USUCREACION;
+		P_MENSAJE VARCHAR2(500):=NULL;
+		P_RESULTADO NUMBER:=0;
+
+		BEGIN
+
+		IF P_IDCOPIA = 0
+		THEN
+
+		SELECT NVL(MAX(IDCOPIA),0) INTO  P_RESULTADO FROM sic.f_copia_lectura;
+
+		INSERT INTO sic.f_copia_lectura
+		(IDCOPIA,
+		GPSCODI_ORIGEN,
+		GPSCODI_DESTINO,
+		FECHAHORA_INICIO,
+		FECHAHORA_FIN,
+		MOTIVO,
+		ESTADO,
+		FECCREACION,
+		USUCREACION
+		)
+		VALUES(P_RESULTADO +1
+		,P_GPSCODI_ORIGEN
+		,P_GPSCODI_DESTINO
+		,to_date(P_FECHAHORA_INICIO, 'DD/MM/YYYY HH24:MI:SS')
+		,to_date(P_FECHAHORA_FIN, 'DD/MM/YYYY HH24:MI:SS')
+		,P_MOTIVO
+		,P_ESTADO
+		,SYSDATE
+		,P_USUCREACION
+		);
+
+		END IF;
+
+		SELECT P_RESULTADO + 1 INTO :RESULTADO FROM DUAL;
+		END;
+
+	</query>
+  </Sql>
+
+	<Sql>
+		<key>Save</key>
+		<query>INSERT INTO sic.f_copia_lectura (IDCOPIA, GPSCODI_ORIGEN, GPSCODI_DESTINO, FECHAHORA_INICIO, FECHAHORA_FIN, MOTIVO, ESTADO, FECCREACION, USUCREACION) VALUES({0}, {1}, {2}, to_date('{3}','DD/MM/YYYY HH24:MI:SS'), to_date('{4}','DD/MM/YYYY HH24:MI:SS'), '{5}', '{6}', sysdate, '{7}')</query>
+	</Sql>
+
+	<Sql>
+		<key>GetListaLecturaOrigen</key>
+		<query>
+			select fechahora, gpscodi, to_char(vsf,'fm99999999999990.99999') as vsf, maximo, minimo, voltaje, num, desv,
+			H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+			H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+			H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+			H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+			H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+			H51, H52, H53, H54, H55, H56, H57, H58, H59, devsec
+			FROM sic.F_LECTURA where GPSCODI='{0}'
+			and FECHAHORA between to_date('{1}','DD-MM-YYYY  HH24:MI:SS')  and
+			to_date('{2}','DD-MM-YYYY  HH24:MI:SS')
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SaveLectura</key>
+		<query>
+			MERGE INTO SIC.F_LECTURA dest
+			USING (SELECT to_date('{0}', 'DD/MM/YYYY HH24:MI:SS') AS FECHAHORA, '{1}' AS GPSCODI, '{2}' AS VSF, '{3}' AS MAXIMO, '{4}' AS MINIMO, '{5}' AS VOLTAJE, '{6}' AS NUM, '{7}' AS DESV, '{8}' AS H0, '{9}' AS H1, '{10}' AS H2, '{11}' AS H3, '{12}' AS H4, '{13}' AS H5, '{14}' AS H6, '{15}' AS H7, '{16}' AS H8, '{17}' AS H9, '{18}' AS H10, '{19}' AS H11, '{20}' AS H12, '{21}' AS H13, '{22}' AS H14, '{23}' AS H15, '{24}' AS H16, '{25}' AS H17, '{26}' AS H18, '{27}' AS H19, '{28}' AS H20, '{29}' AS H21, '{30}' AS H22, '{31}' AS H23, '{32}' AS H24, '{33}' AS H25, '{34}' AS H26, '{35}' AS H27, '{36}' AS H28, '{37}' AS H29, '{38}' AS H30, '{39}' AS H31, '{40}' AS H32, '{41}' AS H33, '{42}' AS H34, '{43}' AS H35, '{44}' AS H36, '{45}' AS H37, '{46}' AS H38, '{47}' AS H39, '{48}' AS H40, '{49}' AS H41, '{50}' AS H42, '{51}' AS H43, '{52}' AS H44, '{53}' AS H45, '{54}' AS H46, '{55}' AS H47, '{56}' AS H48, '{57}' AS H49, '{58}' AS H50, '{59}' AS H51, '{60}' AS H52, '{61}' AS H53, '{62}' AS H54, '{63}' AS H55, '{64}' AS H56, '{65}' AS H57, '{66}' AS H58, '{67}' AS H59, '{68}' AS DEVSEC  FROM DUAL) orig
+			on (dest.FECHAHORA = orig.FECHAHORA and dest.GPSCODI = orig.GPSCODI)
+			WHEN MATCHED THEN
+			UPDATE SET
+			dest.VSF=orig.VSF,
+			dest.MAXIMO=orig.MAXIMO,
+			dest.MINIMO=orig.MINIMO,
+			dest.VOLTAJE = orig.VOLTAJE,
+			dest.NUM = orig.NUM,
+			dest.DESV = orig.DESV,
+			dest.H0=orig.H0,
+			dest.H1=orig.H1,
+			dest.H2=orig.H2,
+			dest.H3=orig.H3,
+			dest.H4=orig.H4,
+			dest.H5=orig.H5,
+			dest.H6=orig.H6,
+			dest.H7=orig.H7,
+			dest.H8=orig.H8,
+			dest.H9=orig.H9,
+			dest.H10=orig.H10,
+			dest.H11=orig.H11,
+			dest.H12=orig.H12,
+			dest.H13=orig.H13,
+			dest.H14=orig.H14,
+			dest.H15=orig.H15,
+			dest.H16=orig.H16,
+			dest.H17=orig.H17,
+			dest.H18=orig.H18,
+			dest.H19=orig.H19,
+			dest.H20=orig.H20,
+			dest.H21=orig.H21,
+			dest.H22=orig.H22,
+			dest.H23=orig.H23,
+			dest.H24=orig.H24,
+			dest.H25=orig.H25,
+			dest.H26=orig.H26,
+			dest.H27=orig.H27,
+			dest.H28=orig.H28,
+			dest.H29=orig.H29,
+			dest.H30=orig.H30,
+			dest.H31=orig.H31,
+			dest.H32=orig.H32,
+			dest.H33=orig.H33,
+			dest.H34=orig.H34,
+			dest.H35=orig.H35,
+			dest.H36=orig.H36,
+			dest.H37=orig.H37,
+			dest.H38=orig.H38,
+			dest.H39=orig.H39,
+			dest.H40=orig.H40,
+			dest.H41=orig.H41,
+			dest.H42=orig.H42,
+			dest.H43=orig.H43,
+			dest.H44=orig.H44,
+			dest.H45=orig.H45,
+			dest.H46=orig.H46,
+			dest.H47=orig.H47,
+			dest.H48=orig.H48,
+			dest.H49=orig.H49,
+			dest.H50=orig.H50,
+			dest.H51=orig.H51,
+			dest.H52=orig.H52,
+			dest.H53=orig.H53,
+			dest.H54=orig.H54,
+			dest.H55=orig.H55,
+			dest.H56=orig.H56,
+			dest.H57=orig.H57,
+			dest.H58=orig.H58,
+			dest.H59=orig.H59,
+			dest.DEVSEC=orig.DEVSEC
+			WHEN NOT MATCHED THEN
+			INSERT (FECHAHORA, GPSCODI, VSF, MAXIMO, MINIMO, VOLTAJE, NUM, DESV, H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10, H11, H12, H13, H14, H15, H16, H17, H18, H19, H20, H21, H22, H23, H24, H25, H26, H27, H28, H29, H30, H31, H32, H33, H34, H35, H36, H37, H38, H39, H40, H41, H42, H43, H44, H45, H46, H47, H48, H49, H50, H51, H52, H53, H54, H55, H56, H57, H58, H59, DEVSEC)
+			VALUES (orig.FECHAHORA, orig.GPSCODI, orig.VSF, orig.MAXIMO, orig.MINIMO, orig.VOLTAJE, orig.NUM, orig.DESV, orig.H0, orig.H1, orig.H2, orig.H3, orig.H4, orig.H5, orig.H6, orig.H7, orig.H8, orig.H9, orig.H10, orig.H11, orig.H12, orig.H13, orig.H14, orig.H15, orig.H16, orig.H17, orig.H18, orig.H19, orig.H20, orig.H21, orig.H22, orig.H23, orig.H24, orig.H25, orig.H26, orig.H27, orig.H28, orig.H29, orig.H30, orig.H31, orig.H32, orig.H33, orig.H34, orig.H35, orig.H36, orig.H37, orig.H38, orig.H39, orig.H40, orig.H41, orig.H42, orig.H43, orig.H44, orig.H45, orig.H46, orig.H47, orig.H48, orig.H49, orig.H50, orig.H51, orig.H52, orig.H53, orig.H54, orig.H55, orig.H56, orig.H57, orig.H58, orig.H59, orig.DEVSEC)
+		</query>
+	</Sql>
+	
+	<Sql>
+		<key>SaveLecturaAnt</key>
+		<query>
+			DECLARE
+			P_INICIO DATE:= to_date('{0}', 'dd/MM/yyyy HH24:Mi:ss');
+			P_FIN DATE:= to_date('{1}', 'dd/MM/yyyy HH24:Mi:ss');
+			P_CODI_ORIGEN NUMBER :={2};
+			P_CODI_DESTINO NUMBER :={3};
+			P_USU VARCHAR2(60) := '{4}';
+			P_ID NUMBER:= 0;
+			P_MENSAJE VARCHAR2(200);
+			v_sql_query varchar2(2000);
+			BEGIN
+			select nvl((SELECT max(ID) FROM sic.FRECUENCIAS_AUDIT_CAB),0)+1 into P_ID from dual;
+
+			insert into sic.FRECUENCIAS_AUDIT_CAB(ID, GPSCODI, FECHAINICIAL, FECHAFINAL, USUARIO)
+			values(P_ID, P_CODI_DESTINO, P_INICIO, P_FIN, P_USU);
+
+			insert into sic.FRECUENCIAS_AUDIT_DET(id, fecha, valor)
+			select * from
+			(select P_ID, to_date(
+			to_char(FECHAHORA, 'dd/MM/yyyy HH24:mi') || decode(length(SEC), 2, replace(SEC, 'H', ':0'), replace(SEC, 'H', ':')), 'dd/MM/yyyy HH24:mi:ss') as FECHA,
+			VALUE
+			from(
+			SELECT FECHAHORA,
+			H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+			H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+			H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+			H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+			H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+			H51, H52, H53, H54, H55, H56, H57, H58, H59
+			FROM sic.F_LECTURA
+			WHERE GPSCODI = P_CODI_DESTINO AND
+			FECHAHORA BETWEEN TRUNC(P_INICIO, 'MI')  AND TRUNC(P_FIN, 'MI')
+			ORDER BY FECHAHORA)
+			unpivot(
+			value
+			for SEC in
+			(H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+			H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+			H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+			H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+			H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+			H51, H52, H53, H54, H55, H56, H57, H58, H59)))
+			WHERE FECHA BETWEEN P_INICIO AND P_FIN;
+
+			UPDATE sic.FRECUENCIAS_AUDIT_CAB SET FILASAFECTADAS=
+			(select count(1) from sic.FRECUENCIAS_AUDIT_DET where ID=P_ID)
+			WHERE ID=P_ID;
+
+			FOR A IN (select 'UPDATE sic.F_LECTURA set '||a||' where FECHAHORA=TO_DATE('''||f||''',''DD/MM/YYYY HH24:mi'') and GPSCODI='||gpscodi S
+			from (
+			select id,to_char(fecha,'DD/MM/YYYY HH24:mi')F
+			,LISTAGG('H'||EXTRACT(SECOND FROM CAST(FECHA AS TIMESTAMP))||'=NULL',',')a
+			from  sic.FRECUENCIAS_AUDIT_DET B
+			where ID=P_ID
+			group by id,to_char(fecha,'DD/MM/YYYY HH24:mi'))a inner join sic.FRECUENCIAS_AUDIT_CAB b on a.id=b.id) LOOP
+			v_sql_query:=A.S;
+			EXECUTE IMMEDIATE v_sql_query;
+			END LOOP;
+
+			update SIC.F_LECTURA dest set
+			dest.MINIMO = null,dest.MAXIMO=null,dest.VSF =null,dest.DESV =null,dest.NUM=0
+			where exists (select 1 from sic.FRECUENCIAS_AUDIT_CAB a
+			where a.GPSCODI = dest.GPSCODI and id=P_ID
+			and dest.FECHAHORA between TRUNC(a.FECHAINICIAL, 'MI') and
+			TRUNC(a.FECHAFINAL, 'MI'));
+
+			MERGE INTO SIC.F_LECTURA dest
+			USING (select FECHAHORA,GPSCODI,max(VALUE)MAXIMO, min(VALUE)MINIMO,
+			round(POWER(SUM(POWER(VALUE, 2))/count(1), 0.5)-60,5) VSF,round((sum(value)-(count(1)*60))/60,5) DESV,count(VALUE) NUM
+			from(select l.*
+			from SIC.F_LECTURA l
+			inner join sic.FRECUENCIAS_AUDIT_CAB a
+			on a.GPSCODI = l.GPSCODI
+			where id=P_ID
+			and l.FECHAHORA between TRUNC(a.FECHAINICIAL, 'MI') and
+			TRUNC(a.FECHAFINAL, 'MI') ORDER BY FECHAHORA)
+			unpivot(
+			value
+			for SEC in
+			(H0, H1, H2, H3, H4, H5, H6, H7, H8, H9, H10,
+			H11, H12, H13, H14, H15, H16, H17, H18, H19, H20,
+			H21, H22, H23, H24, H25, H26, H27, H28, H29, H30,
+			H31, H32, H33, H34, H35, H36, H37, H38, H39, H40,
+			H41, H42, H43, H44, H45, H46, H47, H48, H49, H50,
+			H51, H52, H53, H54, H55, H56, H57, H58, H59))
+			group by FECHAHORA,GPSCODI) orig
+			ON (dest.FECHAHORA = orig.FECHAHORA and dest.GPSCODI = orig.GPSCODI)
+			WHEN MATCHED THEN
+			UPDATE SET dest.MINIMO = orig.MINIMO,
+			dest.MAXIMO = orig.MAXIMO,
+			dest.VSF = orig.VSF,
+			dest.DESV = orig.DESV,
+			dest.NUM=orig.NUM;
+			COMMIT;
+
+			END;
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>SaveAnt</key>
+    <query>insert into sic.f_carga_virtual(IDCARGA,
+      GPSCODI,
+      TIPOCARGA,
+      EMPRCODI,
+      CENTRAL,
+      UNIDADCODI,
+      FECHACARGA,
+      ARCHIVOCARGA,
+      FECHACREACION,
+      USUCREACION,
+      DATACARGA
+      )
+      values(
+      '{0}',
+      '{1}',
+      '{2}',
+      '{3}',
+      '{4}',
+      '{5}',
+      to_date('{6}','dd/mm/yyyy'),
+      '{7}',
+      sysdate,
+      '{8}',
+      '{9}'
+      );
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveLecturaVirtual</key>
+    <query>
+
+		DECLARE
+		P_IDCARGA NUMBER :=:IDCARGA;
+		P_FECHAHORA varchar2(19) :=:FECHAHORA;
+		P_FRECUENCIA NUMBER :=:FRECUENCIA;
+		P_TENSION  NUMBER :=:TENSION;
+
+		P_MENSAJE VARCHAR2(500):=NULL;
+		P_CODMAX NUMBER:=0;
+
+		BEGIN
+
+		INSERT INTO sic.f_lectura_virtual
+		(IDCARGA,
+		FECHAHORA,
+		FRECUENCIA,
+		TENSION
+		)
+		VALUES(P_IDCARGA
+		,P_FECHAHORA
+		,P_FRECUENCIA
+		,P_TENSION);
+
+		SELECT P_MENSAJE INTO :MENSAJE FROM DUAL;
+		END;
+
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      DECLARE
+      P_IDCOPIA NUMBER :=:IDCOPIA;
+      P_ESTADO VARCHAR2(1) :=:GPSESTADO;
+      P_USUCREACION VARCHAR2(20) :=:USUCREACION;
+      P_MENSAJE VARCHAR2(500):=NULL;
+
+      BEGIN
+
+      UPDATE sic.f_copia_lectura
+      SET
+      ESTADO=P_ESTADO,
+      FECELIMINA=SYSDATE,
+      USUELIMINA=P_USUCREACION
+      WHERE IDCOPIA=P_IDCOPIA;
+
+
+      SELECT P_MENSAJE INTO :MENSAJE FROM DUAL;
+      END;
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetNumRegistrosPorEquipo</key>
+    <query>
+      select count(*) as num_registros from sic.F_LECTURA where GPSCODI={0}
+    </query>
+  </Sql>
+
+
+</Sqls>

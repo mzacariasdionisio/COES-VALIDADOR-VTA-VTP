@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(fteeqcodi), 0) + 1 from ft_ext_envio_eq
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ft_ext_envio_eq(
+      fteeqcodi,
+      fteeqestado,
+      ftevercodi,
+      equicodi,
+      grupocodi,
+      ftfmtcodi,
+      fteeqflagespecial,
+      fteeqcodiorigen,
+      fteeqflagaprob
+      )
+      values(
+      :fteeqcodi,
+      :fteeqestado,
+      :ftevercodi,
+      :equicodi,
+      :grupocodi,
+      :ftfmtcodi,
+      :fteeqflagespecial,
+      :fteeqcodiorigen,
+      :fteeqflagaprob
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update ft_ext_envio_eq
+      set
+      fteeqestado = :fteeqestado,
+      ftevercodi = :ftevercodi,
+      equicodi = :equicodi,
+      grupocodi = :grupocodi,
+      ftfmtcodi = :ftfmtcodi,
+      fteeqflagespecial = :fteeqflagespecial,
+      fteeqcodiorigen = :fteeqcodiorigen,
+      fteeqflagaprob = :fteeqflagaprob
+      where
+      fteeqcodi = :fteeqcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstado</key>
+    <query>
+      update ft_ext_envio_eq
+      set
+      fteeqestado = '{1}'
+      where
+      fteeqcodi in ({0})
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ft_ext_envio_eq
+      where
+      fteeqcodi = :fteeqcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      ee.*,
+      ev.ftenvcodi,
+      (CASE WHEN ee.equicodi IS NULL THEN g.gruponomb ELSE eq.equinomb END) AS nombreelemento
+      from
+      ft_ext_envio_eq ee
+      inner join ft_ext_envio_version ev on ev.ftevercodi = ee.ftevercodi
+      left join eq_equipo eq on eq.equicodi = ee.equicodi
+      left join pr_grupo g on g.grupocodi = ee.grupocodi
+      
+      where
+      ee.fteeqcodi = :fteeqcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      ft_ext_envio_eq
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      ee.*,
+      emp.emprnomb AS nombempresaelemento,
+      emp.emprcodi AS idempresaelemento,
+      (CASE WHEN ee.equicodi IS NULL THEN g.gruponomb ELSE eq.equinomb END) AS nombreelemento,
+      (CASE WHEN eq.equicodi IS NULL THEN c.catenomb ELSE f.famnomb END) AS tipoelemento,
+      (CASE WHEN ee.equicodi IS NULL THEN ee.grupocodi ELSE ee.equicodi END) AS idelemento,
+      ar.areanomb AS areaelemento,
+      env.ftenvcodi,
+      eq.famcodi,
+      g.catecodi,
+      EQ.EQUIPADRE
+      from ft_ext_envio_eq ee
+      inner join ft_ext_envio_version ev on ev.ftevercodi = ee.ftevercodi
+      inner join ft_ext_envio env on env.ftenvcodi = ev.ftenvcodi
+      left join eq_equipo eq on eq.equicodi = ee.equicodi
+      left join pr_grupo g on g.grupocodi = ee.grupocodi
+      left join pr_categoria c on c.catecodi = g.catecodi
+      left join eq_familia f on f.famcodi = eq.famcodi
+      left join si_empresa emp on emp.emprcodi = (CASE WHEN eq.equicodi IS NULL THEN g.emprcodi ELSE eq.emprcodi  END)
+      left join eq_area ar on ar.areacodi = (CASE WHEN eq.equicodi IS NULL THEN g.areacodi ELSE eq.areacodi  END)
+      where ev.ftevercodi in ({0})
+      and ( '{1}'='-1' or ee.FTEEQESTADO = '{1}' )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorEnvios</key>
+    <query>
+      select
+      ee.*,
+      emp.emprnomb AS nombempresaelemento,
+      emp.emprcodi AS idempresaelemento,
+      (CASE WHEN ee.equicodi IS NULL THEN g.gruponomb ELSE eq.equinomb END) AS nombreelemento,
+      (CASE WHEN eq.equicodi IS NULL THEN c.catenomb ELSE f.famnomb END) AS tipoelemento,
+      (CASE WHEN ee.equicodi IS NULL THEN ee.grupocodi ELSE ee.equicodi END) AS idelemento,
+      ar.areanomb AS areaelemento,
+      env.ftenvcodi
+      from ft_ext_envio_eq ee
+      inner join ft_ext_envio_version ev on ev.ftevercodi = ee.ftevercodi
+      inner join ft_ext_envio env on env.ftenvcodi = ev.ftenvcodi
+      left join eq_equipo eq on eq.equicodi = ee.equicodi
+      left join pr_grupo g on g.grupocodi = ee.grupocodi
+      left join pr_categoria c on c.catecodi = g.catecodi
+      left join eq_familia f on f.famcodi = eq.famcodi
+      left join si_empresa emp on emp.emprcodi = (CASE WHEN eq.equicodi IS NULL THEN g.emprcodi ELSE eq.emprcodi  END)
+      left join eq_area ar on ar.areacodi = (CASE WHEN eq.equicodi IS NULL THEN g.areacodi ELSE eq.areacodi  END)
+      where ev.ftenvcodi in ({0})
+      and ee.FTEEQESTADO = 'S'
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarPorIds</key>
+    <query>
+      select
+      eeq.*,
+      (CASE WHEN eeq.equicodi IS NULL THEN g.gruponomb ELSE e.equinomb END) AS nombreelemento,
+      (CASE WHEN eeq.equicodi IS NULL THEN c.catenomb ELSE f.famnomb END) AS tipoelemento,
+      (CASE WHEN eeq.equicodi IS NULL THEN eeq.grupocodi ELSE eeq.equicodi END) AS idelemento
+      from ft_ext_envio_eq   eeq
+      left join pr_grupo g on g.grupocodi = eeq.grupocodi
+      left join pr_categoria c on c.catecodi = g.catecodi
+      left join eq_equipo e on e.equicodi = eeq.equicodi
+      left join eq_familia f on f.famcodi = e.famcodi
+      where
+      eeq.fteeqcodi in ({0})
+      and eeq.FTEEQESTADO = 'S'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByVersionYModificacion</key>
+    <query>
+      select DISTINCT
+      ee.*,
+      emp.emprnomb AS nombempresaelemento,
+      emp.emprcodi AS idempresaelemento,
+      (CASE WHEN ee.equicodi IS NULL THEN g.gruponomb ELSE eq.equinomb END) AS nombreelemento,
+      (CASE WHEN eq.equicodi IS NULL THEN c.catenomb ELSE f.famnomb END) AS tipoelemento,
+      (CASE WHEN ee.equicodi IS NULL THEN ee.grupocodi ELSE ee.equicodi END) AS idelemento,
+      ar.areanomb AS areaelemento,
+      env.ftenvcodi,
+      eq.famcodi,
+      g.catecodi,
+      ed.ftedatflagmodificado,
+      ic.ftitcodi
+      from ft_ext_envio_eq ee
+      inner join ft_ext_envio_dato ed on ed.fteeqcodi = ee.fteeqcodi
+      inner join ft_ext_itemcfg ic on ic.fitcfgcodi = ed.fitcfgcodi
+      inner join ft_ext_envio_version ev on ev.ftevercodi = ee.ftevercodi
+      inner join ft_ext_envio env on env.ftenvcodi = ev.ftenvcodi
+      left join eq_equipo eq on eq.equicodi = ee.equicodi
+      left join pr_grupo g on g.grupocodi = ee.grupocodi
+      left join pr_categoria c on c.catecodi = g.catecodi
+      left join eq_familia f on f.famcodi = eq.famcodi
+      left join si_empresa emp on emp.emprcodi = (CASE WHEN eq.equicodi IS NULL THEN g.emprcodi ELSE eq.emprcodi  END)
+      left join eq_area ar on ar.areacodi = (CASE WHEN eq.equicodi IS NULL THEN g.areacodi ELSE eq.areacodi  END)
+      where ev.ftevercodi in ({0})
+      and (ed.ftedatflagmodificado = {1} or '-1' = '{1}')
+      and ee.FTEEQESTADO = 'S'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetTotalXFormatoExtranet</key>
+    <query>
+      select nvl(count(*), 0) from ft_ext_envio_eq
+      where ftfmtcodi = {0}
+    </query>
+  </Sql>
+
+</Sqls>

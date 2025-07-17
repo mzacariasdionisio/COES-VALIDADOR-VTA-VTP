@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <!--QUERY PARA OBTENER EL MAXIMO ID DE LA PROGRAMACIÓN-->
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(progrcodi), 0) + 1 from in_programacion
+    </query>
+  </Sql>
+
+  <!--QUERY PARA INSERTAR UNA PROGRAMACIÓN-->
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into in_programacion(
+      progrcodi,
+      Evenclasecodi,
+      progrnomb,
+      prograbrev,
+      progrfechaini,
+      progrfechafin,
+      progrversion,
+      progrsololectura,
+      progrfechalim,
+      progrusucreacion,
+      progrfeccreacion,
+      progrusuaprob,
+      progrfecaprob,
+      progresaprobadorev,
+      progrmaxfecreversion,
+      progrusuhabrev,
+      progrfechabrev,
+      progrusuaprobrev,
+      progrfecaprobrev
+      )
+      values(
+      :progrcodi,
+      :Evenclasecodi,
+      :progrnomb,
+      :prograbrev,
+      :progrfechaini,
+      :progrfechafin,
+      :progrversion,
+      :progrsololectura,
+      :progrfechalim,
+      :progrusucreacion,
+      :progrfeccreacion,
+      :progrusuaprob,
+      :progrfecaprob,
+      :progresaprobadorev,
+      :progrmaxfecreversion,
+      :progrusuhabrev,
+      :progrfechabrev,
+      :progrusuaprobrev,
+      :progrfecaprobrev
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update in_programacion
+      set
+      Progrcodi            = :Progrcodi,
+      Evenclasecodi        = :Evenclasecodi,
+      Progrnomb            = :Progrnomb,
+      Prograbrev           = :Prograbrev,
+      Progrfechaini        = :Progrfechaini,
+      Progrfechafin        = :Progrfechafin,
+      Progrversion         = :Progrversion,
+      Progrsololectura     = :Progrsololectura,
+      Progrfechalim        = :Progrfechalim,
+      Progrusucreacion     = :Progrusucreacion,
+      Progrfeccreacion     = :Progrfeccreacion,
+      progrusuaprob = :progrusuaprob,
+      progrfecaprob = :progrfecaprob,
+      progresaprobadorev = :progresaprobadorev,
+      progrmaxfecreversion = :progrmaxfecreversion,
+      progrusuhabrev = :progrusuhabrev,
+      progrfechabrev = :progrfechabrev,
+      progrusuaprobrev = :progrusuaprobrev,
+      progrfecaprobrev = :progrfecaprobrev
+      where
+      Progrcodi = :Progrcodi
+    </query>
+  </Sql>
+
+  <!--QUERY PARA HACER SOLO DE LECTURA A LA PROGRAMACIÓN-->
+  <Sql>
+    <key>HacerSoloLecturaProgramacion</key>
+    <query>
+      update in_programacion
+      set
+      progrsololectura = :Progrsololectura,
+      Progrusuaprob = :Progrusuaprob,
+      Progrfecaprob = :Progrfecaprob
+      where
+      progrcodi = :progrcodi
+    </query>
+  </Sql>
+
+  <!--QUERY PARA TRAER LAS PROGRAMACIONES POR EL ID DE PROGRAMACIÓN Y DE TIPO DE PROGRAMACIÓN-->
+  <Sql>
+    <key>GetProgramacionesByIdTipoProgramacion</key>
+    <query>
+      select
+      p.*,
+      e.evenclasedesc,
+      coalesce(tot.total, 0) as totalregistro,
+      coalesce(totrev.totalrever, 0) as totalrevertidos
+      from in_programacion p
+      inner join eve_evenclase e on e.evenclasecodi = p.evenclasecodi
+      left join (
+          select p1.progrcodi, count(*) total from in_intervencion i
+          inner join in_programacion p1 on p1.progrcodi = i.progrcodi
+          where i.interregprevactivo = 'S' and i.interdeleted = 0
+          group by p1.progrcodi
+      ) tot on tot.progrcodi = p.progrcodi
+      left join (
+          select p2.progrcodi, count(*) totalrever from in_intervencion i
+          inner join in_programacion p2 on p2.progrcodi = i.progrcodi
+          where i.interregprevactivo = 'S' and i.estadocodi = 2 and i.interprocesado = 2
+          group by p2.progrcodi 
+      ) totrev on totrev.progrcodi = p.progrcodi
+      where
+      p.Evenclasecodi = {0} and
+      ('-1' = '{1}' or p.progrcodi in ({1}))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerIdProgramacionXFecIniYTipoPro</key>
+    <query>
+      select
+      p.*,
+      e.evenclasedesc
+      from in_programacion p
+      inner join eve_evenclase e on e.evenclasecodi = p.evenclasecodi
+      where
+      p.progrfechaini = to_date(:progrfechaini,'YYYY-MM-DD') and
+      e.Evenclasecodi = :Evenclasecodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerProgramacionesPorId</key>
+    <query>
+      select
+      p.*,
+      e.evenclasedesc
+      from in_programacion p
+      inner join eve_evenclase e on e.evenclasecodi = p.evenclasecodi
+      where
+      progrcodi in ({0})
+    </query>
+  </Sql>
+
+  <!--QUERY PARA ACTUALIZAR CAMPOS AL APROBAR LA REVERSIÓN-->
+  <Sql>
+    <key>ActualizarAprobadoReversion</key>
+    <query>
+      update in_programacion
+      set
+      Progresaprobadorev = :Progresaprobadorev,
+      Progrusuaprobrev = :Progrusuaprobrev,
+      Progrfecaprobrev = :Progrfecaprobrev
+      where
+      progrcodi = :progrcodi
+    </query>
+  </Sql>
+
+  <!--QUERY PARA ACTUALIZAR CAMPOS AL HABILITAR LA REVERSIÓN-->
+  <Sql>
+    <key>HabilitarReversion</key>
+    <query>
+      update in_programacion
+      set
+      Progrusuhabrev = :Progrusuhabrev,
+      Progrfechabrev = :Progrfechabrev,
+      Progrmaxfecreversion = :Progrmaxfecreversion
+      where
+      progrcodi = :progrcodi
+    </query>
+  </Sql>
+
+</Sqls>

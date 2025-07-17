@@ -1,0 +1,598 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(msgcodi), 0) + 1 from si_mensaje
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into si_mensaje(
+      msgcodi,  msgfecha,  fdatcodi,  tmsgcodi,   estmsgcodi,  MSGDESCRIPCION,  MSGFECHAPERIODO,  modcodi,  emprcodi,  formatcodi,  msgusucreacion, msgto,  msgfrom,  msgfromname,  msgasunto,  msgflagadj)
+      values(
+      {0},
+      to_date('{1}','dd/mm/yyyy hh24:mi:ss'),
+      {2},
+      {3},
+      {4},
+      to_clob('{5}'),
+      to_date('{6}','dd/mm/yyyy'),
+      {7},
+      {8},
+      {9},
+      '{10}',
+      '{11}',
+      '{12}',
+      '{13}',
+      '{14}',
+      {15}
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstado</key>
+    <query>
+      update si_mensaje
+      set
+      estmsgcodi = {0},
+      msgusumodificacion = '{4}',
+      msgfecmodificacion = to_date('{5}','dd/mm/yyyy hh:mi:ss a.m.' , 'nls_date_language=american')
+      where
+      msgcodi = {1} and emprcodi = {3} and modcodi={2}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update si_mensaje
+      set
+      msgestado = 'B',
+      msgusumodificacion = '{1}',
+      msgfecmodificacion = to_date('{2}','DD/MM/YYYY HH24:MI:SS' )
+      where
+      msgcodi in({0})
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>InsertAmpl</key>
+    <query>
+      insert into me_ampliacionfecha ( amplifecha,
+      emprcodi, amplifechaplazo, lastuser, lastdate, formatcodi)
+      select amplifecha, emprcodi, amplifechaplazo, '{4}',to_date('{5}','dd/mm/yyyy hh:mi:ss a.m.' , 'nls_date_language=american'),
+      formatcodi from si_solicitudampliacion
+      where msgcodi = {1} and emprcodi = {3}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select msj.*
+      from si_mensaje msj
+      where msj.msgcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Listar</key>
+    <query>
+      select * from(
+      select datos.* ,
+      (row_number() over (order by datos.msgfecha desc)) as r
+      from (
+      select
+      msgcodi,
+      msgfecha,
+      fdatcodi,
+      tmsgcodi,
+      estmsgcodi,
+      CAST(MSGDESCRIPCION AS VARCHAR2(4000)) as MSGDESCRIPCION,
+      MSGFECHAPERIODO,
+      modcodi,
+      emprcodi,
+      formatcodi,
+      msgusumodificacion,
+      msgfecmodificacion,
+      msgusucreacion,
+      msgto,
+      msgfrom,
+      msgfromname,
+      msgasunto,
+      msgflagadj,
+      msgcc,
+      msgbcc
+      from
+      si_mensaje
+      where
+      trim(upper(msgto)) like trim(upper('%{0}%')) and modcodi = 9
+
+      union all
+
+      select
+      0 as msgcodi,
+      corrfechaenvio as msgfecha,
+      0 as fdatcodi,
+      9 as tmsgcodi,
+      1 as estmsgcodi,
+      CAST(CORRCONTENIDO AS VARCHAR2(4000)) as MSGDESCRIPCION,
+      corrfechaperiodo as MSGFECHAPERIODO,
+      9 as modcodi,
+      emprcodi,
+      0 as formatcodi,
+      null as msgusumodificacion,
+      null as msgfecmodificacion,
+      null as msgusucreacion,
+      corrto as msgto,
+      corrfrom as msgfrom,
+      'WEBAPP COES' as msgfromname,
+      corrasunto as msgasunto,
+      0 as msgflagadj,
+      '' as msgcc,
+      '' as msgbcc
+      from
+      si_correo
+      where
+      trim(upper(corrto)) like trim(upper('%{0}%')) and plantcodi not in (0)
+      ) datos
+
+      )
+      where r >= ((({1}-1) * {3}) + 1) and r &lt; (({1} * {3}) + 1 )
+    </query>
+  </Sql>
+  <Sql>
+    <key>TotalListaRecibidos</key>
+    <query>
+      select
+      count(*) total
+      from
+      (
+      select
+      msgcodi,
+      msgfecha,
+      fdatcodi,
+      tmsgcodi,
+      estmsgcodi,
+      CAST(MSGDESCRIPCION AS VARCHAR2(4000)) as MSGDESCRIPCION,
+      MSGFECHAPERIODO,
+      modcodi,
+      emprcodi,
+      formatcodi,
+      msgusumodificacion,
+      msgfecmodificacion,
+      msgusucreacion,
+      msgto,
+      msgfrom,
+      msgfromname,
+      msgasunto,
+      msgflagadj,
+      msgcc,
+      msgbcc
+      from
+      si_mensaje
+      where
+      trim(upper(msgto)) like trim(upper('%{0}%')) and modcodi = 9
+
+      union all
+
+      select
+      0 as msgcodi,
+      corrfechaenvio as msgfecha,
+      0 as fdatcodi,
+      3 as tmsgcodi,
+      1 as estmsgcodi,
+      CAST(CORRCONTENIDO AS VARCHAR2(4000)) as MSGDESCRIPCION,
+      corrfechaperiodo as MSGFECHAPERIODO,
+      9 as modcodi,
+      emprcodi,
+      '0' as formatcodi,
+      null as msgusumodificacion,
+      null as msgfecmodificacion,
+      null as msgusucreacion,
+      corrto as msgto,
+      corrfrom as msgfrom,
+      null as msgfromname,
+      corrasunto as msgasunto,
+      0 as msgflagadj,
+      '' as msgcc,
+      '' as msgbcc
+      from
+      si_correo
+      where
+      trim(upper(corrto)) like trim(upper('%{0}%'))and plantcodi not in (0)
+
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>TotalListaEnviados</key>
+    <query>
+      select
+      count(*) total
+      from
+      (
+      select
+      msgcodi,
+      msgfecha,
+      fdatcodi,
+      tmsgcodi,
+      estmsgcodi,
+      CAST(MSGDESCRIPCION AS VARCHAR2(4000)) as MSGDESCRIPCION,
+      MSGFECHAPERIODO,
+      modcodi,
+      emprcodi,
+      formatcodi,
+      msgusumodificacion,
+      msgfecmodificacion,
+      msgusucreacion,
+      msgto,
+      msgfrom,
+      msgfromname,
+      msgasunto,
+      msgflagadj,
+      msgcc,
+      msgbcc
+      from
+      si_mensaje
+      where
+      trim(upper(msgto)) like trim(upper('%{0}%'))  and modcodi = 9
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarEnviados</key>
+    <query>
+      select * from
+      (select
+      msgcodi,
+      msgfecha,
+      fdatcodi,
+      tmsgcodi,
+      estmsgcodi,
+      CAST(MSGDESCRIPCION AS VARCHAR2(4000)) as MSGDESCRIPCION,
+      MSGFECHAPERIODO,
+      modcodi,
+      emprcodi,
+      formatcodi,
+      msgusumodificacion,
+      msgfecmodificacion,
+      msgusucreacion,
+      msgto,
+      msgfrom,
+      msgfromname,
+      msgasunto,
+      msgflagadj,
+      msgcc,
+      msgbcc
+      (row_number() over (order by msgfecha desc)) as r
+      from
+      si_mensaje
+      where
+      trim(upper(msgfrom)) like trim(upper('%{0}%')) and modcodi = 9
+      order by msgfecha desc
+      )
+      where r >= ((({1}-1) * {3}) + 1) and r &lt; (({1} * {3}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Listar_bkp</key>
+    <query>
+      select * from
+      (select
+      msgcodi,
+      msgfecha,
+      fdatcodi,
+      tmsgcodi,
+      estmsgcodi,
+      CAST(MSGDESCRIPCION AS VARCHAR2(4000)) as MSGDESCRIPCION,
+      MSGFECHAPERIODO,
+      modcodi,
+      emprcodi,
+      formatcodi,
+      msgusumodificacion,
+      msgfecmodificacion,
+      msgusucreacion,
+      msgto,
+      msgfrom,
+      msgfromname,
+      msgasunto,
+      msgflagadj,
+      msgcc,
+      msgbcc
+      (row_number() over (order by msgfecha desc)) as r
+      from
+      si_mensaje
+      where
+      trim(upper(msgto)) like trim(upper('%{0}%'))
+      order by msgfecha desc
+      )
+      where r >= ((({1}-1) * {3}) + 1) and r &lt; (({1} * {3}) + 1 )
+    </query>
+  </Sql>
+
+  <!-- INICIO SIOSEIN -->
+  <Sql>
+    <key>TotalListaEnviadosSiosein</key>
+    <query>
+      select
+      count(*) total
+
+      from
+      si_mensaje
+      where
+      trim(upper(msgto)) like trim(upper('%{0}%')) and modcodi = {2}
+      and(0={3} or tmsgcodi ={3})
+      and ('' ='{5}' or msgfechaperiodo = to_date('{5}','dd/mm/yyyy hh:mi:ss a.m.' , 'nls_date_language=american'))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalListaRecibidosSiosein</key>
+    <query>
+
+      select
+      count(*) total
+      from
+      si_mensaje
+      where
+      trim(upper(msgto)) = trim(upper('{0}')) and modcodi = {2}
+      and(0={3} or tmsgcodi ={3}) and (0={4} or BANDCODI = {4})
+      and ('0' ='{5}' or msgfechaperiodo = to_date('{5}','dd/mm/yyyy'))
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarXUsuario</key>
+    <query>
+      select
+      msgfecmodificacion,
+      msgusumodificacion,
+      msgfeccreacion,
+      msgusucreacion,
+      msgtipo,
+      msgestado,
+      bandcodi,
+      msgflagadj,
+      msgfromname,
+      msgfrom,
+      msgto,
+      msgasunto,
+      formatcodi,
+      emprcodi,
+      modcodi,
+      msgfechaperiodo,
+      cast(msgcontenido as varchar2(4000)) as msgcontenido,
+      estmsgcodi,
+      tmsgcodi,
+      fdatcodi,
+      msgfecha,
+      msgcodi,
+      msgcc,
+      msgbcc
+      from
+      si_mensaje
+      where
+      ('-1'='{0}' or trim(upper(msgto)) = trim(upper('{0}')))
+      and ('-1'='{1}' or trim(upper(msgfrom)) = trim(upper('{1}')))
+      and modcodi = {2}
+      and ('-1'='{3}' or tmsgcodi={3})
+      and ('-1'='{4}' or BANDCODI={4})
+      and ('-1'='{5}' or estmsgcodi={5})
+      and ('-1' ='{6}' or msgfechaperiodo = to_date('{6}','dd/mm/yyyy'))
+      and msgestado='{7}'
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveCorreoSiosein</key>
+    <query>
+      insert into si_mensaje(
+      msgfecmodificacion,
+      msgusumodificacion,
+      msgfeccreacion,
+      msgusucreacion,
+      msgtipo,
+      msgestado,
+      bandcodi,
+      msgflagadj,
+      msgfromname,
+      msgfrom,
+      msgto,
+      msgasunto,
+      formatcodi,
+      emprcodi,
+      modcodi,
+      msgfechaperiodo,
+      msgcontenido,
+      estmsgcodi,
+      tmsgcodi,
+      fdatcodi,
+      msgfecha,
+      msgcodi
+      )
+      values(
+      :msgfecmodificacion,
+      :msgusumodificacion,
+      :msgfeccreacion,
+      :msgusucreacion,
+      :msgtipo,
+      :msgestado,
+      :bandcodi,
+      :msgflagadj,
+      :msgfromname,
+      :msgfrom,
+      :msgto,
+      :msgasunto,
+      :formatcodi,
+      :emprcodi,
+      :modcodi,
+      :msgfechaperiodo,
+      :msgcontenido,
+      :estmsgcodi,
+      :tmsgcodi,
+      :fdatcodi,
+      :msgfecha,
+      :msgcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateCarpeta</key>
+    <query>
+      Update  si_mensaje
+      set BANDCODI = {0}
+      where
+      trim(upper(msgto)) like trim(upper('%{1}%')) and modcodi = {2}
+      and msgcodi in ({3})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstadoEliminado</key>
+    <query>
+      update si_mensaje
+      set
+      estmsgcodi = {0}
+      where
+      msgcodi in ({3}) and modcodi={2}
+    </query>
+  </Sql>
+  <!-- FIN SIOSEIN -->
+
+  <!-- INICIO INTERVENCIONES -->
+  <Sql>
+    <key>Enviar</key>
+    <query>
+      insert into si_mensaje(
+      msgcodi,
+      msgfecha,
+      fdatcodi,
+      tmsgcodi,
+      estmsgcodi,
+      msgcontenido,
+      msgfechaperiodo,
+      modcodi,
+      emprcodi,
+      formatcodi,
+      msgasunto,
+      msgto,
+      msgfrom,
+      msgfromname,
+      msgflagadj,
+      bandcodi,
+      msgestado,
+      msgtipo,
+      msgusucreacion,
+      msgfeccreacion,
+      msgusumodificacion,
+      msgfecmodificacion,
+      msgcc,
+      msgbcc
+      )
+      values(
+      :msgcodi,
+      :msgfecha,
+      :fdatcodi,
+      :tmsgcodi,
+      :estmsgcodi,
+      :msgcontenido,
+      :msgfechaperiodo,
+      :modcodi,
+      :emprcodi,
+      :formatcodi,
+      :msgasunto,
+      :msgto,
+      :msgfrom,
+      :msgfromname,
+      :msgflagadj,
+      :bandcodi,
+      :msgestado,
+      :msgtipo,
+      :msgusucreacion,
+      :msgfeccreacion,
+      :msgusumodificacion,
+      :msgfecmodificacion,
+      :msgcc,
+      :msgbcc
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListMensajeIntervencion</key>
+    <query>
+      select msj.*, i.intercodi, i.progrcodi, emp.emprnomb
+      from si_mensaje msj
+      inner join me_enviodetmensaje msjdet on msjdet.msgcodi = msj.msgcodi
+      inner join ME_ENVIODET d on d.ENVDETCODI = msjdet.ENVDETCODI
+      inner join in_intervencion i on i.intercodi = d.ENVDETFPKCODI
+      inner join si_empresa emp on emp.emprcodi = msj.emprcodi
+      where
+      (msj.modcodi = {4}) and
+      ('{0}'='-1' or i.progrcodi in ({0}) ) and
+      ('{1}'='-1' or i.intercodi in ({1})) and
+      (( i.interfechaini >= to_date('{2} 00:00:00','dd/mm/yyyy hh24:mi:ss') and i.interfechaini &lt; to_date('{3} 00:00:00','dd/mm/yyyy hh24:mi:ss') ) or
+      ( i.interfechafin > to_date('{2} 00:00:00','dd/mm/yyyy hh24:mi:ss') and i.interfechafin &lt;= to_date('{3} 00:00:00','dd/mm/yyyy hh24:mi:ss') ) or
+      ( i.interfechaini &lt; to_date('{2} 00:00:00','dd/mm/yyyy hh24:mi:ss') and i.interfechafin > to_date('{3} 00:00:00','dd/mm/yyyy hh24:mi:ss') ))
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>BusquedaSiMensajesIntervencion</key>
+		<query>
+      select msj.*, i.intercodi, i.progrcodi, emp.emprnomb,
+      --i.intercodi as intercodivigente,
+      fn_obtenerintervencionpadre(i.intercodi) as intercodivigente,
+      case prog.evenclasecodi when 2 then prog.progrnomb || '(' || to_char(prog.progrfechaini, 'dd/mm/yyyy') || ')'
+      else prog.progrnomb || '(' || to_char(prog.progrfechaini, 'dd/mm/yyyy') || ' - ' || to_char(prog.progrfechafin, 'dd/mm/yyyy') || ')' end as programacion,
+      (select listagg(emdet.emprcodi, ',') WITHIN GROUP (ORDER BY emdet.emprcodi) from si_empresamensajedet emdet inner join si_empresamensaje empm on emdet.empmsjcodi = empm.empmsjcodi
+      where empm.msgcodi = msj.msgcodi) as msglectura
+      from si_mensaje msj
+      inner join me_enviodetmensaje msjdet on msjdet.msgcodi = msj.msgcodi
+      inner join me_enviodet d on d.envdetcodi = msjdet.envdetcodi
+      inner join in_intervencion i on i.intercodi = d.envdetfpkcodi
+      inner join in_programacion prog on i.progrcodi = prog.progrcodi
+      inner join si_empresa emp on emp.emprcodi = msj.emprcodi
+      where
+      (msj.modcodi = {4}) and
+      (i.evenclasecodi = {0} ) and
+      ('{1}'='-1' or i.progrcodi in ({1}) ) and
+      (( i.interfechaini >= to_date('{2} 00:00:00','dd/mm/yyyy hh24:mi:ss') and i.interfechaini &lt; to_date('{3} 00:00:00','dd/mm/yyyy hh24:mi:ss') ) or
+			( i.interfechafin > to_date('{2} 00:00:00','dd/mm/yyyy hh24:mi:ss') and i.interfechafin &lt;= to_date('{3} 00:00:00','dd/mm/yyyy hh24:mi:ss') ) or
+			( i.interfechaini &lt; to_date('{2} 00:00:00','dd/mm/yyyy hh24:mi:ss') and i.interfechafin > to_date('{3} 00:00:00','dd/mm/yyyy hh24:mi:ss') ))
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>RptConsultasMensajes</key>
+    <query>
+      SELECT
+      m.*,
+      emp.emprnomb
+      FROM SI_MENSAJE M
+      LEFT JOIN SI_EMPRESA emp ON emp.emprcodi = m.emprcodi
+      WHERE
+      ( M.modcodi = {2}) and
+      ( M.MSGFECCREACION >=  TO_DATE('{0} 00:00:00','DD/MM/YYYY HH24:MI:SS')  OR {0} IS NULL ) and
+      ( M.MSGFECCREACION &lt;=  TO_DATE('{1} 00:00:00','DD/MM/YYYY HH24:MI:SS')  OR {1} IS NULL ) AND
+      ( '{3}'='-1' or M.TMSGCODI = '{3}')
+      ORDER BY
+      msgfeccreacion
+    </query>
+  </Sql>
+
+  <!-- FIN INTERVENCIONES -->
+</Sqls>
+

@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(stkcmtcodi), 0) + 1 from ind_stock_combustible
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+        stkcmt.*,
+        iper.iperinombre,
+        empr.emprnomb,
+        eqpcentral.equinomb as equinombcentral,
+        eqpunidad.equinomb as equinombunidad,
+        tipoinfo.tipoinfodesc
+      from
+        ind_stock_combustible stkcmt
+        left outer join ind_periodo iper on iper.ipericodi = stkcmt.ipericodi
+        left outer join si_empresa empr on empr.emprcodi = stkcmt.emprcodi
+        left outer join eq_equipo eqpcentral on eqpcentral.equicodi = stkcmt.equicodicentral
+        left outer join eq_equipo eqpunidad on eqpunidad.equicodi = stkcmt.equicodiunidad
+        left outer join si_tipoinformacion tipoinfo on tipoinfo.tipoinfocodi = stkcmt.tipoinfocodi
+      where
+        stkcmt.stkcmtcodi =  :stkcmtcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into ind_stock_combustible(
+        stkcmtcodi,
+        ipericodi,
+        emprcodi,
+        equicodicentral,
+        equicodiunidad,
+        tipoinfocodi,
+        ptomedicodi,
+        stkcmtusucreacion,
+        stkcmtfeccreacion,
+        stkcmtusumodificacion,
+        stkcmtfecmodificacion
+      )
+      values(
+        :stkcmtcodi,
+        :ipericodi,
+        :emprcodi,
+        :equicodicentral,
+        :equicodiunidad,
+        :tipoinfocodi,
+        :ptomedicodi,
+        :stkcmtusucreacion,
+        :stkcmtfeccreacion,
+        :stkcmtusumodificacion,
+        :stkcmtfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+        *
+      from
+        ind_stock_combustible
+      where
+        ipericodi = {0} and  
+        emprcodi = {1} and 
+        equicodicentral = {2} and 
+        equicodiunidad in ({3}) and 
+        tipoinfocodi = {4}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListStockByAnioMes</key>
+    <query>
+      select sc.emprcodi, sc.equicodicentral, sc.equicodiunidad, sc.tipoinfocodi, sc.ptomedicodi,
+      scd.stkdetcodi, scd.stkcmtcodi,scd.stkdettipo,
+      scd.d1, scd.d2,scd.d3,scd.d4,scd.d5,scd.d6,scd.d7,scd.d8,scd.d9,scd.d10,
+      scd.d11, scd.d12,scd.d13,scd.d14,scd.d15,scd.d16,scd.d17,scd.d18,scd.d19,scd.d20,
+      scd.d21, scd.d22,scd.d23,scd.d24,scd.d25,scd.d26,scd.d27,scd.d28,scd.d29,scd.d30,scd.d31
+      from ind_periodo p, ind_stock_combustible sc, ind_stkcombustible_detalle scd
+      where p.iperianio = {0} and p.iperimes = {1} and p.iperiestado = 'A'
+      and p.ipericodi = sc.ipericodi
+      and sc.stkcmtcodi = scd.stkcmtcodi
+    </query>
+  </Sql>  
+</Sqls>

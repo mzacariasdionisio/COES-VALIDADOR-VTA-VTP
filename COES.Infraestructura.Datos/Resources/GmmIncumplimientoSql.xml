@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(incucodi), 0) + 1 from gmm_incumplimiento
+    </query>
+  </Sql>
+  <Sql>
+    <key>Save</key>
+    <query>
+      INSERT INTO gmm_incumplimiento (
+      incucodi,
+      incuanio,
+      incumes,
+      incuaceptado,
+      incusubsanado,
+      incuusucreacion,
+      incufeccreacion,
+      incuusumodificacion,
+      incufecmodificacion,
+      empgcodi,
+      tipoemprcodi,
+      emprcodi,
+      incumonto
+      ) VALUES (
+      :incucodi,
+      :incuanio,
+      :incumes,
+      '1',
+      '1',
+      :incuusucreacion,
+      sysdate,
+      null,
+      null,
+      :empgcodi,
+      :tipoemprcodi,
+      :emprcodi,
+      :incumonto
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>Update</key>
+    <query>
+      UPDATE gmm_incumplimiento
+      SET
+      incuanio = :incuanio,
+      incumes = :incumes,
+      incuusumodificacion = :incuusumodificacion,
+      incufecmodificacion = sysdate,
+      empgcodi = :empgcodi,
+      tipoemprcodi = :tipoemprcodi,
+      emprcodi = :emprcodi,
+      incumonto = :incumonto
+      WHERE
+      incucodi = :incucodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateTrienio</key>
+    <query>
+      UPDATE gmm_trienio t1
+      SET (trinuminc) = (SELECT count(distinct(incuanio + incumes))
+      FROM gmm_incumplimiento t2
+      WHERE t1.empgcodi = t2.empgcodi group by empgcodi)
+      WHERE EXISTS (
+      SELECT 1
+      FROM gmm_incumplimiento t2
+      WHERE t1.empgcodi = t2.empgcodi and t1.empgcodi = :empgcodi)
+    </query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from gmm_incumplimiento where incucodi = :incucodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByIdEdit</key>
+    <query>
+      SELECT
+      incucodi as IncucodiEdit,
+      incuanio as IncuanioEdit,
+      incumes as IncumesEdit,
+      incumonto as IncumMontoEdit,
+      '(' || trim(emp1.emprruc) || ') ' || NVL(TRIM(NVL(emp1.EMPRRAZSOCIAL,emp1.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumplidoraEdit,
+      '(' || trim(emp2.emprruc) || ') ' || NVL(TRIM(NVL(emp2.EMPRRAZSOCIAL,emp2.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as AfectadaEdit,
+      inc.empgcodi as EmpgcodiEdit,
+      inc.emprcodi as EmprcodiEdit,
+      inc.TIPOEMPRCODI
+      FROM
+      gmm_incumplimiento inc
+      join si_empresa emp1 on emp1.emprcodi = (select emprcodi from gmm_empresa where empgcodi = inc.empgcodi)
+      join si_empresa emp2 on emp2.emprcodi = inc.emprcodi
+      WHERE incucodi = :incucodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByIdEditGeneradoras</key>
+    <query>
+      SELECT
+      incucodi as IncucodiEdit,
+      incuanio as IncuanioEdit,
+      incumes as IncumesEdit,
+      incumonto as IncumMontoEdit,
+      '(' || trim(emp1.emprruc) || ') ' || NVL(TRIM(NVL(emp1.EMPRRAZSOCIAL,emp1.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumplidoraEdit,
+      '(' || trim(emp2.emprruc) || ') ' || NVL(TRIM(NVL(emp2.EMPRRAZSOCIAL,emp2.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as AfectadaEdit,
+      inc.empgcodi as EmpgcodiEdit,
+      inc.emprcodi as EmprcodiEdit,
+      inc.TIPOEMPRCODI
+      FROM
+      gmm_incumplimiento inc
+      join si_empresa emp1 on emp1.emprcodi = inc.empgcodi
+      join si_empresa emp2 on emp2.emprcodi = inc.emprcodi
+      WHERE incucodi = :incucodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarFiltroIncumplimientoDeudora</key>
+    <query>
+      SELECT
+      inc.incucodi as IncucodiEdit,
+      inc.incuanio || '-' || inc.incumes as IncumAnioMes,
+      '(' || trim(emp1.emprruc) || ') ' || NVL(TRIM(NVL(emp1.EMPRRAZSOCIAL,emp1.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumEmprDeudora,
+      '(' || trim(emp2.emprruc) || ') ' || NVL(TRIM(NVL(emp2.EMPRRAZSOCIAL,emp2.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumEmprAfectada,
+      inc.incumonto as IncumMonto,
+      inc.empgcodi,
+      inc.emprcodi,
+      (
+      select LISTAGG(tinf.tinfinforme, ', ')WITHIN GROUP (ORDER BY tinf.tinfinforme)
+      FROM
+      gmm_detincumplimiento dinc
+      join gmm_tipinforme tinf on tinf.tinfcodi = dinc.tinfcodi
+      where dinc.incucodi = inc.incucodi and dincestado = '1'
+      )
+      as IncumInforme
+      FROM
+      gmm_incumplimiento inc
+      join si_empresa emp1 on emp1.emprcodi = (select emprcodi from gmm_empresa where empgcodi = inc.empgcodi)
+      join si_empresa emp2 on emp2.emprcodi = inc.emprcodi
+      WHERE 1 = 1
+      and inc.incuanio = case {0} when 0 then inc.incuanio else {0} end
+      and inc.incumes = case '{1}' when '-' then inc.incumes else '{1}' end
+      and UPPER(emp1.emprnomb) like case '{2}' when '-' then UPPER(emp1.emprnomb) else UPPER('%{2}%') end
+      and emp1.emprruc like case '{3}' when '-' then emp1.emprruc else '%{3}%' end
+      and inc.TIPOEMPRCODI = 20
+      UNION
+      SELECT
+      inc.incucodi as IncucodiEdit,
+      inc.incuanio || '-' || inc.incumes as IncumAnioMes,
+      '(' || trim(emp1.emprruc) || ') ' || NVL(TRIM(NVL(emp1.EMPRRAZSOCIAL,emp1.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumEmprDeudora,
+      '(' || trim(emp2.emprruc) || ') ' || NVL(TRIM(NVL(emp2.EMPRRAZSOCIAL,emp2.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumEmprAfectada,
+      inc.incumonto as IncumMonto,
+      inc.empgcodi,
+      inc.emprcodi,
+      (
+      select LISTAGG(tinf.tinfinforme, ', ')WITHIN GROUP (ORDER BY tinf.tinfinforme)
+      FROM
+      gmm_detincumplimiento dinc
+      join gmm_tipinforme tinf on tinf.tinfcodi = dinc.tinfcodi
+      where dinc.incucodi = inc.incucodi and dincestado = '1'
+      )
+      as IncumInforme
+      FROM
+      gmm_incumplimiento inc
+      join si_empresa emp1 on emp1.emprcodi = (select emprcodi from si_empresa where emprcodi = inc.empgcodi)
+      join si_empresa emp2 on emp2.emprcodi = inc.emprcodi
+      WHERE 1 = 1
+      and inc.incuanio = case {0} when 0 then inc.incuanio else {0} end
+      and inc.incumes = case '{1}' when '-' then inc.incumes else '{1}' end
+      and UPPER(emp1.emprnomb) like case '{2}' when '-' then UPPER(emp1.emprnomb) else UPPER('%{2}%') end
+      and emp1.emprruc like case '{3}' when '-' then emp1.emprruc else '%{3}%' end
+      and inc.TIPOEMPRCODI = 3
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarFiltroIncumplimientoAfectada</key>
+    <query>
+      SELECT
+      inc.incucodi as IncucodiEdit,
+      inc.incuanio || '-' || inc.incumes as IncumAnioMes,
+      '(' || trim(emp1.emprruc) || ') ' || NVL(TRIM(NVL(emp1.EMPRRAZSOCIAL,emp1.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumEmprDeudora,
+      '(' || trim(emp2.emprruc) || ') ' || NVL(TRIM(NVL(emp2.EMPRRAZSOCIAL,emp2.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumEmprAfectada,
+      inc.incumonto as IncumMonto,
+      inc.empgcodi,
+      inc.emprcodi,
+      (
+      select LISTAGG(tinf.tinfinforme, ', ')WITHIN GROUP (ORDER BY tinf.tinfinforme)
+      FROM
+      gmm_detincumplimiento dinc
+      join gmm_tipinforme tinf on tinf.tinfcodi = dinc.tinfcodi
+      where dinc.incucodi = inc.incucodi and dincestado = '1'
+      )
+      as IncumInforme
+      FROM
+      gmm_incumplimiento inc
+      join si_empresa emp1 on emp1.emprcodi = (select emprcodi from gmm_empresa where empgcodi = inc.empgcodi)
+      join si_empresa emp2 on emp2.emprcodi = inc.emprcodi
+      WHERE 1 = 1
+      and inc.incuanio = case {0} when 0 then inc.incuanio else {0} end
+      and inc.incumes = case '{1}' when '-' then inc.incumes else '{1}' end
+      and UPPER(emp2.emprnomb) like case '{2}' when '-' then UPPER(emp2.emprnomb) else UPPER('%{2}%') end
+      and emp2.emprruc like case '{3}' when '-' then emp2.emprruc else '%{3}%' end
+      and inc.TIPOEMPRCODI = 20
+      UNION
+      SELECT
+      inc.incucodi as IncucodiEdit,
+      inc.incuanio || '-' || inc.incumes as IncumAnioMes,
+      '(' || trim(emp1.emprruc) || ') ' || NVL(TRIM(NVL(emp1.EMPRRAZSOCIAL,emp1.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumEmprDeudora,
+      '(' || trim(emp2.emprruc) || ') ' || NVL(TRIM(NVL(emp2.EMPRRAZSOCIAL,emp2.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as IncumEmprAfectada,
+      inc.incumonto as IncumMonto,
+      inc.empgcodi,
+      inc.emprcodi,
+      (
+      select LISTAGG(tinf.tinfinforme, ', ')WITHIN GROUP (ORDER BY tinf.tinfinforme)
+      FROM
+      gmm_detincumplimiento dinc
+      join gmm_tipinforme tinf on tinf.tinfcodi = dinc.tinfcodi
+      where dinc.incucodi = inc.incucodi and dincestado = '1'
+      )
+      as IncumInforme
+      FROM
+      gmm_incumplimiento inc
+      join si_empresa emp1 on emp1.emprcodi = (select emprcodi from si_empresa where emprcodi = inc.empgcodi)
+      join si_empresa emp2 on emp2.emprcodi = inc.emprcodi
+      WHERE 1 = 1
+      and inc.incuanio = case {0} when 0 then inc.incuanio else {0} end
+      and inc.incumes = case '{1}' when '-' then inc.incumes else '{1}' end
+      and UPPER(emp2.emprnomb) like case '{2}' when '-' then UPPER(emp2.emprnomb) else UPPER('%{2}%') end
+      and emp2.emprruc like case '{3}' when '-' then emp2.emprruc else '%{3}%' end
+      and inc.TIPOEMPRCODI = 3
+    </query>
+  </Sql>
+</Sqls>

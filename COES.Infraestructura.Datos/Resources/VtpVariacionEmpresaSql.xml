@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_variacion_empresa(
+      varempcodi,
+      emprcodi,
+      varempprocentaje,
+      varemptipocomp,
+      varempvigencia,
+      varempestado,
+      varempusucreacion,
+      varempfeccreacion,
+      varempusumodificacion,
+      varempfecmodificacion
+      )
+      values(
+      :varempcodi,
+      :emprcodi,
+      :varempprocentaje,
+      :varemptipocomp,
+      :varempvigencia,
+      :varempestado,
+      :varempusucreacion,
+      :varempfeccreacion,
+      :varempusumodificacion,
+      :varempfecmodificacion
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(varempcodi), 0) + 1 from vtp_variacion_empresa
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetDefaultPercentVariationByTipoComp</key>
+    <query>
+      select * from vtp_variacion_empresa
+      where varempestado='ACT' and emprcodi=0 and rownum=1 and varemptipocomp = :varemptipocomp
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateStatusVariationByTipoComp</key>
+    <query>
+      update vtp_variacion_empresa
+      set varempestado=:varempestado
+      where varemptipocomp = :varemptipocomp and emprcodi=0
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateStatusVariationByTipoCompAndEmpresa</key>
+    <query>
+      update vtp_variacion_empresa
+      set varempestado=:varempestado,
+      varempusumodificacion=:varempusumodificacion,
+      varempfecmodificacion=:varempfecmodificacion
+      where varemptipocomp =: varemptipocomp and emprcodi =: emprcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListVariacionEmpresaByTipoComp</key>
+    <query>
+		select * from
+		(select distinct
+		siemp.emprcodi as siemprcodi
+		,siemp.emprnomb
+		,varemp.emprcodi
+		,nvl(varemp.varempprocentaje,0.00) as varempprocentaje
+		,varemp.varempvigencia
+		,siemp.tipoemprcodi
+		,row_number() over (order by siemp.emprnomb asc) as fila
+		from si_empresa siemp
+		left join vtp_variacion_empresa varemp on siemp.emprcodi=varemp.emprcodi AND varemp.varemptipocomp!=:varemptipocomp AND varemp.emprcodi !=0 AND varemp.varempestado!='INA'
+		where siemp.emprestado='A' AND siemp.emprcodi in (select genemprcodi from trn_codigo_retiro_solicitud) and (emprnomb like :emprnom||'%' or :emprnom = '*')
+		and siemp.emprcodi not in (67) --Minera cerro verde
+		union
+		select distinct infadicodi, trim(infadinomb),varemp.emprcodi
+		,nvl(varemp.varempprocentaje,0.00) as varempprocentaje
+		,varemp.varempvigencia,trninfo.tipoemprcodi
+		,row_number() over (order by trim(trninfo.infadinomb) asc)
+		from TRN_INFOADICIONAL_det trninfo
+		left join vtp_variacion_empresa varemp on trninfo.infadicodi=varemp.emprcodi AND varemp.varemptipocomp!=:varemptipocomp AND varemp.emprcodi !=0 AND varemp.varempestado!='INA'
+		where trninfo.infadicodi!=-1001 and trninfo.infadiestado = 'I' and (trim(infadinomb) like :emprnom||'%' or :emprnom = '*')) where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize) order by 2
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetNroRecordsVariacionEmpresaByTipoComp</key>
+    <query>
+      select count(1) as NroRegistros from
+      (select distinct
+      siemp.emprcodi as siemprcodi
+      ,siemp.emprnomb
+      ,varemp.emprcodi
+      ,nvl(varemp.varempprocentaje,0.00) as varempprocentaje
+      ,varemp.varempvigencia
+      ,siemp.tipoemprcodi
+      ,row_number() over (order by siemp.emprnomb asc) as fila
+      from si_empresa siemp
+      left join vtp_variacion_empresa varemp on siemp.emprcodi=varemp.emprcodi AND varemp.varemptipocomp!=:varemptipocomp AND varemp.emprcodi !=0 AND varemp.varempestado!='INA'
+      where siemp.emprestado='A' AND siemp.emprcodi in (select genemprcodi from trn_codigo_retiro_solicitud) and (emprnomb like :emprnom||'%' or :emprnom = '*')
+      union
+      select distinct infadicodi, trim(infadinomb),varemp.emprcodi
+      ,nvl(varemp.varempprocentaje,0.00) as varempprocentaje
+      ,varemp.varempvigencia,trninfo.tipoemprcodi
+      ,row_number() over (order by trim(trninfo.infadinomb) asc)
+      from TRN_INFOADICIONAL_det trninfo
+      left join vtp_variacion_empresa varemp on trninfo.infadicodi=varemp.emprcodi AND varemp.varemptipocomp!=:varemptipocomp AND varemp.emprcodi !=0 AND varemp.varempestado!='INA'
+      where trninfo.infadicodi!=-1001 and trninfo.infadiestado = 'I' and (trim(infadinomb) like :emprnom||'%' or :emprnom = '*'))
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListHistoryVariacionEmpresaByEmprCodiAndTipoComp</key>
+    <query>
+		select
+		varemp.varempcodi,
+		varemp.emprcodi,
+		nvl(siemp.emprnomb,trim(trninfo.infadinomb)) as emprnomb,
+		nvl(varemp.varempprocentaje,0.00) as varempprocentaje,
+		varemp.varempvigencia,
+		varemp.varempestado,
+		varemp.varempusumodificacion,
+		varemp.varempfecmodificacion,
+		varemp.varempfeccreacion
+		from vtp_variacion_empresa varemp
+		left outer join si_empresa siemp on siemp.emprcodi=varemp.emprcodi and varemp.emprcodi!=0
+		left outer join TRN_INFOADICIONAL_det trninfo on trninfo.infadicodi=varemp.emprcodi and varemp.emprcodi!=0 and trninfo.infadiestado = 'I'
+		where varemp.emprcodi=:emprcodi and varemp.varemptipocomp=:varemptipocomp
+		order by varemp.varempestado
+	</query>
+  </Sql>
+  <Sql>
+    <key>GetPercentVariationByEmprCodiAndTipoComp</key>
+    <query>
+      select * from vtp_variacion_empresa
+      where varempestado='ACT' and emprcodi=:emprcodi and rownum=1 and varemptipocomp=:varemptipocomp
+    </query>
+  </Sql>
+</Sqls>
+

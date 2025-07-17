@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cp_proprecurso(
+           recurcodi,
+           topcodi,
+           propcodi,
+           variaccodi,
+           fechaproprecur,
+           valor
+       )
+       values(
+           :recurcodi,
+           :topcodi,
+           :propcodi,
+           :variaccodi,
+           :fechaproprecur,
+           :valor
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cp_proprecurso
+       set
+           valor = :valor
+       where
+           recurcodi = :recurcodi and
+           topcodi = :topcodi and
+           propcodi = :propcodi and
+           variaccodi = :variaccodi and
+           fechaproprecur = :fechaproprecur
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cp_proprecurso
+       where
+           recurcodi = :recurcodi and
+           topcodi = :topcodi and
+           propcodi = :propcodi and
+           variaccodi = :variaccodi and
+           fechaproprecur = :fechaproprecur
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select a.recurcodi,a.fechaproprecur,a.valor Valor,0 topcodi,0 variaccodi,a.propcodi
+      from cp_proprecurso a
+      inner join(
+      select recurcodi,propcodi,topcodi,max(fechaproprecur) maxfecha from cp_proprecurso
+      where topcodi = {0} and recurcodi = {1} and propcodi = {2} and  fechaproprecur &lt;= to_date('{3}','YYYY-MM-DD')
+      group by recurcodi,propcodi,topcodi  )
+      maxProp on maxProp.propcodi = a.propcodi
+      and maxProp.recurcodi = a.recurcodi and maxProp.maxfecha = a.fechaproprecur and
+      maxProp.topcodi = a.topcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           recurcodi,
+           topcodi,
+           propcodi,
+           variaccodi,
+           fechaproprecur,
+           valor
+       from
+           cp_proprecurso
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           recurcodi,
+           topcodi,
+           propcodi,
+           variaccodi,
+           fechaproprecur,
+           valor
+       from
+           cp_proprecurso
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPropiedadxRecurso2</key>
+    <query>
+      select a.recurcodi, 0 variaccodi,a.propcodi ,a.fechaproprecur, trim(a.valor) Valor,b.proporden PropOrden,b.propcodisicoes, {0} topcodi,prop.catcodi
+      from cp_proprecurso a
+      inner join cp_propiedad prop on prop.propcodi = a.propcodi
+      inner join( select recurcodi,propcodi,topcodi,max(fechaproprecur) maxfecha from cp_proprecurso where topcodi = {0}
+      group by recurcodi,propcodi,topcodi )
+      maxProp on maxProp.propcodi = a.propcodi and maxProp.recurcodi = a.recurcodi and maxProp.maxfecha = a.fechaproprecur and
+      maxProp.topcodi = a.topcodi, cp_propiedad b
+      where a.PROPCODI = b.PROPCODI and
+      (prop.proporden = {2} or ({2} = -1)) and
+      (prop.catcodi in ({3}) or '{3}' = '-1') and
+      a.recurcodi in (select recurcodi from cp_recurso where topcodi = {0} and recurestado = 1 and (recurtoescenario = {4} or {4} = -1) )
+      order by a.PROPCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPropiedadxRecursoToGams</key>
+    <query>
+      select a.recurcodi, 0 variaccodi,a.propcodi ,a.fechaproprecur, trim(a.valor) Valor,b.proporden PropOrden,b.propcodisicoes, {0} topcodi,prop.catcodi
+      from cp_proprecurso a
+      inner join cp_propiedad prop on prop.propcodi = a.propcodi
+      inner join( select recurcodi,propcodi,topcodi,max(fechaproprecur) maxfecha from cp_proprecurso where topcodi = {0}
+      group by recurcodi,propcodi,topcodi )
+      maxProp on maxProp.propcodi = a.propcodi and maxProp.recurcodi = a.recurcodi and maxProp.maxfecha = a.fechaproprecur and
+      maxProp.topcodi = a.topcodi, cp_propiedad b
+      where a.PROPCODI = b.PROPCODI and
+      (prop.proporden = {2} or ({2} = -1)) and
+      (prop.catcodi in ({3}) or '{3}' = '-1') and
+      a.recurcodi in (select recurcodi from cp_recurso where topcodi = {0} and recurestado = 1 and (recurconsideragams = {4} or {4} = -1) )
+      order by a.PROPCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPropiedadxRecurso</key>
+    <query>
+      select a.recurcodi, 0 variaccodi,a.propcodi ,a.fechaproprecur, trim(a.valor) Valor,b.proporden PropOrden,b.propcodisicoes, {1} topcodi,r.catcodi
+      from cp_proprecurso a
+      inner join cp_recurso r on r.recurcodi = a.recurcodi and r.topcodi = {1}
+      {3}
+      inner join( select recurcodi,propcodi,topcodi,max(fechaproprecur) maxfecha from cp_proprecurso where topcodi = {1}
+      and recurcodi = {0} group by recurcodi,propcodi,topcodi )
+      maxProp on maxProp.propcodi = a.propcodi and maxProp.recurcodi = a.recurcodi and maxProp.maxfecha = a.fechaproprecur and
+      maxProp.topcodi = a.topcodi, cp_propiedad b where a.PROPCODI = b.PROPCODI order by a.PROPCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearCopia</key>
+    <query>
+      insert into cp_proprecurso (recurcodi,variaccodi,propcodi,fechaproprecur,valor,topcodi)
+      select a.recurcodi ,variaccodi ,a.propcodi ,a.fechaproprecur ,trim(a.valor) valor,{1}
+      from cp_proprecurso a
+      inner join cp_recurso rec on rec.recurcodi = a.recurcodi and rec.topcodi = {0}
+      where a.topcodi = {0} and rec.recurorigen = 0
+    </query>
+  </Sql>
+  
+</Sqls>

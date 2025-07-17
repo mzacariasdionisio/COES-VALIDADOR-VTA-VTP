@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+  <Sql>
+    <key>List</key>
+    <query>
+      select equicodi, trim(equinomb) as equinomb from  vw_eq_central_generacion where equiestado in  ('A') order by equinomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListTemporal</key>
+    <query>
+      select equicodi, trim(equinomb) as equinomb from  vw_eq_central_generacion where equiestado in  ('A')
+      or (equicodi in ( 12607, 12378,      12379)) order by equinomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Unidad</key>
+    <query>
+      <!--select equicodi, trim(equinomb) as equinomb from  vw_eq_central_generacion where equiestado = 'A' order by equinomb asc-->
+      <!--ASSETEC 20190115-->
+      select u.equicodi, trim(u.equinomb) || ' [' || trim(e.equinomb) || ']' as equinomb
+      from  vw_eq_central_generacion u, eq_equipo e
+      where u.equiestado = 'A'  and u.equipadre = e.equicodi
+      order by 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UnidadCentral</key>
+    <query>
+      select equicodi, trim(equinomb) as equinomb, famcodi from  vw_eq_central_generacion
+      where equiestado = 'A' and equipadre = :equicodicen order by equinomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListInfoBase</key>
+    <query>
+      select * from  vw_eq_equipo_trn_coinfb order by equinomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaInterCodEnt</key>
+    <query>
+      select * from vw_eq_central_generacion where equicodi in (select equicodi from trn_codigo_entrega) order by equinomb asc
+    </query>
+  </Sql>
+	
+  <!--Inicio PrimasRER.2023-->
+  <Sql>
+	<key>ListaCentralByEmpresa</key>
+	<query>
+	  select * from vw_eq_central_generacion where
+	  emprcodi = :emprcodi and
+	  famcodi in (4,5,37,39) and
+	  equiestado = 'A'
+	  order by equinomb asc
+	</query>
+  </Sql>
+
+  <Sql>
+	<key>ListaCentralUnidadByEmpresa</key>
+	<query>
+	  select * from vw_eq_central_generacion where (equiestado in  ('A')
+      or (equicodi in ( 12607, 12378, 12379)))
+      and emprcodi = :emprcodi
+      order by equinomb asc
+	</query>
+  </Sql>
+  <!--Fin PrimasRER.2023-->
+
+  <Sql>
+    <key>ListaInterCodInfoBase</key>
+    <query>
+      select * from vw_eq_equipo_trn_coinfb where equicodi in (select equicodi from trn_codigo_infobase) order by equinomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCentGeneNombre</key>
+    <query>
+      select * from eq_equipo where (equiestado = 'A' or equiestado = 'F' or (equicodi in ( 12607, 12378,      12379))) and trim(equinomb) = trim(:equinomb) and emprcodi in
+      (select emprcodi from si_empresa where emprestado = 'A') order by equiestado
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEmpresaCentralGeneracion</key>
+    <query>
+      <!--select e.equicodi, concat(concat(trim(e.equinomb || ' [' || e.equiestado || ']'), ' - '), trim(s.emprnomb || ' [' || s.emprestado || ']')) as equinomb
+      from eq_equipo e left join si_empresa s on e.emprcodi = s.emprcodi
+      where equiestado = 'A' and e.equinomb is not null
+      order by 2
+      ASSETEC 20200612-->
+      select e.equicodi, concat(trim(e.equinomb || ' [' || e.equiestado || ']'), ' - ') || ' / ' || trim( f.famnomb) || ' / ' || trim(s.emprnomb || ' [' || s.emprestado || ']') as equinomb
+      from eq_equipo e left join si_empresa s on e.emprcodi = s.emprcodi
+      left join eq_familia f on e.famcodi = f.famcodi
+      where equiestado = 'A' and e.equinomb is not null
+      order by 2
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCentGeneNombVsEN</key>
+    <query>
+      select e.* from eq_equipo e, st_centralgen c 
+      where trim(e.equinomb) = trim(:equinomb) 
+      and e.equicodi = c.equicodi and c.STGENRCODI in (select stgenrcodi from st_generador g where  g.strecacodi = :strecacodi)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCentGeneTermoelectricaNombre</key>
+    <query>
+      select * from eq_equipo
+      where trim(equinomb) = trim(:equinomb)
+      and famcodi in (4,5) and equiestado = 'A'
+      and emprcodi in (select emprcodi from si_empresa where emprestado = 'A')
+      order by equiestado
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCentGeneNombreEquipo</key>
+    <query>
+      select * from eq_equipo where trim(equinomb) = trim(:equinomb) and equicodi in (select equicodicen from vcr_medborne where (vcrecacodi = :vcrecacodi or :vcrecacodi = -1))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCentGeneUniNombreEquipo</key>
+    <query>
+      select * from eq_equipo where trim(equinomb) = trim(:equinomb) and equipadre = :equicodi and equicodi in (select equicodiuni from vcr_medborne where (vcrecacodi = :vcrecacodi or :vcrecacodi = -1))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCentGeneNombreEquipoUniCen</key>
+    <query>      
+      select * from eq_equipo where trim(equinomb) = trim(:equinomb) and equicodi in (select equicodiuni from vcr_medborne where (vcrecacodi = :vcrecacodi or :vcrecacodi = -1))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByEquicodi</key>
+    <query>
+      select * from eq_equipo where equicodi = :equicodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByEquiNomb</key>
+    <query>
+      select * from eq_equipo where trim(equinomb) = trim(:equinomb) and equiestado = 'A' and EQUIABREV not like 'SERV. AUX.'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByEquiPadre</key>
+    <query>
+      select * from eq_equipo where equipadre = :equicodi
+    </query>
+  </Sql>
+
+    <!--INICIO SIOSEIN-PRIE-2021-->
+    <Sql>
+	    <key>ListarEquiposPorEmpresa</key>
+	    <query>
+		    select equicodi, '[ID:' || equicodi || '].[PADRE:' || equipadre || ']' || equinomb  as equinomb, emprcodi, equipadre
+		    from eq_equipo
+		    where equiestado = 'A' and emprcodi = :emprcodi
+		    order by equinomb
+	    </query>
+    </Sql>
+    <!--FIN SIOSEIN-PRIE-2021-->
+
+</Sqls>

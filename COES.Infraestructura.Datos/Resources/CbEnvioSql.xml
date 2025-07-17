@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(cbenvcodi), 0) + 1 from cb_envio
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxIdAutoguardado</key>
+    <query>
+      select nvl(min(cbenvcodi), -1) - 1
+      from cb_envio
+      where cbenvcodi &lt; 0
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cb_envio(
+      cbenvcodi,
+      cbenvfecsolicitud,
+      cbenvususolicitud,
+      grupocodi,
+      equicodi,
+      emprcodi,
+      cbenvfecaprobacion,
+      cbenvusuaprobacion,
+      cbenvestado,
+      cbenvplazo,
+      fenergcodi,
+      estenvcodi,
+      cbenvfecpreciovigente,
+      estcomcodi,
+      cbenvmoneda,
+      cbenvunidad,
+      cbenvfecfinrptasolicitud,
+      cbenvfecfinsubsanarobs,
+      cbenvfecmodificacion,
+      cbenvobs,
+      cbenvfecampl,
+      cbenvitem106,
+      cbenvtipocentral,
+      cbenvfechaperiodo,
+      cbenvfecsistema,
+      cbftcodi,
+      cbenvtipocarga,
+      cbenvusucarga,
+      cbenvtipoenvio
+      )
+      values(
+      :cbenvcodi,
+      :cbenvfecsolicitud,
+      :cbenvususolicitud,
+      :grupocodi,
+      :equicodi,
+      :emprcodi,
+      :cbenvfecaprobacion,
+      :cbenvusuaprobacion,
+      :cbenvestado,
+      :cbenvplazo,
+      :fenergcodi,
+      :estenvcodi,
+      :cbenvfecpreciovigente,
+      :estcomcodi,
+      :cbenvmoneda,
+      :cbenvunidad,
+      :cbenvfecfinrptasolicitud,
+      :cbenvfecfinsubsanarobs,
+      :cbenvfecmodificacion,
+      :cbenvobs,
+      :cbenvfecampl,
+      :cbenvitem106,
+      :cbenvtipocentral,
+      :cbenvfechaperiodo,
+      :cbenvfecsistema,
+      :cbftcodi,
+      :cbenvtipocarga,
+      :cbenvusucarga,
+      :cbenvtipoenvio
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cb_envio
+      set
+      cbenvfecsolicitud = :cbenvfecsolicitud,
+      cbenvususolicitud = :cbenvususolicitud,
+      grupocodi = :grupocodi,
+      equicodi = :equicodi,
+      emprcodi = :emprcodi,
+      cbenvfecaprobacion = :cbenvfecaprobacion,
+      cbenvusuaprobacion = :cbenvusuaprobacion,
+      cbenvestado = :cbenvestado,
+      cbenvplazo = :cbenvplazo,
+      fenergcodi = :fenergcodi,
+      estenvcodi = :estenvcodi,
+      cbenvfecpreciovigente = :cbenvfecpreciovigente,
+      estcomcodi = :estcomcodi,
+      cbenvmoneda = :cbenvmoneda,
+      cbenvunidad = :cbenvunidad,
+      cbenvfecfinrptasolicitud = :cbenvfecfinrptasolicitud,
+      cbenvfecfinsubsanarobs = :cbenvfecfinsubsanarobs,
+      cbenvfecmodificacion = :cbenvfecmodificacion,
+      cbenvobs = :cbenvobs,
+      cbenvfecampl = :cbenvfecampl,
+      cbenvitem106 = :cbenvitem106,
+      cbenvtipocentral = :cbenvtipocentral,
+      cbenvfechaperiodo = :cbenvfechaperiodo,
+      cbenvfecsistema = :cbenvfecsistema,
+      cbftcodi = :cbftcodi,
+      cbenvtipocarga = :cbenvtipocarga,
+      cbenvusucarga = :cbenvusucarga,
+      cbenvtipoenvio = :cbenvtipoenvio
+      where
+      cbenvcodi = :cbenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from cb_envio
+      where
+      cbenvcodi = :cbenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      cmb.estcomnomb,
+      en.*,
+      emp.emprnomb,
+      eq.equinomb,
+      pr.gruponomb,
+      ex.estenvnomb,
+      f.fenergnomb
+      from
+      cb_envio en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join pr_grupo pr on pr.grupocodi = en.grupocodi
+      inner join si_fuenteenergia f on f.fenergcodi = en.fenergcodi
+      inner join ext_estado_envio ex on ex.estenvcodi =  en.estenvcodi
+      inner join si_estadocombustible cmb ON cmb.estcomcodi = en.estcomcodi
+      where
+      cbenvcodi = :cbenvcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from (
+
+      select
+      cmb.estcomnomb,
+      en.*,
+      emp.emprnomb,
+      eq.equinomb,
+      pr.gruponomb,
+      ex.estenvnomb,
+      f.fenergnomb,
+      (row_number() over (order by en.cbenvcodi asc)) as r
+      from
+      cb_envio en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join pr_grupo pr on pr.grupocodi = en.grupocodi
+      inner join si_fuenteenergia f on f.fenergcodi = en.fenergcodi
+      inner join ext_estado_envio ex on ex.estenvcodi =  en.estenvcodi
+      inner join si_estadocombustible cmb ON cmb.estcomcodi = en.estcomcodi
+      where
+      (en.emprcodi in ({0}) or '{0}' = '-1') and
+      (en.equicodi in ({1}) or '{1}' = '-1')  and
+      (en.estenvcodi in ({2}) or '{2}' = '-1') and
+      (en.CBENVFECSOLICITUD >=  TO_DATE('{3}','YYYY-MM-DD')  and en.CBENVFECSOLICITUD &lt; TO_DATE('{4}','YYYY-MM-DD'))
+      and en.CBENVESTADO = 'A'
+      order by cbenvcodi asc
+
+      )
+      where r >= ((({5}-1) * {6}) + 1) and r &lt; (({5} * {6}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerTotalXFiltro</key>
+    <query>
+      select
+      count(*) total
+      from
+      cb_envio en
+      where
+      (en.cbenvtipoenvio = 2) and
+      (en.emprcodi in ({0}) or '{0}' = '-1') and
+      (en.equicodi in ({1}) or '{1}' = '-1')  and
+      (en.estenvcodi in ({2}) or '{2}' = '-1') and
+      (en.CBENVFECSOLICITUD >=  TO_DATE('{3}','YYYY-MM-DD')  and en.CBENVFECSOLICITUD &lt; TO_DATE('{4}','YYYY-MM-DD'))
+      and en.CBENVESTADO = 'A'
+      AND (EN.CBENVTIPOCARGA &lt;> '{6}' OR EN.CBENVTIPOCARGA IS NULL)
+      and en.estcomcodi in ({5})
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      cmb.estcomnomb,
+      en.*,
+      emp.emprnomb,
+      eq.equinomb,
+      pr.gruponomb,
+      ex.estenvnomb,
+      f.fenergnomb
+      from
+      cb_envio en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join pr_grupo pr on pr.grupocodi = en.grupocodi
+      inner join si_fuenteenergia f on f.fenergcodi = en.fenergcodi
+      inner join ext_estado_envio ex on ex.estenvcodi =  en.estenvcodi
+      inner join si_estadocombustible cmb ON cmb.estcomcodi = en.estcomcodi
+      where
+      (en.emprcodi in ({0}) or '{0}' = '-1') and
+      (en.equicodi in ({1}) or '{1}' = '-1')  and
+      (en.CBENVFECSOLICITUD >=  TO_DATE('{2}','YYYY-MM-DD')  and en.CBENVFECSOLICITUD &lt; TO_DATE('{3}','YYYY-MM-DD'))
+      and en.CBENVESTADO = 'A'
+      order by cbenvcodi asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListXEstado</key>
+    <query>
+      select
+      cmb.estcomnomb,
+      en.*,
+      emp.emprnomb,
+      eq.equinomb,
+      pr.gruponomb,
+      ex.estenvnomb,
+      f.fenergnomb
+      from
+      cb_envio en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join pr_grupo pr on pr.grupocodi = en.grupocodi
+      inner join si_fuenteenergia f on f.fenergcodi = en.fenergcodi
+      inner join ext_estado_envio ex on ex.estenvcodi =  en.estenvcodi
+      inner join si_estadocombustible cmb ON cmb.estcomcodi = en.estcomcodi
+      where
+      (en.Estenvcodi in ({0})) and
+      ('{1}'='-1' or en.equicodi in ({1})) and
+      ('{2}'='-1' or en.fenergcodi in ({2}))
+      and en.CBENVESTADO = 'A'
+      order by cbenvcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaEnvios</key>
+    <query>
+      select
+      cmb.estcomnomb,
+      en.*,
+      emp.emprnomb,
+      eq.equinomb,
+      pr.gruponomb,
+      ex.estenvnomb,
+      f.fenergnomb,
+      (row_number() over (order by en.cbenvcodi asc)) as r
+      from
+      cb_envio en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join pr_grupo pr on pr.grupocodi = en.grupocodi
+      inner join si_fuenteenergia f on f.fenergcodi = en.fenergcodi
+      inner join ext_estado_envio ex on ex.estenvcodi =  en.estenvcodi
+      inner join si_estadocombustible cmb ON cmb.estcomcodi = en.estcomcodi
+      where
+      (en.cbenvtipoenvio = {5} or '{5}' = '-1') and
+      (en.emprcodi in ({0}) or '{0}' = '-1') and
+      (en.estenvcodi in ({1}) or '{1}' = '-1') and
+      (en.CBENVFECSOLICITUD >=  TO_DATE('{2}','YYYY-MM-DD')  and en.CBENVFECSOLICITUD &lt; TO_DATE('{3}','YYYY-MM-DD')+1)
+      and en.CBENVESTADO = 'A'
+      and en.estcomcodi in ({4})
+      order by cbenvcodi asc
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByTipoCombustibleYVigenciaYTipocentral</key>
+    <query>
+      select
+      cmb.estcomnomb,
+      en.*,
+      emp.emprnomb,
+      eq.equinomb,
+      pr.gruponomb,
+      ex.estenvnomb,
+      f.fenergnomb
+      from
+      cb_envio en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join pr_grupo pr on pr.grupocodi = en.grupocodi
+      inner join si_fuenteenergia f on f.fenergcodi = en.fenergcodi
+      inner join ext_estado_envio ex on ex.estenvcodi =  en.estenvcodi
+      inner join si_estadocombustible cmb ON cmb.estcomcodi = en.estcomcodi
+      where
+      (en.emprcodi = '{0}') and
+      (en.estcomcodi = '{1}') and
+      (en.estenvcodi &lt;> 8 and (en.estenvcodi = {4} or '-1'='{4}')) and
+      (en.CBENVESTADO = 'A') and
+      (en.CBENVFECHAPERIODO =  TO_DATE('{2}','YYYY-MM-DD')) and
+      (en.CBENVTIPOCENTRAL = '{3}' or '-1'='{3}')
+      and en.CBENVTIPOENVIO = 2
+      order by cbenvcodi asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaAutoguardados</key>
+    <query>
+      SELECT * FROM cb_envio
+      WHERE
+      cbenvtipocentral = '{0}' AND
+      cbenvfechaperiodo =  TO_DATE('{1}','DD/MM/YYYY') AND
+      emprcodi = {2} AND
+      estenvcodi = {3} AND
+      (cbenvtipoenvio = {4} or '{4}' = '-1') and
+      CBENVCODI &lt; 0
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CambiarEstado</key>
+    <query>
+      UPDATE CB_ENVIO SET CBENVESTADO = '{0}' WHERE CBENVCODI IN ({1})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetDatosReporteCumplimiento</key>
+    <query>
+      select DISTINCT
+      en.*,
+      em.emprnomb,
+      eq.equinomb,
+      f.fenergnomb
+      from cb_envio en
+      inner join cb_version ve on ve.cbenvcodi = en.cbenvcodi
+      inner join cb_envio_central ec on ec.cbvercodi = ve.cbvercodi
+      inner join si_empresa em  on  em.emprcodi = en.emprcodi
+      inner join eq_equipo eq on  eq.equicodi = ec.equicodi
+      inner join si_fuenteenergia f on f.fenergcodi = en.fenergcodi
+      where
+      en.cbenvcodi in ({0})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaEnviosXPeriodo</key>
+    <query>
+      select
+      cmb.estcomnomb,
+      en.*,
+      emp.emprnomb,
+      eq.equinomb,
+      pr.gruponomb,
+      ex.estenvnomb,
+      f.fenergnomb,
+      (row_number() over (order by en.cbenvcodi asc)) as r
+      from
+      cb_envio en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join pr_grupo pr on pr.grupocodi = en.grupocodi
+      inner join si_fuenteenergia f on f.fenergcodi = en.fenergcodi
+      inner join ext_estado_envio ex on ex.estenvcodi =  en.estenvcodi
+      inner join si_estadocombustible cmb ON cmb.estcomcodi = en.estcomcodi
+      where
+      (en.cbenvtipoenvio = {5} or '{5}' = '-1') and
+      (en.emprcodi in ({0}) or '{0}' = '-1') and
+      (en.estenvcodi in ({1}) or '{1}' = '-1') and
+      (en.CBENVFECHAPERIODO >=  TO_DATE('{2}','YYYY-MM-DD')  and en.CBENVFECHAPERIODO &lt; TO_DATE('{3}','YYYY-MM-DD')+1)
+      and en.CBENVESTADO = 'A'
+      and en.estcomcodi in ({4})
+      order by cbenvcodi asc
+
+    </query>
+  </Sql>
+
+</Sqls>

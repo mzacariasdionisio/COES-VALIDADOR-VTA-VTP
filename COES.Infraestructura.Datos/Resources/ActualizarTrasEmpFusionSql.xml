@@ -1,0 +1,480 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetListaSaldosSobrantes</key>
+    <query>
+      SELECT
+      sr.emprcodi         AS EmprCodiOri,
+      sr.pericodi         AS PeriCodiOri,
+      sr.recacodi         AS RecaCodi,
+      sr.salrecsaldo      AS SalsoSaldoOri,
+      v.tmopercodi        AS SalsoTipOpe,
+      v.emprcodidestino   AS EmprCodiDes,
+      v.migrafeccreacion  AS SalsoFecMigracion,
+      (
+      SELECT
+      nvl(SUM(salrecsaldo), 0)
+      FROM
+      trn_saldo_recalculo
+      WHERE
+      emprcodi = v.emprcodidestino
+      AND pericodidestino = :pericodides
+      AND recacodi = sr.recacodi
+      ) AS SalsoSaldoDes
+      FROM
+      trn_saldo_recalculo   sr
+      INNER JOIN VW_SI_MIGRACION_SALDO       v ON sr.emprcodi = v.emprcodiorigen
+      INNER JOIN TRN_PERIODO tp on tp.pericodi = sr.pericodidestino
+      WHERE
+      sr.pericodidestino = :pericodides
+      and tp.perianiomes >=  TO_NUMBER(TO_CHAR(v.migrafeccreacion,'YYYYMM'))
+      --AND sr.emprcodi NOT IN (
+      --SELECT
+      --emprcodi
+      --FROM
+      --trn_valor_trans
+      --WHERE
+      --pericodi = :pericodides
+      --AND vtranversion = 1
+      --)
+
+    </query>
+  </Sql>
+  <Sql>
+    <key>DeleteSaldosSobrantesPendientes</key>
+    <query>
+      delete from trn_saldos_sobrantes
+      where
+      salsoestado = :salsoestado
+    </query>
+  </Sql>
+  <Sql>
+    <key>SaveUpdate</key>
+    <query>
+      DECLARE
+      p_typerecord             CHAR(1) := :salsovteavtp;
+      p_pericodides            NUMBER := :pericodides;
+      p_pericodiori            NUMBER := :pericodiori;
+      p_recacodi               NUMBER := :recacodi;
+      p_emprcodiori            NUMBER := :emprcodiori;
+      p_salsosaldoori          NUMBER := :salsosaldoori;
+      p_salsotipope            NUMBER := :salsotipope;
+      p_salsofecmigracion      DATE := :salsofecmigracion;
+      p_emprcodides            NUMBER := :emprcodides;
+      p_salsosaldodes          NUMBER := :salsosaldodes;
+      p_salsousucreacion       VARCHAR2(60) := :salsousucreacion;
+      p_salsousumodificacion   VARCHAR2(60) := :salsousumodificacion;
+      p_mensaje                VARCHAR2(500) := NULL;
+      p_salsocodi              NUMBER := 0;
+      p_count                  NUMBER := 0;
+
+      BEGIN
+
+      SELECT
+      COUNT(salsocodi)
+      INTO
+      p_count
+      FROM
+      trn_saldos_sobrantes
+      WHERE
+      pericodides = p_pericodides
+      AND pericodiori = p_pericodiori
+      AND recacodi = p_recacodi
+      AND salsovteavtp = p_typerecord
+      AND emprcodiori =p_emprcodiori
+      AND emprcodides = p_emprcodides;
+
+
+      IF p_count = 0 THEN
+      SELECT
+      nvl(MAX(salsocodi), 0) + 1
+      INTO p_salsocodi
+      FROM
+      trn_saldos_sobrantes;
+
+      INSERT INTO trn_saldos_sobrantes (
+      salsocodi,
+      emprcodiori,
+      pericodiori,
+      recacodi,
+      salsosaldoori,
+      salsotipope,
+      salsofecmigracion,
+      pericodides,
+      emprcodides,
+      salsosaldodes,
+      salsoestado,
+      salsovteavtp,
+      salsousucreacion,
+      salsofeccreacion
+      ) VALUES (
+      p_salsocodi,
+      p_emprcodiori,
+      p_pericodiori,
+      p_recacodi,
+      p_salsosaldoori,
+      p_salsotipope,
+      p_salsofecmigracion,
+      p_pericodides,
+      p_emprcodides,
+      p_salsosaldodes,
+      'P',
+      p_typerecord,
+      p_salsousucreacion,
+      sysdate
+      );
+
+      ELSE
+
+      SELECT
+      salsocodi
+      INTO
+      p_salsocodi
+      FROM
+      trn_saldos_sobrantes
+      WHERE
+      pericodides = p_pericodides
+      AND pericodiori = p_pericodiori
+      AND recacodi = p_recacodi
+      AND salsovteavtp = p_typerecord
+      AND emprcodiori =p_emprcodiori
+      AND emprcodides = p_emprcodides;
+
+      UPDATE trn_saldos_sobrantes
+      SET
+      salsosaldoori = p_salsosaldoori,
+      salsosaldodes = p_salsosaldodes,
+      salsousumodificacion = p_salsousumodificacion,
+      salsofecmodificacion = sysdate
+      WHERE
+      salsocodi = p_salsocodi;
+
+      END IF;
+
+      SELECT
+      'OK'
+      INTO :mensaje
+      FROM
+      dual;
+
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetLista</key>
+    <query>
+      SELECT
+      ss.salsocodi,
+      ss.emprcodiori,
+      se.emprnomb            AS descempresaorigen,
+      ss.pericodiori,
+      tp.perinombre          AS descperiodoorigen,
+      ss.recacodi,
+      tr.recanombre          AS descversionorigen,
+      ss.salsosaldoori,
+      ss.salsotipope,
+      ss.salsofecmigracion,
+      st.tmoperdescripcion   AS desctipoope,
+      ss.pericodides,
+      ss.emprcodides,
+      sed.emprnomb           AS descempresadestino,
+      ss.salsosaldodes,
+      ss.salsoestado,
+      (
+      CASE ss.salsoestado
+      WHEN 'P'   THEN
+      'Pendiente'
+      WHEN 'A'   THEN
+      'Actualizado'
+      END
+      ) descestado,
+      ss.salsofecproceso
+      FROM
+      trn_saldos_sobrantes    ss
+      INNER JOIN si_empresa              se ON se.emprcodi = ss.emprcodiori
+      INNER JOIN si_empresa              sed ON sed.emprcodi = ss.emprcodides
+      INNER JOIN trn_periodo             tp ON tp.pericodi = ss.pericodiori
+      INNER JOIN trn_recalculo           tr ON tr.recacodi = ss.recacodi
+      AND tr.pericodi = ss.pericodiori
+      INNER JOIN si_tipomigraoperacion   st ON st.tmopercodi = ss.salsotipope
+      WHERE
+      ss.pericodides = :pericodides
+      AND salsovteavtp = :salsovteavtp
+      ORDER BY ss.salsoestado desc
+    </query>
+  </Sql>
+  <Sql>
+    <key>SaveUpdateSaldos</key>
+    <query>
+      DECLARE
+      p_salsocodi              NUMBER := :salsocodi;
+      p_salsousumodificacion   VARCHAR2(60) := :salsousumodificacion;
+      p_emprcodiori            NUMBER := 0;
+      p_pericodiori            NUMBER := 0;
+      p_recacodi               NUMBER := 0;
+      p_pericodides            NUMBER := 0;
+      p_emprcodides            NUMBER := 0;
+      BEGIN
+      SELECT
+      emprcodiori,
+      pericodiori,
+      recacodi,
+      pericodides,
+      emprcodides
+      INTO
+      p_emprcodiori,
+      p_pericodiori,
+      p_recacodi,
+      p_pericodides,
+      p_emprcodides
+      FROM
+      trn_saldos_sobrantes
+      WHERE
+      salsocodi = p_salsocodi;
+
+      UPDATE trn_saldo_recalculo
+      SET
+      emprcodi = p_emprcodides
+      WHERE
+      emprcodi = p_emprcodiori
+      AND pericodi = p_pericodiori
+      AND recacodi = p_recacodi
+      AND pericodidestino = p_pericodides;
+
+      UPDATE trn_saldos_sobrantes
+      SET
+      salsoestado = 'A',
+      salsofecmodificacion = sysdate,
+      salsofecproceso = sysdate,
+      salsousumodificacion = p_salsousumodificacion
+      WHERE
+      salsocodi = p_salsocodi;
+
+      SELECT
+      'OK'
+      INTO :mensaje
+      FROM
+      dual;
+
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetListaSaldosSobrantesVTP</key>
+    <query>
+      SELECT
+      se.emprcodi         AS EmprCodiOri,
+      se.pericodi         AS PeriCodiOri,
+      se.recpotcodi         AS RecaCodi,
+      se.potsesaldoreca      AS SalsoSaldoOri,
+      v.tmopercodi        AS SalsoTipOpe,
+      v.emprcodidestino   AS EmprCodiDes,
+      v.migrafeccreacion  AS SalsoFecMigracion,
+      (
+      SELECT
+      nvl(SUM(potsesaldoreca), 0)
+      FROM
+      vtp_saldo_empresa
+      WHERE
+      emprcodi = v.emprcodidestino
+      AND potsepericodidest = :pericodides
+      AND recpotcodi = se.recpotcodi
+      ) AS SalsoSaldoDes
+      FROM
+      vtp_saldo_empresa se
+      INNER JOIN VW_SI_MIGRACION_SALDO  v ON se.emprcodi = v.emprcodiorigen
+      INNER JOIN TRN_PERIODO tp on tp.pericodi = se.potsepericodidest
+      WHERE
+      se.potsepericodidest = :pericodides
+      and tp.perianiomes >=  TO_NUMBER(TO_CHAR(v.migrafeccreacion,'YYYYMM'))
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaVTP</key>
+    <query>
+      SELECT
+      ss.salsocodi,
+      ss.emprcodiori,
+      se.emprnomb            AS descempresaorigen,
+      ss.pericodiori,
+      tp.perinombre          AS descperiodoorigen,
+      ss.recacodi,
+      tr.recpotnombre          AS descversionorigen,
+      ss.salsosaldoori,
+      ss.salsotipope,
+      ss.salsofecmigracion,
+      st.tmoperdescripcion   AS desctipoope,
+      ss.pericodides,
+      ss.emprcodides,
+      sed.emprnomb           AS descempresadestino,
+      ss.salsosaldodes,
+      ss.salsoestado,
+      (
+      CASE ss.salsoestado
+      WHEN 'P'   THEN
+      'Pendiente'
+      WHEN 'A'   THEN
+      'Actualizado'
+      END
+      ) descestado,
+      ss.salsofecproceso
+      FROM
+      trn_saldos_sobrantes    ss
+      INNER JOIN si_empresa              se ON se.emprcodi = ss.emprcodiori
+      INNER JOIN si_empresa              sed ON sed.emprcodi = ss.emprcodides
+      INNER JOIN trn_periodo             tp ON tp.pericodi = ss.pericodiori
+      INNER JOIN vtp_recalculo_potencia           tr ON tr.recpotcodi = ss.recacodi
+      AND tr.pericodi = ss.pericodiori
+      INNER JOIN si_tipomigraoperacion   st ON st.tmopercodi = ss.salsotipope
+      WHERE
+      ss.pericodides = :pericodides
+      AND salsovteavtp = :salsovteavtp
+      ORDER BY ss.salsoestado desc
+    </query>
+  </Sql>
+<Sql>
+    <key>GetListaSaldosNoIdentificados</key>
+    <query>
+      SELECT
+    si.emprnomb      AS descempresani,
+    tp.perinombre    AS descperiodoni,
+    tr.recanombre    AS descversionni,
+    t.salrecsaldo    AS saldoni,
+    t.salrecfecins   AS fechani
+FROM
+    (
+        SELECT
+            sr.salreccodi,
+            sr.emprcodi,
+            sr.pericodi,
+            sr.recacodi,
+            sr.salrecsaldo,
+            sr.salrecfecins,
+            v.tmopercodi,
+            v.emprcodidestino
+        FROM
+            trn_saldo_recalculo   sr
+            LEFT JOIN VW_SI_MIGRACION_VAL       v ON sr.emprcodi = v.emprcodiorigen
+        WHERE
+            sr.pericodidestino = :pericodiori
+            AND sr.emprcodi NOT IN (
+                SELECT
+                    emprcodi
+                FROM
+                    trn_valor_trans
+                WHERE
+                    pericodi = :pericodiori
+                    AND vtranversion = 1 --mensual
+            )
+    ) t
+    INNER JOIN si_empresa      si ON si.emprcodi = t.emprcodi
+    INNER JOIN trn_periodo     tp ON tp.pericodi = t.pericodi
+    INNER JOIN trn_recalculo   tr ON tr.recacodi = t.recacodi
+                                   AND tr.pericodi = t.pericodi
+    WHERE
+    t.emprcodidestino IS NULL
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetListaSaldosNoIdentificadosVTP</key>
+    <query>
+      SELECT
+      si.emprnomb      AS descempresani,
+      tp.perinombre    AS descperiodoni,
+      tr.recpotnombre    AS descversionni,
+      t.potsesaldoreca    AS saldoni,
+      t.potsefeccreacion   AS fechani
+      FROM
+      (
+      SELECT
+      sr.potsecodi,
+      sr.emprcodi,
+      sr.pericodi,
+      sr.recpotcodi,
+      sr.potsesaldoreca,
+      sr.potsefeccreacion,
+      v.tmopercodi,
+      v.emprcodidestino
+      FROM
+      vtp_saldo_empresa   sr
+      LEFT JOIN VW_SI_MIGRACION_VAL       v ON sr.emprcodi = v.emprcodiorigen
+      WHERE
+      sr.potsepericodidest = :pericodiori
+      AND sr.emprcodi NOT IN (
+      SELECT
+      emprcodi
+      FROM
+      trn_valor_trans
+      WHERE
+      pericodi = :pericodiori
+      AND vtranversion = 1 --mensual
+      )
+      ) t
+      INNER JOIN si_empresa      si ON si.emprcodi = t.emprcodi
+      INNER JOIN trn_periodo     tp ON tp.pericodi = t.pericodi
+      INNER JOIN vtp_recalculo_potencia   tr ON tr.recpotcodi = t.recpotcodi
+      AND tr.pericodi = t.pericodi
+      WHERE
+      t.emprcodidestino IS NULL
+    </query>
+  </Sql>
+  <Sql>
+    <key>SaveUpdateSaldosVTP</key>
+    <query>
+      DECLARE
+      p_salsocodi              NUMBER := :salsocodi;
+      p_salsousumodificacion   VARCHAR2(60) := :salsousumodificacion;
+      p_emprcodiori            NUMBER := 0;
+      p_pericodiori            NUMBER := 0;
+      p_recacodi               NUMBER := 0;
+      p_pericodides            NUMBER := 0;
+      p_emprcodides            NUMBER := 0;
+      BEGIN
+      SELECT
+      emprcodiori,
+      pericodiori,
+      recacodi,
+      pericodides,
+      emprcodides
+      INTO
+      p_emprcodiori,
+      p_pericodiori,
+      p_recacodi,
+      p_pericodides,
+      p_emprcodides
+      FROM
+      trn_saldos_sobrantes
+      WHERE
+      salsocodi = p_salsocodi;
+
+      UPDATE vtp_saldo_empresa
+      SET
+      emprcodi = p_emprcodides
+      WHERE
+      emprcodi = p_emprcodiori
+      AND pericodi = p_pericodiori
+      AND recpotcodi = p_recacodi
+      AND potsepericodidest = p_pericodides;
+
+      UPDATE trn_saldos_sobrantes
+      SET
+      salsoestado = 'A',
+      salsofecmodificacion = sysdate,
+      salsofecproceso = sysdate,
+      salsousumodificacion = p_salsousumodificacion
+      WHERE
+      salsocodi = p_salsocodi;
+
+      SELECT
+      'OK VTP'
+      INTO :mensaje
+      FROM
+      dual;
+
+      END;
+    </query>
+  </Sql>
+</Sqls>

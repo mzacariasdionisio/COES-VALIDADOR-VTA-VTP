@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(facpagcodi), 0) + 1 from st_factorpago
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into st_factorpago(
+      facpagcodi,
+      strecacodi,
+      stcntgcodi,
+      stcompcodi,
+      facpagfggl,
+      facpagreajuste,
+      facpagfgglajuste,
+      facpagusucreacion,
+      facpagfeccreacion
+      )
+      values(
+      :facpagcodi,
+      :strecacodi,
+      :stcntgcodi,
+      :stcompcodi,
+      :facpagfggl,
+      :facpagreajuste,
+      :facpagfgglajuste,
+      :facpagusucreacion,
+      :facpagfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update st_Factorpago
+      set facpagfggl = :facpagfggl,
+      facpagfgglajuste = :facpagfgglajuste,
+      facpagreajuste = :facpagreajuste
+      where facpagcodi = :facpagcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from st_factorpago where strecacodi = :strecacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from st_factorpago
+      where facpagcodi = :facpagcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdFK</key>
+    <query>
+      select * from st_factorpago
+      where strecacodi = :strecacodi and stcntgcodi = :stcntgcodi and stcompcodi = :stcompcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select * from st_factorpago where strecacodi = :strecacodi and stcompcodi = :stcompcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select * from st_factorpago where strecacodi = :strecacodi and stcompcodi = :stcompcodi and facpagreajuste = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaInicialReporte</key>
+    <query>
+      select fp.*,eq.equinomb, ec.elecmpmonto, cp.stcompcodelemento
+      from st_elemento_compensado ec, st_factorpago fp, st_centralgen cg, eq_equipo eq, st_compensacion cp
+      where cg.stcntgcodi = fp.stcntgcodi
+      and fp.stcompcodi = ec.stcompcodi
+      and cg.equicodi = eq.equicodi
+      and ec.stcompcodi = cp.stcompcodi
+      and ec.strecacodi = :strecacodi
+      order by cp.stcompcodelemento
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaReporte</key>
+    <query>
+      select fp.*,eq.equinomb, ec.elecmpmonto, cp.stcompcodelemento, pa.pagasgcmggl
+      from st_elemento_compensado ec, st_factorpago fp, st_centralgen cg, eq_equipo eq, st_compensacion cp, st_pagoasignado pa
+      where cg.stcntgcodi = fp.stcntgcodi and fp.stcompcodi = ec.stcompcodi and cg.equicodi = eq.equicodi and ec.stcompcodi = cp.stcompcodi
+      and fp.stcntgcodi = pa.stcntgcodi and fp.stcompcodi = pa.stcompcodi
+      and ec.strecacodi = :strecacodi and fp.facpagreajuste = 1
+      order by cp.stcompcodelemento
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaReporteFactorPago</key>
+    <query>
+      select fp.*, eq.equinomb, cm.stcompcodelemento
+      from st_factorpago fp, eq_equipo eq, st_centralgen cg, st_compensacion cm
+      where fp.stcntgcodi = cg.stcntgcodi and cg.equicodi = eq.equicodi and fp.stcompcodi = cm.stcompcodi
+      and fp.strecacodi = :strecacodi
+      order by cm.stcompcodelemento
+    </query>
+  </Sql>
+
+  <!--SIOSEIN2-->
+
+  <Sql>
+    <key>ObtenerFactorPagoParticipacion</key>
+    <query>
+      select fp.*, eq.equinomb, cm.stcompcodelemento
+      from st_factorpago fp, eq_equipo eq, st_centralgen cg, st_compensacion cm
+      where fp.stcntgcodi = cg.stcntgcodi and cg.equicodi = eq.equicodi and fp.stcompcodi = cm.stcompcodi
+      and fp.strecacodi = :strecacodi
+      and (fp.stcompcodi =:stcompcodi or -1=:stcompcodi)
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ObtenerCompensacionMensual</key>
+    <query>
+      select fp.*,eq.equinomb, ec.elecmpmonto, cp.stcompcodelemento, pa.pagasgcmggl
+      from st_elemento_compensado ec, st_factorpago fp, st_centralgen cg, eq_equipo eq, st_compensacion cp, st_pagoasignado pa
+      where cg.stcntgcodi = fp.stcntgcodi and fp.stcompcodi = ec.stcompcodi and cg.equicodi = eq.equicodi and ec.stcompcodi = cp.stcompcodi
+      and fp.stcntgcodi = pa.stcntgcodi and fp.stcompcodi = pa.stcompcodi
+      and ec.strecacodi = {0} and fp.facpagreajuste = 1
+      and (fp.stcompcodi ={1} or -1={1})
+    </query>
+  </Sql>
+
+  <!--END SIOSEIN2-->
+  
+</Sqls>
+
+

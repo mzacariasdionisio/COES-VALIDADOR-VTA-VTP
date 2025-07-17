@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(flupotcodi), 0) + 1 from cm_flujo_potencia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cm_flujo_potencia(
+      flupotcodi,
+      cmgncorrelativo,
+      equicodi,
+      flupotvalor,
+      flupotoperativo,
+      flupotfecha,
+      flupotusucreacion,
+      flupotfechacreacion,
+      flupotvalor1,
+      flupotvalor2,
+      configcodi,
+      emprcodi
+      )
+      values(
+      :flupotcodi,
+      :cmgncorrelativo,
+      :equicodi,
+      :flupotvalor,
+      :flupotoperativo,
+      :flupotfecha,
+      :flupotusucreacion,
+      :flupotfechacreacion,
+      :flupotvalor1,
+      :flupotvalor2,
+      :configcodi,
+      :emprcodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cm_flujo_potencia
+      set
+      cmgncorrelativo = :cmgncorrelativo,
+      equicodi = :equicodi,
+      flupotvalor = :flupotvalor,
+      flupotoperativo = :flupotoperativo,
+      flupotfecha = :flupotfecha,
+      flupotusucreacion = :flupotusucreacion,
+      flupotfechacreacion = :flupotfechacreacion,
+      flupotvalor1 = :flupotvalor1,
+      flupotvalor2 = :flupotvalor2,
+      configcodi = :configcodi,
+      emprcodi = :emprcodi
+      where
+      flupotcodi = :flupotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cm_flujo_potencia
+       where
+           flupotcodi = :flupotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      flupotcodi,
+      cmgncorrelativo,
+      equicodi,
+      emprcodi,
+      flupotvalor,
+      flupotoperativo,
+      flupotfecha,
+      flupotusucreacion,
+      flupotfechacreacion,
+      flupotvalor1,
+      flupotvalor2,
+      configcodi
+      from
+      cm_flujo_potencia
+      where
+      flupotcodi = :flupotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      flupotcodi,
+      cmgncorrelativo,
+      equicodi,
+      emprcodi,
+      flupotvalor,
+      flupotoperativo,
+      flupotfecha,
+      flupotusucreacion,
+      flupotfechacreacion,
+      flupotvalor1,
+      flupotvalor2,
+      configcodi
+      from
+      cm_flujo_potencia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      flupotcodi,
+      cmgncorrelativo,
+      equicodi,
+      emprcodi,
+      flupotvalor,
+      flupotoperativo,
+      flupotfecha,
+      flupotusucreacion,
+      flupotfechacreacion,
+      flupotvalor1,
+      flupotvalor2,
+      configcodi
+      from
+      cm_flujo_potencia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteFlujoPotencia</key>
+    <query>
+      select
+      emp.emprcodi,
+      emp.emprnomb,
+      cm.*,
+      emp.emprnomb,
+      --area.areanomb as equinomb,
+      eq.equinomb,
+      eq.famcodi,
+      config.nodobarra1,
+      config.nodobarra2
+      from cm_flujo_potencia cm
+      inner join
+      (
+      select max(t.cmgncorrelativo) as correlativo from (
+      select distinct cmgncorrelativo, to_char(flupotfecha, 'YYYY-MM-DD HH24:MI') as fecha from cm_flujo_potencia
+      where flupotfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and flupotfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      ) t
+      group by t.fecha
+      ) tabla on cm.cmgncorrelativo = tabla.correlativo
+      inner join eq_equipo eq on cm.equicodi = eq.equicodi
+      --inner join eq_area area on eq.areacodi = area.areacodi
+      inner join si_empresa emp on EMP.EMPRCODI= (case when coalesce(CM.EMPRCODI,-1) > 0 then CM.EMPRCODI else EQ.emprcodi end)
+      inner join eq_congestion_config config on cm.configcodi = config.configcodi
+      where
+      cm.flupotfecha >= to_date('{0} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and cm.flupotfecha &lt;= to_date('{1} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+      order by eq.equinomb asc,cm.flupotfecha asc      
+    </query>
+  </Sql>
+  
+</Sqls>

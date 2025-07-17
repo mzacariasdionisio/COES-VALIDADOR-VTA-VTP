@@ -1,0 +1,226 @@
+﻿<?xml version="1.0" encoding="utf-8" ?> 
+<Sqls>
+  <Sql>
+    <key>ListCodigoInfoBase</key>
+    <query>
+      select trn_codigo_infobase.coinfbcodi,
+      vw_trn_empresa_str.emprnomb,
+      trn_barra.barrbarratransferencia,
+      trn_codigo_infobase.coinfbcodigo,'InformacionBase' as tipo,
+      vw_eq_equipo_trn_coinfb.equinomb,
+      vw_trn_empresa_str.emprcodi
+      from trn_codigo_infobase left outer join vw_trn_empresa_str on trn_codigo_infobase.emprcodi= vw_trn_empresa_str.emprcodi
+      join trn_barra on trn_codigo_infobase.barrcodi= trn_barra.barrcodi
+      left outer join vw_eq_equipo_trn_coinfb on trn_codigo_infobase.equicodi = vw_eq_equipo_trn_coinfb.equicodi
+      where trn_codigo_infobase.emprcodi= :emprcodi
+      and trn_codigo_infobase.coinfbestado = 'ACT'
+      and nvl(to_char(trn_codigo_infobase.coinfbfechainicio, 'yyyymm'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      and nvl(to_char(trn_codigo_infobase.coinfbfechafin, 'yyyymm'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      trn_codigo_entrega.codentcodi,
+      vw_trn_empresa_str.emprnomb,
+      trn_barra.barrbarratransferencia,
+      trn_codigo_entrega.codentcodigo, 'Entrega' as Tipo,
+      vw_eq_central_generacion.equinomb,
+      vw_trn_empresa_str.emprcodi
+      from trn_codigo_entrega --inner join trn_codigo_consolidado_periodo on trn_codigo_entrega.codentcodigo=trn_codigo_consolidado_periodo.codcncodivta
+      left outer join vw_trn_empresa_str on trn_codigo_entrega.emprcodi = vw_trn_empresa_str.emprcodi
+      join trn_barra on trn_codigo_entrega.barrcodi= trn_barra.barrcodi
+      left outer join vw_eq_central_generacion on trn_codigo_entrega.equicodi = vw_eq_central_generacion.equicodi
+      where trn_codigo_entrega.emprcodi = :emprcodi --and trn_codigo_consolidado_periodo.peridccodi=:pericodi
+      and trn_codigo_entrega.codentestado = 'ACT'
+      and NVL(to_char(trn_codigo_entrega.codentfechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      and NVL(to_char(trn_codigo_entrega.codentfechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      union
+      select trn_codigo_retiro_solicitud.coresocodi,
+      (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = trn_codigo_retiro_solicitud.genemprcodi),
+      (select trn_barra.barrbarratransferencia from trn_barra where trn_barra.barrcodi =trn_codigo_retiro_solicitud.barrcodi ),
+      trn_codigo_retiro_solicitud.coresocodigo, 'Retiro' as Tipo,
+      (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = trn_codigo_retiro_solicitud.cliemprcodi) ,
+      trn_codigo_retiro_solicitud.genemprcodi
+      from trn_codigo_retiro_solicitud --inner join trn_codigo_consolidado_periodo on trn_codigo_retiro_solicitud.coresocodigo=trn_codigo_consolidado_periodo.codcncodivta
+      where trn_codigo_retiro_solicitud.genemprcodi = :emprcodi
+      and trn_codigo_retiro_solicitud.coresoestado in ('ASI','ACT')
+      and trn_codigo_retiro_solicitud.coresoobservacion = 'SOLBAJANO' --and trn_codigo_consolidado_periodo.peridccodi=:pericodi
+      and NVL(to_char(trn_codigo_retiro_solicitud.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      and NVL(to_char(trn_codigo_retiro_solicitud.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      order by Tipo asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListVistaTodo</key>
+    <query>
+      select trn_codigo_entrega.codentcodi, vw_trn_empresa_str.emprnomb,
+      trn_barra.barrbarratransferencia,
+      trn_codigo_entrega.codentcodigo, 'Entrega' as Tipo, vw_eq_central_generacion.equinomb,
+      vw_trn_empresa_str.emprcodi
+      from trn_codigo_entrega
+      left outer join vw_trn_empresa_str on trn_codigo_entrega.emprcodi = vw_trn_empresa_str.emprcodi
+      join trn_barra on trn_codigo_entrega.barrcodi= trn_barra.barrcodi
+      left outer join vw_eq_central_generacion on trn_codigo_entrega.equicodi = vw_eq_central_generacion.equicodi
+      where (trn_codigo_entrega.emprcodi = {0} or {0} is null or {0} = 0)
+      and trn_codigo_entrega.codentestado = 'ACT'
+      and NVL(to_char(trn_codigo_entrega.codentfechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = {1})
+      and NVL(to_char(trn_codigo_entrega.codentfechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = {1})
+      and (trn_codigo_entrega.barrcodi = {2} or {2} is null or {2} = 0)
+      union
+      select vw_trn_codigo_retiro.tretcoresocoresccodi, (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = vw_trn_codigo_retiro.genemprcodi),
+      (select trn_barra.barrbarratransferencia from trn_barra where trn_barra.barrcodi =vw_trn_codigo_retiro.barrcodi ),
+      vw_trn_codigo_retiro.tretcodigo, 'Retiro' as Tipo, (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = vw_trn_codigo_retiro.cliemprcodi) ,
+      vw_trn_codigo_retiro.genemprcodi
+      from vw_trn_codigo_retiro
+      where (vw_trn_codigo_retiro.genemprcodi = {0} or {0} is null or {0} = 0)
+      and NVL(to_char(vw_trn_codigo_retiro.fechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = {1})
+      and NVL(to_char(vw_trn_codigo_retiro.fechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = {1})
+      and (vw_trn_codigo_retiro.barrcodi = {2} or {2} is null or {2} = 0)
+      order by tipo asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaPeriVer</key>
+    <query>
+      select emprcodi, (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi=trn_valor_trans.emprcodi) as emprnomb,
+      (select vtranetotal from trn_valor_trans_empresa where
+      trn_valor_trans_empresa.emprcodi= trn_valor_trans.emprcodi
+      and  trn_valor_trans_empresa.pericodi = trn_valor_trans.pericodi
+      and  trn_valor_trans_empresa.vtraneversion = trn_valor_trans.vtranversion
+      ) as VT,
+      (select salempsaldo from trn_saldo_empresa where
+      trn_saldo_empresa.emprcodi =trn_valor_trans.emprcodi
+      and trn_saldo_empresa.pericodi =trn_valor_trans.pericodi
+      and trn_saldo_empresa.salempversion=trn_valor_trans.vtranversion
+      )as  ST,
+      (select salrscsaldo from trn_saldo_coresc where
+      trn_saldo_coresc.emprcodi =trn_valor_trans.emprcodi
+      and trn_saldo_coresc.pericodi =trn_valor_trans.pericodi
+      and trn_saldo_coresc.salrscversion=trn_valor_trans.vtranversion
+      )as  SCDSC,
+      (select  sum(ingcomimporte)  from trn_ing_compensacion where
+      trn_ing_compensacion.emprcodi=trn_valor_trans.emprcodi and
+      trn_ing_compensacion.pericodi =trn_valor_trans.pericodi and
+      trn_ing_compensacion.ingcomversion= trn_valor_trans.vtranversion
+      ) AS COMPENSACION ,(select vtotemtotal from trn_valor_total_empresa where
+      trn_valor_total_empresa.emprcodi =trn_valor_trans.emprcodi and
+      trn_valor_total_empresa.vtotemversion = trn_valor_trans.vtranversion and
+      trn_valor_total_empresa.pericodi = trn_valor_trans.pericodi
+      )as TOTAL ,pericodi,vtranversion
+      from  trn_valor_trans
+      where
+      (pericodi=:pericodi  )and
+      (vtranversion =:vtranversion) and
+      (vtranflag not in 'X')
+      group by emprcodi,pericodi,vtranversion order by emprcodi  asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaEmprPeriVer</key>
+    <query>
+      select a.pericodi, a.ingcomversion, a.emprcodi, a.ingcomimporte, b.cabcomnombre
+      from trn_ing_compensacion a join trn_cabe_compensacion b on a.cabcomcodi = b.cabcomcodi
+      where a.emprcodi=:emprcodi
+      and a.pericodi=:pericodi
+      and a.ingcomversion=:ingcomversion
+      order by b.cabcomnombre
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMatrizByCriteriPeriVer</key>
+    <query>
+      <!--select (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = trn_empresa_pago.emprcodi) as emprnomb,
+      (select emprnomb from vw_trn_empresa_str where vw_trn_empresa_str.emprcodi = trn_empresa_pago.emppagcodemppago) as emprnombpago,
+      emppagmonto 
+      from trn_empresa_pago 
+      where emprcodi = :emprcodi and emprcodi > 0 
+      and pericodi = :pericodi 
+      and emppagversion = :emppagversion 
+      order by 1, 2-->
+      select c.emprcodi,c.emprnomb,b.emprcodi as emppagocodi,b.emprruc, b.emprnomb as emprnombpago,a.emppagmonto
+      from trn_empresa_pago a
+      inner join vw_trn_empresa_str b on b.emprcodi = a.emppagcodemppago
+      inner join vw_trn_empresa_str c on c.emprcodi = a.emprcodi
+      where a.emprcodi = :emprcodi --and a.emprcodi > 0
+      and a.pericodi = :pericodi
+      and a.emppagversion = :emppagversion
+      order by b.emprcodi asc
+    </query>
+  </Sql>
+ 
+  <Sql>
+    <key>GetMatrizEmprByCriteriPeriVer</key>
+    <query>
+      select distinct a.emprcodi, b.emprnomb, b.emprruc
+      from trn_empresa_pago a join vw_trn_empresa_str b on a.emprcodi = b.emprcodi
+      where a.pericodi = :pericodi
+      and a.emppagversion = :emppagversion
+      order by b.emprnomb
+    </query>
+  </Sql>
+
+  <!--ASSETEC 202001-->
+  <Sql>
+    <key>GetByListCodigoInfoBaseByEnvio</key>
+    <query>
+      select trn_codigo_infobase.coinfbcodi,
+      vw_trn_empresa_str.emprnomb,
+      trn_barra.barrbarratransferencia,
+      trn_codigo_infobase.coinfbcodigo,'InformacionBase' as tipo,
+      vw_eq_equipo_trn_coinfb.equinomb,
+      vw_trn_empresa_str.emprcodi
+      from trn_codigo_infobase left outer join vw_trn_empresa_str on trn_codigo_infobase.emprcodi= vw_trn_empresa_str.emprcodi
+      join trn_barra on trn_codigo_infobase.barrcodi= trn_barra.barrcodi
+      left outer join vw_eq_equipo_trn_coinfb on trn_codigo_infobase.equicodi = vw_eq_equipo_trn_coinfb.equicodi
+      where trn_codigo_infobase.trnenvcodi= :trnenvcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByListCodigoModelo</key>
+    <query>
+      select mr.coresocodi as codentcodi,
+      (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = crs.genemprcodi) as  emprnomb,
+      b.barrbarratransferencia,
+      mr.coresocodigo as codentcodigo, 'Modelo' as tipo,
+      (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = crs.cliemprcodi) as equinomb,
+      crs.genemprcodi as emprcodi
+      from trn_modelo m join trn_modelo_retiro mr on m.trnmodcodi = mr.trnmodcodi and m.trnmodcodi = :trnmodcodi
+      left outer join trn_barra b on mr.barrcodi= b.barrcodi
+      left outer join trn_codigo_retiro_solicitud crs on mr.coresocodi = crs.coresocodi
+      --inner join trn_codigo_consolidado_periodo on crs.coresocodigo=trn_codigo_consolidado_periodo.codcncodivta
+      where m.emprcodi= :emprcodi
+      and crs.coresoestado in ('ASI','ACT')
+      and crs.coresoobservacion = 'SOLBAJANO' --and trn_codigo_consolidado_periodo.peridccodi=:pericodi
+      and NVL(to_char(crs.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      and NVL(to_char(crs.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      order by mr.coresocodigo
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByListCodigoModeloVTA</key>
+    <query>
+      select mr.coresocodi as codentcodi,
+      (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = crs.genemprcodi) as  emprnomb,
+      b.barrbarratransferencia,
+      mr.coresocodigo as codentcodigo, 'Modelo' as tipo,
+      (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = crs.cliemprcodi) as equinomb,
+      crs.genemprcodi as emprcodi
+      from trn_modelo m join trn_modelo_retiro mr on m.trnmodcodi = mr.trnmodcodi and m.trnmodcodi = :trnmodcodi
+      left outer join trn_barra b on mr.barrcodi= b.barrcodi
+      left outer join trn_codigo_retiro_solicitud crs on mr.coresocodi = crs.coresocodi      
+      where m.emprcodi= :emprcodi
+      and crs.coresoestado in ('ASI','ACT')
+      and crs.coresoobservacion = 'SOLBAJANO'      
+      and NVL(to_char(crs.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      and NVL(to_char(crs.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :pericodi)
+      order by mr.coresocodigo
+    </query>
+  </Sql>
+</Sqls>

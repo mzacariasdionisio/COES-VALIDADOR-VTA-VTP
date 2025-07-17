@@ -1,0 +1,363 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(empgcodi), 0) + 1 from gmm_empresa
+    </query>
+  </Sql>
+  <Sql>
+    <key>Save</key>
+    <query>
+      INSERT INTO gmm_empresa (
+      empgcodi,
+      empgfecingreso,
+      empgusucreacion,
+      empgtipopart,
+      empgestado,
+      empgcomentario,
+      empgfeccreacion,
+      empgusumodificacion,
+      empgfecmodificacion,
+      emprcodi
+      ) VALUES (
+      :empgcodi,
+      to_date(:empgfecingreso,'yyyy-mm-dd'),
+      :empgusucreacion,
+      :empgtipopart,
+      :empgestado,
+      :empgcomentario,
+      sysdate,
+      null,
+      null,
+      :emprcodi
+      )
+    </query>
+  </Sql>
+  <Sql>
+		<key>ListarMaestroEmpresas</key>
+		<query>
+      SELECT EMPRCODI,
+      '(' || TRIM(TEMP.TIPOEMPRDESC) || ') ' || NVL(TRIM(NVL(EMPRRAZSOCIAL,EMPRNOMB)), ' - SIN RAZON SOCIAL - ') AS Emprrazsocial,
+      NVL(EMPRRUC, ' - SIN RUC - ') as EmprRuc
+      FROM SI_EMPRESA EMP
+      JOIN si_tipoempresa TEMP
+      ON EMP.TIPOEMPRCODI = TEMP.TIPOEMPRCODI
+      WHERE
+      EMP.EMPRESTADO = 'A' AND
+      EMP.EMPRCODI NOT IN (0,-1) AND
+      EMP.EMPRCODI NOT IN (SELECT EMPRCODI FROM GMM_EMPRESA) AND
+      EMP.TIPOEMPRCODI IN (2,3,4) AND
+      EMP.TIPOEMPRCODI NOT IN (-1)
+      {0}
+      ORDER BY NVL(EMPRRAZSOCIAL,EMPRNOMB)
+    </query>
+	</Sql>
+    <Sql>
+		<key>ListarEmpresasParticipantes</key>
+		<query>
+     select ge.empgcodi, se.emprcodi, se.EMPRRAZSOCIAL, se.EMPRNOMB , ge.empgestado ,  NVL(EMPRRUC, ' - SIN RUC - ') as EmprRuc
+      from GMM_EMPRESA  ge
+      join SI_EMPRESA se on ge.emprcodi = se.emprcodi
+      where 1=1
+      and ge.empgestado = '{0}' 
+      {1}
+        ORDER BY NVL(EMPRRAZSOCIAL,EMPRNOMB)
+    </query>
+	</Sql>
+  
+  <Sql>
+    <key>ListarMaestroEmpresasCliente</key>
+    <query>
+      SELECT EMPRCODI,
+      '(' || TRIM(nvl(emprruc,'- SIN RUC -')) || ') ' || NVL(TRIM(NVL(EMPRRAZSOCIAL,EMPRNOMB)), ' - SIN RAZON SOCIAL - ') AS Emprrazsocial,
+      NVL(EMPRRUC, ' - SIN RUC - ') as EmprRuc
+      FROM SI_EMPRESA EMP
+      JOIN si_tipoempresa TEMP
+      ON EMP.TIPOEMPRCODI = TEMP.TIPOEMPRCODI
+      WHERE
+      EMP.EMPRESTADO = 'A' AND
+      EMP.EMPRCODI NOT IN (0,-1) AND
+      EMP.TIPOEMPRCODI NOT IN (-1)
+      {0}
+      ORDER BY NVL(EMPRRAZSOCIAL,EMPRNOMB)
+    </query>
+  </Sql>
+  <Sql>
+    <key>Update</key>
+    <query>
+      UPDATE gmm_empresa
+      SET
+      empgfecingreso = to_date(:EMPGFECINGRESO,'yyyy-mm-dd'),
+      empgtipopart = :EMPGTIPOPART,
+      empgestado = :EMPGESTADO,
+      empgcomentario = :EMPGCOMENTARIO,
+      empgusumodificacion = :EMPGUSUMODIFICACION,
+      empgfecmodificacion = sysdate
+      WHERE
+      empgcodi = :EMPGCODI
+    </query>
+  </Sql>
+  <Sql>
+    <key>Delete</key>
+    <query>
+      UPDATE gmm_empresa
+      SET
+      empgestado = '0' ,
+      empgusumodificacion =:empgusumodificacion,
+      empgfecmodificacion = sysdate
+      WHERE
+      empgcodi =:empgcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * from gmm_empresa where empgcodi = :empgcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByIdEdit</key>
+    <query>
+      select
+      emp.empgcodi as EmpCodiEdit,
+      trim(memp.emprnomb) as EmpNombreEdit,
+      memp.emprruc as EmpRucEdit,
+      emp.empgfecingreso as EmpFecIngEdit ,
+      emp.empgtipopart as EmptpartEdit,
+      emp.empgestado as EmpestadoEdit,
+      emp.empgcomentario as EmpComentarioEdit
+      from
+      gmm_empresa emp
+      join si_empresa memp
+      on emp.emprcodi = memp.emprcodi
+      left join gmm_garantia ga
+      on emp.empgcodi = ga.empgcodi
+      left join gmm_tipomodalidad tmo
+      on ga.tmodcodi = tmo.tmodcodi
+      left join (select trisecuencia, trinuminc, empgcodi from gmm_trienio) tri
+      on tri.empgcodi = emp.empgcodi
+      where 1 = 1
+      and tri.trisecuencia = (select max(trisecuencia) from gmm_trienio where empgcodi = emp.empgcodi)
+      and emp.empgcodi = :empgcodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarFiltroAgentes</key>
+    <query>
+      SELECT
+      emp.empgcodi,
+      case
+      when emp.empgestado = 'R' then 'En revisión'
+      when emp.empgestado = 'H' then 'Habilitado'
+      when emp.empgestado = 'S' then 'Suspendido'
+      when emp.empgestado = 'B' then 'Baja'
+      when emp.empgestado = '0' then 'Eliminado' /* 20220511 -> ASSETEC */
+      end as Emprestado,
+      case
+      when emp.empgtipopart = 'U' then 'Gran Usuario'
+      when emp.empgtipopart = 'G' then 'Generador'
+      when emp.empgtipopart = 'D' then 'Distribuidor'
+      end as Emprtipoparticipante,
+      '(' || trim(memp.emprruc) || ') ' || NVL(TRIM(NVL(memp.EMPRRAZSOCIAL,memp.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') as Emprnombrecomercial,
+      emp.empgfecingreso as EmprFechaIngreso,
+      ga.garafecfin as EmprFechaFin,
+      tmo.tmodmodalidad as EmprmodalidadBusqueda,
+      case ga.tmodcodi when 'GA' then to_char(ga.garamontogarantia)
+      when 'CR' then (select tcercertificacion
+      from gmm_tipocerticificacion where tcercodi = ga.tcercodi) end as EmprMontoGarantia,
+      tri.trinuminc as Emprnumeincumplimientos
+      FROM
+      gmm_empresa emp
+      join si_empresa memp
+      on emp.emprcodi = memp.emprcodi
+      left join gmm_garantia ga
+      on emp.empgcodi = ga.empgcodi
+      left join gmm_tipomodalidad tmo
+      on ga.tmodcodi = tmo.tmodcodi
+      left join (select trisecuencia, trinuminc, empgcodi from gmm_trienio) tri
+      on tri.empgcodi = emp.empgcodi
+      where 1= 1
+      --and ga.garaestado='1' -- validamos registro activo Garantia -- 20220505 -> comentado por ASSETEC
+      --and emp.empgestado != '0'  -- 20220511 -> comentado por ASSETEC
+      and tri.trisecuencia = (select max(trisecuencia) from gmm_trienio where empgcodi = emp.empgcodi)
+      and nvl(ga.garacodi,0) = (select nvl(max(garacodi),0) from gmm_garantia where empgcodi = emp.empgcodi)
+      and UPPER(memp.emprnomb) like case '{0}' when '' then UPPER(memp.emprnomb) else UPPER('%{0}%') end
+      and nvl(memp.emprruc,'-') like case '{1}' when '' then nvl(memp.emprruc,'-') else '%{1}%' end
+      and emp.empgtipopart = case '{2}' when '-' then emp.empgtipopart else '{2}' end
+      and emp.empgestado = case '{3}' when '-' then emp.empgestado else '{3}' end
+      and nvl(tmo.tmodcodi,'-') = case '{4}' when '-' then nvl(tmo.tmodcodi,'-') else '{4}' end
+      and nvl(ga.garafecfin,sysdate) between to_date(case '{5}' when '-' then to_char(nvl(ga.garafecfin,sysdate), 'dd/mm/yyyy') else '{5}' end,'dd/mm/yyyy')
+      and to_date(case '{6}' when '-' then to_char(nvl(ga.garafecfin+1,sysdate+1), 'dd/mm/yyyy') else '{6}' end,'dd/mm/yyyy')
+      and nvl(tri.trinuminc,0) >= {7}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarAgentes</key>
+    <query>
+      SELECT
+      emp.empgcodi,
+      '(' || TRIM(nvl(memp.emprruc,'- SIN RUC -')) || ') ' || NVL(TRIM(NVL(memp.EMPRRAZSOCIAL,memp.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') AS Emprnombrecomercial,
+      20 as TIPOEMPRCODI
+      FROM
+      gmm_empresa emp
+      join si_empresa memp
+      on emp.emprcodi = memp.emprcodi
+      where 1 = 1
+      and UPPER(TRIM(NVL(memp.EMPRRAZSOCIAL,memp.EMPRNOMB))) like case '{0}' when '' then UPPER(TRIM(NVL(memp.EMPRRAZSOCIAL,memp.EMPRNOMB)))
+      else UPPER('%{0}%') end
+      UNION
+      SELECT
+      memp.emprcodi,
+      '(' || TRIM(nvl(memp.emprruc,'- SIN RUC -')) || ') ' || NVL(TRIM(NVL(memp.EMPRRAZSOCIAL,memp.EMPRNOMB)), ' - SIN RAZON SOCIAL - ') AS Emprnombrecomercial,
+      memp.TIPOEMPRCODI
+      FROM
+      si_empresa memp
+      where 1 = 1
+      and UPPER(TRIM(NVL(memp.EMPRRAZSOCIAL,memp.EMPRNOMB))) like case '{0}' when '' then UPPER(TRIM(NVL(memp.EMPRRAZSOCIAL,memp.EMPRNOMB)))
+      else UPPER('%{0}%') end
+      and memp.EMPRESTADO = 'A'
+      and memp.EMPRCODI NOT IN (0,-1)
+      and memp.EMPRCODI NOT IN (SELECT EMPRCODI FROM GMM_EMPRESA) AND
+      memp.TIPOEMPRCODI IN (3) AND
+      memp.TIPOEMPRCODI NOT IN (-1)
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarAgentesParaCalculo</key>
+    <query>
+      select
+      empgcodi as EmpgcodiCal,
+      GEMP.emprcodi as EmprcodiCal,
+      (select pericodi from gmm_periodo where perianio = {0} and perimes = {1}) as pericodical,
+      nvl(pericodi, 0) as Pericodi,
+      case when (
+      SELECT COUNT(*) from gmm_datcalculo dat2 WHERE dat2.DCALANIO =  {0}  and dat2.DCALMES = {1}
+      and dat2.TINSCODI = 'SSCC' and dat2.DATCALESTADO ='1' AND DAT2.EMPGCODI=GEMP.EMPGCODI
+      ) = 1 then '1'
+      else '0' end as Empgfasecal,
+
+      (select periestado from gmm_periodo where perianio = {0} and perimes = {1}) as periestado
+
+      from
+      gmm_empresa GEMP
+      where empgestado = 'H' and '{2}' >= to_char(gemp.empgfecingreso,'YYYYMM')
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ListarAgentesEntregaParaCalculo</key>
+		<query>
+      select
+      empgcodi as EmpgcodiCal,
+      GEMP.emprcodi as EmprcodiCal,
+      (select pericodi from gmm_periodo where perianio = {0} and perimes = {1}) as pericodical,
+      nvl(pericodi, 0) as Pericodi,
+      case when (
+      SELECT COUNT(*) from gmm_datcalculo dat2 WHERE dat2.DCALANIO =  {0}  and dat2.DCALMES = {1}
+      and dat2.TINSCODI = 'ENTPRE' and dat2.DATCALESTADO ='1' AND DAT2.EMPGCODI=GEMP.EMPGCODI
+      ) = 1 then '1'
+      else '0' end as Empgfasecal,
+
+      (select periestado from gmm_periodo where perianio = {0} and perimes = {1}) as periestado
+
+      from
+      gmm_empresa GEMP
+      where empgestado = 'H' and '{2}' >= to_char(gemp.empgfecingreso,'YYYYMM')
+    </query>
+	</Sql>	
+	
+	
+	
+	
+	
+	<Sql>
+  <key>ListarCabeceraValoresEnergia</key>
+  <query>
+    select pto.ptomedicodi, pto.barrcodi, cbar.casddbbarra, pto.TPTOMEDICODI from me_hojaptomed hp
+    join me_ptomedicion pto on pto.ptomedicodi = hp.ptomedicodi
+    join trn_barra bar on pto.barrcodi = bar.barrcodi
+    join cai_equisddpbarr cbar on cbar.barrcodi = bar.barrcodi
+    where hp.formatcodi in ({0},{1}) and pto.emprcodi = {2} and hp.tipoinfocodi = {3}
+    group by pto.ptomedicodi, pto.barrcodi, cbar.casddbbarra, pto.TPTOMEDICODI
+  </query>
+</Sql>
+
+  <Sql>
+    <key>ListarModalidades</key>
+    <query>
+      select
+      ga.garacodi,
+      emp.empgcodi,
+      ga.garafecinicio as EmprFechaInicio,
+      ga.garafecfin as EmprFechaFin,
+      tmo.tmodmodalidad as EmprModalidad,
+      nvl(tcer.tcercertificacion, '-') as EmprCertifica,
+      ga.garamontogarantia as EmprMonto,
+      ga.garaarchivo as EmprArchivo,
+      tri.trisecuencia as EmprTrienio,
+      tri.trinuminc as EmprTotalIncM
+      from
+      gmm_empresa emp
+      join si_empresa memp
+      on emp.emprcodi = memp.emprcodi
+      left join gmm_garantia ga
+      on emp.empgcodi = ga.empgcodi
+      left join gmm_tipocerticificacion tcer
+      on tcer.tcercodi = ga.tcercodi
+      left join gmm_tipomodalidad tmo
+      on ga.tmodcodi = tmo.tmodcodi
+      left join gmm_trienio tri
+      on tri.empgcodi = emp.empgcodi
+      where 1= 1
+      and emp.empgcodi = '{0}' and ga.garaestado = '1'
+      and tri.tricodi = (select max(tricodi) from gmm_trienio where empgcodi = emp.empgcodi)
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarEstados</key>
+    <query>
+      SELECT
+      emp.empgcodi,
+      est.estcodi,
+      est.estfeccreacion as EmprFechaRegistro,
+      case
+      when est.estestado = 'R' then 'En revisión'
+      when est.estestado = 'H' then 'Habilitado'
+      when est.estestado = 'S' then 'Suspendido'
+      when est.estestado = 'B' then 'Baja'
+      end as EmprEstado,
+      est.estusucreacion as EmprUsuario
+      FROM
+      gmm_estadoempresa est
+      join gmm_empresa emp
+      on emp.empgcodi = est.empgcodi
+      where 1= 1
+      and emp.empgcodi = '{0}' order by estfeccreacion desc
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarIncumplimientos</key>
+    <query>
+      select
+      tri.empgcodi,
+      tri.trisecuencia as EmprTriSecuencia,
+      tri.trifecinicio as EmprFecIniTrienio,
+      tri.trifeclimite as EmprFecFinTrienio,
+      tri.trinuminc as EmprTotalInc
+      from
+      gmm_empresa emp
+      left join gmm_trienio tri
+      on tri.empgcodi = emp.empgcodi
+      where 1= 1
+      and emp.empgcodi = '{0}'
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetGarantiaById</key>
+    <query>
+      select * from gmm_garantia where garacodi = :garacodi
+    </query>
+  </Sql>
+</Sqls>

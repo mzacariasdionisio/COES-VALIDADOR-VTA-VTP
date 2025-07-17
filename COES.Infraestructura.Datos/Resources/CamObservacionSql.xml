@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+	<Sql>
+		<key>GetObservacionByProyCodi</key>
+		<query>
+			SELECT OB.*, RO.FECHA_RESPUESTA, RO.RESPUESTA FROM CAM_OBSERVACIONES OB LEFT JOIN CAM_RESPUESTAS_OBSERVACION RO ON OB.CAM_OBSERVACIONID = RO.CAM_OBSERVACIONID AND RO.IND_DEL = :IND_DELR  WHERE PROYCODI= :PROYCODI AND OB.IND_DEL= :IND_DEL ORDER BY OB.CAM_OBSERVACIONID DESC 
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>SaveObservacion</key>
+		<query>
+			INSERT INTO CAM_OBSERVACIONES (
+			CAM_OBSERVACIONID,
+			PROYCODI,
+			FECHA_OBSERVACION,
+			DESCRIPCION,
+			ESTADO,
+			USU_CREACION,
+			IND_DEL,
+			FEC_CREACION
+			) VALUES (
+			NVL(
+                    (SELECT MAX(CAM_OBSERVACIONID) FROM CAM_OBSERVACIONES), 0
+                ) + 1,
+			:PROYCODI,
+			:FECHA_OBSERVACION,
+			:DESCRIPCION,
+			:ESTADO,
+			:USU_CREACION,
+			:IND_DEL,
+			:FEC_CREACION
+			) 
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>UpdateObservacion</key>
+		<query>
+			UPDATE CAM_OBSERVACIONES
+			SET
+			PROYCODI=:PROYCODI,
+			FECHA_OBSERVACION=:FECHA_OBSERVACION,
+			DESCRIPCION=:DESCRIPCION,
+			ESTADO=:ESTADO,
+			USU_MODIFICACION = :USU_MODIFICACION,
+			FEC_MODIFICACION = :FEC_MODIFICACION
+			WHERE CAM_OBSERVACIONID = :CAM_OBSERVACIONID
+		</query>
+	</Sql>
+	<Sql>
+		<key>GetLastObservacionId</key>
+		<query>
+			SELECT * FROM CAM_OBSERVACIONES
+			ORDER BY CAM_OBSERVACIONID DESC
+			FETCH FIRST 1 ROWS ONLY
+		</query>
+	</Sql>
+
+
+	<Sql>
+		<key>DeleteObservacionById</key>
+		<query>
+			UPDATE CAM_OBSERVACIONES SET IND_DEL = :IND_DEL,  USU_MODIFICACION = :USU_MODIFICACION, FEC_MODIFICACION = :FEC_MODIFICACION WHERE CAM_OBSERVACIONID = :ID
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetObservacionById</key>
+		<query>
+			SELECT * FROM CAM_OBSERVACIONES WHERE CAM_OBSERVACIONID = :ID AND IND_DEL = :IND_DEL
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>EnviarObservacionByProyecto</key>
+		<query>
+			UPDATE CAM_OBSERVACIONES
+			SET
+			ESTADO=:ESTADO
+			WHERE ESTADO = :ESTADOP AND PROYCODI = :PROYCODI AND IND_DEL = :IND_DEL
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>GetObservacionByPlanCodi</key>
+		<query>
+			SELECT * FROM CAM_OBSERVACIONES O INNER JOIN CAM_TRNSMPROYECTO P ON O.PROYCODI = P.PROYCODI  WHERE P.PLANCODI = :PLANCODI AND O.IND_DEL = :IND_DEL AND O.ESTADO != 'Cerrada'
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>UpdateObservacionByProyecto</key>
+		<query>
+			UPDATE CAM_OBSERVACIONES
+			SET
+			ESTADO=:ESTADO
+			WHERE PROYCODI = :PROYCODI AND IND_DEL = :IND_DEL AND ESTADO = 'Enviada'
+		</query>
+	</Sql>
+</Sqls>

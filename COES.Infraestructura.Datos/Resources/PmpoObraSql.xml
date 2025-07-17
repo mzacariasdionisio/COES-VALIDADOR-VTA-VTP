@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      SELECT NVL(MAX(OBRACODI), 0) + 1 FROM PMPO_OBRA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into pmpo_obra(
+      emprcodi,
+      obracodi,
+      tobracodi,
+      obrafechaplanificada,
+      obraflagformat,
+      obradescripcion,
+      obrausucreacion,
+      obrafeccreacion
+      )
+      values(
+      :emprcodi,
+      :obracodi,
+      :tobracodi,
+      :obrafechaplanificada,
+      :obraflagformat,
+      :obradescripcion,
+      :obrausucreacion,
+      sysdate
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update pmpo_obra
+      set
+      obrafechaplanificada = to_date('{0}','yyyy-mm-dd'),
+      obradescripcion = '{1}',
+      obrausumodificacion = '{2}',
+      obrafecmodificacion = sysdate
+      where
+      obracodi = {3}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from pmpo_obra
+      where
+      obracodi = {0}
+    </query>
+  </Sql>
+
+  <!--<Sql>
+    <key>GetByIdGeneracion</key>
+    <query>
+      select
+      be.emprcodi,
+      po.obracodi,
+      po.tobracodi,
+      pmto.tobradescripcion,
+      po.obrafechaplanificada,
+      po.obradescripcion,
+      po.obrausucreacion,
+      po.obrafeccreacion,
+      po.obrausumodificacion,
+      po.obrafecmodificacion,
+      gr.grupocodi as Equicodi,
+      gr.gruponomb as Equinomb,
+      gr.grupoestado
+      from pmpo_obra po, pmpo_obra_detalle pd, pr_grupo gr, pmpo_tipo_obra pmto
+      where
+      po.obracodi = pd.obracodi and
+      po.tobracodi = pmto.tobracodi and
+      pd.grupocodi = gr.grupocodi and
+      po.obracodi = {0}
+    </query>
+  </Sql>-->
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+   select
+      po.emprcodi,
+      po.obracodi,
+      po.obraflagformat,
+      po.tobracodi,
+      pmto.tobradescripcion,
+      po.obrafechaplanificada,
+      po.obradescripcion,
+      po.obrausucreacion,
+      po.obrafeccreacion,
+      po.obrausumodificacion,
+      po.obrafecmodificacion,
+      pd.barrcodi as Barrcodi,
+      pd.grupocodi as Grupocodi,
+      pd.equicodi as EquiCodi,
+      (select barrnombre from pr_barra br where br.barrcodi = pd.barrcodi) as BarraNomb,
+      (select gruponomb from pr_grupo gr where gr.grupocodi = pd.grupocodi) as GrupoNomb,
+      (select equinomb from eq_equipo eq where eq.equicodi = pd.equicodi) as EquiNomb,
+      (select emprnomb from si_empresa where emprcodi = po.emprcodi) as Emprnomb
+      from pmpo_obra po, pmpo_obra_detalle pd, pmpo_tipo_obra pmto
+      where
+      po.obracodi = pd.obracodi and
+      po.tobracodi = pmto.tobracodi and
+      po.obracodi = {0}
+    </query>
+  </Sql>
+
+  
+  <!--<Sql>
+    <key>ListGeneracion</key>
+    <query>
+      select
+      gr.emprcodi,
+      em.emprnomb,
+      po.obracodi,
+      po.tobracodi,
+      pmto.tobradescripcion,
+      po.obrafechaplanificada,
+      po.obraflagformat,
+      po.obradescripcion,
+      po.obrausucreacion,
+      po.obrafeccreacion,
+      po.obrausumodificacion,
+      po.obrafecmodificacion,
+      gr.grupocodi as Equicodi,
+      gr.gruponomb as Equinomb,
+      gr.grupoestado
+      from pmpo_obra po, pmpo_obra_detalle pd, pr_grupo gr, pmpo_tipo_obra pmto, si_empresa em,me_ptomedicion pto, me_hojaptomed hpto, me_hoja ho, me_formato fo
+      where
+      po.obracodi = pd.obracodi and
+      po.tobracodi = pmto.tobracodi and
+      po.obrafechaplanificada between to_date('{0}','yyyy-mm') and to_date('{1}','yyyy-mm') and
+      pd.grupocodi = gr.grupocodi and
+      gr.emprcodi = em.emprcodi and
+      gr.emprcodi = decode({2}, 0, gr.emprcodi, {2}) and
+      po.tobracodi = {3} and
+      pto.ptomedicodi = hpto.ptomedicodi and
+      hpto.hojacodi = ho.hojacodi and
+      ho.formatcodi = fo.formatcodi and
+      fo.formatcodi in ({4}) and
+      pto.emprcodi = gr.emprcodi
+      group by gr.emprcodi,
+      em.emprnomb,
+      po.obracodi,
+      po.tobracodi,
+      pmto.tobradescripcion,
+      po.obrafechaplanificada,
+      po.obraflagformat,
+      po.obradescripcion,
+      po.obrausucreacion,
+      po.obrafeccreacion,
+      po.obrausumodificacion,
+      po.obrafecmodificacion,
+      gr.grupocodi,
+      gr.gruponomb,
+      gr.grupoestado
+      order by po.obradescripcion
+    </query>
+  </Sql>-->
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      po.emprcodi,
+      po.obracodi,
+      po.obradescripcion,
+      po.tobracodi,
+      pmto.tobradescripcion,
+      po.obrafechaplanificada,
+      po.obraflagformat,
+      po.obradescripcion,
+      po.obrausucreacion,
+      po.obrafeccreacion,
+      po.obrausumodificacion,
+      po.obrafecmodificacion,
+      pd.barrcodi as Barrcodi,
+      pd.grupocodi as Grupocodi,
+      pd.equicodi as EquiCodi,
+      (select barrnombre from pr_barra br where br.barrcodi = pd.barrcodi) as BarraNomb,
+      (select gruponomb from pr_grupo gr where gr.grupocodi = pd.grupocodi) as GrupoNomb,
+      (select equinomb from eq_equipo eq where eq.equicodi = pd.equicodi) as EquiNomb,
+      (select emprnomb from si_empresa where emprcodi = po.emprcodi) as Emprnomb
+      from pmpo_obra po, pmpo_obra_detalle pd, pmpo_tipo_obra pmto,me_ptomedicion pto, me_hojaptomed hpto, me_hoja ho, me_formato fo
+      where
+      po.obracodi = pd.obracodi and
+      po.tobracodi = pmto.tobracodi and
+      po.obrafechaplanificada between to_date('{0}','yyyy-mm') and to_date('{1}','yyyy-mm') and
+      po.tobracodi = {3} and
+      pto.ptomedicodi = hpto.ptomedicodi and
+      hpto.hojacodi = ho.hojacodi and
+      ho.formatcodi = fo.formatcodi and
+      fo.formatcodi in ({4})
+      group by
+      po.emprcodi,
+      po.obracodi,
+      po.tobracodi,
+      pmto.tobradescripcion,
+      po.obrafechaplanificada,
+      po.obraflagformat,
+      po.obradescripcion,
+      po.obrausucreacion,
+      po.obrafeccreacion,
+      po.obrausumodificacion,
+      po.obrafecmodificacion,
+      pd.barrcodi,
+      pd.grupocodi,
+      pd.equicodi
+      order by po.obracodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListObras</key>
+    <query>
+      select distinct
+      mo.obracodi,
+      mo.obrafecprop,
+      mo.obraflagformat,
+      mo.obracomentario,
+      mo.obrauser,
+      mo.obrafeccreacion,
+      eq.equicodi,
+      mf.formatnombre,
+      eq.equinomb,
+      ef.famnomb,
+      se.emprnomb,
+      eq.equipot,
+      eq.equifechiniopcom
+      from eq_equipo eq
+      left join pmpo_obra mo on eq.equicodi = mo.equicodi
+      left join eq_familia ef on eq.famcodi = ef.famcodi
+      left join si_empresa se on eq.emprcodi = se.emprcodi
+      left join me_ptomedicion mp on eq.equicodi = mp.equicodi
+      left join me_hojaptomed mh on mp.ptomedicodi = mh.ptomedicodi
+      left join me_formato mf on mh.formatcodi = mf.formatcodi
+      where
+      eq.equifechiniopcom between to_date('{0}','yyyy-mm') and to_date('{1}','yyyy-mm') and
+      eq.emprcodi in ({2}) and
+      ef.tipoecodi = {3}
+      order by eq.equifechiniopcom desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListBarras</key>
+    <query>
+      select distinct
+            bar.barrcodi,
+            bar.barrestado,
+            bar.barrsituacion
+      from pr_barra bar
+      where emprcodi = {0}
+      order by bar.barrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListFlagFormat</key>
+    <query>
+      select distinct obraflagformat from pmpo_obra
+    </query>
+  </Sql>
+  
+</Sqls>

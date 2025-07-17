@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+    
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_valor_total_empresa
+      (
+      vtotemcodi,pericodi, emprcodi, vtotemversion, vtotemtotal,vtotemusername ,vtotemfecins
+      )
+      values
+      (
+      :vtotemcodi, :pericodi, :emprcodi, :vtotemversion, :vtotemtotal, :vtotemusername,:valtotaempfecins
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+     
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from trn_valor_total_empresa
+      where
+      pericodi = :pericodi and
+      vtotemversion = :vtotemversion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+   
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select * from trn_valor_total_empresa where pericodi = :pericodi and vtotemversion = :vtotemversion and
+		--emprcodi = :emprcodi
+		(emprcodi = :emprcodi or emprcodi in (select v.emprcodiorigen
+		from vw_si_migracion v
+		left join vw_si_migracion v1 on v1.emprcodiorigen = v.emprcodidestino
+		where nvl(v1.emprcodidestino,v.emprcodidestino) = :emprcodi or v.emprcodidestino = :emprcodi))
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(vtotemcodi), 0) + 1 from trn_valor_total_empresa
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetEmpresaPositivaByCriteria</key>
+    <query>
+      select * from trn_valor_total_empresa where
+      vtotemtotal &gt; 0 and pericodi = :pericodi and vtotemversion = :vtotemversion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetEmpresaNegativaByCriteria</key>
+    <query>
+      select a.*, 
+      (select sum(b.vtotemtotal) from trn_valor_total_empresa b 
+       where b.vtotemtotal &lt; 0 
+       and b.pericodi = a.pericodi 
+       and b.vtotemversion = a.vtotemversion) as total
+      from trn_valor_total_empresa a
+      where a.vtotemtotal &lt; 0 and a.pericodi = :pericodi and a.vtotemversion = :vtotemversion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarValorTotalEmpresa</key>
+    <query>
+      select * from trn_valor_total_empresa where pericodi = :pericodi and vtotemversion = :vtotemversion
+    </query>
+  </Sql>
+</Sqls>

@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(ofercodi), 0) + 1 from sma_oferta
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into sma_oferta(
+            ofertipo,
+            oferfechainicio,
+            oferfechafin,
+            ofercodenvio,
+            oferestado,
+            oferusucreacion,
+            oferfeccreacion,
+            oferusumodificacion,
+            oferfecmodificacion,
+            oferfechaenvio,
+            ofercodi,
+            usercode, 
+            oferfuente,
+            smapaccodi
+      )
+      values(
+            :ofertipo,
+            :oferfechainicio,
+            :oferfechafin,
+            'SUB-'||:ofercodi,
+            'A',
+            :oferusucreacion,
+            sysdate,
+            null,
+            null,
+            :oferfechaenvio,
+            :ofercodi,
+            :usercode,
+            :oferfuente,
+            :smapaccodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update sma_oferta
+       set
+           ofertipo = :ofertipo,
+           oferfechainicio = :oferfechainicio,
+           oferfechafin = :oferfechafin,
+           ofercodenvio = :ofercodenvio,
+           oferusumodificacion = :oferusumodificacion,
+           oferfecmodificacion = :oferfecmodificacion,
+           oferfechaenvio = :oferfechaenvio,
+           usercode = :usercode
+       where
+           ofercodi = :ofercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateOferDia</key>
+    <query>
+      update sma_oferta
+      set oferestado = 'H' where ofercodi  in (
+      select so.ofercodi
+      from
+      sma_oferta so, sma_oferta_detalle sd
+      where
+      so.ofercodi = sd.ofercodi and
+      sd.urscodi in ({0}) and
+      so.oferfuente = '{1}' and
+      so.ofertipo = {2} and
+      so.oferestado = 'A' and
+      so.oferfechainicio = to_date('{3}','YYYY-MM-DD')
+      group by so.ofercodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetNumOferDia</key>
+    <query>
+      select count(*)
+      from (
+      select so.ofercodi
+      from
+      sma_oferta so, sma_oferta_detalle sd
+      where
+      so.ofercodi = sd.ofercodi and
+      sd.urscodi in (select  urscodi from sma_usuario_urs where usercode = {0} and UURSESTADO = 'A') and
+      so.ofertipo = {1} and
+      so.oferestado = 'A' and
+      so.oferfechainicio = to_date('{2}','YYYY-MM-DD')
+      group by so.ofercodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           *
+       from
+           sma_oferta
+       where
+           ofercodi = :ofercodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListOfertas</key>
+    <query>
+      SELECT
+      distinct sofe.ofercodenvio,
+      sofe.ofertipo,
+      sofe.oferestado,
+      sofe.ofercodi,
+      sofe.oferfechaenvio,
+      sofe.oferfechainicio,
+      sofe.oferfechafin,
+      sofe.oferusucreacion,
+      sofe.oferfeccreacion,
+      sofe.oferusumodificacion,
+      sofe.oferfecmodificacion,
+      sofe.usercode,
+      fw.username
+      FROM sma_oferta sofe, fw_user fw, vw_user_empresa smope, sma_oferta_detalle sofd
+      WHERE
+      fw.usercode = sofe.usercode and
+      fw.usercode = smope.usercode and
+      sofe.ofercodi = sofd.ofercodi and
+      (sofe.ofertipo = '{0}' or '1'='-1') and
+      ('{1}' = 'NULL' or  (to_date('{1}','YYYY-MM-DD') &lt;= sofe.oferfechainicio and to_date('{2}','YYYY-MM-DD') >= sofe.oferfechainicio )) and
+      (smope.emprcodi = '{3}' or '{3}'='-1') and
+      (sofd.urscodi IN ({4}) or '{4}'='-1') and
+      (sofe.usercode = '{5}' or '{5}'='-1') and
+      sofe.oferfuente = '{6}'
+      order by sofe.oferfechaenvio desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      SELECT
+      sofd.ofdetipo,
+      sofd.ofdecodi,
+      sofd.ofdeprecio as Repoprecio,
+      sofd.ofdepotofer as Repopotofer,
+      sofd.ofdemoneda as Repomoneda,
+      srom.odmobndcalificada as BandaCalificada,
+      srom.odmobnddisponible as BandaDisponible,
+      sofd.ofdehorainicio,
+      sofd.ofdehorafin,
+      sofe.ofertipo,
+      sofe.oferestado,
+      sofe.ofercodi,
+      sofe.ofercodenvio,
+      sofe.oferfechaenvio,
+      sofe.oferfechainicio,
+      sofe.oferfechafin,
+      sofe.oferusucreacion,
+      sofe.oferfeccreacion,
+      sofe.oferusumodificacion,
+      sofe.oferfecmodificacion,
+      sofe.usercode,
+      smope.emprnomb,
+      sofd.urscodi,
+      smope.ursnomb,
+      fw.username,
+      srom.grupocodi,
+      smope.gruponomb
+      FROM sma_relacion_od_mo srom, sma_oferta_detalle sofd, sma_oferta sofe, vw_sma_urs_modo_operacion smope, fw_user fw
+      WHERE  sofd.ofdecodi = srom.ofdecodi and
+      sofe.ofercodi = sofd.ofercodi and
+      srom.grupocodi = smope.grupocodi and
+      fw.usercode = sofe.usercode and
+      sofe.oferestado = decode(:oferestado,'-1',sofe.oferestado,:oferestado) and
+      sofe.ofertipo = decode(:ofertipo,-1,sofe.ofertipo,:ofertipo) and
+      to_char(sofe.oferfechainicio,'YYYYMMDD') = decode(:oferfechainicio,null,to_char(sofe.oferfechainicio,'YYYYMMDD'),to_char(:oferfechainicio,'YYYYMMDD')) and
+      sofe.usercode = decode(:usercode,-1,sofe.usercode,:usercode) and
+      sofe.ofercodi = decode(:ofercodi,-1,sofe.ofercodi,:ofercodi) AND
+      srom.ODMOESTADO = 'A' and
+      sofe.oferfuente = :oferfuente
+      ORDER BY sofd.urscodi, sofd.ofdehorainicio,sofd.ofdehorafin, srom.grupocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListInterna</key>
+    <query>
+      SELECT
+      sofd.ofdetipo,
+      sofd.ofdecodi,
+      sofd.ofdeprecio as Repoprecio,
+      sofd.ofdemoneda as Repomoneda,
+      sofd.ofdepotofer as Repopotofer,
+      srom.odmobndcalificada as BandaCalificada,
+      srom.odmobnddisponible as BandaDisponible,
+      sofd.ofdehorainicio,
+      sofd.ofdehorafin,
+      sofe.ofertipo,
+      sofe.oferestado,
+      sofe.ofercodi,
+      sofe.ofercodenvio,
+      sofe.oferfechaenvio,
+      sofe.oferfechainicio,
+      sofe.oferfechafin,
+      sofe.oferusucreacion,
+      sofe.oferfeccreacion,
+      sofe.oferusumodificacion,
+      sofe.oferfecmodificacion,
+      sofe.usercode,
+      sofe.oferfuente,
+      (select fw.username from fw_user fw where fw.usercode = sofe.usercode) as username,
+      sofd.urscodi,
+      smope.emprnomb,
+      smope.emprcodi,
+      (select distinct ss.ursnomb from vw_sma_urs_modo_operacion ss  where ss.urscodi = sofd.urscodi and rownum = 1) as ursnomb,
+      (LISTAGG(trim(srom.grupocodi), ',') WITHIN GROUP (ORDER BY srom.grupocodi)) as OferlistMO,
+      (LISTAGG(trim(gruponomb), ',') WITHIN GROUP (ORDER BY gruponomb)) as OferlistMODes
+      FROM sma_relacion_od_mo srom, sma_oferta_detalle sofd, sma_oferta sofe, vw_sma_urs_modo_operacion smope
+      where  sofd.ofdecodi = srom.ofdecodi and
+      (sofe.oferfuente = '{8}' or '{8}'='-1') and
+      sofe.ofercodi = sofd.ofercodi and
+      srom.grupocodi = smope.grupocodi and
+      (sofe.oferestado = '{0}' or '{0}'='-1') and
+      (sofe.ofertipo = {1} or '{1}'='-1') and
+      ('{2}' = 'NULL' or  (to_date('{2}','YYYY-MM-DD') &lt;= sofe.oferfechainicio and to_date('{3}','YYYY-MM-DD') >= sofe.oferfechainicio )) and
+      (smope.emprcodi = '{4}' or '{4}'='-1') and
+      (sofd.urscodi IN ({5}) or '{5}'='-1') and
+      (sofe.usercode = '{6}' or '{6}'='-1') and
+      (sofe.ofercodi in ({7}) or '{7}'='-1') and
+      srom.ODMOESTADO = 'A'
+      GROUP  BY
+      sofd.ofdetipo,
+      sofd.ofdecodi,
+      sofd.ofdeprecio,
+      sofd.ofdemoneda,
+      sofd.ofdepotofer,
+      srom.odmobndcalificada,
+      srom.odmobnddisponible,
+      sofd.ofdehorainicio,
+      sofd.ofdehorafin,
+      sofe.ofertipo,
+      sofe.oferestado,
+      sofe.ofercodi,
+      sofe.ofercodenvio,
+      sofe.oferfechaenvio,
+      sofe.oferfechainicio,
+      sofe.oferfechafin,
+      sofe.oferusucreacion,
+      sofe.oferfeccreacion,
+      sofe.oferusumodificacion,
+      sofe.oferfecmodificacion,
+      sofe.usercode,
+      sofe.oferfuente,
+      sofd.urscodi,
+      smope.emprnomb,
+      smope.emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      ofertipo,
+      oferfechainicio,
+      oferfechafin,
+      ofercodenvio,
+      oferestado,
+      oferusucreacion,
+      oferfeccreacion,
+      oferusumodificacion,
+      oferfecmodificacion,
+      oferfechaenvio,
+      ofercodi,
+      usercode
+      from
+      sma_oferta
+      where
+      ofertipo = :OFERTIPO
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListOfertaSimetricaHorario</key>
+    <query>
+      select
+      ID,
+      HORARIO_INICIO,
+      HORARIO_FIN,
+      ESTADO
+      from
+      SMA_OFERTA_SIMETRICA_HORARIO order by ID desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CrearOfertaSimetricaHorario</key>
+    <query>
+      insert into SMA_OFERTA_SIMETRICA_HORARIO(
+      ID,
+      HORARIO_INICIO,
+      HORARIO_FIN,
+      ESTADO
+      )
+      values(
+      (select count(1)+1 from SMA_OFERTA_SIMETRICA_HORARIO),
+      TO_DATE('{0}', 'DD/MM/YYYY HH24:MI:SS'),
+      TO_DATE('{1}', 'DD/MM/YYYY HH24:MI:SS'),
+      1
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>RevertirEstadoEntidadOfertaSimetricaHorario</key>
+    <query>
+      update SMA_OFERTA_SIMETRICA_HORARIO
+      set ESTADO = {0}
+      where ID = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EstaVigenteEntidadOfertaSimetricaHorario</key>
+    <query>
+      select * from SMA_OFERTA_SIMETRICA_HORARIO
+      where (SYSDATE BETWEEN HORARIO_INICIO and HORARIO_FIN) and estado = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EliminarParaCrearEntidadOfertaSimetricaHorario</key>
+    <query>
+      update sma_oferta set oferestado = 'H' where oferfechainicio = to_date('{0}','DD/MM/YYYY') + INTERVAL '1' DAY
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ResetearOfertaDefecto</key>
+    <query>
+      update sma_oferta set oferestado = 'H' where ofertipo = 0 and oferfechainicio between to_date('{0}','YYYY-MM-DD') and  to_date('{1}','YYYY-MM-DD')
+    </query>
+  </Sql>
+  
+</Sqls>

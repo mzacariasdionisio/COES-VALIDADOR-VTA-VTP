@@ -1,0 +1,762 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+	<Sql>
+		<key>ObtenerGeneracionPorFechas</key>
+		<query>
+			select medifecha, ptomedicodi,
+			h1,h2,h3,h4,h5,h6,h7,h8,h9,h10,
+			h11,h12,h13,h14,h15,h16,h17,h18,h19,h20,
+			h21,h22,h23,h24,h25,h26,h27,h28,h29,h30,
+			h31,h32,h33,h34,h35,h36,h37,h38,h39,h40,
+			h41,h42,h43,h44,h45,h46,h47,h48
+			from sic.me_medicion48
+			where
+			{0}
+			and lectcodi in (6, 103) and tipoinfocodi=1 order by medifecha
+		</query>
+	</Sql>
+	<Sql>
+		<key>ObtenerFormulas</key>
+		<query>
+			select
+			prgr.ptomedibarranomb,
+			mper1.prruabrev as NOMBRE_P,
+			mper1.prruformula as FORMULA_P,
+			mper2.prruabrev as NOMBRE_S,
+			mper2.prruformula as FORMULA_S
+			from
+			sic.prn_relaciontna rtna,
+			sic.me_perfil_rule mper1,
+			sic.me_perfil_rule mper2,
+			sic.prn_relaciontnadetalle rdet,
+			(select pm.ptomedibarranomb,pm.grupocodi from sic.me_hojaptomed hm,sic.me_ptomedicion pm where hm.ptomedicodi=pm.ptomedicodi and hm.formatcodi=47 and pm.origlectcodi=18) prgr
+			where
+			rtna.reltnaformula=mper1.prrucodi and
+			mper1.prruactiva='S' and
+			rdet.reltnadetformula=mper2.prrucodi and
+			mper2.prruactiva='S' and
+			rtna.reltnacodi=rdet.reltnacodi and
+			rdet.barracodi=prgr.grupocodi and mper1.prruabrev like '%PRN_%'
+			group by
+			prgr.ptomedibarranomb, mper1.prruabrev, mper1.prruformula, mper2.prruabrev, mper2.prruformula
+			order by
+			mper1.prruabrev,mper2.prruabrev
+		</query>
+	</Sql>
+	<Sql>
+		<key>ObtenerDemandaPorFechas</key>
+		<query>
+			select *
+			from ({0})
+			where
+			(dporawfecha between to_date('{1}','yyyy-mm-dd hh24:mi:ss') and to_date('{2}','yyyy-mm-dd hh24:mi:ss'))
+			and ptomedicodi in ({3})
+			and prnvarcodi in (3,8,17) and dporawfuente=2 and dporawtipomedi in (1,5,6)
+			order by dporawfecha
+		</query>
+	</Sql>
+	<Sql>
+		<key>RelacionScoIeod</key>
+		<query>
+			select
+			me1.ptomedicodi as ptomedicodi_sco,me2.ptomedicodi as ptomedicodi_ieod
+			from
+			(select * from sic.me_ptomedicion where origlectcodi=36 and codref in (1,5,6)) me1
+			inner join
+			(select * from sic.me_ptomedicion where origlectcodi=37 and codref in (1,5,6)) me2
+			on me1.ptomedidesc = me2.ptomedidesc
+		</query>
+	</Sql>
+	<Sql>
+		<key>ListaBarras</key>
+		<query>
+			select
+			pm.ptomedicodi,
+			pm.grupocodi,
+			pm.ptomedibarranomb,
+			arel.areapadre as areacodi
+			from
+			sic.me_hojaptomed hm
+			inner join me_ptomedicion pm on hm.ptomedicodi=pm.ptomedicodi
+			inner join pr_grupo gr on pm.grupocodi = gr.grupocodi
+			left join eq_arearel arel on gr.areacodi = arel.areacodi and (arel.areapadre in (2,3,5,6))
+			where
+			hm.formatcodi=47 and
+			pm.origlectcodi=18 order by hm.hptoorden
+		</query>
+	</Sql>
+	<Sql>
+		<key>ObtenerDemandaSRP</key>
+		<query>
+			select
+			me.medifecha,
+			mp.ptomedibarranomb,
+			sum(me.h1) as h1,sum(me.h2) as h2,sum(me.h3) as h3,sum(me.h4) as h4,sum(me.h5) as h5,
+			sum(me.h6) as h6,sum(me.h7) as h7,sum(me.h8) as h8,sum(me.h9) as h9,sum(me.h10) as h10,
+			sum(me.h11) as h11,sum(me.h12) as h12,sum(me.h13) as h13,sum(me.h14) as h14,sum(me.h15) as h15,
+			sum(me.h16) as h16,sum(me.h17) as h17,sum(me.h18) as h18,sum(me.h19) as h19,sum(me.h20) as h20,
+			sum(me.h21) as h21,sum(me.h22) as h22,sum(me.h23) as h23,sum(me.h24) as h24,sum(me.h25) as h25,
+			sum(me.h26) as h26,sum(me.h27) as h27,sum(me.h28) as h28,sum(me.h29) as h29,sum(me.h30) as h30,
+			sum(me.h31) as h31,sum(me.h32) as h32,sum(me.h33) as h33,sum(me.h34) as h34,sum(me.h35) as h35,
+			sum(me.h36) as h36,sum(me.h37) as h37,sum(me.h38) as h38,sum(me.h39) as h39,sum(me.h40) as h40,
+			sum(me.h41) as h41,sum(me.h42) as h42,sum(me.h43) as h43,sum(me.h44) as h44,sum(me.h45) as h45,
+			sum(me.h46) as h46,sum(me.h47) as h47,sum(me.h48) as h48
+			from (
+				select
+				pm.ptomedibarranomb,
+				pm.grupocodi
+				from
+				sic.me_hojaptomed hm,
+				sic.me_ptomedicion pm
+				where
+				hm.ptomedicodi=pm.ptomedicodi and
+				hm.formatcodi=47 and
+				pm.origlectcodi=18
+				order by
+				hm.hptoorden
+			) mp left join
+			(
+				select
+				*
+				from
+				sic.prn_mediciongrp md
+				where
+				( 
+					md.medifecha between to_date('{0}','yyyy-mm-dd') and to_date('{1}','yyyy-mm-dd'))					
+					and md.prnmgrtipo in ({2})
+					and md.vergrpcodi in ({3})
+				) me on mp.grupocodi=me.grupocodi
+			where
+			me.medifecha is not null
+			group by
+			me.medifecha,
+			mp.ptomedibarranomb
+			order by
+			mp.ptomedibarranomb
+		</query>
+	</Sql>
+	<Sql>
+		<key>ObtenerDemandaUltimaHora</key>
+		<query>
+			select
+			ptomedicodi, prnvarcodi, dporawfuente, dporawtipomedi, TO_DATE('{0}','DD/MM/YYYY HH24:MI') as dporawfecha,
+			sum(h1) as dporawvalorh1, sum(h2) as dporawvalorh2, sum(h3) as dporawvalorh3, sum(h4) as dporawvalorh4, sum(h5) as dporawvalorh5,
+			sum(h6) as dporawvalorh6, sum(h7) as dporawvalorh7, sum(h8) as dporawvalorh8, sum(h9) as dporawvalorh9, sum(h10) as dporawvalorh10,
+			sum(h11) as dporawvalorh11, sum(h12) as dporawvalorh12, sum(h13) as dporawvalorh13, sum(h14) as dporawvalorh14, sum(h15) as dporawvalorh15,
+			sum(h16) as dporawvalorh16, sum(h17) as dporawvalorh17, sum(h18) as dporawvalorh18, sum(h19) as dporawvalorh19, sum(h20) as dporawvalorh20,
+			sum(h21) as dporawvalorh21, sum(h22) as dporawvalorh22, sum(h23) as dporawvalorh23, sum(h24) as dporawvalorh24, sum(h25) as dporawvalorh25,
+			sum(h26) as dporawvalorh26, sum(h27) as dporawvalorh27, sum(h28) as dporawvalorh28, sum(h29) as dporawvalorh29, sum(h30) as dporawvalorh30,
+			sum(h31) as dporawvalorh31, sum(h32) as dporawvalorh32, sum(h33) as dporawvalorh33, sum(h34) as dporawvalorh34, sum(h35) as dporawvalorh35,
+			sum(h36) as dporawvalorh36, sum(h37) as dporawvalorh37, sum(h38) as dporawvalorh38, sum(h39) as dporawvalorh39, sum(h40) as dporawvalorh40,
+			sum(h41) as dporawvalorh41, sum(h42) as dporawvalorh42, sum(h43) as dporawvalorh43, sum(h44) as dporawvalorh44, sum(h45) as dporawvalorh45,
+			sum(h46) as dporawvalorh46, sum(h47) as dporawvalorh47, sum(h48) as dporawvalorh48, sum(h49) as dporawvalorh49, sum(h50) as dporawvalorh50,
+			sum(h51) as dporawvalorh51, sum(h52) as dporawvalorh52, sum(h53) as dporawvalorh53, sum(h54) as dporawvalorh54, sum(h55) as dporawvalorh55,
+			sum(h56) as dporawvalorh56, sum(h57) as dporawvalorh57, sum(h58) as dporawvalorh58, sum(h59) as dporawvalorh59, sum(h60) as dporawvalorh60
+			from (
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			tmp.dporawvalor as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:01','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, tmp.dporawvalor as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:02','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, tmp.dporawvalor as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:03','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, tmp.dporawvalor as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:04','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, tmp.dporawvalor as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:05','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, tmp.dporawvalor as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:06','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, tmp.dporawvalor as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:07','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, tmp.dporawvalor as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:08','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, tmp.dporawvalor as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:09','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, tmp.dporawvalor as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:10','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			tmp.dporawvalor as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:11','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, tmp.dporawvalor as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:12','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, tmp.dporawvalor as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:13','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, tmp.dporawvalor as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:14','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, tmp.dporawvalor as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:15','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, tmp.dporawvalor as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:16','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, tmp.dporawvalor as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:17','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, tmp.dporawvalor as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:18','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, tmp.dporawvalor as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:19','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, tmp.dporawvalor as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:20','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			tmp.dporawvalor as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:21','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, tmp.dporawvalor as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:22','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, tmp.dporawvalor as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:23','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, tmp.dporawvalor as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:24','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, tmp.dporawvalor as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:25','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, tmp.dporawvalor as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:26','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, tmp.dporawvalor as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:27','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, tmp.dporawvalor as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:28','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, tmp.dporawvalor as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:29','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, tmp.dporawvalor as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:30','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			tmp.dporawvalor as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:31','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, tmp.dporawvalor as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:32','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, tmp.dporawvalor as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:33','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, tmp.dporawvalor as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:34','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, tmp.dporawvalor as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:35','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, tmp.dporawvalor as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:36','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, tmp.dporawvalor as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:37','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, tmp.dporawvalor as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:38','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, tmp.dporawvalor as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:39','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, tmp.dporawvalor as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:40','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			tmp.dporawvalor as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:41','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, tmp.dporawvalor as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:42','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, tmp.dporawvalor as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:43','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, tmp.dporawvalor as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:44','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, tmp.dporawvalor as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:45','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, tmp.dporawvalor as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:46','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, tmp.dporawvalor as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:47','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, tmp.dporawvalor as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:48','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, tmp.dporawvalor as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:49','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, tmp.dporawvalor as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:50','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			tmp.dporawvalor as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:51','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, tmp.dporawvalor as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:52','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, tmp.dporawvalor as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:53','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, tmp.dporawvalor as h54, null as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:54','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, tmp.dporawvalor as h55, null as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:55','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, tmp.dporawvalor as h56, null as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:56','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, tmp.dporawvalor as h57, null as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:57','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, tmp.dporawvalor as h58, null as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:58','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, tmp.dporawvalor as h59, null as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{2} {1}:59','DD/MM/YYYY HH24:MI')
+			union
+			select tmp.ptomedicodi, tmp.prnvarcodi, tmp.dporawfuente, tmp.dporawtipomedi, tmp.dporawfecha,
+			null as h1, null as h2, null as h3, null as h4, null as h5, null as h6, null as h7, null as h8, null as h9, null as h10,
+			null as h11, null as h12, null as h13, null as h14, null as h15, null as h16, null as h17, null as h18, null as h19, null as h20,
+			null as h21, null as h22, null as h23, null as h24, null as h25, null as h26, null as h27, null as h28, null as h29, null as h30,
+			null as h31, null as h32, null as h33, null as h34, null as h35, null as h36, null as h37, null as h38, null as h39, null as h40,
+			null as h41, null as h42, null as h43, null as h44, null as h45, null as h46, null as h47, null as h48, null as h49, null as h50,
+			null as h51, null as h52, null as h53, null as h54, null as h55, null as h56, null as h57, null as h58, null as h59, tmp.dporawvalor as h60
+			from dpo_estimadorraw_tmp tmp
+			where tmp.dporawfecha = to_date('{3}','DD/MM/YYYY HH24:MI')
+			) t2
+			where
+			ptomedicodi in ({4}) and
+			prnvarcodi in (3,8,17) and dporawfuente=2 and dporawtipomedi in (1,5,6)
+			group by ptomedicodi, prnvarcodi, dporawfuente, dporawtipomedi
+		</query>
+	</Sql>
+</Sqls>

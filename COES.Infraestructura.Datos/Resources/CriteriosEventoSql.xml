@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+	
+	<Sql>
+		<key>SqlObtenerComentarioXEventoyEtapa</key>
+		<query>
+			select a.CRCOMENTARIOS_RESPONSABLES from cr_etapa_evento a
+			inner join cr_evento b on a.CREVENCODI = b.CREVENCODI
+			where
+			a.CRETAPA = {0}
+			and b.CREVENCODI = {1}
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlObtenerEmpresaResponsable</key>
+		<query>
+			select a.EMPRCODI, b.EMPRNOMB from CR_EMPRESA_RESPONSABLE a
+			inner join SI_EMPRESA b on a.EMPRCODI = b.EMPRCODI
+			inner join cr_etapa_evento c  on c.CRETAPACODI = a.CRETAPACODI
+			inner join CR_EVENTO d on c.CREVENCODI = d.CREVENCODI
+			where d.CREVENCODI = {0} and c.CRETAPACODI = {1}
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlObtenerEmpresaSolicitante</key>
+		<query>
+			select d.CREVENCODI, c.CRETAPACODI, a.EMPRCODI, b.EMPRNOMB, a.CRARGUMENTO, a.CRDECISION from CR_EMPRESA_SOLICITANTE a
+			inner join SI_EMPRESA b on a.EMPRCODI = b.EMPRCODI
+			inner join cr_etapa_evento c  on c.CRETAPACODI = a.CRETAPACODI
+			inner join CR_EVENTO d on c.CREVENCODI = d.CREVENCODI
+			where d.CREVENCODI = {0} and c.CRETAPACODI = {1}
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlConsultarCriterioEvento</key>
+		<query>
+      select cr.crevencodi as cod_criterio,
+      e.evendesc as descripcion_eve_evento,
+      e.evenini as fecha_eve_evento,
+      ce.credescripcion as descasoespecial
+      from cr_evento cr
+      inner join af_evento ev on cr.afecodi = ev.afecodi
+      inner join eve_evento e on ev.evencodi = e.evencodi
+      left join cr_casos_especiales ce on cr.crespecialcodi = ce.crespecialcodi
+      <!--select * from
+      (
+      select total.*, (row_number() over (order by total.fecha_eve_evento desc)) as r from(
+      select cr.crevencodi as cod_criterio,
+      e.evendesc as descripcion_eve_evento,
+      e.evenini as fecha_eve_evento,
+      ce.credescripcion as descasoespecial
+      from cr_evento cr
+      inner join af_evento ev on cr.afecodi = ev.afecodi
+      inner join eve_evento e on ev.evencodi = e.evencodi
+      left join cr_casos_especiales ce on cr.crespecialcodi = ce.crespecialcodi) total
+      )
+      where (r >= ((({0}-1) * {1}) + 1) and r &lt; (({0} * {1}) + 1 )) or ({0} = -1 and {1} = -1)-->
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlConsultarCriterioEvento2</key>
+		<query>
+			select creve.CREVENCODI,
+			'EV-'||lpad(AFECORR,3,'0')||'-'||AFEANIO  CODIGO,
+			TO_CHAR(eve.EVENINI,'dd/mm/yyyy hh24:mi')  FECHA_EVENTO,
+			EVENASUNTO NOMBRE_EVENTO,
+			caes.CREDESCRIPCION CASOS_ESPECIAL,
+			'' IMPUGNACION,
+			--ETAPA1
+			--ETAPA1.CRETAPA,
+			ETAPA1.CRFECHDESICION FECHA_DECISION,
+			ETAPA1.CREVENTODESCRIPCION DESCRIPCION_EVENTO_DECISION,
+			ETAPA1.CRRESUMENCRITERIO RESUMEN_DECISION,
+			ETAPA1.EMPRNOMB RESPONSABLE_DECISION,
+			ETAPA1.CRCOMENTARIOS_RESPONSABLES COMENTARIO_EMPRESA_DECISION,
+			ETAPA1.CREDESCRIPCION CRITERIO_DECISION,
+			--ETAPA2
+			--ETAPA2.CREVENCODI ,
+			--ETAPA2.CRETAPA,
+			ETAPA2.EMPRNOMB EMPR_SOLI_RECONSIDERACION,
+			ETAPA2.CRARGUMENTO ARGUMENTO_RECONCIDERACION,
+			ETAPA2.CRDECISION DECISION_RECONCIDERACION,
+			'' RESPONSABLE_RECONCIDERACION,--ETAPA2.EMPRNOMB RESPONSABLE_RECONCIDERACION,
+			ETAPA2.CRCOMENTARIOS_RESPONSABLES COMENTARIOS_RECONCIDERACION,
+			ETAPA2.CREDESCRIPCION CRITERIOS_RECONSIDERACION,
+			--ETAPA3
+			--ETAPA3.CREVENCODI ,
+			--ETAPA3.CRETAPA,
+			ETAPA3.EMPRNOMB EMPR_SOLI_APELACION,
+			ETAPA3.CRARGUMENTO ARGUMENTO_APELACION,
+			ETAPA3.CRDECISION DECISION_APELACION,
+			'' RESPONSABLE_APELACION, --ETAPA3.EMPRNOMB RESPONSABLE_APELACION,
+			ETAPA3.CRCOMENTARIOS_RESPONSABLES COMENTARIOS_APELACION,
+			ETAPA3.CREDESCRIPCION CRITERIOS_APELACION,
+			--ETAPA4
+			--ETAPA4.CREVENCODI ,
+			--ETAPA4.CRETAPA,
+			ETAPA4.EMPRNOMB EMPR_SOLI_ARBITRAJE,
+			ETAPA4.CRARGUMENTO ARGUMENTO_ARBITRAJE,
+			ETAPA4.CRDECISION DECISION_ARBITRAJE,
+			'' RESPONSABLE_ARBITRAJE, -- ETAPA4.EMPRNOMB RESPONSABLE_ARBITRAJE,
+			ETAPA4.CRCOMENTARIOS_RESPONSABLES COMENTARIOS_ARBITRAJE,
+			ETAPA4.CREDESCRIPCION CRITERIOS_ARBITRAJE
+			from CR_EVENTO  creve
+			inner join af_evento afeve on creve.AFECODI = afeve.AFECODI
+			inner join eve_evento eve on afeve.EVENCODI = eve.EVENCODI
+			inner join cr_evento creve on afeve.AFECODI = creve.AFECODI
+			left join cr_casos_especiales caes on creve.CRESPECIALCODI = caes.CRESPECIALCODI
+			inner join cr_etapa_evento etapeve on creve.CREVENCODI = etapeve.CREVENCODI
+			left join CR_EMPRESA_RESPONSABLE empres on etapeve.CRETAPACODI = empres.CRETAPACODI
+			inner join cr_criterios cri on etapeve.CRCRITERIOCODI = cri.CRCRITERIOCODI
+			left join SI_EMPRESA siemp on empres.EMPRCODI = siemp.EMPRCODI
+			--ETAPA 1
+			left join (
+			select
+			etapeve.CREVENCODI,
+			etapeve.CRETAPA,
+			etapeve.CRFECHDESICION,
+			etapeve.CREVENTODESCRIPCION,
+			etapeve.CRRESUMENCRITERIO,
+			siemp.EMPRNOMB,
+			etapeve.CRCOMENTARIOS_RESPONSABLES,
+			cri.CREDESCRIPCION
+			from cr_etapa_evento etapeve
+			left join CR_EMPRESA_RESPONSABLE empres on etapeve.CRETAPACODI = empres.CRETAPACODI
+			left join CR_EMPRESA_SOLICITANTE empsol on etapeve.CRETAPACODI = empsol.CRETAPACODI
+			left join SI_EMPRESA siemp on empres.EMPRCODI = siemp.EMPRCODI
+			left join SI_EMPRESA siempx on empsol.EMPRCODI = siempx.EMPRCODI
+			left join cr_criterios cri on etapeve.CRCRITERIOCODI = cri.CRCRITERIOCODI
+			where etapeve.CRETAPA = 1 AND ROWNUM = 1
+			) ETAPA1
+			on creve.CREVENCODI = ETAPA1.CREVENCODI
+			--ETAPA 2
+			left join (
+			select
+			etapeve.CREVENCODI,
+			etapeve.CRETAPA,
+			siempx.EMPRNOMB,
+			empsol.CRARGUMENTO,
+			empsol.CRDECISION,
+			--siemp.EMPRNOMB,
+			etapeve.CRCOMENTARIOS_RESPONSABLES,
+			cri.CREDESCRIPCION
+			from cr_etapa_evento etapeve
+			left join CR_EMPRESA_RESPONSABLE empres on etapeve.CRETAPACODI = empres.CRETAPACODI
+			left join CR_EMPRESA_SOLICITANTE empsol on etapeve.CRETAPACODI = empsol.CRETAPACODI
+			left join SI_EMPRESA siemp on empres.EMPRCODI = siemp.EMPRCODI
+			left join SI_EMPRESA siempx on empsol.EMPRCODI = siempx.EMPRCODI
+			left join cr_criterios cri on etapeve.CRCRITERIOCODI = cri.CRCRITERIOCODI
+			where etapeve.CRETAPA = 2 AND ROWNUM = 1
+			) ETAPA2
+			on creve.CREVENCODI = ETAPA2.CREVENCODI
+			--ETAPA 3
+			left join (
+			select
+			etapeve.CREVENCODI,
+			etapeve.CRETAPA,
+			siempx.EMPRNOMB,
+			empsol.CRARGUMENTO,
+			empsol.CRDECISION,
+			--siemp.EMPRNOMB,
+			etapeve.CRCOMENTARIOS_RESPONSABLES,
+			cri.CREDESCRIPCION
+			from cr_etapa_evento etapeve
+			left join CR_EMPRESA_RESPONSABLE empres on etapeve.CRETAPACODI = empres.CRETAPACODI
+			left join CR_EMPRESA_SOLICITANTE empsol on etapeve.CRETAPACODI = empsol.CRETAPACODI
+			left join SI_EMPRESA siemp on empres.EMPRCODI = siemp.EMPRCODI
+			left join SI_EMPRESA siempx on empsol.EMPRCODI = siempx.EMPRCODI
+			left join cr_criterios cri on etapeve.CRCRITERIOCODI = cri.CRCRITERIOCODI
+			where etapeve.CRETAPA = 3 AND ROWNUM = 1
+			) ETAPA3
+			on creve.CREVENCODI = ETAPA3.CREVENCODI
+			--ETAPA 4
+			left join (
+			select
+			etapeve.CREVENCODI,
+			etapeve.CRETAPA,
+			siempx.EMPRNOMB,
+			empsol.CRARGUMENTO,
+			empsol.CRDECISION,
+			--siemp.EMPRNOMB,
+			etapeve.CRCOMENTARIOS_RESPONSABLES,
+			cri.CREDESCRIPCION
+			from cr_etapa_evento etapeve
+			left join CR_EMPRESA_RESPONSABLE empres on etapeve.CRETAPACODI = empres.CRETAPACODI
+			left join CR_EMPRESA_SOLICITANTE empsol on etapeve.CRETAPACODI = empsol.CRETAPACODI
+			left join SI_EMPRESA siemp on empres.EMPRCODI = siemp.EMPRCODI
+			left join SI_EMPRESA siempx on empsol.EMPRCODI = siempx.EMPRCODI
+			left join cr_criterios cri on etapeve.CRCRITERIOCODI = cri.CRCRITERIOCODI
+			where etapeve.CRETAPA = 4 AND ROWNUM = 1
+			) ETAPA4
+			on creve.CREVENCODI = ETAPA4.CREVENCODI
+			where afeve.afecodi = 118
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlGetMaxIdCasosEspeciales</key>
+		<query>
+			select nvl(max(CRESPECIALCODI), 0) + 1 from CR_CASOS_ESPECIALES
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlGetByIdCasosEspeciales</key>
+		<query>
+			SELECT CRESPECIALCODI, CREDESCRIPCION, CREESTADO, LASTDATE, LASTUSER
+			FROM CR_CASOS_ESPECIALES
+			where
+			CRESPECIALCODI = :CRESPECIALCODI
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlObtenerCasosEspeciales</key>
+		<query>
+			SELECT CRESPECIALCODI, CREDESCRIPCION 
+			FROM CR_CASOS_ESPECIALES 
+			WHERE CREESTADO = 'A' order by CRESPECIALCODI
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlObtenerCriterios</key>
+		<query>
+			SELECT CRCRITERIOCODI, CREDESCRIPCION 
+			FROM CR_CRITERIOS 
+			WHERE CREESTADO = 'A' order by CRCRITERIOCODI
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlGetByIdCriterios</key>
+		<query>
+			SELECT CRCRITERIOCODI, CREDESCRIPCION, CREESTADO, LASTDATE, LASTUSER
+			FROM CR_CRITERIOS
+			where
+			CRCRITERIOCODI = :CRCRITERIOCODI
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlSaveCasosEspeciales</key>
+		<query>
+			insert into CR_CASOS_ESPECIALES(
+			CRESPECIALCODI,
+			CREDESCRIPCION,
+			CREESTADO,
+			LASTDATE,
+			LASTUSER
+			)
+			values(
+			:CRESPECIALCODI,
+			:CREDESCRIPCION,
+			:CREESTADO,
+			:LASTDATE,
+			:LASTUSER
+			)
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlUpdateCasosEspeciales</key>
+		<query>
+			update CR_CASOS_ESPECIALES
+			set
+			CREDESCRIPCION = :CREDESCRIPCION,
+			CREESTADO = :CREESTADO,
+			LASTDATE = :LASTDATE,
+			LASTUSER = :LASTUSER
+			where
+			CRESPECIALCODI = :CRESPECIALCODI
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlDeleteCasosEspeciales</key>
+		<query>
+			delete from CR_CASOS_ESPECIALES
+			where
+			CRESPECIALCODI = :CRESPECIALCODI
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlListCasosEspeciales</key>
+		<query>
+			select
+			CRESPECIALCODI,
+			CREDESCRIPCION,
+			CREESTADO,
+			LASTDATE,
+			LASTUSER
+			from
+			CR_CASOS_ESPECIALES
+			<!--WHERE CREESTADO = 'A'-->
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlGetMaxIdCriterios</key>
+		<query>
+			select nvl(max(CRCRITERIOCODI), 0) + 1 from CR_CRITERIOS
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlSaveCriterios</key>
+		<query>
+			insert into CR_CRITERIOS(
+			CRCRITERIOCODI,
+			CREDESCRIPCION,
+			CREESTADO,
+			LASTDATE,
+			LASTUSER
+			)
+			values(
+			:CRCRITERIOCODI,
+			:CREDESCRIPCION,
+			:CREESTADO,
+			:LASTDATE,
+			:LASTUSER
+			)
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlUpdateCriterios</key>
+		<query>
+			update CR_CRITERIOS
+			set
+			CREDESCRIPCION = :CREDESCRIPCION,
+			CREESTADO = :CREESTADO,
+			LASTDATE = :LASTDATE,
+			LASTUSER = :LASTUSER
+			where
+			CRCRITERIOCODI = :CRCRITERIOCODI
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlDeleteCriterios</key>
+		<query>
+			delete from CR_CRITERIOS
+			where
+			CRCRITERIOCODI = :CRCRITERIOCODI
+		</query>
+	</Sql>
+	<Sql>
+		<key>SqlListCriterios</key>
+		<query>
+			select
+			CRCRITERIOCODI,
+			CREDESCRIPCION,
+			CREESTADO,
+			LASTDATE,
+			LASTUSER
+			from
+			CR_CRITERIOS
+			<!--WHERE CREESTADO = 'A'-->
+		</query>
+	</Sql>
+  <Sql>
+    <key>ValidarCasosEspeciales</key>
+    <query>
+      select count(*) from cr_evento eve
+      where eve.crespecialcodi =  {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ValidarCriterios</key>
+    <query>
+      select count(*) from cr_etapa_criterio
+      where crcriteriocodi =  {0}
+    </query>
+  </Sql>
+  
+</Sqls>

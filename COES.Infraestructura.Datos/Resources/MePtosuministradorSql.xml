@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(ptosucodi), 0) + 1 from me_ptosuministrador
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into me_ptosuministrador(
+           ptosucodi,
+           ptomedicodi,
+           emprcodi,
+           ptosufechainicio,
+           ptosufechafin,
+           ptosuusucreacion,
+           ptosufeccreacion,
+           ptosuusumodificacion,
+           ptosufecmodificacion
+       )
+       values(
+           :ptosucodi,
+           :ptomedicodi,
+           :emprcodi,
+           :ptosufechainicio,
+           :ptosufechafin,
+           :ptosuusucreacion,
+           :ptosufeccreacion,
+           :ptosuusumodificacion,
+           :ptosufecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update me_ptosuministrador
+       set
+           ptomedicodi = :ptomedicodi,
+           emprcodi = :emprcodi,
+           ptosufechainicio = :ptosufechainicio,
+           ptosufechafin = :ptosufechafin,
+           ptosuusucreacion = :ptosuusucreacion,
+           ptosufeccreacion = :ptosufeccreacion,
+           ptosuusumodificacion = :ptosuusumodificacion,
+           ptosufecmodificacion = :ptosufecmodificacion
+       where
+           ptosucodi = :ptosucodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from me_ptosuministrador
+       where
+           ptosucodi = :ptosucodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           ptosucodi,
+           ptomedicodi,
+           emprcodi,
+           ptosufechainicio,
+           ptosufechafin,
+           ptosuusucreacion,
+           ptosufeccreacion,
+           ptosuusumodificacion,
+           ptosufecmodificacion
+       from
+           me_ptosuministrador
+	   where
+           ptosucodi = :ptosucodi       
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           ptosucodi,
+           ptomedicodi,
+           emprcodi,
+           ptosufechainicio,
+           ptosufechafin,
+           ptosuusucreacion,
+           ptosufeccreacion,
+           ptosuusumodificacion,
+           ptosufecmodificacion
+       from
+           me_ptosuministrador
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           ptosucodi,
+           ptomedicodi,
+           emprcodi,
+           ptosufechainicio,
+           ptosufechafin,
+           ptosuusucreacion,
+           ptosufeccreacion,
+           ptosuusumodificacion,
+           ptosufecmodificacion
+       from
+           me_ptosuministrador
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaEditorPtoSuministro</key>
+    <query>
+		SELECT pto.PTOMEDICODI
+		, pto.PTOMEDIDESC
+		, suvi.PTOSUCODI
+		, emvi.EMPRCODI AS VIG_EMPRCODI
+		, emvi.EMPRRAZSOCIAL AS EMPRRAZSOCIAL
+		, supe.PTOSUCODI AS PER_PTOSUCODI
+		, supe.EMPRCODI AS PER_EMPRCODI
+		, NVL(supe.EMPRCODI, emvi.EMPRCODI) AS SEL_EMPRCODI
+		FROM ME_HOJAPTOMED hp
+		INNER JOIN ME_PTOMEDICION pto ON (pto.PTOMEDICODI = hp.PTOMEDICODI
+		AND pto.PTOMEDIESTADO = 'A')
+		inner join SI_HISEMPPTO_DATA vwpt on vwpt.HPTDATFECHA &lt;= TO_DATE('{0}', 'dd/mm/yyyy') and (vwpt.PTOMEDICODI = pto.PTOMEDICODI OR vwpt.PTOMEDICODIOLD = pto.PTOMEDICODI)
+		INNER JOIN SI_TIPOINFORMACION ti ON (ti.TIPOINFOCODI = hp.TIPOINFOCODI)
+		INNER JOIN ME_TIPOPTOMEDICION tpmed ON (tpmed.TPTOMEDICODI = pto.TPTOMEDICODI)
+		INNER JOIN SI_EMPRESA emp ON (emp.EMPRCODI = vwpt.EMPRCODI
+		AND emp.EMPRESTADO = 'A')
+		LEFT JOIN (
+		SELECT r1.PTOSUCODI
+		, r1.PTOMEDICODI
+		, r1.PTOSUFECHAINICIO
+		, r2.PTOSUFECHAINICIO AS PTOSUFECHAFIN
+		, r1.EMPRCODI
+		FROM (SELECT ROWNUM SEC, T.*
+		FROM (SELECT PTOMEDICODI
+		, PTOSUFECHAINICIO
+		, EMPRCODI
+		, PTOSUCODI
+		FROM ME_PTOSUMINISTRADOR
+		ORDER BY 1,2) T) r1
+		LEFT JOIN (SELECT ROWNUM SEC, T.*
+		FROM (SELECT PTOMEDICODI
+		, PTOSUFECHAINICIO
+		, EMPRCODI
+		, PTOSUCODI
+		FROM ME_PTOSUMINISTRADOR
+		ORDER BY 1,2) T) r2 ON (r1.PTOMEDICODI = r2.PTOMEDICODI
+		AND (r1.SEC + 1) = r2.SEC)
+		) suvi ON (
+		pto.PTOMEDICODI = suvi.PTOMEDICODI
+		AND TO_DATE('{0}', 'dd/mm/yyyy') >= suvi.PTOSUFECHAINICIO
+		AND TO_DATE('{0}', 'dd/mm/yyyy') &lt; NVL(suvi.PTOSUFECHAFIN, SYSDATE) 
+						  )						  
+	    LEFT JOIN SI_EMPRESA emvi ON (suvi.EMPRCODI = emvi.EMPRCODI)
+	    LEFT JOIN (
+				    SELECT sumi.PTOSUCODI
+                         , sumi.PTOMEDICODI
+					     , sumi.EMPRCODI
+					     , suem.EMPRRAZSOCIAL
+					     , sumi.PTOSUFECHAINICIO
+		            FROM ME_PTOSUMINISTRADOR sumi
+				       , SI_EMPRESA suem
+				    WHERE sumi.EMPRCODI = suem.EMPRCODI
+				    ) supe ON (
+				               pto.PTOMEDICODI = supe.PTOMEDICODI
+						       AND supe.PTOSUFECHAINICIO = TO_DATE('{0}', 'dd/mm/yyyy') 
+						       )	
+    WHERE emp.EMPRCODI = {1} 
+    AND hp.FORMATCODI  = {2} 
+    ORDER BY hp.HPTOORDEN ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByPtoPeriodo</key>
+    <query>
+      SELECT PTOSUCODI,
+      PTOMEDICODI,
+      EMPRCODI,
+      PTOSUFECHAINICIO,
+      PTOSUFECHAFIN,
+      PTOSUUSUCREACION,
+      PTOSUFECCREACION,
+      PTOSUUSUMODIFICACION,
+      PTOSUFECMODIFICACION
+      FROM ME_PTOSUMINISTRADOR WHERE PTOMEDICODI = {0} AND PTOSUFECHAINICIO = TO_DATE('{1}', 'dd/mm/yyyy') 
+    </query>
+  </Sql>
+  <Sql>
+    <key>ObtenerSuministradorVigente</key>
+    <query>
+      select * from(
+      select
+      ptosucodi,
+      ptomedicodi,
+      emprcodi,
+      ptosufechainicio,
+      ptosufechafin,
+      ptosuusucreacion,
+      ptosufeccreacion,
+      ptosuusumodificacion,
+      ptosufecmodificacion
+      from me_ptosuministrador
+      where
+      ptomedicodi= {0} and
+      sysdate between ptosufechainicio and nvl(ptosufechafin,sysdate) 
+      order by ptosufeccreacion desc) where ROWNUM=1
+
+    </query>
+  </Sql>
+  <!--Rechazo de Carga-->
+  <Sql>
+    <key>ListaSuministradoresRechazoCarga</key>
+    <query>
+      SELECT EMPRCODI,NVL(EMPRRAZSOCIAL,EMPRNOMB) AS EMPRRAZSOCIAL
+      FROM SI_EMPRESA WHERE EMPRCODI IN (SELECT EMPRCODISUMINISTRADOR FROM VW_SUMINISTRADOR_USUARIO_LIBRE)
+      ORDER BY 2      
+    </query>
+  </Sql>
+  <!--Rechazo de Carga-->
+</Sqls>

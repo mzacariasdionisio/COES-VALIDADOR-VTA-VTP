@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(audpcodi), 0) + 1 from aud_auditoriaplanificada
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into aud_auditoriaplanificada(
+      audpcodi,
+      plancodi,
+      audpnombre,
+      audpcodigo,
+      audpmesinicio,
+      audpmesfin,
+      audpdactivo,
+      audphistorico,
+      audpusucreacion,
+      audpfeccreacion,
+      audpusumodificacion,
+      audpfecmodificacion
+      )
+      values(
+      :audpcodi,
+      :plancodi,
+      :audpnombre,
+      :audpcodigo,
+      :audpmesinicio,
+      :audpmesfin,
+      :audpdactivo,
+      :audphistorico,
+      :audpusucreacion,
+      :audpfeccreacion,
+      :audpusumodificacion,
+      :audpfecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update aud_auditoriaplanificada
+      set
+      plancodi = :plancodi,
+      audpnombre = :audpnombre,
+      audpcodigo = :audpcodigo,
+      audpmesinicio = :audpmesinicio,
+      audpmesfin = :audpmesfin,
+      audphistorico = :audphistorico,
+      audpusumodificacion = :audpusumodificacion,
+      audpfecmodificacion = :audpfecmodificacion
+      where
+      audpcodi = :audpcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       update aud_auditoriaplanificada
+       set audpdactivo = '0', audphistorico = '1',
+       audpusumodificacion = :audpusumodificacion, audpfecmodificacion = :audpfecmodificacion
+       where
+           audpcodi = :audpcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByAudPlan</key>
+    <query>
+      update aud_auditoriaplanificada
+      set audpdactivo = '0', audphistorico = '1',
+      audpusumodificacion = :audpusumodificacion, audpfecmodificacion = :audpfecmodificacion
+      where
+      plancodi = :plancodi and not exists(select * from sic.aud_audplanificada_proceso app where app.audppactivo = '1' and app.audpcodi = audpcodi)
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      ap.audpcodi,
+      ap.plancodi,
+      ap.audpnombre,
+      ap.audpcodigo,
+      ap.audpmesinicio,
+      ap.audpmesfin,
+      ap.audpdactivo,
+      ap.audphistorico,
+      ap.audpusucreacion,
+      ap.audpfeccreacion,
+      ap.audpusumodificacion,
+      ap.audpfecmodificacion,
+      (select count(*) from AUD_AUDPLANIFICADA_PROCESO appr
+      inner join aud_auditoriaproceso app on appr.AUDPPCODI = app.AUDPPCODI
+      where appr.AUDPCODI = ap.AUDPCODI and app.AUDIPACTIVO = '1') existeaudiproceso
+      from
+      aud_auditoriaplanificada ap
+      where
+      ap.audpcodi = :audpcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      audpcodi,
+      plancodi,
+      audpnombre,
+      audpcodigo,
+      audpmesinicio,
+      audpmesfin,
+      audpdactivo,
+      audphistorico,
+      audpusucreacion,
+      audpfeccreacion,
+      audpusumodificacion,
+      audpfecmodificacion
+      from
+      aud_auditoriaplanificada
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      ap.audpcodi,
+      ap.plancodi,
+      ap.audpnombre,
+      ap.audpcodigo,
+      ap.audpmesinicio,
+      ap.audpmesfin,
+      ap.audpdactivo,
+      ap.audphistorico,
+      ap.audpusucreacion,
+      ap.audpfeccreacion,
+      ap.audpusumodificacion,
+      ap.audpfecmodificacion,
+      ( SELECT
+      LISTAGG(p.Procdescripcion,'|') WITHIN GROUP (ORDER BY pp.AUDPPCODI)
+      FROM  sic.aud_audplanificada_proceso pp
+      inner join sic.aud_proceso p on pp.Proccodi = p.Proccodi and p.PROCACTIVO = '1'
+      where pp.audpcodi = ap.audpcodi and pp.AUDPPACTIVO = '1'
+      ) procesos,
+      ( SELECT
+      LISTAGG(a.Areaabrev,'|') WITHIN GROUP (ORDER BY pp.AUDPPCODI)
+      FROM  sic.aud_audplanificada_proceso pp
+      inner join sic.aud_proceso p on pp.Proccodi = p.Proccodi and p.procactivo = '1'
+      inner join sic.si_area a on p.Areacodi = a.Areacodi
+      where pp.audpcodi = ap.audpcodi and pp.AUDPPACTIVO = '1'
+      ) procesoareas
+      from
+      aud_auditoriaplanificada ap
+      where ap.plancodi = {0} and ap.audpdactivo = '1' {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByAudPlanificadaValidacion</key>
+    <query>
+      select
+      (
+      CASE
+      WHEN (SELECT COUNT(*) FROM AUD_AUDITORIAPROCESO apr where apr.AUDPPCODI = app.AUDPPCODI and apr.AUDIPACTIVO = '1') > 0
+      THEN 'No se puede eliminar, la Auditoria Planificada tiene una Auditoria a Ejecutar relacionada'
+      ELSE '' END
+      ) ValidacionMensaje
+      from aud_auditoriaplanificada ap
+      inner join aud_audplanificada_proceso app on ap.audpcodi = app.audpcodi and app.AUDPPACTIVO = '1'
+      where ap.AUDPCODI = {0} and ap.AUDPDACTIVO = '1'
+    </query>
+  </Sql>
+  
+</Sqls>

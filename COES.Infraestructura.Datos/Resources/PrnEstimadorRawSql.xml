@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(etmrawcodi), 0) + 1 from prn_estimadorraw
+    </query>
+  </Sql>
+	
+  <Sql>
+    <key>GetMaxIdSco</key>
+    <query>
+		select nvl(min(etmrawcodi), 0) - 1
+		from
+		prn_estimadorraw
+		where
+		etmrawfuente = 'sco'
+	</query>
+  </Sql>
+	
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into prn_estimadorraw(
+      etmrawcodi,
+      ptomedicodi,
+      prnvarcodi,
+      etmrawfuente,
+      etmrawtipomedi,
+      etmrawfecha,
+      etmrawhora,
+      etmrawvalor,
+      etmrawusucreacion,
+      etmrawfeccreacion
+      )
+      values(
+      :etmrawcodi,
+      :ptomedicodi,
+      :prnvarcodi,
+      :etmrawfuente,
+      :etmrawtipomedi,
+      :etmrawfecha,
+      :etmrawhora,
+      :etmrawvalor,
+      :etmrawusucreacion,
+      :etmrawfeccreacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update prn_estimadorraw
+      set
+      ptomedicodi = :ptomedicodi,
+      prnvarcodi = :prnvarcodi,
+      etmrawfuente = :etmrawfuente,
+      etmrawtipomedi = :etmrawtipomedi,
+      etmrawfecha = :etmrawfecha,
+      etmrawhora = :etmrawhora,
+      etmrawvalor = :etmrawvalor,
+      etmrawusumodificacion = :etmrawusumodificacion,
+      etmrawfecmodificacion = :etmrawfecmodificacion
+      where etmrawcodi = :etmrawcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      etmrawcodi,
+      ptomedicodi,
+      prnvarcodi,
+      etmrawfuente,
+      etmrawtipomedi,
+      etmrawfecha,
+      etmrawhora,
+      etmrawvalor
+      from prn_estimadorraw
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from prn_estimadorraw
+      where etmrawcodi = :etmrawcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      etmrawcodi,
+      ptomedicodi,
+      prnvarcodi,
+      etmrawfuente,
+      etmrawtipomedi,
+      etmrawfecha,
+      etmrawhora,
+      etmrawvalor
+      from prn_estimadorraw
+      where etmrawcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListDemandaTnaPorUnidad</key>
+    <query>
+      select
+      ptomedicodi,
+      prnvarcodi,
+      etmrawfuente,
+      etmrawtipomedi,
+      etmrawfecha,
+      etmrawvalor
+      from prn_estimadorraw
+      where ptomedicodi in ({0}) and
+      etmrawfecha between to_date('{1}', 'DD/MM/YYYY') and to_date('{2}', 'DD/MM/YYYY') and
+      prnvarcodi in ({3})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEstimadorRawPorRangoPorUnidad</key>
+    <query>
+      select      
+      ptomedicodi,
+      prnvarcodi,
+      etmrawfuente,
+      etmrawtipomedi,
+      etmrawfecha,
+      etmrawvalor
+      from 
+	  prn_estimadorraw
+      where
+	  ptomedicodi = {0} and
+	  etmrawfecha between to_date('{1}', 'DD/MM/YYYY') and to_date('{2}', 'DD/MM/YYYY') and
+	  prnvarcodi = {3} and 
+	  etmrawfuente = {4} and
+	  etmrawtipomedi = {5}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEstimadorRawPorRangoPorAsociacion</key>
+    <query>
+      select
+      {0} Ptomedicodi,
+      t1.etmrawfecha,
+      Sum(t1.etmrawvalor) Etmrawvalor
+      from 
+	  prn_estimadorraw t1
+	  join prn_asociaciondetalle t2
+      on t1.Ptomedicodi = t2.Ptomedicodi
+      where
+	  t2.asociacodi = {0} and
+	  t1.etmrawfecha between to_date('{1}', 'DD/MM/YYYY')  and to_date('{2}', 'DD/MM/YYYY') and
+	  t1.prnvarcodi = {3} and 
+	  t1.etmrawfuente = {4} and
+	  t1.etmrawtipomedi = {5}
+      group by t1.etmrawfecha
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEstimadorRawPorUnidad</key>
+    <query>
+      select
+      ptomedicodi,
+      prnvarcodi,
+      etmrawfuente,
+      etmrawtipomedi,
+      etmrawfecha,
+      etmrawvalor
+      from
+	  prn_estimadorraw
+      where
+	  ptomedicodi = {0} and
+	  etmrawfecha = to_date('{1}', 'DD/MM/YYYY') and
+	  prnvarcodi = {2} and 
+	  etmrawfuente = {3} and
+	  etmrawtipomedi = {4}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEstimadorRawPorAsociacion</key>
+    <query>
+      select
+      {0} Ptomedicodi,
+      t1.etmrawfecha,
+      Sum(t1.etmrawvalor) Etmrawvalor
+      from 
+	  prn_estimadorraw t1 
+	  join prn_asociaciondetalle t2
+      on t1.ptomedicodi = t2.ptomedicodi
+      where 
+	  t2.asociacodi = {0} and
+	  t1.etmrawfecha = to_date('{1}', 'DD/MM/YYYY') and
+	  t1.prnvarcodi = {2} and
+	  t1.etmrawfuente = {3} and
+	  t1.etmrawtipomedi = {4}
+      group by t1.etmrawfecha
+    </query>
+  </Sql>
+	<Sql>
+		<key>DeletePorFechaIntervalo</key>
+		<query>
+			delete
+			from
+			prn_estimadorraw
+			where
+			etmrawfuente = {0} and
+			etmrawfecha = to_date('{1}', 'DD/MM/YYYY HH24:mi')
+		</query>
+	</Sql>
+	<Sql>
+		<key>InsertTableIntoPrnEstimadorRaw</key>
+		<query>
+			insert /*+ ignore_row_on_dupkey_index (prn_estimadorraw, pk_prnestimadorpk) */
+			into prn_estimadorraw (ptomedicodi, prnvarcodi, etmrawfuente, etmrawtipomedi, etmrawfecha, etmrawvalor)
+			select ptomedicodi, prnvarcodi, etmrawfuente, etmrawtipomedi, etmrawfecha, etmrawvalor
+			from {0}
+			where
+			etmrawfecha = to_date('{1}', 'DD/MM/YYYY HH24:mi')
+		</query>
+	</Sql>
+	<Sql>
+		<key>TruncateTablaTemporal</key>
+		<query>
+			truncate table {0}
+		</query>
+	</Sql>
+</Sqls>

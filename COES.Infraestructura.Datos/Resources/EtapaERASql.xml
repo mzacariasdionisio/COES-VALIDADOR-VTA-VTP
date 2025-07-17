@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+  <Sql>
+    <key>GetById</key>
+    <query>
+      SELECT
+      eta.ETAPACODI,
+      eta.NOMBRE,
+      eta.UMBRAL,
+      eta.ESTADO,
+      eta.FECCREACION,
+      eta.USUCREACION,
+      eta.FECMODIFICA,
+      eta.USUMODIFICA
+      from sic.ME_ETAPAERA eta
+      WHERE eta.ETAPACODI=:ETAPACODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetListaEtapas</key>
+    <query>
+      SELECT
+      eta.ETAPACODI,
+      eta.NOMBRE,
+      eta.UMBRAL,
+      eta.ESTADO,
+      eta.FECCREACION,
+      eta.USUCREACION,
+      eta.FECMODIFICA,
+      eta.USUMODIFICA
+      from sic.ME_ETAPAERA eta
+      WHERE eta.estado not in ('E')
+      ORDER BY etapacodi ASC
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetUltimoCodigoGenerado</key>
+    <query>
+      select nvl(max(ETAPACODI),0) + 1 as codigo from sic.ME_ETAPAERA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarNombreEtapa</key>
+    <query>
+      DECLARE
+      P_NOMBRE  VARCHAR2(50):=:NOMBRE;
+      P_CODI    NUMBER :=:ETAPACODI;
+      P_RESULTADO NUMBER:=0;
+      begin
+      select count(*) INTO P_RESULTADO from  sic.ME_ETAPAERA
+      where trim(upper(nombre))=trim(upper(P_NOMBRE)) and ETAPACODI!=P_CODI;
+      SELECT P_RESULTADO INTO :RESULTADO FROM DUAL;
+      end;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveUpdate</key>
+    <query>
+      DECLARE
+      P_ETAPACODI NUMBER :=:ETAPACODI;
+      P_NOMBRE VARCHAR2(50) :=:NOMBRE;
+      P_UMBRAL NUMBER :=:UMBRAL;
+      P_ESTADO VARCHAR2(1) :=:ESTADO;
+      P_USUCREACION VARCHAR2(20) :=:USUCREACION;
+      P_MENSAJE VARCHAR2(500):=NULL;
+      P_CODMAX NUMBER:=0;
+
+      BEGIN
+
+      IF P_ETAPACODI = 0
+      THEN
+
+      SELECT  NVL(MAX(ETAPACODI),0)  INTO P_CODMAX FROM sic.ME_ETAPAERA;
+
+      INSERT INTO sic.ME_ETAPAERA
+      (ETAPACODI,
+      NOMBRE,
+      UMBRAL,
+      ESTADO,
+      FECCREACION,
+      USUCREACION
+      )
+      VALUES(P_CODMAX +1
+      ,P_NOMBRE
+      ,P_UMBRAL
+      ,P_ESTADO
+      ,SYSDATE
+      ,P_USUCREACION);
+
+
+
+      ELSE
+
+
+      UPDATE sic.ME_ETAPAERA
+      SET
+      NOMBRE = P_NOMBRE,
+      UMBRAL = P_UMBRAL,
+      ESTADO = P_ESTADO,
+      FECMODIFICA=SYSDATE,
+      USUMODIFICA=P_USUCREACION
+      WHERE ETAPACODI=P_ETAPACODI;
+
+
+
+      END IF;
+
+
+      SELECT P_MENSAJE INTO :MENSAJE FROM DUAL;
+      END;
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+
+      DECLARE
+      P_ETAPACODI NUMBER :=:ETAPACODI;
+      P_MENSAJE VARCHAR2(500):=NULL;
+
+      BEGIN
+
+      delete from sic.ME_ETAPAERA
+      WHERE ETAPACODI=P_ETAPACODI;
+
+
+      SELECT P_MENSAJE INTO :MENSAJE FROM DUAL;
+      END;
+
+    </query>
+  </Sql>
+
+
+</Sqls>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(cmcicodi), 0) + 1 from cm_costo_incremental
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cm_costo_incremental(
+           cmcicodi,
+           equicodi,
+           grupocodi,
+           cmcifecha,
+           cmciperiodo,
+           cmgncorrelativo,
+           cmcitramo1,
+           cmcitramo2,
+           cmciusucreacion,
+           cmcifeccreacion,
+           cmciusumodificacion,
+           cmcifecmodificacion
+       )
+       values(
+           :cmcicodi,
+           :equicodi,
+           :grupocodi,
+           :cmcifecha,
+           :cmciperiodo,
+           :cmgncorrelativo,
+           :cmcitramo1,
+           :cmcitramo2,
+           :cmciusucreacion,
+           :cmcifeccreacion,
+           :cmciusumodificacion,
+           :cmcifecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cm_costo_incremental
+       set
+           equicodi = :equicodi,
+           grupocodi = :grupocodi,
+           cmcifecha = :cmcifecha,
+           cmciperiodo = :cmciperiodo,
+           cmgncorrelativo = :cmgncorrelativo,
+           cmcitramo1 = :cmcitramo1,
+           cmcitramo2 = :cmcitramo2,
+           cmciusucreacion = :cmciusucreacion,
+           cmcifeccreacion = :cmcifeccreacion,
+           cmciusumodificacion = :cmciusumodificacion,
+           cmcifecmodificacion = :cmcifecmodificacion
+       where
+           cmcicodi = :cmcicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+		delete from cm_costo_incremental
+		where
+		to_date(to_char(cmcifecha, 'YYYY-MM-DD'), 'YYYY-MM-DD')= to_date('{0}', 'YYYY-MM-DD') and  cmciperiodo = {1}
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           cmcicodi,
+           equicodi,
+           grupocodi,
+           cmcifecha,
+           cmciperiodo,
+           cmgncorrelativo,
+           cmcitramo1,
+           cmcitramo2,
+           cmciusucreacion,
+           cmcifeccreacion,
+           cmciusumodificacion,
+           cmcifecmodificacion
+       from
+           cm_costo_incremental
+       where
+           cmcicodi = :cmcicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           cmcicodi,
+           equicodi,
+           grupocodi,
+           cmcifecha,
+           cmciperiodo,
+           cmgncorrelativo,
+           cmcitramo1,
+           cmcitramo2,
+           cmciusucreacion,
+           cmcifeccreacion,
+           cmciusumodificacion,
+           cmcifecmodificacion
+       from
+           cm_costo_incremental
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select ci.*,
+		grupo.grupopadre,
+		relacion.nombretna
+		from cm_costo_incremental ci inner join pr_grupo grupo on ci.grupocodi = grupo.grupocodi
+		inner join eq_relacion relacion on ci.equicodi = relacion.equicodi
+		where ci.cmcifecha >= to_date('{0} 00:00', 'YYYY-MM-DD HH24:MI') and
+		ci.cmcifecha &lt;= to_date('{0} 23:59', 'YYYY-MM-DD HH24:MI') and relacion.indfuente = 'G'
+		order by relacion.nombretna asc
+	</query>
+  </Sql> 
+	
+</Sqls>

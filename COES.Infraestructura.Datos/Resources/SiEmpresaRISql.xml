@@ -1,0 +1,1410 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxNroConstancia</key>
+    <query>
+      select nvl(max(EMPRNROCONSTANCIA), 0) + 1 from si_empresa
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetByIdGestionModificacion</key>
+    <query>
+      select
+      EMPRCODI,
+      EMPRRUC,
+      EMPRNOMBRECOMERCIAL,
+      EMPRRAZSOCIAL,
+      EMPRDOMICILIOLEGAL,
+      EMPRSIGLA,
+      EMPRNUMPARTIDAREG,
+      EMPRTELEFONO,
+      EMPRFAX,
+      EMPRPAGWEB,
+      EMPRNROREGISTRO
+      from
+      si_empresa
+      where
+      emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdConRevision</key>
+    <query>
+      select
+      emprcodi,
+      emprnomb,
+      tipoemprcodi,
+      emprdire,
+      emprtele,
+      emprnumedocu,
+      tipodocucodi,
+      emprruc,
+      emprabrev,
+      emprorden,
+      emprdom,
+      emprsein,
+      emprrazsocial,
+      emprcoes,
+      lastuser,
+      lastdate,
+      compcode,
+      inddemanda,
+      emprestado,
+      EMPRCODOSINERGMIN,
+      EMPRNOMBRECOMERCIAL,
+      EMPRDOMICILIOLEGAL,
+      EMPRSIGLA,
+      EMPRNUMPARTIDAREG,
+      EMPRTELEFONO,
+      EMPRFAX,
+      EMPRPAGWEB,
+      (select revicodi from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) ReviCodiSGI,
+      (select revicodi from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) ReviCodiDJR,
+      (select reviestado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) ReviEstadoSGI,
+      (select reviestado from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 2) ReviEstadoDJR,
+      EMPRNROCONSTANCIA,
+      (select REVIFECENVIADO from RI_REvision R where R.emprcodi = em.emprcodi and R.REVIESTADOREGISTRO = 'A' and R.ETRVCODI = 1) EMPRFECINSCRIPCION,
+      EMPRNROREGISTRO,
+      --em.emprfecinscripcion SOLIFECMODIFICACION,
+      EMPRFECINSCRIPCION as FECREGISTRO
+      from
+      si_empresa em
+      where
+      em.emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCabeceraSolicitudById</key>
+    <query>
+      SELECT
+      emp.EMPRCODI,
+      emp.EMPRRUC,
+      emp.EMPRSIGLA,
+      emp.EMPRNOMBRECOMERCIAL,
+      emp.EMPRRAZSOCIAL,
+      emp.EMPRDOMICILIOLEGAL,
+      tie.TIPOEMPRDESC
+      FROM SI_EMPRESA emp
+      INNER JOIN SI_TIPO_COMPORTAMIENTO tcom on emp.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      INNER JOIN SI_TIPOEMPRESA tie ON (tcom.TIPOEMPRCODI = tie.TIPOEMPRCODI)
+      WHERE emp.EMPRCODI = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarEmpresaGestionModificacion</key>
+    <query>
+      update SI_EMPRESA
+      set
+      EMPRNOMBRECOMERCIAL = :EMPRNOMBRECOMERCIAL,
+      EMPRRAZSOCIAL = :EMPRRAZSOCIAL,
+      EMPRDOMICILIOLEGAL = :EMPRDOMICILIOLEGAL,
+      EMPRSIGLA = :EMPRSIGLA,
+      EMPRNUMPARTIDAREG = :EMPRNUMPARTIDAREG,
+      EMPRTELEFONO = :EMPRTELEFONO,
+      EMPRFAX = :EMPRFAX,
+      EMPRPAGWEB=:EMPRPAGWEB,
+      EMPRNROREGISTRO = :EMPRNROREGISTRO
+      where
+      EMPRCODI = :EMPRCODI
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ActualizarEmpresaGestionModificacionAgente</key>
+		<query>
+			update SI_EMPRESA
+			set
+			EMPRDOMICILIOLEGAL = :EMPRDOMICILIOLEGAL,
+			EMPRTELEFONO = :EMPRTELEFONO,
+			EMPRFAX = :EMPRFAX,
+			EMPRPAGWEB=:EMPRPAGWEB
+			where
+			EMPRCODI = :EMPRCODI
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ActualizarEmpresaCambioDenom</key>
+		<query>
+			update SI_EMPRESA
+			set
+			EMPRNOMBRECOMERCIAL = :EMPRNOMBRECOMERCIAL,
+			EMPRRAZSOCIAL = :EMPRRAZSOCIAL,
+			EMPRSIGLA = :EMPRSIGLA
+			where
+			EMPRCODI = :EMPRCODI
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>ListarIntegrantesporTipo</key>
+    <query>
+		select * from (
+		select
+		empresa.EMPRCODI,
+		empresa.EMPRRUC,
+		empresa.EMPRNOMBRECOMERCIAL,
+		empresa.EMPRRAZSOCIAL,
+		empresa.EMPRDOMICILIOLEGAL,
+		empresa.EMPRSIGLA,
+		empresa.EMPRNUMPARTIDAREG,
+		empresa.EMPRTELEFONO,
+		empresa.EMPRFAX,
+		empresa.EMPRPAGWEB,
+		empresa.EMPRNROCONSTANCIA,
+		empresa.EMPRNROREGISTRO,
+		case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+		tipoempresa.tipoemprdesc,
+		CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+		rpte.RpteCorreoElectronico,
+		rpte.RpteTelefono,
+		(row_number() over (PARTITION BY rpte.emprcodi order by  COALESCE(rpte.rptefecmodificacion, rpte.rptefeccreacion) desc)) as p,
+		(row_number() over (order by empresa.EMPRNROCONSTANCIA asc)) as r
+		from (si_empresa empresa
+		inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+		inner join si_tipoempresa tipoempresa on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+		left join SI_REPRESENTANTE rpte
+		on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+		where
+		(NVL(rpte.rpteestadoregistro,0) != 1) and
+		(tcom.tipoemprcodi = {0} or {0} = -1) and
+		(upper(empresa.emprnomb) like upper('%{1}%') or upper(empresa.emprabrev) like upper('%{1}%') or '{1}' = '-1') and
+		(empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+		(empresa.emprcoes = 'S')
+		order by empresa.EMPRNROCONSTANCIA asc
+		)
+		where (p &lt;= 1) and (r >= ((({2}-1) * {3}) + 1) and r &lt; (({2} * {3}) + 1 )) or ({2} = -1 and {3} = -1)
+      order by EMPRNROCONSTANCIA asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListarIntegrantesporTipo</key>
+    <query>
+      select
+      count(*)
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      where
+      (NVL(rpte.rpteestadoregistro,0) != 1) and
+      (tcom.tipoemprcodi = {0} or {0} = -1) and
+      (upper(empresa.emprnomb) like upper('%{1}%') or upper(empresa.emprabrev) like upper('%{1}%') or '{1}' = '-1') and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarporTipoNombreRepresentanteconFechaVigencia</key>
+    <query>
+      select * from (
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      rpte.RpteTelfmovil,
+      rpte.RpteTipo,
+      rpte.RPTETIPREPRESENTANTELEGAL,
+      rpte.RPTEDOCIDENTIDAD,
+      rpte.RPTECARGOEMPRESA,
+      rpte.rptebaja,
+      rpte.RPTEFECHAVIGENCIAPODER,
+
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (
+      si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi
+      where
+      (NVL(rpte.rpteestadoregistro,0) != 1) and
+      (tcom.tipoemprcodi = {0} or {0} = -1) and
+      (upper(empresa.emprnomb) like upper('%{1}%') or upper(empresa.emprabrev) like upper('%{1}%') or '{1}' = '-1') and
+      (rpte.RPTETIPREPRESENTANTELEGAL = '{2}' or '{2}' = '-1') and
+      (rpte.RPTETIPO = '{3}' or '{3}' = '-1') and
+      (rpte.RPTEBAJA = '{4}' or '{4}' = '-1') and
+      (rpte.rptefechavigenciapoder &lt;= TO_DATE('{5}','YYYY-MM-DD')) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+      )
+      where (r >= ((({6}-1) * {7}) + 1) and r &lt; (({6} * {7}) + 1 )) or ({6} = -1 and {7} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarporTipoNombreRepresentante</key>
+    <query>
+		select * from (
+		select
+		empresa.EMPRCODI,
+		empresa.EMPRRUC,
+		empresa.EMPRNOMBRECOMERCIAL,
+		empresa.EMPRRAZSOCIAL,
+		empresa.EMPRDOMICILIOLEGAL,
+		empresa.EMPRSIGLA,
+		empresa.EMPRNUMPARTIDAREG,
+		empresa.EMPRTELEFONO,
+		empresa.EMPRFAX,
+		empresa.EMPRPAGWEB,
+		case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+		tipoempresa.tipoemprdesc,
+		CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+		rpte.RpteCorreoElectronico,
+		rpte.RpteTelefono,
+		rpte.RPTETELFMOVIL,
+		rpte.RpteTipo,
+		rpte.RPTETIPREPRESENTANTELEGAL,
+		rpte.RPTEDOCIDENTIDAD,
+		rpte.RPTECARGOEMPRESA,
+		rpte.rptebaja,
+		rpte.RPTEFECHAVIGENCIAPODER,
+
+		(row_number() over (order by empresa.emprcodi desc)) as r
+		from (
+		si_empresa empresa
+		inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+		inner join si_tipoempresa tipoempresa
+		on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+		left join SI_REPRESENTANTE rpte
+		on empresa.emprcodi = rpte.emprcodi
+		where
+		(NVL(rpte.rpteestadoregistro,0) != 1) and
+		(tcom.tipoemprcodi = {0} or {0} = -1) and
+		(upper(empresa.emprnomb) like upper('%{1}%') or upper(empresa.emprabrev) like upper('%{1}%') or '{1}' = '-1') and
+		(rpte.RPTETIPREPRESENTANTELEGAL = '{2}' or '{2}' = '-1') and
+		(rpte.RPTETIPO = '{3}' or '{3}' = '-1') and
+		(rpte.RPTEBAJA = '{4}' or '{4}' = '-1') and
+		(empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+		(empresa.emprcoes = 'S')
+		order by empresa.emprnomb asc
+		)
+		where (r >= ((({5}-1) * {6}) + 1) and r &lt; (({5} * {6}) + 1 )) or ({5} = -1 and {6} = -1)
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarporTipoNombreRepresentanteFiltroXls</key>
+    <query>
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      rpte.RpteTelfmovil,
+      rpte.RpteTipo,
+      rpte.RPTETIPREPRESENTANTELEGAL,
+      rpte.RPTEDOCIDENTIDAD,
+      rpte.RPTECARGOEMPRESA,
+      rpte.rptebaja,
+      rpte.RPTEFECHAVIGENCIAPODER,
+
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi
+      where
+      (NVL(rpte.rpteestadoregistro,0) != 1) and
+      (tcom.tipoemprcodi = {0} or {0} = -1) and
+      (upper(empresa.emprnomb) like upper('%{1}%') or upper(empresa.emprabrev) like upper('%{1}%') or '{1}' = '-1') and
+      (rpte.RPTETIPREPRESENTANTELEGAL = '{2}' or '{2}' = '-1') and
+      (rpte.RPTETIPO = '{3}' or '{3}' = '-1') and
+      (rpte.RPTEBAJA = '{4}' or '{4}' = '-1') and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarporTipoNombreRepresentanteFiltroXlsconFechaVigencia</key>
+    <query>
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      rpte.RpteTelfmovil,
+      rpte.RpteTipo,
+      rpte.RPTETIPREPRESENTANTELEGAL,
+      rpte.RPTEDOCIDENTIDAD,
+      rpte.RPTECARGOEMPRESA,
+      rpte.rptebaja,
+      rpte.RPTEFECHAVIGENCIAPODER,
+
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi
+      where
+      (NVL(rpte.rpteestadoregistro,0) != 1) and
+      (tcom.tipoemprcodi = {0} or {0} = -1) and
+      (upper(empresa.emprnomb) like upper('%{1}%') or upper(empresa.emprabrev) like upper('%{1}%') or '{1}' = '-1') and
+      (rpte.RPTETIPREPRESENTANTELEGAL = '{2}' or '{2}' = '-1') and
+      (rpte.RPTETIPO = '{3}' or '{3}' = '-1') and
+      (rpte.RPTEBAJA = '{4}' or '{4}' = '-1') and
+      (rpte.rptefechavigenciapoder &lt;= TO_DATE('{5}','YYYY-MM-DD')) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListarporTipoNombreRepresentante</key>
+    <query>
+      select
+      count(*)
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi
+      where
+      (NVL(rpte.rpteestadoregistro,0) != 1) and
+      (tcom.tipoemprcodi = {0} or {0} = -1) and
+      (upper(empresa.emprnomb) like upper('%{1}%') or upper(empresa.emprabrev) like upper('%{1}%') or '{1}' = '-1') and
+      (rpte.RPTETIPREPRESENTANTELEGAL = '{2}' or '{2}' = '-1') and
+      (rpte.RPTETIPO = '{3}' or '{3}' = '-1') and
+      (rpte.RPTEBAJA = '{4}' or '{4}' = '-1') and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListarporTipoNombreRepresentanteconFechaVigencia</key>
+    <query>
+      select
+      count(*)
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi
+      where
+      (NVL(rpte.rpteestadoregistro,0) != 1) and
+      (tcom.tipoemprcodi = {0} or {0} = -1) and
+      (upper(empresa.emprnomb) like upper('%{1}%') or upper(empresa.emprabrev) like upper('%{1}%') or '{1}' = '-1') and
+      (rpte.RPTETIPREPRESENTANTELEGAL = '{2}' or '{2}' = '-1') and
+      (rpte.RPTETIPO = '{3}' or '{3}' = '-1') and
+      (rpte.RPTEBAJA = '{4}' or '{4}' = '-1') and
+      (rpte.rptefechavigenciapoder &lt;= TO_DATE('{5}','YYYY-MM-DD')) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarIntegrantesporFechaTipo</key>
+    <query>
+      select distinct * from (
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      '' as TIPOTIPAGENTE
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = -1) and
+      (upper(empresa.emprnomb) like upper('%{3}%') or upper(empresa.emprabrev) like upper('%{3}%') or '{3}' = '-1') and
+      (empresa.EMPRCONDICION = '{4}' or '{4}' = '-1') and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+      )
+      OFFSET (({5} - 1) * {6}) ROWS FETCH NEXT {6} ROWS ONLY
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListarIntegrantesporFechaTipo</key>
+    <query>
+      select
+      count(*)
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      where
+      (empresa.emprfecinscripcion BETWEEN  TO_DATE('{0}','YYYY-MM-DD')  and TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = -1) and
+      (upper(empresa.emprnomb) like upper('%{3}%') or upper(empresa.emprabrev) like upper('%{3}%') or '{3}' = '-1') and
+      (empresa.EMPRCONDICION = '{4}' or '{4}' = '-1') and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarIntegrantesporFechaTipoFiltroXls</key>
+    <query>
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = -1) and
+      (upper(empresa.emprnomb) like upper('%{3}%') or upper(empresa.emprabrev) like upper('%{3}%') or '{3}' = '-1') and
+      (empresa.EMPRCONDICION = '{4}' or '{4}' = '-1') and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarIntegrantesporFechaTipoSolicitud</key>
+    <query>
+      select * from (
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      tiposoli.tisonombre,
+      soli.soliestado,
+      soli.solifecsolicitud,
+      soli.solifecenviado,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      left join RI_SOLICITUD soli
+      on empresa.emprcodi= soli.emprcodi
+      join RI_TIPOSOLICITUD tiposoli
+      on soli.tisocodi = tiposoli.tisocodi
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = -1) and
+      (soli.tisocodi = {3} or {3} = -1) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+      )
+      where (r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )) or ({4} = -1 and {5} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListarIntegrantesporFechaTipoSolicitud</key>
+    <query>
+      select count(*) from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      left join RI_SOLICITUD soli on empresa.emprcodi= soli.emprcodi
+      join RI_TIPOSOLICITUD tiposoli on soli.tisocodi = tiposoli.tisocodi
+      where (empresa.emprfecinscripcion BETWEEN  TO_DATE('{0}','YYYY-MM-DD')  and TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = -1) and (soli.tisocodi = {3} or {3} = -1) and (empresa.emprestado != 'E') and (empresa.emprcoes = 'S') order by empresa.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarIntegrantesporFechaTipoSolicitudFiltroXls</key>
+    <query>
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      tiposoli.tisonombre,
+      soli.soliestado,
+      soli.solifecsolicitud,
+      soli.solifecenviado,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      left join RI_SOLICITUD soli
+      on empresa.emprcodi= soli.emprcodi
+      join RI_TIPOSOLICITUD tiposoli
+      on soli.tisocodi = tiposoli.tisocodi
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = -1) and
+      (soli.tisocodi = {3} or {3} = -1) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHistoricoSolicitudes</key>
+    <query>
+      select distinct * from (
+      select EMPRCODI, emprestado,tipoemprdesc,EMPRRUC,EMPRSIGLA,EMPRRAZSOCIAL,EMPRNOMBRECOMERCIAL,RpteNombres, tisonombre, soliestado ,solifecsolicitud, solifecenviado,
+      '' as EMPRDOMICILIOLEGAL, '' as EMPRNUMPARTIDAREG, '' as EMPRTELEFONO, '' as EMPRFAX, '' as EMPRPAGWEB,
+      '' as RpteCorreoElectronico, '' as RpteTelefono, '' as Modalidad, '' as TIPOTIPAGENTE
+      from (
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      usuario.username As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      tiposoli.tisonombre,
+      soli.soliestado,
+      soli.solifecsolicitud,
+      soli.solifecenviado,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      left join RI_SOLICITUD soli
+      on empresa.emprcodi= soli.emprcodi
+      join RI_TIPOSOLICITUD tiposoli
+      on soli.tisocodi = tiposoli.tisocodi
+      join fw_user usuario on soli.soliusucreacion = usuario.usercode
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = 0) and
+      (soli.tisocodi = {3} or {3} = -1) and
+      (empresa.emprcodi = {4} or {4} = 0) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+      )
+      where (r >= ((({5}-1) * {6}) + 1) and r &lt; (({5} * {6}) + 1 )) or ({5} = -1 and {6} = -1)
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListarHistoricoSolicitudes</key>
+    <query>
+      select count(*) from (
+      select distinct * from (
+
+      select EMPRCODI, emprestado,tipoemprdesc,EMPRRUC,EMPRSIGLA,EMPRRAZSOCIAL,EMPRNOMBRECOMERCIAL,RpteNombres, tisonombre, soliestado ,solifecsolicitud, solifecenviado,
+      '' as EMPRDOMICILIOLEGAL, '' as EMPRNUMPARTIDAREG, '' as EMPRTELEFONO, '' as EMPRFAX, '' as EMPRPAGWEB,
+      '' as RpteCorreoElectronico, '' as RpteTelefono, '' as Modalidad, '' as TIPOTIPAGENTE from (
+
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      tiposoli.tisonombre,
+      soli.soliestado,
+      soli.solifecsolicitud,
+      soli.solifecenviado,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      left join RI_SOLICITUD soli
+      on empresa.emprcodi= soli.emprcodi
+      join RI_TIPOSOLICITUD tiposoli
+      on soli.tisocodi = tiposoli.tisocodi
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = 0) and
+      (soli.tisocodi = {3} or {3} = -1) and
+      (empresa.emprcodi = {4} or {4} = 0) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc)))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHistoricoSolicitudesFiltroXls</key>
+    <query>
+      select distinct * from (
+
+      select EMPRCODI, emprestado,tipoemprdesc,EMPRRUC,EMPRSIGLA,EMPRRAZSOCIAL,EMPRNOMBRECOMERCIAL,RpteNombres, tisonombre, soliestado ,solifecsolicitud, solifecenviado,
+      '' as EMPRDOMICILIOLEGAL, '' as EMPRNUMPARTIDAREG, '' as EMPRTELEFONO, '' as EMPRFAX, '' as EMPRPAGWEB,
+      '' as RpteCorreoElectronico, '' as RpteTelefono, '' as Modalidad, '' as TIPOTIPAGENTE from (
+
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      usuario.username As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      tiposoli.tisonombre,
+      soli.soliestado,
+      soli.solifecsolicitud,
+      soli.solifecenviado,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      left join RI_SOLICITUD soli
+      on empresa.emprcodi= soli.emprcodi
+      join RI_TIPOSOLICITUD tiposoli
+      on soli.tisocodi = tiposoli.tisocodi
+      join fw_user usuario on soli.soliusucreacion = usuario.usercode
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = 0) and
+      (soli.tisocodi = {3} or {3} = -1) and
+      (empresa.emprcodi = {4} or {4} = 0) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHistoricoRevisiones</key>
+    <query>
+      select * from (
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      revi.REVIITERACION,
+      CASE revi.ETRVCODI WHEN 1 then 'SGI' else 'DJR' end as tiporevision,
+      revi.REVIFECCREACION,
+      revi.REVIFECREVISION,
+      revi.REVIESTADO,
+      case UPPER(revi.REVIESTADO)
+      when 'PENDIENTE' then
+      cast((sysdate - revi.REVIFECCREACION )  as int)
+      else
+      cast((revi.REVIFECREVISION - revi.REVIFECCREACION) as int)
+      end as hora,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from ri_revision revi
+      join si_empresa empresa on revi.emprcodi = empresa.emprcodi
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      join si_tipoempresa tipoempresa on tcom.tipoemprcodi = tipoempresa.tipoemprcodi
+      join SI_TIPO_COMPORTAMIENTO tipo on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = 0) and
+      (revi.etrvcodi= {3} or {3} = -1) and
+      (empresa.emprcodi = {4} or {4} = 0) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+      )
+      where (r >= ((({5}-1) * {6}) + 1) and r &lt; (({5} * {6}) + 1 )) or ({5} = -1 and {6} = -1)
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListarHistoricoRevisiones</key>
+    <query>
+      select count(*) from ri_revision revi
+      join si_empresa empresa on revi.emprcodi = empresa.emprcodi
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      join si_tipoempresa tipoempresa on tcom.tipoemprcodi = tipoempresa.tipoemprcodi
+      join SI_TIPO_COMPORTAMIENTO tipo on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = 0) and
+      (revi.etrvcodi= {3} or {3} = -1) and
+      (empresa.emprcodi = {4} or {4} = 0) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHistoricoRevisionesFiltroXls</key>
+    <query>
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      revi.REVIITERACION,
+      CASE revi.ETRVCODI WHEN 1 then 'SGI' else 'DJR' end as tiporevision,
+      revi.REVIFECCREACION,
+      revi.REVIFECREVISION,
+      revi.REVIESTADO,
+      case UPPER(revi.REVIESTADO)
+      when 'PENDIENTE' then
+      cast((sysdate - revi.REVIFECCREACION )  as int)
+      else
+      cast((revi.REVIFECREVISION - revi.REVIFECCREACION) as int)
+      end as hora,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from ri_revision revi
+      join si_empresa empresa on revi.emprcodi = empresa.emprcodi
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      join si_tipoempresa tipoempresa on tcom.tipoemprcodi = tipoempresa.tipoemprcodi
+      join SI_TIPO_COMPORTAMIENTO tipo on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = 0) and
+      (revi.etrvcodi= {3} or {3} = -1) and
+      (empresa.emprcodi = {4} or {4} = 0) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHistoricoModificaciones</key>
+    <query>
+      select distinct * from (
+      select EMPRCODI, emprestado, tipoemprdesc, EMPRRUC, EMPRSIGLA, EMPRRAZSOCIAL,EMPRNOMBRECOMERCIAL, RpteNombres, RpteCorreoElectronico, RpteTelefono,
+      '' as EMPRDOMICILIOLEGAL, '' as EMPRNUMPARTIDAREG, '' as EMPRTELEFONO, '' as EMPRFAX , '' as EMPRPAGWEB, '' as Modalidad, '' as TIPOTIPAGENTE from (
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      left join RI_SOLICITUD soli
+      on empresa.emprcodi= soli.emprcodi
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = 0) and
+      (soli.tisocodi= {3} or {3} = 0) and
+      (empresa.emprcodi = {4} or {4} = 0) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+      )
+      where (r >= ((({5}-1) * {6}) + 1) and r &lt; (({5} * {6}) + 1 )) or ({5} = -1 and {6} = -1))
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListarHistoricoModificaciones</key>
+    <query>
+      select count(*) from (
+      select distinct * from (
+
+      select EMPRCODI, emprestado, tipoemprdesc, EMPRRUC, EMPRSIGLA, EMPRRAZSOCIAL,EMPRNOMBRECOMERCIAL, RpteNombres, RpteCorreoElectronico, RpteTelefono,
+      '' as EMPRDOMICILIOLEGAL, '' as EMPRNUMPARTIDAREG, '' as EMPRTELEFONO, '' as EMPRFAX , '' as EMPRPAGWEB, '' as Modalidad, '' as TIPOTIPAGENTE from (
+
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      left join RI_SOLICITUD soli
+      on empresa.emprcodi= soli.emprcodi
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = 0) and
+      (soli.tisocodi= {3} or {3} = 0) and
+      (empresa.emprcodi = {4} or {4} = 0) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+      )
+      ))
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHistoricoModificacionesFiltroXls</key>
+    <query>
+      select distinct * from (
+      select EMPRCODI, emprestado, tipoemprdesc, EMPRRUC, EMPRSIGLA, EMPRRAZSOCIAL,EMPRNOMBRECOMERCIAL, RpteNombres, RpteCorreoElectronico, RpteTelefono,
+      '' as EMPRDOMICILIOLEGAL, '' as EMPRNUMPARTIDAREG, '' as EMPRTELEFONO, '' as EMPRFAX , '' as EMPRPAGWEB, '' as Modalidad, '' as TIPOTIPAGENTE from (
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      CONCAT( rpte.RpteNombres || ' ', rpte.RpteApellidos) As RpteNombres,
+      rpte.RpteCorreoElectronico,
+      rpte.RpteTelefono,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join SI_REPRESENTANTE rpte
+      on empresa.emprcodi = rpte.emprcodi and rpte.rptetipo ='L' and rpte.RPTETIPREPRESENTANTELEGAL='T' and rpte.rptebaja='N'
+      left join SI_TIPO_COMPORTAMIENTO tipo
+      on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      left join RI_SOLICITUD soli
+      on empresa.emprcodi= soli.emprcodi
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = 0) and
+      (soli.tisocodi= {3} or {3} = 0) and
+      (empresa.emprcodi = {4} or {4} = 0) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc))
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarTiempoProceso</key>
+    <query>
+      select * from (
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      revi.REVIITERACION,
+      CASE revi.ETRVCODI WHEN 1 then 'SGI' else 'DJR' end as tiporevision,
+      revi.REVIFECCREACION,
+      revi.REVIFECREVISION,
+      revi.REVIESTADO,
+      case UPPER(revi.REVIESTADO)
+      when 'PENDIENTE' then
+      cast((sysdate - revi.REVIFECCREACION )  as int)
+      else
+      cast((revi.REVIFECREVISION - revi.REVIFECCREACION) as int)
+      end as hora,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from ri_revision revi
+      join si_empresa empresa on revi.emprcodi = empresa.emprcodi
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      join si_tipoempresa tipoempresa on tcom.tipoemprcodi = tipoempresa.tipoemprcodi
+      join SI_TIPO_COMPORTAMIENTO tipo on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = -1) and
+      (revi.etrvcodi= {3} or {3} = -1) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+      )
+      where (r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )) or ({4} = -1 and {5} = -1)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>NroRegListarTiempoProceso</key>
+    <query>
+      select count(*) from ri_revision revi
+      join si_empresa empresa on revi.emprcodi = empresa.emprcodi
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      join si_tipoempresa tipoempresa on tcom.tipoemprcodi = tipoempresa.tipoemprcodi
+      join SI_TIPO_COMPORTAMIENTO tipo on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = -1) and
+      (revi.etrvcodi= {3} or {3} = -1) and
+      (empresa.emprestado = 'A' and empresa.emprestregint = 'A') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarTiempoProcesoFiltroXls</key>
+    <query>
+      select
+      empresa.EMPRCODI,
+      empresa.EMPRRUC,
+      empresa.EMPRNOMBRECOMERCIAL,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRDOMICILIOLEGAL,
+      empresa.EMPRSIGLA,
+      empresa.EMPRNUMPARTIDAREG,
+      empresa.EMPRTELEFONO,
+      empresa.EMPRFAX,
+      empresa.EMPRPAGWEB,
+      case empresa.EMPRESTREGINT when 'A' then 'ACTIVO' when 'B' then 'BAJA' when 'E' then 'ELIMINADO' else '' end as emprestado,
+      tipoempresa.tipoemprdesc,
+      empresa.EMPRCONDICION as Modalidad,
+      tipo.TIPOTIPAGENTE,
+      revi.REVIITERACION,
+      CASE revi.ETRVCODI WHEN 1 then 'SGI' else 'DJR' end as tiporevision,
+      revi.REVIFECCREACION,
+      revi.REVIFECREVISION,
+      revi.REVIESTADO,
+      case UPPER(revi.REVIESTADO)
+      when 'PENDIENTE' then
+      cast((sysdate - revi.REVIFECCREACION )  as int)
+      else
+      cast((revi.REVIFECREVISION - revi.REVIFECCREACION) as int)
+      end as hora,
+      (row_number() over (order by empresa.emprcodi desc)) as r
+      from ri_revision revi
+      join si_empresa empresa on revi.emprcodi = empresa.emprcodi
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      join si_tipoempresa tipoempresa on tcom.tipoemprcodi = tipoempresa.tipoemprcodi
+      join SI_TIPO_COMPORTAMIENTO tipo on empresa.emprcodi= tipo.emprcodi and tipo.tipoprincipal = 'S' and tipo.tipobaja = 'N'
+      where
+      (empresa.emprfecinscripcion >= TO_DATE('{0}','YYYY-MM-DD') and empresa.emprfecinscripcion &lt;= TO_DATE('{1}','YYYY-MM-DD')) and
+      (tcom.tipoemprcodi = {2} or {2} = -1) and
+      (revi.etrvcodi= {3} or {3} = -1) and
+      (empresa.emprestado != 'E') and
+      (empresa.emprcoes = 'S')
+      order by empresa.emprnomb asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarFlujoSolicitud</key>
+    <query>
+      select
+      emfl.Emflcodi,
+      flj.Fljcodi,
+      emp.emprcodi,
+      flj.FLJFECHAORIG,
+      flj.FLJFECHARECEP,
+      flj.FLJFECHAPROCE,
+      flj.FLJESTADO,
+      flj.corrnumproc,
+      g.filecodi,
+      g.FILECOMENTARIO as observacion
+      from
+      RI_EMPRESA_FLUJO emfl inner join DOC_FLUJO flj on emfl.fljcodi = flj.fljcodi
+      inner join SI_EMPRESA emp on emp.emprcodi = flj.fljremitente and
+      emp.emprcodi = emfl.emprcodi
+      inner join doc_flujo_det d on flj.fljcodi = d.fljcodi
+      inner join doc_flujo_files g on d.fljdetcodi = g.fljdetcodi
+      where emp.emprcodi = {0} and emfl.solicodi = {1}
+      order by flj.FLJFECHARECEP desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarFlujoEmpresa</key>
+    <query>
+      select
+      emfl.Emflcodi,
+      flj.Fljcodi,
+      emp.emprcodi,
+      flj.FLJFECHAORIG,
+      flj.FLJFECHARECEP,
+      flj.FLJFECHAPROCE,
+      flj.FLJESTADO,
+      flj.corrnumproc,
+      g.filecodi,
+      g.FILECOMENTARIO as observacion,
+      emp.EMPRFECINSCRIPCION,
+      emp.EMPRRAZSOCIAL,
+      emp.EMPRDOMICILIOLEGAL,
+      emp.EMPRCONDICION
+      from
+      RI_EMPRESA_FLUJO emfl inner join DOC_FLUJO flj on emfl.fljcodi = flj.fljcodi
+      inner join SI_EMPRESA emp on emp.emprcodi = flj.fljremitente and
+      emp.emprcodi = emfl.emprcodi
+      inner join doc_flujo_det d on flj.fljcodi = d.fljcodi
+      inner join doc_flujo_files g on d.fljdetcodi = g.fljdetcodi
+      where emp.emprcodi = {0} and emfl.solicodi is null
+      order by flj.FLJFECHARECEP desc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarEstadoRegistro</key>
+    <query>
+      update si_empresa
+      set
+      emprestadoregistro = :emprestadoregistro,
+      lastuser = :lastuser,
+      lastdate = :lastdate
+      where
+      emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarFechaIngreso</key>
+    <query>
+      update si_empresa
+      set
+      emprfecingreso = sysdate,
+      emprcoes = 'S'
+      where
+      emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarFechaBaja</key>
+    <query>
+      update si_empresa
+      set
+      emprfecbaja = sysdate,
+      emprcoes = 'N'
+      where
+      emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarCondicion</key>
+    <query>
+      update si_empresa
+      set
+      emprcondicion = :emprcondicion,
+      emprfecinscripcion = sysdate
+      where
+      emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxNroConstancia</key>
+    <query>
+      select nvl(max(EMPRNROCONSTANCIA), 0) + 1 from si_empresa
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerAgentesParticipantes</key>
+    <query>
+		select distinct
+		mme.emprmmecodi,
+		emp.emprcodi,
+		emp.EMPRRAZSOCIAL as emprnomb,
+		emp.tipoemprcodi,
+		case {0}
+		when 2 then 'DISTRIBUCION'
+		when 3 then 'GENERACION'
+		when 4 then 'GRAN USUARIO' else '' end as tipoemprdesc,
+		emp.emprruc,
+		case emp.emprestado when 'A' then 'Activo' when 'B' then 'Baja' when 'E' then 'Eliminado' else '' end as emprestado,
+		mme.emprfecparticipacion,
+		mme.emprfecretiro,
+		mme.emprcomentario,
+		mme.emprusucreacion,
+		mme.emprfeccreacion,
+		mme.emprusumodificacion,
+		mme.emprfecmodificacion
+		from si_empresa emp
+		inner join si_tipo_comportamiento comp on emp.emprcodi = comp.emprcodi
+		inner join si_tipoempresa tipo on comp.tipoemprcodi = tipo.tipoemprcodi
+		left join si_empresa_mme mme on mme.emprcodi = emp.emprcodi and mme.emprmmeestado = 1 and mme.tipoemprcodi = {0}
+		where
+		(emprcoes = 'S' and emprestado = 'A' and emprestregint = 'A' and (tipo.tipoemprcodi = 3 and comp.tipoprincipal = 'S' or emp.emprcodi in (13,67)) and {0} = 3) or
+		(emp.emprcodi = 67 and {0} = 4)or
+		(emp.emprcodi = 12099 and {0} = 2)
+		order by 3 asc
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxNroRegistro</key>
+    <query>
+      select nvl(max(EMPRNROREGISTRO), 0) + 1 from si_empresa
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ActualizarEmpresaNroRegistro</key>
+    <query>
+      update SI_EMPRESA
+      set
+      EMPRNROREGISTRO = :EMPRNROREGISTRO
+      where
+      EMPRCODI = :EMPRCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarEmpresasPublico</key>
+    <query>
+      select distinct
+      empresa.EMPRCODI,
+      empresa.EMPRNOMB,
+      empresa.EMPRFECINSCRIPCION,
+      empresa.EMPRFECINGRESO,
+      empresa.EMPRPAGWEB,
+      empresa.EMPRRAZSOCIAL,
+      empresa.EMPRRUC
+      from (si_empresa empresa
+      inner join si_tipo_comportamiento tcom on empresa.emprcodi = tcom.emprcodi and tcom.tipoprincipal = 'S'
+      inner join si_tipoempresa tipoempresa
+      on tcom.tipoemprcodi = tipoempresa.tipoemprcodi)
+      left join RI_SOLICITUD soli
+      on empresa.emprcodi= soli.emprcodi
+      where
+      (tcom.tipoemprcodi = {0} or {0} = -1) and
+      (soli.tisocodi = {1} or {1} = -1) and
+      (empresa.EMPRESTREGINT = 'A') and
+      (empresa.emprcoes = 'S') and
+      (empresa.emprcodi > 1) and
+      (empresa.emprestado = 'A')
+      order by empresa.EMPRRAZSOCIAL asc
+    </query>
+  </Sql>
+
+  <!--FIT - Aplicativo VTD-->
+  <Sql>
+    <key>ObtenerAgentesParticipantesMME</key>
+    <query>
+      select distinct emprnomb, emprcodi
+      from si_empresa where tipoemprcodi = 3 or emprcodi in (67,12634)
+      order by emprnomb
+    </query>
+  </Sql>
+  <!--FIT - Aplicativo VTD-->
+
+</Sqls>

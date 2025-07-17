@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ctgcodi), 0) + 1 from eq_categoria
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eq_categoria(
+      ctgcodi,
+      ctgpadre,
+      ctgnomb,
+      ctgflagexcluyente,
+      famcodi ,
+      ctgestado,
+      ctgusucreacion,
+      ctgfeccreacion
+      )
+      values(
+      :ctgcodi,
+      :ctgpadre,
+      :ctgnomb,
+      :ctgflagexcluyente,
+      :famcodi ,
+      :ctgestado,
+      :usuariocreacion,
+      SYSDATE
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eq_categoria set
+      ctgnomb = :ctgnomb,
+      ctgflagexcluyente = :ctgflagexcluyente,
+      ctgestado = :ctgestado,
+      ctgusumodificacion = :usuarioupdate,
+      ctgfecmodificacion = SYSDATE
+      where ctgcodi = :ctgcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from eq_categoria
+      where
+      ctgcodi = :ctgcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select ctg.ctgcodi,ctg.ctgpadre,ctg.ctgnomb,ctg.ctgflagexcluyente,ctg.famcodi ,ctg.ctgestado,ctg.ctgusucreacion,ctg.ctgfeccreacion,ctg.ctgusumodificacion,ctg.ctgfecmodificacion
+      ,fam.FAMNOMB, ctgp.ctgnomb "CTGPADRENOMB", tot.cant_det, tot_hijo.cant_hijo
+      from eq_categoria ctg
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp on  ctgp.CTGCODI =  ctg.CTGPADRE
+      left join (
+      select ctg.ctgcodi,count(*) cant_det
+      from eq_categoria ctg
+      inner join eq_categoria_det ctgdet on ctgdet.CTGCODI = ctg.CTGCODI
+      group by ctg.ctgcodi
+      ) tot on tot.ctgcodi = ctg.ctgcodi
+      left join (
+      select ctg1.CTGCODI,count(*) cant_hijo from eq_categoria ctg1
+      inner join eq_categoria ctgp1 on  ctgp1.CTGPADRE =  ctg1.CTGCODI
+      group by ctg1.CTGCODI
+      ) tot_hijo on tot_hijo.CTGCODI = ctg.ctgcodi
+      where
+      ctg.ctgcodi = :ctgcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select ctg.ctgcodi,ctg.ctgpadre,ctg.ctgnomb,ctg.ctgflagexcluyente,ctg.famcodi ,ctg.ctgestado,ctg.ctgusucreacion,ctg.ctgfeccreacion,ctg.ctgusumodificacion,ctg.ctgfecmodificacion
+      ,fam.FAMNOMB, ctgp.ctgnomb "CTGPADRENOMB"
+      from eq_categoria ctg
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp on  ctgp.CTGCODI =  ctg.CTGPADRE
+      order by ctg.famcodi ,ctg.CTGNOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListPadre</key>
+    <query>
+      select ctg.ctgcodi,ctg.ctgpadre,ctg.ctgnomb,ctg.ctgflagexcluyente,ctg.famcodi ,ctg.ctgestado,ctg.ctgusucreacion,ctg.ctgfeccreacion,ctg.ctgusumodificacion,ctg.ctgfecmodificacion
+      ,fam.FAMNOMB
+      from eq_categoria ctg
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      where fam.FAMCODI = {0} and ctg.ctgcodi &lt;> {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListByFamiliaAndEstado</key>
+    <query>
+      select ctg.ctgcodi,ctg.ctgpadre, ctgp.ctgnomb "CTGPADRENOMB",ctg.ctgnomb,ctg.ctgflagexcluyente,ctg.famcodi ,ctg.ctgestado, ctg.ctgusucreacion,ctg.ctgfeccreacion,ctg.ctgusumodificacion,ctg.ctgfecmodificacion
+      ,fam.FAMNOMB, tot.cant_det, tot_hijo.cant_hijo
+      from eq_categoria ctg
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp on  ctgp.CTGCODI =  ctg.CTGPADRE
+      left join (
+      select ctg.ctgcodi,count(*) cant_det
+      from eq_categoria ctg
+      inner join eq_categoria_det ctgdet on ctgdet.CTGCODI = ctg.CTGCODI
+      group by ctg.ctgcodi
+      ) tot on tot.ctgcodi = ctg.ctgcodi
+      left join (
+      select ctg1.CTGCODI,count(*) cant_hijo from eq_categoria ctg1
+      inner join eq_categoria ctgp1 on  ctgp1.CTGPADRE =  ctg1.CTGCODI
+      group by ctg1.CTGCODI
+      ) tot_hijo on tot_hijo.CTGCODI = ctg.ctgcodi
+      where (fam.FAMCODI = {0} or '-2' = '{0}') and (ctg.ctgestado ='{1}'  or '-2' = '{1}')
+      order by fam.FAMNOMB,ctgp.ctgnomb,upper(ctg.ctgnomb)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCategoriaClasificacion</key>
+    <query>
+      select ctg.ctgcodi,ctg.ctgpadre,ctg.ctgnomb,ctg.ctgflagexcluyente,ctg.famcodi ,ctg.ctgestado, ctg.ctgusucreacion,ctg.ctgfeccreacion,ctg.ctgusumodificacion,ctg.ctgfecmodificacion
+      ,fam.FAMNOMB, ctgp1.ctgnomb "CTGPADRENOMB"
+      from eq_categoria ctg
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp1 on  ctgp1.CTGCODI =  ctg.CTGPADRE
+      where fam.FAMCODI = {0} and ctg.ctgestado ='{1}'
+      and ctg.ctgcodi not in
+      (
+      select  ctgpadre from
+      (   select ctg.ctgcodi,ctg.ctgpadre
+      from eq_categoria ctg
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      where fam.FAMCODI = {0} and ctg.ctgestado ='{1}'
+      )
+      where ctgpadre is not null
+      group by ctgpadre
+      )
+      order by fam.FAMNOMB,upper(ctg.ctgnomb)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCategoriaHijoByIdPadre</key>
+    <query>
+      select ctg.ctgcodi,ctg.ctgpadre,ctg.ctgnomb,ctg.ctgflagexcluyente,ctg.famcodi ,ctg.ctgestado, ctg.ctgusucreacion,ctg.ctgfeccreacion,ctg.ctgusumodificacion,ctg.ctgfecmodificacion
+      ,fam.FAMNOMB, ctgp.ctgnomb "CTGPADRENOMB"
+      from eq_categoria ctg
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp on  ctgp.CTGCODI =  ctg.CTGPADRE
+      where (coalesce(ctg.ctgpadre,-1) = {1}) and ctg.famcodi  = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListCategoriaHijoByIdPadreAndEmpresa</key>
+    <query>
+      select ctg.ctgcodi,ctg.ctgpadre,ctg.ctgnomb,ctg.ctgflagexcluyente,ctg.famcodi ,ctg.ctgestado, ctg.ctgusucreacion,ctg.ctgfeccreacion,ctg.ctgusumodificacion,ctg.ctgfecmodificacion
+      ,fam.FAMNOMB, ctgp.ctgnomb "CTGPADRENOMB", ctgequi.cant_equipo
+      from eq_categoria ctg
+      inner join eq_familia fam on fam.FAMCODI = ctg.FAMCODI
+      left join eq_categoria ctgp on  ctgp.CTGCODI =  ctg.CTGPADRE
+      left join (
+        select ctg1.CTGCODI,  e1.emprcodi, count(*) cant_equipo
+        from eq_categoria ctg1
+        inner join eq_categoria_det ctgdet1  on ctg1.CTGCODI = ctgdet1.CTGCODI
+        inner join EQ_CATEGORIA_EQUIPO ctgequi1  on ctgdet1.CTGDETCODI = ctgequi1.CTGDETCODI
+        inner join eq_equipo e1 on e1.equicodi = ctgequi1.equicodi
+        group by ctg1.CTGCODI, e1.emprcodi
+
+        union
+        select ctg2.CTGCODI,  e2.emprcodi, count(*) cant_hijo from eq_categoria ctg2
+        inner join eq_categoria ctghijo on  ctghijo.CTGPADRE =  ctg2.CTGCODI
+        inner join eq_categoria_det ctgdethijo  on ctghijo.CTGCODI = ctgdethijo.CTGCODI
+        inner join EQ_CATEGORIA_EQUIPO ctgequihijo  on ctgdethijo.CTGDETCODI = ctgequihijo.CTGDETCODI
+        inner join eq_equipo e2 on e2.equicodi = ctgequihijo.equicodi
+        group by ctg2.CTGCODI, e2.emprcodi
+      )ctgequi  on ctgequi.CTGCODI = ctg.CTGCODI and ctgequi.emprcodi = {2}
+
+      where (coalesce(ctg.ctgpadre,-1) = {1}) and ctg.famcodi  = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select  * from eq_categoria
+    </query>
+  </Sql>
+</Sqls>

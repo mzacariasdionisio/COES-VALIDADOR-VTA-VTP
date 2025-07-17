@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(cbcentcodi), 0) + 1 from cb_envio_central
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into cb_envio_central(
+      cbcentcodi,
+      cbcentestado,
+      cbvercodi,
+      equicodi,
+      fenergcodi,
+      grupocodi
+      )
+      values(
+      :cbcentcodi,
+      :cbcentestado,
+      :cbvercodi,
+      :equicodi,
+      :fenergcodi,
+      :grupocodi
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update cb_envio_central
+      set
+      cbcentestado = :cbcentestado,
+      cbvercodi = :cbvercodi,
+      equicodi = :equicodi,
+      fenergcodi = :fenergcodi,
+      grupocodi = :grupocodi,
+      where
+      cbcentcodi = :cbcentcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from cb_envio_central
+      where
+      cbcentcodi = :cbcentcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      cb_envio_central
+      where
+      cbcentcodi = :cbcentcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      cb_envio_central
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select ec.*, eq.equinomb, em.emprnomb
+      from cb_envio_central ec
+      inner join cb_version v on v.cbvercodi = ec.cbvercodi
+      inner join cb_envio e on e.cbenvcodi = v.cbenvcodi
+      inner join eq_equipo eq on eq.equicodi = ec.equicodi
+      inner join si_empresa em on em.emprcodi = eq.emprcodi
+      where ec.cbvercodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCentralesPorEnvio</key>
+    <query>
+      select ec.*, eq.equinomb, em.emprnomb
+      from cb_envio_central ec
+      inner join cb_version v on v.cbvercodi = ec.cbvercodi
+      inner join cb_envio e on e.cbenvcodi = v.cbenvcodi
+      inner join eq_equipo eq on eq.equicodi = ec.equicodi
+      inner join si_empresa em on em.emprcodi = eq.emprcodi
+      where v.cbvernumversion = 1
+      and e.cbenvcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCentralesConInfoEnviada</key>
+    <query>
+      select * from (
+      SELECT
+      EC.* ,
+      ROW_NUMBER() OVER(PARTITION BY E.CBENVCODI,EC.EQUICODI ORDER BY E.CBENVCODI,EC.EQUICODI,EC.CBVERCODI DESC) AS NUM
+      FROM CB_ENVIO_CENTRAL EC
+      INNER JOIN CB_VERSION V ON V.CBVERCODI = EC.CBVERCODI
+      INNER JOIN CB_ENVIO E ON E.CBENVCODI = V.CBENVCODI
+      WHERE
+      E.ESTENVCODI != 8
+      AND e.cbenvtipoenvio = 2
+      AND EXTRACT(MONTH FROM E.cbenvfechaperiodo) = {0}
+      AND EXTRACT(YEAR FROM E.cbenvfechaperiodo) = {1}
+      ) where num = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCentralUltimoEnvioXMes</key>
+    <query>
+      select * from (
+      SELECT
+      EC.*,
+      E.cbenvfechaperiodo,
+      ROW_NUMBER() OVER(PARTITION BY E.CBENVCODI,EC.EQUICODI ORDER BY E.CBENVCODI,EC.EQUICODI,EC.CBVERCODI DESC) AS NUM
+      FROM CB_ENVIO_CENTRAL EC
+      INNER JOIN CB_VERSION V ON V.CBVERCODI = EC.CBVERCODI
+      INNER JOIN CB_ENVIO E ON E.CBENVCODI = V.CBENVCODI
+      WHERE
+      E.ESTENVCODI != 8
+      AND E.cbenvtipoenvio = 2
+      AND EXTRACT(MONTH FROM E.cbenvfechaperiodo) = {0}
+      AND EXTRACT(YEAR FROM E.cbenvfechaperiodo) = {1}
+      ) where num = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCentralUltimoEnvioXDato</key>
+    <query>
+      select * from (
+      SELECT
+      EC.*,
+      E.cbenvfechaperiodo,
+      ROW_NUMBER() OVER(PARTITION BY EC.EQUICODI ORDER BY EC.EQUICODI,E.cbenvfechaperiodo DESC,EC.CBVERCODI DESC) AS NUM
+      FROM CB_DATOS D
+      INNER JOIN  CB_ENVIO_CENTRAL EC ON EC.CBCENTCODI = D.CBCENTCODI
+      INNER JOIN CB_VERSION V ON V.CBVERCODI = EC.CBVERCODI
+      INNER JOIN CB_ENVIO E ON E.CBENVCODI = V.CBENVCODI
+      WHERE
+      D.CCOMBCODI = {1} AND D.CBEVDAVALOR = '{2}'
+      AND EC.CBCENTESTADO = 'A'
+      AND E.ESTENVCODI != 8
+      AND E.cbenvtipoenvio = 2
+      AND E.cbenvfechaperiodo &lt; to_date('{0}','YYYY-MM-DD')
+      and ec.equicodi in ({3})
+      ) where num = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCentralNuevaUltimoEnvioXDato</key>
+    <query>
+      select * from (
+      SELECT
+      EC.*,
+      E.cbenvfechaperiodo,
+      ROW_NUMBER() OVER(PARTITION BY EC.EQUICODI ORDER BY EC.EQUICODI,E.cbenvfechaperiodo DESC,EC.CBVERCODI DESC) AS NUM
+      FROM CB_DATOS D
+      INNER JOIN  CB_ENVIO_CENTRAL EC ON EC.CBCENTCODI = D.CBCENTCODI
+      INNER JOIN CB_VERSION V ON V.CBVERCODI = EC.CBVERCODI
+      INNER JOIN CB_ENVIO E ON E.CBENVCODI = V.CBENVCODI
+      WHERE
+      D.CCOMBCODI = {1} AND D.CBEVDAVALOR is not null
+      AND EC.CBCENTESTADO = 'A'
+      AND E.ESTENVCODI != 8
+      AND E.cbenvtipoenvio = 2
+      AND E.cbenvfechaperiodo &lt; to_date('{0}','YYYY-MM-DD')
+      and ec.equicodi in ({2})
+      ) where num = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCentralUltimoEnvioXDia</key>
+    <query>
+      select * from (
+      SELECT
+      EC.*,
+      E.cbenvfechaperiodo,
+      EMP.EMPRCODI,
+      EMP.EMPRNOMB,
+      ROW_NUMBER() OVER(PARTITION BY E.CBENVCODI,EC.EQUICODI ORDER BY E.CBENVCODI,EC.EQUICODI,EC.CBVERCODI DESC) AS NUM
+      FROM CB_ENVIO_CENTRAL EC
+      INNER JOIN CB_VERSION V ON V.CBVERCODI = EC.CBVERCODI
+      INNER JOIN CB_ENVIO E ON E.CBENVCODI = V.CBENVCODI
+      INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI =  EC.EQUICODI
+      INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+      WHERE
+      EC.EQUICODI IN ({0})
+      AND trunc(E.cbenvfecsolicitud) = to_date('{1}','YYYY-MM-DD')
+      ) where num = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByEstadoYVersion</key>
+    <query>
+      SELECT DISTINCT EC.*, EQ.EQUINOMB FROM CB_ENVIO_CENTRAL EC
+      INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI = EC.EQUICODI
+      INNER JOIN CB_VERSION VE ON VE.CBVERCODI = EC.CBVERCODI
+      WHERE
+      (EC.CBCENTESTADO = '{0}' OR '{0}' = '-1') AND
+      EC.CBVERCODI IN ({1})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCentralPorRangoMes</key>
+    <query>
+      select * from (
+      SELECT
+      EC.*,
+      E.cbenvfechaperiodo,
+      EMP.EMPRCODI,
+      EMP.EMPRNOMB,
+      EQ.EQUINOMB,
+      FE.FENERGNOMB,
+      ROW_NUMBER() OVER(PARTITION BY E.CBENVCODI,EC.EQUICODI ORDER BY E.CBENVCODI,EC.EQUICODI,EC.CBVERCODI DESC) AS NUM
+      FROM CB_ENVIO_CENTRAL EC
+      INNER JOIN CB_VERSION V ON V.CBVERCODI = EC.CBVERCODI
+      INNER JOIN CB_ENVIO E ON E.CBENVCODI = V.CBENVCODI
+      INNER JOIN EQ_EQUIPO EQ ON EQ.EQUICODI =  EC.EQUICODI
+      INNER JOIN SI_EMPRESA EMP ON EMP.EMPRCODI = EQ.EMPRCODI
+      INNER JOIN SI_FUENTEENERGIA FE ON FE.FENERGCODI = EC.FENERGCODI
+      WHERE
+      EC.EQUICODI IN ({0})
+      and E.cbenvtipoenvio = 2
+      and E.cbenvfechaperiodo &gt;= to_date('{1}','YYYY-MM-DD')
+      and E.cbenvfechaperiodo &lt;= to_date('{2}','YYYY-MM-DD')
+      ) where num = 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPorIds</key>
+    <query>
+      SELECT EC.*, E.EQUINOMB FROM CB_ENVIO_CENTRAL EC
+      INNER JOIN EQ_EQUIPO E ON E.EQUICODI = EC.EQUICODI
+      WHERE CBCENTCODI IN ({0})
+    </query>
+  </Sql>
+
+
+</Sqls>

@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(migracodi), 0) + 1 from si_migracion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into si_migracion(
+      migracodi,
+      emprcodi,
+      tmopercodi,
+      migradescripcion,
+      migrafeccorte,
+      migrausucreacion,
+      migrafeccreacion,
+      migrausumodificacion,
+      migrafecmodificacion,
+      migradeleted,
+      migrareldeleted,
+      migraflagstr
+      )
+      values(
+      :migracodi,
+      :emprcodi,
+      :tmopercodi,
+      :migradescripcion,
+      :migrafeccorte,
+      :migrausucreacion,
+      :migrafeccreacion,
+      :migrausumodificacion,
+      :migrafecmodificacion,
+      :migradeleted,
+      :migrareldeleted,
+      :migraflagstr
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update si_migracion
+      set
+      emprcodi = :emprcodi,
+      tmopercodi = :tmopercodi,
+      migradescripcion = :migradescripcion,
+      migrafeccorte = :migrafeccorte,
+      migrausucreacion = :migrausucreacion,
+      migrafeccreacion = :migrafeccreacion,
+      migrausumodificacion = :migrausumodificacion,
+      migrafecmodificacion = :migrafecmodificacion,
+      migradeleted = :migradeleted,
+      migrareldeleted = :migrareldeleted,
+      migraflagstr = :migraflagstr
+      where
+      migracodi = :migracodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from si_migracion
+      where
+      migracodi = :migracodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      mig.migracodi,
+      mig.emprcodi,
+      mig.tmopercodi,
+      mig.migradescripcion,
+      mig.migrafeccorte,
+      mig.migrausucreacion,
+      mig.migrafeccreacion,
+      mig.migrafeccreacion as MIGRAFECCORTESTR,
+      mig.migrausumodificacion,
+      mig.migrafecmodificacion,
+      mig.migradeleted,
+      mig.migrareldeleted,
+      mig.migraflagstr,
+      emp.emprnomb as EMPRNOMBDESTINO,
+      emp2.emprnomb as EMPRNOMBORIGEN,
+      tmg.tmoperdescripcion,
+      morg.emprcodi as EMPRCODIORIGEN
+      from
+      si_migracion mig
+      inner join si_empresa emp on emp.emprcodi=mig.emprcodi
+      inner join si_tipomigraoperacion tmg on tmg.tmopercodi=mig.tmopercodi
+      inner join si_migraemprorigen morg on morg.migracodi=mig.migracodi
+      inner join si_empresa emp2 on emp2.emprcodi=morg.emprcodi
+      where
+      mig.migracodi = :migracodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      migracodi,
+      emprcodi,
+      tmopercodi,
+      migradescripcion,
+      migrafeccorte,
+      migrausucreacion,
+      migrafeccreacion,
+      migrausumodificacion,
+      migrafecmodificacion,
+      migradeleted,
+      migrareldeleted,
+      migraflagstr
+      from
+      si_migracion mig
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      migracodi,
+      emprcodi,
+      tmopercodi,
+      migradescripcion,
+      migrafeccorte,
+      migrausucreacion,
+      migrafeccreacion,
+      migrausumodificacion,
+      migrafecmodificacion,
+      migradeleted,
+      migrareldeleted,
+      migraflagstr
+      from
+      si_migracion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarTransferenciasXEmpresaOrigenXEmpresaDestino</key>
+    <query>
+		SELECT
+		migra.migracodi,
+		c.emprcodi ,
+		emprorg.emprnomb  AS EMPRNOMBORIGEN,
+		migra.emprcodi as EMPRCODI,
+		emprdest.emprnomb as EMPRNOMBDESTINO,
+		migra.tmopercodi ,
+		tpmig.tmoperdescripcion,
+		migra.migradescripcion,
+		migra.migrafeccorte,
+		migra.migrausucreacion,
+		migra.migrafeccreacion,
+		migra.migrausumodificacion,
+		migra.migrafecmodificacion,
+		migra.migradeleted,
+		migra.migrareldeleted,
+		migra.migraflagstr,
+		coalesce(total_migr.total,0) total
+		from si_migracion migra
+		inner join si_empresa emprdest on migra.emprcodi=emprdest.emprcodi
+		inner join si_migraemprorigen c on migra.migracodi=c.migracodi
+		INNER JOIN SI_EMPRESA emprorg on c.emprcodi=emprorg.emprcodi
+		inner join si_tipomigraoperacion tpmig on tpmig.tmopercodi= migra.tmopercodi
+		left join (
+		select migracodi,count(*)total from SI_HISEMPEQ group by migracodi
+		)total_migr on total_migr.migracodi = migra.migracodi
+		where
+		migra.migradeleted = 0 and
+		(c.emprcodi={0} or -2={0})and
+		(migra.emprcodi={1} or -2={1}) and
+		(lower(nvl(migra.migradescripcion,' ')) like '%{2}%' )
+		order by migra.migracodi desc
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>SaveMigracion</key>
+    <query>
+      insert into si_migracion(
+      migracodi,
+      emprcodi,
+      tmopercodi,
+      migradescripcion,
+      migrafeccorte,
+      migrausucreacion,
+      migrafeccreacion,
+      migrausumodificacion,
+      migrafecmodificacion
+      )
+      values(
+      :migracodi,
+      :emprcodi,
+      :tmopercodi,
+      :migradescripcion,
+      :migrafeccorte,
+      :migrausucreacion,
+      :migrafeccreacion,
+      :migrausumodificacion,
+      :migrafecmodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarHistoricoEstadoEmpresa</key>
+    <query>
+      select  emp.emprnomb as Emprnomborigen, emp.EMPRABREV as EMPRABREVorigen,emporg.emprcodi, coalesce(emporg.MIGEMPESTADOORIG, 'B') as Emprestadoorigen
+      ,migr.tmopercodi, tpmig.tmoperdescripcion
+      ,migr.MIGRACODI, migr.migradescripcion, migr.migrafeccorte, migr.migrausucreacion, migr.migrafeccreacion, migr.migrausumodificacion, migr.migrafecmodificacion
+      from SI_MIGRAEMPRORIGEN emporg
+      inner join SI_MIGRACION migr on emporg.migracodi = migr.migracodi
+      inner join si_tipomigraoperacion tpmig on tpmig.tmopercodi= migr.tmopercodi
+      inner join si_empresa emp on emp.emprcodi = emporg.emprcodi
+      where ('-2' = '{0}' or emporg.emprcodi in ({0}) ) and migr.MIGRAFECCORTE &lt;= to_date('{1}', 'YYYY-MM-DD')
+      order by emp.emprnomb, migr.migrafeccorte desc, migr.migrafeccreacion desc
+    </query>
+  </Sql>
+
+  <!--INICIO - siosein2-->
+  <Sql>
+    <key>ListarTransferenciasXTipoMigracion</key>
+    <query>
+      SELECT
+      migra.migracodi,
+      c.emprcodi ,
+      emprorg.emprnomb  AS EMPRNOMBORIGEN,
+      migra.emprcodi as EMPRCODI,
+      emprdest.emprnomb as EMPRNOMBDESTINO,
+      migra.tmopercodi ,
+      tpmig.tmoperdescripcion,
+      migra.migradescripcion,
+      migra.migrafeccorte,
+      migra.migrausucreacion,
+      migra.migrafeccreacion,
+      migra.migrausumodificacion,
+      migra.migrafecmodificacion
+      from si_migracion migra
+      inner join si_empresa emprdest on migra.emprcodi=emprdest.emprcodi
+      inner join si_migraemprorigen c on migra.migracodi=c.migracodi
+      INNER JOIN SI_EMPRESA emprorg on c.emprcodi=emprorg.emprcodi
+      inner join si_tipomigraoperacion tpmig on tpmig.tmopercodi= migra.tmopercodi
+      where
+      (tpmig.tmopercodi in({0}) or '{0}'='-1' ) and
+      ( migra.migrafeccorte >= to_date('{1}','YYYY-MM-DD') and
+      migra.migrafeccorte &lt; to_date('{2}','YYYY-MM-DD'))
+      order by migra.migracodi desc
+    </query>
+  </Sql>
+  <!--FIN - siosein2-->
+
+  <Sql>
+    <key>UpdateMigraAnulacion</key>
+    <query>
+      update si_migracion
+      set
+      MIGRADELETED = 1,
+      MIGRARELDELETED  =:migrareldeleted,
+      MIGRAUSUMODIFICACION =:usuario,
+      MIGRAFECMODIFICACION =:fechaActualizacion
+      where
+      migracodi = :migracodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateMigraProcesoPendiente</key>
+    <query>
+      update si_migracion
+      set
+      MIGRAFLAGSTR = null
+      where
+      migracodi = :migracodi
+    </query>
+  </Sql>
+
+</Sqls>

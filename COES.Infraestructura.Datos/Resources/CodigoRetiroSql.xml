@@ -1,0 +1,1140 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+		select trn_codigo_retiro_solicitud.*,
+		empresa.emprnomb,
+		trn_barra.barrbarratransferencia,
+		trn_tipo_contrato.tipconnombre,
+		trn_tipo_usuario.tipusunombre,
+		cliente.emprruc as cliruc,
+		cliente.emprnomb as clinombre
+		from trn_codigo_retiro_solicitud
+		left outer join vw_si_empresa empresa on empresa.emprcodi = trn_codigo_retiro_solicitud.genemprcodi
+		left outer join vw_si_empresa cliente on cliente.emprcodi = trn_codigo_retiro_solicitud.cliemprcodi
+		join trn_barra  on trn_barra.barrcodi = trn_codigo_retiro_solicitud.barrcodi
+		join trn_tipo_contrato on trn_tipo_contrato.tipconcodi = trn_codigo_retiro_solicitud.tipconcodi
+		join trn_tipo_usuario on trn_tipo_usuario.tipusucodi = trn_codigo_retiro_solicitud.tipusucodi
+		where trn_codigo_retiro_solicitud.coresocodi = :coresocodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByIdGestionCodigosVTEAVTP</key>
+    <query>
+		select  rsl.coresocodi
+		,rsl.genemprcodi
+		,semp.emprnomb
+		,rsl.Cliemprcodi
+		,secl.emprruc                                                                 as cliruc
+		,secl.emprnomb                                                                as clinombre
+		,tpcn.tipconnombre
+		,tusu.tipusunombre
+		,coresofechainicio
+		,coresofechafin
+		, CASE WHEN vest.ESTDABREV='PAP'
+		THEN 'Pendiente Asignacion VTEA y VTP'
+		WHEN rsl.CORESOESTADO='ASI'
+		THEN 'Activo'
+		ELSE vest.ESTDDESCRIPCION
+		END                                                                  as  ESTDDESCRIPCION
+		, CASE WHEN rsl.CORESOESTADO='ASI'
+		THEN 'ACT'
+		ELSE vest.ESTDABREV
+		END                                                                 as   ESTDABREV
+		,tnb.barrcodi
+		,tnb.barrbarratransferencia
+		,rsl.coresocodigo
+		,rsl.coresovariacion
+		,rsl.coesusername
+		,rsl.SEINUSERNAME
+		,rsl.coresofecharegistro
+		,rsl.coresodescripcion
+		,rsl.coresodetalle
+		,(select e.emprabrevcodi from si_empresa e
+		left join trn_infoadicional_det ia on e.emprcodi = ia.emprcodi and ia.infadiestado = 'I'
+		where ia.infadicodi = rsl.genemprcodi or  e.emprcodi= rsl.genemprcodi) as emprabrev
+		,case  when CNPER.TRNPCTIPOPOTENCIA=1 then 'AGRVTA'
+		when CNPER.TRNPCTIPOPOTENCIA=2 then 'AGRVTP'
+		end as TrnpcTipoCasoAgrupado
+		,rsl.coresoestapr as ESTAPR
+		,CNPER.TRNPCTIPOPOTENCIA AS TRNPCTIPOPOTENCIA
+		from trn_codigo_retiro_solicitud rsl
+		inner join trn_codigo_consolidado_periodo CNPER ON (rsl.coresocodi=CNPER.coresocodi) AND CNPER.PERIDCCODI =:pericodi
+		inner join vw_si_empresa                semp on rsl.genemprcodi=semp.emprcodi
+		inner join vw_si_empresa                secl on rsl.cliemprcodi=secl.emprcodi
+		inner join trn_tipo_contrato         tpcn
+		on rsl.tipconcodi=tpcn.tipconcodi
+		inner join trn_tipo_usuario          tusu
+		on rsl.tipusucodi=tusu.tipusucodi
+		inner join trn_barra                  tnb
+		on  rsl.barrcodi=tnb.barrcodi
+		left join vtp_estado                vest
+		on rsl.coresoestado=vest.ESTDABREV
+		where (rsl.coresocodi=:coresocodi  )
+
+	</query>
+  </Sql>
+
+
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into trn_codigo_retiro_solicitud
+      (
+      coresocodi, genemprcodi,barrcodi ,seinusername, tipconcodi,tipusucodi,cliemprcodi,coresocodigo,
+      coresofecharegistro,coresodescripcion,coresodetalle,coresofechainicio,coresofechafin, coresoobservacion,
+      coresoestado, coresofecins)
+      values
+      (
+      :coresocodi, :genemprcodi, :barrcodi, :seinusername,:tipconcodi,:tipusucodi,:cliemprcodi,:coresocodigo,
+      :coresofecharegistro,:coresodescripcion,:coresodetalle,:coresofechainicio,:coresofechafin, :coresoobservacion,
+      :coresoestado, :coresofecins)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update trn_codigo_retiro_solicitud
+      set
+      genemprcodi = :genemprcodi,
+      barrcodi = :barrcodi,
+      coesusername = :coesusername,
+      tipconcodi = :tipconcodi,
+      tipusucodi = :tipusucodi,
+      cliemprcodi = :cliemprcodi,
+      coresocodigo = :coresocodigo,
+      coresofecharegistro = :coresofecharegistro,
+      coresodescripcion = :coresodescripcion,
+      coresodetalle= :coresodetalle,
+      coresofechainicio = : coresofechainicio,
+      coresofechafin = :coresofechafin,
+      coresoobservacion = :coresoobservacion,
+      coresoestado = :coresoestado,
+      coresofecact = :coresofecact,
+      coresofechasolicitudbaja = :coresofechasolicitudbaja,
+      coresofechadebaja = :coresofechadebaja
+      where
+      coresocodi = :coresocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstado</key>
+    <query>
+      update trn_codigo_retiro_solicitud
+      set
+      coresocodigo = :coresocodigo,
+      coesusername = :coesusername,
+      coresoestado = :coresoestado,
+      coresofecact = :coresofecact,
+      CORESOFECHAINICIO = :CORESOFECHAINICIO,
+      CORESOFECHAFIN = :CORESOFECHAFIN
+      where  coresocodi = :coresocodi
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateEstadoRechazar</key>
+    <query>
+      update trn_codigo_retiro_solicitud
+      set
+      coresocodigo = :coresocodigo,
+      coesusername = :coesusername,
+      coresoestado = :coresoestado,
+      coresofecact = :coresofecact
+      where  coresocodi = :coresocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateBajaCodigoVTEA</key>
+    <query>
+      DECLARE
+      cantidadActivo number:=0;
+      coresocodiAux number :=:coresocodi;
+      BEGIN
+      SELECT COUNT(1) into cantidadActivo
+      FROM VTP_CODIGO_RETIRO_GENERADO RG
+      INNER JOIN VTP_CODIGO_RETIRO_SOL_DET SDT
+      ON rg.coresdcodi=sdt.coresdcodi
+      WHERE SDT.CORESOCODI=coresocodiAux
+      AND COREGEESTADO IN('ACT','PAP','SBJ');
+      if cantidadActivo=0 then
+      update TRN_CODIGO_RETIRO_SOLICITUD set
+      coesusername = :coesusername,
+      coresoestado = 'BAJ',
+      coresofecact = :coresofecact
+      where coresocodi=coresocodiAux;
+      end if;
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateBajaCodigoVTEAVTP</key>
+    <query>
+      declare
+      cantidadbajavtea number:=0;
+      cantidadbajavtp number:=0;
+      coresocodiaux number := :coresocodi;
+      coesusernameaux varchar(120) := :coesusername;
+      coresofecactaux date := :coresofecact;
+      begin
+
+      merge into vtp_codigo_retiro_generado t1
+      using
+      (
+      select sd.coresdcodi from trn_codigo_retiro_solicitud csl
+      inner join vtp_codigo_retiro_sol_det sd
+      on csl.coresocodi=sd.coresocodi
+      where csl.coresocodi=coresocodiaux
+      )t2 on(t1.coresdcodi = t2.coresdcodi)
+      when matched then update set
+      t1.coregeestado = 'BAJ',
+      t1.coregeusumodificacion =coesusernameaux,
+      t1.coregefecmodificacion =coresofecactaux;
+      update  trn_codigo_retiro_solicitud
+      set coresoestado = 'BAJ',
+      coesusername = coesusernameaux,
+      coresofecact = coresofecactaux,
+      coresoobservacion = 'SOLBAJAOK'
+      where coresocodi=coresocodiaux;
+      end;
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateVariacion</key>
+    <query>
+      update trn_codigo_retiro_solicitud
+      set
+      coesusername = :coesusername,
+      coresovariacion = :coresovariacion,
+      coresofecact = :coresofecact
+      where  coresocodi = :coresocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update trn_codigo_retiro_solicitud
+      set
+      coresoestado = :coresoestado,
+      coresofecact = :coresofecact
+      where
+      coresocodi = :coresocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+		select trn_codigo_retiro_solicitud.*,
+		empresa.emprnomb,
+		trn_barra.barrbarratransferencia,
+		trn_tipo_contrato.tipconnombre,
+		trn_tipo_usuario.tipusunombre,
+		cliente.emprruc as cliruc,
+		cliente.emprnomb as clinombre
+		from trn_codigo_retiro_solicitud
+		left outer join vw_si_empresa empresa on empresa.emprcodi = trn_codigo_retiro_solicitud.genemprcodi
+		left outer join vw_si_empresa cliente on cliente.emprcodi = trn_codigo_retiro_solicitud.cliemprcodi
+		join trn_barra  on trn_barra.barrcodi = trn_codigo_retiro_solicitud.barrcodi
+		join trn_tipo_contrato on trn_tipo_contrato.tipconcodi = trn_codigo_retiro_solicitud.tipconcodi
+		join trn_tipo_usuario on trn_tipo_usuario.tipusucodi = trn_codigo_retiro_solicitud.tipusucodi
+		where trn_codigo_retiro_solicitud.coresoestado = :coresoestado
+		order by coresocodigo desc, empresa.emprnomb, cliente.emprnomb, trn_barra.barrbarratransferencia
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ListarGestionCodigosVTEAVTP</key>
+    <query>
+		with t as
+		(
+		select *
+		from
+		(
+		select  rsl.coresocodi
+		,semp.emprnomb
+		,secl.emprruc                                                                 as cliruc
+		,secl.emprnomb                                                                as clinombre
+		,tpcn.tipconnombre
+		,tusu.tipusunombre
+		,coresofechainicio
+		,coresofechafin
+		,
+		CASE WHEN vest.ESTDABREV='PAP'
+		THEN 'Pendiente Asignacion VTEA y VTP'
+		WHEN rsl.CORESOESTADO='ASI'
+		THEN 'Activo'
+		ELSE vest.ESTDDESCRIPCION
+		END                                                                     as  ESTDDESCRIPCION
+		,
+		CASE WHEN rsl.CORESOESTADO='ASI'
+		THEN 'ACT'
+		ELSE vest.ESTDABREV
+		END                                                                     as ESTDABREV
+		,tnb.barrbarratransferencia
+		,rsl.coresocodigo
+		,rsl.coresovariacion
+		,vgn.coregecodi
+		,vcr.barrcodisum
+		,tnbSum.barrnombre
+		,vgn.coregecodvtp
+		,vestVTP.ESTDDESCRIPCION                                                   as   ESTDDESCRIPCIONVTP
+		,vestVTP.ESTDABREV                                                         as   ESTDABREVVTP
+		,CNPER.TRNPCTIPOPOTENCIA
+		,NVL(potcn.trnpctcodi,potcngn.trnpctcodi)      as trnpctcodi
+		,NVL(potcn.coresocodi,potcngn.coresocodi)      as coresocodipotcn
+		,NVL(potcn.coregecodi,potcngn.coregecodi)      as coregecodipotcn
+		,NVL(potcn.trnpcagrp,potcngn.trnpcagrp)        as trnpcagrp
+		,NVL(potcn.trnpcnumord,potcngn.trnpcnumord)    as trnpcnumordm
+		,NVL(potcn.trnpccodicas,potcngn.trnpccodicas)  as trnpccodicas
+		,nvl(potcn.trnpcttotalmwfija,potcngn.trnpcttotalmwfija) as trnpcttotalmwfija
+		,nvl(potcn.trnpcthpmwfija,potcngn.trnpcthpmwfija)    as  trnpcthpmwfija
+		,nvl(potcn.trnpcthfpmwfija,potcngn.trnpcthfpmwfija)  as trnpcthfpmwfija
+		,nvl(potcn.trnpcttotalmwvariable,potcngn.trnpcttotalmwvariable) as trnpcttotalmwvariable
+		,nvl(potcn.trnpcthpmwfijavariable,potcngn.trnpcthpmwfijavariable) as trnpcthpmwfijavariable
+		,nvl(potcn.trnpcthfpmwfijavariable,potcngn.trnpcthfpmwfijavariable) as trnpcthfpmwfijavariable
+
+
+		--,nvl(potcn.trnpctcomeobs,potcngn.trnpctcomeobs) as trnpctcomeobs
+		,rsl.coresodescripcion trnpctcomeobs
+		,nvl(casagrvt.TIPCASABREV,casagrvtp.TIPCASABREV)                                          as TIPCASABREV
+		,nvl(potcn.TRNPCEXCEL,potcngn.TRNPCEXCEL)                                          as TRNPCEXCEL
+		,row_number() over (order by rsl.coresocodi desc,semp.emprnomb asc,secl.emprnomb asc,tnb.barrbarratransferencia asc,vgn.coregecodvtp  asc)       as fila
+		from trn_codigo_retiro_solicitud     rsl
+		inner join vw_si_empresa                semp
+		on rsl.genemprcodi=semp.emprcodi
+		inner join si_empresa                secl
+		on rsl.cliemprcodi=secl.emprcodi
+		inner join trn_tipo_contrato         tpcn
+		on rsl.tipconcodi=tpcn.tipconcodi
+		inner join trn_tipo_usuario          tusu
+		on rsl.tipusucodi=tusu.tipusucodi
+		inner join trn_barra                  tnb
+		on  rsl.barrcodi=tnb.barrcodi
+		left join vtp_estado                vest
+		on (case when rsl.coresoestado='ASI' then 'ACT'
+		ELSE rsl.coresoestado
+		END)=vest.ESTDABREV
+		left join vtp_codigo_retiro_sol_det  vcr
+		on rsl.coresocodi = vcr.coresocodi
+		and vcr.coresdestado='ACT'
+		and vcr.coresdreg>0
+		left join vtp_codigo_retiro_generado vgn
+		on vcr.coresdcodi = vgn.coresdcodi
+		and vgn.coregeestado not in('INA')
+		left join trn_barra                     tnbSum
+		on  vcr.barrcodisum=tnbSum.barrcodi
+		left join vtp_estado                     vestVTP
+		on vgn.coregeestado=vestVTP.ESTDABREV
+
+		left outer join TRN_POTENCIA_CONTRATADA potcn
+		on rsl.coresocodi=potcn.coresocodi
+		and potcn.coregecodi is null
+		and potcn.trnpcEstado='ACT'
+		and NVL(potcn.PERIDCCODI,potcn.PERICODI) =:pericodi
+		left outer join VTP_TIPO_CASO_AGR       casagrvt
+		on potcn.TRNPCCODICAS= casagrvt.TIPCASCODI
+
+		left join TRN_POTENCIA_CONTRATADA potcngn
+		on rsl.coresocodi=potcngn.coresocodi
+		and  vgn.coregecodi=potcngn.coregecodi
+		and potcngn.trnpcEstado='ACT'
+		and NVL(potcngn.PERIDCCODI,potcngn.PERICODI) =:pericodi
+		left join VTP_TIPO_CASO_AGR       casagrvtp
+		on potcngn.TRNPCCODICAS= casagrvtp.TIPCASCODI
+
+
+
+
+		INNER join TRN_CODIGO_CONSOLIDADO_PERIODO  CNPER
+		ON (rsl.coresocodi=CNPER.coresocodi)
+		AND   CNPER.PERIDCCODI =:pericodi
+		--AND CNPER.emprcodi=semp.emprcodi
+
+		left join VTP_CODIGO_CONSOLIDADO_PERIODO  VTPER
+		ON vgn.COREGECODVTP=VTPER.CODCNCODIVTP
+		AND   VTPER.PERIDCCODI =:pericodi
+		--AND VTPER.emprcodi=semp.emprcodi
+
+		where
+		CNPER.CODCNPEESTADO='ACT'
+		AND (rsl.genemprcodi=:genemprcodi   or :genemprcodi is null)
+		and (rsl.cliemprcodi=:cliemprcodi     or :cliemprcodi is null)
+		and (tpcn.tipconcodi=:tipconcodi      or :tipconcodi is null)
+		and (tusu.tipusucodi=:tipusucodi      or :tipusucodi is null)
+		and (rsl.barrcodi=:barrcodi           or :barrcodi is null)
+		and (vcr.barrcodisum=:barrcodisum     or :barrcodisum is null)
+		and (
+		(rsl.coresoestado=:coresoestado   or :coresoestado is null)
+		or (vgn.coregeestado=:coresoestado   or :coresoestado is null)
+		)
+		--and (rsl.CORESOESTAPR=:coresoestapr     or :coresoestapr is null)
+		--and (NVL(potcnapr.PERIDCCODI,potcnapr.PERICODI) =:pericodi or  :coresoestapr is null)
+		and ( :coregecodvteavtp is null or (vgn.coregecodvtp like '%'||:coregecodvteavtp||'%' or rsl.coresocodigo like  '%'||:coregecodvteavtp||'%'))
+		AND NVL(to_char(rsl.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+      AND NVL(to_char(rsl.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+      AND
+      (
+      (CNPER.CODCNCODIVTA IS NOT NULL OR CNPER.coresocodi IS NOT NULL)
+      AND (VTPER.CODCNCODIVTP IS NOT  NULL  OR VTPER.CODCNCODIVTP IS NULL)
+      )
+      order by
+      nvl(potcn.trnpcagrp,0) desc
+      ,potcn.trnpcnumord
+      ,rsl.coresocodi desc
+      ,semp.emprnomb
+      ,secl.emprnomb
+      ,tnb.barrbarratransferencia
+      ,potcngn.trnpcagrp
+      ,trnpcnumordm
+      ,vgn.coregecodvtp
+
+      )
+      where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize)
+      )
+      SELECT *
+      FROM t
+      WHERE ESTDABREV IN('PAP','PVT')
+      UNION ALL
+      SELECT *
+      FROM t
+      WHERE ESTDABREV!='PAP' AND ESTDABREV!='PVT'
+
+    </query>
+  </Sql>
+	
+	
+  <Sql>
+    <key>ListarGestionCodigosVTEAVTPAprobar</key>
+    <query>
+		with t as
+		(
+		select *
+		from
+		(
+		select  rsl.coresocodi
+		,semp.emprnomb
+		,secl.emprruc                                                                 as cliruc
+		,secl.emprnomb                                                                as clinombre
+		,tpcn.tipconnombre
+		,tusu.tipusunombre
+		,coresofechainicio
+		,coresofechafin
+		,
+		CASE WHEN vest.ESTDABREV='PAP'
+		THEN 'Pendiente Asignacion VTEA y VTP'
+		WHEN rsl.CORESOESTADO='ASI'
+		THEN 'Activo'
+		ELSE vest.ESTDDESCRIPCION
+		END                                                                     as  ESTDDESCRIPCION
+		,
+		CASE WHEN rsl.CORESOESTADO='ASI'
+		THEN 'ACT'
+		ELSE vest.ESTDABREV
+		END                                                                     as ESTDABREV
+		,tnb.barrbarratransferencia
+		,rsl.coresocodigo
+		,rsl.coresovariacion
+		,vgn.coregecodi
+		,vcr.barrcodisum
+		,tnbSum.barrnombre
+		,vgn.coregecodvtp
+		,vestVTP.ESTDDESCRIPCION                                                   as   ESTDDESCRIPCIONVTP
+		,vestVTP.ESTDABREV                                                         as   ESTDABREVVTP
+		,CNPER.TRNPCTIPOPOTENCIA
+		,NVL(potcn.trnpctcodi,potcngn.trnpctcodi)      as trnpctcodi
+		,NVL(potcn.coresocodi,potcngn.coresocodi)      as coresocodipotcn
+		,NVL(potcn.coregecodi,potcngn.coregecodi)      as coregecodipotcn
+		,NVL(potcn.trnpcagrp,potcngn.trnpcagrp)        as trnpcagrp
+		,NVL(potcn.trnpcnumord,potcngn.trnpcnumord)    as trnpcnumordm
+		,NVL(potcn.trnpccodicas,potcngn.trnpccodicas)  as trnpccodicas
+		,nvl(potcn.trnpcttotalmwfija,potcngn.trnpcttotalmwfija) as trnpcttotalmwfija
+		,nvl(potcn.trnpcthpmwfija,potcngn.trnpcthpmwfija)    as  trnpcthpmwfija
+		,nvl(potcn.trnpcthfpmwfija,potcngn.trnpcthfpmwfija)  as trnpcthfpmwfija
+		,nvl(potcn.trnpcttotalmwvariable,potcngn.trnpcttotalmwvariable) as trnpcttotalmwvariable
+		,nvl(potcn.trnpcthpmwfijavariable,potcngn.trnpcthpmwfijavariable) as trnpcthpmwfijavariable
+		,nvl(potcn.trnpcthfpmwfijavariable,potcngn.trnpcthfpmwfijavariable) as trnpcthfpmwfijavariable
+
+		--,nvl(potcn.trnpctcomeobs,potcngn.trnpctcomeobs) as trnpctcomeobs
+		,rsl.coresodescripcion trnpctcomeobs
+		,nvl(casagrvt.TIPCASABREV,casagrvtp.TIPCASABREV)                                          as TIPCASABREV
+		,nvl(potcn.TRNPCEXCEL,potcngn.TRNPCEXCEL)                                          as TRNPCEXCEL
+		,row_number() over (order by rsl.coresocodi desc,semp.emprnomb asc,secl.emprnomb asc,tnb.barrbarratransferencia asc,vgn.coregecodvtp  asc)       as fila
+		from trn_codigo_retiro_solicitud     rsl
+		inner join vw_si_empresa                semp
+		on rsl.genemprcodi=semp.emprcodi
+		inner join si_empresa                secl
+		on rsl.cliemprcodi=secl.emprcodi
+		inner join trn_tipo_contrato         tpcn
+		on rsl.tipconcodi=tpcn.tipconcodi
+		inner join trn_tipo_usuario          tusu
+		on rsl.tipusucodi=tusu.tipusucodi
+		inner join trn_barra                  tnb
+		on  rsl.barrcodi=tnb.barrcodi
+		left join vtp_estado                vest
+		on (case when rsl.coresoestado='ASI' then 'ACT'
+		ELSE rsl.coresoestado
+		END)=vest.ESTDABREV
+		left join vtp_codigo_retiro_sol_det  vcr
+		on rsl.coresocodi = vcr.coresocodi
+		and vcr.coresdestado='ACT'
+		and vcr.coresdreg>0
+		left join vtp_codigo_retiro_generado vgn
+		on vcr.coresdcodi = vgn.coresdcodi
+		and vgn.coregeestado not in('INA')
+		left join trn_barra                     tnbSum
+		on  vcr.barrcodisum=tnbSum.barrcodi
+		left join vtp_estado                     vestVTP
+		on vgn.coregeestado=vestVTP.ESTDABREV
+
+		left outer join TRN_POTENCIA_CONTRATADA_APR potcn
+		on rsl.coresocodi=potcn.coresocodi
+		and potcn.coregecodi is null
+		and potcn.trnpcEstado='ACT'
+		and NVL(potcn.PERIDCCODI,potcn.PERICODI) =:pericodi
+		left outer join VTP_TIPO_CASO_AGR       casagrvt
+		on potcn.TRNPCCODICAS= casagrvt.TIPCASCODI
+
+		left join TRN_POTENCIA_CONTRATADA_APR potcngn
+		on rsl.coresocodi=potcngn.coresocodi
+		and  vgn.coregecodi=potcngn.coregecodi
+		and potcngn.trnpcEstado='ACT'
+		and NVL(potcngn.PERIDCCODI,potcngn.PERICODI) =:pericodi
+		left join VTP_TIPO_CASO_AGR       casagrvtp
+		on potcngn.TRNPCCODICAS= casagrvtp.TIPCASCODI
+
+
+
+		INNER join TRN_CODIGO_CONSOLIDADO_PERIODO  CNPER
+		ON (rsl.coresocodi=CNPER.coresocodi)
+		AND   CNPER.PERIDCCODI =:pericodi
+		AND CNPER.emprcodi=semp.emprcodi
+
+		left join VTP_CODIGO_CONSOLIDADO_PERIODO  VTPER
+		ON vgn.COREGECODVTP=VTPER.CODCNCODIVTP
+		AND   VTPER.PERIDCCODI =:pericodi
+		AND VTPER.emprcodi=semp.emprcodi
+
+		where
+		CNPER.CODCNPEESTADO='ACT'
+		AND (rsl.genemprcodi=:genemprcodi   or :genemprcodi is null)
+		and (rsl.cliemprcodi=:cliemprcodi     or :cliemprcodi is null)
+		and (tpcn.tipconcodi=:tipconcodi      or :tipconcodi is null)
+		and (tusu.tipusucodi=:tipusucodi      or :tipusucodi is null)
+		and (rsl.barrcodi=:barrcodi           or :barrcodi is null)
+		and (vcr.barrcodisum=:barrcodisum     or :barrcodisum is null)
+		and (
+		(rsl.coresoestado=:coresoestado   or :coresoestado is null)
+		or (vgn.coregeestado=:coresoestado   or :coresoestado is null)
+		)
+		and (rsl.CORESOESTAPR=:coresoestapr     or :coresoestapr is null)
+		and (potcn.PERIDCCODI=:pericodi or  potcngn.PERIDCCODI=:pericodi)
+		--and (potcngn.PERIDCCODI=potcn.PERIDCCODI)
+		and ( :coregecodvteavtp is null or (vgn.coregecodvtp like '%'||:coregecodvteavtp||'%' or rsl.coresocodigo like  '%'||:coregecodvteavtp||'%'))
+		AND NVL(to_char(rsl.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+      AND NVL(to_char(rsl.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+      AND
+      (
+      (CNPER.CODCNCODIVTA IS NOT NULL OR CNPER.coresocodi IS NOT NULL)
+      AND (VTPER.CODCNCODIVTP IS NOT  NULL  OR VTPER.CODCNCODIVTP IS NULL)
+      )
+      order by
+      nvl(potcn.trnpcagrp,0) desc
+      ,potcn.trnpcnumord
+      ,rsl.coresocodi desc
+      ,semp.emprnomb
+      ,secl.emprnomb
+      ,tnb.barrbarratransferencia
+      ,potcngn.trnpcagrp
+      ,trnpcnumordm
+      ,vgn.coregecodvtp
+
+      )
+      where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize)
+      )
+      SELECT *
+      FROM t
+      WHERE ESTDABREV IN('PAP','PVT')
+      UNION ALL
+      SELECT *
+      FROM t
+      WHERE ESTDABREV!='PAP' AND ESTDABREV!='PVT'
+
+    </query>
+  </Sql>
+
+
+
+  <Sql>
+    <key>ListarGestionCodigosExportarVTEAVTP</key>
+    <query>
+		with t as
+		(
+		select *
+		from
+		(
+		select  rsl.coresocodi
+		,semp.emprnomb
+		,secl.emprruc                                                                 as cliruc
+		,secl.emprnomb                                                                as clinombre
+		,tpcn.tipconnombre
+		,tusu.tipusunombre
+		,coresofechainicio
+		,coresofechafin
+		,
+		CASE WHEN vest.ESTDABREV='PAP'
+		THEN 'Pendiente Asignacion VTEA y VTP'
+		WHEN rsl.CORESOESTADO='ASI'
+		THEN 'Activo'
+		ELSE vest.ESTDDESCRIPCION
+		END                                                                     as  ESTDDESCRIPCION
+		,
+		CASE WHEN rsl.CORESOESTADO='ASI'
+		THEN 'ACT'
+		ELSE vest.ESTDABREV
+		END                                                                     as ESTDABREV
+		,tnb.barrbarratransferencia
+		,rsl.coresocodigo
+		,rsl.coresovariacion
+		,vgn.coregecodi
+		,vcr.barrcodisum
+		,tnbSum.barrnombre
+		,vgn.coregecodvtp
+		,vestVTP.ESTDDESCRIPCION                                                   as   ESTDDESCRIPCIONVTP
+		,vestVTP.ESTDABREV                                                         as   ESTDABREVVTP
+		,CNPER.TRNPCTIPOPOTENCIA
+		,NVL(potcn.trnpctcodi,potcngn.trnpctcodi)      as trnpctcodi
+		,NVL(potcn.coresocodi,potcngn.coresocodi)      as coresocodipotcn
+		,NVL(potcn.coregecodi,potcngn.coregecodi)      as coregecodipotcn
+		,NVL(potcn.trnpcagrp,potcngn.trnpcagrp)        as trnpcagrp
+		,NVL(potcn.trnpcnumord,potcngn.trnpcnumord)    as trnpcnumordm
+		,NVL(potcn.trnpccodicas,potcngn.trnpccodicas)  as trnpccodicas
+		,nvl(potcn.trnpcttotalmwfija,potcngn.trnpcttotalmwfija) as trnpcttotalmwfija
+		,nvl(potcn.trnpcthpmwfija,potcngn.trnpcthpmwfija)    as  trnpcthpmwfija
+		,nvl(potcn.trnpcthfpmwfija,potcngn.trnpcthfpmwfija)  as trnpcthfpmwfija
+		,nvl(potcn.trnpcttotalmwvariable,potcngn.trnpcttotalmwvariable) as trnpcttotalmwvariable
+		,nvl(potcn.trnpcthpmwfijavariable,potcngn.trnpcthpmwfijavariable) as trnpcthpmwfijavariable
+		,nvl(potcn.trnpcthfpmwfijavariable,potcngn.trnpcthfpmwfijavariable) as trnpcthfpmwfijavariable
+		--,nvl(potcn.trnpctcomeobs,potcngn.trnpctcomeobs) as trnpctcomeobs
+		,rsl.coresodescripcion trnpctcomeobs
+		,nvl(casagrvt.TIPCASABREV,casagrvtp.TIPCASABREV)                                          as TIPCASABREV
+		,nvl(potcn.TRNPCEXCEL,potcngn.TRNPCEXCEL)                                          as TRNPCEXCEL
+		,row_number() over (order by rsl.coresocodi desc,semp.emprnomb asc,secl.emprnomb asc,tnb.barrbarratransferencia asc,vgn.coregecodvtp  asc)       as fila
+		from trn_codigo_retiro_solicitud     rsl
+		inner join vw_si_empresa                semp
+		on rsl.genemprcodi=semp.emprcodi
+		inner join si_empresa                secl
+		on rsl.cliemprcodi=secl.emprcodi
+		inner join trn_tipo_contrato         tpcn
+		on rsl.tipconcodi=tpcn.tipconcodi
+		inner join trn_tipo_usuario          tusu
+		on rsl.tipusucodi=tusu.tipusucodi
+		inner join trn_barra                  tnb
+		on  rsl.barrcodi=tnb.barrcodi
+		left join vtp_estado                vest
+		on (case when rsl.coresoestado='ASI' then 'ACT'
+		ELSE rsl.coresoestado
+		END)=vest.ESTDABREV
+		left join vtp_codigo_retiro_sol_det  vcr
+		on rsl.coresocodi = vcr.coresocodi
+		and vcr.coresdestado='ACT'
+		and vcr.coresdreg>0
+		left join vtp_codigo_retiro_generado vgn
+		on vcr.coresdcodi = vgn.coresdcodi
+		and vgn.coregeestado not in('INA')
+		left join trn_barra                     tnbSum
+		on  vcr.barrcodisum=tnbSum.barrcodi
+		left join vtp_estado                     vestVTP
+		on vgn.coregeestado=vestVTP.ESTDABREV
+
+		left outer join TRN_POTENCIA_CONTRATADA potcn
+		on rsl.coresocodi=potcn.coresocodi
+		and potcn.coregecodi is null
+		and potcn.trnpcEstado='ACT'
+		and NVL(potcn.PERIDCCODI,potcn.PERICODI) =:pericodi
+		left outer join VTP_TIPO_CASO_AGR       casagrvt
+		on potcn.TRNPCCODICAS= casagrvt.TIPCASCODI
+
+		left join TRN_POTENCIA_CONTRATADA potcngn
+		on rsl.coresocodi=potcngn.coresocodi
+		and  vgn.coregecodi=potcngn.coregecodi
+		and potcngn.trnpcEstado='ACT'
+		and NVL(potcngn.PERIDCCODI,potcngn.PERICODI) =:pericodi
+		left join VTP_TIPO_CASO_AGR       casagrvtp
+		on potcngn.TRNPCCODICAS= casagrvtp.TIPCASCODI
+
+
+
+		left join TRN_CODIGO_CONSOLIDADO_PERIODO  CNPER
+		ON (rsl.coresocodi=CNPER.coresocodi)
+		AND   CNPER.PERIDCCODI =:pericodi
+		AND CNPER.emprcodi=semp.emprcodi
+
+		left join VTP_CODIGO_CONSOLIDADO_PERIODO  VTPER
+		ON vgn.COREGECODVTP=VTPER.CODCNCODIVTP
+		AND   VTPER.PERIDCCODI =:pericodi
+		AND VTPER.emprcodi=semp.emprcodi
+
+		where (rsl.genemprcodi=:genemprcodi   or :genemprcodi is null)
+		AND  rsl.CORESOESTADO IN('ASI','PAP','ACT','PVT')
+		AND (vestVTP.ESTDABREV IN ('ACT','PAP','PVT') or  vestVTP.ESTDABREV  IS NULL)
+		AND (rsl.cliemprcodi=:cliemprcodi     or :cliemprcodi is null)
+		and (tpcn.tipconcodi=:tipconcodi      or :tipconcodi is null)
+		and (tusu.tipusucodi=:tipusucodi      or :tipusucodi is null)
+		and (rsl.barrcodi=:barrcodi           or :barrcodi is null)
+		and (vcr.barrcodisum=:barrcodisum     or :barrcodisum is null)
+		and (
+		(rsl.coresoestado=:coresoestado   or :coresoestado is null)
+		or (vgn.coregeestado=:coresoestado   or :coresoestado is null)
+		)
+		and (:coregecodvteavtp is null or (vgn.coregecodvtp LIKE '%'||:coregecodvteavtp||'%' or rsl.coresocodigo LIKE '%'||:coregecodvteavtp||'%') )
+		AND NVL(to_char(rsl.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+      AND NVL(to_char(rsl.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(peridcaniomes) from TRN_PERIODO_DECLARACION where peridccodi = :pericodi)
+
+      AND
+      (
+      (CNPER.CODCNCODIVTA IS NOT NULL OR CNPER.coresocodi IS NOT NULL)
+      AND (VTPER.CODCNCODIVTP IS NOT  NULL  OR VTPER.CODCNCODIVTP IS NULL)
+      )
+      order by
+      nvl(potcn.trnpcagrp,0) desc
+      ,potcn.trnpcnumord
+      ,rsl.coresocodi desc
+      ,semp.emprnomb
+      ,secl.emprnomb
+      ,tnb.barrbarratransferencia
+      ,potcngn.trnpcagrp
+      ,trnpcnumordm
+      ,vgn.coregecodvtp
+
+
+
+      )
+      where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize)
+      )
+      SELECT *
+      FROM t
+      WHERE ESTDABREV IN('PAP','PVT')
+      UNION ALL
+      SELECT *
+      FROM t
+      WHERE ESTDABREV!='PAP' AND ESTDABREV!='PVT'
+
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarCodigoVTEAByEmprBarr</key>
+    <query>
+      select tipconcodi
+      ,tipusucodi
+      ,coresocodi
+      ,coresocodigo
+      from trn_codigo_retiro_solicitud
+      where genemprcodi=:genemprcodi
+      and  cliemprcodi=:cliemprcodi
+      and barrcodi=:barrcodi
+      and coresoestado in ('ACT','ASI')
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetByCriteriaExtranet</key>
+    <query>
+		select trn_codigo_retiro_solicitud.*,
+		empresa.emprnomb,
+		trn_barra.barrbarratransferencia,
+		trn_tipo_contrato.tipconnombre,
+		trn_tipo_usuario.tipusunombre,
+		cliente.emprruc as cliruc,
+		cliente.emprnomb as clinombre
+		from trn_codigo_retiro_solicitud
+		left outer join vw_si_empresa empresa on empresa.emprcodi = trn_codigo_retiro_solicitud.genemprcodi
+		left outer join vw_si_empresa cliente on cliente.emprcodi = trn_codigo_retiro_solicitud.cliemprcodi
+		join trn_barra on trn_barra.barrcodi = trn_codigo_retiro_solicitud.barrcodi
+		join trn_tipo_contrato on trn_tipo_contrato.tipconcodi = trn_codigo_retiro_solicitud.tipconcodi
+		join trn_tipo_usuario on trn_tipo_usuario.tipusucodi = trn_codigo_retiro_solicitud.tipusucodi
+		where (empresa.emprnomb =:emprnomb  or :emprnomb is null)
+		and (trn_tipo_usuario.tipusunombre =:tipusunombre or :tipusunombre is null)
+		and (trn_tipo_contrato.tipconnombre =:tipconnombre or :tipconnombre is null)
+		and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+		and (cliente.emprnomb =:clinombre or :clinombre is null)
+		and (trn_codigo_retiro_solicitud.coresofechainicio &gt;=:coresofechainicio or :coresofechainicio is null)
+      and (trn_codigo_retiro_solicitud.coresofechafin &lt;=:coresofechafin or :coresofechafin is null)
+      and (trn_codigo_retiro_solicitud.coresoobservacion =:coresoobservacion or :coresoobservacion is null)
+      and (trn_codigo_retiro_solicitud.coresoestado =:coresoestado or :coresoestado is null)
+      order by coresocodigo desc, empresa.emprnomb, cliente.emprnomb, trn_barra.barrbarratransferencia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigoRetiro</key>
+    <query>
+		select trn_codigo_retiro_solicitud.*,
+		empresa.emprnomb,
+		trn_barra.barrbarratransferencia,
+		trn_tipo_contrato.tipconnombre,
+		trn_tipo_usuario.tipusunombre,
+		cliente.emprruc as cliruc,
+		cliente.emprnomb as clinombre,
+		barra.barrnombre,
+		generado.coregecodvtp,
+		generado.coregeestado
+		from trn_codigo_retiro_solicitud
+		left outer join vw_si_empresa empresa on empresa.emprcodi = trn_codigo_retiro_solicitud.genemprcodi
+		left outer join vw_si_empresa cliente on cliente.emprcodi = trn_codigo_retiro_solicitud.cliemprcodi
+		join trn_barra on trn_barra.barrcodi = trn_codigo_retiro_solicitud.barrcodi
+		join trn_tipo_contrato on trn_tipo_contrato.tipconcodi = trn_codigo_retiro_solicitud.tipconcodi
+		join trn_tipo_usuario on trn_tipo_usuario.tipusucodi = trn_codigo_retiro_solicitud.tipusucodi
+		left outer join vtp_codigo_retiro_sol_det detalle on detalle.coresocodi = trn_codigo_retiro_solicitud.coresocodi
+		left outer join trn_barra barra on barra.barrcodi = detalle.barrcodisum
+		left outer join vtp_codigo_retiro_generado generado on generado.coresdcodi = detalle.coresdcodi
+		where (empresa.emprnomb =:emprnomb  or :emprnomb is null)
+		and (trn_tipo_usuario.tipusunombre =:tipusunombre or :tipusunombre is null)
+		and (trn_tipo_contrato.tipconnombre =:tipconnombre or :tipconnombre is null)
+		and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+		and (cliente.emprnomb =:clinombre or :clinombre is null)
+		and (trn_codigo_retiro_solicitud.coresofechainicio &gt;=:coresofechainicio or :coresofechainicio is null)
+      and (trn_codigo_retiro_solicitud.coresofechafin &lt;=:coresofechafin or :coresofechafin is null)
+      and (trn_codigo_retiro_solicitud.coresoobservacion =:coresoobservacion or :coresoobservacion is null)
+      and (trn_codigo_retiro_solicitud.coresoestado =:coresoestado or :coresoestado is null)
+      order by coresocodigo desc, empresa.emprnomb, cliente.emprnomb, trn_barra.barrbarratransferencia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select
+		*
+		from (select trn_codigo_retiro_solicitud.*,
+		empresa.emprnomb,
+		trn_barra.barrbarratransferencia,
+		trn_tipo_contrato.tipconnombre,
+		trn_tipo_usuario.tipusunombre,
+		cliente.emprruc as cliruc,
+		cliente.emprnomb as clinombre,
+		(row_number() over (order by coresocodigo desc, empresa.emprnomb, cliente.emprnomb, trn_barra.barrbarratransferencia)) as r
+		from trn_codigo_retiro_solicitud
+		left outer join vw_si_empresa empresa on empresa.emprcodi = trn_codigo_retiro_solicitud.genemprcodi
+		left outer join vw_si_empresa cliente on cliente.emprcodi = trn_codigo_retiro_solicitud.cliemprcodi
+		join trn_barra on trn_barra.barrcodi = trn_codigo_retiro_solicitud.barrcodi
+		join trn_tipo_contrato on trn_tipo_contrato.tipconcodi = trn_codigo_retiro_solicitud.tipconcodi
+		join trn_tipo_usuario on trn_tipo_usuario.tipusucodi = trn_codigo_retiro_solicitud.tipusucodi
+		where (empresa.emprnomb =:emprnomb  or :emprnomb is null)
+		and (trn_tipo_usuario.tipusunombre =:tipusunombre or :tipusunombre is null)
+		and (trn_tipo_contrato.tipconnombre =:tipconnombre or :tipconnombre is null)
+		and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+		and (cliente.emprnomb =:clinombre or :clinombre is null)
+		and (trn_codigo_retiro_solicitud.coresofechainicio &gt;=:coresofechainicio or :coresofechainicio is null)
+      and (trn_codigo_retiro_solicitud.coresofechafin &lt;=:coresofechafin or :coresofechafin is null)
+      and (trn_codigo_retiro_solicitud.coresoobservacion =:coresoobservacion or :coresoobservacion is null)
+      and (trn_codigo_retiro_solicitud.coresoestado =:coresoestado or :coresoestado is null)
+      and (trn_codigo_retiro_solicitud.coresocodigo like '%'||:coresocodigo||'%' or :coresocodigo is null )
+      order by coresocodigo desc, empresa.emprnomb, cliente.emprnomb, trn_barra.barrbarratransferencia
+      )
+      where r >= (((:nropagina-1) * :pagesize) + 1) and r &lt; ((:nropagina * :pagesize) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRecords</key>
+    <query>
+      select count(*) as NroRegistros
+      from trn_codigo_retiro_solicitud
+      left outer join vw_si_empresa empresa on empresa.emprcodi = trn_codigo_retiro_solicitud.genemprcodi
+      left outer join vw_si_empresa cliente on cliente.emprcodi = trn_codigo_retiro_solicitud.cliemprcodi
+      join trn_barra on trn_barra.barrcodi = trn_codigo_retiro_solicitud.barrcodi
+      join trn_tipo_contrato on trn_tipo_contrato.tipconcodi = trn_codigo_retiro_solicitud.tipconcodi
+      join trn_tipo_usuario on trn_tipo_usuario.tipusucodi = trn_codigo_retiro_solicitud.tipusucodi
+      where (empresa.emprnomb =:emprnomb  or :emprnomb is null)
+      and (trn_tipo_usuario.tipusunombre =:tipusunombre or :tipusunombre is null)
+      and (trn_tipo_contrato.tipconnombre =:tipconnombre or :tipconnombre is null)
+      and (trn_barra.barrbarratransferencia =:barrbarratransferencia or :barrbarratransferencia is null)
+      and (cliente.emprnomb =:clinombre or :clinombre is null)
+      and (trn_codigo_retiro_solicitud.coresofechainicio &gt;=:coresofechainicio or :coresofechainicio is null)
+      and (trn_codigo_retiro_solicitud.coresofechafin &lt;=:coresofechafin or :coresofechafin is null)
+      and (trn_codigo_retiro_solicitud.coresoobservacion =:coresoobservacion or :coresoobservacion is null)
+      and (trn_codigo_retiro_solicitud.coresoestado =:coresoestado or :coresoestado is null)
+      and (trn_codigo_retiro_solicitud.coresocodigo like '%'||:coresocodigo||'%' or :coresocodigo is null )
+    </query>
+  </Sql>
+  <Sql>
+    <key>TotalRecordsGestionarCodigosVTEAVTP</key>
+    <query>
+      select count(1)  as NroRegistros
+      from
+      (
+      select  rsl.coresocodi
+      ,semp.emprnomb
+      ,secl.emprnomb                                                                as clinombre
+      ,tpcn.tipconnombre
+      ,tusu.tipusunombre
+      ,coresofechainicio
+      ,coresofechafin
+      ,
+      CASE WHEN vest.ESTDABREV='PAP'
+      THEN 'Pendiente Asignacion VTEA y VTP'
+      WHEN rsl.CORESOESTADO='ASI'
+      THEN 'Activo'
+      ELSE vest.ESTDDESCRIPCION
+      END                                                                     as  ESTDDESCRIPCION
+      ,
+      CASE WHEN rsl.CORESOESTADO='ASI'
+      THEN 'ACT'
+      ELSE vest.ESTDABREV
+      END                                                                     as ESTDABREV
+      ,tnb.barrbarratransferencia
+      ,rsl.coresocodigo
+      ,rsl.coresovariacion
+      ,vgn.coregecodi
+      ,vcr.barrcodisum
+      ,tnbSum.barrnombre
+      ,vgn.coregecodvtp
+      ,vestVTP.ESTDDESCRIPCION                                                   as   ESTDDESCRIPCIONVTP
+      ,vestVTP.ESTDABREV                                                         as   ESTDABREVVTP
+      ,CNPER.TRNPCTIPOPOTENCIA
+      ,NVL(potcn.trnpctcodi,potcngn.trnpctcodi)      as trnpctcodi
+      ,NVL(potcn.coresocodi,potcngn.coresocodi)      as coresocodipotcn
+      ,NVL(potcn.coregecodi,potcngn.coregecodi)      as coregecodipotcn
+      ,NVL(potcn.trnpcagrp,potcngn.trnpcagrp)        as trnpcagrp
+      ,NVL(potcn.trnpcnumord,potcngn.trnpcnumord)    as trnpcnumordm
+      ,NVL(potcn.trnpccodicas,potcngn.trnpccodicas)  as trnpccodicas
+      ,nvl(potcn.trnpcttotalmwfija,potcngn.trnpcttotalmwfija) as trnpcttotalmwfija
+      ,nvl(potcn.trnpcthpmwfija,potcngn.trnpcthpmwfija)    as  trnpcthpmwfija
+      ,nvl(potcn.trnpcthfpmwfija,potcngn.trnpcthfpmwfija)  as trnpcthfpmwfija
+      ,nvl(potcn.trnpcttotalmwvariable,potcngn.trnpcttotalmwvariable) as trnpcttotalmwvariable
+      ,nvl(potcn.trnpcthpmwfijavariable,potcngn.trnpcthpmwfijavariable) as trnpcthpmwfijavariable
+      ,nvl(potcn.trnpcthfpmwfijavariable,potcngn.trnpcthfpmwfijavariable) as trnpcthfpmwfijavariable
+      --,nvl(potcn.trnpctcomeobs,potcngn.trnpctcomeobs) as trnpctcomeobs
+      ,rsl.coresodescripcion trnpctcomeobs
+      ,nvl(casagrvt.TIPCASABREV,casagrvtp.TIPCASABREV)                                          as TIPCASABREV
+      ,nvl(potcn.TRNPCEXCEL,potcngn.TRNPCEXCEL)                                          as TRNPCEXCEL
+      ,row_number() over (order by rsl.coresocodi desc,semp.emprnomb asc,secl.emprnomb asc,tnb.barrbarratransferencia asc,vgn.coregecodvtp  asc)       as fila
+      from trn_codigo_retiro_solicitud     rsl
+      inner join vw_si_empresa                semp
+      on rsl.genemprcodi=semp.emprcodi
+      inner join si_empresa                secl
+      on rsl.cliemprcodi=secl.emprcodi
+      inner join trn_tipo_contrato         tpcn
+      on rsl.tipconcodi=tpcn.tipconcodi
+      inner join trn_tipo_usuario          tusu
+      on rsl.tipusucodi=tusu.tipusucodi
+      inner join trn_barra                  tnb
+      on  rsl.barrcodi=tnb.barrcodi
+      left join vtp_estado                vest
+      on (case when rsl.coresoestado='ASI' then 'ACT'
+      ELSE rsl.coresoestado
+      END)=vest.ESTDABREV
+      left join vtp_codigo_retiro_sol_det  vcr
+      on rsl.coresocodi = vcr.coresocodi
+      and vcr.coresdestado='ACT'
+      and vcr.coresdreg>0
+      left join vtp_codigo_retiro_generado vgn
+      on vcr.coresdcodi = vgn.coresdcodi
+      and vgn.coregeestado not in('INA')
+      left join trn_barra                     tnbSum
+      on  vcr.barrcodisum=tnbSum.barrcodi
+      left join vtp_estado                     vestVTP
+      on vgn.coregeestado=vestVTP.ESTDABREV
+
+      left outer join TRN_POTENCIA_CONTRATADA potcn
+      on rsl.coresocodi=potcn.coresocodi
+      and potcn.coregecodi is null
+      and potcn.trnpcEstado='ACT'
+      and NVL(potcn.PERIDCCODI,potcn.PERICODI) =:pericodi
+      left outer join VTP_TIPO_CASO_AGR       casagrvt
+      on potcn.TRNPCCODICAS= casagrvt.TIPCASCODI
+
+      left join TRN_POTENCIA_CONTRATADA potcngn
+      on rsl.coresocodi=potcngn.coresocodi
+      and  vgn.coregecodi=potcngn.coregecodi
+      and potcngn.trnpcEstado='ACT'
+      and NVL(potcngn.PERIDCCODI,potcngn.PERICODI) =:pericodi
+      left join VTP_TIPO_CASO_AGR       casagrvtp
+      on potcngn.TRNPCCODICAS= casagrvtp.TIPCASCODI
+
+
+
+      left join TRN_CODIGO_CONSOLIDADO_PERIODO  CNPER
+      ON (rsl.coresocodi=CNPER.coresocodi)
+      AND   CNPER.PERIDCCODI =:pericodi
+      AND CNPER.EMPRCODI=semp.EMPRCODI
+
+      left join VTP_CODIGO_CONSOLIDADO_PERIODO  VTPER
+      ON vgn.COREGECODVTP=VTPER.CODCNCODIVTP
+      AND   VTPER.PERIDCCODI =:pericodi
+      AND VTPER.EMPRCODI=semp.EMPRCODI
+
+      where (rsl.genemprcodi=:genemprcodi   or :genemprcodi is null)
+      and (rsl.cliemprcodi=:cliemprcodi     or :cliemprcodi is null)
+      and (tpcn.tipconcodi=:tipconcodi      or :tipconcodi is null)
+      and (tusu.tipusucodi=:tipusucodi      or :tipusucodi is null)
+      and (rsl.barrcodi=:barrcodi           or :barrcodi is null)
+      and (vcr.barrcodisum=:barrcodisum     or :barrcodisum is null)
+      and (
+      (rsl.coresoestado=:coresoestado   or :coresoestado is null)
+      or (vgn.coregeestado=:coresoestado   or :coresoestado is null)
+      )
+      and ((vgn.coregecodvtp=:coregecodvteavtp or rsl.coresocodigo=:coregecodvteavtp) or :coregecodvteavtp is null)
+
+      AND
+      (
+      (CNPER.CODCNCODIVTA IS NOT NULL OR CNPER.coresocodi IS NOT NULL)
+      AND (VTPER.CODCNCODIVTP IS NOT  NULL  OR VTPER.CODCNCODIVTP IS NULL)
+      )
+
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(coresocodi), 0) + 1 from trn_codigo_retiro_solicitud
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetBySoliCodireticodigo</key>
+    <query>
+      select trettabla,tretcoresocoresccodi,tretcodigo,barrcodi,cast(genemprcodi as number(5)) as genemprcodi, cliemprcodi ,fechainicio, fechafin
+      from vw_trn_codigo_retiro where vw_trn_codigo_retiro.tretcodigo =:tretcodigo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetCodigoRetiroByCodigo</key>
+    <query>
+      select * from trn_codigo_retiro_solicitud where coresocodigo = :coresocodigo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>CodigoRetiroVigenteByPeriodo</key>
+    <query>
+      select trettabla, tretcoresocoresccodi, tretcodigo, barrcodi, cast(genemprcodi as number(5)) as genemprcodi, cliemprcodi, fechainicio, fechafin
+      from vw_trn_codigo_retiro
+      where vw_trn_codigo_retiro.tretcodigo =:tretcodigo
+      and NVL(to_char(vw_trn_codigo_retiro.fechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :emprcodi)
+      and NVL(to_char(vw_trn_codigo_retiro.fechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :emprcodi)
+    </query>
+  </Sql>
+
+  <!--ASSETEC 202001-->
+  <Sql>
+    <key>ImportarCodigosRetiroSolicitud</key>
+    <query>
+		select
+		crt.coresocodi,
+		crt.coresocodigo,
+		crt.genemprcodi,
+		crt.cliemprcodi,
+		crt.tipconcodi,
+		crt.tipusucodi,
+		crt.barrcodi,
+		crt.coresofechainicio,
+		crt.coresofechafin,
+		empgen.emprnomb as emprnomb,
+		empcli.emprruc as cliruc,
+		empcli.emprnomb as clinombre,
+		bar.barrbarratransferencia,
+		tc.tipconnombre,
+		tu.tipusunombre
+		from
+		trn_codigo_retiro_solicitud crt
+		left outer join si_empresa empgen on (empgen.emprcodi = crt.genemprcodi)
+		left outer join si_empresa empcli on (empcli.emprcodi = crt.cliemprcodi)
+		inner join trn_barra bar  on (bar.barrcodi = crt.barrcodi)
+		inner join trn_tipo_contrato tc on (tc.tipconcodi = crt.tipconcodi)
+		inner join trn_tipo_usuario tu on (tu.tipusucodi = crt.tipusucodi)
+		where
+		crt.coresoestado = 'ASI' and
+		crt.coresoobservacion = 'SOLBAJANO' and
+		crt.genemprcodi = :genemprcodi
+		and NVL(to_char(crt.coresofechainicio, 'YYYYMM'), '000000') &lt;= (select to_char(perianiomes) from trn_periodo where pericodi = :emprcodi)
+      and NVL(to_char(crt.coresofechafin, 'YYYYMM'), '999999') &gt;= (select to_char(perianiomes) from trn_periodo where pericodi = :emprcodi)
+      order by
+      empgen.emprnomb,
+      empcli.emprnomb,
+      bar.barrbarratransferencia,
+      crt.coresocodigo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ValidarExisteCodigoEnEnvios</key>
+    <query>
+      select trn_codigo_entrega.codentcodi, vw_trn_empresa_str.emprnomb,
+      trn_barra.barrbarratransferencia,
+      trn_codigo_entrega.codentcodigo as coresocodigo, 'Entrega' as tipo,
+      vw_eq_central_generacion.equinomb,
+      vw_trn_empresa_str.emprcodi
+      from trn_codigo_entrega
+      left outer join vw_trn_empresa_str on trn_codigo_entrega.emprcodi = vw_trn_empresa_str.emprcodi
+      join trn_barra on trn_codigo_entrega.barrcodi= trn_barra.barrcodi
+      left outer join vw_eq_central_generacion on trn_codigo_entrega.equicodi = vw_eq_central_generacion.equicodi
+      where trn_codigo_entrega.codentcodigo =:tretcodigo
+      and
+      trn_codigo_entrega.codentestado = 'ACT'
+      union
+      select vw_trn_codigo_retiro.tretcoresocoresccodi as codentcodi, (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = vw_trn_codigo_retiro.genemprcodi) as emprnomb,
+      (select trn_barra.barrbarratransferencia from trn_barra where trn_barra.barrcodi =vw_trn_codigo_retiro.barrcodi ) as barrbarratransferencia,
+      vw_trn_codigo_retiro.tretcodigo as coresocodigo, 'Retiro' as tipo,
+      (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = vw_trn_codigo_retiro.cliemprcodi) as emprnomb,
+      vw_trn_codigo_retiro.genemprcodi
+      from vw_trn_codigo_retiro
+      where vw_trn_codigo_retiro.tretcodigo =:tretcodigo
+      union
+      select trn_codigo_infobase.coinfbcodi as codentcodi,vw_trn_empresa_str.emprnomb,
+      trn_barra.barrbarratransferencia,
+      trn_codigo_infobase.coinfbcodigo as coresocodigo,'InformacionBase' as tipo,
+      vw_eq_equipo_trn_coinfb.equinomb,
+      vw_trn_empresa_str.emprcodi
+      from trn_codigo_infobase left outer join vw_trn_empresa_str on trn_codigo_infobase.emprcodi= vw_trn_empresa_str.emprcodi
+      join trn_barra on trn_codigo_infobase.barrcodi= trn_barra.barrcodi
+      left outer join vw_eq_equipo_trn_coinfb on trn_codigo_infobase.equicodi = vw_eq_equipo_trn_coinfb.equicodi
+      where trn_codigo_infobase.coinfbcodigo =:tretcodigo
+      union
+      select mr.coresocodi as codentcodi,(select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = crs.genemprcodi) as  emprnomb,
+      b.barrbarratransferencia,
+      mr.coresocodigo, 'Modelo' as tipo,
+      (select vw_trn_empresa_str.emprnomb from vw_trn_empresa_str where  vw_trn_empresa_str.emprcodi = crs.cliemprcodi) as equinomb,
+      crs.genemprcodi as emprcodi
+      from trn_modelo m join trn_modelo_retiro mr on m.trnmodcodi = mr.trnmodcodi
+      left outer join trn_barra b on mr.barrcodi= b.barrcodi
+      left outer join trn_codigo_retiro_solicitud crs on mr.coresocodi = crs.coresocodi
+      inner join trn_codigo_consolidado_periodo on crs.coresocodigo=trn_codigo_consolidado_periodo.codcncodivta
+      where  mr.coresocodigo =:tretcodigo
+      and crs.coresoestado in ('ASI','ACT')
+      and crs.coresoobservacion = 'SOLBAJANO'
+    </query>
+  </Sql>
+  <!--Inicio PrimasRER.2023-->
+  <Sql>
+	<key>ListCodRetirosByEmpresaYFecha</key>
+	<query>
+		select
+		trn_soli.coresocodi, trn_soli.genemprcodi, trn_soli.barrcodi, trn_soli.coresocodigo,
+		trn_soli.coresofechainicio, trn_soli.coresofechafin, trn_barra.barrbarratransferencia
+		from trn_codigo_retiro_solicitud trn_soli
+		join trn_barra on trn_barra.barrcodi = trn_soli.barrcodi
+		where trn_soli.coresoestado IN ('ASI','ACT') and trn_soli.genemprcodi = {0} and trn_soli.coresoobservacion = 'SOLBAJANO'
+		and(
+		(trn_soli.coresofechainicio BETWEEN to_date('{1}', 'DD/MM/YYYY') and to_date('{2}', 'DD/MM/YYYY'))
+		or (trn_soli.coresofechafin BETWEEN to_date('{1}', 'DD/MM/YYYY') and to_date('{2}', 'DD/MM/YYYY'))
+		or ((to_date('{1}', 'DD/MM/YYYY') > trn_soli.coresofechainicio) and (trn_soli.coresofechafin > to_date('{2}', 'DD/MM/YYYY')))
+		)
+	</query>
+  </Sql>
+  <!--Fin PrimasRER.2023-->
+
+</Sqls>

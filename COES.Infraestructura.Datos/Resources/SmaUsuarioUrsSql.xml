@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(uurscodi), 0) + 1 from sma_usuario_urs
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into sma_usuario_urs(
+        uurscodi,
+        urscodi,
+        uursusucreacion,
+        uursfeccreacion,
+        uursusumodificacion,
+        uursfecmodificacion,
+        usercode,
+        uursestado
+      )
+      values(
+        :uurscodi,
+        :urscodi,
+        :uursusucreacion,
+        sysdate,
+        null,
+        null,
+        :usercode,
+        'A'
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update sma_usuario_urs
+      set
+      urscodi = :urscodi,
+      uursusumodificacion = :uursusumodificacion,
+      uursfecmodificacion = sysdate
+      where
+      uurscodi = :uurscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateUsuAct</key>
+    <query>
+      update sma_usuario_urs
+      set
+      uursestado = 'X'
+      where
+      uurscodi = :uurscodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update sma_usuario_urs
+      set
+      uursusumodificacion = :uursusumodificacion,
+      uursfecmodificacion = sysdate,
+      uursestado = 'X'
+      where
+      uurscodi = :uurscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      urs.uurscodi,
+      urs.urscodi,
+      urs.uursusucreacion,
+      urs.uursusumodificacion,
+      urs.uursfecmodificacion,
+      urs.usercode,
+      urs.uursestado,
+      urs.uursfeccreacion,
+      (select distinct vsum.ursnomb from vw_sma_urs_modo_operacion vsum where urs.urscodi = vsum.urscodi and rownum = 1) as ursnomb,
+      (select distinct vsum.urstipo from vw_sma_urs_modo_operacion vsum where urs.urscodi = vsum.urscodi and rownum = 1) as urstipo,
+      fw.username
+      from
+      sma_usuario_urs urs, fw_user fw
+      where
+      urs.usercode = fw.usercode and
+      urs.uursestado = 'A' and
+      urs.uurscodi = :UURSCODI 
+      order by urs.usercode, urs.urscodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      urs.uurscodi,
+      urs.urscodi,
+      urs.uursusucreacion,
+      urs.uursusumodificacion,
+      urs.uursfecmodificacion,
+      urs.usercode,
+      urs.uursestado,
+      urs.uursfeccreacion,
+      (select distinct vsum.ursnomb from vw_sma_urs_modo_operacion vsum where urs.urscodi = vsum.urscodi and rownum = 1) as ursnomb,
+      (select distinct vsum.urstipo from vw_sma_urs_modo_operacion vsum where urs.urscodi = vsum.urscodi and rownum = 1) as urstipo,
+      fw.username,
+      fw.useremail,
+      fw.userlogin
+      from
+      sma_usuario_urs urs, fw_user fw
+      where
+      urs.usercode = fw.usercode and
+      urs.uursestado = 'A'
+      order by urs.usercode, urs.urscodi
+    </query>
+  </Sql>
+
+  
+  <Sql>
+    <key>ListGetUsuUrsAct</key>
+    <query>
+      select
+      urs.uurscodi,
+      urs.urscodi,
+      urs.uursusucreacion,
+      urs.uursusumodificacion,
+      urs.uursfecmodificacion,
+      urs.usercode,
+      urs.uursestado,
+      urs.uursfeccreacion,
+      (select distinct vsum.ursnomb from vw_sma_urs_modo_operacion vsum where urs.urscodi = vsum.urscodi and rownum = 1) as ursnomb,
+      (select distinct vsum.urstipo from vw_sma_urs_modo_operacion vsum where urs.urscodi = vsum.urscodi and rownum = 1) as urstipo,
+      fw.username
+      from
+      sma_usuario_urs urs, fw_user fw
+      where
+      urs.usercode = fw.usercode and
+      urs.uursestado = 'A' and
+      urs.usercode = :usercode and
+      urs.urscodi = :urscodi
+      order by urs.usercode, urs.urscodi
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      distinct urs.urscodi,
+      urs.uurscodi,
+      urs.uursusucreacion,
+      urs.uursusumodificacion,
+      urs.uursfecmodificacion,
+      urs.usercode,
+      urs.uursestado,
+      urs.uursfeccreacion,
+      sumo.ursnomb,
+      sumo.urstipo,
+      fw.username,
+      fw.userlogin,
+      fw.useremail
+      from
+      sma_usuario_urs urs, fw_user fw, vw_sma_urs_modo_operacion sumo
+      where
+      urs.usercode = fw.usercode and
+      urs.uursestado = 'A' and
+      urs.usercode = :USERCODE and
+      urs.urscodi = sumo.urscodi
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaMO</key>
+    <query>
+      select
+      distinct urs.urscodi,
+      urs.uurscodi,
+      urs.uursusucreacion,
+      urs.uursusumodificacion,
+      urs.uursfecmodificacion,
+      urs.usercode,
+      urs.uursestado,
+      urs.uursfeccreacion,
+      sumo.ursnomb,
+      sumo.urstipo,
+      sumo.grupocodi,
+      sumo.grupotipo,
+      sumo.gruponomb,
+      fw.username
+      from
+      sma_usuario_urs urs, fw_user fw, vw_sma_urs_modo_operacion sumo
+      where
+      urs.usercode = fw.usercode and
+      urs.uursestado = 'A' and
+      urs.usercode = :USERCODE and
+      urs.urscodi = sumo.urscodi
+      order by urs.uurscodi, sumo.grupocodi
+    </query>
+  </Sql>
+  
+</Sqls>

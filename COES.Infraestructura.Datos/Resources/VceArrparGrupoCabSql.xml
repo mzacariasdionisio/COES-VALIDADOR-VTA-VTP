@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- compensaciones.HDT - 29/03/2017: Cambio para atender el requerimiento -->
+<Sqls>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vce_arrpar_grupo_cab(
+      pecacodi,
+      grupocodi,
+      apgcfccodi,
+      apgcabccbef,
+      apgcabccmarr,
+      apgcabccadic,
+      apgcabflagcalcmanual
+      )
+      values(
+      :pecacodi,
+      :grupocodi,
+      :apgcfccodi,
+      :apgcabccbef,
+      :apgcabccmarr,
+      :apgcabccadic,
+      :apgcabflagcalcmanual
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vce_arrpar_grupo_cab
+      set
+      apgcabccbef = :apgcabccbef,
+      apgcabccmarr = :apgcabccmarr,
+      apgcabccadic = :apgcabccadic,
+      apgcabflagcalcmanual = :apgcabflagcalcmanual
+      where
+      pecacodi = :pecacodi and
+      grupocodi = :grupocodi and
+      apgcfccodi = :apgcfccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vce_arrpar_grupo_cab
+      where
+      pecacodi = :pecacodi and
+      grupocodi = :grupocodi and
+      apgcfccodi = :apgcfccodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteCabecera</key>
+    <query>
+      delete from vce_arrpar_grupo_cab
+      where
+      pecacodi = :pecacodi and
+      grupocodi = :grupocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteDetalle</key>
+    <query>
+      delete from vce_arrpar_grupo_det
+      where
+      pecacodi = :pecacodi and
+      grupocodi = :grupocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteCabeceraByVersion</key>
+    <query>
+      delete from vce_arrpar_grupo_cab
+      where
+      pecacodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteDetalleByVersion</key>
+    <query>
+      delete from vce_arrpar_grupo_det
+      where
+      pecacodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select co.pecacodi,
+      co.grupocodi,
+      co.apgcfccodi,
+      co.apgcabccbef,
+      co.apgcabccmarr,
+      co.apgcabccadic,
+      co.apgcabflagcalcmanual,
+      gr.gruponomb
+      from vce_arrpar_grupo_cab co
+      left join pr_grupo gr on co.grupocodi = gr.grupocodi
+      where co.pecacodi = {0}
+      and co.grupocodi = {1}
+      and co.apgcfccodi = '{2}'
+      order by gr.gruponomb
+    </query>
+  </Sql>    
+
+  <Sql>
+    <key>SqlGetListaPorPeriodo</key>
+    <query>
+      select co.pecacodi,
+      co.grupocodi,
+      co.apgcfccodi,
+      co.apgcabccbef,
+      co.apgcabccmarr,
+      co.apgcabccadic,
+      co.apgcabflagcalcmanual,
+      gr.gruponomb
+      from vce_arrpar_grupo_cab co
+      left join pr_grupo gr on co.grupocodi = gr.grupocodi
+      where co.pecacodi = {0}
+      and co.apgcabflagcalcmanual = '1'
+      order by gr.gruponomb
+    </query>
+  </Sql>
+<!-- DSH 31-05-2017 Cambio por requerimiento-->
+  <Sql>
+    <key>ListByGroupCompArrpar</key>
+    <query>
+      SELECT EMP.EMPRNOMB
+      ,SUM(COM.APGCABCCBEF) AS "APGCABCCBEF"
+      ,SUM(COM.APGCABCCMARR) AS "APGCABCCMARR"
+      ,SUM(COM.APGCABCCADIC) AS "APGCABCCADIC"
+      ,SUM(NVL(COM.APGCABCCBEF,0)+NVL(COM.APGCABCCMARR,0)+NVL(COM.APGCABCCADIC,0)) as "APGCABTOTAL"
+      FROM VCE_ARRPAR_GRUPO_CAB COM LEFT JOIN PR_GRUPO GR ON COM.GRUPOCODI = GR.GRUPOCODI
+      LEFT JOIN SI_EMPRESA EMP ON GR.EMPRCODI = EMP.EMPRCODI
+      WHERE COM.PECACODI = {0}
+      AND COM.APGCFCCODI = '{1}'
+      GROUP BY EMP.EMPRNOMB
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveCabeceraFromOtherVersion</key>
+    <query>
+      INSERT INTO VCE_ARRPAR_GRUPO_CAB(
+      PECACODI, GRUPOCODI, APGCFCCODI, APGCABCCBEF, APGCABCCMARR,
+      APGCABCCADIC, APGCABFLAGCALCMANUAL
+      )
+      SELECT {0}, GRUPOCODI, APGCFCCODI, APGCABCCBEF, APGCABCCMARR,
+      APGCABCCADIC,APGCABFLAGCALCMANUAL
+      FROM VCE_ARRPAR_GRUPO_CAB
+      WHERE PECACODI = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveDetalleFromOtherVersion</key>
+    <query>
+      INSERT INTO VCE_ARRPAR_GRUPO_DET(
+      PECACODI, GRUPOCODI, APGCFCCODI, APGDETFECINIPER ,APGDETNUMARR,
+      APGDETNUMPAR, APGDETPRECIOAPLICXARR, APGDETPRECIOAPLICXPAR ,APGDETNUMINC,
+      APGDETNUMDIS, APGDETPRECIOAPLICXINCGEN ,APGDETPRECIOAPLICXDISGEN
+      )
+      SELECT {0}, GRUPOCODI, APGCFCCODI, APGDETFECINIPER ,APGDETNUMARR,
+      APGDETNUMPAR, APGDETPRECIOAPLICXARR, APGDETPRECIOAPLICXPAR ,APGDETNUMINC,
+      APGDETNUMDIS, APGDETPRECIOAPLICXINCGEN ,APGDETPRECIOAPLICXDISGEN
+      FROM VCE_ARRPAR_GRUPO_DET
+      WHERE PECACODI = {1}
+    </query>
+  </Sql>
+  
+</Sqls>
+

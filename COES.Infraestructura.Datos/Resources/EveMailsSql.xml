@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(mailcodi), 0) + 1 from eve_mails
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eve_mails(
+      mailcodi,
+      mailturnonum,
+      mailreprogcausa,
+      mailcheck1,
+      mailhoja,
+      mailprogramador,
+      mailbloquehorario,
+      lastuser,
+      lastdate,
+      mailfecha,
+      mailcheck2,
+      mailemitido,
+      equicodi,
+      mailfechaini,
+      mailfechafin,
+      lastuserproc,
+      mailespecialista,
+      mailtipoprograma,
+      subcausacodi,
+      mailhora,
+      mailconsecuencia,
+      topcodi,
+      mailcoordinador
+      )
+      values(
+      :mailcodi,
+      :mailturnonum,
+      :mailreprogcausa,
+      :mailcheck1,
+      :mailhoja,
+      :mailprogramador,
+      :mailbloquehorario,
+      :lastuser,
+      :lastdate,
+      :mailfecha,
+      :mailcheck2,
+      :mailemitido,
+      :equicodi,
+      :mailfechaini,
+      :mailfechafin,
+      :lastuserproc,
+      :mailespecialista,
+      :mailtipoprograma,
+      :subcausacodi,
+      :mailhora,
+      :mailconsecuencia,
+      :topcodi,
+      :mailcoordinador
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eve_mails
+      set
+      mailturnonum = :mailturnonum,
+      mailreprogcausa = :mailreprogcausa,
+      mailcheck1 = :mailcheck1,
+      mailhoja = :mailhoja,
+      mailprogramador = :mailprogramador,
+      mailbloquehorario = :mailbloquehorario,
+      lastuser = :lastuser,
+      lastdate = :lastdate,
+      mailfecha = :mailfecha,
+      mailcheck2 = :mailcheck2,
+      mailemitido = :mailemitido,
+      equicodi = :equicodi,
+      mailfechaini = :mailfechaini,
+      mailfechafin = :mailfechafin,
+      lastuserproc = :lastuserproc,
+      mailespecialista = :mailespecialista,
+      mailtipoprograma = :mailtipoprograma,
+      subcausacodi = :subcausacodi,
+      mailhora = :mailhora,
+      mailconsecuencia = :mailconsecuencia,
+      topcodi = :topcodi,
+      mailcoordinador = :mailcoordinador
+      where
+      mailcodi = :mailcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from eve_mails
+       where
+           mailcodi = :mailcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      *
+      from
+      eve_mails
+      where
+      mailcodi = :mailcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      eve_mails
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      *
+      from
+      eve_mails
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListado</key>
+    <query>
+      select
+      *
+      from (
+      select a.mailcodi,a.mailfecha, b.subcausadesc,
+      case when  b.subcausacodi=321 or b.subcausacodi=326 THEN 'T'|| mailturnonum ELSE '' END AS T,
+      a.mailprogramador,a.mailespecialista,a.subcausacodi,a.lastuser,a.lastdate,a.mailemitido,
+      a.mailhoja,
+      a.mailreprogcausa,
+      a.mailbloquehorario,
+      (row_number() over (order by a.mailfecha desc)) as r
+      from eve_mails a, eve_subcausaevento b
+      where a.subcausacodi=b.subcausacodi
+      and (a.subcausacodi={0} or {0} = 0)
+      and
+      (
+      (a.mailfecha >= TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.mailfecha &lt; TO_DATE('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      )
+      order by a.mailfecha desc, a.lastdate desc
+      )
+      where (r >= ((({3}-1) * {4}) + 1) and r &lt; (({3} * {4}) + 1 )) or ({3} = -1 and {4} = -1)
+    </query>
+  </Sql>
+
+
+
+  <Sql>
+    <key>ObtenerListadoReProgramasPorFecha</key>
+    <query>
+      select
+      *
+      from (
+      select a.mailcodi,a.mailfecha, b.subcausadesc,
+      case when  b.subcausacodi=321 or b.subcausacodi=326 THEN 'T'|| mailturnonum ELSE '' END AS T,
+      a.mailprogramador,a.lastuser,a.lastdate,a.mailemitido,
+      a.mailhoja,
+      a.mailreprogcausa,
+      a.mailbloquehorario,
+      (row_number() over (order by a.mailfecha desc)) as r
+      from eve_mails a, eve_subcausaevento b
+      where a.subcausacodi=b.subcausacodi
+      and (a.subcausacodi= 322)
+      and (TO_CHAR(a.mailfecha, 'YYYYMMDD') = '{0}')
+      order by a.mailfecha desc, a.lastdate desc
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ExportarEnvioCorreos</key>
+    <query>
+		select
+		*
+		from (
+		select
+		a.mailcodi,a.mailfecha, b.subcausadesc,a.mailreprogcausa,
+		case when  b.subcausacodi=321 or b.subcausacodi=326 THEN 'T'|| mailturnonum ELSE '' END AS T,
+		a.mailprogramador,a.mailespecialista,a.subcausacodi,a.lastuser,a.lastdate,a.mailemitido
+		from eve_mails a, eve_subcausaevento b
+		where a.subcausacodi=b.subcausacodi
+		and (a.subcausacodi={0} or {0} = 0)
+		and
+		(
+		(a.mailfecha >= TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+		and a.mailfecha &lt; TO_DATE('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      )
+      order by a.mailfecha desc, a.lastdate desc
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRegistros</key>
+    <query>
+      select count(*)
+      from eve_mails a, eve_subcausaevento b
+      where a.subcausacodi=b.subcausacodi
+      and (a.subcausacodi={0} or {0} = 0)
+      and
+      (
+      (a.mailfecha >= TO_DATE('{1} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.mailfecha &lt; TO_DATE('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS')+1)
+      )
+
+
+    </query>
+
+  </Sql>
+
+  <!-- INICIO - COSTO OPORTUNIDAD -->
+  <Sql>
+    <key>GetListaReprogramado</key>
+    <query>
+      SELECT distinct mailfecha, nvl(mailbloquehorario,0) mailbloquehorario, nvl(mailreprogcausa,' ') mailreprogcausa, nvl(mailhoja,' ') mailhoja
+      fROM eve_mails
+      WHERE subcausacodi = 322
+      AND  mailfecha=to_date('{0} 00:00:00','YYYY-MM-DD HH24:MI:SS')
+      order by mailfecha asc ,mailbloquehorario asc
+    </query>
+  </Sql>
+  <!-- FIN - COSTO OPORTUNIDAD -->
+
+  <!-- PROGRAMA EMITIDO FECHA MÁX 1.1.1 ANEXO A WORD -->
+  <Sql>
+    <key>GetFechaMaxProgramaEmitido</key>
+    <query>
+      SELECT MAX(LASTDATE) LASTDATE FROM EVE_MAILS WHERE
+      SUBCAUSACODI = 321 AND MAILFECHA = to_date('{0}','yyyy-mm-dd')
+      ORDER BY LASTDATE DESC
+    </query>
+  </Sql>
+  <!-- FIN - PROGRAMA  EMITIDO FECHA MÁX 1.1.1 ANEXO A WORD -->
+  
+</Sqls>

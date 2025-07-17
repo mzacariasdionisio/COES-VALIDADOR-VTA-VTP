@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(eveninfcodi), 0) + 1 from eve_informe
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eve_informe(
+      eveninfcodi,
+      evencodi,
+      emprcodi,
+      infestado,
+      lastuser,
+      lastdate,
+      infversion,
+      indestado,
+      indplazo
+      )
+      values(
+      :eveninfcodi,
+      :evencodi,
+      :emprcodi,
+      :infestado,
+      :lastuser,
+      :lastdate,
+      :infversion,
+      :indestado,
+      :indplazo
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update eve_informe
+       set
+           evencodi = :evencodi,
+           emprcodi = :emprcodi,
+           infestado = :infestado,
+           lastuser = :lastuser,
+           lastdate = :lastdate,
+           infversion = :infversion,
+           indestado = :indestado,
+           indplazo = :indplazo
+       where
+           eveninfcodi = :eveninfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>FinalizarInforme</key>
+    <query>
+      update eve_informe
+      set
+      indplazo = :indplazo,
+      infestado = :infestado,
+      lastuser = :lastuser,
+      lastdate = sysdate
+      where
+      eveninfcodi = :eveninfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>RevisarInforme</key>
+    <query>
+      update eve_informe
+      set
+      infestado = :infestado,
+      lastuserrev = :lastuser,
+      lastdaterev = sysdate
+      where 
+      eveninfcodi = :eveninfcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from eve_informe
+       where
+           eveninfcodi = :eveninfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+        evencodi,
+        eveninfcodi,
+        emprcodi,
+        infestado,
+        lastuser,
+        lastdate,
+        infversion,
+        indestado,
+        indplazo,
+        lastuserrev,
+        lastdaterev
+      from
+        eve_informe
+      where
+        eveninfcodi = :eveninfcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerInformePorTipo</key>
+    <query>
+      select
+        evencodi,
+        eveninfcodi,
+        emprcodi,
+        infestado,
+        lastuser,
+        lastdate,
+        infversion,
+        indestado,
+        indplazo,
+        lastuserrev,
+        lastdaterev
+      from eve_informe
+      where evencodi = :evencodi and
+      emprcodi = :emprcodi and infversion = :infversion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           evencodi,
+           eveninfcodi,
+           emprcodi,
+           infestado,
+           lastuser,
+           lastdate,
+           infversion,
+           indestado,
+           indplazo,
+           lastuserrev,
+           lastdaterev
+       from
+           eve_informe
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           evencodi,
+           eveninfcodi,
+           emprcodi,
+           infestado,
+           lastuser,
+           lastdate,
+           infversion,
+           indestado,
+           indplazo,
+           lastuserrev,
+           lastdaterev
+       from
+           eve_informe
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerInformeEmpresa</key>
+    <query>
+      select
+        evencodi,
+        eveninfcodi,
+        emprcodi,
+        infestado,
+        lastuser,
+        lastdate,
+        infversion,
+        indestado,
+        indplazo,
+        lastuserrev,
+        lastdaterev
+      from
+        eve_informe
+      where
+        evencodi = :evencodi and emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarEquiposInforme</key>
+    <query>
+      select
+        eq.equipadre,
+        eq.equicodi,
+        (select case when x.equicodi = 0 then eq.equinomb  when x.equicodi > 0
+        then x.equinomb else eq.equinomb end from eq_equipo x where x.equicodi = eq.equipadre) as descentral,
+        eq.equinomb,
+        eta.tareaabrev,
+        ea.areanomb,
+        fam.famabrev,
+        eq.equiabrev,
+        fam.famcodi
+      from eq_equipo eq
+      inner join eq_area ea on eq.areacodi = ea.areacodi
+      inner join eq_tipoarea eta on ea.tareacodi = eta.tareacodi
+      inner join eq_familia fam on eq.famcodi = fam.famcodi
+      where (eq.emprcodi = {0} or {0} = 0 or {0} = -1) and eq.famcodi in (8,9,10,16,6,2,3,36,38) and eq.equiestado = 'A'
+      and eq.emprcodi not in (-1, 0)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReporteEmpresaGeneral</key>
+    <query>
+      select informe.*, empresa.emprnomb from eve_informe informe
+      inner join si_empresa empresa on informe.emprcodi = empresa.emprcodi
+      where informe.evencodi = {0} and informe.infestado = 'F'
+      union all
+      select informe.*, empresa.emprnomb from eve_informe informe
+      inner join si_empresa empresa on informe.emprcodi = empresa.emprcodi
+      where informe.evencodi = {0} and empresa.emprcodi in (-1, 0)
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ObtenerReporteEmpresa</key>
+    <query>
+      select informe.*, empresa.emprnomb from eve_informe informe
+      inner join si_empresa empresa on informe.emprcodi = empresa.emprcodi
+      where informe.evencodi = {0} and informe.infestado = 'F'
+      and informe.emprcodi not in ({1}) and informe.emprcodi not in (0)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEstadoReporte</key>
+    <query>
+      select informe.*, empresa.emprnomb from eve_informe informe
+      inner join si_empresa empresa
+      on informe.emprcodi = empresa.emprcodi
+      where informe.evencodi = {0} and informe.emprcodi in ({1})
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresaInforme</key>
+    <query>
+      select empresa.emprcodi, empresa.emprnomb
+      from si_empresa empresa
+      where empresa.emprcodi in ({0})
+    </query>
+  </Sql>
+  
+</Sqls>

@@ -1,0 +1,259 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(retrelcodi), 0) + 1 from vtp_codigo_retiro_relacion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_codigo_retiro_relacion
+      (retrelcodi, retrelvari,retelestado,retrelusucreacion,retrelfeccreacion)
+      values
+      (:retrelcodi, :retrelvari, :retelestado,:retrelusucreacion, :retrelfeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_codigo_retiro_relacion
+      set
+      retrelvari=:retrelvari,
+      retelestado=:retelestado,
+      retrelusumodificacion=:retrelusumodificacion,
+      retrelfecmodificacion=:retrelfecmodificacion
+      where retrelcodi=:retrelcodi
+    </query>
+  </Sql>
+
+
+
+  <Sql>
+    <key>ListarRelacionCodigoRetiros</key>
+    <query>
+      select *
+      from (
+      SELECT row_number() over ( order by retrelcodi desc) as fila, tbl.*
+      from
+      (
+      select
+      rdt.retrelcodi
+      ,rdt.rerldtcodi
+      ,emprvtea.emprnomb           genemprnombvtea
+      ,clievtea.emprnomb           cliemprnombvtea
+      ,tpvtea.tipconnombre         tipocontratovtea
+      ,tusuvtea.tipusunombre       tipousuariovtea
+      ,barravtea.barrnombre        barrnombvtea
+      ,tsolvtea.coresocodigo       codigovtea
+      ,emprvtp.emprnomb            genemprnombvtp
+      ,clievtp.emprnomb            cliemprnombvtp
+      ,tpvtp.tipconnombre          tipocontratovtp
+      ,tusuvtp.tipusunombre        tipousuariovtp
+      ,barravtp.barrnombre         barrnombvtp
+      ,vtp.coregecodvtp            codigovtp
+      ,rrl.RETRELVARI
+      from vtp_codigo_retiro_relacion      rrl
+      left join vtp_codigo_retiro_rel_det  rdt on rrl.retrelcodi= rdt.retrelcodi
+      left join vw_si_empresa              emprvtea on rdt.genemprcodivtea=emprvtea.emprcodi
+      left join vw_si_empresa              emprvtp on rdt.genemprcodivtp=emprvtp.emprcodi
+      left join vw_si_empresa              clievtea on rdt.cliemprcodivtea=clievtea.emprcodi
+      left join vw_si_empresa              clievtp on rdt.cliemprcodivtp=clievtp.emprcodi
+      left join trn_barra               barravtea on rdt.barrcodivtea=barravtea.barrcodi
+      left join trn_barra               barravtp on rdt.barrcodivtp=barravtp.barrcodi
+      left join trn_codigo_retiro_solicitud tsolvtea on  rdt.coresocodvtea=tsolvtea.coresocodi
+      left join vtp_codigo_retiro_generado vtp on  rdt.coresocodvtp=vtp.coregecodi
+      left join vtp_codigo_consolidado codvtp on vtp.coregecodvtp=codvtp.codcncodivtp
+      left join trn_tipo_contrato         tpvtea on  tsolvtea.tipconcodi=tpvtea.tipconcodi
+      left join trn_tipo_contrato         tpvtp on  codvtp.tipconcodi=tpvtp.tipconcodi
+      left join trn_tipo_usuario          tusuvtea on  tsolvtea.tipusucodi=tusuvtea.tipusucodi
+      left join trn_tipo_usuario          tusuvtp on  codvtp.tipusucodi=tusuvtp.tipusucodi
+      where
+      (rdt.genemprcodivtea = :genemprcodi or rdt.genemprcodivtp = :genemprcodi or :genemprcodi is null)
+      and (rdt.cliemprcodivtea=:cliemprcodi or rdt.cliemprcodivtp=:cliemprcodi or :cliemprcodi is null)
+      and (rdt.barrcodivtea=:barrcoditra or :barrcoditra is null)
+      and (rdt.barrcodivtp=:barrcodisum or :barrcodisum is null)
+      and (tsolvtea.tipconcodi=:tipconcodi or codvtp.tipconcodi=:tipconcodi or :tipconcodi is null)
+      and (tsolvtea.tipusucodi=:tipusucodi or codvtp.tipusucodi=:tipusucodi or :tipusucodi is null)
+      and (rdt.retrelcodi in (   SELECT  distinct t2.retrelcodi FROM trn_codigo_retiro_solicitud t11
+      inner join  vtp_codigo_retiro_rel_det t2
+      on  t2.coresocodvtea=t11.coresocodi
+      inner join vtp_codigo_retiro_relacion t3
+      on t2.retrelcodi= t3.retrelcodi
+      and t3.retelestado='ACT'
+      WHERE t11.coresocodigo = :codigo) or rdt.retrelcodi in (SELECT  distinct t2.retrelcodi FROM vtp_codigo_retiro_generado t11
+      inner join  vtp_codigo_retiro_rel_det t2
+      on   t2.coresocodvtp=t11.coregecodi
+      inner join vtp_codigo_retiro_relacion t3
+      on t2.retrelcodi= t3.retrelcodi
+      and t3.retelestado='ACT'
+      WHERE t11.coregecodvtp = :codigo)  or :codigo is null)
+      and rrl.retelestado=:retelestado  and rdt.retrelcodi is not null
+      ) tbl
+
+      )
+      where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize)
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarRelacionCodigoRetirosPorCodigo</key>
+    <query>
+
+      select
+      rdt.retrelcodi
+      ,rdt.rerldtcodi
+      ,emprvtea.emprnomb           genemprnombvtea
+      ,clievtea.emprnomb           cliemprnombvtea
+      ,tpvtea.tipconnombre         tipocontratovtea
+      ,tusuvtea.tipusunombre       tipousuariovtea
+      ,barravtea.barrnombre        barrnombvtea
+      ,tsolvtea.coresocodigo       codigovtea
+      ,emprvtp.emprnomb            genemprnombvtp
+      ,clievtp.emprnomb            cliemprnombvtp
+      ,tpvtp.tipconnombre          tipocontratovtp
+      ,tusuvtp.tipusunombre        tipousuariovtp
+      ,barravtp.barrnombre         barrnombvtp
+      ,vtp.coregecodvtp            codigovtp
+      ,rrl.RETRELVARI
+      from vtp_codigo_retiro_relacion      rrl
+      left join vtp_codigo_retiro_rel_det  rdt on rrl.retrelcodi= rdt.retrelcodi
+      left join vw_si_empresa              emprvtea on rdt.genemprcodivtea=emprvtea.emprcodi
+      left join vw_si_empresa              emprvtp on rdt.genemprcodivtp=emprvtp.emprcodi
+      left join vw_si_empresa              clievtea on rdt.cliemprcodivtea=clievtea.emprcodi
+      left join vw_si_empresa              clievtp on rdt.cliemprcodivtp=clievtp.emprcodi
+      left join trn_barra               barravtea on rdt.barrcodivtea=barravtea.barrcodi
+      left join trn_barra               barravtp on rdt.barrcodivtp=barravtp.barrcodi
+      left join trn_codigo_retiro_solicitud tsolvtea on  rdt.coresocodvtea=tsolvtea.coresocodi
+      left join vtp_codigo_retiro_generado vtp on  rdt.coresocodvtp=vtp.coregecodi
+      left join vtp_codigo_consolidado codvtp on vtp.coregecodvtp=codvtp.codcncodivtp
+      left join trn_tipo_contrato         tpvtea on  tsolvtea.tipconcodi=tpvtea.tipconcodi
+      left join trn_tipo_contrato         tpvtp on  codvtp.tipconcodi=tpvtp.tipconcodi
+      left join trn_tipo_usuario          tusuvtea on  tsolvtea.tipusucodi=tusuvtea.tipusucodi
+      left join trn_tipo_usuario          tusuvtp on  codvtp.tipusucodi=tusuvtp.tipusucodi
+      where
+      rdt.retrelcodi = :genemprcodi
+
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarRelacionCodigoRetiros_old</key>
+    <query>
+      select *
+      from (
+      SELECT row_number() over ( order by retrelcodi desc) as fila, tbl.*
+      from (
+      select distinct
+      rrl.RETRELCODI
+      ,''          empresaVTEA
+      ,''          clienteVTEA
+      ,''          barrtrans
+      ,''          empresaVTP
+      ,''          clienteVTP
+      ,''          barrsum
+      ,rrl.RETRELVARI
+      FROM vtp_codigo_retiro_relacion      rrl
+      inner join vtp_codigo_retiro_rel_det det on rrl.retrelcodi= det.retrelcodi
+      left join trn_codigo_retiro_solicitud vtea on det.coresocodvtea=vtea.coresocodi
+      left join vtp_codigo_retiro_generado vtp on det.coresocodvtp=vtp.coregecodi
+      left join vtp_codigo_consolidado codvtp on vtp.coregecodvtp=codvtp.codcncodivtp
+      where
+      (det.genemprcodivtea = :genemprcodi or det.genemprcodivtp = :genemprcodi or :genemprcodi is null)
+      and (det.cliemprcodivtea=:cliemprcodi or det.cliemprcodivtp=:cliemprcodi or :cliemprcodi is null)
+      and (det.barrcodivtea=:barrcoditra or :barrcoditra is null)
+      and (det.barrcodivtp=:barrcodisum or :barrcodisum is null)
+      and (vtea.tipconcodi=:tipconcodi or codvtp.tipconcodi=:tipconcodi or :tipconcodi is null)
+      and (vtea.tipusucodi=:tipusucodi or codvtp.tipusucodi=:tipusucodi or :tipusucodi is null)
+      and (vtea.coresocodigo = :codigo or vtp.coregecodvtp = :codigo or :codigo is null)
+      and rrl.retelestado=:retelestado ) tbl
+      )
+      where fila >=((:nropagina-1)*:pagesize)+1 and fila &lt;=(:nropagina*:pagesize)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRecordsRelacionCodigoRetiros</key>
+    <query>
+      SELECT count(1) NroRegistros
+      from (
+      select distinct
+      rrl.RETRELCODI
+      ,rdt.rerldtcodi
+      from vtp_codigo_retiro_relacion      rrl
+      left join vtp_codigo_retiro_rel_det  rdt on rrl.retrelcodi= rdt.retrelcodi
+      left join vw_si_empresa              emprvtea on rdt.genemprcodivtea=emprvtea.emprcodi
+      left join vw_si_empresa              emprvtp on rdt.genemprcodivtp=emprvtp.emprcodi
+      left join vw_si_empresa              clievtea on rdt.cliemprcodivtea=clievtea.emprcodi
+      left join vw_si_empresa              clievtp on rdt.cliemprcodivtp=clievtp.emprcodi
+      left join trn_barra               barravtea on rdt.barrcodivtea=barravtea.barrcodi
+      left join trn_barra               barravtp on rdt.barrcodivtp=barravtp.barrcodi
+      left join trn_codigo_retiro_solicitud tsolvtea on  rdt.coresocodvtea=tsolvtea.coresocodi
+      left join vtp_codigo_retiro_generado vtp on  rdt.coresocodvtp=vtp.coregecodi
+      left join vtp_codigo_consolidado codvtp on vtp.coregecodvtp=codvtp.codcncodivtp
+      left join trn_tipo_contrato         tpvtea on  tsolvtea.tipconcodi=tpvtea.tipconcodi
+      left join trn_tipo_contrato         tpvtp on  codvtp.tipconcodi=tpvtp.tipconcodi
+      left join trn_tipo_usuario          tusuvtea on  tsolvtea.tipusucodi=tusuvtea.tipusucodi
+      left join trn_tipo_usuario          tusuvtp on  codvtp.tipusucodi=tusuvtp.tipusucodi
+      where
+      (rdt.genemprcodivtea = :genemprcodi or rdt.genemprcodivtp = :genemprcodi or :genemprcodi is null)
+      and (rdt.cliemprcodivtea=:cliemprcodi or rdt.cliemprcodivtp=:cliemprcodi or :cliemprcodi is null)
+      and (rdt.barrcodivtea=:barrcoditra or :barrcoditra is null)
+      and (rdt.barrcodivtp=:barrcodisum or :barrcodisum is null)
+      and (tsolvtea.tipconcodi=:tipconcodi or codvtp.tipconcodi=:tipconcodi or :tipconcodi is null)
+      and (tsolvtea.tipusucodi=:tipusucodi or codvtp.tipusucodi=:tipusucodi or :tipusucodi is null)
+      and (tsolvtea.coresocodigo = :codigo or vtp.coregecodvtp = :codigo or :codigo is null)
+      and rrl.retelestado=:retelestado
+      ) tbl
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalRecordsRelacionCodigoRetiros_old</key>
+    <query>
+      SELECT count(1) NroRegistros
+      from (
+      select distinct
+      rrl.RETRELCODI
+      FROM vtp_codigo_retiro_relacion      rrl
+      inner join vtp_codigo_retiro_rel_det det on rrl.retrelcodi= det.retrelcodi
+      left join trn_codigo_retiro_solicitud vtea on det.coresocodvtea=vtea.coresocodi
+      left join vtp_codigo_retiro_generado vtp on det.coresocodvtp=vtp.coregecodi
+      left join vtp_codigo_consolidado codvtp on vtp.coregecodvtp=codvtp.codcncodivtp
+      where
+      (det.genemprcodivtea = :genemprcodi or det.genemprcodivtp = :genemprcodi or :genemprcodi is null)
+      and (det.cliemprcodivtea=:cliemprcodi or det.cliemprcodivtp=:cliemprcodi or :cliemprcodi is null)
+      and (det.barrcodivtea=:barrcoditra or :barrcoditra is null)
+      and (det.barrcodivtp=:barrcodisum or :barrcodisum is null)
+      and (vtea.tipconcodi=:tipconcodi or codvtp.tipconcodi=:tipconcodi or :tipconcodi is null)
+      and (vtea.tipusucodi=:tipusucodi or codvtp.tipusucodi=:tipusucodi or :tipusucodi is null)
+      and (vtea.coresocodigo = :codigo or vtp.coregecodvtp = :codigo or :codigo is null)
+      and rrl.retelestado=:retelestado ) tbl
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>select * from vtp_codigo_retiro_relacion where retrelcodi = :retrelcodi</query>
+  </Sql>
+
+  <Sql>
+    <key>GetPoteCoincidenteByCodigoVtp</key>
+    <query>
+      select nvl(ped.pegrdpoteegreso,0) as pegrdpotecoincidente, codcon.CODCNCODIVTP, ped.pegrdcodi  from vtp_peaje_egreso vpe
+      inner join vtp_peaje_egreso_detalle ped on vpe.pegrcodi=ped.pegrcodi
+      inner join vtp_codigo_consolidado codcon on codcon.EMPRCODI=vpe.EMPRCODI and codcon.CLICODI=ped.EMPRCODI and codcon.BARRCODI=ped.BARRCODI and UPPER(codcon.TIPUSUNOMBRE)=UPPER(ped.PEGRDTIPOUSUARIO)
+      and codcon.CODCNCODIVTP=ped.coregecodvtp
+      where vpe.pericodi=:pericodi and vpe.recpotcodi=:recpotcodi and
+      codcon.CODCNCODIVTP=:codigovtp and vpe.emprcodi=:emprcodi and vpe.pegrcodi =
+      (select pegrcodi from (select vpe.*,row_number() over(order by vpe.pegrfeccreacion desc) as rn  from vtp_peaje_egreso vpe
+      inner join vtp_peaje_egreso_detalle ped on vpe.pegrcodi=ped.pegrcodi
+      inner join vtp_codigo_consolidado codcon on codcon.EMPRCODI=vpe.EMPRCODI and codcon.CLICODI=ped.EMPRCODI and codcon.BARRCODI=ped.BARRCODI and UPPER(codcon.TIPUSUNOMBRE)=UPPER(ped.PEGRDTIPOUSUARIO)
+      where vpe.pericodi=:pericodi and vpe.recpotcodi=:recpotcodi and vpe.emprcodi=:emprcodi and  vpe.pegrestado = 'SI') where rn=1)
+    </query>
+  </Sql>
+</Sqls>

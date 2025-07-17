@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(logcodi), 0) + 1 from si_log
+    </query>
+  </Sql>
+
+  <!--INICIO MODIFICACIÓN-->
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into si_log(
+      logcodi,
+      modcodi,
+      logdesc,
+      logfeccreacion,
+      logusucreacion
+      <!--logfecha,
+      loguser-->
+      )
+      values(
+      {0},
+      {1},
+     '{2}',
+      sysdate,
+      '{3}'
+      )
+    </query>
+  </Sql>
+  <!--FIN MODIFICACIÓN -->
+  
+  <Sql>
+    <key>Update</key>
+    <query>
+      update si_log
+      set
+      logdesc = {0},
+      LOGUSUMODIFICACION = '{4}',
+      LOGFECMODIFICACION = to_date('{5}','dd/mm/yyyy hh:mi:ss a.m.' , 'nls_date_language=american')
+      where
+      logcodi = {1} and modcodi={2}
+    </query>
+  </Sql>
+
+
+
+  <Sql>
+    <key>Listar</key>
+    <query>
+      select * from
+      (
+      select
+      logcodi,
+      modcodi,
+      logdesc,
+      LOGFECCREACION,
+      LOGUSUCREACION,
+      LOGFECMODIFICACION,
+      LOGUSUMODIFICACION,
+      (row_number() over (order by LOGFECCREACION desc)) as r
+      from
+      si_log
+      where
+      modcodi = {2}
+      and
+      trim(upper(LOGUSUCREACION)) = trim(upper('{0}'))
+      order by LOGFECCREACION desc
+      )
+      where r >= (1) and r &lt; (11)
+    </query>
+  </Sql>
+  <Sql>
+    <key>Listar_bkp</key>
+    <query>
+      select
+      logcodi,
+      modcodi,
+      logdesc,
+      LOGFECCREACION,
+      LOGUSUCREACION,
+      LOGFECMODIFICACION,
+      LOGUSUMODIFICACION
+      from
+      si_log
+      where
+      modcodi = {2} and LOGFECCREACION >= to_date('{1}','dd/mm/yyyy hh:mi:ss a.m.' , 'nls_date_language=american') and LOGFECCREACION  &lt; (to_date('{1}','dd/mm/yyyy hh:mi:ss a.m.' , 'nls_date_language=american')+ INTERVAL '1' day)
+      and
+      trim(upper(LOGUSUCREACION)) = trim(upper('{0}'))
+      order by LOGFECMODIFICACION desc
+    </query>
+  </Sql>
+
+<!--Region Transferencia de Equipos-->
+  <Sql>
+    <key>ListLogByMigracion</key>
+    <query>
+      SELECT log.*,lmig.LOGMIGTIPO, q.MIQUBAMENSAJE,MIQUBAFLAG
+      FROM SI_LOG log
+      INNER JOIN SI_LOGMIGRA lmig on lmig.logcodi=log.logcodi
+      left join SI_MIGRAQUERYBASE q on q.MIQUBACODI = lmig.MIQUBACODI
+      WHERE lmig.MIGRACODI = {0}
+      order by log.logcodi asc
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>SaveTransferencia</key>
+    <query>
+      insert into si_log(
+      logcodi,
+      modcodi,
+      logdesc,
+      LOGFECCREACION,
+      LOGUSUCREACION
+      )
+      values(
+      :logcodi,
+      :modcodi,
+      :logdesc,
+      :logfeccreacion,
+      :logusucreacion
+      )
+    </query>
+  </Sql>
+
+  
+  <!--Fin-->
+
+  <!--INICIO INTERVENCIONES-->  
+  <!--QUERYS PARA EL REPORTE DE HISTORIAL DE ACTIVIDADES EN EL SISTEMA--> 
+  <Sql>
+    <key>RptHistorialIntervenciones</key>
+    <query>
+      SELECT
+      LOGCODI,
+      LOGDESC,
+      LOGUSUCREACION,
+      LOGFECCREACION
+      FROM
+      SI_LOG L
+      WHERE
+      (LOGDESC = '{0}' or '0' ='{1}')
+      AND
+      ( LOGFECCREACION >=  TO_DATE('{2} 00:00:00','DD/MM/YYYY HH24:MI:SS')  OR {2} IS NULL ) and
+      ( LOGFECCREACION &lt;=  TO_DATE('{3} 00:00:00','DD/MM/YYYY HH24:MI:SS')  OR {3} IS NULL )
+      and l.modcodi = 1 --Modcodi mantenimientos
+      ORDER BY
+      LOGFECCREACION
+    </query>
+  </Sql>
+  <!--FIN INTERVENCIONES -->
+  
+</Sqls>
+

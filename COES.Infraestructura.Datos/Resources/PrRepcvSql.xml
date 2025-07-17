@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(repcodi), 0) + 1 from pr_repcv
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into pr_repcv(
+           repcodi,
+           repfecha,
+           lastuser,
+           lastdate,
+           repobserva,
+           reptipo,
+           repnomb,
+           repdetalle,
+           deleted,
+           repfechafp,
+           repfechaem
+       )
+       values(
+           :repcodi,
+           :repfecha,
+           :lastuser,
+           :lastdate,
+           :repobserva,
+           :reptipo,
+           :repnomb,
+           :repdetalle,
+           :deleted,
+           :repfechafp,
+           :repfechaem
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update pr_repcv
+       set
+           repfecha = :repfecha,
+           lastuser = :lastuser,
+           lastdate = :lastdate,
+           repobserva = :repobserva,
+           reptipo = :reptipo,
+           repnomb = :repnomb,
+           repdetalle = :repdetalle,
+           deleted = :deleted,
+           repfechafp = :repfechafp,
+           repfechaem = :repfechaem
+       where
+           repcodi = :repcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from pr_repcv
+       where
+           repcodi = :repcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      repcodi,
+      repfecha,
+      lastuser,
+      lastdate,
+      repobserva,
+      reptipo,
+      repnomb,
+      repdetalle,
+      deleted,
+      repfechafp,
+      repfechaem
+      from
+      pr_repcv
+      where
+      repcodi = :repcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           repcodi,
+           repfecha,
+           lastuser,
+           lastdate,
+           repobserva,
+           reptipo,
+           repnomb,
+           repdetalle,
+           deleted,
+           repfechafp,
+           repfechaem
+       from
+           pr_repcv
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      repcodi,
+      repfecha,
+      lastuser,
+      lastdate,
+      repobserva,
+      reptipo,
+      repnomb,
+      repdetalle,
+      deleted,
+      repfechafp,
+      repfechaem
+      from
+      pr_repcv
+      where
+      repfecha >= to_date('{0}','YYYY-MM-DD') and
+      repfecha &lt;= to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      and deleted='N'
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GetRepcvByEnvcodi</key>
+    <query>
+      select
+	      pr.*
+      from
+	      pr_repcv pr
+      inner join cb_enviorelcv ce on ce.repcodi = pr.repcodi
+      where ce.cbenvcodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ObtenerReporte</key>
+    <query>
+        select
+        repcodi,
+        repfecha,
+        lastuser,
+        lastdate,
+        repobserva,
+        reptipo,
+        repnomb,
+        repdetalle,
+        deleted,
+        repfechafp,
+        repfechaem
+      from 
+        pr_repcv
+      where
+        repfecha >= to_date('{0}','DD/MM/YYYY') 
+        and repfecha &lt; to_date('{1}','DD/MM/YYYY')+1      
+      order by repcodi desc
+    </query>
+  </Sql>
+
+  <!--INICIO MigracionSGOCOES-GrupoB-->
+
+  <Sql>
+    <key>GetByFechaAndTipo</key>
+    <query>
+      select
+      *
+      from
+      pr_repcv
+      where
+      repfecha = to_date('{0}','YYYY-MM-DD')
+      and REPTIPO = '{1}'
+      order by repcodi desc
+    </query>
+  </Sql>
+
+  <!--FIN MigracionSGOCOES-GrupoB-->  
+  
+  <!--INICIO siosein2-->
+  <Sql>
+    <key>ObtenerReportecvYVariablesXPeriodo</key>
+    <query>
+      select t.*,
+      (select v.grupopadre from pr_grupo v where v.grupocodi=c.grupocodi) as GRUPOPADRECODI,
+      c.grupocodi,
+      (c.cvc + c.cvnc) as CVBASE,
+      (c.cvc + c.cvnc) as CVMEDIA,
+      (c.cvc + c.cvnc) as CVPUNTA
+      from pr_repcv t, pr_cvariables c, pr_grupo g, pr_escenario e
+      where t.repcodi = c.repcodi and c.grupocodi = g.grupocodi and c.escecodi = e.escecodi
+      and to_char(c.repcodi)||to_char(e.escenum) in
+      (
+      select to_char(repcodi)||to_char(escenum) from
+      (
+      --obtener reportes ultimo escenario
+      select pr_cvariables.repcodi, max(pr_escenario.escenum) as escenum
+      from pr_cvariables, pr_escenario
+      where pr_cvariables.escecodi = pr_escenario.escecodi
+      and pr_cvariables.repcodi in
+      (
+      select repcodi from
+      (
+      --obtener ultimo reporte por dia
+      select to_char(repfecha, 'YYYYMMDD'), max(repcodi) as repcodi from pr_repcv
+      group by to_char(repfecha, 'YYYYMMDD')
+      )
+      )
+      group by pr_cvariables.repcodi
+      )
+      )
+      and to_char(t.repfecha, 'YYYYMM') = '{0}'
+      and t.reptipo = 'D'
+      and t.deleted = 'N'
+      and g.grupotipo='T'
+      order by t.repfecha, c.grupocodi
+    </query>
+  </Sql>
+  <!--FIN siosein2-->
+</Sqls>

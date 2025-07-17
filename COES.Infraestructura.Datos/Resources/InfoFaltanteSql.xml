@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<Sqls>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select e.emprnomb as empresa, barrbarratransferencia as barra, equinomb as cliente, codentcodigo as codigo
+      from trn_periodo p, trn_codigo_entrega c, vw_eq_central_generacion g, trn_barra b, vw_si_empresa e
+      where c.equicodi = g.equicodi and c.barrcodi = b.barrcodi and c.emprcodi = e.emprcodi
+      and c.codentestado = 'ACT' and p.pericodi = :pericodi
+      and NVL(to_char(c.codentfechainicio, 'YYYYMM'), '000000') &lt;= to_char(p.perianiomes)
+      and NVL(to_char(c.codentfechafin, 'YYYYMM'), '999999') &gt;= to_char(p.perianiomes)
+      and c.codentcodi not in (select codentcodi from trn_trans_entrega t where c.codentcodi = t.codentcodi and t.pericodi = p.pericodi)
+      union
+      select e.emprnomb as empresa, barrbarratransferencia as barra, cl.emprnomb as cliente, tretcodigo as codigo
+      from trn_periodo p, vw_trn_codigo_retiro c, vw_si_empresa e, trn_barra b, vw_si_empresa cl
+      where c.genemprcodi = e.emprcodi and c.barrcodi = b.barrcodi and c.cliemprcodi = cl.emprcodi
+      and p.pericodi = :pericodi
+      and NVL(to_char(c.fechainicio, 'YYYYMM'), '000000') &lt;= to_char(p.perianiomes)
+      and NVL(to_char(c.fechafin, 'YYYYMM'), '999999') &gt;= to_char(p.perianiomes)
+      and (c.trettabla, c.tretcoresocoresccodi) not in (select trettabla, tretcoresocoresccodi from trn_trans_retiro t where c.trettabla = t.trettabla and c.tretcoresocoresccodi = t.tretcoresocoresccodi and t.pericodi = p.pericodi)
+      order by 1, 2, 3
+  </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByListaPeriodoVersion</key>
+    <query>
+          select emprnomb as empresa, barrbarratransferencia as barra, equinomb as cliente, codentcodigo as codigo,ev.emprcodi,codentfechainicio as fechainicio,codentfechafin as fechafin,'ENTREGA' as tipo
+      from trn_periodo p, trn_codigo_entrega c, vw_eq_central_generacion g, trn_barra b, vw_si_empresa ev
+      where c.equicodi = g.equicodi and c.barrcodi = b.barrcodi and c.emprcodi = ev.emprcodi
+      and p.pericodi = :pericodi     
+      and (NVL(to_char(c.codentfechainicio, 'YYYYMM'), '000000') = to_char(p.perianiomes)
+       or NVL(to_char(c.codentfechafin, 'YYYYMM'), '999999') = to_char(p.perianiomes))
+      and c.codentcodi in (select codentcodi from trn_trans_entrega t where c.codentcodi = t.codentcodi and t.pericodi = p.pericodi and t.tentversion=:version)
+      union
+      select e.emprnomb as empresa, barrbarratransferencia as barra, cl.emprnomb as cliente, tretcodigo as codigo, e.emprcodi,c.fechainicio,c.fechafin,'RETIRO' as tipo
+      from trn_periodo p, vw_trn_codigo_retiro c, vw_si_empresa e, trn_barra b, vw_si_empresa cl
+      where c.genemprcodi = e.emprcodi and c.barrcodi = b.barrcodi and c.cliemprcodi = cl.emprcodi
+      and p.pericodi = :pericodi
+      and (NVL(to_char(c.fechainicio, 'YYYYMM'), '000000') = to_char(p.perianiomes) or
+       NVL(to_char(c.fechafin, 'YYYYMM'), '999999') = to_char(p.perianiomes))
+      and (c.trettabla, c.tretcoresocoresccodi) in (select trettabla, tretcoresocoresccodi from trn_trans_retiro t where c.trettabla = t.trettabla and c.tretcoresocoresccodi = t.tretcoresocoresccodi and t.pericodi = p.pericodi and t.tretversion = :version)
+      union
+      select emprnomb as empresa, barrbarratransferencia as barra, equinomb as cliente, coinfbcodigo as codigo,ev.emprcodi,coinfbfechainicio,coinfbfechafin,'INFOBASE' as tipo
+      from trn_periodo p, trn_codigo_infobase c, vw_eq_central_generacion g, trn_barra b, vw_si_empresa ev
+      where c.equicodi = g.equicodi and c.barrcodi = b.barrcodi and c.emprcodi = ev.emprcodi
+      and p.pericodi = :pericodi     
+      and (NVL(to_char(c.coinfbfechainicio, 'YYYYMM'), '000000') = to_char(p.perianiomes)
+       or NVL(to_char(c.coinfbfechafin, 'YYYYMM'), '999999') = to_char(p.perianiomes))
+      and c.coinfbcodi in (select coinfbcodi from trn_trans_infobase t where c.coinfbcodi = t.coinfbcodi and t.pericodi = p.pericodi and t.tinfbversion=:version) 
+      order by 1, 2, 3
+      
+    </query>
+  </Sql>
+
+
+  
+
+</Sqls>

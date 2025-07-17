@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(empcorcodi), 0) + 1 from si_empresa_correo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into si_empresa_correo(
+      empcorcodi,
+      emprcodi,
+      modcodi,
+      empcornomb,
+      empcordesc,
+      empcoremail,
+      empcorestado,
+      empcorcargo,
+      empcortelefono,
+      empcormovil,
+      empcorindnotic,
+	  lastuser,
+	  lastdate
+      )
+      values(
+      :empcorcodi,
+      :emprcodi,
+      :modcodi,
+      :empcornomb,
+      :empcordesc,
+      :empcoremail,
+      :empcorestado,
+      :empcorcargo,
+      :empcortelefono,
+      :empcormovil,
+      :empcorindnotic,
+	  :lastuser,
+	  sysdate
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update si_empresa_correo
+      set
+      emprcodi = :emprcodi,
+      modcodi = :modcodi,
+      empcornomb = :empcornomb,
+      empcordesc = :empcordesc,
+      empcoremail = :empcoremail,
+      empcorestado = :empcorestado,
+      empcorcargo =:empcorcargo,
+      empcortelefono =:empcortelefono,
+      empcormovil =:empcormovil,
+      empcorindnotic = :empcorindnotic,
+	  lastuser = :lastuser,
+	  lastdate = sysdate
+      where
+      empcorcodi = :empcorcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from si_empresa_correo
+       where
+           empcorcodi = :empcorcodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>UpdateAuditoria</key>
+		<query>
+			update aud_si_empresa_correo
+			set USERAUDITORIA = :lastuser
+			where
+			empcorcodi = :empcorcodi
+			and ACTIONAUDITORIA = 'DELETE'
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      empcorcodi,
+      emprcodi,
+      modcodi,
+      empcornomb,
+      empcordesc,
+      empcoremail,
+      empcorestado,
+      empcorcargo,
+      empcortelefono,
+      empcormovil,
+      empcorindnotic,
+      lastuser,
+      lastdate
+      from
+      si_empresa_correo
+      where
+      empcorcodi = :empcorcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      empcorcodi,
+      emprcodi,
+      modcodi,
+      empcornomb,
+      empcordesc,
+      empcoremail,
+      empcorestado,
+      empcorcargo,
+      empcortelefono,
+      empcormovil,
+      empcorindnotic,
+      lastuser,
+      lastdate
+      from
+      si_empresa_correo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select -1 as empcorcodi, empresa.emprcodi, solicitud.modcodi, usuario.username as empcornomb,
+      '' as empcordesc, usuario.useremail as empcoremail, 'A' as empcorestado, tipoempresa.tipoemprdesc,
+      empresa.emprnomb, empresa.emprindnotificacion ,
+      '' as empcorcargo, '' as empcortelefono, '' as empcormovil, '' as empcorindnotic, '' as  lastuser, null as lastdate
+      from
+      fw_solicitud solicitud
+      inner join fw_user usuario on solicitud.usercode = usuario.usercode
+      inner join si_empresa empresa on usuario.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipoempresa on empresa.tipoemprcodi = tipoempresa.tipoemprcodi
+      where solicitud.modcodi = {2} and solicitud.solicestado = 'A' and usuario.userstate = 'A'
+      and (empresa.emprcodi = {0} or '{0}' = '-1') and empresa.tipoemprcodi in ({1}) and empresa.emprestado = 'A'
+      union all
+      select emprcorr.empcorcodi, emprcorr.emprcodi, emprcorr.modcodi, emprcorr.empcornomb,
+      emprcorr.empcordesc, emprcorr.empcoremail, emprcorr.empcorestado, tipoempresa.tipoemprdesc,
+      empresa.emprnomb, empresa.emprindnotificacion, emprcorr.empcorcargo, emprcorr.empcortelefono, emprcorr.empcormovil,
+      emprcorr.empcorindnotic, emprcorr.lastuser, emprcorr.lastdate
+      from si_empresa_correo emprcorr
+      inner join si_empresa empresa on emprcorr.emprcodi = empresa.emprcodi
+      inner join si_tipoempresa tipoempresa on empresa.tipoemprcodi = tipoempresa.tipoemprcodi
+      where emprcorr.modcodi = {2}
+      and (empresa.emprcodi = {0} or '{0}' = '-1') and empresa.tipoemprcodi in ({1}) and empresa.emprestado = 'A'
+      and emprcorr.empcorestado != 'E'
+      order by 8 asc, 9 asc
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ObtenerEmpresasIncumplimiento</key>
+    <query>
+      select distinct emp.emprcodi, emp.emprnomb from me_ptomedicion pto
+      inner join si_empresa emp on pto.emprcodi = emp.emprcodi
+      where origlectcodi = 6 and emp.tipoemprcodi in (2,4) and emp.emprestado = 'A'
+      and emp.emprcodi not in (
+      select distinct emprcodi  from me_envio
+      where formatcodi = {0} and enviofechaperiodo = to_date('{1}','YYYY-MM-DD')
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>ObtenerEmpresasIncumplimiento20200227</key>
+    <query>
+      select distinct emp.emprcodi, emp.emprnomb from me_ptomedicion pto
+      inner join si_empresa emp on pto.emprcodi = emp.emprcodi
+      where origlectcodi = 6 and emp.tipoemprcodi in (2,4) and emp.emprestado = 'A'
+      and emp.emprcodi not in (
+      select distinct archivo.emprcodi from ext_envio envio
+      inner join ext_archivo archivo on envio.earcodi = archivo.earcodi
+      where envio.etacodi = {0} and envio.fecha_rep = to_date('{1}','YYYY-MM-DD')
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerEmpresasDisponibles</key>
+    <query>
+      select distinct emp.emprcodi from me_ptomedicion pto inner join si_empresa emp on pto.emprcodi = emp.emprcodi
+      where origlectcodi = 6 and emp.tipoemprcodi in (2,4)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>HabilitarNotificacion</key>
+    <query>
+      update si_empresa
+      set
+      emprindnotificacion = :emprindnotificacion,
+      lastuser = :lastuser,
+      lastdate = sysdate
+      where emprcodi = :emprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCorreoPorModulo</key>
+    <query>
+      select distinct empresa.emprnomb,empresa.emprcodi, usuario.username, usuario.useremail from fw_solicitud solicitud
+      inner join fw_user usuario on solicitud.usercode = usuario.usercode
+      inner join si_empresa empresa on usuario.emprcodi = empresa.emprcodi
+      where solicitud.modcodi = :modcodi and solicitud.solicestado = 'A' and usuario.userstate = 'A'
+      and empresa.emprestado = 'A' order by 1 asc, 2 asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCorreoPorEmpresaModulo</key>
+    <query>
+      select distinct empresa.emprnomb,empresa.emprcodi, usuario.username, usuario.useremail from fw_solicitud solicitud
+      inner join fw_user usuario on solicitud.usercode = usuario.usercode 
+      inner join si_empresa empresa on empresa.emprcodi in (select emprcodi from fw_user_x_empresa where usercode = usuario.usercode)
+      where
+      solicitud.modcodi = {0} and
+      (empresa.emprcodi = {1} or '{1}' = '-1') and
+      solicitud.solicestado = 'A' and usuario.userstate = 'A' and
+      empresa.emprestado = 'A' order by 1 asc, 2 asc
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCorreosPorEmpresa</key>
+    <query>
+          select empcor.*, emp.emprnomb, emp.emprruc from si_empresa_correo empcor
+          inner join si_empresa emp on empcor.emprcodi = emp.emprcodi where empcor.emprcodi = {0} and empcor.modcodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerReportePersonasContacto</key>
+    <query>
+		select tipo.tipoemprdesc, emp.emprrazsocial as emprnomb, emp.emprruc,  tabla.* from
+		(select rpte.emprcodi ,rptenombres || ' ' || rpteapellidos as empcornomb, rpte.RPTETELEFONO as empcortelefono, rpte.RPTETELFMOVIL as empcormovil,
+		rpte.RPTECARGOEMPRESA as empcorcargo, rpte.RPTECORREOELECTRONICO as empcoremail,
+		case rpte.rptetiprepresentantelegal when 'T' then 'Rpte. Legal Titular'
+		when 'A' then 'Rpte. Legal Alterno' else '' end  as emprcortipo, rpte.rpteindnotic as empcorindnotic
+		from si_representante rpte inner join si_empresa emp on rpte.emprcodi = emp.emprcodi
+		where rpte.RPTEBAJA = 'N' and rpte.rptetipo = 'L'
+		union all
+		select corr.emprcodi, corr.empcornomb as emprnomb, corr.empcortelefono as empcortelefono, corr.empcormovil ,
+		corr.empcorcargo , corr.empcoremail, 'Contacto adicional' as emprcortipo, corr.empcorindnotic
+		from SI_EMPRESA_CORREO corr inner join si_empresa emp on corr.emprcodi = emp.emprcodi
+		where corr.modcodi = 34 and  corr.EMPCORESTADO = 'A') tabla
+		inner join si_empresa emp on tabla.emprcodi = emp.emprcodi
+		inner join si_tipoempresa tipo on emp.tipoemprcodi = tipo.tipoemprcodi
+		where emp.emprestado = 'A' and (emp.tipoemprcodi = {1} or {1} = 0) --and emprsein = 'S'
+		and ( ( '{0}' = 'S' and emp.emprcoes = '{0}' and emp.emprestregint = 'A') or ('{0}' = 'N' and emp.emprcoes = '{0}' and emp.emprruc is not null and emp.emprrazsocial is not null))
+		order by 1, 2, 5
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerCorreosNotificacion</key>
+    <query>
+      select rpte.emprcodi ,rptenombres || ' ' || rpteapellidos as empcornomb, rpte.RPTETELEFONO as empcortelefono, rpte.RPTETELFMOVIL as empcormovil,
+      rpte.RPTECARGOEMPRESA as empcorcargo, rpte.RPTECORREOELECTRONICO as empcoremail,
+      case rpte.rptetiprepresentantelegal when 'T' then 'Rpte. Legal Titular'
+      when 'A' then 'Rpte. Legal Alterno' else '' end  as emprcortipo, rpte.rpteindnotic as empcorindnotic
+      from si_representante rpte inner join si_empresa emp on rpte.emprcodi = emp.emprcodi
+      where rpte.RPTEBAJA = 'N' and rpte.rptetipo = 'L' and rpte.RPTEINDNOTIC = 'S' and emp.emprruc = '{0}'
+      union all
+      select corr.emprcodi, corr.empcornomb as emprnomb, corr.empcortelefono as empcortelefono, corr.empcormovil ,
+      corr.empcorcargo , corr.empcoremail, 'Contacto adicional' as emprcortipo, corr.empcorindnotic
+      from SI_EMPRESA_CORREO corr inner join si_empresa emp on corr.emprcodi = emp.emprcodi
+      where corr.modcodi = 34 and  corr.EMPCORESTADO = 'A' and corr.EMPCORINDNOTIC = 'S' and emp.emprruc = '{0}'
+      order by 2 asc
+    </query>
+  </Sql>
+
+	<Sql>
+	<key>ObtenerListaCorreosNotificacion</key>
+	<query>
+		--select distinct rptecorreoelectronico as empcoremail
+		--from si_representante r
+		--inner join si_empresa e on e.emprcodi = r.emprcodi
+		--where rptebaja = 'N' and rpteindnotic = 'S' and rptetipo = 'L'
+		--and e.emprruc = '{0}'
+		select distinct re.rptecorreoelectronico as empcoremail
+		from
+		SI_REPRESENTANTE RE INNER JOIN SI_EMPRESA EMP ON RE.EMPRCODI = EMP.EMPRCODI
+		WHERE RE.RPTETIPO = 'L' AND RE.RPTEBAJA = 'N' AND RE.RPTETIPREPRESENTANTELEGAL in ('A', 'T')
+		AND EMP.EMPRESTADO = 'A' AND EMP.EMPRESTREGINT = 'A' AND re.rpteindnotic = 'S' AND EMP.emprruc = '{0}'
+		UNION ALL
+		select distinct empcoremail as empcoremail from si_empresa_correo empcor
+		inner join si_empresa emp on empcor.emprcodi = emp.emprcodi and emp.emprestado = 'A'
+		where empcor.modcodi = {1} and empcorestado = 'A' and empcorindnotic = 'S'
+		and emp.emprruc = '{0}'
+	</query>
+ </Sql>
+	<Sql>
+		<key>ObtenerListaCorreosNotificacionProveedor</key>
+		<query>
+			select distinct empcoremail as empcoremail from si_empresa_correo empcor
+			inner join si_empresa emp on empcor.emprcodi = emp.emprcodi
+			where empcor.modcodi = {1} and empcorestado = 'A'
+			and emp.emprruc = '{0}'
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>CorreosPorEmpresaResarcimiento</key>
+    <query>
+      select ec.*, e.emprnomb from si_empresa_correo ec
+      inner join si_empresa e on e.emprcodi = ec.emprcodi
+      where ec.modcodi= 48 and (ec.emprcodi = {0} or '-1' = '{0}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>EliminarPorEmpresaResarcimiento</key>
+    <query>
+      delete from si_empresa_correo
+      where
+      modcodi= 48 and emprcodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarSoloResarcimiento</key>
+    <query>
+      select * from si_empresa_correo
+      where
+      modcodi= 48 
+    </query>
+  </Sql>
+  
+
+</Sqls>

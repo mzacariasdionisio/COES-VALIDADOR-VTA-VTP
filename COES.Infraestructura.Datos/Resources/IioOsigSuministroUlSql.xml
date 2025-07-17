@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from IIO_OSIG_SUMINISTRO_UL
+      WHERE PSICLICODI = {0} AND ULSUMICODEMPRESA = '{1}'
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdateOsigSuministro</key>
+    <query>
+      UPDATE IIO_OSIG_SUMINISTRO_UL tmp
+      SET tmp.Equicodi = (
+      SELECT eqp.EQUICODI
+      FROM EQ_EQUIPO eqp
+      WHERE eqp.FAMCODI = 45 AND eqp.EQUIESTADO != 'X' 
+      AND eqp.OSINERGCODI = tmp.ULSUMICODSUMINISTRO
+      )
+      WHERE tmp.PSICLICODI = :PSICLICODI AND tmp.ULSUMICODEMPRESA IN ({0})
+
+    </query>
+  </Sql>
+  <Sql>
+    <key>ValidarEquipos</key>
+    <query>
+      SELECT ULSUMICODSUMINISTRO FROM IIO_OSIG_SUMINISTRO_UL
+      WHERE PSICLICODI = :PSICLICODI AND (EQUICODI IS NULL OR EQUICODI = 0) {0}
+    </query>
+  </Sql>
+  <Sql>
+    <key>GetMaxIdIioLogImportacion</key>
+    <query>
+      select nvl(max(ulogcodi), 0) + 1 as correlativo
+      from iio_log_importacion
+    </query>
+  </Sql>
+  <Sql>
+    <key>RegistrarLogimportacionEquipo</key>
+    <query>
+      insert into iio_log_importacion(ulogcodi,ulogusucreacion,ulogfeccreacion,ulogproceso, ulogtablaafectada,
+      ulognroregistrosafectados,ulogmensaje,psiclicodi,ulogtablacoes,ulogidregistrocoes,ulogtipoincidencia,rcimcodi)
+      select {0}+rownum,t.* from (
+      select '{1}',sysdate,'SICLI',ULSUMICODEMPRESA as tablaafectada,count(*),'Empresa ' || ULSUMICODEMPRESA || ': no encontró la información del Suministro del Usuario Libre ' || ULSUMICODSUMINISTRO ,
+      '{2}','EQ_EQUIPO',ulsumicodempresa,1, MAX(ci.RCIMCODI)
+      from iio_osig_suministro_ul f  join iio_control_importacion ci
+      on ci.psiclicodi = f.psiclicodi AND TRIM(ci.rtabcodi) = '{3}' AND TRIM(rcimempresa) = ULSUMICODEMPRESA
+      where f.psiclicodi = :psiclicodi and (f.equicodi is null OR f.equicodi = 0)
+      AND ULSUMICODEMPRESA IN ({4})
+      group by ULSUMICODEMPRESA, ULSUMICODSUMINISTRO) t
+    </query>
+  </Sql>
+</Sqls>

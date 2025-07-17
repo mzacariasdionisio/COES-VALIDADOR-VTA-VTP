@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(operegcodi), 0) + 1 from cm_operacionregistro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cm_operacionregistro(
+           operegcodi,
+           grupocodi,
+           subcausacodi,
+           operegfecinicio,
+           operegfecfin,
+           operegusucreacion,
+           operegfeccreacion,
+           operegusumodificacion,
+           operegfecmodificacion
+       )
+       values(
+           :operegcodi,
+           :grupocodi,
+           :subcausacodi,
+           :operegfecinicio,
+           :operegfecfin,
+           :operegusucreacion,
+           :operegfeccreacion,
+           :operegusumodificacion,
+           :operegfecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cm_operacionregistro
+       set
+           grupocodi = :grupocodi,
+           subcausacodi = :subcausacodi,
+           operegfecinicio = :operegfecinicio,
+           operegfecfin = :operegfecfin,
+           operegusucreacion = :operegusucreacion,
+           operegfeccreacion = :operegfeccreacion,
+           operegusumodificacion = :operegusumodificacion,
+           operegfecmodificacion = :operegfecmodificacion
+       where
+           operegcodi = :operegcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cm_operacionregistro
+       where
+           operegcodi = :operegcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           operegcodi,
+           grupocodi,
+           subcausacodi,
+           operegfecinicio,
+           operegfecfin,
+           operegusucreacion,
+           operegfeccreacion,
+           operegusumodificacion,
+           operegfecmodificacion
+       from
+           cm_operacionregistro
+       where
+           operegcodi = :operegcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           operegcodi,
+           grupocodi,
+           subcausacodi,
+           operegfecinicio,
+           operegfecfin,
+           operegusucreacion,
+           operegfeccreacion,
+           operegusumodificacion,
+           operegfecmodificacion
+       from
+           cm_operacionregistro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           operegcodi,
+           grupocodi,
+           subcausacodi,
+           operegfecinicio,
+           operegfecfin,
+           operegusucreacion,
+           operegfeccreacion,
+           operegusumodificacion,
+           operegfecmodificacion
+       from
+           cm_operacionregistro
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListado</key>
+    <query>
+      select
+      *
+      from (
+      select
+      a.operegcodi,b.grupocodi,b.gruponomb,
+      a.subcausacodi,
+      (select c.subcausadesc from eve_subcausaevento c where  c.subcausacodi = a.subcausacodi) as subcausadesc,
+      a.operegfecinicio,a.operegfecfin,
+      a.operegusucreacion,a.operegfeccreacion,a.operegusumodificacion,
+      a.operegfecmodificacion,
+      (row_number() over (order by a.operegfecinicio desc)) as r
+      from cm_operacionregistro a, pr_grupo b
+      where (b.grupocodi= a.grupocodi) and (a.grupocodi={0} or {0} = 0)  and (a.subcausacodi={1} or {1} = 0)
+      and
+      (
+      ((a.operegfecinicio >=  TO_DATE('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.operegfecinicio &lt;  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+      (a.operegfecfin >  TO_DATE('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.operegfecfin &lt;=  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+      (a.operegfecinicio &lt;  TO_DATE('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.operegfecfin >  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')))
+      )
+      order by a.operegfecinicio desc
+      )
+      where (r >= ((({4}-1) * {5}) + 1) and r &lt; (({4} * {5}) + 1 )) or ({4} = -1 and {5} = -1)
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>TotalRegistros</key>
+    <query>
+      select count(*) from cm_operacionregistro a,pr_grupo b,eve_subcausaevento c where (b.grupocodi= a.grupocodi) and (a.grupocodi={0} or {0} = 0) 
+      and (c.subcausacodi= a.subcausacodi) and (a.subcausacodi={1} or {1} = 0)
+      and
+      (
+      ((a.operegfecinicio >=  TO_DATE('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.operegfecinicio &lt;  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+      (a.operegfecfin >  TO_DATE('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.operegfecfin &lt;=  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')) or
+      (a.operegfecinicio &lt;  TO_DATE('{2} 00:00:00','YYYY-MM-DD HH24:MI:SS') and a.operegfecfin >  TO_DATE('{3} 00:00:00','YYYY-MM-DD HH24:MI:SS')))
+      )
+    </query>
+  </Sql>
+</Sqls>

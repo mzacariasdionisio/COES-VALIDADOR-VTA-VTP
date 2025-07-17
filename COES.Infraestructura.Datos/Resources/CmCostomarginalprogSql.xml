@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(cmarprcodi), 0) + 1 from cm_costomarginalprog
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into cm_costomarginalprog(
+           cmarprcodi,
+           cnfbarcodi,
+           cmarprtotal,
+           cmarprfecha,
+           cmarprlastuser,
+           cmarprlastdate
+       )
+       values(
+           :cmarprcodi,
+           :cnfbarcodi,
+           :cmarprtotal,
+           :cmarprfecha,
+           :cmarprlastuser,
+           :cmarprlastdate
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update cm_costomarginalprog
+       set
+           cnfbarcodi = :cnfbarcodi,
+           cmarprtotal = :cmarprtotal,
+           cmarprfecha = :cmarprfecha,
+           cmarprlastuser = :cmarprlastuser,
+           cmarprlastdate = :cmarprlastdate
+       where
+           cmarprcodi = :cmarprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from cm_costomarginalprog
+       where
+           cmarprcodi = :cmarprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           cmarprcodi,
+           cnfbarcodi,
+           cmarprtotal,
+           cmarprfecha,
+           cmarprlastuser,
+           cmarprlastdate
+       from
+           cm_costomarginalprog
+       where
+           cmarprcodi = :cmarprcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           cmarprcodi,
+           cnfbarcodi,
+           cmarprtotal,
+           cmarprfecha,
+           cmarprlastuser,
+           cmarprlastdate
+       from
+           cm_costomarginalprog
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           cmarprcodi,
+           cnfbarcodi,
+           cmarprtotal,
+           cmarprfecha,
+           cmarprlastuser,
+           cmarprlastdate
+       from
+           cm_costomarginalprog
+    </query>
+  </Sql>
+
+  <!--INICIO MonitoreoMME-->
+  <Sql>
+    <key>ListCostoMarginalProgPeriodo</key>
+    <query>
+      select
+      cmcostprog.cmarprcodi,
+      cmcostprog.cnfbarcodi,
+      cmcostprog.cmarprtotal,
+      cmcostprog.cmarprfecha,
+      cmcostprog.cmarprlastuser,
+      cmcostprog.cmarprlastdate,
+      pr.grupocodi
+      from cm_costomarginalprog   cmcostprog
+      inner join pr_grupoxcnfbar pr on pr.cnfbarcodi=cmcostprog.cnfbarcodi
+      where  cmcostprog.cmarprfecha  between TO_DATE('{0}','dd/mm/yyyy')  and ADD_MONTHS(TO_DATE('{0}','dd/mm/yyyy'),1)
+    </query>
+  </Sql>
+  <!--FIN MonitoreoMME-->
+
+  <!--INICIO SIOSEIN-->
+  <Sql>
+    <key>GetByBarratranferencia</key>
+    <query>
+      select
+      cmcostprog.cmarprcodi,
+      cmcostprog.cnfbarcodi,
+      cmcostprog.cmarprtotal,
+      cmcostprog.cmarprfecha,
+      cmcostprog.cmarprlastuser,
+      cmcostprog.cmarprlastdate,
+      cfb.cnfbarnombre,
+      br.osinergcodi
+      from cm_costomarginalprog   cmcostprog
+      inner join cm_configbarra cfb on cfb.cnfbarcodi = cmcostprog.cnfbarcodi
+      inner join trn_barra br on br.barrcodi = cfb.barrcodi
+      where  br.barrcodi in({0}) and
+      cmcostprog.cmarprfecha  between TO_DATE('{1}','YYYY-MM-DD')  and TO_DATE('{2} 23:59:00','YYYY-MM-DD HH24:MI:SS')
+
+    </query>
+  </Sql>
+  <!--FIN SIOSEIN-->
+
+  <!--INICIO IMME-->
+  <Sql>
+    <key>DeleteDias</key>
+    <query>
+      delete from cm_costomarginalprog
+      where
+      cmarprfecha > to_date('{0}','YYYY-MM-DD') and cmarprfecha &lt; to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaTotalXDia</key>
+    <query>
+      select TO_CHAR (cmarprfecha,'YYYY-MM-DD') fechadia,count(*) totalregdia from Cm_Costomarginalprog
+      where CMARPRFECHA >= to_date('{0}','YYYY-MM-DD') and cmarprfecha &lt; to_date('{1} 23:59:59','YYYY-MM-DD HH24:MI:SS')
+      group by TO_CHAR (cmarprfecha,'YYYY-MM-DD')
+      order by TO_CHAR (cmarprfecha,'YYYY-MM-DD') asc
+    </query>
+  </Sql>
+  <!--FIN IMME-->
+</Sqls>

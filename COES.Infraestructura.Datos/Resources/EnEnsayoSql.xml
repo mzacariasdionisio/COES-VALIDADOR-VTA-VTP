@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(ensayocodi), 0) + 1 from en_ensayo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into en_ensayo(
+      ensayocodi,
+      ensayofecha,
+      ensayousercodi,
+      emprcodi,
+      equicodi,
+      estadocodi,
+      ensayofechaevento,
+      ensayolastdate,
+      ensayolastuser
+      )
+      values(
+      {0},to_date('{1}','YYYY-MM-DD HH24:MI:SS'),
+      '{2}',
+      {3},
+      {4},
+      {5},
+      to_date('{6}','YYYY-MM-DD HH24:MI:SS'),
+      to_date('{7}','YYYY-MM-DD HH24:MI:SS'),
+      '{8}'
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update en_ensayo
+      set
+      ensayofecha = :ensayofecha,
+      ensayousercodi = :ensayousercodi,
+      emprcodi = :emprcodi,
+      equicodi = :equicodi,
+      estadocodi = :estadocodi,
+      ensayofechaevento = :ensayofechaevento,
+      ensayolastdate = :ensayolastdate,
+      ensayolastuser = :ensayolastuser
+      where
+      ensayocodi = :ensayocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstadoEnsayo</key>
+    <query>
+      update en_ensayo
+      set
+      estadocodi = {0},
+      ensayofechaevento = to_date('{1}','YYYY-MM-DD HH24:MI:SS'),
+      ensayolastdate = to_date('{2}','YYYY-MM-DD HH24:MI:SS'),
+      ensayolastuser = '{3}'
+      where
+      ensayocodi = {4}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from en_ensayo
+      where
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      en.*, eq.equinomb,em.emprnomb
+      from
+      en_ensayo en
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join si_empresa em on em.emprcodi = en.emprcodi
+      where
+      ensayocodi = :ensayocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      ensayocodi,
+      ensayofecha,
+      ensayousercodi,
+      emprcodi,
+      equicodi,
+      estadocodi,
+      ensayoacep,
+      ensayofechaacep
+      from
+      en_ensayo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      ensayocodi,
+      ensayofecha,
+      ensayousercodi,
+      emprcodi,
+      equicodi,
+      estadocodi,
+      ensayofechaevento,
+      ensayolastdate,
+      ensayolastuser
+      from
+      en_ensayo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaDetalle</key>
+    <query>
+      select
+      enviocodi,
+      enviofecha,
+      ensayousercodi,
+      en.grupocodi,
+      en.estadocodi,
+      tipocombcodi,
+      en.emprcodi,
+      en.observacion,
+      emp.emprnomb,
+      eq.gruponomb,
+      ex.estenvnomb
+      from
+      cb_envio en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join pr_grupo eq on eq.grupocodi = en.grupocodi
+      inner join ext_estado_envio ex on ex.estenvcodi =  en.estenvcodi
+      where tipocombcodi = {0}
+      order by enviocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaDetalleFiltro</key>
+    <query>
+      select * from (
+      select
+      en.*,
+      emp.emprnomb,
+      eq.equinomb central,
+      es.estadonombre,
+      es.estadocolor,
+      (row_number() over (order by en.ensayocodi asc)) as r
+      from
+      en_ensayo en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join en_estado es on es.estadocodi = en.estadocodi
+      where ( (en.emprcodi in ({0}) or '{0}' = '-1' )
+      and (eq.equicodi in ({1}) or '{1}' = '-1'))
+      and (en.estadocodi in ({2}) or '{2}' = '-1' )
+      and (ensayofecha >=  TO_DATE('{3}','YYYY-MM-DD')  and ensayofecha &lt;= TO_DATE('{4}','YYYY-MM-DD'))
+      order by en.ensayocodi asc
+      )
+      where r >= ((({5}-1) * {6}) + 1) and r &lt; (({5} * {6}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaDetalleFiltro2</key>
+    <query>
+
+      select * from (
+      select
+      en.*,
+      emp.emprnomb,
+      eqp.equinomb central,
+      eq.equinomb unidadnomb,
+      es.estadonombre,
+      es.estadocolor,
+      (row_number() over (order by en.ensayocodi asc)) as r
+      from
+      en_ensayo en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi
+      inner join eq_equipo eq on eq.equicodi = en.equicodi
+      inner join eq_equipo eqp on eq.equipadre = eqp.equicodi
+      inner join en_estado es on es.estadocodi = en.estadocodi
+      where ((en.emprcodi in ({0}) or '{0}' = '-1' ) and  (eq.equipadre in ({1}) or '{1}' = '-1')) and (en.estadocodi in ({2}) or '{2}' = '-1' )
+      and (ensayofecha >=  TO_DATE('{3}','YYYY-MM-DD')  and ensayofecha &lt;= TO_DATE('{4}','YYYY-MM-DD'))
+      order by en.ensayocodi asc
+      )
+      where r >= ((({5}-1) * {6}) + 1) and r &lt; (({5} * {6}) + 1 )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListaDetalleFiltroXls</key>
+    <query>
+      select
+      en.ensayocodi,
+      emp.emprnomb empresa,
+      eqc.equinomb central,
+      TRIM(equ.equinomb) unidad,
+      TRIM(pg.gruponomb) modo,
+      es.estadonombre nombestado,
+      es.estadocolor colestado,
+      en.ensayofecha fecha
+
+      from en_ensayo en
+      inner join si_empresa emp on en.emprcodi=emp.emprcodi
+      inner join eq_equipo eqc on en.equicodi=eqc.equicodi
+      inner join en_ensayomodo em on en.ensayocodi=em.ensayocodi
+      inner join pr_grupo pg on em.grupocodi=pg.grupocodi
+      inner join en_ensayounidad eu on en.ensayocodi=eu.ensayocodi
+      inner join eq_equipo equ on eu.equicodi=equ.equicodi
+      inner join en_estado es on es.estadocodi = en.estadocodi
+      where
+      (
+      (en.emprcodi in ({0}) or '{0}' = '-1' )
+      and
+      (equ.equipadre in ({1}) or '{1}' = '-1')
+      )
+      and
+      (
+      ensayofecha >=  TO_DATE('{3}','YYYY-MM-DD')  and ensayofecha &lt;= TO_DATE('{4}','YYYY-MM-DD')
+      )
+      order by en.ensayocodi asc
+
+
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>TotalListaEnsayo</key>
+    <query>
+      select
+      count(*) total
+      from
+      (((en_ensayo en
+      inner join si_empresa emp on emp.emprcodi = en.emprcodi)
+      inner join eq_equipo eq on eq.equicodi = en.equicodi)
+      inner join en_estado es on es.estadocodi = en.estadocodi)
+      where ((en.emprcodi in ({0}) or '{0}' = '-1' ) and  (eq.equicodi in ({1}) or '{1}' = '-1')) and (en.estadocodi in ({2}) or '{2}' = '-1')
+      and ((ensayofecha >=  TO_DATE('{3}','YYYY-MM-DD')  and ensayofecha &lt;= TO_DATE('{4}','YYYY-MM-DD'))
+      )
+
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetMaxIdEnMaster</key>
+    <query>
+      select nvl(max(codiingreso), 0) + 1 from en_ensayomaster
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>SaveEnsayoMaster</key>
+    <query>
+      insert into en_ensayomaster(
+      codiingreso,
+      ensayocodi,
+      ensayolastdate,
+      ensayolastuser
+      )
+      values(
+      {0},
+      {1},
+      to_date('{2}','YYYY-MM-DD HH24:MI:SS'),
+      '{3}'
+      )
+    </query>
+  </Sql>
+
+</Sqls>

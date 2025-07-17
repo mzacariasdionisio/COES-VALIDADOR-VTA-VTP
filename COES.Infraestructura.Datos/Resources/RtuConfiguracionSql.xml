@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(rtuconcodi), 0) + 1 from rtu_configuracion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into rtu_configuracion(
+      rtuconcodi,
+      rtuconanio,
+      rtuconmes,
+      rtuconusucreacion,
+      rtuconfeccreacion,
+      rtuconfecmodificacion,
+      rtuconusumodificacion
+      )
+      values(
+      :rtuconcodi,
+      :rtuconanio,
+      :rtuconmes,
+      :rtuconusucreacion,
+      :rtuconfeccreacion,
+      :rtuconfecmodificacion,
+      :rtuconusumodificacion
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update rtu_configuracion
+      set
+      rtuconanio = :rtuconanio,
+      rtuconmes = :rtuconmes,
+      rtuconusucreacion = :rtuconusucreacion,
+      rtuconfeccreacion = :rtuconfeccreacion,
+      rtuconfecmodificacion = :rtuconfecmodificacion,
+      rtuconusumodificacion = :rtuconusumodificacion
+      where
+      rtuconcodi = :rtuconcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>		
+		declare
+		p_idconfiguracion number := :rtuconcodi;
+		begin
+
+		delete from rtu_configuracion_persona
+		where rtugrucodi in (select grupo.rtugrucodi from rtu_configuracion_grupo grupo where grupo.rtuconcodi = p_idconfiguracion );
+
+		delete from rtu_configuracion_grupo where rtuconcodi = p_idconfiguracion;
+
+		end;
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select *
+      from
+      rtu_configuracion
+      where
+      rtuconcodi = :rtuconcodi
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>GetByAnioMes</key>
+		<query>
+			select *
+			from
+			rtu_configuracion
+			where
+			rtuconanio = {0} and rtuconmes = {1}
+		</query>
+	</Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select *
+      from
+      rtu_configuracion
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select *
+      from
+      rtu_configuracion
+    </query>
+  </Sql>
+
+	<Sql>
+		<key>ObtenerConfiguracion</key>
+		<query>
+			select
+			per.percodi,
+			person.pernomb || ' ' || person.perapellido as pernomb,
+			per.rtuperorden as perorden,
+			grupo.rtugrucodi as grupocodi,
+			grupo.rtugrutipo as grupotipo,
+			grupo.rtugruorden as grupoorden
+			from rtu_configuracion_persona per
+			inner join si_persona person on per.percodi = person.percodi
+			inner join rtu_configuracion_grupo grupo on grupo.rtugrucodi = per.rtugrucodi
+			inner join rtu_configuracion conf on grupo.rtuconcodi = conf.rtuconcodi
+			where conf.rtuconanio = {0} and conf.rtuconmes = {1}
+		</query>
+	</Sql>
+
+	<Sql>
+		<key>ObtenerConfiguracionReciente</key>
+		<query>
+			select *
+			from rtu_configuracion
+			where
+			(rtuconanio = {0} and rtuconmes &lt; {1}) or (rtuconanio &lt; {0})
+			order by rtuconanio desc, rtuconmes desc
+		</query>
+	</Sql>
+	
+</Sqls>

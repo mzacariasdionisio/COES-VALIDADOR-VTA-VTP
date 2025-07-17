@@ -1,0 +1,600 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>UpdateEstado</key>
+    <query>
+      update vtp_codigo_retiro_generado set coregeestado=:coregeestado where coregecodi=:coregecodi
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>GenerarAprobacion</key>
+    <query>
+		DECLARE
+		username VARCHAR2(100) := '';
+		abreviatura VARCHAR2(100) := '';
+		codigoEmpresa NUMBER := '';
+		nombreEmpresa VARCHAR2(100) := '';
+		codigoCliente NUMBER :=0;
+		nombreEmprCliente VARCHAR2(100) := '';
+		barraSuministro VARCHAR2(200) := '';
+		numeracionMaximo NUMBER := 0;
+		codigoMaximo VARCHAR2(100) := '';
+		coresdccodiAux NUMBER := 0;
+		tipusucodiAux NUMBER := 0;
+		tipusunombreAux  VARCHAR2(200) := '';
+		tipconcodiAux NUMBER := 0;
+		tipconnombreAux  VARCHAR2(200) := '';
+		estadoEjecutar VARCHAR2(3) := :coregeestado;
+		coregecodAux NUMBER := :coregecodi;
+		barrcoditraAux NUMBER := :barrcoditra;
+		barrcodisumAux NUMBER := :barrcodisum;
+		coresocodiAux number := :coresocodi;
+		periCodiAux number :=:periCodi;--
+
+		coresofechainicioAux VARCHAR2(10) := '01/01/2021';
+		coresofechafinAux VARCHAR2(10) := '01/01/2022';
+		codcncodiAux NUMBER := 0;
+		existeGeneradoPeriodo NUMBER:=0;--
+		existeGeneradoPeriodoVTA NUMBER:=0;--
+		codigoVTA  VARCHAR2(30) :='';--
+		trnPcTipoPotencia number:=:trnpctipopotencia;
+		BEGIN
+
+		SELECT COESUSERNAME INTO username  FROM TRN_CODIGO_RETIRO_SOLICITUD   WHERE CORESOCODI=coresocodiAux;
+		-- INSERT INTO LOG_TRANS(keyTrans,descripcion) VALUES('--------','ini --------------');
+
+		IF estadoEjecutar='ACT'
+		THEN
+
+		IF coregecodAux=0 THEN
+		select NVL((select CORESDCODI  from VTP_CODIGO_RETIRO_SOL_DET where coresdestado='ACT' and barrcodisum=barrcodisumAux and coresocodi=coresocodiAux),0) into coresdccodiAux from dual;
+		IF coresdccodiAux=0 THEN
+		select nvl(max(coresdcodi),0)+1 into coresdccodiAux from VTP_CODIGO_RETIRO_SOL_DET;
+
+
+		-- INSERT INTO LOG_TRANS(keyTrans,descripcion) VALUES('1-VTP_CODIGO_RETIRO_SOL_DET','insert');
+
+		Insert into VTP_CODIGO_RETIRO_SOL_DET (CORESDCODI,CORESOCODI,BARRCODITRA,BARRCODISUM,CORESDREG,CORESDUSUCREACION,CORESDFECCREACION,CORESDUSUMODIFICACION,CORESDFECMODIFICACION,CORESDESTADO)
+		values (coresdccodiAux,coresocodiAux,barrcoditraAux,barrcodisumAux,0,username,sysdate,null,null,'ACT');
+		END IF;
+		select NVL(MAX(COREGECODI),0)+1 into coregecodAux from VTP_CODIGO_RETIRO_GENERADO;
+
+		-- INSERT INTO LOG_TRANS(keyTrans,descripcion) VALUES('2-VTP_CODIGO_RETIRO_GENERADO','insert');
+		Insert into VTP_CODIGO_RETIRO_GENERADO (COREGECODI,CORESDCODI,COREGEESTADO,COREGEUSUCREACION,COREGEFECCREACION,COREGEUSUMODIFICACION,COREGEFECMODIFICACION,COREGECODVTP)
+		values (coregecodAux,coresdccodiAux,'ACT',username,sysdate,null,null,null);
+		update VTP_CODIGO_RETIRO_SOL_DET SET coresdreg=coresdreg+1 where coresdcodi=coresdccodiAux ;
+		END IF;
+
+		select
+		e.emprabrevcodi
+		,e.emprcodi
+		,emprnomb
+		into
+		abreviatura
+		,codigoEmpresa
+		,nombreEmpresa
+		from si_empresa e
+		left join trn_infoadicional_det ia on e.emprcodi = ia.emprcodi and ia.infadiestado = 'I'
+		where e.emprcodi=:genemprcodi or ia.infadicodi=:genemprcodi;
+
+		select
+		cliemprcodi
+		,emprnomb
+		,tipusu.tipusucodi
+		,tipusu.tipusunombre
+		,tipcnt.tipconcodi
+		,tipcnt.tipconnombre
+		,NVL(to_char(tcodrt.coresofechainicio, 'DD/MM/YYYY'), '01/01/2021')
+		,NVL(to_char(tcodrt.coresofechafin, 'DD/MM/YYYY'), '01/01/2022')
+		into
+		codigoCliente
+		,nombreEmprCliente
+		,tipusucodiAux
+		,tipusunombreAux
+		,tipconcodiAux
+		,tipconnombreAux
+		,coresofechainicioAux
+		,coresofechafinAux
+		from TRN_CODIGO_RETIRO_SOLICITUD tcodrt
+		inner join vw_si_empresa                     sempr
+		on tcodrt.cliemprcodi=sempr.emprcodi
+		inner join trn_tipo_usuario tipusu
+		on tcodrt.tipusucodi = tipusu.tipusucodi
+		inner join trn_tipo_contrato tipcnt
+		on tcodrt.tipconcodi= tipcnt.tipconcodi
+		where tcodrt.coresocodi=coresocodiAux;
+
+		select barrnombre
+		into
+		barraSuministro
+		from  TRN_BARRA
+		where barrcodi=barrcodisumAux;
+
+		/*
+		select  (TO_NUMBER(SUBSTR(nvl(max(vgn.coregecodvtp),'P0000'),2,4))+1)
+		into numeracionMaximo
+		from vtp_codigo_retiro_generado vgn
+		inner join vtp_codigo_retiro_sol_det  vtr
+		on vgn.coresdcodi=vtr.coresdcodi
+		inner join trn_codigo_retiro_solicitud  trs
+		on vtr.coresocodi=trs.coresocodi
+		where trs.genemprcodi=:genemprcodi
+		and   vtr.coresdestado='ACT';
+		*/
+		select  (TO_NUMBER(SUBSTR(nvl(max(vgn.codcncodivtp),'P0000'),2,4))+1)
+		into numeracionMaximo
+		from vtp_codigo_consolidado vgn
+		where vgn.emprcodi=:genemprcodi;
+		codigoMaximo :='P'||SUBSTR('0000'||TO_CHAR(numeracionMaximo),-4,4)||abreviatura;
+		ELSE
+		codigoMaximo:=null;
+		END IF;
+
+		update vtp_codigo_retiro_generado set coregeestado=estadoEjecutar,coregecodvtp=codigomaximo where coregecodi=coregecodAux;
+
+		----------------------------------------------------------------------------------------
+		-- Inicio para carga periodo
+		-----------------------------------------------------------------------------------------
+		IF estadoEjecutar='ACT'
+		THEN
+		-- Obtener Periodo
+
+
+
+		select nvl(max(codcncodi),0)+1 into codcncodiAux from VTP_CODIGO_CONSOLIDADO;
+
+		-- INSERT INTO LOG_TRANS(keyTrans,descripcion) VALUES('3-VTP_CODIGO_CONSOLIDADO','insert');
+		Insert into VTP_CODIGO_CONSOLIDADO (CODCNCODI,EMPRCODI,EMPRESA,CLICODI,CLIENTE,BARRCODI,BARRA,TIPUSUCODI,TIPUSUNOMBRE,TIPCONCODI,TIPCONNOMBRE,CODCNCODIVTP,CODCNPOTEGRE,CODCNFECINICIO,CODCNFECFIN)
+		values (codcncodiAux,:genemprcodi,nombreEmpresa,codigoCliente,nombreEmprCliente,barrcodisumAux,barraSuministro,tipusucodiAux,tipusunombreAux,tipconcodiAux,tipconnombreAux,codigomaximo,null,TO_DATE(coresofechainicioAux,'DD/MM/YYYY'),TO_DATE(coresofechafinAux,'DD/MM/YYYY'));
+
+		-- VTP
+		SELECT (
+		SELECT CODCNPECODI
+		FROM VTP_CODIGO_CONSOLIDADO_PERIODO WHERE coregecodi=coregecodAux AND PERIDCCODI=periCodiAux
+		) INTO existeGeneradoPeriodo
+		FROM DUAL;
+
+		IF existeGeneradoPeriodo IS NULL
+		THEN
+
+		-- INSERT INTO LOG_TRANS(keyTrans,descripcion) VALUES('4-VTP_CODIGO_CONSOLIDADO','insert');
+		INSERT INTO VTP_CODIGO_CONSOLIDADO_PERIODO(PERIDCCODI,EMPRESA,CODCNCODIVTP,COREGECODI,codcnpefecregi,CODCNPEUSUARIOREGI,codcnpeestado,emprcodi)
+		values(periCodiAux,nombreEmpresa,codigomaximo,coregecodAux,SYSDATE,username,'ACT',codigoEmpresa);
+		ELSE
+		UPDATE VTP_CODIGO_CONSOLIDADO_PERIODO  SET  CODCNCODIVTP=codigomaximo WHERE CODCNPECODI=existeGeneradoPeriodo;
+		END IF;
+		--- fin VTP
+
+		---- VTA
+
+		SELECT CORESOCODIGO INTO CODIGOVTA  FROM TRN_CODIGO_RETIRO_SOLICITUD   WHERE CORESOCODI=coresocodiAux;
+		SELECT ( SELECT CODCNPECODI FROM TRN_CODIGO_CONSOLIDADO_PERIODO WHERE CORESOCODI=coresocodiAux AND PERIDCCODI=periCodiAux) INTO existeGeneradoPeriodoVTA FROM DUAL;
+		IF(existeGeneradoPeriodoVTA IS NULL)
+		THEN
+		-- INSERT INTO LOG_TRANS(keyTrans,descripcion) VALUES('5-TRN_CODIGO_CONSOLIDADO_PERIODO','insert');
+
+		INSERT INTO TRN_CODIGO_CONSOLIDADO_PERIODO(PERIDCCODI,CORESOCODI,CODCNCODIVTA,codcnpefecregi,CODCNPEUSUARIOREGI,codcnpeestado,emprcodi, trnpctipopotencia)
+		values(periCodiAux,coresocodiAux,CODIGOVTA,SYSDATE,username,'ACT',codigoEmpresa, trnPcTipoPotencia);
+		UPDATE TRN_CODIGO_RETIRO_SOLICITUD SET TRNPCTIPOPOTENCIA=trnPcTipoPotencia where CORESOCODI=coresocodiAux;
+		ELSE
+		UPDATE TRN_CODIGO_CONSOLIDADO_PERIODO SET CODCNCODIVTA= CODIGOVTA, TRNPCTIPOPOTENCIA=trnPcTipoPotencia WHERE CODCNPECODI=existeGeneradoPeriodoVTA;
+		UPDATE TRN_CODIGO_RETIRO_SOLICITUD SET TRNPCTIPOPOTENCIA=trnPcTipoPotencia where CORESOCODI=coresocodiAux;
+		END IF;
+		-----
+
+
+
+		----------------------------------------------------------------------------------------
+		-- Si hay en periodos abiertos superiores VTP
+		-----------------------------------------------------------------------------------------
+		-- INSERT INTO LOG_TRANS(keyTrans,descripcion) VALUES('6-VTP_CODIGO_CONSOLIDADO_PERIODO','insert');
+
+		INSERT INTO VTP_CODIGO_CONSOLIDADO_PERIODO(PERIDCCODI,EMPRESA,CODCNCODIVTP,COREGECODI,codcnpefecregi,CODCNPEUSUARIOREGI,codcnpeestado,emprcodi)
+
+		with t as
+		(
+		SELECT DISTINCT PERIDCCODI
+		FROM VTP_CODIGO_CONSOLIDADO_PERIODO
+		WHERE COREGECODI=coregecodAux
+		AND PERIDCCODI>periCodiAux
+		)
+		SELECT DC.PERIDCCODI,nombreEmpresa,codigomaximo,coregecodAux,SYSDATE,'APROBACION_VTP','ACT',codigoEmpresa
+		FROM TRN_PERIODO_DECLARACION DC
+		LEFT JOIN T
+		ON DC.PERIDCCODI=T.PERIDCCODI
+		WHERE DC.PERIDCCODI>periCodiAux
+		AND PERIDCESTADO='ABI'
+		and NVL(to_char(TO_DATE(coresofechainicioAux,'DD/MM/YYYY'), 'YYYYMM'), '000000') &lt;= PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2)
+      and NVL(to_char(TO_DATE(coresofechafinAux,'DD/MM/YYYY'), 'YYYYMM'), '999999') &gt;= PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2)
+      AND T.PERIDCCODI IS NULL;
+
+      END IF;
+
+
+      SELECT coregecodAux INTO :coregecodiOut FROM DUAL;
+
+      END;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DesactivarSolicitudPeriodoActual</key>
+    <query>
+      DECLARE
+      p_periodoCreacion NUMBER:=:periCodi;
+      p_coresocodiAux   Number := :coresocodi;
+      p_cantidadPeriodoAbiertos NUMBER:=0;
+      p_coresofechainicioAux VARCHAR2(10):='';
+      p_coresofechafinAux  VARCHAR2(10):='';
+      BEGIN
+
+      select
+      NVL(to_char(coresofechainicio, 'DD/MM/YYYY'), '01/01/2021')
+      ,NVL(to_char(coresofechafin, 'DD/MM/YYYY'), '01/01/2022')
+      into
+      p_coresofechainicioAux
+      ,p_coresofechafinAux
+      from TRN_CODIGO_RETIRO_SOLICITUD tcodrt
+      where tcodrt.coresocodi=p_coresocodiAux;
+
+
+      SELECT COUNT(1) INTO p_cantidadPeriodoAbiertos
+      FROM TRN_PERIODO_DECLARACION DC
+      WHERE DC.PERIDCCODI>p_periodoCreacion
+      AND PERIDCESTADO='ABI'
+      and NVL(to_char(TO_DATE(p_coresofechainicioAux,'DD/MM/YYYY'), 'YYYYMM'), '999999') &gt;= PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2)
+      and NVL(to_char(TO_DATE(p_coresofechainicioAux,'DD/MM/YYYY'), 'YYYYMM'), '000000') &lt;=PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2)
+      and NVL(to_char(TO_DATE(p_coresofechafinAux,'DD/MM/YYYY'), 'YYYYMM'), '999999') &gt;= PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2);
+ 
+
+      IF(p_cantidadPeriodoAbiertos>0)
+      THEN 
+      UPDATE TRN_CODIGO_CONSOLIDADO_PERIODO SET CODCNPEESTADO = 'INA' WHERE CORESOCODI=p_coresocodiAux and PERIDCCODI=p_periodoCreacion;
+      merge into VTP_CODIGO_CONSOLIDADO_PERIODO t1
+      using
+      (
+      SELECT CGN.COREGECODI
+      FROM VTP_CODIGO_RETIRO_GENERADO CGN
+      INNER JOIN VTP_CODIGO_RETIRO_SOL_DET SLC
+      ON CGN.CORESDCODI=SLC.CORESDCODI
+      WHERE SLC.CORESOCODI=p_coresocodiAux
+      )t2 on(t1.COREGECODI = t2.COREGECODI
+      AND T1.PERIDCCODI=p_periodoCreacion)
+      when matched then update set
+      t1.CODCNPEESTADO = 'INA';
+
+      END IF;
+
+      END;
+    </query>
+  </Sql>
+  <Sql>
+    <key>GenerarPotenciasPeriodosAbiertos</key>
+    <query>
+      ----------------------------------------------------------------------------------------
+      -- Genera potencias
+      -----------------------------------------------------------------------------------------
+
+      DECLARE
+
+      idPotencia   number:=0;
+      coresocodiAux number := :coresocodi;
+      periCodiAux number :=:periCodi;--
+      BEGIN
+
+      SELECT NVL(MAX(TRNPCTCODI),0)+1 INTO idPotencia
+      FROM TRN_POTENCIA_CONTRATADA;
+
+      INSERT INTO TRN_POTENCIA_CONTRATADA
+      (
+      "TRNPCTCODI",
+      --"PERICODI" ,
+      PERIDCCODI,
+      "EMPRCODI" ,
+      "CORESOCODI" ,
+      "TRNPCTPTOSUMINS" ,
+      "TRNPCTTOTALMWFIJA" ,
+      "TRNPCTHPMWFIJA" ,
+      "TRNPCTHFPMWFIJA",
+      "TRNPCTTOTALMWVARIABLE",
+      "TRNPCTHPMWFIJAVARIABLE" ,
+      "TRNPCTHFPMWFIJAVARIABLE",
+      "TRNPCTCOMEOBS" ,
+      "TRNPCTUSERNAMEINS" ,
+      "TRNPCTFECINS" ,
+      "COREGECODI"  ,
+      "TRNPCAGRP"  ,
+      "TRNPCNUMORD"  ,
+      "TRNPCCODICAS"  ,
+      "TRNPCESTADO"  ,
+      "TRNPCEXCEL"  ,
+      "TRNPCENVCODI" )
+      WITH T AS(
+      SELECT NVL(PERIDCCODI,PERICODI) PERICODI
+      FROM TRN_POTENCIA_CONTRATADA
+      WHERE   CORESOCODI=coresocodiAux
+      AND NVL(PERIDCCODI,PERICODI)>periCodiAux
+      AND TRNPCESTADO='ACT'
+      )
+      SELECT TRNPCTCODI,
+      PERIDCCODI ,
+      "EMPRCODI" ,
+      CORESOCODI ,
+      "TRNPCTPTOSUMINS" ,
+      "TRNPCTTOTALMWFIJA" ,
+      "TRNPCTHPMWFIJA" ,
+      "TRNPCTHFPMWFIJA",
+      "TRNPCTTOTALMWVARIABLE",
+      "TRNPCTHPMWFIJAVARIABLE" ,
+      "TRNPCTHFPMWFIJAVARIABLE",
+      "TRNPCTCOMEOBS" ,
+      'GENERADO_MANUAL' ,
+      "TRNPCTFECINS" ,
+      "COREGECODI"  ,
+      "TRNPCAGRP"  ,
+      "TRNPCNUMORD"  ,
+      "TRNPCCODICAS"  ,
+      "TRNPCESTADO"  ,
+      "TRNPCEXCEL"  ,
+      "TRNPCENVCODI"
+      FROM(
+      SELECT
+      idPotencia + (row_number() over (order by  TRNPCTCODI )) TRNPCTCODI,
+      DCL.PERIDCCODI ,
+      "EMPRCODI" ,
+      PTC.CORESOCODI ,
+      "TRNPCTPTOSUMINS" ,
+      "TRNPCTTOTALMWFIJA" ,
+      "TRNPCTHPMWFIJA" ,
+      "TRNPCTHFPMWFIJA",
+      "TRNPCTTOTALMWVARIABLE",
+      "TRNPCTHPMWFIJAVARIABLE" ,
+      "TRNPCTHFPMWFIJAVARIABLE",
+      "TRNPCTCOMEOBS" ,
+      'GENERADO_MANUAL' ,
+      "TRNPCTFECINS" ,
+      "COREGECODI"  ,
+      "TRNPCAGRP"  ,
+      "TRNPCNUMORD"  ,
+      "TRNPCCODICAS"  ,
+      "TRNPCESTADO"  ,
+      "TRNPCEXCEL"  ,
+      "TRNPCENVCODI"
+      FROM TRN_PERIODO_DECLARACION DCL,(SELECT * FROM TRN_POTENCIA_CONTRATADA
+      WHERE   CORESOCODI=coresocodiAux
+      AND NVL(PERIDCCODI,PERICODI)=periCodiAux
+      AND TRNPCESTADO='ACT'
+      ) PTC
+
+      WHERE DCL.PERIDCCODI>periCodiAux
+      AND TO_NUMBER(to_char(:CodiRetiFechaInicio, 'YYYYMM')) &lt;=TO_NUMBER( PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2))
+      AND TO_NUMBER(to_char(:CodiRetiFechaFin, 'YYYYMM')) &gt;= TO_NUMBER(PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2))
+
+      ) TBL_RESULT
+      LEFT JOIN T
+      ON  TBL_RESULT.PERIDCCODI=T.PERICODI
+      WHERE T.PERICODI IS NULL
+      ORDER BY  TBL_RESULT.PERIDCCODI;
+
+      END;
+
+
+
+    </query>
+  </Sql>
+  <Sql>
+    <key>GenerarVTAPeriodosAbiertos</key>
+    <query>
+		----------------------------------------------------------------------------------------
+		-- Si hay en periodos abiertos superiores para VTA
+		-----------------------------------------------------------------------------------------
+		INSERT INTO TRN_CODIGO_CONSOLIDADO_PERIODO(PERIDCCODI,CORESOCODI,CODCNCODIVTA,codcnpefecregi,CODCNPEUSUARIOREGI,codcnpeestado,emprcodi, trnpctipopotencia)
+		with t as
+		(
+		SELECT DISTINCT PERIDCCODI
+		FROM TRN_CODIGO_CONSOLIDADO_PERIODO
+		WHERE CORESOCODI=:coresoCodi
+		AND PERIDCCODI>:periCodi
+		)
+		SELECT DC.PERIDCCODI,:coresoCodi,:coresoCodigo,SYSDATE,'APROBACION_VTA','ACT',:GENEMPRCODI, :Trnpctipopotencia
+		FROM TRN_PERIODO_DECLARACION DC
+		LEFT JOIN T
+		ON DC.PERIDCCODI=T.PERIDCCODI
+		WHERE DC.PERIDCCODI>:periCodi
+		AND PERIDCESTADO='ABI'
+		AND TO_NUMBER(to_char(:CodiRetiFechaInicio, 'YYYYMM')) &lt;=TO_NUMBER( PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2))
+      AND TO_NUMBER(to_char(:CodiRetiFechaFin, 'YYYYMM')) &gt;= TO_NUMBER(PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2))
+      AND T.PERIDCCODI IS NULL
+    </query>
+  </Sql>
+  <Sql>
+    <key>GenerarVTPPeriodosAbiertos</key>
+    <query>
+      ----------------------------------------------------------------------------------------
+      -- Si hay en periodos abiertos superiores para VTP existentes
+      -----------------------------------------------------------------------------------------
+      DECLARE
+      periCodiAux number :=:periCodi;--
+      BEGIN
+      DECLARE
+      c_solicitud VTP_CODIGO_CONSOLIDADO_PERIODO%rowtype;
+      CURSOR c1 IS
+      -- 5 VTA QUE NO EXISTEN
+      SELECT DISTINCT CLPER.*
+      FROM VTP_CODIGO_CONSOLIDADO_PERIODO  CLPER
+      INNER JOIN (
+      SELECT RTGN.COREGECODI FROM TRN_CODIGO_RETIRO_SOLICITUD SL
+      INNER JOIN VTP_CODIGO_RETIRO_SOL_DET SDT
+      ON SL.CORESOCODI=SDT.CORESOCODI
+      INNER JOIN VTP_CODIGO_RETIRO_GENERADO RTGN
+      ON SDT.CORESDCODI=RTGN.CORESDCODI
+      WHERE SL.CORESOCODI=:coresocodi
+      ) TBL_CODIGOS
+      ON CLPER.COREGECODI=TBL_CODIGOS.COREGECODI
+      WHERE  PERIDCCODI =periCodiAux;
+      BEGIN
+      OPEN c1;
+      FETCH c1 INTO c_solicitud;
+      WHILE c1%found
+      LOOP
+
+      INSERT INTO VTP_CODIGO_CONSOLIDADO_PERIODO(PERIDCCODI,EMPRESA,CODCNCODIVTP,COREGECODI,codcnpefecregi,CODCNPEUSUARIOREGI,codcnpeestado,emprcodi)
+      with t as
+      (
+      SELECT DISTINCT PERIDCCODI
+      FROM VTP_CODIGO_CONSOLIDADO_PERIODO
+      WHERE COREGECODI=c_solicitud.COREGECODI
+      AND PERIDCCODI>periCodiAux
+      )
+      SELECT DC.PERIDCCODI,c_solicitud.EMPRESA,c_solicitud.CODCNCODIVTP,c_solicitud.COREGECODI,SYSDATE,'APROBACION_VTP','ACT',c_solicitud.EMPRCODI
+      FROM TRN_PERIODO_DECLARACION DC
+      LEFT JOIN T
+      ON DC.PERIDCCODI=T.PERIDCCODI
+      WHERE DC.PERIDCCODI>periCodiAux
+      AND PERIDCESTADO='ABI'
+      AND TO_NUMBER(to_char(:CodiRetiFechaInicio, 'YYYYMM')) &lt;=TO_NUMBER( PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2))
+      AND TO_NUMBER(to_char(:CodiRetiFechaFin, 'YYYYMM')) &gt;= TO_NUMBER(PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2))
+      AND T.PERIDCCODI IS NULL;
+
+      --*************************************************************** FIN ****************************************************
+      FETCH c1 INTO c_solicitud;
+      END LOOP;
+      CLOSE c1;
+      END;
+      END;
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GenerarVTPPeriodosAbiertos_OLD</key>
+    <query>
+      ----------------------------------------------------------------------------------------
+      -- Si hay en periodos abiertos superiores para VTP existentes
+      -----------------------------------------------------------------------------------------
+      INSERT INTO VTP_CODIGO_CONSOLIDADO_PERIODO(PERIDCCODI,EMPRESA,CODCNCODIVTP,COREGECODI,codcnpefecregi,CODCNPEUSUARIOREGI,codcnpeestado,emprcodi)
+      with t as
+      (
+
+      SELECT DISTINCT PERIDCCODI
+      ,CODCNCODIVTP
+      ,EMPRESA
+      ,EMPRCODI
+      ,CLPER.COREGECODI
+      FROM VTP_CODIGO_CONSOLIDADO_PERIODO  CLPER
+      INNER JOIN (
+      SELECT RTGN.COREGECODI FROM TRN_CODIGO_RETIRO_SOLICITUD SL
+      INNER JOIN VTP_CODIGO_RETIRO_SOL_DET SDT
+      ON SL.CORESOCODI=SDT.CORESOCODI
+      INNER JOIN VTP_CODIGO_RETIRO_GENERADO RTGN
+      ON SDT.CORESDCODI=RTGN.CORESDCODI
+      WHERE SL.CORESOCODI=:coresocodi
+      ) TBL_CODIGOS
+      ON CLPER.COREGECODI=TBL_CODIGOS.COREGECODI
+      WHERE  PERIDCCODI > :periCodi
+
+      )
+      SELECT DC.PERIDCCODI,T.EMPRESA,T.CODCNCODIVTP,T.COREGECODI,SYSDATE,'APROBACION_VTP','ACT',T.EMPRCODI
+      FROM TRN_PERIODO_DECLARACION DC
+      LEFT JOIN T
+      ON DC.PERIDCCODI=T.PERIDCCODI
+      WHERE DC.PERIDCCODI> :periCodi
+      AND PERIDCESTADO='ABI'
+      and TO_NUMBER(to_char(:CodiRetiFechaInicio, 'YYYYMM')) &lt;= TO_NUMBER( PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2))
+      and TO_NUMBER(to_char(:CodiRetiFechaFin, 'YYYYMM')) &gt;= TO_NUMBER( PERIDCANIO|| SUBSTR('0'||PERIDCMES,-2,2))
+      AND T.PERIDCCODI IS NULL
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarCodigosGeneradoVTP</key>
+    <query>
+      select vcod.coresocodi
+      ,vcodgn.coregecodi
+      ,vcod.barrcodisum
+      ,tnb.barrnombre
+      ,vcodgn.coregecodvtp
+      ,vest.ESTDDESCRIPCION
+      ,vest.ESTDABREV
+      from vtp_codigo_retiro_sol_det  vcod
+      inner join vtp_codigo_retiro_generado    vcodgn
+      on vcod.coresdcodi=vcodgn.coresdcodi
+      inner join trn_barra                     tnb
+      on  vcod.barrcodisum=tnb.barrcodi
+      inner join vtp_estado                     vest
+      on vcodgn.coregeestado=vest.ESTDABREV
+      where coresocodi in(@coresocodiArray)
+      and (vcod.barrcodisum=:barrcodisum     or :barrcodisum is null)
+      and vcod.coresdestado='ACT'
+      and vcodgn.coregeestado not in('INA')
+      order by vcodgn.coregecodi asc
+    </query>
+  </Sql>
+
+
+  <Sql>
+    <key>ListarCodigosVTPByEmpBar</key>
+    <query>
+      select  vcodgn.coregecodi
+      ,vcodgn.coregecodvtp
+      ,rsl.tipconcodi
+      ,rsl.tipusucodi
+      from vtp_codigo_retiro_sol_det  vcod
+      inner join vtp_codigo_retiro_generado    vcodgn
+      on vcod.coresdcodi=vcodgn.coresdcodi
+      inner join trn_codigo_retiro_solicitud  rsl
+      on vcod.coresocodi=rsl.coresocodi
+      where
+      vcod.barrcodisum=:barrcodisum
+      and   genemprcodi=:genemprcodi
+      and   cliemprcodi=:cliemprcodi
+      and   coresoestado in ('ACT','ASI')
+      and   vcodgn.coregeestado  in ('ACT','ASI')
+      order by vcodgn.coregecodi asc
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarCodigosGeneradosVTPExtranet</key>
+    <query>
+      select
+      vrge.COREGECODVTP,
+      siemp.EMPRNOMB,
+      crso.CLIEMPRCODI,
+      barr.BARRNOMBRE,
+      tipcon.TIPCONNOMBRE,
+      tipusu.TIPUSUNOMBRE,
+      row_number() over (order by vrge.COREGECODVTP desc) as fila,
+      0.00 as PEGRDPOTECALCULADA,
+      0.00 as PEGRDPOTECOINCIDENTE,
+      0.00 as PEGRDPOTEDECLARADA,
+      0.00 as PEGRDPEAJEUNITARIO,
+      0.00 as PEGRDFACPERDIDA,
+      '' as PEGRDCALIDAD from
+      VTP_CODIGO_RETIRO_SOL_DET vrsd
+      inner join VTP_CODIGO_RETIRO_GENERADO vrge on vrsd.CORESDCODI=vrge.CORESDCODI
+      inner join TRN_CODIGO_RETIRO_SOLICITUD crso on vrsd.CORESOCODI=crso.CORESOCODI
+      inner join SI_EMPRESA siemp on siemp.EMPRCODI=crso.CLIEMPRCODI
+      inner join TRN_BARRA barr on vrsd.BARRCODISUM=barr.BARRCODI
+      inner join TRN_TIPO_CONTRATO tipcon on crso.TIPCONCODI=tipcon.TIPCONCODI
+      inner join TRN_TIPO_USUARIO tipusu on crso.TIPUSUCODI=tipusu.TIPUSUCODI
+      where vrge.COREGEESTADO='ACT'
+    </query>
+  </Sql>
+  <Sql>
+    <key>CodigoGeneradoVTPByCodivoVTP</key>
+    <query>
+      select
+      corege.COREGECODI,
+      corege.CORESDCODI,
+      corege.COREGEESTADO,
+      corege.COREGECODVTP,
+      corege.COREGEUSUCREACION,
+      corege.COREGEFECCREACION
+      from
+      vtp_codigo_retiro_generado corege
+      where corege.coregecodvtp=:coregecodvtp
+    </query>
+  </Sql>
+</Sqls>

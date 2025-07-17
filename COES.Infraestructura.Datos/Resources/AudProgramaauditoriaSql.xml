@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(progacodi), 0) + 1 from aud_programaauditoria
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into aud_programaauditoria(
+      progacodi,
+      audicodi,
+      tabcdcoditipoactividad,
+      progafecha,
+      progahorainicio,
+      progahorafin,
+      progaactivo,
+      progahistorico,
+      progausucreacion,
+      progafeccreacion,
+      progausumodificacion,
+      progafecmodificacion,
+      Tabcdcodiestadoactividad
+      )
+      values(
+      :progacodi,
+      :audicodi,
+      :tabcdcoditipoactividad,
+      :progafecha,
+      :progahorainicio,
+      :progahorafin,
+      :progaactivo,
+      :progahistorico,
+      :progausucreacion,
+      :progafeccreacion,
+      :progausumodificacion,
+      :progafecmodificacion,
+      :Tabcdcodiestadoactividad
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update aud_programaauditoria
+      set
+      audicodi = :audicodi,
+      tabcdcoditipoactividad = :tabcdcoditipoactividad,
+      progafecha = :progafecha,
+      progahorainicio = :progahorainicio,
+      progahorafin = :progahorafin,
+      progahistorico = :progahistorico,
+      progausumodificacion = :progausumodificacion,
+      progafecmodificacion = :progafecmodificacion,
+      Tabcdcodiestadoactividad = :Tabcdcodiestadoactividad
+      where
+      progacodi = :progacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      update aud_programaauditoria
+      set progaactivo = '0', progahistorico = '1',
+      progausumodificacion = :progausumodificacion,
+      progafecmodificacion = :progafecmodificacion
+      where
+      progacodi = :progacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      pa.progacodi,
+      pa.audicodi,
+      pa.Tabcdcodiestadoactividad,
+      pa.tabcdcoditipoactividad,
+      pa.progafecha,
+      pa.progahorainicio,
+      pa.progahorafin,
+      pa.progaactivo,
+      pa.progahistorico,
+      pa.progausucreacion,
+      pa.progafeccreacion,
+      pa.progausumodificacion,
+      pa.progafecmodificacion,
+      e.tabcdcoditipoelemento tipoelementocodi,
+      p.areacodi
+      from
+      aud_programaauditoria pa
+      inner join AUD_TABLACODIGO_DETALLE d on pa.tabcdcoditipoactividad = d.TABCDCODI
+      left join AUD_PROGAUDI_ELEMENTO pe on pa.progacodi = pe.progacodi and pe.PROGAEACTIVO = '1'
+      left join AUD_ELEMENTO e on pe.elemcodi = e.elemcodi and e.ELEMACTIVO = '1'
+      left join AUD_PROCESO p on e.proccodi = p.proccodi and p.PROCACTIVO = '1'
+      left join AUD_TABLACODIGO_DETALLE te on e.TABCDCODITIPOELEMENTO = te.TABCDCODI and te.TABCDACTIVO = '1'
+      where
+      pa.progacodi = :progacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      a.AUDINOMBRE,
+      a.AUDICODIGO,
+      pa.progacodi,
+      pa.audicodi,
+      pa.tabcdcoditipoactividad,
+      pa.progafecha,
+      pa.progahorainicio,
+      pa.progahorafin,
+      pa.progaactivo,
+      pa.progahistorico,
+      pa.progausucreacion,
+      pa.progafeccreacion,
+      pa.progausumodificacion,
+      pa.progafecmodificacion,
+      d.tabcddescripcion tipoactividad,
+      te.tabcddescripcion tipoelemento,
+      e.tabcdcoditipoelemento tipoelementocodi,
+      e.elemdescripcion,
+      ( SELECT
+      LISTAGG(p.PERNOMB || ' ' ||  p.PERAPELLIDO,' / ') WITHIN GROUP (ORDER BY p.PERNOMB || ' ' ||  p.PERAPELLIDO)
+      FROM  sic.AUD_PROGAUDI_INVOLUCRADO pi
+      inner join sic.si_persona p on pi.PERCODIINVOLUCRADO = p.percodi
+      where pi.PROGACODI = pa.PROGACODI and pi.tabcdcoditipoinvolucrado= 36 and pi.progaiactivo = '1'
+      ) Equipo,
+      ( SELECT
+      LISTAGG(p.PERNOMB || ' ' ||  p.PERAPELLIDO,' / ') WITHIN GROUP (ORDER BY p.PERNOMB || ' ' ||  p.PERAPELLIDO)
+      FROM  sic.AUD_PROGAUDI_INVOLUCRADO pi
+      inner join sic.si_persona p on pi.PERCODIINVOLUCRADO = p.percodi
+      where pi.PROGACODI = pa.PROGACODI and pi.tabcdcoditipoinvolucrado= 37 and pi.progaiactivo = '1'
+      ) Responsables,
+      (row_number() over (order by pa.progacodi desc)) as r
+      from
+      aud_programaauditoria pa
+      inner join AUD_AUDITORIA a on pa.AUDICODI = a.AUDICODI
+      inner join AUD_TABLACODIGO_DETALLE d on pa.tabcdcoditipoactividad = d.TABCDCODI
+      inner join AUD_PROGAUDI_ELEMENTO pe on pa.progacodi = pe.progacodi and pe.progaeactivo = '1'
+      inner join AUD_ELEMENTO e on pe.elemcodi = e.elemcodi     
+      inner join AUD_TABLACODIGO_DETALLE te on e.TABCDCODITIPOELEMENTO = te.TABCDCODI
+      left join aud_auditoriaplanificada ap on ap.audpcodi = a.audpcodi
+      left join aud_planauditoria pau on pau.plancodi = ap.plancodi
+      where pa.audicodi = :audicodi and (pa.progaactivo = '{0}' or '{0}' = '-1')
+      and (pau.plananovigencia = '{1}' or '{1}' = '')
+      and (a.AUDICODIGO = '{2}' or '{2}' = '')
+      
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      a.AUDINOMBRE,
+      a.AUDICODIGO,
+      pa.progacodi,
+      pa.audicodi,
+      pa.tabcdcoditipoactividad,
+      pa.progafecha,
+      pa.progahorainicio,
+      pa.progahorafin,
+      pa.progaactivo,
+      pa.progahistorico,
+      pa.progausucreacion,
+      pa.progafeccreacion,
+      pa.progausumodificacion,
+      pa.progafecmodificacion,
+      d.tabcddescripcion tipoactividad,
+      pa.Tabcdcodiestadoactividad,
+      ( SELECT
+      LISTAGG(te.tabcddescripcion,'|') WITHIN GROUP (ORDER BY te.tabcddescripcion)
+      FROM  sic.AUD_PROGAUDI_ELEMENTO pe
+      left join sic.AUD_ELEMENTO e on pe.elemcodi = e.elemcodi
+      left join sic.AUD_TABLACODIGO_DETALLE te on e.TABCDCODITIPOELEMENTO = te.TABCDCODI
+      where pe.progacodi = pa.progacodi and pe.progaeactivo = '1'
+      ) tipoelemento,
+      ( SELECT
+      LISTAGG(e.elemdescripcion,'|') WITHIN GROUP (ORDER BY e.elemdescripcion)
+      FROM  sic.AUD_PROGAUDI_ELEMENTO pe
+      left join sic.AUD_ELEMENTO e on pe.elemcodi = e.elemcodi
+      left join sic.AUD_TABLACODIGO_DETALLE te on e.TABCDCODITIPOELEMENTO = te.TABCDCODI
+      where pe.progacodi = pa.progacodi and pe.progaeactivo = '1'
+      ) elemdescripcion,
+      ( SELECT
+      LISTAGG(e.elemcodi,'|') WITHIN GROUP (ORDER BY e.elemcodi)
+      FROM  sic.AUD_PROGAUDI_ELEMENTO pe
+      left join sic.AUD_ELEMENTO e on pe.elemcodi = e.elemcodi
+      left join sic.AUD_TABLACODIGO_DETALLE te on e.TABCDCODITIPOELEMENTO = te.TABCDCODI
+      where pe.progacodi = pa.progacodi and pe.progaeactivo = '1'
+      ) elemcodi,
+      --pe.Progaecodi,
+      ( SELECT
+      LISTAGG(p.PERNOMB || ' ' ||  p.PERAPELLIDO,' / ') WITHIN GROUP (ORDER BY p.PERNOMB || ' ' ||  p.PERAPELLIDO)
+      FROM  sic.AUD_PROGAUDI_INVOLUCRADO pi
+      inner join sic.si_persona p on pi.PERCODIINVOLUCRADO = p.percodi
+      where pi.PROGACODI = pa.PROGACODI and pi.tabcdcoditipoinvolucrado= 36 and pi.progaiactivo = '1'
+      ) Equipo,
+      ( SELECT
+      LISTAGG(p.PERNOMB || ' ' ||  p.PERAPELLIDO,' / ') WITHIN GROUP (ORDER BY p.PERNOMB || ' ' ||  p.PERAPELLIDO)
+      FROM  sic.AUD_PROGAUDI_INVOLUCRADO pi
+      inner join sic.si_persona p on pi.PERCODIINVOLUCRADO = p.percodi
+      where pi.PROGACODI = pa.PROGACODI and pi.tabcdcoditipoinvolucrado= 37 and pi.progaiactivo = '1'
+      ) Responsables,
+      d.TABCDORDEN,
+      (row_number() over (order by d.TABCDORDEN)) as r
+      from
+      sic.aud_programaauditoria pa
+      inner join sic.AUD_AUDITORIA a on pa.AUDICODI = a.AUDICODI
+      inner join sic.AUD_TABLACODIGO_DETALLE d on pa.tabcdcoditipoactividad = d.TABCDCODI
+      where pa.audicodi = :audicodi and pa.progaactivo = '1'
+      order by TABCDORDEN
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteriaEjecucion</key>
+    <query>
+      select * from (
+      select
+      a.AUDINOMBRE,
+      a.AUDICODIGO,
+      pa.progacodi,
+      pa.audicodi,
+      pa.tabcdcoditipoactividad,
+      pa.Tabcdcodiestadoactividad,
+      pa.progafecha,
+      pa.progahorainicio,
+      pa.progahorafin,
+      pa.progaactivo,
+      pa.progahistorico,
+      pa.progausucreacion,
+      pa.progafeccreacion,
+      pa.progausumodificacion,
+      pa.progafecmodificacion,
+      d.tabcddescripcion tipoactividad,
+      te.tabcddescripcion tipoelemento,
+      e.tabcdcoditipoelemento tipoelementocodi,
+      e.elemdescripcion,
+      e.elemcodi,
+      e.elemcodigo,
+      pe.Progaecodi,
+      nvl(
+      ( SELECT
+      LISTAGG(p.PERNOMB || ' ' ||  p.PERAPELLIDO,' / ') WITHIN GROUP (ORDER BY p.PERNOMB || ' ' ||  p.PERAPELLIDO)
+      FROM  sic.AUD_PROGAUDI_INVOLUCRADO pi
+      inner join sic.si_persona p on pi.PERCODIINVOLUCRADO = p.percodi
+      where pi.PROGACODI = pa.PROGACODI and pi.tabcdcoditipoinvolucrado= 36 and pi.progaiactivo = '1'
+      ), ' ') Equipo,
+      ( SELECT
+      LISTAGG(p.PERNOMB || ' ' ||  p.PERAPELLIDO,' / ') WITHIN GROUP (ORDER BY p.PERNOMB || ' ' ||  p.PERAPELLIDO)
+      FROM  sic.AUD_PROGAUDI_INVOLUCRADO pi
+      inner join sic.si_persona p on pi.PERCODIINVOLUCRADO = p.percodi
+      where pi.PROGACODI = pa.PROGACODI and pi.tabcdcoditipoinvolucrado= 37 and pi.progaiactivo = '1'
+      ) Responsables,
+      d.TABCDORDEN,
+      (row_number() over (order by d.TABCDORDEN)) as r
+      from
+      aud_programaauditoria pa
+      inner join AUD_AUDITORIA a on pa.AUDICODI = a.AUDICODI
+      inner join AUD_TABLACODIGO_DETALLE d on pa.tabcdcoditipoactividad = d.TABCDCODI
+      left join AUD_PROGAUDI_ELEMENTO pe on pa.progacodi = pe.progacodi and pe.progaeactivo = '1'
+      left join AUD_ELEMENTO e on pe.elemcodi = e.elemcodi
+      left join AUD_TABLACODIGO_DETALLE te on e.TABCDCODITIPOELEMENTO = te.TABCDCODI
+      where pa.audicodi = {0} and (pa.TABCDCODIESTADOACTIVIDAD = {1} or {1} = 0) and pa.progaactivo = '1'
+      ) where (nvl(Equipo, '') like '%{2}%' or '' = '')
+      order by TABCDORDEN
+    </query>
+  </Sql>
+</Sqls>

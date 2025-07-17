@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(scaufacodi), 0) + 1 from eve_subcausa_familia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+       insert into eve_subcausa_familia(
+           scaufacodi,
+           subcausacodi,
+           famcodi,
+           scaufaeliminado,
+           scaufausucreacion,
+           scaufafeccreacion,
+           scaufausumodificacion,
+           scaufafecmodificacion
+       )
+       values(
+           :scaufacodi,
+           :subcausacodi,
+           :famcodi,
+           :scaufaeliminado,
+           :scaufausucreacion,
+           :scaufafeccreacion,
+           :scaufausumodificacion,
+           :scaufafecmodificacion
+       )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+       update eve_subcausa_familia
+       set
+           subcausacodi = :subcausacodi,
+           famcodi = :famcodi,
+           scaufaeliminado = :scaufaeliminado,
+           scaufausucreacion = :scaufausucreacion,
+           scaufafeccreacion = :scaufafeccreacion,
+           scaufausumodificacion = :scaufausumodificacion,
+           scaufafecmodificacion = :scaufafecmodificacion
+       where
+           scaufacodi = :scaufacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+       delete from eve_subcausa_familia
+       where
+           scaufacodi = :scaufacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+       select
+           scaufacodi,
+           subcausacodi,
+           famcodi,
+           scaufaeliminado,
+           scaufausucreacion,
+           scaufafeccreacion,
+           scaufausumodificacion,
+           scaufafecmodificacion
+       from
+           eve_subcausa_familia
+       where
+           scaufacodi = :scaufacodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+       select
+           scaufacodi,
+           subcausacodi,
+           famcodi,
+           scaufaeliminado,
+           scaufausucreacion,
+           scaufafeccreacion,
+           scaufausumodificacion,
+           scaufafecmodificacion
+       from
+           eve_subcausa_familia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListFamiliaPorSubcausa</key>
+    <query>
+      select
+        scaufacodi,
+        subcausacodi,
+        famcodi,
+        scaufaeliminado,
+        scaufausucreacion,
+        scaufafeccreacion,
+        scaufausumodificacion,
+        scaufafecmodificacion
+      from
+        eve_subcausa_familia
+      where 
+        subcausacodi ={0} and 
+        scaufaeliminado='N'
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+       select
+           scaufacodi,
+           subcausacodi,
+           famcodi,
+           scaufaeliminado,
+           scaufausucreacion,
+           scaufafeccreacion,
+           scaufausumodificacion,
+           scaufafecmodificacion
+       from
+           eve_subcausa_familia
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ObtenerListado</key>
+    <query>
+      select
+      *
+      from (
+      select a.scaufacodi,b.subcausacodi,b.subcausadesc,c.famcodi,c.famabrev,c.famnomb,a.scaufaeliminado,
+        a.scaufausucreacion,a.scaufafeccreacion,a.scaufausumodificacion,a.scaufafecmodificacion, 
+        (row_number() over (order by b.subcausadesc,c.famnomb)) as r 
+      from eve_subcausa_familia a, eve_subcausaevento b, eq_familia c 
+      where 
+        (scaufaeliminado='{0}' or '{0}'='T') and
+        (b.subcausacodi= a.subcausacodi) and 
+        (a.subcausacodi={1} or {1} = 0) and 
+        (c.famcodi= a.famcodi) and (a.famcodi={2} or {2} = 0)
+      order by b.subcausadesc,c.famnomb
+      )
+      where (r >= ((({3}-1) * {4}) + 1) and r &lt; (({3} * {4}) + 1 )) or ({3} = -1 and {4} = -1)
+    </query>
+
+  </Sql>
+
+  <Sql>
+    <key>TotalRegistros</key>
+    <query>
+      select 
+        count(*) 
+      from 
+        eve_subcausa_familia a,eve_subcausaevento b,eq_familia c 
+      where (b.subcausacodi= a.subcausacodi) and 
+        (scaufaeliminado='{0}' or '{0}'='T') and
+        (a.subcausacodi={1} or {1} = 0) and 
+        (c.famcodi= a.famcodi) and (a.famcodi={2} or {2} = 0)
+    </query>
+  </Sql>
+</Sqls>

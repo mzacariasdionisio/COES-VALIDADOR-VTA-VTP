@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+       select nvl(max(pagegrcodi), 0) + 1 from vtp_pago_egreso
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into vtp_pago_egreso(pagegrcodi, pericodi, recpotcodi, emprcodi,
+      pagegregreso, pagegrsaldo, pagegrpagoegreso, pagegrusucreacion, pagegrfeccreacion)
+      values(:pagegrcodi, :pericodi, :recpotcodi, :emprcodi,
+      :pagegregreso, :pagegrsaldo, :pagegrpagoegreso, :pagegrusucreacion, :pagegrfeccreacion)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update vtp_pago_egreso
+      set
+      pericodi = :pericodi,
+      recpotcodi = :recpotcodi,
+      emprcodi = :emprcodi,
+      pagegregreso = :pagegregreso,
+      pagegrsaldo = :pagegrsaldo,
+      pagegrpagoegreso = :pagegrpagoegreso,
+      pagegrusucreacion = :pagegrusucreacion,
+      pagegrfeccreacion = :pagegrfeccreacion
+      where pagegrcodi = :pagegrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from vtp_pago_egreso where pagegrcodi = :pagegrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteByCriteria</key>
+    <query>
+      delete from vtp_pago_egreso where pericodi = :pericodi and recpotcodi = :recpotcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select * where from vtp_pago_egreso pagegrcodi = :pagegrcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+		select --(select emprnomb from vw_si_empresa e where e.emprcodi = pe.emprcodi) as emprnomb,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = pe.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = pe.emprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = pe.pericodi and recacodi = pe.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = pe.emprcodi) end as emprnomb,
+		pe.*
+		from vtp_pago_egreso pe where pe.pericodi = :pericodi and pe.recpotcodi = :recpotcodi
+		order by 1
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+		select --(select emprnomb from vw_si_empresa e where e.emprcodi = pe.emprcodi) as emprnomb,
+		case
+		when
+		(select count(*) from trn_infoadicional_det info where info.infadicodi = pe.emprcodi) > 0 then
+		(select info.infadinomb from trn_infoadicional_det info where info.infadicodi = pe.emprcodi and info.fechacorte &lt;= (select recafecins from trn_recalculo where pericodi = pe.pericodi and recacodi = pe.recpotcodi) order by info.fechacorte desc FETCH FIRST 1 ROWS ONLY) else (select emprnomb from vw_trn_empresa_str e where e.emprcodi = pe.emprcodi) end as emprnomb,
+		 pe.*
+		 from vtp_pago_egreso pe where pe.pericodi = :pericodi and pe.recpotcodi = :recpotcodi
+		 order by 1
+	</query>
+  </Sql>
+</Sqls>

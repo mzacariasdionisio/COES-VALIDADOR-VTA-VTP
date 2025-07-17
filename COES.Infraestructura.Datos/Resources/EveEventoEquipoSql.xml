@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(eeqcodi), 0) + 1 from eve_eventoequipo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into eve_eventoequipo(
+      eeqcodi,
+      equicodi,
+      subcausacodi,
+      eeqfechaini,
+      eeqestado,
+      eeqdescripcion,
+      eeqfechafin
+      )
+      values(
+      :eeqcodi,
+      :equicodi,
+      :subcausacodi,
+      :eeqfechaini,
+      :eeqestado,
+      :eeqdescripcion,
+      :eeqfechafin
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update eve_eventoequipo
+      set
+      subcausacodi = :subcausacodi,
+      eeqfechaini = :eeqfechaini,
+      eeqestado = :eeqestado
+      where
+      eeqcodi = :eeqcodi 
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from eve_eventoequipo
+      where
+      eeqcodi = :eeqcodi and
+      equicodi = :equicodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>DeleteEquipo</key>
+    <query>
+      delete from eve_evenequipo
+      where
+      evencodi = :evencodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      eeqcodi,
+      equicodi,
+      subcausacodi,
+      eeqfechaini,
+      eeqestado,
+      eeqdescripcion,
+      eeqfecha fin
+      from
+      eve_eventoequipo
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarDetalleEquiposSEIN</key>
+    <query>
+      select
+      E.eeqcodi,
+      E.equicodi,
+      E.subcausacodi,
+      E.eeqfechaini,
+      E.eeqestado,
+      E.eeqdescripcion,
+      E.eeqfechafin,
+      emp.emprcodi,
+      emp.emprnomb,
+      eq.equinomb,
+      sub.subcausadesc,
+      fa.famcodi,
+      fa.famnomb
+      from
+      eve_eventoequipo E inner join eq_equipo Eq
+      on E.equicodi = Eq.equicodi
+      inner join eq_familia fa
+      on fa.famcodi = Eq.famcodi
+      inner join si_empresa emp
+      on emp.emprcodi = Eq.emprcodi
+      inner join eve_subcausaevento sub
+      on sub.subcausacodi = E.subcausacodi
+      where
+      emp.emprcodi in ({0}) and fa.famcodi in ({3})
+      and E.eeqfechaini >= to_date('{4}','DD-MM-YYYY') and E.eeqfechaini &lt; (to_date('{4}','DD-MM-YYYY') + INTERVAL '1' DAY)
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ListarPendientesEquiposSEIN</key>
+    <query>
+      select
+      E.eeqcodi,
+      E.equicodi,
+      E.subcausacodi,
+      E.eeqfechaini,
+      E.eeqestado,
+      E.eeqdescripcion,
+      E.eeqfechafin,
+      emp.emprcodi,
+      emp.emprnomb,
+      eq.equinomb,
+      sub.subcausadesc,
+      fa.famcodi,
+      fa.famnomb
+      from
+      eve_eventoequipo E inner join eq_equipo Eq
+      on E.equicodi = Eq.equicodi
+      inner join eq_familia fa
+      on fa.famcodi = Eq.famcodi
+      inner join si_empresa emp
+      on emp.emprcodi = Eq.emprcodi
+      inner join eve_subcausaevento sub
+      on sub.subcausacodi = E.subcausacodi
+      where
+      emp.emprcodi in ({0}) and fa.famcodi in ({3})
+      and E.eeqfechaini >= to_date('{4}','DD-MM-YYYY') and E.eeqfechaini &lt; (to_date('{5}','DD-MM-YYYY') + INTERVAL '1' DAY)
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateEstado</key>
+    <query> 
+      update eve_eventoequipo
+      set 
+      eeqestado = {4}
+      where
+      eeqcodi = {0}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetPropCodi</key>
+    <query> 
+      select propcodi from eq_propiedad where propabrev = '{6}' and famcodi=0
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>InsPropEq</key>
+    <query> 
+      insert into eq_propequi(
+      propcodi,
+      equicodi,
+      fechapropequi,
+      valor
+      )
+      values
+      (
+      {0},
+      {3},
+      to_date('{6}','dd/mm/yyyy hh:mi:ss a.m.' , 'nls_date_language=american'),
+      '{7}'
+      )
+    </query>
+  </Sql>
+  <Sql>
+    <key>UpdUbicEq</key>
+    <query> 
+      update eq_equipo
+      set 
+      areacodi = {7},
+      usuarioupdate = '{6}',
+      fechaupdate=to_date('{8}','dd/mm/yyyy hh:mi:ss a.m.' , 'nls_date_language=american')  
+      where
+      equicodi ={3} and
+      emprcodi = {1}
+    </query>
+  </Sql>
+  <Sql>
+    <key>ListarDetalleEquiposSEIN02</key>
+    <query>
+      select
+      E.eeqcodi,
+      E.equicodi,
+      E.subcausacodi,
+      E.eeqfechaini,
+      E.eeqestado,
+      E.eeqdescripcion,
+      E.eeqfechafin,
+      emp.emprcodi,
+      emp.emprnomb,
+      eq.equinomb,
+      sub.subcausadesc,
+      fa.famcodi,
+      fa.famnomb,
+      ar.areanomb
+      from
+      eve_eventoequipo E inner join eq_equipo Eq on E.equicodi = Eq.equicodi
+      inner join eq_familia fa on fa.famcodi = Eq.famcodi
+      inner join si_empresa emp on emp.emprcodi = Eq.emprcodi
+      inner join eve_subcausaevento sub on sub.subcausacodi = E.subcausacodi
+      inner join eq_area ar on Eq.areacodi = ar.areacodi
+      where
+      emp.emprcodi in ({0}) and fa.famcodi in ({1})
+      and E.eeqfechaini >= to_date('{2}','yyyy-MM-dd') and E.eeqfechaini &lt;= to_date('{3}','yyyy-MM-dd')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarDetalleEquiposSEIN02</key>
+    <query>
+      select
+      E.eeqcodi,
+      E.equicodi,
+      E.subcausacodi,
+      E.eeqfechaini,
+      E.eeqestado,
+      E.eeqdescripcion,
+      E.eeqfechafin,
+      emp.emprcodi,
+      emp.emprnomb,
+      eq.equinomb,
+      sub.subcausadesc,
+      fa.famcodi,
+      fa.famnomb,
+      ar.areanomb
+      from
+      eve_eventoequipo E inner join eq_equipo Eq on E.equicodi = Eq.equicodi
+      inner join eq_familia fa on fa.famcodi = Eq.famcodi
+      inner join si_empresa emp on emp.emprcodi = Eq.emprcodi
+      inner join eve_subcausaevento sub on sub.subcausacodi = E.subcausacodi
+      inner join eq_area ar on Eq.areacodi = ar.areacodi
+      where
+      emp.emprcodi in ({0}) and fa.famcodi in ({1})
+      and E.eeqfechaini >= to_date('{2}','yyyy-MM-dd') and E.eeqfechaini &lt;= to_date('{3}','yyyy-MM-dd')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarIngresoSalidaOperacionComercialSEIN</key>
+    <query>
+      select TI.TGENERNOMB,ecd.ctgcodi, FE.FENERGCODI, FE.FENERGNOMB, ecd.ctgdetnomb, E.eeqcodi, E.equicodi, E.eeqfechaini,
+      E.eeqfechafin, emp.emprcodi, emp.emprnomb,  eq.equinomb, eqp.equinomb equinombpadre, sub.subcausadesc, fa.famcodi, Eq.equitension
+      from eve_eventoequipo E
+      inner join eq_equipo Eq on E.equicodi = Eq.equicodi
+      inner join eq_equipo eqp on eqp.equicodi = Eq.equipadre
+      inner join PR_GRUPO pg on Eq.grupocodi = pg.grupocodi
+      inner join si_fuenteenergia fe on pg.FENERGCODI = fe.FENERGCODI
+      inner join EQ_CATEGORIA_EQUIPO ece on ece.equicodi = eq.equicodi
+      inner join EQ_CATEGORIA_DET ecd on ecd.CTGDETCODI = ece.CTGDETCODI
+      inner join eq_familia fa on fa.famcodi = Eq.famcodi
+      inner join si_empresa emp on emp.emprcodi = Eq.emprcodi
+      inner join eve_subcausaevento sub on sub.subcausacodi = E.subcausacodi
+      inner join SI_TIPOGENERACION TI on TI.TGENERCODI = fe.TGENERCODI
+      where
+      E.eeqfechaini >= to_date('{0}','yyyy-MM-dd') and E.eeqfechaini &lt;= to_date('{1}','yyyy-MM-dd')
+      and E.subcausacodi = {2}
+      order by E.eeqcodi
+    </query>
+  </Sql>
+
+</Sqls>
+

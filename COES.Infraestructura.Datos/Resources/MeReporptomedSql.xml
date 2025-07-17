@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select nvl(max(repptocodi), 0) + 1 from me_reporptomed
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetMaxOrder</key>
+    <query>
+      select nvl(max(repptoorden), 0) + 1 from me_reporptomed hp
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      where
+      HP.reporcodi = {0} and
+      eq.emprcodi = {1}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Save</key>
+    <query>
+		insert into me_reporptomed(
+		repptocodi,
+		reporcodi,
+		ptomedicodi,
+		tipoinfocodi,
+		repptoorden,
+		repptoestado,
+		lectcodi,
+		repptotabmed,
+		tptomedicodi,
+		Funptocodi,
+		Repptonomb,
+		repptocolorcelda,
+		repptoequivpto,
+		repptoindcopiado
+		)
+		values(
+		:repptocodi,
+		:reporcodi,
+		:ptomedicodi,
+		:tipoinfocodi,
+		:repptoorden,
+		:repptoestado,
+		:lectcodi,
+		:repptotabmed,
+		:tptomedicodi,
+		:Funptocodi,
+		:Repptonomb,
+		:repptocolorcelda,
+		:repptoequivpto,
+		:repptoindcopiado
+		)
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+		update me_reporptomed
+		set
+		repptoorden = :repptoorden,
+		repptoestado = :repptoestado,
+		lectcodi = :lectcodi,
+		tptomedicodi =:tptomedicodi,
+		tipoinfocodi = :tipoinfocodi,
+		repptotabmed = :repptotabmed,
+		repptonomb = :repptonomb,
+		repptocolorcelda = :repptocolorcelda,
+		repptoequivpto = :repptoequivpto,
+		repptoindcopiado = :repptoindcopiado
+		where
+		repptocodi =:repptocodi
+	</query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from me_reporptomed
+      where repptocodi =:repptocodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      HP.*,eq.equinomb,ti.tipoinfoabrev,emp.emprabrev,tpto.TPTOMEDINOMB
+      from
+      me_reporptomed HP
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+      inner join si_empresa emp on emp.emprcodi = eq.emprcodi
+      where
+      HP.repptocodi = {0}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById2</key>
+    <query>
+      select * from me_reporptomed where reporcodi = :reporcodi
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>GetById3</key>
+    <query>
+      select
+      HP.*,eq.equinomb,ti.tipoinfoabrev,emp.emprabrev,tpto.TPTOMEDINOMB
+      from
+      me_reporptomed HP
+      inner join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      inner join me_tipoptomedicion tpto on tpto.tptomedicodi = pto.tptomedicodi
+      LEFT join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+      left join si_empresa emp on emp.emprcodi = eq.emprcodi
+      where
+      HP.reporcodi = {0} and
+      HP.ptomedicodi = {1} and
+      HP.lectcodi = {2} and
+      HP.tipoinfocodi = {3} and
+      HP.tptomedicodi = {4}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      *
+      from
+      me_reporptomed
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select a.*, b.ptomedibarranomb,b.PTOMEDICALCULADO,b.Ptomedielenomb,b.ptomedidesc,ti.tipoinfoabrev
+      from me_reporptomed a
+      inner join me_ptomedicion b on b.ptomedicodi = a.ptomedicodi
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = coalesce(a.tipoinfocodi,-1)
+      where a.reporcodi = {0} and (a.ptomedicodi = {1} or '-1' = '{1}')
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEncabezado</key>
+    <query>
+      SELECT
+      tpto.TPTOMEDINOMB,eq1.equicodi,eq.equinomb,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      pto.ptomedielenomb,pto.ptomedidesc,
+      eq.famcodi, tpto.TPTOMEDICODI, empr.emprcodi,empr.emprnomb,eq1.equinomb cuenca,
+      fam.famabrev,
+      rpto.*
+      FROM
+      ME_REPORPTOMED rpto
+      inner join me_ptomedicion pto on pto.ptomedicodi = rpto.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join eq_equipo eq1 on eq1.equicodi = eq.equipadre
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join me_tipoptomedicion tpto on tpto.TPTOMEDICODI = pto.TPTOMEDICODI
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = rpto.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = eq.emprcodi
+      where
+      reporcodi = {0} and eq.famcodi &lt;> 42 and
+      (empr.emprcodi in ({1}) or '{1}' = '-1') and
+      (rpto.tipoinfocodi in ({2})  or '{2}' = '-1' )
+
+      union
+
+      SELECT
+      tpto.TPTOMEDINOMB,eq2.equicodi,eq.equinomb,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      pto.ptomedielenomb,pto.ptomedidesc,
+      eq.famcodi, tpto.TPTOMEDICODI, empr.emprcodi,empr.emprnomb,eq2.equinomb cuenca,
+      fam.famabrev,
+      rpto.*
+      FROM
+      ME_REPORPTOMED rpto
+      inner join me_ptomedicion pto on pto.ptomedicodi = rpto.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join eq_equipo eq1 on eq1.equicodi = eq.equipadre
+      inner join eq_equipo eq2 on eq2.equicodi = eq1.equipadre
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join me_tipoptomedicion tpto on tpto.TPTOMEDICODI = pto.TPTOMEDICODI
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = rpto.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = eq.emprcodi
+      where
+      reporcodi = {0} and eq.famcodi = 42 and
+      (empr.emprcodi in ({1}) or '{1}' = '-1') and
+      (rpto.tipoinfocodi in ({2})  or '{2}' = '-1' )
+      order by 1
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListarPuntoReporte</key>
+    <query>
+      select HP.*, fp.funptofuncion, emp.EMPRCODI, emp.EMPRABREV,emp.EMPRNOMB,
+      fam.famcodi,fam.famnomb,fam.FAMABREV,
+      pto.ptomedibarranomb, PTO.PTOMEDIELENOMB,pto.ptomedidesc,PTO.PTOMEDICALCULADO,PTO.OSICODI,PTO.CODREF,
+      eq.equipadre, eqp.equinomb central, eq.osinergcodi as CodigoOsinergmin, eq.equicodi, eq.equinomb, eq.equiabrev,
+      ar.areacodi, (tar.TAREAABREV || ' ' || ar.areanomb) as areanomb,
+      ti.tipoinfoabrev, tpto.TPTOMEDINOMB, orig.ORIGLECTCODI, orig.ORIGLECTNOMBRE, lect.lectnomb
+      from me_reporptomed HP
+      left join ME_PTOMEDICION PTO ON PTO.PTOMEDICODI = HP.PTOMEDICODI
+      left join eq_equipo eq on eq.equicodi = pto.equicodi
+      left join eq_equipo eqp on eqp.equicodi = (case when  eq.equipadre is null then -1 else eq.equipadre end)
+      left join eq_familia fam on fam.famcodi = eq.famcodi
+      left join eq_area ar on eq.areacodi = ar.areacodi
+      left join EQ_TIPOAREA tar on tar.TAREACODI = ar.tareacodi
+      left join si_tipoinformacion ti on ti.tipoinfocodi = hp.tipoinfocodi
+      left join si_empresa emp on emp.emprcodi = coalesce(PTO.emprcodi, -1)
+      left join ME_TIPOPTOMEDICION tpto on tpto.TPTOMEDICODI = hp.TPTOMEDICODI
+      left join me_lectura lect on lect.lectcodi = coalesce(HP.LECTCODI,-1)
+      left join ME_ORIGENLECTURA orig on orig.ORIGLECTCODI = pto.ORIGLECTCODI
+      left join me_funcionpunto fp on fp.funptocodi=hp.funptocodi
+      WHERE (hp.reporcodi= {0} or '-1' = '{0}')
+      order by emp.emprcodi, hp.REPPTOORDEN asc
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>PaginacionReporte</key>
+    <query>
+      SELECT fecha FROM
+      (
+      select
+      distinct medifecha fecha
+      from me_medicion{0} me
+      inner join  me_ptomedicion pto on pto.ptomedicodi = me.ptomedicodi
+      inner join me_reporptomed rmed on rmed.ptomedicodi = me.ptomedicodi and rmed.tipoinfocodi = me.tipoinfocodi
+      inner join me_reporte rep on rep.reporcodi = rmed.reporcodi and rep.lectcodi = me.lectcodi
+      where rep.reporcodi = {1} and pto.PTOMEDICALCULADO = 'N' and rmed.REPPTOESTADO = 1
+      AND me.MEDIFECHA >= to_date('{2}','YYYY-MM-DD HH24:MI:SS')
+      AND me.MEDIFECHA &lt;= to_date('{3}','YYYY-MM-DD HH24:MI:SS')
+
+      union
+
+      select
+      distinct medifecha fecha
+      from me_medicion{0} me
+      inner join  me_ptomedicion pto2 on me.ptomedicodi = pto2.ptomedicodi
+      inner join ME_RELACIONPTO relpto on relpto.PTOMEDICODI2 = pto2.ptomedicodi
+      inner join me_ptomedicion pto1 on pto1.ptomedicodi = relpto.PTOMEDICODI1
+      inner join ME_REPORPTOMED repmed on repmed.PTOMEDICODI =  relpto.PTOMEDICODI1
+      inner join ME_REPORTE rep on rep.REPORCODI = repmed.REPORCODI
+      inner join ME_TIPORELACIONPTO tiprelpto on tiprelpto.TRPTOCODI = relpto.TRPTOCODI
+      where rep.reporcodi = {1} AND pto1.PTOMEDICALCULADO = 'S' and repmed.REPPTOESTADO = 1
+      AND me.MEDIFECHA >= to_date('{2}','YYYY-MM-DD HH24:MI:SS')
+      AND me.MEDIFECHA &lt;= to_date('{3}','YYYY-MM-DD HH24:MI:SS')
+      )
+      order by FECHA
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>ListEncabezadoPowel</key>
+    <query>
+      SELECT
+      tpto.TPTOMEDINOMB,eq.equicodi, eq.equinomb,ti.tipoinfoabrev,pto.ptomedibarranomb,
+      pto.ptomedielenomb,pto.ptomedidesc,
+      eq.famcodi, tpto.TPTOMEDICODI, empr.emprcodi, empr.emprnomb,
+      fam.famabrev,
+      rpto.*
+      FROM
+      ME_REPORPTOMED rpto
+      inner join me_ptomedicion pto on pto.ptomedicodi = rpto.ptomedicodi
+      inner join eq_equipo eq on eq.equicodi = pto.equicodi
+      inner join eq_familia fam on fam.famcodi = eq.famcodi
+      inner join me_tipoptomedicion tpto on tpto.TPTOMEDICODI = pto.TPTOMEDICODI
+      inner join si_tipoinformacion ti on ti.tipoinfocodi = rpto.tipoinfocodi
+      inner join si_empresa empr on empr.emprcodi = eq.emprcodi
+      where
+      reporcodi = {0}
+      order by rpto.REPPTOORDEN
+    </query>
+  </Sql>
+  
+</Sqls>

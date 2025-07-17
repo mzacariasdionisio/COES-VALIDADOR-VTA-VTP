@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Sqls>
+  <Sql>
+    <key>GetMaxId</key>
+    <query>
+      select (nvl(max(PARMETCODI), 0) + 1) as "Parmetcodi" from IND_PARAMETROPROCESO
+    </query>
+  </Sql>
+  <Sql>
+    <key>Save</key>
+    <query>
+      insert into IND_PARAMETROPROCESO(
+      PARMETCODI,
+      PARMETFECPROC,
+      PARMETDIAMAX,
+      PARMETHORAMAX,
+      PARMETTOLERANCIA,
+      PARMETESTADO,
+      PARMETUSUMODIFICACION,
+      PARMETFECMODIFICACION
+      )
+      values(
+      :PARMETCODI,
+      :PARMETFECPROC,
+      :PARMETDIAMAX,
+      :PARMETHORAMAX,
+      :PARMETTOLERANCIA,
+      :PARMETESTADO,
+      :PARMETUSUMODIFICACION,
+      :PARMETFECMODIFICACION
+      )
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Update</key>
+    <query>
+      update IND_PARAMETROPROCESO
+      set
+      PARMETCODI = :PARMETCODI,
+      PARMETFECPROC = :PARMETFECPROC,
+      PARMETDIAMAX = :PARMETDIAMAX,
+      PARMETHORAMAX = :PARMETHORAMAX,
+      PARMETTOLERANCIA= :PARMETTOLERANCIA,
+      PARMETESTADO= :PARMETESTADO,
+      PARMETUSUMODIFICACION= :PARMETUSUMODIFICACION,
+      PARMETFECMODIFICACION= :PARMETFECMODIFICACION
+      where
+      PARMETCODI = :PARMETCODI
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>Delete</key>
+    <query>
+      delete from ind_parametroproceso
+      where
+      parmetcodi = :parmetcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetById</key>
+    <query>
+      select
+      parmetcodi,
+      parmetfecproc,
+      parmethoramax,
+      parmettolerancia,
+      parmetusumodificacion,
+      parmetfecmodificacion,
+      parmetestado,
+      parmetdiamax
+      from
+      ind_parametroproceso
+      where
+      parmetcodi = :parmetcodi
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>List</key>
+    <query>
+      select
+      parmetcodi,
+      parmetfecproc,
+      parmethoramax,
+      parmettolerancia,
+      parmetusumodificacion,
+      parmetfecmodificacion,
+      parmetestado,
+      parmetdiamax
+      from
+      ind_parametroproceso
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>GetByCriteria</key>
+    <query>
+      select
+      parmetcodi,
+      parmetfecproc,
+      parmethoramax,
+      parmettolerancia,
+      parmetusumodificacion,
+      parmetfecmodificacion,
+      parmetestado,
+      parmetdiamax
+      from
+      ind_parametroproceso
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ParametrosProcesosFiltroConRangoDeFechas</key>
+    <query>
+      SELECT PAR.*
+      FROM IND_PARAMETROPROCESO PAR
+      WHERE (TO_DATE(PARMETFECPROC) >= TO_DATE ('{0}','DD/MM/YYYY')
+      AND TO_DATE(PARMETFECPROC) &lt;= TO_DATE('{1}','DD/MM/YYYY'))
+      AND PARMETESTADO IN('A','B')
+      ORDER BY PARMETESTADO
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateParamProcConEstadoActivo</key>
+    <query>
+      UPDATE IND_PARAMETROPROCESO SET PARMETDIAMAX = {0}, PARMETHORAMAX = {1}, PARMETTOLERANCIA = {2},
+      PARMETUSUMODIFICACION = '{3}', PARMETFECMODIFICACION = SYSDATE WHERE PARMETCODI = {4}
+    </query>
+  </Sql>
+
+  <Sql>
+    <key>UpdateParmProcAnuevoParamActivo</key>
+    <query>  
+      UPDATE IND_PARAMETROPROCESO SET PARMETDIAMAX = {0}, PARMETHORAMAX = {1}, PARMETTOLERANCIA = {2},
+      PARMETUSUMODIFICACION = '{3}', PARMETESTADO= 'A', PARMETFECMODIFICACION = SYSDATE WHERE PARMETCODI = {4}
+    </query>
+  </Sql>
+  
+  <Sql>
+    <key>ValidarPeriodoParaRegistroContratoCombustible</key>
+    <query>
+      SELECT UNIQUE CASE
+      WHEN
+          0&lt;(SELECT COUNT(PARMETCODI) FROM IND_PARAMETROPROCESO
+                WHERE PARMETDIAMAX > {0}
+                AND PARMETCODI = (SELECT PARMETCODI FROM IND_PARAMETROPROCESO
+                                  WHERE PARMETESTADO = 'A'))
+      THEN
+          1
+      WHEN
+          0&lt;(SELECT COUNT(PARMETCODI) FROM IND_PARAMETROPROCESO
+                WHERE PARMETDIAMAX = {0}
+                AND PARMETCODI = (SELECT PARMETCODI FROM IND_PARAMETROPROCESO
+                                  WHERE PARMETESTADO = 'A')) AND
+          0&lt;(SELECT COUNT(PARMETCODI) FROM IND_PARAMETROPROCESO
+                WHERE PARMETCODI = (SELECT PARMETCODI FROM IND_PARAMETROPROCESO
+                                    WHERE PARMETESTADO = 'A') AND
+                                    PARMETHORAMAX > {1})
+      THEN
+          1
+      WHEN
+          0&lt;(SELECT COUNT(PARMETCODI) FROM IND_PARAMETROPROCESO
+                WHERE PARMETDIAMAX = {0}
+                AND PARMETCODI = (SELECT PARMETCODI FROM IND_PARAMETROPROCESO
+                                  WHERE PARMETESTADO = 'A')) AND
+          0&lt;(SELECT COUNT(PARMETCODI) FROM IND_PARAMETROPROCESO
+                WHERE PARMETCODI = (SELECT PARMETCODI FROM IND_PARAMETROPROCESO
+                                    WHERE PARMETESTADO = 'A') AND
+                                    PARMETHORAMAX = {1}) AND
+          0&lt;(SELECT COUNT(PARMETCODI) FROM IND_PARAMETROPROCESO
+                WHERE PARMETCODI = (SELECT PARMETCODI FROM IND_PARAMETROPROCESO
+                                    WHERE PARMETESTADO = 'A') AND
+                                    PARMETTOLERANCIA >= {2})
+      THEN
+          1
+      ELSE
+          0
+      END
+      AS VALIDACION
+      FROM IND_PARAMETROPROCESO
+    </query>
+  </Sql>
+  
+</Sqls>

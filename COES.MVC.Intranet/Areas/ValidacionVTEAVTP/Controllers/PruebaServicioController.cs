@@ -8,6 +8,9 @@ using COES.Servicios.Aplicacion.TransfPotencia.Helper;
 using System.Threading.Tasks;
 using COES.Dominio.DTO.ValidacionVTEAVTP;
 using System.Collections.Generic;
+using COES.MVC.Intranet.Helper;
+using COES.MVC.Intranet.Areas.Proteccion.Helper;
+using COES.Framework.Base.Tools;
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 {
@@ -46,8 +49,16 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             PruebaServicioModel modelo = new PruebaServicioModel();
             modelo.StrMensaje = "hola";
             modelo.Resultado = "prueba";
-            List<TrnPeriodoDTO> lstPeriodo = await validacionVTEAVTPAppServicio.ObtenerSmeTrnPeriodo();
-            List<VteVersionDTO> lstVeriones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions("2025.Marzo", "");
+            FileServer.CreateFolder(base.PathFiles, ConstantesValidacionVTEAVTP.FolderValidacion, "");
+            FileServer.CreateFolder(base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog, "");
+
+            string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+
+            List<TrnPeriodoDTO> lstPeriodo = await validacionVTEAVTPAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            List<VteVersionDTO> lstVeriones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            VtpDTO vtp = await validacionVTEAVTPAppServicio.FuncionVtp("2025.Marzo", "Revisión 01", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            VtpValidacionDTO valiacion = await validacionVTEAVTPAppServicio.FuncionVtpValidar("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            VtpVteaDTO vtpVtea = await validacionVTEAVTPAppServicio.FuncionVtpVtea("2025.Marzo", "", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
             return View(modelo);
         }
 

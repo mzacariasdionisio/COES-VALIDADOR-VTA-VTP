@@ -1,5 +1,5 @@
 ﻿
-namespace COES.MVC.Intranet.Areas.Proteccion.Helper
+namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 {
     public class ConstantesValidacionVTEAVTP
     {

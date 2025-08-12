@@ -25,6 +25,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         string urlBaseValidador = "http://10.100.210.3:8002";
         const string HttpMethodTrnperiodo = "sme/trnperiodo";
         const string HttpMethodVtpVersions = "sme/vtp_versions";
+        const string HttpMethodVteaVersions = "sme/vtea_versions";
         const string HttpMethodVtpValidacion = "funcion/vtp_validation";
         const string HttpMethodVtp = "funcion/vtp";
         const string HttpMethodVtpVtea = "funcion/vtp_vtea";
@@ -60,7 +61,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio Vtp Versions
         /// </summary>
-        public async Task<List<VteVersionDTO>> ObtenerSmeVtpVersions(string perinombre, string recpotnombre,
+        public async Task<List<VtpVersionDTO>> ObtenerSmeVtpVersions(string perinombre, string recpotnombre,
             string folderUpload,
             string pathfile,
             string folderSave)
@@ -86,7 +87,45 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
 
                 string json = await response.Content.ReadAsStringAsync();
                 RegistrarLogTransaccionTxt("POST", urlMetodo, jsonBody, response, folderUpload, pathfile, folderSave);
-                return JsonConvert.DeserializeObject<List<VteVersionDTO>>(json);
+                return JsonConvert.DeserializeObject<List<VtpVersionDTO>>(json);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ConstantesAppServicio.LogError, ex);
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene datos del servicio Vtea Versions
+        /// </summary>
+        public async Task<List<VteaVersionDTO>> ObtenerSmeVteaVersions(string perinombre, string recpotnombre,
+            string folderUpload,
+            string pathfile,
+            string folderSave)
+        {
+            try
+            {
+                string urlMetodo = $"{urlBase}/{HttpMethodVteaVersions}/";
+
+                var parametros = new
+                {
+                    perinombre,
+                    recpotnombre
+                };
+                string jsonBody = JsonConvert.SerializeObject(parametros);
+
+                // Aquí se configura correctamente el tipo MIME: application/json
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PostAsync(urlMetodo, content);
+
+                if (!response.IsSuccessStatusCode)
+                    throw new Exception("Error al llamar al servicio: " + response.StatusCode);
+
+                string json = await response.Content.ReadAsStringAsync();
+                RegistrarLogTransaccionTxt("POST", urlMetodo, jsonBody, response, folderUpload, pathfile, folderSave);
+                return JsonConvert.DeserializeObject<List<VteaVersionDTO>>(json);
             }
             catch (Exception ex)
             {

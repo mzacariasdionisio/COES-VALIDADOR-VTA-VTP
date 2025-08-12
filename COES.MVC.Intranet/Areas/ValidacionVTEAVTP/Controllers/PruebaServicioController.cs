@@ -55,7 +55,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
             List<TrnPeriodoDTO> lstPeriodo = await validacionVTEAVTPAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
-            List<VteVersionDTO> lstVeriones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            List<VtpVersionDTO> lstVerionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            List<VteaVersionDTO> lstVerionesVtea = await validacionVTEAVTPAppServicio.ObtenerSmeVteaVersions("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
             VtpDTO vtp = await validacionVTEAVTPAppServicio.FuncionVtp("2025.Marzo", "Revisión 01", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
             VtpValidacionDTO valiacion = await validacionVTEAVTPAppServicio.FuncionVtpValidar("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
             VtpVteaDTO vtpVtea = await validacionVTEAVTPAppServicio.FuncionVtpVtea("2025.Marzo", "", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);

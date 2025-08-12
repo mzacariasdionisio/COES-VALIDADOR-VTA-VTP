@@ -64,7 +64,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             return View(model);
         }
 
-        private string RenderRazorViewToString(string viewName, object model)
+        private string RenderViewToString(string viewName, object model)
         {
             ViewData.Model = model;
             using (var sw = new System.IO.StringWriter())
@@ -78,25 +78,50 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         }
 
         [HttpGet]
-        public ActionResult CargarReporteConsolidadoHtml(int periodo, int version, int inicializar)
+        public async Task<ActionResult> CargarReporteConsolidadoHtml(string periodo, string version, int inicializar)
         {
+            var model = new ValidadorVTPSalidaModel();
+            model.StrMensaje = "";
+            model.StrMensajeError = "";
+
             try
             {
+                if (inicializar > 0)
+                {
+                    model.VtpValidacion = new VtpValidacionDTO();
+                    model.VtpValidacion.Valorizacion = new ValorizacionDTO();
+                    model.VtpValidacion.Valorizacion.TableAnas = new List<TableAnaValDTO>();
+                    model.VtpValidacion.Peaje =new PeajeDTO();
+                    model.VtpValidacion.Peaje.TableAnas = new List<TableAnaPeajeDTO>();
+                 
+                }
+                else
+                {
+                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
+                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
+
+                    string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+
+                    var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpValidar(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+                    model.VtpValidacion = datosSalidaVTP;               
+
+                }
+
                 // 1. Obtener todos los datos necesarios, igual que antes
-                var listaBarras = new List<COES.Dominio.DTO.Transferencias.BarraDTO>();
-                var model = new ValidadorVTPSalidaModel();
-                model.ListBarrasBrg = listaBarras;
-                model.ListBarrasNoBrg = listaBarras;
+
 
                 // 2. Renderizar cada vista parcial a un string de HTML usando el método auxiliar
                 string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVTPSalida/";
 
-                string htmlBarrasBrg = RenderRazorViewToString($"{rutaBaseVista}ListaValorizacion.cshtml", model);
-                string htmlBarrasNoBrg = RenderRazorViewToString($"{rutaBaseVista}ListaCompensacion.cshtml", model);              
+                string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaValorizacion.cshtml", model);
+                string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaCompensacion.cshtml", model);              
 
                 // 3. Crear un objeto anónimo (o un DTO) para empaquetar los strings de HTML
                 model.VistaValorizacion = htmlBarrasBrg;
-                model.VistaCompensacion = htmlBarrasNoBrg;              
+                model.VistaCompensacion = htmlBarrasNoBrg;
+
+                model.StrMensaje = inicializar > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación" : "NOTA: Se realizó la evaluación el " + DateTime.Now.ToString("dd/MM/yyyy hh:mm:ss") + ".";
 
                 // 4. Devolver este objeto como JSON
                 return Json(model, JsonRequestBehavior.AllowGet);
@@ -110,6 +135,22 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 Response.StatusCode = 500;
                 return Content(ex.Message, "text/plain");
             }
+        }
+
+        public async Task<ActionResult> ObtenerVersiones(string periodo)
+        {
+            ValidadorVTPSalidaModel model = new ValidadorVTPSalidaModel();
+            FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
+            FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
+
+            string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+
+            List<VteVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+            model.ListVersiones = lstVersiones;
+            model.StrMensajeError = "0";
+
+            return Json(model, JsonRequestBehavior.AllowGet);
         }
 
     }

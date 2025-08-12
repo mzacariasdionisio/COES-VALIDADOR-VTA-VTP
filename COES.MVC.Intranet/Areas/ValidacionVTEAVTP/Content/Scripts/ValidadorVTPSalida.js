@@ -5,40 +5,45 @@ $(function () {
 
     $('#tab-container').easytabs({
         animate: false
-    });   
+    });
 
     $('#cbPeriodo').on('change', function () {
-        //$('#detalleBarras').html("");
-        //$('#detalleBarras1').html("");
-        //$('#tab-container').hide();
+        consultar(1);
+        cargarVersiones();
     });
 
     $('#cbVersion').on('change', function () {
-        //$('#detalleBarras').html("");
-        //$('#detalleBarras1').html("");
-        //$('#tab-container').hide();        
-    });  
+        consultar(1);
+    });
+
+    $('#btnProcesar').on('click', function () {
+        consultar(0);
+    });
+      
 
     consultar(1);
 });
 
-function cargarPeriodos(anio) {
+function cargarVersiones() {
+
+    let periodo = $("#cbPeriodo").val();
+
     $.ajax({
         type: 'POST',
-        url: controlador + 'ObtenerPeriodos',
+        url: controlador + 'ObtenerVersiones',
         data: {
-            anio: anio
+            periodo: periodo
         },
         dataType: 'json',
         global: false,
         success: function (result) {
-            if (result != -1) {
-                $('#cbPeriodo').get(0).options.length = 0;
-                $('#cbPeriodo').get(0).options[0] = new Option("--SELECCIONE--", "");
-                $.each(result, function (i, item) {
-                    $('#cbPeriodo').get(0).options[$('#cbPeriodo').get(0).options.length] = new Option(item.Repernombre, item.Repercodi);
+            if (result.StrMensajeError != -1) {
+                $('#cbVersion').get(0).options.length = 0;
+                //$('#cbPeriodo').get(0).options[0] = new Option("--SELECCIONE--", "");
+                $.each(result.ListVersiones, function (i, item) {
+                    $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecPotNombre, item.RecPotNombre);
                 });
-                $('#tab-container').hide();
+                //$('#tab-container').hide();
             }
             else {
                 mostrarMensaje('mensaje', 'error', 'Se ha producido un error.');
@@ -55,13 +60,7 @@ function cargarPeriodos(anio) {
     let periodo = $("#cbPeriodo").val();
     let version = $("#cbVersion").val();
 
-     if (periodo == '') {
-         periodo = 0;
-     }
-
-     if (version == '') {
-         version = 0;
-     }
+   
 
     setTimeout(function () {
         $.ajax({
@@ -89,7 +88,7 @@ function cargarPeriodos(anio) {
                         lengthMenu: 'Mostrar _MENU_ registros por página',
                         zeroRecords: 'No se encontró nada'
                     },
-                    order: [[4, 'asc']]
+                    order: [[0, 'asc']]
                 });
 
                 $('#tablaListadoCompensacion').dataTable({
@@ -104,9 +103,10 @@ function cargarPeriodos(anio) {
                         lengthMenu: 'Mostrar _MENU_ registros por página',
                         zeroRecords: 'No se encontró nada'
                     },
-                    order: [[4, 'asc']]
+                    order: [[0, 'asc']]
                 });
-                             
+
+                $('#mensajeProcesar').html(evt.StrMensaje);
 
                 $('.dataTables_filter input').attr('maxLength', 50);
             },

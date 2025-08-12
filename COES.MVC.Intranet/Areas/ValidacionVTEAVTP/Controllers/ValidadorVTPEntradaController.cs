@@ -15,6 +15,9 @@ using COES.Framework.Base.Tools;
 using System.Threading.Tasks;
 using COES.Dominio.DTO.ValidacionVTEAVTP;
 using COES.MVC.Intranet.Helper;
+using COES.MVC.Intranet.Areas.Evaluacion.Helper;
+using WebGrease.Activities;
+using System.Configuration;
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 {
@@ -60,8 +63,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             var primerPeriodo = lstPeriodo.FirstOrDefault();
 
             List<VteVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
-            //List<VteVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions("2025.Marzo", "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
-
+            
             model.ListPeriodos = lstPeriodo;
             model.ListVersiones = lstVersiones;
 
@@ -84,15 +86,46 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         }
 
         [HttpGet]
-        public ActionResult CargarReporteConsolidadoHtml(string periodo, string version, int inicializar)
+        public async Task<ActionResult> CargarReporteConsolidadoHtml(string periodo, string version, int inicializar)
         {
+            var model = new ValidadorVTPEntradaModel();
+            model.StrMensaje = "";
+            model.StrMensajeError = "";
+
             try
             {
+                if(inicializar > 0)
+                {
+                    model.DatosVTP = new VtpDTO();
+                    model.DatosVTP.TableVtpBrg = new List<TableVtpBrgResultDTO>();
+                    model.DatosVTP.TableVtpNoBrg = new List<TablaVtpNoBrgResultDTO>();
+                    model.DatosVTP.TableAnas = new List<TablaAnaResultDTO>();
+                    model.DatosVTP.TableVtpSinAnalizar = new List<TablaVtpSinAnalizarResultDTO>();
+                    model.EmpresasBarra = new List<string>();
+                }
+                else
+                {
+                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
+                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
+
+                    string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+
+                    var datosEntradaVTP = await validacionVTEAVTPAppServicio.FuncionVtp(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+                    model.DatosVTP = datosEntradaVTP;
+
+                    var empresas = datosEntradaVTP.TableVtpBrg
+                                    .Select(p => p.Empresa)
+                                    .Concat(datosEntradaVTP.TableVtpNoBrg.Select(p => p.Empresa))
+                                    .Distinct()
+                                    .OrderBy(p => p).ToList();
+
+                    model.EmpresasBarra = empresas;
+
+                }
+
                 // 1. Obtener todos los datos necesarios, igual que antes
-                var listaBarras = new List<COES.Dominio.DTO.Transferencias.BarraDTO>();
-                var model =new ValidadorVTPEntradaModel();
-                model.ListBarrasBrg = listaBarras;
-                model.ListBarrasNoBrg = listaBarras;               
+                     
 
                 // 2. Renderizar cada vista parcial a un string de HTML usando el método auxiliar
                 string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVTPEntrada/";
@@ -108,7 +141,9 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 model.VistaBarrasSinAnalizar = htmlBarrasSinAnalizar;
                 model.VistaBarrasDiferencia = htmlBarrasDiferencia;
 
-                model.StrMensaje = "NOTA: Se realizó la evaluación el " + DateTime.Now.ToString("dd/MM/yyyy hh:mm:ss") + ".";
+                var fecha = DateTime.Now;
+                model.StrMensaje = inicializar > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación." : 
+                    string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("hh:mm:ss"));
 
                 // 4. Devolver este objeto como JSON
                 return Json(model, JsonRequestBehavior.AllowGet);
@@ -138,6 +173,60 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             model.StrMensajeError = "0";
 
             return Json(model, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> GenerarReporteSeccion(string periodo, string version, string seccion)
+        {
+            base.ValidarSesionUsuario();
+            
+            string rutaLogo = Server.MapPath("~/Areas/ValidacionVTEAVTP/Content/Images/logocoes_black.png");
+
+            string nombreArchivo = "-1";
+
+            FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
+            FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
+
+            string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+
+            switch (seccion)
+            {
+                case "Barras":                   
+
+                    var datosEntradaVTP = await validacionVTEAVTPAppServicio.FuncionVtp(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+                    nombreArchivo = Helper.ExcelDocument.GenerarReporteBarras(datosEntradaVTP, periodo, version, rutaLogo);
+                   
+                    break;
+
+                case "BarrasSinAnalizar":                   
+
+                    var datosBarraSinAnalizarVTP = await validacionVTEAVTPAppServicio.FuncionVtp(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+                    nombreArchivo = Helper.ExcelDocument.GenerarReporteBarrasSinAnalizar(datosBarraSinAnalizarVTP, periodo, version, rutaLogo);
+
+                    break;
+
+                case "BarrasDiferencia":
+                    var datosBarraDiferenciaVTP = await validacionVTEAVTPAppServicio.FuncionVtp(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+                    nombreArchivo = Helper.ExcelDocument.GenerarReporteBarrasDiferencia(datosBarraDiferenciaVTP, periodo, version, rutaLogo);
+                    break;
+
+                default:
+                    // Si el tipo de reporte no es válido, no hacer nada o devolver un error.
+                    return new HttpNotFoundResult("El tipo de reporte solicitado no es válido.");
+            }
+
+            return Json(nombreArchivo);
+        }
+
+        public virtual ActionResult DescargarArchivo(string file)
+        {
+            string fullPath = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile].ToString() + file;
+            var bytes = System.IO.File.ReadAllBytes(fullPath);
+            System.IO.File.Delete(fullPath);
+            return File(bytes, Constantes.AppExcel, file);
         }
     }
 }

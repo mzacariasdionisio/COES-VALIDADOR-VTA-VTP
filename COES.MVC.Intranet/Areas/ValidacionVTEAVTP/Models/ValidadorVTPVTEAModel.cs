@@ -17,6 +17,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Models
         public List<TrnPeriodoDTO> ListPeriodos { get; set; }
         public List<VteVersionDTO> ListVersiones { get; set; }
 
+        public VtpVteaDTO VtpVteaDatos { get; set; }
+
         public List<BarraDTO> ListBarrasBrg { get; set; }
 
         public List<BarraDTO> ListBarrasNoBrg { get; set; }       

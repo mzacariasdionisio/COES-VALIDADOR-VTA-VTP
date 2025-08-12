@@ -8,37 +8,43 @@ $(function () {
     });   
 
     $('#cbPeriodo').on('change', function () {
-        //$('#detalleBarras').html("");
-        //$('#detalleBarras1').html("");
-        //$('#tab-container').hide();
+        consultar(1);
+        cargarVersiones();
     });
 
     $('#cbVersionVTP').on('change', function () {
-        //$('#detalleBarras').html("");
-        //$('#detalleBarras1').html("");
-        //$('#tab-container').hide();        
+        consultar(1);   
     });  
+
+    $('#cbVersionVTEA').on('change', function () {
+        consultar(1);
+    });  
+
+    $('#btnProcesar').on('click', function () {
+        consultar(0);
+    });
 
     consultar(1);
 });
 
-function cargarPeriodos(anio) {
+function cargarVersiones() {
+
+    let periodo = $("#cbPeriodo").val();
+
     $.ajax({
         type: 'POST',
-        url: controlador + 'ObtenerPeriodos',
+        url: controlador + 'ObtenerVersiones',
         data: {
-            anio: anio
+            periodo: periodo
         },
         dataType: 'json',
         global: false,
         success: function (result) {
-            if (result != -1) {
-                $('#cbPeriodo').get(0).options.length = 0;
-                $('#cbPeriodo').get(0).options[0] = new Option("--SELECCIONE--", "");
-                $.each(result, function (i, item) {
-                    $('#cbPeriodo').get(0).options[$('#cbPeriodo').get(0).options.length] = new Option(item.Repernombre, item.Repercodi);
-                });
-                $('#tab-container').hide();
+            if (result.StrMensajeError != -1) {
+                $('#cbVersionVTP').get(0).options.length = 0;               
+                $.each(result.ListVersiones, function (i, item) {
+                    $('#cbVersionVTP').get(0).options[$('#cbVersionVTP').get(0).options.length] = new Option(item.RecPotNombre, item.RecPotNombre);
+                });                
             }
             else {
                 mostrarMensaje('mensaje', 'error', 'Se ha producido un error.');
@@ -50,18 +56,13 @@ function cargarPeriodos(anio) {
     });
 }
 
+
  function consultar (inicializar) {
 
-    let periodo = $("#cbPeriodo").val();
-    let version = $("#cbVersionVTP").val();
-
-     if (periodo == '') {
-         periodo = 0;
-     }
-
-     if (version == '') {
-         version = 0;
-     }
+     let periodo = $("#cbPeriodo").val();
+     let version = $("#cbVersionVTP").val();
+     let versionVTEA = $("#cbVersionVTEA").val();
+        
 
     setTimeout(function () {
         $.ajax({
@@ -70,6 +71,7 @@ function cargarPeriodos(anio) {
             data: {
                 periodo: periodo,
                 version: version,
+                versionVTEA: versionVTEA,
                 inicializar: inicializar
             },
             success: function (evt) {
@@ -90,7 +92,7 @@ function cargarPeriodos(anio) {
                         lengthMenu: 'Mostrar _MENU_ registros por página',
                         zeroRecords: 'No se encontró nada'
                     },
-                    order: [[4, 'asc']]
+                    order: [[1, 'asc']]
                 });
 
                 $('#tablaListadoComparacionVTP').dataTable({
@@ -105,7 +107,7 @@ function cargarPeriodos(anio) {
                         lengthMenu: 'Mostrar _MENU_ registros por página',
                         zeroRecords: 'No se encontró nada'
                     },
-                    order: [[4, 'asc']]
+                    order: [[1, 'asc']]
                 });
 
                 $('#tablaListadoComparacionDiferencias').dataTable({
@@ -120,7 +122,7 @@ function cargarPeriodos(anio) {
                         lengthMenu: 'Mostrar _MENU_ registros por página',
                         zeroRecords: 'No se encontró nada'
                     },
-                    order: [[4, 'asc']]
+                    order: [[1, 'asc']]
                 });
               
 

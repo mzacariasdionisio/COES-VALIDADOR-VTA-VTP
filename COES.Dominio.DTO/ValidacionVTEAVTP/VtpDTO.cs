@@ -45,7 +45,39 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
 
     public class TablaVtpSinAnalizarResultDTO
     {
-       
+        [JsonProperty("codigo")]
+        public string Codigo { get; set; }
+
+        [JsonProperty("empresa")]
+        public string Empresa { get; set; }
+
+        [JsonProperty("cliente")]
+        public string Cliente { get; set; }
+
+        [JsonProperty("barra")]
+        public string Barra { get; set; }
+
+        [JsonProperty("contrato")]
+        public string Contrato { get; set; }
+
+        [JsonProperty("tipousuario")]
+        public string TipoUsuario { get; set; }
+
+        [JsonProperty("preciopotencia")]
+        public double? PrecioPotencia { get; set; }
+
+        [JsonProperty("potenciacoincidente")]
+        public double? PotenciaCoincidente { get; set; }
+
+        [JsonProperty("potenciadeclarada")]
+        public double? PotenciaDeclarada { get; set; }
+
+        [JsonProperty("peajeunitario")]
+        public double? PeajeUnitario { get; set; }
+
+        [JsonProperty("factorperdida")]
+        public double? FactorPerdida { get; set; }
+
     }
 
     public class TableVtpBrgResultDTO

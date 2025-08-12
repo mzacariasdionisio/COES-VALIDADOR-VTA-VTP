@@ -56,7 +56,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             var primerPeriodo = lstPeriodo.FirstOrDefault();
 
-            List<VteVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+            List<VtpVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
             model.ListPeriodos = lstPeriodo;
             model.ListVersiones = lstVersiones;
@@ -142,7 +142,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-            List<VteVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+            List<VtpVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
             model.ListVersiones = lstVersiones;
             model.StrMensajeError = "0";

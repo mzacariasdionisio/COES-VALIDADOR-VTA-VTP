@@ -20,7 +20,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "ReporteBarras" + ".xlsx";
+            var archivoExcel = "Barras_BRG_con_Error" + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -317,7 +317,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "ReporteBarrasSinAnalizar" + ".xlsx";
+            var archivoExcel = "Reporte_Barras_Sin_Analizar" + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -449,7 +449,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "ReporteBarrasDiferencia" + ".xlsx";
+            var archivoExcel = "Reporte_Empresas_Diferencia_Potencia" + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -465,7 +465,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
                 var contFila = 11;
 
-                #region Barras Sin Analizar
+                #region Barras Diferencia
 
                 if (File.Exists(rutaLogo))
                 {
@@ -555,6 +555,606 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             return archivoExcel;
         }
+
+        public static string GenerarReporteValorizacionVTP(VtpValidacionDTO DatosVTP, string periodo, string version, string rutaLogo)
+        {
+
+            string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
+
+            var archivoExcel = "Reporte_VTP_Valorizacion" + ".xlsx";
+
+            FileInfo newFile = new FileInfo(ruta + archivoExcel);
+            if (newFile.Exists)
+            {
+                newFile.Delete();
+                newFile = new FileInfo(ruta + archivoExcel);
+            }
+
+            using (ExcelPackage xlPackage = new ExcelPackage(newFile))
+            {
+                ExcelWorksheet ws = xlPackage.Workbook.Worksheets.Add("VTP Valorizacion");
+                ws.Cells.Style.Font.Name = "Calibri";
+
+                var contFila = 11;
+
+                #region Valorizacion
+
+                if (File.Exists(rutaLogo))
+                {
+                    Image logo = Image.FromFile(rutaLogo);
+                    var excelImage = ws.Drawings.AddPicture("Logo", logo);
+                    excelImage.SetPosition(2, 0, 1, 0);
+                    excelImage.SetSize(120, 60);
+                }
+
+                ws.Cells[5, 4].Value = "Análisis de Datos de Salida VTP - Valorización";
+                ws.Cells[5, 4].Style.Font.Bold = true;
+                ws.Cells[5, 4, 5, 7].Merge = true;
+                ws.Cells[5, 4, 5, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                              
+                ws.Cells[7, 2].Value = "Mes de Valorización";
+                ws.Cells[7, 3].Value = periodo;
+                ws.Cells[8, 2].Value = "Versión de valorización VTP";
+                ws.Cells[8, 3].Value = version;
+
+               
+                ws.Cells[10, 2].Value = "Empresa";             
+
+                ws.Cells[10, 3].Value = "Potencia Consumida (kW)";
+                ws.Cells[10, 4].Value = "Valorización (S/)";
+                ws.Cells[10, 5].Value = "Predicción (S/)";
+                ws.Cells[10, 6].Value = "Diferencia (S/)";
+                ws.Cells[10, 7].Value = "Error (%)";
+                ws.Cells[10, 8].Value = "Calidad";
+              
+
+
+                ExcelRange rg1 = ws.Cells[10, 2, 10, 8];
+                ObtenerEstiloCelda(rg1, 2);
+                rg1.Style.WrapText = true;
+
+                rg1 = ws.Cells[7, 2, 8, 2];
+                ObtenerEstiloCelda(rg1, 2);
+
+                foreach (var item in DatosVTP.Valorizacion.TableAnas)
+                {
+                  
+                    ws.Cells[contFila, 2].Value = item.Empresa;                   
+
+                    if (item.PotenciaConsumida.HasValue)
+                    {
+                        ws.Cells[contFila, 3].Value = item.PotenciaConsumida;
+                        ws.Cells[contFila, 3].Style.Numberformat.Format = "0.00";
+                    }
+                    if (item.Valorizacion.HasValue)
+                    {
+                        ws.Cells[contFila, 4].Value = item.Valorizacion;
+                        ws.Cells[contFila, 4].Style.Numberformat.Format = "0.00";
+                    }
+                    if (item.Prediccion.HasValue)
+                    {
+                        ws.Cells[contFila, 5].Value = item.Prediccion;
+                        ws.Cells[contFila, 5].Style.Numberformat.Format = "0.00";
+                    }
+                    if (item.Error.HasValue)
+                    {
+                        ws.Cells[contFila, 6].Value = item.Error;
+                        ws.Cells[contFila, 6].Style.Numberformat.Format = "0.00";
+                    }
+                    if (item.ErrorPorcentaje.HasValue)
+                    {
+                        ws.Cells[contFila, 7].Value = item.ErrorPorcentaje;
+                        ws.Cells[contFila, 7].Style.Numberformat.Format = "0.00";
+                    }
+
+                    ws.Cells[contFila, 8].Value = item.Calidad;
+
+                    if (item.Calidad.ToUpper().Equals("INCORRECTO"))
+                    {
+                        ws.Cells[contFila, 2, contFila, 8].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        ws.Cells[contFila, 2, contFila, 8].Style.Fill.BackgroundColor.SetColor(Color.DarkRed);
+                        ws.Cells[contFila, 2, contFila, 8].Style.Font.Color.SetColor(Color.White);
+                    }
+                   
+
+                    contFila++;
+                }
+
+
+                if (DatosVTP.Valorizacion.TableAnas.Count > 0)
+                {
+                    rg1 = ws.Cells[11, 2, contFila - 1, 8];
+                    ObtenerEstiloCelda(rg1, 1);
+                }
+
+                rg1.Style.WrapText = true;
+
+
+                ws.Column(1).Width = 5;
+                ws.Column(2).Width = 50;
+                ws.Column(3).Width = 25;
+                ws.Column(4).Width = 20;
+                ws.Column(5).Width = 20;
+                ws.Column(6).Width = 20;
+                ws.Column(7).Width = 20;
+                ws.Column(8).Width = 15;
+               
+
+                #endregion
+
+                xlPackage.Save();
+            }
+
+            return archivoExcel;
+        }
+
+        public static string GenerarReporteCompensacionVTP(VtpValidacionDTO DatosVTP, string periodo, string version, string rutaLogo)
+        {
+
+            string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
+
+            var archivoExcel = "Reporte_VTP_Peaje" + ".xlsx";
+
+            FileInfo newFile = new FileInfo(ruta + archivoExcel);
+            if (newFile.Exists)
+            {
+                newFile.Delete();
+                newFile = new FileInfo(ruta + archivoExcel);
+            }
+
+            using (ExcelPackage xlPackage = new ExcelPackage(newFile))
+            {
+                ExcelWorksheet ws = xlPackage.Workbook.Worksheets.Add("VTP Compensacion");
+                ws.Cells.Style.Font.Name = "Calibri";
+
+                var contFila = 11;
+
+                #region Compensacion
+
+                if (File.Exists(rutaLogo))
+                {
+                    Image logo = Image.FromFile(rutaLogo);
+                    var excelImage = ws.Drawings.AddPicture("Logo", logo);
+                    excelImage.SetPosition(2, 0, 1, 0);
+                    excelImage.SetSize(120, 60);
+                }
+
+                ws.Cells[5, 4].Value = "Análisis de Datos de Salida VTP - Compensación por peaje de transmisión";
+                ws.Cells[5, 4].Style.Font.Bold = true;
+                ws.Cells[5, 4, 5, 8].Merge = true;
+                ws.Cells[5, 4, 5, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[7, 2].Value = "Mes de Valorización";
+                ws.Cells[7, 3].Value = periodo;
+                ws.Cells[8, 2].Value = "Versión de valorización VTP";
+                ws.Cells[8, 3].Value = version;
+
+
+                ws.Cells[10, 2].Value = "Empresa";
+
+                ws.Cells[10, 3].Value = "Comp. peaje aprox. (S/)";
+                ws.Cells[10, 4].Value = "Comp. peaje real (S/)";
+                ws.Cells[10, 5].Value = "Predicción (S/)";
+                ws.Cells[10, 6].Value = "Diferencia (S/)";
+                ws.Cells[10, 7].Value = "Error (%)";
+                ws.Cells[10, 8].Value = "Calidad";
+
+
+
+                ExcelRange rg1 = ws.Cells[10, 2, 10, 8];
+                ObtenerEstiloCelda(rg1, 2);
+                rg1.Style.WrapText = true;
+
+                rg1 = ws.Cells[7, 2, 8, 2];
+                ObtenerEstiloCelda(rg1, 2);
+
+                foreach (var item in DatosVTP.Peaje.TableAnas)
+                {
+
+                    ws.Cells[contFila, 2].Value = item.Empresa;
+
+                    ws.Cells[contFila, 3].Value = item.CompPeajeAprox;
+                    ws.Cells[contFila, 3].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 4].Value = item.CompPeajeReal;
+                    ws.Cells[contFila, 4].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 5].Value = item.Prediccion;
+                    ws.Cells[contFila, 5].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 6].Value = item.Error;
+                    ws.Cells[contFila, 6].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 7].Value = item.ErrorPorcentaje;
+                    ws.Cells[contFila, 7].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 8].Value = item.Calidad;
+
+                    if (item.Calidad.ToUpper().Equals("INCORRECTO"))
+                    {
+                        ws.Cells[contFila, 2, contFila, 8].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        ws.Cells[contFila, 2, contFila, 8].Style.Fill.BackgroundColor.SetColor(Color.DarkRed);
+                        ws.Cells[contFila, 2, contFila, 8].Style.Font.Color.SetColor(Color.White);
+                    }
+
+
+                    contFila++;
+                }
+
+
+                if (DatosVTP.Valorizacion.TableAnas.Count > 0)
+                {
+                    rg1 = ws.Cells[11, 2, contFila - 1, 8];
+                    ObtenerEstiloCelda(rg1, 1);
+                }
+
+                rg1.Style.WrapText = true;
+
+
+                ws.Column(1).Width = 5;
+                ws.Column(2).Width = 50;
+                ws.Column(3).Width = 25;
+                ws.Column(4).Width = 25;
+                ws.Column(5).Width = 20;
+                ws.Column(6).Width = 20;
+                ws.Column(7).Width = 20;
+                ws.Column(8).Width = 15;
+
+
+                #endregion
+
+
+                xlPackage.Save();
+            }
+
+            return archivoExcel;
+        }
+
+        public static string GenerarReporteDiferenciaVTPVTEA(VtpVteaDTO DatosVTP, string periodo, string versionVTP, string versionVTEA, string rutaLogo)
+        {
+
+            string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
+
+            var archivoExcel = "Reporte_Diferencias_VTP-VTEA." + ".xlsx";
+
+            FileInfo newFile = new FileInfo(ruta + archivoExcel);
+            if (newFile.Exists)
+            {
+                newFile.Delete();
+                newFile = new FileInfo(ruta + archivoExcel);
+            }
+
+            using (ExcelPackage xlPackage = new ExcelPackage(newFile))
+            {
+                ExcelWorksheet ws = xlPackage.Workbook.Worksheets.Add("Descarga Diferencia VTP-VTEA");
+                ws.Cells.Style.Font.Name = "Calibri";
+
+                var contFila = 12;
+
+                #region Diferencia VTP-VTEA
+
+                if (File.Exists(rutaLogo))
+                {
+                    Image logo = Image.FromFile(rutaLogo);
+                    var excelImage = ws.Drawings.AddPicture("Logo", logo);
+                    excelImage.SetPosition(2, 0, 1, 0);
+                    excelImage.SetSize(120, 60);
+                }
+
+                ws.Cells[5, 4].Value = "Análisis de Datos de VTP y VTEA - Diferencia entre VTP y VTEA";
+                ws.Cells[5, 4].Style.Font.Bold = true;
+                ws.Cells[5, 4, 5, 8].Merge = true;
+                ws.Cells[5, 4, 5, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[7, 2].Value = "Mes de Valorización";
+                ws.Cells[7, 3].Value = periodo;
+                ws.Cells[8, 2].Value = "Versión de valorización VTP";
+                ws.Cells[8, 3].Value = versionVTP;
+                ws.Cells[9, 2].Value = "Versión de valorización VTEA";
+                ws.Cells[9, 3].Value = versionVTEA;
+
+                ws.Cells[11, 2].Value = "Codigo VTP";
+                ws.Cells[11, 3].Value = "Empresa";
+                ws.Cells[11, 4].Value = "Cliente";
+
+                ws.Cells[11, 5].Value = "Potencia VTEA (MW)";
+                ws.Cells[11, 6].Value = "Potencia VTP (MW)";
+                ws.Cells[11, 7].Value = "Diferencia (MW)";
+                ws.Cells[11, 8].Value = "Error resp. VTEA (%)";
+                ws.Cells[11, 9].Value = "Error resp. VTP (%)";
+
+
+
+                ExcelRange rg1 = ws.Cells[11, 2, 11, 9];
+                ObtenerEstiloCelda(rg1, 2);
+                rg1.Style.WrapText = true;
+
+                rg1 = ws.Cells[7, 2, 9, 2];
+                ObtenerEstiloCelda(rg1, 2);
+
+                foreach (var item in DatosVTP.TablesD.OrderBy(p=>p.Empresa))
+                {
+                    ws.Cells[contFila, 2].Value = item.CodigoVtp;
+                    ws.Cells[contFila, 3].Value = item.Empresa;
+                    ws.Cells[contFila, 4].Value = item.Cliente;                   
+
+                    if (item.PotenciaVtea.HasValue)
+                    {
+                        ws.Cells[contFila, 5].Value = item.PotenciaVtea;
+                        ws.Cells[contFila, 5].Style.Numberformat.Format = "0.0000";
+                    }
+
+                    if (item.PotenciaVtp.HasValue)
+                    {
+                        ws.Cells[contFila, 6].Value = item.PotenciaVtp;
+                        ws.Cells[contFila, 6].Style.Numberformat.Format = "0.0000";
+                    }
+                    if (item.Diferencia.HasValue)
+                    {
+                        ws.Cells[contFila, 7].Value = item.Diferencia;
+                        ws.Cells[contFila, 7].Style.Numberformat.Format = "0.0000";
+                    }
+                    if (item.ErrorVtea.HasValue)
+                    {
+                        ws.Cells[contFila, 8].Value = item.ErrorVtea;
+                        ws.Cells[contFila, 8].Style.Numberformat.Format = "0.0000";
+                    }
+                    if (item.ErrorVtp.HasValue)
+                    {
+                        ws.Cells[contFila, 9].Value = item.ErrorVtp;
+                        ws.Cells[contFila, 9].Style.Numberformat.Format = "0.0000";
+                    }
+
+                    contFila++;
+                }
+
+
+                if (DatosVTP.TablesD.Count > 0)
+                {
+                    rg1 = ws.Cells[12, 2, contFila - 1, 9];
+                    ObtenerEstiloCelda(rg1, 1);
+                }
+
+                rg1.Style.WrapText = true;
+
+
+                ws.Column(1).Width = 5;
+                ws.Column(2).Width = 30;
+                ws.Column(3).Width = 30;
+                ws.Column(4).Width = 40;
+                ws.Column(5).Width = 20;
+                ws.Column(6).Width = 20;
+                ws.Column(7).Width = 20;
+                ws.Column(8).Width = 20;
+                ws.Column(9).Width = 20;
+               
+
+                #endregion
+
+                xlPackage.Save();
+            }
+
+            return archivoExcel;
+        }
+
+        public static string GenerarReporteComparacionVTEA(VtpVteaDTO DatosVTP, string periodo, string versionVTP, string versionVTEA,string rutaLogo)
+        {
+
+            string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
+
+            var archivoExcel = "Reporte_VTP_Val-VTEA_Zer" + ".xlsx";
+
+            FileInfo newFile = new FileInfo(ruta + archivoExcel);
+            if (newFile.Exists)
+            {
+                newFile.Delete();
+                newFile = new FileInfo(ruta + archivoExcel);
+            }
+
+            using (ExcelPackage xlPackage = new ExcelPackage(newFile))
+            {
+                ExcelWorksheet ws = xlPackage.Workbook.Worksheets.Add("Descarga VTP_Zer VTEA_Val");
+                ws.Cells.Style.Font.Name = "Calibri";
+
+                var contFila = 12;
+
+                #region ComparacionVTEA
+
+                if (File.Exists(rutaLogo))
+                {
+                    Image logo = Image.FromFile(rutaLogo);
+                    var excelImage = ws.Drawings.AddPicture("Logo", logo);
+                    excelImage.SetPosition(2, 0, 1, 0);
+                    excelImage.SetSize(120, 60);
+                }
+
+                ws.Cells[5, 3].Value = "Análisis de Datos de VTP y VTEA - Información Cero/Vacía entre VTP y VTEA";
+                ws.Cells[5, 3].Style.Font.Bold = true;
+                ws.Cells[5, 3, 5, 6].Merge = true;
+                ws.Cells[5, 3, 5, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                ws.Cells[6, 3].Value = "Comparación de declaraciones VTEA - VTP cero/vacío";
+                ws.Cells[6, 3].Style.Font.Bold = true;
+                ws.Cells[6, 3, 6, 6].Merge = true;
+                ws.Cells[6, 3, 6, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[7, 2].Value = "Mes de Valorización";
+                ws.Cells[7, 3].Value = periodo;
+                ws.Cells[8, 2].Value = "Versión de valorización VTP";
+                ws.Cells[8, 3].Value = versionVTP;
+                ws.Cells[9, 2].Value = "Versión de valorización VTEA";
+                ws.Cells[9, 3].Value = versionVTEA;
+
+                ws.Cells[11, 2].Value = "Codigo VTP";
+                ws.Cells[11, 3].Value = "Empresa";
+                ws.Cells[11, 4].Value = "Cliente";
+
+                ws.Cells[11, 5].Value = "Potencia VTEA (MW)";
+                ws.Cells[11, 6].Value = "Potencia VTP (MW)";             
+
+
+                ExcelRange rg1 = ws.Cells[11, 2, 11, 6];
+                ObtenerEstiloCelda(rg1, 2);
+                rg1.Style.WrapText = true;
+
+                rg1 = ws.Cells[7, 2, 9, 2];
+                ObtenerEstiloCelda(rg1, 2);
+
+                foreach (var item in DatosVTP.TablesXY)
+                {
+                    ws.Cells[contFila, 2].Value = item.CodigoVtp;
+                    ws.Cells[contFila, 3].Value = item.Empresa;
+                    ws.Cells[contFila, 4].Value = item.Cliente;
+
+                    if (item.PotenciaVtea.HasValue)
+                    {
+                        ws.Cells[contFila, 5].Value = item.PotenciaVtea;
+                        ws.Cells[contFila, 5].Style.Numberformat.Format = "0.0000";
+                    }
+
+                    if (item.PotenciaVtp.HasValue)
+                    {
+                        ws.Cells[contFila, 6].Value = item.PotenciaVtp;
+                        ws.Cells[contFila, 6].Style.Numberformat.Format = "0.0000";
+                    }                  
+
+                    contFila++;
+                }
+
+
+                if (DatosVTP.TablesXY.Count > 0)
+                {
+                    rg1 = ws.Cells[12, 2, contFila - 1, 6];
+                    ObtenerEstiloCelda(rg1, 1);
+                }
+
+                rg1.Style.WrapText = true;
+
+
+                ws.Column(1).Width = 5;
+                ws.Column(2).Width = 40;
+                ws.Column(3).Width = 40;
+                ws.Column(4).Width = 40;
+                ws.Column(5).Width = 20;
+                ws.Column(6).Width = 20;
+              
+
+                #endregion
+
+                xlPackage.Save();
+            }
+
+            return archivoExcel;
+        }
+
+        public static string GenerarReporteComparacionVTP(VtpVteaDTO DatosVTP, string periodo, string versionVTP, string versionVTEA, string rutaLogo)
+        {
+
+            string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
+
+            var archivoExcel = "Reporte_VTP_Zer-VTEA_Val" + ".xlsx";
+
+            FileInfo newFile = new FileInfo(ruta + archivoExcel);
+            if (newFile.Exists)
+            {
+                newFile.Delete();
+                newFile = new FileInfo(ruta + archivoExcel);
+            }
+
+            using (ExcelPackage xlPackage = new ExcelPackage(newFile))
+            {
+                ExcelWorksheet ws = xlPackage.Workbook.Worksheets.Add("Descarga VTP_Val VTEA_Zer");
+                ws.Cells.Style.Font.Name = "Calibri";
+
+                var contFila = 12;
+
+                #region ComparacionVTEA
+
+                if (File.Exists(rutaLogo))
+                {
+                    Image logo = Image.FromFile(rutaLogo);
+                    var excelImage = ws.Drawings.AddPicture("Logo", logo);
+                    excelImage.SetPosition(2, 0, 1, 0);
+                    excelImage.SetSize(120, 60);
+                }
+
+                ws.Cells[5, 3].Value = "Análisis de Datos de VTP y VTEA - Información Cero/Vacía entre VTP y VTEA";
+                ws.Cells[5, 3].Style.Font.Bold = true;
+                ws.Cells[5, 3, 5, 6].Merge = true;
+                ws.Cells[5, 3, 5, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                ws.Cells[6, 3].Value = "Comparación de declaraciones VTEA cero/vacío - VTP";
+                ws.Cells[6, 3].Style.Font.Bold = true;
+                ws.Cells[6, 3, 6, 6].Merge = true;
+                ws.Cells[6, 3, 6, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[7, 2].Value = "Mes de Valorización";
+                ws.Cells[7, 3].Value = periodo;
+                ws.Cells[8, 2].Value = "Versión de valorización VTP";
+                ws.Cells[8, 3].Value = versionVTP;
+                ws.Cells[9, 2].Value = "Versión de valorización VTEA";
+                ws.Cells[9, 3].Value = versionVTEA;
+
+                ws.Cells[11, 2].Value = "Codigo VTP";
+                ws.Cells[11, 3].Value = "Empresa";
+                ws.Cells[11, 4].Value = "Cliente";
+
+                ws.Cells[11, 5].Value = "Potencia VTEA (MW)";
+                ws.Cells[11, 6].Value = "Potencia VTP (MW)";
+
+
+                ExcelRange rg1 = ws.Cells[11, 2, 11, 6];
+                ObtenerEstiloCelda(rg1, 2);
+                rg1.Style.WrapText = true;
+
+                rg1 = ws.Cells[7, 2, 9, 2];
+                ObtenerEstiloCelda(rg1, 2);
+
+                foreach (var item in DatosVTP.TablesYX)
+                {
+                    ws.Cells[contFila, 2].Value = item.CodigoVtp;
+                    ws.Cells[contFila, 3].Value = item.Empresa;
+                    ws.Cells[contFila, 4].Value = item.Cliente;
+
+                    if (item.PotenciaVtea.HasValue)
+                    {
+                        ws.Cells[contFila, 5].Value = item.PotenciaVtea;
+                        ws.Cells[contFila, 5].Style.Numberformat.Format = "0.0000";
+                    }
+
+                    if (item.PotenciaVtp.HasValue)
+                    {
+                        ws.Cells[contFila, 6].Value = item.PotenciaVtp;
+                        ws.Cells[contFila, 6].Style.Numberformat.Format = "0.0000";
+                    }
+
+                    contFila++;
+                }
+
+
+                if (DatosVTP.TablesYX.Count > 0)
+                {
+                    rg1 = ws.Cells[12, 2, contFila - 1, 6];
+                    ObtenerEstiloCelda(rg1, 1);
+                }
+
+                rg1.Style.WrapText = true;
+
+
+                ws.Column(1).Width = 5;
+                ws.Column(2).Width = 40;
+                ws.Column(3).Width = 40;
+                ws.Column(4).Width = 40;
+                ws.Column(5).Width = 20;
+                ws.Column(6).Width = 20;
+
+
+                #endregion
+
+                xlPackage.Save();
+            }
+
+            return archivoExcel;
+        }
+
         public static ExcelRange ObtenerEstiloCelda(ExcelRange rango, int seccion)
         {
             if (seccion == 0)
@@ -580,7 +1180,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             if (seccion == 1)
             {
-                rango.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                //rango.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 rango.Style.Font.Size = 10;
                 string colorborder = "#000000";
                 rango.Style.Border.Left.Style = ExcelBorderStyle.Thin;

@@ -15,6 +15,7 @@ using COES.Framework.Base.Tools;
 using System.Threading.Tasks;
 using COES.Dominio.DTO.ValidacionVTEAVTP;
 using COES.MVC.Intranet.Helper;
+using System.Configuration;
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 {
@@ -57,9 +58,11 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             var primerPeriodo = lstPeriodo.FirstOrDefault();
 
             List<VtpVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+            List<VteaVersionDTO> lstVersionesVTEA = await validacionVTEAVTPAppServicio.ObtenerSmeVteaVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
             model.ListPeriodos = lstPeriodo;
             model.ListVersiones = lstVersiones;
+            model.ListVersionsVTEA = lstVersionesVTEA;
 
             return View(model);
         }
@@ -86,68 +89,144 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             try
             {
-                if (inicializar > 0)
-                {
-                    model.VtpVteaDatos = new VtpVteaDTO();
-                    model.VtpVteaDatos.TablesXY = new List<TableXY>();                  
-                    model.VtpVteaDatos.TablesYX = new List<TableYX>();
-                    model.VtpVteaDatos.TablesD = new List<TableD>();
+                model.VtpVteaDatos = new VtpVteaDTO();
+                model.VtpVteaDatos.TablesXY = new List<TableXY>();
+                model.VtpVteaDatos.TablesYX = new List<TableYX>();
+                model.VtpVteaDatos.TablesD = new List<TableD>();
 
-                }
-                else
-                {
+                if (inicializar == 0)
+                {                  
                     FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
                     FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
 
                     string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                    var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpVtea(periodo, versionVTP, versionVTP, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+                    var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpVtea(periodo, verstionVTEA, versionVTP, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
-                    model.VtpVteaDatos = datosSalidaVTP;
+                    //model.VtpVteaDatos = datosSalidaVTP;
+
+                    if (datosSalidaVTP.Resultado == 0)
+                    {
+                        model.VtpVteaDatos = datosSalidaVTP;
+                    }
+                    else
+                    {
+                        if (datosSalidaVTP.Resultado == -1)
+                        {
+                            model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+
+                            log.Error(model.StrMensajeError);
+
+                        }
+                        else if (datosSalidaVTP.Resultado == 1)
+                        {
+                            //por revisar
+                        }
+                    }
 
                 }
-                // 1. Obtener todos los datos necesarios, igual que antes
-             
-                // 2. Renderizar cada vista parcial a un string de HTML usando el método auxiliar
+               
                 string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVTPVTEA/";
 
                 string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaComparacionDiferencias.cshtml", model);
                 string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaComparacionVTEA.cshtml", model);
-                string htmlBarrasSinAnalizar = RenderViewToString($"{rutaBaseVista}ListaComparacionVTP.cshtml", model);               
-
-                // 3. Crear un objeto anónimo (o un DTO) para empaquetar los strings de HTML
+                string htmlBarrasSinAnalizar = RenderViewToString($"{rutaBaseVista}ListaComparacionVTP.cshtml", model);              
+                               
                 model.VistaComparacionDiferencia = htmlBarrasBrg;
                 model.VistaComparacionVTEA = htmlBarrasNoBrg;
                 model.VistaComparacionVTP = htmlBarrasSinAnalizar;
 
-                model.StrMensaje = inicializar > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación" : "NOTA: Se realizó la evaluación el " + DateTime.Now.ToString("dd/MM/yyyy hh:mm:ss") + ".";
+                var fecha = DateTime.Now;
+                model.StrMensaje = inicializar > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación" :
+                     string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("hh:mm:ss"));
 
-                // 4. Devolver este objeto como JSON
+                Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_VTEA_VTP] = model.VtpVteaDatos;
+
+               
                 return Json(model, JsonRequestBehavior.AllowGet);
             }
             catch (System.Exception ex)
             {
-                // Si hay un error, lo devolvemos como un error 500 y el mensaje
-                // será visible en la consola de herramientas de desarrollador del navegador (F12).
-                Response.StatusCode = 500;
-                return Content(ex.Message, "text/plain");
+                log.Error(NameController, ex);
+                model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
             }
+
+            return Json(model, JsonRequestBehavior.AllowGet);
         }
 
         public async Task<ActionResult> ObtenerVersiones(string periodo)
         {
-            ValidadorVTPSalidaModel model = new ValidadorVTPSalidaModel();
+            ValidadorVTPVTEAModel model = new ValidadorVTPVTEAModel();
             FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
             FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
 
             string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
             List<VtpVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+            List<VteaVersionDTO> lstVersionesVTEA = await validacionVTEAVTPAppServicio.ObtenerSmeVteaVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
             model.ListVersiones = lstVersiones;
+            model.ListVersionsVTEA = lstVersionesVTEA;
+
             model.StrMensajeError = "0";
 
             return Json(model, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public ActionResult GenerarReporteSeccion(string periodo, string versionVTP, string versionVTEA, string seccion)
+        {
+            base.ValidarSesionUsuario();
+
+            string rutaLogo = Server.MapPath("~/Areas/ValidacionVTEAVTP/Content/Images/logocoes_black.png");
+
+            string nombreArchivo = "-1";
+
+            var datosVTP = new VtpVteaDTO();
+
+            if (Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_VTEA_VTP] != null)
+            {
+                datosVTP = (VtpVteaDTO)Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_VTEA_VTP];
+            }
+
+            try
+            {
+                switch (seccion)
+                {
+                    case "DiferenciaVTPVTEA":
+                       
+                        nombreArchivo = Helper.ExcelDocument.GenerarReporteDiferenciaVTPVTEA(datosVTP, periodo, versionVTP, versionVTEA, rutaLogo);
+
+                        break;
+
+                    case "ComparacionVTEA":
+
+                        nombreArchivo = Helper.ExcelDocument.GenerarReporteComparacionVTEA(datosVTP, periodo, versionVTP, versionVTEA, rutaLogo);
+
+                        break;
+
+                    case "ComparacionVTP":
+                        
+                        nombreArchivo = Helper.ExcelDocument.GenerarReporteComparacionVTP(datosVTP, periodo, versionVTP, versionVTEA, rutaLogo);
+                        break;
+
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(NameController, ex);
+                nombreArchivo = "-1";
+            }
+
+            return Json(nombreArchivo);
+        }
+
+        public virtual ActionResult DescargarArchivo(string file)
+        {
+            string fullPath = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile].ToString() + file;
+            var bytes = System.IO.File.ReadAllBytes(fullPath);
+            System.IO.File.Delete(fullPath);
+            return File(bytes, Constantes.AppExcel, file);
         }
 
     }

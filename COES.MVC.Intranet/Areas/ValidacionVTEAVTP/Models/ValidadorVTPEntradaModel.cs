@@ -12,6 +12,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Models
         public string StrMensaje { get; set; }
 
         public string StrMensajeError {  get; set; }
+        public string StrMensajeErrorApi { get; set; }
 
         public List<TrnPeriodoDTO> ListPeriodos { get; set; }
         public List<VtpVersionDTO> ListVersiones { get; set; }

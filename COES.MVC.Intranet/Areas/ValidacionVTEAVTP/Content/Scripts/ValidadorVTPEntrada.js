@@ -56,7 +56,7 @@ function mostrarMensaje(id, tipo, mensaje) {
 
 }
 
-function limpiarBarraMensaje(id) {
+function limpiarMensaje(id) {
     $('#' + id).css("display", "none");
     $('#' + id).removeClass();
     $('#' + id).addClass('action-message');
@@ -66,6 +66,8 @@ function limpiarBarraMensaje(id) {
 function cargarVersiones() {
 
     let periodo = $("#cbPeriodo").val();
+
+    limpiarMensaje('mensaje');
 
     $.ajax({
         type: 'POST',
@@ -77,19 +79,17 @@ function cargarVersiones() {
         global: false,
         success: function (result) {
             if (result.StrMensajeError != -1) {
-                $('#cbVersion').get(0).options.length = 0;
-                //$('#cbPeriodo').get(0).options[0] = new Option("--SELECCIONE--", "");
+                $('#cbVersion').get(0).options.length = 0;                
                 $.each(result.ListVersiones, function (i, item) {
                     $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecPotNombre, item.RecPotNombre);
-                });
-                //$('#tab-container').hide();
+                });                
             }
             else {
-                mostrarMensaje('mensaje', 'error', 'Se ha producido un error.');
+                alert("Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.");
             }
         },
         error: function () {
-            mostrarMensaje('mensaje', 'error', 'Se ha producido un error.');
+            alert("Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.");
         }
     });
 }
@@ -97,18 +97,21 @@ function cargarVersiones() {
  function consultar (inicializar) {
 
     let periodo = $("#cbPeriodo").val();
-    let version = $("#cbVersion").val();
+    let version = $("#cbVersion").val();    
 
      if (inicializar == 0) {
-         if (periodo == '') {
-             //periodo = 0;
+         if (periodo == '' || periodo == null) {
+             mostrarMensaje('mensaje', 'error', 'El dato “Mes de valorización” está vacío. No es posible procesar la evaluación.');
+             return;
          }
 
-         if (version == '') {
-             //version = 0;
+         if (version == '' || version == null) {
+             mostrarMensaje('mensaje', 'error', 'El dato “Versión” está vacío. No es posible procesar la evaluación.');
+             return;
          }
      }    
 
+     limpiarMensaje('mensaje');
     setTimeout(function () {
         $.ajax({
             type: 'GET',
@@ -116,9 +119,10 @@ function cargarVersiones() {
             data: {
                 periodo: periodo,
                 version: version,
-                inicializar: inicializar
+                esInicio: inicializar
             },
             success: function (evt) {
+
                 $('#tab-container').show();
                 $('#detalleBarrasBrg').html(evt.VistaBarrasBrg);
                 $('#detalleBarrasNoBrg').html(evt.VistaBarrasNoBrg);
@@ -126,22 +130,32 @@ function cargarVersiones() {
                 $('#detalleDiferenciaPotencias').html(evt.VistaBarrasDiferencia);
 
                 $('#tablaListadoBarras').dataTable({
-                    "iDisplayLength": 25,
+                    "iDisplayLength": 20,
+                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
+                    "pagingType": "full_numbers",
                     columnDefs: [
-                        
+
                     ],
                     language: {
                         info: 'Mostrando página _PAGE_ de _PAGES_',
                         infoEmpty: 'No hay registros disponibles',
                         infoFiltered: '(filtrado de _MAX_ registros totales)',
                         lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada'
+                        zeroRecords: 'No se encontró nada',
+                        "paginate": {
+                            "first": '<<',
+                            "last": '>>',
+                            "next": '>',
+                            "previous": '<'
+                        }
                     },
                     order: [[1, 'asc']]
                 });
 
                 $('#tablaListadoBarrasNoBrg').dataTable({
-                    "iDisplayLength": 25,
+                    "iDisplayLength": 20,
+                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
+                    "pagingType": "full_numbers",
                     columnDefs: [
 
                     ],
@@ -150,13 +164,21 @@ function cargarVersiones() {
                         infoEmpty: 'No hay registros disponibles',
                         infoFiltered: '(filtrado de _MAX_ registros totales)',
                         lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada'
+                        zeroRecords: 'No se encontró nada',
+                        "paginate": {
+                            "first": '<<',
+                            "last": '>>',
+                            "next": '>',
+                            "previous": '<'
+                        }
                     },
                     order: [[1, 'asc']]
                 });
 
                 $('#tablaListadoBarrasSinAnalizar').dataTable({
-                    "iDisplayLength": 25,
+                    "iDisplayLength": 5,
+                    "lengthMenu": [[5, 20, 50, 100], [5, 20, 50, 100]],
+                    "pagingType": "full_numbers",
                     columnDefs: [
 
                     ],
@@ -165,13 +187,21 @@ function cargarVersiones() {
                         infoEmpty: 'No hay registros disponibles',
                         infoFiltered: '(filtrado de _MAX_ registros totales)',
                         lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada'
+                        zeroRecords: 'No se encontró nada',
+                        "paginate": {
+                            "first": '<<',
+                            "last": '>>',
+                            "next": '>',
+                            "previous": '<'
+                        }
                     },
                     order: [[1, 'asc']]
                 });
 
                 $('#tablaListadoBarrasDiferencia').dataTable({
-                    "iDisplayLength": 25,
+                    "iDisplayLength": 20,
+                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
+                    "pagingType": "full_numbers",
                     columnDefs: [
 
                     ],
@@ -180,7 +210,13 @@ function cargarVersiones() {
                         infoEmpty: 'No hay registros disponibles',
                         infoFiltered: '(filtrado de _MAX_ registros totales)',
                         lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada'
+                        zeroRecords: 'No se encontró nada',
+                        "paginate": {
+                            "first": '<<',
+                            "last": '>>',
+                            "next": '>',
+                            "previous": '<'
+                        }
                     },
                     order: [[1, 'asc']]
                 });
@@ -194,12 +230,18 @@ function cargarVersiones() {
                     $.each(evt.EmpresasBarra, function (i, item) {
                         $('#cbEmpresa').get(0).options[$('#cbEmpresa').get(0).options.length] = new Option(item, item);
                     });
-                }               
+                }
 
                 $('.dataTables_filter input').attr('maxLength', 50);
+
+                if (evt.StrMensajeError != '') {                   
+               
+                    alert(evt.StrMensajeError);
+                }
+                
             },
             error: function () {
-                alert('Hubo un error');
+                alert('Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.');
             }
         });
     }, 100);
@@ -231,6 +273,41 @@ function filtrarEmpresaClick(elemento) {
 function descargarReporte(seccion) {
     let periodo = $("#cbPeriodo").val();
     let version = $("#cbVersion").val();
+    let empresa = $("#cbEmpresa").val();
+
+    var mensajeError = '';
+    switch (seccion) {
+        case 'Barras': {
+            let tablaBarra = $("#tablaListadoBarras").DataTable();
+            let tablaBarraNoBrg = $("#tablaListadoBarrasNoBrg").DataTable();
+
+            if (tablaBarra.data().length == 0 && tablaBarraNoBrg.data().length == 0) {
+                mensajeError = 'Ambas grillas de la subsección “1.1 Registros con error en el PPM y Peaje” están vacías, no es posible descargar.';
+            }
+            break;
+        }
+        case 'BarrasSinAnalizar': {
+            let tablaBarraSinAnalizar = $("#tablaListadoBarrasSinAnalizar").DataTable();
+
+            if (tablaBarraSinAnalizar.data().length == 0) {
+                mensajeError = 'La grilla está vacía, no es posible descargar.';
+            }
+            break;
+        }
+        case 'BarrasDiferencia': {
+            let tablaBarraDiferencia = $("#tablaListadoBarrasDiferencia").DataTable();
+
+            if (tablaBarraDiferencia.data().length == 0) {
+                mensajeError = 'La grilla está vacía, no es posible descargar.';
+            }
+            break;
+        }
+    }
+
+    if (mensajeError != '') {
+        mostrarMensaje('mensaje', 'error', mensajeError);
+        return;
+    }
 
     $.ajax({
         type: 'POST',
@@ -238,6 +315,7 @@ function descargarReporte(seccion) {
         data: {
             periodo: periodo,
             version: version,
+            empresa: empresa,
             seccion: seccion
         },
         dataType: 'json',
@@ -247,11 +325,11 @@ function descargarReporte(seccion) {
                
             }
             else {
-                alert("Error al generar el archivo.");
+                alert("Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.");
             }
         },
         error: function (err) {
-            alert("Ha ocurrido un error");
+            alert("Ha ocurrido un error interno no previsto en el sistema.Por favor comunique al Administrador del sistema.");
         }
     });
 }

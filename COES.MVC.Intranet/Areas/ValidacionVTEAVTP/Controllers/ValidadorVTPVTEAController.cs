@@ -53,16 +53,17 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-            List<TrnPeriodoDTO> lstPeriodo = await validacionVTEAVTPAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+            TrnPeriodoDTO periodo = await validacionVTEAVTPAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
-            var primerPeriodo = lstPeriodo.FirstOrDefault();
+            var primerPeriodo = periodo.Periodos.FirstOrDefault();
 
-            List<VtpVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
-            List<VteaVersionDTO> lstVersionesVTEA = await validacionVTEAVTPAppServicio.ObtenerSmeVteaVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+            VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
-            model.ListPeriodos = lstPeriodo;
-            model.ListVersiones = lstVersiones;
-            model.ListVersionsVTEA = lstVersionesVTEA;
+            VteaVersionDTO versionesVtea = await validacionVTEAVTPAppServicio.ObtenerSmeVteaVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+            model.PeriodoValorizacion = periodo;
+            model.VersionesVtp = versionesVtp;
+            model.VersionesVtea = versionesVtea;
 
             return View(model);
         }
@@ -162,11 +163,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-            List<VtpVersionDTO> lstVersiones = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
-            List<VteaVersionDTO> lstVersionesVTEA = await validacionVTEAVTPAppServicio.ObtenerSmeVteaVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+            VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
-            model.ListVersiones = lstVersiones;
-            model.ListVersionsVTEA = lstVersionesVTEA;
+            VteaVersionDTO versionesVtea = await validacionVTEAVTPAppServicio.ObtenerSmeVteaVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+            model.VersionesVtp = versionesVtp;
+            model.VersionesVtea = versionesVtea;
 
             model.StrMensajeError = "0";
 

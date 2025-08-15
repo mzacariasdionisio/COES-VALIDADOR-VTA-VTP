@@ -8,6 +8,7 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
 
     public class VtpDTO { 
         public int Resultado { get; set; }
+        public string Mensaje { get; set; }
 
         [JsonProperty("Table_ANA")]
         public List<TablaAnaResultDTO> TableAnas { get; set; }

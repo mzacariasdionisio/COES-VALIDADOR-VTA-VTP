@@ -6,7 +6,9 @@ using System.Collections.Generic;
 namespace COES.Dominio.DTO.ValidacionVTEAVTP
 {
 
-    public class VtpValidacionDTO { 
+    public class VtpValidacionDTO {
+        public int Resultado { get; set; }
+        public string Mensaje { get; set; }
         public ValorizacionDTO Valorizacion { get; set; }
         public PeajeDTO Peaje { get; set; } 
     }

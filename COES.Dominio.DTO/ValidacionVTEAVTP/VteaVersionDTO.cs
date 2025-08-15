@@ -7,7 +7,7 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
     {
         public int Resultado { get; set; }
         public string Mensaje { get; set; }
-        public List<TableVersionVteaDTO> versiones { get; set; }
+        public List<TableVersionVteaDTO> Versiones { get; set; }
 
     }
     public class TableVersionVteaDTO

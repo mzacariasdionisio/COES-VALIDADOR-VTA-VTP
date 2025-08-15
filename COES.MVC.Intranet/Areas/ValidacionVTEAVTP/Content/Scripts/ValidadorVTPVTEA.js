@@ -71,12 +71,12 @@ function cargarVersiones() {
         success: function (result) {
             if (result.StrMensajeError != -1) {
                 $('#cbVersionVTP').get(0).options.length = 0;               
-                $.each(result.ListVersiones, function (i, item) {
+                $.each(result.VersionesVtp.Versiones, function (i, item) {
                     $('#cbVersionVTP').get(0).options[$('#cbVersionVTP').get(0).options.length] = new Option(item.RecPotNombre, item.RecPotNombre);
                 });                
 
                 $('#cbVersionVTEA').get(0).options.length = 0;
-                $.each(result.ListVersionsVTEA, function (i, item) {
+                $.each(result.VersionesVtea.Versiones, function (i, item) {
                     $('#cbVersionVTEA').get(0).options[$('#cbVersionVTEA').get(0).options.length] = new Option(item.RecaNombre, item.RecaNombre);
                 });       
             }

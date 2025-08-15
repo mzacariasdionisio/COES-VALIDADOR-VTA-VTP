@@ -65,7 +65,7 @@ function cargarVersiones() {
         success: function (result) {
             if (result.StrMensajeError != -1) {
                 $('#cbVersion').get(0).options.length = 0;                
-                $.each(result.ListVersiones, function (i, item) {
+                $.each(result.VersionesVtp.Versiones, function (i, item) {
                     $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecPotNombre, item.RecPotNombre);
                 });                
             }

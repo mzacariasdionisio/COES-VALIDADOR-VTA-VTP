@@ -136,7 +136,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Post, urlMetodo, content);
                 List<TableVersionVteaDTO> versiones = JsonConvert.DeserializeObject<List<TableVersionVteaDTO>>(json);
                 vteaVersionDTO.Resultado = 0;
-                vteaVersionDTO.versiones = versiones;
+                vteaVersionDTO.Versiones = versiones;
                 return vteaVersionDTO;
             }
             catch (Exception ex)

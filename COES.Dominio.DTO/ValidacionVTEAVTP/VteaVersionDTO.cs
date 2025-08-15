@@ -1,10 +1,18 @@
 ﻿
+using System.Collections.Generic;
+
 namespace COES.Dominio.DTO.ValidacionVTEAVTP
 {
     public class VteaVersionDTO
     {
-        public int RecaCodi { get; set; }
-        public string RecaNombre { get; set; }
+        public int Resultado { get; set; }
+        public string Mensaje { get; set; }
+        public List<TableVersionVteaDTO> versiones { get; set; }
 
     }
-}
+    public class TableVersionVteaDTO
+    {
+        public int RecaCodi { get; set; }
+        public string RecaNombre { get; set; }
+    }
+ }

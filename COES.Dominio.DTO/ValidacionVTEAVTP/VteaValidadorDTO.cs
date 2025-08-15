@@ -6,12 +6,12 @@ using System.Collections.Generic;
 namespace COES.Dominio.DTO.ValidacionVTEAVTP
 {
 
-    public class VteaDTO
+    public class VteaValidadorDTO
     { 
         public int Resultado { get; set; }
         public string Mensaje { get; set; }
 
-        [JsonProperty("Table_E_H")]
+        /*[JsonProperty("Table_E_H")]
         public List<TableEH> TableEH { get; set; }
 
         [JsonProperty("Table_H_E")]
@@ -21,11 +21,11 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
         public List<TableFC> TableFC { get; set; }
 
         [JsonProperty("RETIROS_NEGATIVOS")]
-        public List<RetirosNegativos> RetirosNegativos { get; set; }
+        public List<RetirosNegativos> RetirosNegativos { get; set; }*/
 
     }
 
-    public class TableEH {
+  /*  public class TableEH {
         [JsonProperty("codigo")]
         public string Codigo { get; set; }
 
@@ -100,6 +100,6 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
     public class RetirosNegativos
     {
        //No encontré data para retiros negativos
-    }
+    }*/
 
 }

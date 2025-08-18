@@ -101,8 +101,19 @@ function cargarVersiones() {
      let versionVTEA = $("#cbVersionVTEA").val();
         
      if (inicializar == 0) {
+
+         if ((periodo == '' || periodo == null) && (version == '' || version == null) && (versionVTEA == '' || versionVTEA == null)) {
+             mostrarMensaje('mensaje', 'error', 'Los datos “Mes de valorización”, “Versión VTP” y “Versión VTEA” están vacíos. No es posible procesar la evaluación.');
+             return;
+         }
+
          if (periodo == '' || periodo == null) {
              mostrarMensaje('mensaje', 'error', 'El dato “Mes de valorización” está vacío. No es posible procesar la evaluación.');
+             return;
+         }
+
+         if ((version == '' || version == null) && (versionVTEA == '' || versionVTEA == null)) {
+             mostrarMensaje('mensaje', 'error', 'Los datos “Versión VTP” y “Versión VTEA” están vacíos. No es posible procesar la evaluación.');
              return;
          }
 

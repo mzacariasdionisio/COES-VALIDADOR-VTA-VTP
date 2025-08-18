@@ -102,6 +102,12 @@ function cargarVersiones() {
     let version = $("#cbVersion").val();    
 
      if (inicializar == 0) {
+
+         if ((periodo == '' || periodo == null) && (version == '' || version == null)) {
+             mostrarMensaje('mensaje', 'error', 'Los datos “Mes de valorización” y “Versión” están vacíos. No es posible procesar la evaluación.');
+             return;
+         }
+
          if (periodo == '' || periodo == null) {
              mostrarMensaje('mensaje', 'error', 'El dato “Mes de valorización” está vacío. No es posible procesar la evaluación.');
              return;

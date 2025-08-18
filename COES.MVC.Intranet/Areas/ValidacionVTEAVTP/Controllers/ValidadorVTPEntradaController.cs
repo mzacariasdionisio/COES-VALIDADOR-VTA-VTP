@@ -270,7 +270,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             if(Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_Entrada_VTP] != null)
             {
-                datosVTP = (VtpDTO)Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_Entrada_VTP];
+                var datosinicio = (VtpDTO)Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_Entrada_VTP];
+
+                datosVTP.TableVtpBrg = datosinicio.TableVtpBrg;
+                datosVTP.TableVtpNoBrg = datosinicio.TableVtpNoBrg;
+                datosVTP.TableVtpSinAnalizar = datosinicio.TableVtpSinAnalizar;
+                datosVTP.TableAnas = datosinicio.TableAnas;
             }
 
             try

@@ -189,7 +189,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[5, 4, 5, 9].Merge = true;
                 ws.Cells[5, 4, 5, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                ws.Cells[6, 6].Value = "BARRAS BRG";
+                ws.Cells[6, 6].Value = "BARRAS NO BRG";
                 ws.Cells[6, 6].Style.Font.Bold = true;
 
                 ws.Cells[7, 2].Value = "Mes de Valorización";
@@ -561,7 +561,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "Reporte_VTP_Valorizacion" + ".xlsx";
+            var archivoExcel = "Reporte_VTP_Valorizacion_Compensacion" + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)

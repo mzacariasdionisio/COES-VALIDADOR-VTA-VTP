@@ -1,4 +1,5 @@
 ﻿
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace COES.Dominio.DTO.ValidacionVTEAVTP
@@ -7,6 +8,7 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
     {
         public int Resultado { get; set; }
         public string Mensaje { get; set; }
+        [JsonProperty("VersionVTP")]
         public List<TableVersionVtpDTO> Versiones { get; set; }
 
     }

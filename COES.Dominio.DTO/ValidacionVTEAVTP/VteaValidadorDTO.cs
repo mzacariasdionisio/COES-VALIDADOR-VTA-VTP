@@ -1,6 +1,5 @@
 ﻿
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 
 namespace COES.Dominio.DTO.ValidacionVTEAVTP
@@ -11,45 +10,54 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
         public int Resultado { get; set; }
         public string Mensaje { get; set; }
 
-        /*[JsonProperty("Table_E_H")]
-        public List<TableEH> TableEH { get; set; }
+        [JsonProperty("info_empresa_resumen")]
+        public List<InfoEmpresaResumen> InfoEmpresaResumen { get; set; }
 
-        [JsonProperty("Table_H_E")]
-        public List<TableHE> TableHE { get; set; }
+        [JsonProperty("info_empresa_detalle")]
+        public List<InfoEmpresaDetalle> InfoEmpresaDetalle { get; set; }
 
-        [JsonProperty("Table_F_C")]
-        public List<TableFC> TableFC { get; set; }
+        [JsonProperty("info_declaracion_detalle")]
+        public List<InfoDeclaracionDetalle> InfoDeclaracionDetalle { get; set; }
 
-        [JsonProperty("RETIROS_NEGATIVOS")]
-        public List<RetirosNegativos> RetirosNegativos { get; set; }*/
+        [JsonProperty("info_declaracion_resumen")]
+        public List<InfoDeclaracionResumen> InfoDeclaracionResumen { get; set; }
 
     }
 
-  /*  public class TableEH {
-        [JsonProperty("codigo")]
-        public string Codigo { get; set; }
+    public class InfoEmpresaResumen {
+        [JsonProperty("company")]
+        public string Company { get; set; }
 
-        [JsonProperty("empresa")]
-        public string Empresa { get; set; }
+        [JsonProperty("change")]
+        public string Change { get; set; }
 
         [JsonProperty("cliente")]
         public string Cliente { get; set; }
 
-        [JsonProperty("barra")]
-        public string Barra { get; set; }
+        [JsonProperty("team_now")]
+        public string TeamNow { get; set; }
 
-        [JsonProperty("inicio_contrato")]
-        public string InicioContrato { get; set; }
+        [JsonProperty("team_prev")]
+        public string TeamPrev { get; set; }
 
-        [JsonProperty("fin_contrato")]
-        public string FinContrato { get; set; }
+        [JsonProperty("rate")]
+        public double Rate { get; set; }
+    }
 
-        [JsonProperty("descripcion")]
-        public string Descripcion { get; set; }
+    public class InfoEmpresaDetalle
+    {
+        [JsonProperty("company")]
+        public string Company { get; set; }
+
+        [JsonProperty("date")]
+        public string Date { get; set; }
+
+        [JsonProperty("level")]
+        public int Level { get; set; }
 
     }
 
-    public class TableHE
+    public class InfoDeclaracionDetalle
     {
         [JsonProperty("codigo")]
         public string Codigo { get; set; }
@@ -63,18 +71,22 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
         [JsonProperty("barra")]
         public string Barra { get; set; }
 
-        [JsonProperty("inicio_contrato")]
-        public string InicioContrato { get; set; }
+        [JsonProperty("tipo")]
+        public string Tipo { get; set; }
 
-        [JsonProperty("fin_contrato")]
-        public string FinContrato { get; set; }
+        [JsonProperty("dia")]
+        public int Dia { get; set; }
 
-        [JsonProperty("descripcion")]
-        public string Descripcion { get; set; }
+        [JsonProperty("observado")]
+        public string Observado { get; set; }
+
+        [JsonProperty("indicador")]
+        public int Indicador { get; set; }
     }
 
-    public class TableFC
+    public class InfoDeclaracionResumen
     {
+
         [JsonProperty("codigo")]
         public string Codigo { get; set; }
 
@@ -86,20 +98,10 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
 
         [JsonProperty("barra")]
         public string Barra { get; set; }
-
-        [JsonProperty("inicio_contrato")]
-        public string InicioContrato { get; set; }
-
-        [JsonProperty("fin_contrato")]
-        public string FinContrato { get; set; }
-
-        [JsonProperty("descripcion")]
-        public string Descripcion { get; set; }
+        [JsonProperty("tipo")]
+        public string Tipo { get; set; }
+        [JsonProperty("observado")]
+        public string Observado { get; set; }
     }
-
-    public class RetirosNegativos
-    {
-       //No encontré data para retiros negativos
-    }*/
 
 }

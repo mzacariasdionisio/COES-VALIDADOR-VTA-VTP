@@ -58,9 +58,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             {
                 string urlMetodo = string.Format("{0}/{1}", urlBase, HttpMethodTrnperiodo);
                 var response =await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
-                List<TablePeriodoDTO> periodos = JsonConvert.DeserializeObject<List<TablePeriodoDTO>>(response);
-                trnPeriodoDTO.Resultado = 0;
-                trnPeriodoDTO.Periodos = periodos;
+                trnPeriodoDTO = JsonConvert.DeserializeObject<TrnPeriodoDTO>(response);
                 return trnPeriodoDTO;
             }
             catch (Exception ex)
@@ -84,21 +82,19 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VtpVersionDTO vtpVersionDTO = new VtpVersionDTO();  
             try
             {
-                string urlMetodo = $"{urlBase}/{HttpMethodVtpVersions}/";
+                string urlMetodo = $"{urlBase}/{HttpMethodVtpVersions}?perinombre={perinombre}&recpotnombre={recpotnombre}" ;
 
-                var parametros = new
+                /*var parametros = new
                 {
                     perinombre,
                     recpotnombre
                 };
-                string jsonBody = JsonConvert.SerializeObject(parametros);
+                string jsonBody = JsonConvert.SerializeObject(parametros);*/
 
                 // Aquí se configura correctamente el tipo MIME: application/json
-                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-                string json = await HttpServiceHelper.SendAsync(HttpMethod.Post, urlMetodo, content);
-                List<TableVersionVtpDTO> versiones = JsonConvert.DeserializeObject<List<TableVersionVtpDTO>>(json);
-                vtpVersionDTO.Resultado = 0;
-                vtpVersionDTO.Versiones = versiones;
+                /*var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");*/
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo/*, content*/);
+                vtpVersionDTO = JsonConvert.DeserializeObject<VtpVersionDTO>(json);
                 return vtpVersionDTO;
             }
             catch (Exception ex)
@@ -122,21 +118,28 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VteaVersionDTO vteaVersionDTO = new VteaVersionDTO();
             try
             {
-                string urlMetodo = $"{urlBase}/{HttpMethodVteaVersions}/";
+                string urlMetodo = $"{urlBase}/{HttpMethodVteaVersions}?perinombre={perinombre}&recpotnombre={recpotnombre}";
 
-                var parametros = new
+                /*var parametros = new
                 {
                     perinombre,
                     recpotnombre
                 };
-                string jsonBody = JsonConvert.SerializeObject(parametros);
+                string jsonBody = JsonConvert.SerializeObject(parametros);*/
 
                 // Aquí se configura correctamente el tipo MIME: application/json
-                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-                string json = await HttpServiceHelper.SendAsync(HttpMethod.Post, urlMetodo, content);
-                List<TableVersionVteaDTO> versiones = JsonConvert.DeserializeObject<List<TableVersionVteaDTO>>(json);
-                vteaVersionDTO.Resultado = 0;
-                vteaVersionDTO.Versiones = versiones;
+
+                //var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+                //string json = await HttpServiceHelper.SendAsync(HttpMethod.Post, urlMetodo, content);
+                //List<TableVersionVteaDTO> versiones = JsonConvert.DeserializeObject<List<TableVersionVteaDTO>>(json);
+                //vteaVersionDTO.Resultado = 0;
+                //vteaVersionDTO.Versiones = versiones;
+
+                /*var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");*/
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo/*, content*/);
+                vteaVersionDTO = JsonConvert.DeserializeObject<VteaVersionDTO>(json);
+
+
                 return vteaVersionDTO;
             }
             catch (Exception ex)
@@ -160,18 +163,18 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VtpValidacionDTO vtpValidacionDTO = new VtpValidacionDTO();
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtpValidacion}/";
+                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtpValidacion}?perinombre={perinombre}&recpotnombre={recpotnombre}";
 
-                var parametros = new
-                {
-                    perinombre,
-                    recpotnombre
-                };
-                string jsonBody = JsonConvert.SerializeObject(parametros);
+                /* var parametros = new
+                 {
+                     perinombre,
+                     recpotnombre
+                 };
+                 string jsonBody = JsonConvert.SerializeObject(parametros);
 
-                // Aquí se configura correctamente el tipo MIME: application/json
-                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-                string json = await HttpServiceHelper.SendAsync(HttpMethod.Post, urlMetodo, content);
+                 // Aquí se configura correctamente el tipo MIME: application/json
+                 var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");*/
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo/*, content*/);
                 return JsonConvert.DeserializeObject<VtpValidacionDTO>(json);
             }
             catch (Exception ex)
@@ -187,7 +190,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio Vtp Versions
         /// </summary>
-        public async Task<VteaDTO> FuncionVtea(string perinombre, string recpotnombre,
+        public async Task<VteaDTO> FuncionVtea(string perinombre, string recanombre,
             string folderUpload,
             string pathfile,
             string folderSave)
@@ -195,9 +198,9 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VteaDTO vteaDTO = new VteaDTO();    
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtea}/";
+                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtea}?perinombre={perinombre}&recanombre={recanombre}";
 
-                var parametros = new
+                /*var parametros = new
                 {
                     perinombre,
                     recpotnombre
@@ -205,9 +208,9 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                 string jsonBody = JsonConvert.SerializeObject(parametros);
 
                 // Aquí se configura correctamente el tipo MIME: application/json
-                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");*/
 
-                string json = await HttpServiceHelper.SendAsync(HttpMethod.Post, urlMetodo, content);
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo/*, content*/);
 
                 return JsonConvert.DeserializeObject<VteaDTO>(json);
             }
@@ -225,7 +228,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio Vtp Versions
         /// </summary>
-       /* public async Task<VteaValidadorDTO> FuncionVteaValidador(string perinombre, string recpotnombre,
+       public async Task<VteaValidadorDTO> FuncionVteaValidador(string perinombre, string recpotnombre,
             string folderUpload,
             string pathfile,
             string folderSave)
@@ -233,9 +236,9 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VteaValidadorDTO vteaValidadorDTO = new VteaValidadorDTO(); 
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtea}/";
+                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaValidation}?perinombre={perinombre}&recpotnombre={recpotnombre}";
 
-                var parametros = new
+                /*var parametros = new
                 {
                     perinombre,
                     recpotnombre
@@ -243,9 +246,9 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                 string jsonBody = JsonConvert.SerializeObject(parametros);
 
                 // Aquí se configura correctamente el tipo MIME: application/json
-                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");*/
 
-                string json = await HttpServiceHelper.SendAsync(HttpMethod.Post, urlMetodo, content);
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo/*, content*/);
 
                 return JsonConvert.DeserializeObject<VteaValidadorDTO>(json);
             }
@@ -257,7 +260,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                 return vteaValidadorDTO;
 
             }
-        }*/
+        }
 
         /// <summary>
         /// Obtiene datos del servicio funcion/vtp_vtp
@@ -271,9 +274,9 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VtpDTO vtpDTO = new VtpDTO();
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtp}/";
+                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtp}?perinombre={perinombre}&recpotnombre={recpotnombre}";
 
-                var parametros = new
+                /*var parametros = new
                 {
                     perinombre,
                     recpotnombre
@@ -286,10 +289,10 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                 //var response = await httpClient.PostAsync(urlMetodo, content);
 
                 //if (!response.IsSuccessStatusCode)
-                //    throw new Exception("Error al llamar al servicio: " + response.StatusCode);
+                //    throw new Exception("Error al llamar al servicio: " + response.StatusCode);*/
 
                 //string json = await response.Content.ReadAsStringAsync();
-                string json = await HttpServiceHelper.SendAsync(HttpMethod.Post, urlMetodo, content);
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo/*, content*/);
                 //RegistrarLogTransaccionTxt("POST", urlMetodo, jsonBody, response, folderUpload, pathfile, folderSave);
                 return JsonConvert.DeserializeObject<VtpDTO>(json);
             }
@@ -315,9 +318,9 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VtpVteaDTO vtpVteaDTO = new VtpVteaDTO();
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtpVtea}/";
+                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtpVtea}?perinombre={perinombre}&recpotnombre={recpotnombre}&recanombre={recanombre}";
 
-                var parametros = new
+                /*var parametros = new
                 {
                     perinombre,
                     recanombre,
@@ -333,8 +336,8 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                 //if (!response.IsSuccessStatusCode)
                 //    throw new Exception("Error al llamar al servicio: " + response.StatusCode);
 
-                //string json = await response.Content.ReadAsStringAsync();
-                string json = await HttpServiceHelper.SendAsync(HttpMethod.Post,urlMetodo, content);
+                //string json = await response.Content.ReadAsStringAsync();*/
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get,urlMetodo/*, content*/);
                 //RegistrarLogTransaccionTxt("POST", urlMetodo, jsonBody, response, folderUpload, pathfile, folderSave);
                 return JsonConvert.DeserializeObject<VtpVteaDTO>(json);
             }

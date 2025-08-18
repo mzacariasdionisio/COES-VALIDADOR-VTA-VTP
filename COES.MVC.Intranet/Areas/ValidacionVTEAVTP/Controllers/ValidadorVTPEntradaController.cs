@@ -53,6 +53,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         public async Task<ActionResult> Index()
         {
             ValidadorVTPEntradaModel model = new ValidadorVTPEntradaModel();
+            model.PeriodoValorizacion = new TrnPeriodoDTO();
+            model.VersionesVtp = new VtpVersionDTO();
 
             try
             {
@@ -63,22 +65,56 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 TrnPeriodoDTO periodo = await validacionVTEAVTPAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
-                var primerPeriodo = periodo.Periodos.FirstOrDefault();
+                if(periodo.Resultado == 0)
+                {
+                    model.PeriodoValorizacion = periodo;
 
-                VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+                    var primerPeriodo = periodo.Periodos.FirstOrDefault();
 
-                model.PeriodoValorizacion = periodo;
-                model.VersionesVtp = versionesVtp;
+                    VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+                    if (versionesVtp.Resultado == 0)
+                    {
+                        model.VersionesVtp = versionesVtp;
+                    }
+                    else if (versionesVtp.Resultado == -1)
+                    {
+                        model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
+
+                        log.Error(versionesVtp.Mensaje);
+                        model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                    }
+                    else if (versionesVtp.Resultado == 1)
+                    {
+                        model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
+
+                        model.StrMensajeError = versionesVtp.Mensaje;
+                    }
+                }
+                else if (periodo.Resultado == -1)
+                {
+                    model.PeriodoValorizacion.Periodos = new List<TablePeriodoDTO>();
+                    model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
+
+                    log.Error(periodo.Mensaje);
+                    model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                }
+                else if (periodo.Resultado == 1)
+                {
+                    model.PeriodoValorizacion.Periodos = new List<TablePeriodoDTO>();
+                    model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
+
+                    model.StrMensajeError = periodo.Mensaje;
+                }
             }
             catch (Exception ex)
             {
                 log.Error(NameController, ex);
-                model.StrMensajeError = "-1";
+                model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
             }
 
             return View(model);
         }
-
 
         
         private string RenderViewToString(string viewName, object model)
@@ -142,7 +178,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                         }else if(datosEntradaVTP.Resultado == 1)
                         {
-                            //por revisar
+                            model.StrMensajeError = datosEntradaVTP.Mensaje;
                         }                            
                     }
                 }                                              
@@ -180,15 +216,43 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         public async Task<ActionResult> ObtenerVersiones(string periodo)
         {
             ValidadorVTPEntradaModel model = new ValidadorVTPEntradaModel();
-            FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
-            FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
+            model.VersionesVtp = new VtpVersionDTO();
+            model.StrMensajeError = "";
 
-            string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+            try
+            {
+                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
+                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
 
-            VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+                string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-            model.VersionesVtp = versionesVtp;
-            model.StrMensajeError = "0";
+                VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+
+                if(versionesVtp.Resultado == 0)
+                {
+                    model.VersionesVtp = versionesVtp;
+
+                } else if(versionesVtp.Resultado == -1)
+                {
+                    model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
+
+                    log.Error(versionesVtp.Mensaje);
+                    model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                }
+                else if (versionesVtp.Resultado == 1)
+                {
+                    model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
+
+                    model.StrMensajeError = versionesVtp.Mensaje;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(NameController, ex);
+                model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+            }
+
 
             return Json(model, JsonRequestBehavior.AllowGet);
         }

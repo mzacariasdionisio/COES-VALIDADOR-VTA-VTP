@@ -63,14 +63,17 @@ function cargarVersiones() {
         dataType: 'json',
         global: false,
         success: function (result) {
-            if (result.StrMensajeError != -1) {
-                $('#cbVersion').get(0).options.length = 0;                
+
+            $('#cbVersion').get(0).options.length = 0;         
+
+            if (result.StrMensajeError == '') {
+                     
                 $.each(result.VersionesVtp.Versiones, function (i, item) {
                     $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecPotNombre, item.RecPotNombre);
                 });                
             }
             else {
-                alert("Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.");
+                alert(result.StrMensajeError);
             }
         },
         error: function () {

@@ -69,19 +69,23 @@ function cargarVersiones() {
         dataType: 'json',
         global: false,
         success: function (result) {
-            if (result.StrMensajeError != -1) {
-                $('#cbVersionVTP').get(0).options.length = 0;               
+
+            $('#cbVersionVTP').get(0).options.length = 0;   
+            $('#cbVersionVTEA').get(0).options.length = 0;
+
+            if (result.StrMensajeError == '') {
+                            
                 $.each(result.VersionesVtp.Versiones, function (i, item) {
                     $('#cbVersionVTP').get(0).options[$('#cbVersionVTP').get(0).options.length] = new Option(item.RecPotNombre, item.RecPotNombre);
                 });                
 
-                $('#cbVersionVTEA').get(0).options.length = 0;
+               
                 $.each(result.VersionesVtea.Versiones, function (i, item) {
                     $('#cbVersionVTEA').get(0).options[$('#cbVersionVTEA').get(0).options.length] = new Option(item.RecaNombre, item.RecaNombre);
                 });       
             }
             else {
-                alert("Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.");
+                alert(result.StrMensajeError);
             }
         },
         error: function () {

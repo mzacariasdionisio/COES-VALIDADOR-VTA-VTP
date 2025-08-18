@@ -55,12 +55,13 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
             TrnPeriodoDTO periodo = await validacionVTEAVTPAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
-            VtpVersionDTO verioneVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
-            VteaVersionDTO verioneVtea = await validacionVTEAVTPAppServicio.ObtenerSmeVteaVersions("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            VtpVersionDTO verioneVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions("2025.Junio", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            VteaVersionDTO verioneVtea = await validacionVTEAVTPAppServicio.ObtenerSmeVteaVersions("2025.Junio", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
             VtpDTO vtp = await validacionVTEAVTPAppServicio.FuncionVtp("2025.Marzo", "Revisión 01", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
             VteaDTO vtea = await validacionVTEAVTPAppServicio.FuncionVtea("2025.Marzo", "Revisión 01", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
-            VtpValidacionDTO valiacion = await validacionVTEAVTPAppServicio.FuncionVtpValidar("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
-            VtpVteaDTO vtpVtea = await validacionVTEAVTPAppServicio.FuncionVtpVtea("2025.Marzo", "", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            VtpValidacionDTO valiacion = await validacionVTEAVTPAppServicio.FuncionVtpValidar("2024.Noviembre", "Mensual", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            VtpVteaDTO vtpVtea = await validacionVTEAVTPAppServicio.FuncionVtpVtea("2025.Junio", "Mensual", "Mensual", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+
             return View(modelo);
         }
 

@@ -242,7 +242,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
 
         [HttpPost]
-        public  ActionResult GenerarReporteSeccion(string periodo, string version, string seccion)
+        public  ActionResult GenerarReporteSeccion(string periodo, string version)
         {
             base.ValidarSesionUsuario();
 
@@ -259,20 +259,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             try
             {
-                switch (seccion)
-                {
-                    case "Valorizacion":
-
-                        nombreArchivo = Helper.ExcelDocument.GenerarReporteValorizacionVTP(datosVTP, periodo, version, rutaLogo);
-
-                        break;
-
-                    case "Compensacion":
-
-                        nombreArchivo = Helper.ExcelDocument.GenerarReporteCompensacionVTP(datosVTP, periodo, version, rutaLogo);
-
-                        break;
-                }
+                nombreArchivo = Helper.ExcelDocument.GenerarReporteSalidaVTP(datosVTP, periodo, version, rutaLogo);
             }
             catch (Exception ex)
             {

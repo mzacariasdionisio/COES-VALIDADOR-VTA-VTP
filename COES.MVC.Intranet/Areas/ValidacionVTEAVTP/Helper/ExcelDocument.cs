@@ -46,7 +46,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                     excelImage.SetSize(120, 60);
                 }
 
-                ws.Cells[5, 4].Value = "Análisis de Datos de Entrada VTP - 1. ANALISIS DEL PRECIO DE PEAJE - 1.1. REGISTROS CON ERROR EN EL PPM Y PEAJE";
+                ws.Cells[5, 4].Value = "Análisis de Datos de Entrada VTP - 1. ANÁLISIS DEL PRECIO DE PEAJE - 1.1. REGISTROS CON ERROR EN EL PPM Y PEAJE";
                 ws.Cells[5, 4].Style.Font.Bold = true;
                 ws.Cells[5, 4, 5, 9].Merge = true;
                 ws.Cells[5, 4, 5, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -59,7 +59,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[8, 2].Value = "Versión de valorización VTP";
                 ws.Cells[8, 3].Value = version;
 
-                ws.Cells[10, 2].Value = "Codigo";
+                ws.Cells[10, 2].Value = "Código VTP";
                 ws.Cells[10, 3].Value = "Empresa";
                 ws.Cells[10, 4].Value = "Cliente";
                 ws.Cells[10, 5].Value = "Barra";
@@ -184,7 +184,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                     excelImage.SetSize(120, 60);
                 }
 
-                ws.Cells[5, 4].Value = "Análisis de Datos de Entrada VTP - 1. ANALISIS DEL PRECIO DE PEAJE - 1.1. REGISTROS CON ERROR EN EL PPM Y PEAJE";
+                ws.Cells[5, 4].Value = "Análisis de Datos de Entrada VTP - 1. ANÁLISIS DEL PRECIO DE PEAJE - 1.1. REGISTROS CON ERROR EN EL PPM Y PEAJE";
                 ws.Cells[5, 4].Style.Font.Bold = true;
                 ws.Cells[5, 4, 5, 9].Merge = true;
                 ws.Cells[5, 4, 5, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -197,7 +197,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[8, 2].Value = "Versión de valorización VTP";
                 ws.Cells[8, 3].Value = version;
 
-                ws.Cells[10, 2].Value = "Codigo";
+                ws.Cells[10, 2].Value = "Código VTP";
                 ws.Cells[10, 3].Value = "Empresa";
                 ws.Cells[10, 4].Value = "Cliente";
                 ws.Cells[10, 5].Value = "Barra";
@@ -280,7 +280,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 }
 
 
-                if (DatosVTP.TableVtpBrg.Count > 0)
+                if (DatosVTP.TableVtpNoBrg.Count > 0)
                 {
                     rg1 = ws.Cells[11, 2, contFila - 1, 14];
                     ObtenerEstiloCelda(rg1, 1);
@@ -353,7 +353,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[8, 2].Value = "Versión de valorización VTP";
                 ws.Cells[8, 3].Value = version;
 
-                ws.Cells[10, 2].Value = "Codigo";
+                ws.Cells[10, 2].Value = "Código VTP";
                 ws.Cells[10, 3].Value = "Empresa";
                 ws.Cells[10, 4].Value = "Cliente";
                 ws.Cells[10, 5].Value = "Barra";
@@ -363,7 +363,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[10, 9].Value = "Potencia Coincidente (kW)";
                 ws.Cells[10, 10].Value = "Potencia Declarada (kW)";
                 ws.Cells[10, 11].Value = "Peaje Unitario \n(S/ / kW-mes)";
-                ws.Cells[10, 12].Value = "Factor Perdida";
+                ws.Cells[10, 12].Value = "Factor Pérdida";
                
 
 
@@ -485,7 +485,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[8, 2].Value = "Versión de valorización VTP";
                 ws.Cells[8, 3].Value = version;
 
-                ws.Cells[10, 2].Value = "Codigo";
+                ws.Cells[10, 2].Value = "Código VTP";
                 ws.Cells[10, 3].Value = "Empresa";
                 ws.Cells[10, 4].Value = "Cliente";
                 ws.Cells[10, 5].Value = "Barra";                
@@ -556,7 +556,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
             return archivoExcel;
         }
 
-        public static string GenerarReporteValorizacionVTP(VtpValidacionDTO DatosVTP, string periodo, string version, string rutaLogo)
+        public static string GenerarReporteSalidaVTP(VtpValidacionDTO DatosVTP, string periodo, string version, string rutaLogo)
         {
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
@@ -678,9 +678,109 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Column(6).Width = 20;
                 ws.Column(7).Width = 20;
                 ws.Column(8).Width = 15;
-               
+
 
                 #endregion
+
+                ws = xlPackage.Workbook.Worksheets.Add("VTP Compensacion");
+                ws.Cells.Style.Font.Name = "Calibri";
+
+                contFila = 11;
+
+                #region Compensacion
+
+                if (File.Exists(rutaLogo))
+                {
+                    Image logo = Image.FromFile(rutaLogo);
+                    var excelImage = ws.Drawings.AddPicture("Logo", logo);
+                    excelImage.SetPosition(2, 0, 1, 0);
+                    excelImage.SetSize(120, 60);
+                }
+
+                ws.Cells[5, 4].Value = "Análisis de Datos de Salida VTP - Compensación por peaje de transmisión";
+                ws.Cells[5, 4].Style.Font.Bold = true;
+                ws.Cells[5, 4, 5, 8].Merge = true;
+                ws.Cells[5, 4, 5, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                ws.Cells[7, 2].Value = "Mes de Valorización";
+                ws.Cells[7, 3].Value = periodo;
+                ws.Cells[8, 2].Value = "Versión de valorización VTP";
+                ws.Cells[8, 3].Value = version;
+
+
+                ws.Cells[10, 2].Value = "Empresa";
+
+                ws.Cells[10, 3].Value = "Comp. peaje aprox. (S/)";
+                ws.Cells[10, 4].Value = "Comp. peaje real (S/)";
+                ws.Cells[10, 5].Value = "Predicción (S/)";
+                ws.Cells[10, 6].Value = "Diferencia (S/)";
+                ws.Cells[10, 7].Value = "Error (%)";
+                ws.Cells[10, 8].Value = "Calidad";
+
+
+
+                rg1 = ws.Cells[10, 2, 10, 8];
+                ObtenerEstiloCelda(rg1, 2);
+                rg1.Style.WrapText = true;
+
+                rg1 = ws.Cells[7, 2, 8, 2];
+                ObtenerEstiloCelda(rg1, 2);
+
+                foreach (var item in DatosVTP.Peaje.TableAnas)
+                {
+
+                    ws.Cells[contFila, 2].Value = item.Empresa;
+
+                    ws.Cells[contFila, 3].Value = item.CompPeajeAprox;
+                    ws.Cells[contFila, 3].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 4].Value = item.CompPeajeReal;
+                    ws.Cells[contFila, 4].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 5].Value = item.Prediccion;
+                    ws.Cells[contFila, 5].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 6].Value = item.Error;
+                    ws.Cells[contFila, 6].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 7].Value = item.ErrorPorcentaje;
+                    ws.Cells[contFila, 7].Style.Numberformat.Format = "0.00";
+
+                    ws.Cells[contFila, 8].Value = item.Calidad;
+
+                    if (item.Calidad.ToUpper().Equals("INCORRECTO"))
+                    {
+                        ws.Cells[contFila, 2, contFila, 8].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        ws.Cells[contFila, 2, contFila, 8].Style.Fill.BackgroundColor.SetColor(Color.DarkRed);
+                        ws.Cells[contFila, 2, contFila, 8].Style.Font.Color.SetColor(Color.White);
+                    }
+
+
+                    contFila++;
+                }
+
+
+                if (DatosVTP.Peaje.TableAnas.Count > 0)
+                {
+                    rg1 = ws.Cells[11, 2, contFila - 1, 8];
+                    ObtenerEstiloCelda(rg1, 1);
+                }
+
+                rg1.Style.WrapText = true;
+
+
+                ws.Column(1).Width = 5;
+                ws.Column(2).Width = 50;
+                ws.Column(3).Width = 25;
+                ws.Column(4).Width = 25;
+                ws.Column(5).Width = 20;
+                ws.Column(6).Width = 20;
+                ws.Column(7).Width = 20;
+                ws.Column(8).Width = 15;
+
+
+                #endregion
+
 
                 xlPackage.Save();
             }
@@ -853,7 +953,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[9, 2].Value = "Versión de valorización VTEA";
                 ws.Cells[9, 3].Value = versionVTEA;
 
-                ws.Cells[11, 2].Value = "Codigo VTP";
+                ws.Cells[11, 2].Value = "Código VTP";
                 ws.Cells[11, 3].Value = "Empresa";
                 ws.Cells[11, 4].Value = "Cliente";
 
@@ -897,12 +997,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                     if (item.ErrorVtea.HasValue)
                     {
                         ws.Cells[contFila, 8].Value = item.ErrorVtea;
-                        ws.Cells[contFila, 8].Style.Numberformat.Format = "0.0000";
+                        ws.Cells[contFila, 8].Style.Numberformat.Format = "0.00";
                     }
                     if (item.ErrorVtp.HasValue)
                     {
                         ws.Cells[contFila, 9].Value = item.ErrorVtp;
-                        ws.Cells[contFila, 9].Style.Numberformat.Format = "0.0000";
+                        ws.Cells[contFila, 9].Style.Numberformat.Format = "0.00";
                     }
 
                     contFila++;
@@ -972,7 +1072,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[5, 3].Style.Font.Bold = true;
                 ws.Cells[5, 3, 5, 6].Merge = true;
                 ws.Cells[5, 3, 5, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                ws.Cells[6, 3].Value = "Comparación de declaraciones VTEA - VTP cero/vacío";
+                ws.Cells[6, 3].Value = "Comparación de declaraciones VTEA cero/vacío - VTP";
                 ws.Cells[6, 3].Style.Font.Bold = true;
                 ws.Cells[6, 3, 6, 6].Merge = true;
                 ws.Cells[6, 3, 6, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -984,7 +1084,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[9, 2].Value = "Versión de valorización VTEA";
                 ws.Cells[9, 3].Value = versionVTEA;
 
-                ws.Cells[11, 2].Value = "Codigo VTP";
+                ws.Cells[11, 2].Value = "Código VTP";
                 ws.Cells[11, 3].Value = "Empresa";
                 ws.Cells[11, 4].Value = "Cliente";
 
@@ -1081,7 +1181,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[5, 3].Style.Font.Bold = true;
                 ws.Cells[5, 3, 5, 6].Merge = true;
                 ws.Cells[5, 3, 5, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                ws.Cells[6, 3].Value = "Comparación de declaraciones VTEA cero/vacío - VTP";
+                ws.Cells[6, 3].Value = "Comparación de declaraciones VTEA - VTP cero/vacío ";
                 ws.Cells[6, 3].Style.Font.Bold = true;
                 ws.Cells[6, 3, 6, 6].Merge = true;
                 ws.Cells[6, 3, 6, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -1093,7 +1193,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[9, 2].Value = "Versión de valorización VTEA";
                 ws.Cells[9, 3].Value = versionVTEA;
 
-                ws.Cells[11, 2].Value = "Codigo VTP";
+                ws.Cells[11, 2].Value = "Código VTP";
                 ws.Cells[11, 3].Value = "Empresa";
                 ws.Cells[11, 4].Value = "Cliente";
 

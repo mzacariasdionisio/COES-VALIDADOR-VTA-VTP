@@ -132,6 +132,8 @@ function cargarVersiones() {
             success: function (evt) {
 
                 $('#tab-container').show();
+                $('#tab-container').easytabs('select', '#informacionVTP');
+
                 $('#detalleComparacionVTEA').html(evt.VistaComparacionVTEA);
                 $('#detalleComparacionVTP').html(evt.VistaComparacionVTP);
                 $('#detalleComparacionDiferencias').html(evt.VistaComparacionDiferencia);

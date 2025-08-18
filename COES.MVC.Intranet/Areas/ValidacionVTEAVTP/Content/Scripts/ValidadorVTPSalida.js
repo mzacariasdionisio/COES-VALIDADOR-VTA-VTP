@@ -20,14 +20,9 @@ $(function () {
         consultar(0);
     });
 
-    $('#btnDescargaValorizacion').on('click', function () {
-        descargarReporte('Valorizacion');
-    });
-
-    $('#btnDescargaCompensacion').on('click', function () {
-        descargarReporte('Compensacion');
-    });
-      
+    $('#btnDescarga').on('click', function () {
+        descargarReporte();
+    });       
 
     consultar(1);
 });
@@ -113,6 +108,8 @@ function cargarVersiones() {
             success: function (evt) {
 
                 $('#tab-container').show();
+                $('#tab-container').easytabs('select', '#valorizacion');
+
                 $('#detalleValorizacion').html(evt.VistaValorizacion);
                 $('#detalleCompensacion').html(evt.VistaCompensacion);
 
@@ -179,44 +176,30 @@ function cargarVersiones() {
     }, 100);
 }
 
-function descargarReporte(seccion) {
+function descargarReporte() {
     let periodo = $("#cbPeriodo").val();
     let version = $("#cbVersion").val();
 
     var mensajeError = '';
-    switch (seccion) {
-       
-        case 'Valorizacion': {
-            let tablaListadoValorizacion = $("#tablaListadoValorizacion").DataTable();
 
-            if (tablaListadoValorizacion.data().length == 0) {
-                mensajeError = 'La grilla está vacía, no es posible descargar.';
-            }
-            break;
-        }
-        case 'Compensacion': {
-            let tablaListadoCompensacion = $("#tablaListadoCompensacion").DataTable();
+    let tablaListadoValorizacion = $("#tablaListadoValorizacion").DataTable();
+    let tablaListadoCompensacion = $("#tablaListadoCompensacion").DataTable();
 
-            if (tablaListadoCompensacion.data().length == 0) {
-                mensajeError = 'La grilla está vacía, no es posible descargar.';
-            }
-            break;
-        }
-    }
+    if (tablaListadoValorizacion.data().length == 0 && tablaListadoCompensacion.data().length == 0) {
+        mensajeError = 'Las grillas están vacías, no es posible descargar.';
+    }   
 
     if (mensajeError != '') {
         mostrarMensaje('mensaje', 'error', mensajeError);
         return;
     }
 
-
     $.ajax({
         type: 'POST',
         url: controlador + 'GenerarReporteSeccion',
         data: {
             periodo: periodo,
-            version: version,
-            seccion: seccion
+            version: version
         },
         dataType: 'json',
         success: function (result) {

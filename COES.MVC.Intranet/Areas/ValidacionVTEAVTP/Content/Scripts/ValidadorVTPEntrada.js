@@ -126,6 +126,7 @@ function cargarVersiones() {
             success: function (evt) {
 
                 $('#tab-container').show();
+                $('#tab-container').easytabs('select', '#barrasBrg');
                 $('#detalleBarrasBrg').html(evt.VistaBarrasBrg);
                 $('#detalleBarrasNoBrg').html(evt.VistaBarrasNoBrg);
                 $('#detalleBarrasSinAnalizar').html(evt.VistaBarrasSinAnalizar);

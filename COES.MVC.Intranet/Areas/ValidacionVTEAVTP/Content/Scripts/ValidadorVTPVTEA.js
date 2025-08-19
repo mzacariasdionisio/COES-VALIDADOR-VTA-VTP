@@ -136,7 +136,7 @@ function cargarVersiones() {
             url: controlador + 'CargarReporteConsolidadoHtml',
             data: {
                 periodo: periodo,
-                version: version,
+                versionVTP: version,
                 versionVTEA: versionVTEA,
                 inicializar: inicializar
             },

@@ -150,7 +150,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> CargarReporteConsolidadoHtml(string periodo, string versionVTP, string verstionVTEA, int inicializar)
+        public async Task<ActionResult> CargarReporteConsolidadoHtml(string periodo, string versionVTP, string versionVTEA, int inicializar)
         {
             var model = new ValidadorVTPVTEAModel();
             model.StrMensaje = "";
@@ -170,7 +170,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                     string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                    var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpVtea(periodo, verstionVTEA, versionVTP, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+                    var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpVtea(periodo, versionVTEA, versionVTP, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
                     //model.VtpVteaDatos = datosSalidaVTP;
 

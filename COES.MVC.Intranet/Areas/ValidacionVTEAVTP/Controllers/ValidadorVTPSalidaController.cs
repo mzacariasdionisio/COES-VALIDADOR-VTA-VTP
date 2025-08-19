@@ -49,6 +49,9 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         {
             ValidadorVTPSalidaModel model = new ValidadorVTPSalidaModel();
 
+            model.PeriodoValorizacion = new TrnPeriodoDTO();
+            model.VersionesVtp = new VtpVersionDTO();
+
             try
             {
                 FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");

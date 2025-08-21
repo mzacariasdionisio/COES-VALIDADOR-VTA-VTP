@@ -198,7 +198,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 var fecha = DateTime.Now;
                 model.StrMensaje = esInicio > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación." : 
-                    string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("hh:mm:ss"));
+                    string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("HH:mm:ss"));
 
                 Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_Entrada_VTP] = model.DatosVTP;
                

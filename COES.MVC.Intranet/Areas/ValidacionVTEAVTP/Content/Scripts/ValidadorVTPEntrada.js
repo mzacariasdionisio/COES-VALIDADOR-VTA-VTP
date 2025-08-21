@@ -147,7 +147,7 @@ function cargarVersiones() {
                     ],
                     language: {
                         info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: 'No hay registros disponibles',
+                        infoEmpty: '',
                         infoFiltered: '(filtrado de _MAX_ registros totales)',
                         lengthMenu: 'Mostrar _MENU_ registros por página',
                         zeroRecords: 'No se encontró nada',
@@ -170,7 +170,7 @@ function cargarVersiones() {
                     ],
                     language: {
                         info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: 'No hay registros disponibles',
+                        infoEmpty: '',
                         infoFiltered: '(filtrado de _MAX_ registros totales)',
                         lengthMenu: 'Mostrar _MENU_ registros por página',
                         zeroRecords: 'No se encontró nada',
@@ -193,7 +193,7 @@ function cargarVersiones() {
                     ],
                     language: {
                         info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: 'No hay registros disponibles',
+                        infoEmpty: '',
                         infoFiltered: '(filtrado de _MAX_ registros totales)',
                         lengthMenu: 'Mostrar _MENU_ registros por página',
                         zeroRecords: 'No se encontró nada',
@@ -216,7 +216,7 @@ function cargarVersiones() {
                     ],
                     language: {
                         info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: 'No hay registros disponibles',
+                        infoEmpty: '',
                         infoFiltered: '(filtrado de _MAX_ registros totales)',
                         lengthMenu: 'Mostrar _MENU_ registros por página',
                         zeroRecords: 'No se encontró nada',

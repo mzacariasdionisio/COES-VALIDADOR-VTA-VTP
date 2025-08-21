@@ -150,7 +150,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> CargarReporteConsolidadoHtml(string periodo, string versionVTP, string verstionVTEA, int inicializar)
+        public async Task<ActionResult> CargarReporteConsolidadoHtml(string periodo, string versionVTP, string versionVTEA, int inicializar)
         {
             var model = new ValidadorVTPVTEAModel();
             model.StrMensaje = "";
@@ -170,7 +170,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                     string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                    var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpVtea(periodo, verstionVTEA, versionVTP, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+                    var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpVtea(periodo, versionVTEA, versionVTP, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
 
                     //model.VtpVteaDatos = datosSalidaVTP;
 
@@ -207,7 +207,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 var fecha = DateTime.Now;
                 model.StrMensaje = inicializar > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación" :
-                     string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("hh:mm:ss"));
+                     string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("HH:mm:ss"));
 
                 Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_VTEA_VTP] = model.VtpVteaDatos;
 

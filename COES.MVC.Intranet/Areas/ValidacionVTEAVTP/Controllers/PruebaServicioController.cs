@@ -61,8 +61,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             VtpDTO vtp = await validacionVTEAVTPAppServicio.FuncionVtp("2025.Marzo", "Revisión 01", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
             VteaDTO vtea = await validacionVTEAVTPAppServicio.FuncionVtea("2025.Marzo", "Revisión 01", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
 
-            VtpValidacionDTO valiacion = await validacionVTEAVTPAppServicio.FuncionVtpValidar("2025.Marzo", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
-            VtpVteaDTO vtpVtea = await validacionVTEAVTPAppServicio.FuncionVtpVtea("2025.Marzo", "", "", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            VtpValidacionDTO valiacion = await validacionVTEAVTPAppServicio.FuncionVtpValidar("2025.Marzo", "Mensual", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
+            VtpVteaDTO vtpVtea = await validacionVTEAVTPAppServicio.FuncionVtpVtea("2025.Marzo", "Mensual", "Mensual", rutaUpload, base.PathFiles, ConstantesValidacionVTEAVTP.FolderLog);
             
 
             return View(modelo);

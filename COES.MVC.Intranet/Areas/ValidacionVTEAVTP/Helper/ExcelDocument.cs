@@ -15,12 +15,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 {
     public class ExcelDocument
     {
-        public static string GenerarReporteBarras(VtpDTO DatosVTP, string periodo, string version, string rutaLogo)
+        public static string GenerarReporteBarras(VtpDTO DatosVTP, string periodo, string version, string empresa,string rutaLogo)
         {
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "Barras_BRG_con_Error" + ".xlsx";
+            var archivoExcel = string.Format("Barras_BRG_con_Error_{0}_{1}", periodo, version) + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -34,7 +34,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ExcelWorksheet ws = xlPackage.Workbook.Worksheets.Add("Barras BRG con Error");
                 ws.Cells.Style.Font.Name = "Calibri";
 
-                var contFila = 11;
+                var contFila = 12;
 
                 #region Barras BRG
 
@@ -59,27 +59,30 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[8, 2].Value = "Versión de valorización VTP";
                 ws.Cells[8, 3].Value = version;
 
-                ws.Cells[10, 2].Value = "Código VTP";
-                ws.Cells[10, 3].Value = "Empresa";
-                ws.Cells[10, 4].Value = "Cliente";
-                ws.Cells[10, 5].Value = "Barra";
-                ws.Cells[10, 6].Value = "Tipo de Usuario";
+                ws.Cells[9, 2].Value = "Empresa";
+                ws.Cells[9, 3].Value = string.IsNullOrEmpty(empresa)? "--TODOS--": empresa;
 
-                ws.Cells[10, 7].Value = "Potencia Coincidente (kW)";
-                ws.Cells[10, 8].Value = "Potencia Declarada (kW)";
-                ws.Cells[10, 9].Value = "PPM \n(S/ / kW-mes)";
-                ws.Cells[10, 10].Value = "VTP PPM \n(S/ / kW-mes)";
-                ws.Cells[10, 11].Value = "Error PPM \n(S/ / kW-mes) ";
-                ws.Cells[10, 12].Value = "Peaje \n(S/ / kW-mes)";
-                ws.Cells[10, 13].Value = "VTP Peaje \n(S/ / kW-mes)";
-                ws.Cells[10, 14].Value = "Error Peaje \n(S/ / kW-mes)";      
+                ws.Cells[11, 2].Value = "Código VTP";
+                ws.Cells[11, 3].Value = "Empresa";
+                ws.Cells[11, 4].Value = "Cliente";
+                ws.Cells[11, 5].Value = "Barra";
+                ws.Cells[11, 6].Value = "Tipo de Usuario";
+
+                ws.Cells[11, 7].Value = "Potencia Coincidente (kW)";
+                ws.Cells[11, 8].Value = "Potencia Declarada (kW)";
+                ws.Cells[11, 9].Value = "PPM \n(S/ / kW-mes)";
+                ws.Cells[11, 10].Value = "VTP PPM \n(S/ / kW-mes)";
+                ws.Cells[11, 11].Value = "Error PPM \n(S/ / kW-mes) ";
+                ws.Cells[11, 12].Value = "Peaje \n(S/ / kW-mes)";
+                ws.Cells[11, 13].Value = "VTP Peaje \n(S/ / kW-mes)";
+                ws.Cells[11, 14].Value = "Error Peaje \n(S/ / kW-mes)";      
 
 
-                ExcelRange rg1 = ws.Cells[10, 2, 10, 14];
+                ExcelRange rg1 = ws.Cells[11, 2, 11, 14];
                 ObtenerEstiloCelda(rg1, 2);
                 rg1.Style.WrapText = true;
 
-                rg1 = ws.Cells[7, 2, 8, 2];
+                rg1 = ws.Cells[7, 2, 9, 2];
                 ObtenerEstiloCelda(rg1, 2);
 
                 foreach (var item in DatosVTP.TableVtpBrg)
@@ -172,7 +175,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws = xlPackage.Workbook.Worksheets.Add("Barras No BRG con Error");
                 ws.Cells.Style.Font.Name = "Calibri";
 
-                contFila = 11;
+                contFila = 12;
 
                 #region Barras No BRG
 
@@ -197,27 +200,30 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 ws.Cells[8, 2].Value = "Versión de valorización VTP";
                 ws.Cells[8, 3].Value = version;
 
-                ws.Cells[10, 2].Value = "Código VTP";
-                ws.Cells[10, 3].Value = "Empresa";
-                ws.Cells[10, 4].Value = "Cliente";
-                ws.Cells[10, 5].Value = "Barra";
-                ws.Cells[10, 6].Value = "Tipo de Usuario";
+                ws.Cells[9, 2].Value = "Empresa";
+                ws.Cells[9, 3].Value = string.IsNullOrEmpty(empresa) ? "--TODOS--" : empresa;
 
-                ws.Cells[10, 7].Value = "Potencia Coincidente (kW)";
-                ws.Cells[10, 8].Value = "Potencia Declarada (kW)";
-                ws.Cells[10, 9].Value = "PPM \n(S/ / kW-mes)";
-                ws.Cells[10, 10].Value = "VTP PPM \n(S/ / kW-mes)";
-                ws.Cells[10, 11].Value = "Error PPM \n(S/ / kW-mes) ";
-                ws.Cells[10, 12].Value = "Peaje \n(S/ / kW-mes)";
-                ws.Cells[10, 13].Value = "VTP Peaje \n(S/ / kW-mes)";
-                ws.Cells[10, 14].Value = "Error Peaje \n(S/ / kW-mes)";
+                ws.Cells[11, 2].Value = "Código VTP";
+                ws.Cells[11, 3].Value = "Empresa";
+                ws.Cells[11, 4].Value = "Cliente";
+                ws.Cells[11, 5].Value = "Barra";
+                ws.Cells[11, 6].Value = "Tipo de Usuario";
+
+                ws.Cells[11, 7].Value = "Potencia Coincidente (kW)";
+                ws.Cells[11, 8].Value = "Potencia Declarada (kW)";
+                ws.Cells[11, 9].Value = "PPM \n(S/ / kW-mes)";
+                ws.Cells[11, 10].Value = "VTP PPM \n(S/ / kW-mes)";
+                ws.Cells[11, 11].Value = "Error PPM \n(S/ / kW-mes) ";
+                ws.Cells[11, 12].Value = "Peaje \n(S/ / kW-mes)";
+                ws.Cells[11, 13].Value = "VTP Peaje \n(S/ / kW-mes)";
+                ws.Cells[11, 14].Value = "Error Peaje \n(S/ / kW-mes)";
 
 
-                rg1 = ws.Cells[10, 2, 10, 14];
+                rg1 = ws.Cells[11, 2, 11, 14];
                 ObtenerEstiloCelda(rg1, 2);
                 rg1.Style.WrapText = true;
 
-                rg1 = ws.Cells[7, 2, 8, 2];
+                rg1 = ws.Cells[7, 2, 9, 2];
                 ObtenerEstiloCelda(rg1, 2);
 
                 foreach (var item in DatosVTP.TableVtpNoBrg)
@@ -317,7 +323,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "Reporte_Barras_Sin_Analizar" + ".xlsx";
+            var archivoExcel = string.Format("Reporte_Barras_Sin_Analizar_{0}_{1}", periodo, version) + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -449,7 +455,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "Reporte_Empresas_Diferencia_Potencia" + ".xlsx";
+            var archivoExcel = string.Format("Reporte_Empresas_Diferencia_Potencia_{0}_{1}", periodo, version) + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -561,7 +567,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "Reporte_VTP_Valorizacion_Compensacion" + ".xlsx";
+            var archivoExcel = string.Format("Reporte_VTP_Valorizacion_Compensacion_{0}_{1}", periodo, version) + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -793,7 +799,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "Reporte_VTP_Peaje" + ".xlsx";
+            var archivoExcel = string.Format("Reporte_VTP_Peaje_{0}_{1}", periodo, version) + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -915,7 +921,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "Reporte_Diferencias_VTP-VTEA." + ".xlsx";
+            var archivoExcel = string.Format("Reporte_Diferencias_VTP-VTEA_{0}_{1}_{2}", periodo, versionVTP, versionVTEA) + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -1041,8 +1047,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         {
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
-
-            var archivoExcel = "Reporte_VTP_Val-VTEA_Zer" + ".xlsx";
+                       
+            var archivoExcel = string.Format("Reporte_VTP_Val-VTEA_Zer_{0}_{1}_{2}", periodo, versionVTP, versionVTEA) + ".xlsx";
 
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
@@ -1151,8 +1157,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             string ruta = ConfigurationManager.AppSettings[RutaDirectorio.RutaCargaFile];
 
-            var archivoExcel = "Reporte_VTP_Zer-VTEA_Val" + ".xlsx";
-
+            var archivoExcel = string.Format("Reporte_VTP_Zer-VTEA_Val_{0}_{1}_{2}", periodo, versionVTP, versionVTEA) + ".xlsx";
+            
             FileInfo newFile = new FileInfo(ruta + archivoExcel);
             if (newFile.Exists)
             {

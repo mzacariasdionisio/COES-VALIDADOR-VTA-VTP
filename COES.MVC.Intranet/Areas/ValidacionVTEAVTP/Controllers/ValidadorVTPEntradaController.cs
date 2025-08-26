@@ -290,7 +290,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                             datosVTP.TableVtpNoBrg = datosVTP.TableVtpNoBrg.Where(p => p.Empresa == empresa).ToList();
                         }
 
-                        nombreArchivo = Helper.ExcelDocument.GenerarReporteBarras(datosVTP, periodo, version, rutaLogo);
+                        nombreArchivo = Helper.ExcelDocument.GenerarReporteBarras(datosVTP, periodo, version, empresa, rutaLogo);
 
                         break;
 

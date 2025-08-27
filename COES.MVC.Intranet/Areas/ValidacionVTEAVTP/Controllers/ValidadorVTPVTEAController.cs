@@ -41,7 +41,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             catch (Exception ex)
             {
                 log.Fatal(NameController, ex);
-                throw new ApplicationException($"Error crítico en el controlador {NameController}. Consulte el log para más detalles.", ex);
+                throw new InvalidOperationException($"Error crítico en el controlador {NameController}. Consulte el log para más detalles.", ex);
             }
         }
 
@@ -171,8 +171,6 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                     string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
                     var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpVtea(periodo, versionVTEA, versionVTP, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
-
-                    //model.VtpVteaDatos = datosSalidaVTP;
 
                     if (datosSalidaVTP.Resultado == 0)
                     {

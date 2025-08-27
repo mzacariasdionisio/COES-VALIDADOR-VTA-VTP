@@ -41,7 +41,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             catch (Exception ex)
             {
                 log.Fatal(NameController, ex);
-                throw new ApplicationException($"Error crítico en el controlador {NameController}. Consulte el log para más detalles.", ex);
+                throw new InvalidOperationException($"Error crítico en el controlador {NameController}. Consulte el log para más detalles.", ex);
             }
         }
 

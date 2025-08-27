@@ -17,9 +17,8 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
     /// </summary>
     public class ValidacionVteavtpAppServicio
     {
-        private static readonly HttpClient httpClient = new HttpClient();
-        string urlBase = "";
-        string urlBaseValidador = "";
+        string urlBase;
+        string urlBaseValidador;
         const string HttpMethodTrnperiodo = "sme/trnperiodo";
         const string HttpMethodVtpVersions = "sme/vtp_versions";
         const string HttpMethodVteaVersions = "sme/vtea_versions";
@@ -48,7 +47,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             string pathfile,
             string folderSave)
         {
-            TrnPeriodoDTO trnPeriodoDTO = new TrnPeriodoDTO(); ;
+            TrnPeriodoDTO trnPeriodoDTO = new TrnPeriodoDTO();
             try
             {
                 string urlMetodo = string.Format("{0}/{1}", urlBase, HttpMethodTrnperiodo);
@@ -139,7 +138,6 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                 vtpValidacionDTO.Resultado = -1;
                 vtpValidacionDTO.Mensaje = ex.Message.ToString();
                 return vtpValidacionDTO;
-                //throw new Exception(ex.Message, ex);
             }
         }
 
@@ -222,7 +220,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         }
 
         /// <summary>
-        /// Obtiene datos del servicio funcion/vtp_vtp
+        /// Obtiene datos del servicio funcion/vtp_vtea
         /// </summary>
         public async Task<VtpVteaDTO> FuncionVtpVtea(string perinombre, string recanombre, string recpotnombre,
             string folderUpload,
@@ -248,37 +246,6 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         }
 
 
-        private void RegistrarLogTransaccionTxt(
-            string metodoHttp,
-            string url,
-            string requestBody,
-            HttpResponseMessage response,
-            string folderUpload,
-            string pathfile,
-            string folderSave
-        )
-        {
-
-            string fileName = $"Transacciones-{DateTime.Now:yyyy-MM-dd}.txt";
-            string ruta = folderUpload;
-            string filePath = ruta + fileName;
-            string ruta2 = string.Format("{0}\\{1}", pathfile, folderSave);
-            string path = FileServer.GetDirectory() + ruta2;
-            string pathFilename = string.Format("{0}\\{1}", path, fileName);
-            Directory.CreateDirectory(path);
-
-            if (!File.Exists(pathFilename))
-            {
-                string header = "FechaHora | Metodo | URL | Parametros | BodyRequest | StatusCode";
-                File.WriteAllText(pathFilename, header + Environment.NewLine);
-            }
-
-            string logLine = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {metodoHttp} | {url} | " +
-                             $"{requestBody} | " +
-                             $"{(int)response.StatusCode} {response.ReasonPhrase}";
-
-            File.AppendAllText(pathFilename, logLine + Environment.NewLine);
-        }
 
     }
 }

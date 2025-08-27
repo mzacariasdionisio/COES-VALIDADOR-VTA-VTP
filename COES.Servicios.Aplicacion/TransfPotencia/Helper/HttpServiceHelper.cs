@@ -14,7 +14,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
     /// <summary>
     /// Clase para consumir servicios REST SME y FUNCTION
     /// </summary>
-    public class HttpServiceHelper
+    public static class HttpServiceHelper
     {
         private static readonly HttpClient _httpClient;
         private static readonly ILog _log = LogManager.GetLogger(typeof(HttpServiceHelper));
@@ -50,12 +50,12 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds)))
             using (var request = new HttpRequestMessage(method, url))
             {
-                _log.Info($"[Rest Api MSE] [HTTP {method}] URL: {url}");
+                _log.InfoFormat("[Rest Api MSE] [HTTP {0}] URL: {1}", method, url);
                 if (content != null)
                 {
                     request.Content = content;
                     string body = await content.ReadAsStringAsync();
-                    _log.Info($"[Rest Api MSE] Request Body: {body}");
+                    _log.InfoFormat($"[Rest Api MSE] Request Body: {0}", body);
                 }
 
                 try
@@ -76,7 +76,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                         throw new TimeoutException($"[Rest Api MSE] Tiempo de espera agotado para {url}", ex);
                     }
                     _log.Error($"[Rest Api MSE] Error general en solicitud a {url}", ex);
-                    throw; // Fue cancelado manualmente
+                    throw new OperationCanceledException($"La solicitud a {url} fue cancelada manualmente.", ex, cts.Token);
                 }
             }
 

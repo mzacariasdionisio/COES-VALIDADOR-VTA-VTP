@@ -19,17 +19,17 @@ using System.Configuration;
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 {
-    public class ValidadorVTPSalidaController : BaseController
+    public class ValidadorVtpSalidaController : BaseController
     {
         /// <summary>
         /// Instancia de clase para el acceso a datos
         /// </summary>
 
-        ValidacionVTEAVTPAppServicio validacionVTEAVTPAppServicio = new ValidacionVTEAVTPAppServicio();
+        readonly ValidacionVTEAVTPAppServicio validacionVTEAVTPAppServicio = new ValidacionVTEAVTPAppServicio();
 
-        private static readonly ILog log = log4net.LogManager.GetLogger(typeof(PruebaServicioController));
+        private static readonly ILog log = log4net.LogManager.GetLogger(typeof(ValidadorVtpvteaController));
         private static string NameController = MethodBase.GetCurrentMethod().DeclaringType.Name;
-
+        public const string ErrorInterno = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
         protected override void OnException(ExceptionContext filterContext)
         {
             try
@@ -41,25 +41,25 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             catch (Exception ex)
             {
                 log.Fatal(NameController, ex);
-                throw;
+                throw new ApplicationException($"Error crítico en el controlador {NameController}. Consulte el log para más detalles.", ex);
             }
         }
 
         public async Task<ActionResult> Index()
         {
-            ValidadorVTPSalidaModel model = new ValidadorVTPSalidaModel();
+            ValidadorVtpSalidaModel model = new ValidadorVtpSalidaModel();
 
             model.PeriodoValorizacion = new TrnPeriodoDTO();
             model.VersionesVtp = new VtpVersionDTO();
 
             try
             {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
+                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
+                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
 
                 string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                TrnPeriodoDTO periodo = await validacionVTEAVTPAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+                TrnPeriodoDTO periodo = await validacionVTEAVTPAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
 
                 if (periodo.Resultado == 0)
                 {
@@ -67,7 +67,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                     var primerPeriodo = periodo.Periodos.FirstOrDefault();
 
-                    VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+                    VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
 
                     if (versionesVtp.Resultado == 0)
                     {
@@ -78,7 +78,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                         model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
 
                         log.Error(versionesVtp.Mensaje);
-                        model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                        model.StrMensajeError = ErrorInterno;
                     }
                     else if (versionesVtp.Resultado == 1)
                     {
@@ -93,7 +93,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                     model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
 
                     log.Error(periodo.Mensaje);
-                    model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                    model.StrMensajeError = ErrorInterno;
                 }
                 else if (periodo.Resultado == 1)
                 {
@@ -106,7 +106,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             catch (Exception ex)
             {
                 log.Error(NameController, ex);
-                model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                model.StrMensajeError = ErrorInterno;
             }
 
             return View(model);
@@ -128,7 +128,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         [HttpGet]
         public async Task<ActionResult> CargarReporteConsolidadoHtml(string periodo, string version, int inicializar)
         {
-            var model = new ValidadorVTPSalidaModel();
+            var model = new ValidadorVtpSalidaModel();
             model.StrMensaje = "";
             model.StrMensajeError = "";
 
@@ -143,12 +143,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 if (inicializar == 0)
                 {
               
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
+                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
+                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
 
                     string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                    var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpValidar(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+                    var datosSalidaVTP = await validacionVTEAVTPAppServicio.FuncionVtpValidar(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
 
                     model.VtpValidacion = datosSalidaVTP;
 
@@ -160,7 +160,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                     {
                         if (datosSalidaVTP.Resultado == -1)
                         {
-                            model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                            model.StrMensajeError = ErrorInterno;
 
                             log.Error(model.StrMensajeError);
 
@@ -186,7 +186,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 model.StrMensaje = inicializar > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación" :
                      string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("HH:mm:ss"));
 
-                Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_Salida_VTP] = model.VtpValidacion;
+                Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTP] = model.VtpValidacion;
                
                 return Json(model, JsonRequestBehavior.AllowGet);
             }
@@ -195,7 +195,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             catch (System.Exception ex)
             {
                 log.Error(NameController, ex);
-                model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                model.StrMensajeError = ErrorInterno;
             }
 
             return Json(model, JsonRequestBehavior.AllowGet);
@@ -203,18 +203,18 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
         public async Task<ActionResult> ObtenerVersiones(string periodo)
         {
-            ValidadorVTPSalidaModel model = new ValidadorVTPSalidaModel();
+            ValidadorVtpSalidaModel model = new ValidadorVtpSalidaModel();
             model.VersionesVtp = new VtpVersionDTO();
             model.StrMensajeError = "";
 
             try
             {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog, "");
+                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
+                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
 
                 string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVTEAVTP.FolderLog);
+                VtpVersionDTO versionesVtp = await validacionVTEAVTPAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
 
                 if (versionesVtp.Resultado == 0)
                 {
@@ -226,7 +226,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                     model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
 
                     log.Error(versionesVtp.Mensaje);
-                    model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                    model.StrMensajeError = ErrorInterno;
                 }
                 else if (versionesVtp.Resultado == 1)
                 {
@@ -237,7 +237,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             catch (Exception ex)
             {
                 log.Error(NameController, ex);
-                model.StrMensajeError = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+                model.StrMensajeError = ErrorInterno;
             }
 
             return Json(model, JsonRequestBehavior.AllowGet);
@@ -251,13 +251,13 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             string rutaLogo = Server.MapPath("~/Areas/ValidacionVTEAVTP/Content/Images/logocoes_black.png");
 
-            string nombreArchivo = "-1";
+            string nombreArchivo;
 
             var datosVTP = new VtpValidacionDTO();
 
-            if (Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_Salida_VTP] != null)
+            if (Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTP] != null)
             {
-                datosVTP = (VtpValidacionDTO)Session[Helper.ConstantesValidacionVTEAVTP.D_Datos_Salida_VTP];
+                datosVTP = (VtpValidacionDTO)Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTP];
             }
 
             try

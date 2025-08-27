@@ -1,5 +1,5 @@
-﻿var controlador = siteRoot + 'ValidadorVTPEntrada/';
-var uploader;
+﻿const controlador = siteRoot + 'ValidadorVTPEntrada/';
+
 
 $(function () {
 
@@ -284,7 +284,7 @@ function descargarReporte(seccion) {
     let version = $("#cbVersion").val();
     let empresa = $("#cbEmpresa").val();
 
-    var mensajeError = '';
+    let mensajeError = '';
     switch (seccion) {
         case 'Barras': {
             let tablaBarra = $("#tablaListadoBarras").DataTable();

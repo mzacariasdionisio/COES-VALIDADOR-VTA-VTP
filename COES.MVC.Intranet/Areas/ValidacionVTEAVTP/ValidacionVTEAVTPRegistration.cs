@@ -2,7 +2,7 @@
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP
 {
-    public class ValidacionVTEAVTPRegistration : AreaRegistration
+    public class ValidacionVteavtpRegistration: AreaRegistration
     {
         public override string AreaName
         {

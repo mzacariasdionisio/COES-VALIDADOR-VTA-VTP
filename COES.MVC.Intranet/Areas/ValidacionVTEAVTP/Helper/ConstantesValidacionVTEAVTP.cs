@@ -1,7 +1,7 @@
 ﻿
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 {
-    public class ConstantesValidacionVTEAVTP
+    public static class ConstantesValidacionVteavtp
     {
 
         public const string MetodoPost = "POST";

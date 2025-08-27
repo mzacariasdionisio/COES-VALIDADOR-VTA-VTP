@@ -1,5 +1,5 @@
-﻿var controlador = siteRoot + 'ValidadorVTPSalida/';
-var uploader;
+﻿const controlador = siteRoot + 'ValidadorVTPSalida/';
+
 
 $(function () {
 
@@ -186,7 +186,7 @@ function descargarReporte() {
     let periodo = $("#cbPeriodo").val();
     let version = $("#cbVersion").val();
 
-    var mensajeError = '';
+    let mensajeError = '';
 
     let tablaListadoValorizacion = $("#tablaListadoValorizacion").DataTable();
     let tablaListadoCompensacion = $("#tablaListadoCompensacion").DataTable();

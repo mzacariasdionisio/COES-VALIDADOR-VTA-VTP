@@ -1,5 +1,5 @@
-﻿var controlador = siteRoot + 'ValidadorVTPVTEA/';
-var uploader;
+﻿const controlador = siteRoot + 'ValidadorVTPVTEA/';
+
 
 $(function () {
 
@@ -241,7 +241,7 @@ function descargarReporte(seccion) {
     let versionVTP = $("#cbVersionVTP").val();
     let versionVTEA = $("#cbVersionVTEA").val();
 
-    var mensajeError = '';
+    let mensajeError = '';
     switch (seccion) {
 
         case 'ComparacionVTEA': {

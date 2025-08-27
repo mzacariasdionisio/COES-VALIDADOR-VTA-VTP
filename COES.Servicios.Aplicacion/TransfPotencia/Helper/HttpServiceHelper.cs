@@ -55,7 +55,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                 {
                     request.Content = content;
                     string body = await content.ReadAsStringAsync();
-                    _log.InfoFormat($"[Rest Api MSE] Request Body: {0}", body);
+                    _log.InfoFormat("[Rest Api MSE] Request Body: {0}", body);
                 }
 
                 try

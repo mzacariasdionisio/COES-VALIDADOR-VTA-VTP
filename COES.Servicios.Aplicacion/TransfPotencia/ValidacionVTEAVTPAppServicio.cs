@@ -17,8 +17,8 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
     /// </summary>
     public class ValidacionVteavtpAppServicio
     {
-        string urlBase;
-        string urlBaseValidador;
+        readonly string urlBase;
+        readonly string urlBaseValidador;
         const string HttpMethodTrnperiodo = "sme/trnperiodo";
         const string HttpMethodVtpVersions = "sme/vtp_versions";
         const string HttpMethodVteaVersions = "sme/vtea_versions";

@@ -11,11 +11,18 @@ using System.Threading.Tasks;
 
 namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
 {
+    /// <summary>
+    /// Clase para consumir servicios REST SME y FUNCTION
+    /// </summary>
     public class HttpServiceHelper
     {
         private static readonly HttpClient _httpClient;
         private static readonly ILog _log = LogManager.GetLogger(typeof(HttpServiceHelper));
         private static int _timeoutSeconds;
+
+        /// <summary>
+        /// Constructor para consumir servicios REST SME y FUNCTION
+        /// </summary>
         static HttpServiceHelper()
         {
             string configValue = ConfigurationManager.AppSettings["SmeConnectionTimeout"];
@@ -35,6 +42,9 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             };
         }
 
+        /// <summary>
+        /// Metodo para consumir servicios REST SME y FUNCTION
+        /// </summary>
         public static async Task<string> SendAsync(HttpMethod method, string url, HttpContent content = null)
         {
             using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds)))
@@ -53,8 +63,8 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                     var response = await _httpClient.SendAsync(request, cts.Token);
                     response.EnsureSuccessStatusCode();
 
-                    _log.Info($"[Rest Api MSE] [HTTP {method}] StatusCode: {(int)response.StatusCode} {response.ReasonPhrase}");
-                    _log.Info($"[Rest Api MSE] Response Body: {response}");
+                    _log.InfoFormat("[Rest Api MSE] [HTTP {0}] StatusCode: {1} {2}", method, response.StatusCode, response.ReasonPhrase);
+                    _log.InfoFormat("[Rest Api MSE] Response Body: {0}", response);
 
                     return await response.Content.ReadAsStringAsync();
                 }

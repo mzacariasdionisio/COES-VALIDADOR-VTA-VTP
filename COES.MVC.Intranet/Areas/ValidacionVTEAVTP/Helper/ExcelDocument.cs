@@ -25,6 +25,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         public const string CabeceraPotenciaCoincidentekW = "Potencia Coincidente(kW)";
         public const string CabeceraPotenciaDeclaradakW = "Potencia Declarada(kW)";
         public const string FormatoNroCero = "0.0000";
+        public const string ColorNegro = "#000000";
 
 
         private static void InsertarLogo(ExcelWorksheet ws, string rutaLogo)
@@ -240,10 +241,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
         private static void EstiloAnDatoEntPeaje(ExcelWorksheet ws) {
             ConfigurarColumnasBase(ws);
-            ws.Column(6).Width = 15;
-            ws.Column(7).Width = 19;
-            ws.Column(8).Width = 19;
-            ws.Column(9).Width = 15;
+            EstiloAnDatoEntVtp(ws);
             ws.Column(10).Width = 15;
             ws.Column(11).Width = 15;
             ws.Column(12).Width = 15;
@@ -1337,11 +1335,11 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 rango.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 rango.Style.Fill.PatternType = ExcelFillStyle.Solid;
                 rango.Style.Fill.BackgroundColor.SetColor(ColorTranslator.FromHtml("#BFBFBF"));
-                rango.Style.Font.Color.SetColor(ColorTranslator.FromHtml("#000000"));
+                rango.Style.Font.Color.SetColor(ColorTranslator.FromHtml(ColorNegro));
                 rango.Style.Font.Size = 8;
                 rango.Style.Font.Bold = true;
                 rango.Style.WrapText = true;
-                string colorborder = "#000000";
+                string colorborder = ColorNegro;
                 rango.Style.Border.Left.Style = ExcelBorderStyle.Thin;
                 rango.Style.Border.Left.Color.SetColor(ColorTranslator.FromHtml(colorborder));
                 rango.Style.Border.Right.Style = ExcelBorderStyle.Thin;
@@ -1355,9 +1353,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
             if (seccion == 1)
             {
-                //rango.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 rango.Style.Font.Size = 10;
-                string colorborder = "#000000";
+                string colorborder = ColorNegro;
                 rango.Style.Border.Left.Style = ExcelBorderStyle.Thin;
                 rango.Style.Border.Left.Color.SetColor(ColorTranslator.FromHtml(colorborder));
                 rango.Style.Border.Right.Style = ExcelBorderStyle.Thin;
@@ -1378,7 +1375,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 rango.Style.Font.Size = 10;
                 rango.Style.Font.Bold = true;
                 rango.Style.WrapText = true;
-                string colorborder = "#000000";
+                string colorborder = ColorNegro;
                 rango.Style.Border.Left.Style = ExcelBorderStyle.Thin;
                 rango.Style.Border.Left.Color.SetColor(ColorTranslator.FromHtml(colorborder));
                 rango.Style.Border.Right.Style = ExcelBorderStyle.Thin;
@@ -1395,11 +1392,11 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                 rango.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 rango.Style.Fill.PatternType = ExcelFillStyle.Solid;
                 rango.Style.Fill.BackgroundColor.SetColor(ColorTranslator.FromHtml("#BFBFBF"));
-                rango.Style.Font.Color.SetColor(ColorTranslator.FromHtml("#000000"));
+                rango.Style.Font.Color.SetColor(ColorTranslator.FromHtml(ColorNegro));
                 rango.Style.Font.Size = 8;
                 rango.Style.Font.Bold = true;
                 rango.Style.WrapText = true;
-                string colorborder = "#000000";
+                string colorborder = ColorNegro;
                 rango.Style.Border.Left.Style = ExcelBorderStyle.Thin;
                 rango.Style.Border.Left.Color.SetColor(ColorTranslator.FromHtml(colorborder));
                 rango.Style.Border.Right.Style = ExcelBorderStyle.Thin;

@@ -1,4 +1,4 @@
-﻿const controlador = siteRoot + 'ValidadorVTPVTEA/';
+﻿const controlador = siteRoot + 'ValidadorVtpvtea/';
 
 
 $(function () {

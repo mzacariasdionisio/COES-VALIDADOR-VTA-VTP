@@ -185,7 +185,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 }                                              
 
                
-                string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVTPEntrada/";
+                string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVtpEntrada/";
 
                 string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaBarrasBrg.cshtml", model);
                 string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaBarrasNoBrg.cshtml", model);
@@ -262,6 +262,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         public ActionResult GenerarReporteSeccion(string periodo, string version, string empresa, string seccion)
         {
             base.ValidarSesionUsuario();
+            
             
             string rutaLogo = Server.MapPath("~/Areas/ValidacionVTEAVTP/Content/Images/logocoes_black.png");
 

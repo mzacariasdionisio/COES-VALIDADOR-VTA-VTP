@@ -1,4 +1,4 @@
-﻿const controlador = siteRoot + 'ValidadorVTPEntrada/';
+﻿const controlador = siteRoot + 'ValidadorVtpEntrada/';
 
 
 $(function () {

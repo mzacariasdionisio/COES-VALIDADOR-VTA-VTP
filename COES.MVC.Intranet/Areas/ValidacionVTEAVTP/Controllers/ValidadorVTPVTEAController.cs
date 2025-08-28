@@ -193,7 +193,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 }
                
-                string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVTPVTEA/";
+                string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVtpvtea/";
 
                 string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaComparacionDiferencias.cshtml", model);
                 string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaComparacionVTEA.cshtml", model);

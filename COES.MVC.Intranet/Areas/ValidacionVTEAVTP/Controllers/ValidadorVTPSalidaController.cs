@@ -174,7 +174,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 }
 
                
-                string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVTPSalida/";
+                string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVtpSalida/";
 
                 string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaValorizacion.cshtml", model);
                 string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaCompensacion.cshtml", model);             

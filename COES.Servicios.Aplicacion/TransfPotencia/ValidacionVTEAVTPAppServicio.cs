@@ -2,6 +2,7 @@
 using COES.Dominio.DTO.ValidacionVTEAVTP;
 using COES.Framework.Base.Tools;
 using COES.Servicios.Aplicacion.Helper;
+using DocumentFormat.OpenXml.ExtendedProperties;
 using log4net;
 using Newtonsoft.Json;
 using System;
@@ -28,6 +29,10 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
 
         const string HttpMethodVteaValidation = "funcion/vtea_validation";
         const string HttpMethodVtea = "funcion/vtea";
+
+        const string HttpMethodVteaHistRol = "funcion/vtea_hist_rol";
+        const string HttpMethodVteaDcUnit = "sme/vtea_dc_unit";
+        const string HttpMethodVteaDetail = "funcion/vtea_detail";
 
         /// <summary>
         /// Constructor Validación Vtea - Vtp
@@ -225,7 +230,74 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             }
         }
 
+        /// <summary>
+        /// Obtiene datos del servicio funcion/vtea_hist_rol
+        /// </summary>
+        public async Task<VteaHistRolDTO> FuncionVteaHistRol(string emprnom, string perinombre)
+        {
+            VteaHistRolDTO vteaHistRolDTO = new VteaHistRolDTO();
+            try
+            {
+                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaHistRol}/?emprnom={emprnom}&perinombre={perinombre}";
 
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
+
+                return JsonConvert.DeserializeObject<VteaHistRolDTO>(json);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ConstantesAppServicio.LogError, ex);
+                vteaHistRolDTO.Resultado = -1;
+                vteaHistRolDTO.Mensaje = ex.Message.ToString();
+                return vteaHistRolDTO;
+            }
+        }
+
+        /// <summary>
+        /// Obtiene datos del servicio sme/vtea_dc_unit
+        /// </summary>
+        public async Task<VteaDcUnitDTO> SmeVteaDcUnit(string bus, string client, string code, string company, string pericodi, string tentversion)
+        {
+            VteaDcUnitDTO vteaDcUnitDTO = new VteaDcUnitDTO();
+            try
+            {
+                string urlMetodo = $"{urlBase}/{HttpMethodVteaDcUnit}/?bus={bus}&client={client}&code={code}&company={company}&pericodi={pericodi}&tentversion={tentversion}";
+
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
+
+                return JsonConvert.DeserializeObject<VteaDcUnitDTO>(json);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ConstantesAppServicio.LogError, ex);
+                vteaDcUnitDTO.Resultado = -1;
+                vteaDcUnitDTO.Mensaje = ex.Message.ToString();
+                return vteaDcUnitDTO;
+            }
+        }
+
+        /// <summary>
+        /// Obtiene datos del servicio function/vtea_details
+        /// </summary>
+        public async Task<VteaDetailDTO> FuntionVteaDetail(string bus, string client, string code, string company,string day, string perinombre, string recanombre)
+        {
+            VteaDetailDTO vteaDetailDTO = new VteaDetailDTO();
+            try
+            {
+                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaDetail}/?bus={bus}&client={client}&code={code}&company={company}&day={day}&perinombre={perinombre}&recanombre={recanombre}";
+
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
+
+                return JsonConvert.DeserializeObject<VteaDetailDTO>(json);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ConstantesAppServicio.LogError, ex);
+                vteaDetailDTO.Resultado = -1;
+                vteaDetailDTO.Mensaje = ex.Message.ToString();
+                return vteaDetailDTO;
+            }
+        }
 
     }
 }

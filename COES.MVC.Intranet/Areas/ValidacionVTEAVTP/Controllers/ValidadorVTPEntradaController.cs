@@ -18,6 +18,9 @@ using COES.MVC.Intranet.Helper;
 using WebGrease.Activities;
 using System.Configuration;
 using Microsoft.Office.Interop.Excel;
+using DevExpress.XtraRichEdit.Import.Html;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Numeric;
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 {
@@ -66,7 +69,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
 
-                if(periodo.Resultado == 0)
+                //Prueba de nuevos servicios 
+                VteaHistRolDTO vteaHistRolDTO = await validacionVteavtpAppServicio.FuncionVteaHistRol("CENTRALES SANTA ROSA S.A.C.", "2025.Mayo");
+                VteaDcUnitDTO vteaDcUnitDTO = await validacionVteavtpAppServicio.SmeVteaDcUnit("INDEPENDENCIA 10", "ELECTRO DUNAS", "CB00156CLP", "CELEPSA", "120", "1");
+
+                VteaDetailDTO vteaDetailDTO = await validacionVteavtpAppServicio.FuntionVteaDetail("INDEPENDENCIA 10", "ELECTRO DUNAS", "CB00156CLP", "CELEPSA","1", "2025.Enero", "Mensual");
+                if (periodo.Resultado == 0)
                 {
                     model.PeriodoValorizacion = periodo;
 

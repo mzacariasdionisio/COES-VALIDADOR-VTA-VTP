@@ -64,10 +64,6 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                //Prueba de servicios de IT2
-                VteaValidadorDTO vteaValidador= await validacionVteavtpAppServicio.FuncionVteaValidador("2024.Diciembre", "Mensual");
-                VteaDTO vta= await validacionVteavtpAppServicio.FuncionVtea("2024.Diciembre", "Mensual");
-
                 TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
 
                 if(periodo.Resultado == 0)

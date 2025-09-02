@@ -56,13 +56,9 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             model.VersionesVtea = new VteaVersionDTO();
 
             try
-            {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
+            {             
 
-                string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
-
-                TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
 
                 if (periodo.Resultado == 0)
                 {
@@ -70,7 +66,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                     var primerPeriodo = periodo.Periodos.FirstOrDefault();
 
-                    VteaVersionDTO versionesVtea = await validacionVteavtpAppServicio.ObtenerSmeVteaVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                    VteaVersionDTO versionesVtea = await validacionVteavtpAppServicio.ObtenerSmeVteaVersions(primerPeriodo.PeriNombre, "");
 
                     if (versionesVtea.Resultado == 0)
                     {
@@ -117,19 +113,14 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
         public async Task<ActionResult> ObtenerVersiones(string periodo)
         {
-            ValidadorVtpvteaModel model = new ValidadorVtpvteaModel();           
+            ValidadorVteaSalidaModel model = new ValidadorVteaSalidaModel();           
             model.VersionesVtea = new VteaVersionDTO();
             model.StrMensajeError = "";
 
             try
-            {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
+            {               
 
-                string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
-                                
-
-                VteaVersionDTO versionesVtea = await validacionVteavtpAppServicio.ObtenerSmeVteaVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                VteaVersionDTO versionesVtea = await validacionVteavtpAppServicio.ObtenerSmeVteaVersions(periodo, "");
                               
                 if (versionesVtea.Resultado == 0)
                 {
@@ -190,13 +181,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 model.DatosVTEA.RetirosNegativos = new List<RetirosNegativos>();               
 
                 if (esInicio == 0)
-                {
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
-
-                    string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
-
-                    var datosSalidaVTEA = await validacionVteavtpAppServicio.FuncionVtea(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                {                  
+                    var datosSalidaVTEA = await validacionVteavtpAppServicio.FuncionVtea(periodo, version);
 
                     if (datosSalidaVTEA.Resultado == 0)
                     {
@@ -238,7 +224,10 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTEA] = model.DatosVTEA;
 
-                return Json(model, JsonRequestBehavior.AllowGet);
+                var jsonResult = Json(model, JsonRequestBehavior.AllowGet);
+                jsonResult.MaxJsonLength = int.MaxValue;
+
+                return jsonResult;
             }
             catch (Exception ex)
             {
@@ -262,12 +251,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             if (Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTEA] != null)
             {
-                var datosinicio = (ValidadorVteaSalidaModel)Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTEA];
+                var datosinicio = (VteaDTO)Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTEA];
 
-                datosVTEA.TableEH = datosinicio.DatosVTEA.TableEH;
-                datosVTEA.TableHE = datosinicio.DatosVTEA.TableHE;
-                datosVTEA.TableFC = datosinicio.DatosVTEA.TableFC;
-                datosVTEA.RetirosNegativos = datosinicio.DatosVTEA.RetirosNegativos;
+                datosVTEA.TableEH = datosinicio.TableEH;
+                datosVTEA.TableHE = datosinicio.TableHE;
+                datosVTEA.TableFC = datosinicio.TableFC;
+                datosVTEA.RetirosNegativos = datosinicio.RetirosNegativos;
             }
 
             try

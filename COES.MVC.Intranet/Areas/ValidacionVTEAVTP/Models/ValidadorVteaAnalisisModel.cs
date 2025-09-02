@@ -6,7 +6,7 @@ using COES.Dominio.DTO.ValidacionVTEAVTP;
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Models
 {
-    public class ValidadorVteaSalidaModel
+    public class ValidadorVteaAnalisisModel
     {
         public string Resultado { get; set; }
         public string StrMensaje { get; set; }
@@ -17,7 +17,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Models
         
         public VteaVersionDTO VersionesVtea { get; set; }
 
-        public VteaDTO DatosVTEA { get; set; }
+        public VteaValidadorDTO DatosValidadorVTEA { get; set; }
         
         public string VistaBarrasBrg {  get; set; }
         public string VistaBarrasNoBrg { get; set; }

@@ -1,4 +1,4 @@
-﻿const controlador = siteRoot + 'ValidadorVteaSalida/';
+﻿const controlador = siteRoot + 'ValidadorVteaAnalisis/';
 
 
 $(function () {
@@ -8,7 +8,7 @@ $(function () {
     });   
 
     $('#cbPeriodo').on('change', function () {
-        consultar(1);
+        //consultar(1);
         cargarVersiones();
     });
 
@@ -25,7 +25,7 @@ $(function () {
     });
 
 
-    consultar(1);
+    //consultar(1);
 });
 
 function mostrarMensaje(id, tipo, mensaje) {
@@ -113,12 +113,10 @@ function cargarVersiones() {
 
                 $('#tab-container').show();
                 $('#tab-container').easytabs('select', '#RetirosNegativos');
-                $('#detalleRetirosNegativos').html(evt.VistaBarrasBrg);
-                $('#detalleSinDeclaracion').html(evt.VistaBarrasNoBrg);
-                $('#detalleDeclaracionesNuevas').html(evt.VistaBarrasSinAnalizar);
-                $('#detalleFinContrato').html(evt.VistaBarrasDiferencia);
+                $('#detalleRolEmpresa').html(evt.VistaBarrasBrg);
+                $('#detalleEnergia').html(evt.VistaBarrasNoBrg);               
 
-                $('#tablaListadoRetirosNegativos').dataTable({
+                $('#tablaListadoRolEmpresa').dataTable({
                     "iDisplayLength": 20,
                     "lengthMenu": [[20, 50, 100], [20, 50, 100]],
                     "pagingType": "full_numbers",
@@ -141,74 +139,30 @@ function cargarVersiones() {
                     order: [[1, 'asc']]
                 });
 
-                $('#tablaListadoSinDeclaracion').dataTable({
-                    "iDisplayLength": 20,
-                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
-                    "pagingType": "full_numbers",
-                    columnDefs: [
+                //$('#tablaListadoSinDeclaracion').dataTable({
+                //    "iDisplayLength": 20,
+                //    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
+                //    "pagingType": "full_numbers",
+                //    columnDefs: [
 
-                    ],
-                    language: {
-                        info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: '',
-                        infoFiltered: '(filtrado de _MAX_ registros totales)',
-                        lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada',
-                        "paginate": {
-                            "first": '<<',
-                            "last": '>>',
-                            "next": '>',
-                            "previous": '<'
-                        }
-                    },
-                    order: [[1, 'asc']]
-                });
+                //    ],
+                //    language: {
+                //        info: 'Mostrando página _PAGE_ de _PAGES_',
+                //        infoEmpty: '',
+                //        infoFiltered: '(filtrado de _MAX_ registros totales)',
+                //        lengthMenu: 'Mostrar _MENU_ registros por página',
+                //        zeroRecords: 'No se encontró nada',
+                //        "paginate": {
+                //            "first": '<<',
+                //            "last": '>>',
+                //            "next": '>',
+                //            "previous": '<'
+                //        }
+                //    },
+                //    order: [[1, 'asc']]
+                //});
 
-                $('#tablaListadoDeclaracionesNuevas').dataTable({
-                    "iDisplayLength": 20,
-                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
-                    "pagingType": "full_numbers",
-                    columnDefs: [
-
-                    ],
-                    language: {
-                        info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: '',
-                        infoFiltered: '(filtrado de _MAX_ registros totales)',
-                        lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada',
-                        "paginate": {
-                            "first": '<<',
-                            "last": '>>',
-                            "next": '>',
-                            "previous": '<'
-                        }
-                    },
-                    order: [[1, 'asc']]
-                });
-
-                $('#tablaListadoFinContrato').dataTable({
-                    "iDisplayLength": 20,
-                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
-                    "pagingType": "full_numbers",
-                    columnDefs: [
-
-                    ],
-                    language: {
-                        info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: '',
-                        infoFiltered: '(filtrado de _MAX_ registros totales)',
-                        lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada',
-                        "paginate": {
-                            "first": '<<',
-                            "last": '>>',
-                            "next": '>',
-                            "previous": '<'
-                        }
-                    },
-                    order: [[1, 'asc']]
-                });
+              
 
                 $('#mensajeProcesar').html(evt.StrMensaje);
                             

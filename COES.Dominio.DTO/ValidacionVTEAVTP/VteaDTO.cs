@@ -99,7 +99,17 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
 
     public class RetirosNegativos
     {
-       //No encontré data para retiros negativos
+        // TODO: confirmar que estos campos estén llegando en el servicio, queda pendiente ya que ahora retorna null
+        [JsonProperty("codigo")]
+        public string Codigo { get; set; }
+        [JsonProperty("empresa")]
+        public string Empresa { get; set; }
+        [JsonProperty("cliente")]
+        public string Cliente { get; set; }
+        [JsonProperty("barra")]
+        public string Barra { get; set; }
+        [JsonProperty("descripcion")]
+        public string Descripcion { get; set; }
     }
 
 }

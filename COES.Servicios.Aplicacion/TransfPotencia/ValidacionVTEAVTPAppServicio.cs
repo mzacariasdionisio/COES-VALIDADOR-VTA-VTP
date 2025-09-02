@@ -43,9 +43,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio Trnperiodo
         /// </summary>
-        public async Task<TrnPeriodoDTO> ObtenerSmeTrnPeriodo(string folderUpload,
-            string pathfile,
-            string folderSave)
+        public async Task<TrnPeriodoDTO> ObtenerSmeTrnPeriodo()
         {
             TrnPeriodoDTO trnPeriodoDTO = new TrnPeriodoDTO();
             try
@@ -67,10 +65,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio Vtp Versions
         /// </summary>
-        public async Task<VtpVersionDTO> ObtenerSmeVtpVersions(string perinombre, string recpotnombre,
-            string folderUpload,
-            string pathfile,
-            string folderSave)
+        public async Task<VtpVersionDTO> ObtenerSmeVtpVersions(string perinombre, string recpotnombre)
         {
             VtpVersionDTO vtpVersionDTO = new VtpVersionDTO();  
             try
@@ -93,10 +88,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio Vtea Versions
         /// </summary>
-        public async Task<VteaVersionDTO> ObtenerSmeVteaVersions(string perinombre, string recpotnombre,
-            string folderUpload,
-            string pathfile,
-            string folderSave)
+        public async Task<VteaVersionDTO> ObtenerSmeVteaVersions(string perinombre, string recpotnombre)
         {
             VteaVersionDTO vteaVersionDTO = new VteaVersionDTO();
             try
@@ -120,10 +112,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio Vtp Validar
         /// </summary>
-        public async Task<VtpValidacionDTO> FuncionVtpValidar(string perinombre, string recpotnombre, 
-            string folderUpload,
-            string pathfile,
-            string folderSave)
+        public async Task<VtpValidacionDTO> FuncionVtpValidar(string perinombre, string recpotnombre)
         {
             VtpValidacionDTO vtpValidacionDTO = new VtpValidacionDTO();
             try
@@ -142,17 +131,14 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         }
 
         /// <summary>
-        /// Obtiene datos del servicio Vtp Versions
+        /// Obtiene datos del servicio FuncionVtea
         /// </summary>
-        public async Task<VteaDTO> FuncionVtea(string perinombre, string recanombre,
-            string folderUpload,
-            string pathfile,
-            string folderSave)
+        public async Task<VteaDTO> FuncionVtea(string perinombre, string recanombre)
         {
             VteaDTO vteaDTO = new VteaDTO();    
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtea}?perinombre={perinombre}&recanombre={recanombre}";
+                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtea}/?perinombre={perinombre}&recanombre={recanombre}";
 
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
 
@@ -170,17 +156,14 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
 
 
         /// <summary>
-        /// Obtiene datos del servicio Vtp Versions
+        /// Obtiene datos del servicio FuncionVteaValidador
         /// </summary>
-       public async Task<VteaValidadorDTO> FuncionVteaValidador(string perinombre, string recpotnombre,
-            string folderUpload,
-            string pathfile,
-            string folderSave)
+        public async Task<VteaValidadorDTO> FuncionVteaValidador(string perinombre, string recpotnombre)
         {
             VteaValidadorDTO vteaValidadorDTO = new VteaValidadorDTO(); 
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaValidation}?perinombre={perinombre}&recpotnombre={recpotnombre}";
+                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaValidation}?perinombre={perinombre}&recanombre={recpotnombre}";
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
                 return JsonConvert.DeserializeObject<VteaValidadorDTO>(json);
             }
@@ -222,10 +205,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio funcion/vtp_vtea
         /// </summary>
-        public async Task<VtpVteaDTO> FuncionVtpVtea(string perinombre, string recanombre, string recpotnombre,
-            string folderUpload,
-            string pathfile,
-            string folderSave
+        public async Task<VtpVteaDTO> FuncionVtpVtea(string perinombre, string recanombre, string recpotnombre
             )
         {
             VtpVteaDTO vtpVteaDTO = new VtpVteaDTO();

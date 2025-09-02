@@ -59,7 +59,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo(rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
 
                 if (periodo.Resultado == 0)
                 {
@@ -67,7 +67,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                     var primerPeriodo = periodo.Periodos.FirstOrDefault();
 
-                    VtpVersionDTO versionesVtp = await validacionVteavtpAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                    VtpVersionDTO versionesVtp = await validacionVteavtpAppServicio.ObtenerSmeVtpVersions(primerPeriodo.PeriNombre, "");
 
                     if (versionesVtp.Resultado == 0)
                     {
@@ -148,7 +148,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                     string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                    var datosSalidaVTP = await validacionVteavtpAppServicio.FuncionVtpValidar(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                    var datosSalidaVTP = await validacionVteavtpAppServicio.FuncionVtpValidar(periodo, version);
 
                     model.VtpValidacion = datosSalidaVTP;
 
@@ -214,7 +214,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                VtpVersionDTO versionesVtp = await validacionVteavtpAppServicio.ObtenerSmeVtpVersions(periodo, "", rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                VtpVersionDTO versionesVtp = await validacionVteavtpAppServicio.ObtenerSmeVtpVersions(periodo, "");
 
                 if (versionesVtp.Resultado == 0)
                 {

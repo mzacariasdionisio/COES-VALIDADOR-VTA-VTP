@@ -1,5 +1,5 @@
 ﻿const controlador = siteRoot + 'ValidadorVteaAnalisis/';
-
+let graficoBarrasRol = null;
 
 $(function () {
 
@@ -8,7 +8,7 @@ $(function () {
     });   
 
     $('#cbPeriodo').on('change', function () {
-        //consultar(1);
+        consultar(1);
         cargarVersiones();
     });
 
@@ -20,12 +20,16 @@ $(function () {
         consultar(0);       
     });  
 
-    $('#btnDescarga').on('click', function () {
-        descargarReporte();
+    $('#btnDescargaRolEmpresa').on('click', function () {
+        descargarReporte('RolEmpresa');
+    });
+    $('#btnDescargaEnergia').on('click', function () {
+        descargarReporte('Energia');
     });
 
+    //$('#popUpGrafico').bPopup().close();
 
-    //consultar(1);
+    consultar(1);
 });
 
 function mostrarMensaje(id, tipo, mensaje) {
@@ -45,7 +49,7 @@ function limpiarMensaje(id) {
 
 function cargarVersiones() {
 
-    let periodo = $("#cbPeriodo").val();
+    let periodo = $("#cbPeriodo option:selected").text();
 
     limpiarMensaje('mensaje');
 
@@ -63,7 +67,7 @@ function cargarVersiones() {
 
             if (result.StrMensajeError == '') {               
                 $.each(result.VersionesVtea.Versiones, function (i, item) {
-                    $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecaNombre, item.RecaNombre);
+                    $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecaNombre, item.RecaCodi);
                 });                
             }
             else {
@@ -78,8 +82,8 @@ function cargarVersiones() {
 
  function consultar (inicializar) {
 
-    let periodo = $("#cbPeriodo").val();
-    let version = $("#cbVersion").val();    
+    let periodo = $("#cbPeriodo option:selected").text();
+    let version = $("#cbVersion option:selected").text();
 
      if (inicializar == 0) {
 
@@ -112,13 +116,13 @@ function cargarVersiones() {
             success: function (evt) {
 
                 $('#tab-container').show();
-                $('#tab-container').easytabs('select', '#RetirosNegativos');
+                $('#tab-container').easytabs('select', '#RolEmpresa');
                 $('#detalleRolEmpresa').html(evt.VistaBarrasBrg);
                 $('#detalleEnergia').html(evt.VistaBarrasNoBrg);               
 
                 $('#tablaListadoRolEmpresa').dataTable({
-                    "iDisplayLength": 20,
-                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
+                    "iDisplayLength": 10,
+                    "lengthMenu": [[10, 20, 50, 100], [10, 20, 50, 100]],
                     "pagingType": "full_numbers",
                     columnDefs: [
 
@@ -136,31 +140,31 @@ function cargarVersiones() {
                             "previous": '<'
                         }
                     },
-                    order: [[1, 'asc']]
+                    order: [[1, 'desc'], [0, 'asc']]
                 });
 
-                //$('#tablaListadoSinDeclaracion').dataTable({
-                //    "iDisplayLength": 20,
-                //    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
-                //    "pagingType": "full_numbers",
-                //    columnDefs: [
+                $('#tablaListadoEnergia').dataTable({
+                    "iDisplayLength": 10,
+                    "lengthMenu": [[10, 20, 50, 100], [10, 20, 50, 100]],
+                    "pagingType": "full_numbers",
+                    columnDefs: [
 
-                //    ],
-                //    language: {
-                //        info: 'Mostrando página _PAGE_ de _PAGES_',
-                //        infoEmpty: '',
-                //        infoFiltered: '(filtrado de _MAX_ registros totales)',
-                //        lengthMenu: 'Mostrar _MENU_ registros por página',
-                //        zeroRecords: 'No se encontró nada',
-                //        "paginate": {
-                //            "first": '<<',
-                //            "last": '>>',
-                //            "next": '>',
-                //            "previous": '<'
-                //        }
-                //    },
-                //    order: [[1, 'asc']]
-                //});
+                    ],
+                    language: {
+                        info: 'Mostrando página _PAGE_ de _PAGES_',
+                        infoEmpty: '',
+                        infoFiltered: '(filtrado de _MAX_ registros totales)',
+                        lengthMenu: 'Mostrar _MENU_ registros por página',
+                        zeroRecords: 'No se encontró nada',
+                        "paginate": {
+                            "first": '<<',
+                            "last": '>>',
+                            "next": '>',
+                            "previous": '<'
+                        }
+                    },
+                    order: [[5, 'desc'], [1, 'asc'], [2, 'asc']]
+                });
 
               
 
@@ -184,18 +188,29 @@ function cargarVersiones() {
 
 
 function descargarReporte(seccion) {
-    let periodo = $("#cbPeriodo").val();
-    let version = $("#cbVersion").val();   
+    let periodo = $("#cbPeriodo option:selected").text();
+    let version = $("#cbVersion option:selected").text();
 
     let mensajeError = '';
-    let tablaListadoRetirosNegativos = $("#tablaListadoRetirosNegativos").DataTable();
-    let tablaListadoSinDeclaracion = $("#tablaListadoSinDeclaracion").DataTable();
-    let tablaListadoDeclaracionesNuevas = $("#tablaListadoDeclaracionesNuevas").DataTable();
-    let tablaListadoFinContrato = $("#tablaListadoFinContrato").DataTable();
+   
+    switch (seccion) {
+       
+        case 'RolEmpresa': {
+            let tablaBarraSinAnalizar = $("#tablaListadoRolEmpresa").DataTable();
 
-    if (tablaListadoRetirosNegativos.data().length == 0 && tablaListadoSinDeclaracion.data().length == 0
-        && tablaListadoDeclaracionesNuevas.data().length == 0 && tablaListadoFinContrato.data().length == 0) {
-        mensajeError = 'Las grillas están vacías, no es posible descargar.';
+            if (tablaBarraSinAnalizar.data().length == 0) {
+                mensajeError = 'La grilla está vacía, no es posible descargar.';
+            }
+            break;
+        }
+        case 'Energia': {
+            let tablaBarraDiferencia = $("#tablaListadoEnergia").DataTable();
+
+            if (tablaBarraDiferencia.data().length == 0) {
+                mensajeError = 'La grilla está vacía, no es posible descargar.';
+            }
+            break;
+        }
     }
     
     if (mensajeError != '') {
@@ -208,7 +223,8 @@ function descargarReporte(seccion) {
         url: controlador + 'GenerarReporte',
         data: {
             periodo: periodo,
-            version: version
+            version: version,
+            seccion: seccion
         },
         dataType: 'json',
         success: function (result) {
@@ -225,3 +241,149 @@ function descargarReporte(seccion) {
         }
     });
 }
+
+function verGraficoEmpresa(empresa) {
+    let periodo = $("#cbPeriodo option:selected").text();
+    $.ajax({
+        type: 'POST',
+        url: controlador + 'ObtenerRolHistorico',
+        data: {
+            empresa: empresa,
+            periodo: periodo
+        },
+        dataType: 'json',
+        global: false,
+        success: function (result) {
+           
+            if (result.StrMensajeError == '') {
+                setTimeout(function () {
+                    $('#popupGrafico').bPopup({
+                        autoClose: false
+                    });
+                }, 200);
+                generarGraficoBarras(result, empresa);
+            }
+            else {
+                alert(result.StrMensajeError);
+            }
+        },
+        error: function () {
+            alert("Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.");
+        }
+    });
+}
+
+function generarGraficoBarras(model, empresa) {
+    // Obtener los datos de la tabla 
+    let tableData = model.DatosHisRol.VTEARolHist;
+
+    if (tableData.length == 0) {
+        return;
+    }
+
+    $('#span_pop_title').html(empresa);
+
+    if (graficoBarrasRol) {
+        graficoBarrasRol.destroy();
+    }
+    
+    // Asignamos un color específico a cada valor de Rol
+    const coloresRol = {
+        0: '#FFF9CC', // amarillo
+        1: '#FF5733', // rojo
+        2: '#33C46A'  // verde
+    };
+        
+    const seriesData = tableData.map(item => {
+        const timestamp = new Date(item.TIME).getTime(); // timestamp en ms
+        return {
+            x: timestamp,
+            y: parseInt(item.ROL),
+            color: coloresRol[item.ROL]
+        };
+    });
+
+    // Obtener el timestamp más reciente
+    let maxTimestamp = Number.NEGATIVE_INFINITY;
+
+    for (const item of tableData) {
+        const time = new Date(item.TIME).getTime();
+        if (time > maxTimestamp) {
+            maxTimestamp = time;
+        }
+    }
+
+    // Calcular 10 meses atrás
+    const maxDate = new Date(maxTimestamp);
+    const minDate = new Date(maxDate);
+    minDate.setMonth(minDate.getMonth() - 9);
+    const minTimestamp = minDate.getTime();
+
+    Highcharts.setOptions({
+        lang: {
+            rangeSelectorFrom: 'Desde',
+            rangeSelectorTo: 'Hasta'
+        }
+    });
+
+    graficoBarrasRol = Highcharts.stockChart("AreaGrafico", {
+        chart: {
+            type: 'column'
+        },
+        rangeSelector: {          
+            
+            buttons: [
+                { type: 'month', count: 9, text: '10m' },
+                { type: 'ytd', text: 'Año Actual' },
+                { type: 'all', text: 'Todos' }
+            ],
+            selected: 0,
+            inputEnabled: true,
+            inputDateFormat: '%Y-%m',
+            inputEditDateFormat: '%Y-%m',
+            buttonTheme: {
+                width: 80                    
+            }
+        },
+        title: { text: '' },
+        xAxis: {
+            type: 'datetime',
+            min: minTimestamp,
+            max: maxTimestamp,
+            title: { text: "Periodo" },
+            labels: {
+                format: '{value:%Y-%m}'
+            }
+          
+        },
+        yAxis: {
+            min: 0,
+            max: 2,
+            allowDecimals: false,
+            title: { text: 'Rol' },
+            tickInterval: 1,
+            opposite: false 
+        },
+        tooltip: {
+            enabled: false
+        },
+        series: [
+            {
+                name: 'Rol',
+                data: seriesData,
+                showInLegend: false
+            }
+        ]
+    });
+}
+
+function verGraficoEmpresaEnergia(codigo, empresa, cliente, barra) {
+    let periodo = $("#cbPeriodo").val();
+    let version = $("#cbVersion").val();
+    let periodoTexto = $("#cbPeriodo option:selected").text();
+    let versionTexto = $("#cbVersion option:selected").text();
+
+    window.location.href = controlador + "DetalleEmpresaEnergia?codigo=" + codigo + "&empresa=" + empresa + "&cliente=" + cliente + "&barra=" + barra
+        + "&pericodi=" + periodo + "&recacodi=" + version + "&periodoTexto=" + periodoTexto + "&versionTexto=" + versionTexto;
+}
+

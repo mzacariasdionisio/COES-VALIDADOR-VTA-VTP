@@ -20,11 +20,15 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Models
         public VteaValidadorDTO DatosValidadorVTEA { get; set; }
         
         public string VistaBarrasBrg {  get; set; }
-        public string VistaBarrasNoBrg { get; set; }
+        public string VistaBarrasNoBrg { get; set; }    
 
-        public string VistaBarrasSinAnalizar { get; set; }
+        public VteaHistRolDTO DatosHisRol { get; set; }
 
-        public string VistaBarrasDiferencia { get; set; }        
-      
+        public VteaDcUnitDTO DetalleDiasPeriodo {  get; set; }
+
+        public VteaDetailDTO DetalleEmpresaEnergiaDia { get; set; }
+        
+        public string PeriodoSeleccionado { get; set; }
+        public string VersionSeleccionado { get; set; }
     }
 }

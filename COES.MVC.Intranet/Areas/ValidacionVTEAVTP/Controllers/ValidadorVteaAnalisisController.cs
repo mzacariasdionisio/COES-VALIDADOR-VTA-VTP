@@ -1,8 +1,10 @@
 ﻿using COES.Dominio.DTO.ValidacionVTEAVTP;
 using COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Models;
 using COES.MVC.Intranet.Controllers;
+using COES.MVC.Intranet.Helper;
 using COES.Servicios.Aplicacion.TransfPotencia.Helper;
 using log4net;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -13,7 +15,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Mvc;
-using COES.MVC.Intranet.Helper;
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 {
@@ -172,8 +173,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             try
             {
                 model.DatosValidadorVTEA = new VteaValidadorDTO();
-                //model.DatosValidadorVTEA.TableEH = new List<TableEH>();
-                //model.DatosValidadorVTEA.TableHE = new List<TableHE>();
+                model.DatosValidadorVTEA.InfoEmpresaResumen = new List<InfoEmpresaResumen>();
+                model.DatosValidadorVTEA.InfoDeclaracionResumen = new List<InfoDeclaracionResumen>();
                 //model.DatosValidadorVTEA.TableFC = new List<TableFC>();
                 //model.DatosValidadorVTEA.RetirosNegativos = new List<RetirosNegativos>();
 
@@ -206,19 +207,16 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVteaAnalisis/";
 
                 string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaRolEmpresa.cshtml", model);
-                //string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaSinDeclaracion.cshtml", model);
-                //string htmlBarrasSinAnalizar = RenderViewToString($"{rutaBaseVista}ListaDeclaracionesNuevas.cshtml", model);
-                //string htmlBarrasDiferencia = RenderViewToString($"{rutaBaseVista}ListaFinContrato.cshtml", model);
+                string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaEnergia.cshtml", model);              
 
                 model.VistaBarrasBrg = htmlBarrasBrg;
-                //model.VistaBarrasNoBrg = htmlBarrasNoBrg;
-                //model.VistaBarrasSinAnalizar = htmlBarrasSinAnalizar;
-                //model.VistaBarrasDiferencia = htmlBarrasDiferencia;
+                model.VistaBarrasNoBrg = htmlBarrasNoBrg;               
 
                 var fecha = DateTime.Now;
                 model.StrMensaje = esInicio > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación." :
-                    string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("HH:mm:ss"));
-                                
+                    string.Format("NOTA: Se ejecutó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("HH:mm:ss"));
+
+                Session[Helper.ConstantesValidacionVteavtp.D_Datos_Analisis_VTEA] = model.DatosValidadorVTEA;
 
                 var jsonResult = Json(model, JsonRequestBehavior.AllowGet);
                 jsonResult.MaxJsonLength = int.MaxValue;
@@ -234,7 +232,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             return Json(model, JsonRequestBehavior.AllowGet);
         }
 
-        public ActionResult GenerarReporte(string periodo, string version)
+        public ActionResult GenerarReporte(string periodo, string version, string seccion)
         {
             base.ValidarSesionUsuario();
 
@@ -243,21 +241,36 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             string nombreArchivo = "-1";
 
-            var datosVTEA = new VteaDTO();
+            var datosVTEA = new VteaValidadorDTO();
 
-            if (Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTEA] != null)
+            if (Session[Helper.ConstantesValidacionVteavtp.D_Datos_Analisis_VTEA] != null)
             {
-                var datosinicio = (VteaDTO)Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTEA];
+                var datosinicio = (VteaValidadorDTO)Session[Helper.ConstantesValidacionVteavtp.D_Datos_Analisis_VTEA];
 
-                datosVTEA.TableEH = datosinicio.TableEH;
-                datosVTEA.TableHE = datosinicio.TableHE;
-                datosVTEA.TableFC = datosinicio.TableFC;
-                datosVTEA.RetirosNegativos = datosinicio.RetirosNegativos;
+                datosVTEA.InfoEmpresaResumen = datosinicio.InfoEmpresaResumen;
+                datosVTEA.InfoDeclaracionResumen = datosinicio.InfoDeclaracionResumen;
+               
             }
 
             try
             {
-                nombreArchivo = Helper.ExcelDocumentVteaSalida.GenerarReporte(datosVTEA, periodo, version, rutaLogo);
+
+                switch (seccion)
+                {
+                    case "RolEmpresa":
+                       
+
+                        nombreArchivo = Helper.ExcelDocumentVteaAnalisis.GenerarReporteRolEmpresa(datosVTEA, periodo, version, rutaLogo);
+
+                        break;
+
+                    case "Energia":
+
+                        nombreArchivo = Helper.ExcelDocumentVteaAnalisis.GenerarReporteEnergia(datosVTEA, periodo, version, rutaLogo);
+
+                        break;                  
+
+                }
             }
             catch (Exception ex)
             {
@@ -275,5 +288,182 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             System.IO.File.Delete(fullPath);
             return File(bytes, Constantes.AppExcel, file);
         }
+
+        public async Task<ActionResult> ObtenerRolHistorico(string empresa, string periodo)
+        {
+            ValidadorVteaAnalisisModel model = new ValidadorVteaAnalisisModel();
+            model.VersionesVtea = new VteaVersionDTO();
+            model.StrMensajeError = "";
+
+            try
+            {
+
+                var versionesVtea = await validacionVteavtpAppServicio.FuncionVteaHistRol(empresa.Trim(), periodo);
+
+                if (versionesVtea.Resultado == 0)
+                {
+                    model.DatosHisRol = versionesVtea;
+                }
+                else if (versionesVtea.Resultado == -1)
+                {
+                    model.DatosHisRol.VteaRolHist = new List<VteaRolHist>();
+
+                    log.Error(versionesVtea.Mensaje);
+                    model.StrMensajeError = ErrorInterno;
+                }
+                else if (versionesVtea.Resultado == 1)
+                {
+                    model.DatosHisRol.VteaRolHist = new List<VteaRolHist>();
+
+                    model.StrMensajeError = versionesVtea.Mensaje;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(NameController, ex);
+                model.StrMensajeError = ErrorInterno;
+            }
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(model, new JsonSerializerSettings
+            {
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                DateTimeZoneHandling = DateTimeZoneHandling.Utc
+            });
+
+            return Content(json, "application/json");
+            //return Json(model, JsonRequestBehavior.AllowGet);
+        }
+
+        public async Task<ActionResult> DetalleEmpresaEnergia(string codigo, string empresa, string cliente, string barra, 
+                                                                string pericodi, string recacodi, string periodoTexto, string versionTexto)
+        {
+            ValidadorVteaAnalisisModel model = new ValidadorVteaAnalisisModel();
+           
+            model.PeriodoSeleccionado = periodoTexto;
+            model.VersionSeleccionado = versionTexto;
+
+            ViewBag.Codigo = codigo;
+            ViewBag.Empresa = empresa;
+            ViewBag.Cliente = cliente;
+            ViewBag.Barra = barra;
+
+            try
+            {
+              
+                VteaDcUnitDTO vteaDcUnitDTO = await validacionVteavtpAppServicio.SmeVteaDcUnit(barra, cliente, codigo, empresa, pericodi, recacodi);
+
+
+                if (vteaDcUnitDTO.Resultado == 0)
+                {
+                    
+                    model.DetalleDiasPeriodo = vteaDcUnitDTO;
+                   
+                }
+                else if (vteaDcUnitDTO.Resultado == -1)
+                {
+                    model.DetalleDiasPeriodo = new VteaDcUnitDTO();
+                    model.DetalleDiasPeriodo.VteaDcUnit = new List<VteaDcUnit>();
+
+                    log.Error(vteaDcUnitDTO.Mensaje);
+                    model.StrMensajeError = ErrorInterno;
+                }
+                else if (vteaDcUnitDTO.Resultado == 1)
+                {
+                    model.DetalleDiasPeriodo = new VteaDcUnitDTO();
+                    model.DetalleDiasPeriodo.VteaDcUnit = new List<VteaDcUnit>();
+
+                    model.StrMensajeError = vteaDcUnitDTO.Mensaje;
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(NameController, ex);
+                model.StrMensajeError = ErrorInterno;
+            }
+
+            return View($"~/Areas/ValidacionVTEAVTP/Views/ValidadorVteaAnalisis/DetalleEmpresaEnergia.cshtml", model);
+        }
+
+        public async Task<ActionResult> ObtenerEmpresaEnergiaDia(string codigo, string empresa, string cliente, string barra, string dia, string periodo, string version)
+        {
+            ValidadorVteaAnalisisModel model = new ValidadorVteaAnalisisModel();
+            model.DetalleEmpresaEnergiaDia = new VteaDetailDTO();
+            model.StrMensajeError = "";
+
+            try
+            {
+
+                VteaDetailDTO vteaDetailDTO = await validacionVteavtpAppServicio.FuntionVteaDetail(barra, cliente, codigo, empresa, dia, periodo, version);
+
+                if (vteaDetailDTO.Resultado == 0)
+                {                   
+                    model.DetalleEmpresaEnergiaDia = vteaDetailDTO;
+
+                    Session[Helper.ConstantesValidacionVteavtp.D_Datos_Analisis_Energia_Dia_VTEA] = vteaDetailDTO;
+                }
+                else if (vteaDetailDTO.Resultado == -1)
+                {
+                    model.DetalleEmpresaEnergiaDia.Tmp = new List<Tmp>();
+
+                    log.Error(vteaDetailDTO.Mensaje);
+                    model.StrMensajeError = ErrorInterno;
+                }
+                else if (vteaDetailDTO.Resultado == 1)
+                {
+                    model.DetalleEmpresaEnergiaDia.Tmp = new List<Tmp>();
+
+                    model.StrMensajeError = vteaDetailDTO.Mensaje;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                log.Error(NameController, ex);
+                model.StrMensajeError = ErrorInterno;
+            }
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(model, new JsonSerializerSettings
+            {
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                DateTimeZoneHandling = DateTimeZoneHandling.Utc
+            });
+
+            return Content(json, "application/json");
+            //return Json(model, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult GenerarReporteEnergiaDia(string periodo, string version, string dia)
+        {
+            base.ValidarSesionUsuario();
+
+
+            string rutaLogo = Server.MapPath("~/Areas/ValidacionVTEAVTP/Content/Images/logocoes_black.png");
+
+            string nombreArchivo = "-1";
+
+            var datosVTEA = new VteaDetailDTO();
+
+            if (Session[Helper.ConstantesValidacionVteavtp.D_Datos_Analisis_Energia_Dia_VTEA] != null)
+            {
+                var datosinicio = (VteaDetailDTO)Session[Helper.ConstantesValidacionVteavtp.D_Datos_Analisis_Energia_Dia_VTEA];
+
+                datosVTEA.Tmp = datosinicio.Tmp;              
+
+            }
+
+            try
+            {
+                nombreArchivo = Helper.ExcelDocumentVteaAnalisis.GenerarReporteEnergiaDia(datosVTEA, periodo, version, dia,rutaLogo);
+            }
+            catch (Exception ex)
+            {
+                log.Error(NameController, ex);
+                nombreArchivo = "-1";
+            }
+
+            return Json(nombreArchivo);
+        }
+
     }
 }

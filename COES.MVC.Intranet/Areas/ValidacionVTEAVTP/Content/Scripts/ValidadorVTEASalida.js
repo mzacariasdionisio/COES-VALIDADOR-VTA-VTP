@@ -45,7 +45,7 @@ function limpiarMensaje(id) {
 
 function cargarVersiones() {
 
-    let periodo = $("#cbPeriodo").val();
+    let periodo = $("#cbPeriodo option:selected").text();
 
     limpiarMensaje('mensaje');
 
@@ -63,7 +63,7 @@ function cargarVersiones() {
 
             if (result.StrMensajeError == '') {               
                 $.each(result.VersionesVtea.Versiones, function (i, item) {
-                    $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecaNombre, item.RecaNombre);
+                    $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecaNombre, item.RecaCodi);
                 });                
             }
             else {
@@ -78,8 +78,8 @@ function cargarVersiones() {
 
  function consultar (inicializar) {
 
-    let periodo = $("#cbPeriodo").val();
-    let version = $("#cbVersion").val();    
+     let periodo = $("#cbPeriodo option:selected").text();
+     let version = $("#cbVersion option:selected").text();   
 
      if (inicializar == 0) {
 
@@ -118,100 +118,13 @@ function cargarVersiones() {
                 $('#detalleDeclaracionesNuevas').html(evt.VistaBarrasSinAnalizar);
                 $('#detalleFinContrato').html(evt.VistaBarrasDiferencia);
 
-                $('#tablaListadoRetirosNegativos').dataTable({
-                    "iDisplayLength": 20,
-                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
-                    "pagingType": "full_numbers",
-                    columnDefs: [
+                configurarDataTable('#tablaListadoRetirosNegativos');
+                configurarDataTable('#tablaListadoSinDeclaracion');
+                configurarDataTable('#tablaListadoDeclaracionesNuevas');
+                configurarDataTable('#tablaListadoFinContrato');
+              
 
-                    ],
-                    language: {
-                        info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: '',
-                        infoFiltered: '(filtrado de _MAX_ registros totales)',
-                        lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada',
-                        "paginate": {
-                            "first": '<<',
-                            "last": '>>',
-                            "next": '>',
-                            "previous": '<'
-                        }
-                    },
-                    order: [[1, 'asc']]
-                });
-
-                $('#tablaListadoSinDeclaracion').dataTable({
-                    "iDisplayLength": 20,
-                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
-                    "pagingType": "full_numbers",
-                    columnDefs: [
-
-                    ],
-                    language: {
-                        info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: '',
-                        infoFiltered: '(filtrado de _MAX_ registros totales)',
-                        lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada',
-                        "paginate": {
-                            "first": '<<',
-                            "last": '>>',
-                            "next": '>',
-                            "previous": '<'
-                        }
-                    },
-                    order: [[1, 'asc']]
-                });
-
-                $('#tablaListadoDeclaracionesNuevas').dataTable({
-                    "iDisplayLength": 20,
-                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
-                    "pagingType": "full_numbers",
-                    columnDefs: [
-
-                    ],
-                    language: {
-                        info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: '',
-                        infoFiltered: '(filtrado de _MAX_ registros totales)',
-                        lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada',
-                        "paginate": {
-                            "first": '<<',
-                            "last": '>>',
-                            "next": '>',
-                            "previous": '<'
-                        }
-                    },
-                    order: [[1, 'asc']]
-                });
-
-                $('#tablaListadoFinContrato').dataTable({
-                    "iDisplayLength": 20,
-                    "lengthMenu": [[20, 50, 100], [20, 50, 100]],
-                    "pagingType": "full_numbers",
-                    columnDefs: [
-
-                    ],
-                    language: {
-                        info: 'Mostrando página _PAGE_ de _PAGES_',
-                        infoEmpty: '',
-                        infoFiltered: '(filtrado de _MAX_ registros totales)',
-                        lengthMenu: 'Mostrar _MENU_ registros por página',
-                        zeroRecords: 'No se encontró nada',
-                        "paginate": {
-                            "first": '<<',
-                            "last": '>>',
-                            "next": '>',
-                            "previous": '<'
-                        }
-                    },
-                    order: [[1, 'asc']]
-                });
-
-                $('#mensajeProcesar').html(evt.StrMensaje);
-                            
+                $('#mensajeProcesar').html(evt.StrMensaje);                            
 
                 $('.dataTables_filter input').attr('maxLength', 50);
 
@@ -228,10 +141,34 @@ function cargarVersiones() {
     }, 100);
 }
 
+function configurarDataTable(selector) {
+    $(selector).DataTable({
+        "iDisplayLength": 20,
+        "lengthMenu": [[20, 50, 100], [20, 50, 100]],
+        "pagingType": "full_numbers",
+        columnDefs: [
+
+        ],
+        language: {
+            info: 'Mostrando página _PAGE_ de _PAGES_',
+            infoEmpty: '',
+            infoFiltered: '(filtrado de _MAX_ registros totales)',
+            lengthMenu: 'Mostrar _MENU_ registros por página',
+            zeroRecords: 'No se encontró nada',
+            "paginate": {
+                "first": '<<',
+                "last": '>>',
+                "next": '>',
+                "previous": '<'
+            }
+        },
+        order: [[1, 'asc']]
+    });
+}
 
 function descargarReporte(seccion) {
-    let periodo = $("#cbPeriodo").val();
-    let version = $("#cbVersion").val();   
+    let periodo = $("#cbPeriodo option:selected").text();
+    let version = $("#cbVersion option:selected").text();   
 
     let mensajeError = '';
     let tablaListadoRetirosNegativos = $("#tablaListadoRetirosNegativos").DataTable();

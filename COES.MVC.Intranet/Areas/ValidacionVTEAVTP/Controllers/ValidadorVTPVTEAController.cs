@@ -54,11 +54,6 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             try
             {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
-
-                string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
-
                 TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
 
                 if (periodo.Resultado == 0)
@@ -93,18 +88,18 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                     {
                         model.VersionesVtea = versionesVtea;
                     }
-                    else if (versionesVtp.Resultado == -1)
+                    else if (versionesVtea.Resultado == -1)
                     {
                         model.VersionesVtea.Versiones = new List<TableVersionVteaDTO>();
 
-                        log.Error(versionesVtp.Mensaje);
+                        log.Error(versionesVtea.Mensaje);
                         model.StrMensajeError = ErrorInterno;
                     }
-                    else if (versionesVtp.Resultado == 1)
+                    else if (versionesVtea.Resultado == 1)
                     {
                         model.VersionesVtea.Versiones = new List<TableVersionVteaDTO>();
 
-                        model.StrMensajeError = versionesVtp.Mensaje;
+                        model.StrMensajeError = versionesVtea.Mensaje;
                     }
 
                 }
@@ -164,11 +159,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 model.VtpVteaDatos.TablesD = new List<TableD>();
 
                 if (inicializar == 0)
-                {                  
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
-
-                    string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+                {                                     
 
                     var datosSalidaVTP = await validacionVteavtpAppServicio.FuncionVtpVtea(periodo, versionVTEA, versionVTP);
 
@@ -195,13 +186,13 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                
                 string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVtpvtea/";
 
-                string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaComparacionDiferencias.cshtml", model);
-                string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaComparacionVTEA.cshtml", model);
-                string htmlBarrasSinAnalizar = RenderViewToString($"{rutaBaseVista}ListaComparacionVTP.cshtml", model);              
+                string htmlComparacionDiferencia = RenderViewToString($"{rutaBaseVista}ListaComparacionDiferencias.cshtml", model);
+                string htmlComparacionVtea = RenderViewToString($"{rutaBaseVista}ListaComparacionVTEA.cshtml", model);
+                string htmlComparacionVtp = RenderViewToString($"{rutaBaseVista}ListaComparacionVTP.cshtml", model);              
                                
-                model.VistaComparacionDiferencia = htmlBarrasBrg;
-                model.VistaComparacionVTEA = htmlBarrasNoBrg;
-                model.VistaComparacionVTP = htmlBarrasSinAnalizar;
+                model.VistaComparacionDiferencia = htmlComparacionDiferencia;
+                model.VistaComparacionVTEA = htmlComparacionVtea;
+                model.VistaComparacionVTP = htmlComparacionVtp;
 
                 var fecha = DateTime.Now;
                 model.StrMensaje = inicializar > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación" :
@@ -230,11 +221,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             try
             {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
-
-                string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
-
+              
                 VtpVersionDTO versionesVtp = await validacionVteavtpAppServicio.ObtenerSmeVtpVersions(periodo, "");
 
                 VteaVersionDTO versionesVtea = await validacionVteavtpAppServicio.ObtenerSmeVteaVersions(periodo, "");
@@ -261,18 +248,18 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 {
                     model.VersionesVtea = versionesVtea;
                 }
-                else if (versionesVtp.Resultado == -1)
+                else if (versionesVtea.Resultado == -1)
                 {
                     model.VersionesVtea.Versiones = new List<TableVersionVteaDTO>();
 
                     log.Error(versionesVtp.Mensaje);
                     model.StrMensajeError = ErrorInterno;
                 }
-                else if (versionesVtp.Resultado == 1)
+                else if (versionesVtea.Resultado == 1)
                 {
                     model.VersionesVtea.Versiones = new List<TableVersionVteaDTO>();
 
-                    model.StrMensajeError = versionesVtp.Mensaje;
+                    model.StrMensajeError = versionesVtea.Mensaje;
                 }
 
             }

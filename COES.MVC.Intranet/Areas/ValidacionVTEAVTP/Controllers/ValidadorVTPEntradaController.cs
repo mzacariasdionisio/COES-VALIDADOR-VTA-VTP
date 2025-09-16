@@ -146,12 +146,9 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 if (esInicio == 0)               
                 {
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
 
-                    string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                    var datosEntradaVTP = await validacionVteavtpAppServicio.FuncionVtp(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                    var datosEntradaVTP = await validacionVteavtpAppServicio.FuncionVtp(periodo, version);
 
                     if(datosEntradaVTP.Resultado == 0)
                     {

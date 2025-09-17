@@ -125,7 +125,7 @@ function cargarVersiones() {
                     "lengthMenu": [[10, 20, 50, 100], [10, 20, 50, 100]],
                     "pagingType": "full_numbers",
                     columnDefs: [
-
+                        { width: "10%", targets: 1 }
                     ],
                     language: {
                         info: 'Mostrando página _PAGE_ de _PAGES_',
@@ -290,7 +290,7 @@ function generarGraficoBarras(model, empresa) {
     // Asignamos un color específico a cada valor de Rol
     const coloresRol = {
         0: '#FFF9CC', // amarillo
-        1: '#FF5733', // rojo
+        1: '#CC2E00', // rojo
         2: '#33C46A'  // verde
     };
         

@@ -394,7 +394,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             try
             {
 
-                VteaDetailDTO vteaDetailDTO = await validacionVteavtpAppServicio.FuntionVteaDetail(barra, cliente, codigo, empresa, dia, periodo, version);
+                VteaDetailDTO vteaDetailDTO = await validacionVteavtpAppServicio.FuntionVteaDetail_Temp(barra, cliente, codigo, empresa, dia, periodo, version);
 
                 if (vteaDetailDTO.Resultado == 0)
                 {                   

@@ -25,14 +25,14 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         const string HttpMethodVteaVersions = "sme/vtea_versions";
         const string HttpMethodVtpValidacion = "funcion/vtp_validation";
         const string HttpMethodVtp = "funcion/vtp";
-        const string HttpMethodVtpVtea = "funcion/vtp_vtea";
+        const string HttpMethodVtpVtea = "funcion/vtp_vtea"; //
 
-        const string HttpMethodVteaValidation = "funcion/vtea_validation";
+        const string HttpMethodVteaValidation = "funcion/vtea_validation"; //
         const string HttpMethodVtea = "funcion/vtea";
 
-        const string HttpMethodVteaHistRol = "funcion/vtea_hist_rol";
-        const string HttpMethodVteaDcUnit = "sme/vtea_dc_unit";
-        const string HttpMethodVteaDetail = "funcion/vtea_detail";
+        const string HttpMethodVteaHistRol = "funcion/vtea_hist_rol"; //
+        const string HttpMethodVteaDcUnit = "sme/vtea_dc_unit";//
+        const string HttpMethodVteaDetail = "funcion/vtea_detail";//
 
         /// <summary>
         /// Constructor Validación Vtea - Vtp

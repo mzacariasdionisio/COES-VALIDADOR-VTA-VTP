@@ -61,11 +61,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             model.VersionesVtp = new VtpVersionDTO();
 
             try
-            {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
-
-                string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+            {               
 
                 TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
 
@@ -158,12 +154,9 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 if (esInicio == 0)               
                 {
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
 
-                    string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
 
-                    var datosEntradaVTP = await validacionVteavtpAppServicio.FuncionVtp(periodo, version, rutaUpload, base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog);
+                    var datosEntradaVTP = await validacionVteavtpAppServicio.FuncionVtp(periodo, version);
 
                     if(datosEntradaVTP.Resultado == 0)
                     {
@@ -230,11 +223,6 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             try
             {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
-
-                string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
-
                 VtpVersionDTO versionesVtp = await validacionVteavtpAppServicio.ObtenerSmeVtpVersions(periodo, "");
 
                 if(versionesVtp.Resultado == 0)

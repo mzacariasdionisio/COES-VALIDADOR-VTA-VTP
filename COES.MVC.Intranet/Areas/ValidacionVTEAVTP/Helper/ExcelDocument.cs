@@ -6,9 +6,8 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using COES.MVC.Intranet.Helper;
-using COES.MVC.Intranet.Areas.TiempoReal.Models;
 using COES.Framework.Base.Tools;
-using static iTextSharp.text.pdf.AcroFields;
+using System;
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 {
@@ -24,9 +23,9 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         public const string CabeceraBarra = "Barra";
         public const string CabeceraPotenciaCoincidentekW = "Potencia Coincidente(kW)";
         public const string CabeceraPotenciaDeclaradakW = "Potencia Declarada(kW)";
-        public const string FormatoNroCero = "0.0000";
+        public const string FormatoNroCero = "###,##0.0000";
         public const string ColorNegro = "#000000";
-
+        public const string FormatoDosDecimales = "###,##0.00";
 
         private static void InsertarLogo(ExcelWorksheet ws, string rutaLogo)
         {
@@ -106,13 +105,13 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
             }
             if (item.Ppm.HasValue)
             {
-                ws.Cells[contFila, 9].Value = item.Ppm;
-                ws.Cells[contFila, 9].Style.Numberformat.Format = FormatoNroCero;
+                ws.Cells[contFila, 9].Value = Math.Round(item.Ppm.Value, 2);
+                ws.Cells[contFila, 9].Style.Numberformat.Format = FormatoDosDecimales;
             }
             if (item.VtpPpm.HasValue)
             {
-                ws.Cells[contFila, 10].Value = item.VtpPpm;
-                ws.Cells[contFila, 10].Style.Numberformat.Format = FormatoNroCero;
+                ws.Cells[contFila, 10].Value = Math.Round(item.VtpPpm.Value, 2);
+                ws.Cells[contFila, 10].Style.Numberformat.Format = FormatoDosDecimales;
             }
             if (item.ErrorPpm.HasValue)
             {
@@ -202,13 +201,13 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
             }
             if (item.Ppm.HasValue)
             {
-                ws.Cells[contFila, 9].Value = item.Ppm;
-                ws.Cells[contFila, 9].Style.Numberformat.Format = FormatoNroCero;
+                ws.Cells[contFila, 9].Value = Math.Round(item.Ppm.Value, 2);
+                ws.Cells[contFila, 9].Style.Numberformat.Format = FormatoDosDecimales;
             }
             if (item.VtpPpm.HasValue)
             {
-                ws.Cells[contFila, 10].Value = item.VtpPpm;
-                ws.Cells[contFila, 10].Style.Numberformat.Format = FormatoNroCero;
+                ws.Cells[contFila, 10].Value = Math.Round(item.VtpPpm.Value, 2);
+                ws.Cells[contFila, 10].Style.Numberformat.Format = FormatoDosDecimales;
             }
             if (item.ErrorPpm.HasValue)
             {
@@ -637,27 +636,27 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
             if (item.PotenciaConsumida.HasValue)
             {
                 ws.Cells[contFila, 3].Value = item.PotenciaConsumida;
-                ws.Cells[contFila, 3].Style.Numberformat.Format = "0.00";
+                ws.Cells[contFila, 3].Style.Numberformat.Format = FormatoDosDecimales;
             }
             if (item.Valorizacion.HasValue)
             {
                 ws.Cells[contFila, 4].Value = item.Valorizacion;
-                ws.Cells[contFila, 4].Style.Numberformat.Format = "0.00";
+                ws.Cells[contFila, 4].Style.Numberformat.Format = FormatoDosDecimales;
             }
             if (item.Prediccion.HasValue)
             {
                 ws.Cells[contFila, 5].Value = item.Prediccion;
-                ws.Cells[contFila, 5].Style.Numberformat.Format = "0.00";
+                ws.Cells[contFila, 5].Style.Numberformat.Format = FormatoDosDecimales;
             }
             if (item.Error.HasValue)
             {
                 ws.Cells[contFila, 6].Value = item.Error;
-                ws.Cells[contFila, 6].Style.Numberformat.Format = "0.00";
+                ws.Cells[contFila, 6].Style.Numberformat.Format = FormatoDosDecimales;
             }
             if (item.ErrorPorcentaje.HasValue)
             {
                 ws.Cells[contFila, 7].Value = item.ErrorPorcentaje;
-                ws.Cells[contFila, 7].Style.Numberformat.Format = "0.00";
+                ws.Cells[contFila, 7].Style.Numberformat.Format = FormatoDosDecimales;
             }
 
             ws.Cells[contFila, 8].Value = item.Calidad;
@@ -724,19 +723,19 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
             ws.Cells[contFila, 2].Value = item.Empresa;
 
             ws.Cells[contFila, 3].Value = item.CompPeajeAprox;
-            ws.Cells[contFila, 3].Style.Numberformat.Format = "0.00";
+            ws.Cells[contFila, 3].Style.Numberformat.Format = FormatoDosDecimales;
 
             ws.Cells[contFila, 4].Value = item.CompPeajeReal;
-            ws.Cells[contFila, 4].Style.Numberformat.Format = "0.00";
+            ws.Cells[contFila, 4].Style.Numberformat.Format = FormatoDosDecimales;
 
             ws.Cells[contFila, 5].Value = item.Prediccion;
-            ws.Cells[contFila, 5].Style.Numberformat.Format = "0.00";
+            ws.Cells[contFila, 5].Style.Numberformat.Format = FormatoDosDecimales;
 
             ws.Cells[contFila, 6].Value = item.Error;
-            ws.Cells[contFila, 6].Style.Numberformat.Format = "0.00";
+            ws.Cells[contFila, 6].Style.Numberformat.Format = FormatoDosDecimales;
 
             ws.Cells[contFila, 7].Value = item.ErrorPorcentaje;
-            ws.Cells[contFila, 7].Style.Numberformat.Format = "0.00";
+            ws.Cells[contFila, 7].Style.Numberformat.Format = FormatoDosDecimales;
 
             ws.Cells[contFila, 8].Value = item.Calidad;
 
@@ -927,19 +926,19 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                     ws.Cells[contFila, 2].Value = item.Empresa;
 
                     ws.Cells[contFila, 3].Value = item.CompPeajeAprox;
-                    ws.Cells[contFila, 3].Style.Numberformat.Format = "0.00";
+                    ws.Cells[contFila, 3].Style.Numberformat.Format = FormatoDosDecimales;
 
                     ws.Cells[contFila, 4].Value = item.CompPeajeReal;
-                    ws.Cells[contFila, 4].Style.Numberformat.Format = "0.00";
+                    ws.Cells[contFila, 4].Style.Numberformat.Format = FormatoDosDecimales;
 
                     ws.Cells[contFila, 5].Value = item.Prediccion;
-                    ws.Cells[contFila, 5].Style.Numberformat.Format = "0.00";
+                    ws.Cells[contFila, 5].Style.Numberformat.Format = FormatoDosDecimales;
 
                     ws.Cells[contFila, 6].Value = item.Error;
-                    ws.Cells[contFila, 6].Style.Numberformat.Format = "0.00";
+                    ws.Cells[contFila, 6].Style.Numberformat.Format = FormatoDosDecimales;
 
                     ws.Cells[contFila, 7].Value = item.ErrorPorcentaje;
-                    ws.Cells[contFila, 7].Style.Numberformat.Format = "0.00";
+                    ws.Cells[contFila, 7].Style.Numberformat.Format = FormatoDosDecimales;
 
                     ws.Cells[contFila, 8].Value = item.Calidad;
 
@@ -1070,12 +1069,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                     if (item.ErrorVtea.HasValue)
                     {
                         ws.Cells[contFila, 8].Value = item.ErrorVtea;
-                        ws.Cells[contFila, 8].Style.Numberformat.Format = "0.00";
+                        ws.Cells[contFila, 8].Style.Numberformat.Format = FormatoDosDecimales;
                     }
                     if (item.ErrorVtp.HasValue)
                     {
                         ws.Cells[contFila, 9].Value = item.ErrorVtp;
-                        ws.Cells[contFila, 9].Style.Numberformat.Format = "0.00";
+                        ws.Cells[contFila, 9].Style.Numberformat.Format = FormatoDosDecimales;
                     }
 
                     contFila++;

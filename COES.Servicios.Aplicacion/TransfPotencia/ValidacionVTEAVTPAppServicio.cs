@@ -19,28 +19,30 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
     /// </summary>
     public class ValidacionVteavtpAppServicio
     {
-        readonly string urlBase;
-        readonly string urlBaseValidador;
-        const string HttpMethodTrnperiodo = "sme/trnperiodo";
-        const string HttpMethodVtpVersions = "sme/vtp_versions";
-        const string HttpMethodVteaVersions = "sme/vtea_versions";
-        const string HttpMethodVtpValidacion = "funcion/vtp_validation";
-        const string HttpMethodVtp = "funcion/vtp";
-        const string HttpMethodVtpVtea = "funcion/vtp_vtea"; //
 
-        const string HttpMethodVteaValidation = "funcion/vtea_validation"; //
-        const string HttpMethodVtea = "funcion/vtea";
+        readonly string urlSmeBD;
+        readonly string urlSmeFunction;
+        const string HttpMethodTrnperiodo = "trnperiodo";
+        const string HttpMethodVtpVersions = "vtp_versions";
+        const string HttpMethodVteaVersions = "vtea_versions";
+        const string HttpMethodVtpValidacion = "vtp_validation";
+        const string HttpMethodVtp = "vtp";
+        const string HttpMethodVtpVtea = "vtp_vtea";
 
-        const string HttpMethodVteaHistRol = "funcion/vtea_hist_rol"; //
-        const string HttpMethodVteaDcUnit = "sme/vtea_dc_unit";//
-        const string HttpMethodVteaDetail = "funcion/vtea_detail";//
+        const string HttpMethodVteaValidation = "vtea_validation";
+        const string HttpMethodVtea = "vtea";
+
+
+        const string HttpMethodVteaHistRol = "vtea_hist_rol"; //
+        const string HttpMethodVteaDcUnit = "vtea_dc_unit";//
+        const string HttpMethodVteaDetail = "vtea_detail";//
 
         /// <summary>
         /// Constructor Validación Vtea - Vtp
         /// </summary>
         public ValidacionVteavtpAppServicio(){
-            urlBase = ConfigurationManager.AppSettings["SmeApiRestCombo"];
-            urlBaseValidador = ConfigurationManager.AppSettings["SmeApiRestProceso"];
+            urlSmeBD = ConfigurationManager.AppSettings["SmeApiRestBD"];
+            urlSmeFunction = ConfigurationManager.AppSettings["SmeApiRestFunction"];
         }
 
 
@@ -54,7 +56,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             TrnPeriodoDTO trnPeriodoDTO = new TrnPeriodoDTO();
             try
             {
-                string urlMetodo = string.Format("{0}/{1}", urlBase, HttpMethodTrnperiodo);
+                string urlMetodo = string.Format("{0}/{1}", urlSmeBD, HttpMethodTrnperiodo);
                 var response =await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
                 trnPeriodoDTO = JsonConvert.DeserializeObject<TrnPeriodoDTO>(response);
                 return trnPeriodoDTO;
@@ -76,7 +78,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VtpVersionDTO vtpVersionDTO = new VtpVersionDTO();  
             try
             {
-                string urlMetodo = $"{urlBase}/{HttpMethodVtpVersions}?perinombre={perinombre}&recpotnombre={recpotnombre}" ;
+                string urlMetodo = $"{urlSmeBD}/{HttpMethodVtpVersions}?perinombre={perinombre}&recpotnombre={recpotnombre}" ;
 
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
                 vtpVersionDTO = JsonConvert.DeserializeObject<VtpVersionDTO>(json);
@@ -99,7 +101,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VteaVersionDTO vteaVersionDTO = new VteaVersionDTO();
             try
             {
-                string urlMetodo = $"{urlBase}/{HttpMethodVteaVersions}?perinombre={perinombre}&recpotnombre={recpotnombre}";
+                string urlMetodo = $"{urlSmeBD}/{HttpMethodVteaVersions}?perinombre={perinombre}&recpotnombre={recpotnombre}";
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
                 vteaVersionDTO = JsonConvert.DeserializeObject<VteaVersionDTO>(json);
 
@@ -123,7 +125,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VtpValidacionDTO vtpValidacionDTO = new VtpValidacionDTO();
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtpValidacion}?perinombre={perinombre}&recpotnombre={recpotnombre}";
+                string urlMetodo = $"{urlSmeFunction}/{HttpMethodVtpValidacion}?perinombre={perinombre}&recpotnombre={recpotnombre}";
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
                 return JsonConvert.DeserializeObject<VtpValidacionDTO>(json);
             }
@@ -144,7 +146,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VteaDTO vteaDTO = new VteaDTO();    
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtea}/?perinombre={perinombre}&recanombre={recanombre}";
+                string urlMetodo = $"{urlSmeFunction}/{HttpMethodVtea}/?perinombre={perinombre}&recanombre={recanombre}";
 
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
 
@@ -169,7 +171,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VteaValidadorDTO vteaValidadorDTO = new VteaValidadorDTO(); 
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaValidation}?perinombre={perinombre}&recanombre={recpotnombre}";
+                string urlMetodo = $"{urlSmeFunction}/{HttpMethodVteaValidation}?perinombre={perinombre}&recanombre={recpotnombre}";
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
                 return JsonConvert.DeserializeObject<VteaValidadorDTO>(json);
             }
@@ -186,16 +188,12 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio funcion/vtp_vtp
         /// </summary>
-        public async Task<VtpDTO> FuncionVtp(string perinombre, string recpotnombre,
-            string folderUpload,
-            string pathfile,
-            string folderSave
-            )
+        public async Task<VtpDTO> FuncionVtp(string perinombre, string recpotnombre)
         {
             VtpDTO vtpDTO = new VtpDTO();
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtp}?perinombre={perinombre}&recpotnombre={recpotnombre}";
+                string urlMetodo = $"{urlSmeFunction}/{HttpMethodVtp}?perinombre={perinombre}&recpotnombre={recpotnombre}";
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
                 return JsonConvert.DeserializeObject<VtpDTO>(json);
             }
@@ -211,13 +209,12 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
         /// <summary>
         /// Obtiene datos del servicio funcion/vtp_vtea
         /// </summary>
-        public async Task<VtpVteaDTO> FuncionVtpVtea(string perinombre, string recanombre, string recpotnombre
-            )
+        public async Task<VtpVteaDTO> FuncionVtpVtea(string perinombre, string recanombre, string recpotnombre)
         {
             VtpVteaDTO vtpVteaDTO = new VtpVteaDTO();
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVtpVtea}?perinombre={perinombre}&recpotnombre={recpotnombre}&recanombre={recanombre}";
+                string urlMetodo = $"{urlSmeFunction}/{HttpMethodVtpVtea}?perinombre={perinombre}&recpotnombre={recpotnombre}&recanombre={recanombre}";
 
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get,urlMetodo);
                 return JsonConvert.DeserializeObject<VtpVteaDTO>(json);
@@ -239,7 +236,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VteaHistRolDTO vteaHistRolDTO = new VteaHistRolDTO();
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaHistRol}/?emprnom={emprnom}&perinombre={perinombre}";
+                string urlMetodo = $"{urlSmeFunction}/{HttpMethodVteaHistRol}/?emprnom={emprnom}&perinombre={perinombre}";
 
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
 
@@ -262,7 +259,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VteaDcUnitDTO vteaDcUnitDTO = new VteaDcUnitDTO();
             try
             {
-                string urlMetodo = $"{urlBase}/{HttpMethodVteaDcUnit}/?bus={bus}&client={client}&code={code}&company={company}&pericodi={pericodi}&tentversion={tentversion}";
+                string urlMetodo = $"{urlSmeBD}/{HttpMethodVteaDcUnit}/?bus={bus}&client={client}&code={code}&company={company}&pericodi={pericodi}&tentversion={tentversion}";
 
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
 
@@ -285,7 +282,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VteaDetailDTO vteaDetailDTO = new VteaDetailDTO();
             try
             {
-                string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaDetail}/?bus={bus}&client={client}&code={code}&company={company}&day={day}&perinombre={perinombre}&recanombre={recanombre}";
+                string urlMetodo = $"{urlSmeFunction}/{HttpMethodVteaDetail}/?bus={bus}&client={client}&code={code}&company={company}&day={day}&perinombre={perinombre}&recanombre={recanombre}";
                 
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
 

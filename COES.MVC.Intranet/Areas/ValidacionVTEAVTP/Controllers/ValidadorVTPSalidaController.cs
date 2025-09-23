@@ -53,11 +53,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             model.VersionesVtp = new VtpVersionDTO();
 
             try
-            {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
-
-                string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+            {                
 
                 TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
 
@@ -141,16 +137,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 model.VtpValidacion.Peaje.TableAnas = new List<TableAnaPeajeDTO>();
 
                 if (inicializar == 0)
-                {
-              
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                    FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
-
-                    string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
-
-                    var datosSalidaVTP = await validacionVteavtpAppServicio.FuncionVtpValidar(periodo, version);
-
-                    model.VtpValidacion = datosSalidaVTP;
+                {                                
+                    var datosSalidaVTP = await validacionVteavtpAppServicio.FuncionVtpValidar(periodo, version);                    
 
                     if (datosSalidaVTP.Resultado == 0)
                     {
@@ -176,11 +164,11 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                
                 string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVtpSalida/";
 
-                string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaValorizacion.cshtml", model);
-                string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaCompensacion.cshtml", model);             
+                string htmlValorizacion = RenderViewToString($"{rutaBaseVista}ListaValorizacion.cshtml", model);
+                string htmlCompensacion = RenderViewToString($"{rutaBaseVista}ListaCompensacion.cshtml", model);             
                                
-                model.VistaValorizacion = htmlBarrasBrg;
-                model.VistaCompensacion = htmlBarrasNoBrg;
+                model.VistaValorizacion = htmlValorizacion;
+                model.VistaCompensacion = htmlCompensacion;
 
                 var fecha = DateTime.Now;
                 model.StrMensaje = inicializar > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación" :
@@ -208,11 +196,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             model.StrMensajeError = "";
 
             try
-            {
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderValidacion, "");
-                FileServer.CreateFolder(base.PathFiles, Helper.ConstantesValidacionVteavtp.FolderLog, "");
-
-                string rutaUpload = AppDomain.CurrentDomain.BaseDirectory + ConstantesFormato.FolderUpload;
+            {                
 
                 VtpVersionDTO versionesVtp = await validacionVteavtpAppServicio.ObtenerSmeVtpVersions(periodo, "");
 
@@ -251,7 +235,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
             string rutaLogo = Server.MapPath("~/Areas/ValidacionVTEAVTP/Content/Images/logocoes_black.png");
 
-            string nombreArchivo;
+            string nombreArchivo = "-1";
 
             var datosVTP = new VtpValidacionDTO();
 

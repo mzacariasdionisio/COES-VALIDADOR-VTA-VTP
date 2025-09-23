@@ -9,6 +9,7 @@ using System;
 using System.Configuration;
 using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
@@ -285,8 +286,53 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             try
             {
                 string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaDetail}/?bus={bus}&client={client}&code={code}&company={company}&day={day}&perinombre={perinombre}&recanombre={recanombre}";
-
+                
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
+
+                return JsonConvert.DeserializeObject<VteaDetailDTO>(json);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ConstantesAppServicio.LogError, ex);
+                vteaDetailDTO.Resultado = -1;
+                vteaDetailDTO.Mensaje = ex.Message.ToString();
+                return vteaDetailDTO;
+            }
+        }
+        /// <summary>
+        /// Metodo Temporal
+        /// </summary>
+        /// <param name="bus"></param>
+        /// <param name="client"></param>
+        /// <param name="code"></param>
+        /// <param name="company"></param>
+        /// <param name="day"></param>
+        /// <param name="perinombre"></param>
+        /// <param name="recanombre"></param>
+        /// <returns></returns>
+        public async Task<VteaDetailDTO> FuntionVteaDetail_Temp(string bus, string client, string code, string company, string day, string perinombre, string recanombre)
+        {
+            VteaDetailDTO vteaDetailDTO = new VteaDetailDTO();
+            try
+            {
+                //string urlMetodo = $"{urlBaseValidador}/{HttpMethodVteaDetail}/?bus={bus}&client={client}&code={code}&company={company}&day={day}&perinombre={perinombre}&recanombre={recanombre}";
+                string urlMetodo = $"http://10.100.210.3:8002/{HttpMethodVteaDetail}/";
+
+                var parametros = new
+                {
+                    bus = bus,
+                    client = client,
+                    code = code,
+                    company = company,
+                    day = day,
+                    perinombre = perinombre,
+                    recanombre = recanombre
+                };
+
+                string body = JsonConvert.SerializeObject(parametros);
+                string json = await HttpServiceHelper.SendAsync(HttpMethod.Post, urlMetodo,
+        new StringContent(body, Encoding.UTF8, "application/json"));
+                //string json = await HttpServiceHelper.SendAsync(HttpMethod.Get, urlMetodo);
 
                 return JsonConvert.DeserializeObject<VteaDetailDTO>(json);
             }

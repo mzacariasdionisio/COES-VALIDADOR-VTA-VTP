@@ -31,7 +31,7 @@ namespace COES.Dominio.DTO.ValidacionVTEAVTP
         public string Tipo { get; set; }
 
         [JsonProperty("cmg")]
-        public double cmg { get; set; }
+        public double? cmg { get; set; }
 
         [JsonProperty("mwh")]
         public double mwh { get; set; }

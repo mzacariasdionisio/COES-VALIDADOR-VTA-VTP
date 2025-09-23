@@ -14,5 +14,9 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         public const string D_Datos_Salida_VTP = "D_Datos_Salida_VTP";
         public const string D_Datos_VTEA_VTP = "D_Datos_VTEA_VTP";
 
+        public const string D_Datos_Salida_VTEA = "D_Datos_Salida_VTEA";
+        public const string D_Datos_Analisis_VTEA = "D_Datos_Analisis_VTEA";
+        public const string D_Datos_Analisis_Energia_Dia_VTEA = "D_Datos_Analisis_Energia_Dia_VTEA";
+
     }
 }

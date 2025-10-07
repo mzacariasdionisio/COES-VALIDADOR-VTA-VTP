@@ -98,7 +98,7 @@ function generarGraficoBarras(model) {
         },
         subtitle: {
             useHTML: true,
-            text: '<span style="color:#FF0000;font-weight:bold;">CMg ($/MWh)</span> &nbsp;&nbsp;&nbsp; <span style="color:#0077FF;font-weight:bold;">Energía (MWh)</span>',
+            text: '<span style="color:#0077FF;font-weight:bold;">CMg ($/MWh)</span> &nbsp;&nbsp;&nbsp; <span style="color:#FF0000;font-weight:bold;">Energía (MWh)</span>',
             align: 'center'
         },
         rangeSelector: {
@@ -182,7 +182,7 @@ function generarGraficoBarras(model) {
                 enabled: true,
                 radius: 3
             },
-            color: '#FF0000',
+            color: '#0077FF',
             fillOpacity: 0.1
         }, {
             name: 'Energía (MWh)',
@@ -193,7 +193,7 @@ function generarGraficoBarras(model) {
                 enabled: true,
                 radius: 3
             },
-            color: '#0077FF'
+            color: '#FF0000'
         }]
     });
 }

@@ -56,7 +56,7 @@ function limpiarMensaje(id) {
 
 function cargarVersiones() {
 
-    let periodo = $("#cbPeriodo").val();
+    let periodo = $("#cbPeriodo option:selected").text();
 
     limpiarMensaje('mensaje');
 
@@ -76,12 +76,11 @@ function cargarVersiones() {
             if (result.StrMensajeError == '') {
                             
                 $.each(result.VersionesVtp.Versiones, function (i, item) {
-                    $('#cbVersionVTP').get(0).options[$('#cbVersionVTP').get(0).options.length] = new Option(item.RecPotNombre, item.RecPotNombre);
-                });                
-
+                    $('#cbVersionVTP').get(0).options[$('#cbVersionVTP').get(0).options.length] = new Option(item.RecPotNombre, item.RecPortCodi);
+                });     
                
                 $.each(result.VersionesVtea.Versiones, function (i, item) {
-                    $('#cbVersionVTEA').get(0).options[$('#cbVersionVTEA').get(0).options.length] = new Option(item.RecaNombre, item.RecaNombre);
+                    $('#cbVersionVTEA').get(0).options[$('#cbVersionVTEA').get(0).options.length] = new Option(item.RecaNombre, item.RecaCodi);
                 });       
             }
             else {
@@ -96,9 +95,9 @@ function cargarVersiones() {
 
  function consultar (inicializar) {
 
-     let periodo = $("#cbPeriodo").val();
-     let version = $("#cbVersionVTP").val();
-     let versionVTEA = $("#cbVersionVTEA").val();
+     let periodo = $("#cbPeriodo option:selected").text();
+     let version = $("#cbVersionVTP option:selected").text();
+     let versionVTEA = $("#cbVersionVTEA option:selected").text();
         
      if (inicializar == 0) {
 
@@ -237,9 +236,11 @@ function cargarVersiones() {
 }
 
 function descargarReporte(seccion) {
-    let periodo = $("#cbPeriodo").val();
-    let versionVTP = $("#cbVersionVTP").val();
-    let versionVTEA = $("#cbVersionVTEA").val();
+    let periodo = $("#cbPeriodo option:selected").text();
+    let versionVTP = $("#cbVersionVTP option:selected").text();
+    let versionVTEA = $("#cbVersionVTEA option:selected").text();
+
+    limpiarMensaje('mensaje');
 
     let mensajeError = '';
     switch (seccion) {

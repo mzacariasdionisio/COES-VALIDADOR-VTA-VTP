@@ -45,7 +45,7 @@ function limpiarMensaje(id) {
 
 function cargarVersiones() {
 
-    let periodo = $("#cbPeriodo").val();
+    let periodo = $("#cbPeriodo option:selected").text();
 
     limpiarMensaje('mensaje');
 
@@ -64,7 +64,7 @@ function cargarVersiones() {
             if (result.StrMensajeError == '') {
                      
                 $.each(result.VersionesVtp.Versiones, function (i, item) {
-                    $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecPotNombre, item.RecPotNombre);
+                    $('#cbVersion').get(0).options[$('#cbVersion').get(0).options.length] = new Option(item.RecPotNombre, item.RecPortCodi);
                 });                
             }
             else {
@@ -79,8 +79,8 @@ function cargarVersiones() {
 
  function consultar (inicializar) {
 
-     let periodo = $("#cbPeriodo").val();
-     let version = $("#cbVersion").val();     
+     let periodo = $("#cbPeriodo option:selected").text();
+     let version = $("#cbVersion option:selected").text();     
 
      if (inicializar == 0) {
 
@@ -183,8 +183,8 @@ function cargarVersiones() {
 }
 
 function descargarReporte() {
-    let periodo = $("#cbPeriodo").val();
-    let version = $("#cbVersion").val();
+    let periodo = $("#cbPeriodo option:selected").text();
+    let version = $("#cbVersion option:selected").text();    
 
     let mensajeError = '';
 

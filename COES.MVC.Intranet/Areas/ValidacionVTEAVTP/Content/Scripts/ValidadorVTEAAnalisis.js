@@ -88,7 +88,7 @@ function cargarVersiones() {
      if (inicializar == 0) {
 
          if ((periodo == '' || periodo == null) && (version == '' || version == null)) {
-             mostrarMensaje('mensaje', 'error', 'Los datos “Mes de valorización” y “Versión VTEA” están vacíos. No es posible procesar la evaluación.');
+             mostrarMensaje('mensaje', 'error', 'Los datos “Mes de valorización” y “Versión” están vacíos. No es posible procesar la evaluación.');
              return;
          }
 
@@ -98,7 +98,7 @@ function cargarVersiones() {
          }
 
          if (version == '' || version == null) {
-             mostrarMensaje('mensaje', 'error', 'El dato “Versión VTEA” está vacío. No es posible procesar la evaluación.');
+             mostrarMensaje('mensaje', 'error', 'El dato “Versión” está vacío. No es posible procesar la evaluación.');
              return;
          }
      }    

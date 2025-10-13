@@ -52,8 +52,8 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
                      
             ws.Cells[11, 2].Value = "Empresa";
             ws.Cells[11, 3].Value = "Cambio";
-            ws.Cells[11, 4].Value = "Grupo Actual";
-            ws.Cells[11, 5].Value = "Grupo Previo";
+            ws.Cells[11, 4].Value = "Rol Actual";
+            ws.Cells[11, 5].Value = "Rol Previo";
             ws.Cells[11, 6].Value = "Tasa";
 
         }

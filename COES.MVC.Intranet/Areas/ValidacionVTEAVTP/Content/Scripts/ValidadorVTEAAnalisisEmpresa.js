@@ -98,7 +98,7 @@ function generarGraficoBarras(model) {
         },
         subtitle: {
             useHTML: true,
-            text: '<span style="color:#0077FF;font-weight:bold;">CMg ($/MWh)</span> &nbsp;&nbsp;&nbsp; <span style="color:#FF0000;font-weight:bold;">Energía (MWh)</span>',
+            text: '<span style="color:#FF0000;font-weight:bold;">Energía (MWh)</span> &nbsp;&nbsp;&nbsp; <span style="color:#0077FF;font-weight:bold;">CMg ($/MWh)</span>',
             align: 'center'
         },
         rangeSelector: {
@@ -152,7 +152,8 @@ function generarGraficoBarras(model) {
             opposite: true,
             labels: {
                 format: '{value:.2f}'
-            }
+            },
+            reversed: true
         }],
         tooltip: {
             shared: true,
@@ -175,7 +176,7 @@ function generarGraficoBarras(model) {
         },
         series: [{
             name: 'CMg ($/MWh)',
-            type: 'area',
+            type: 'line',
             yAxis: 0,
             data: dataCMg,
             marker: {
@@ -183,17 +184,21 @@ function generarGraficoBarras(model) {
                 radius: 3
             },
             color: '#0077FF',
-            fillOpacity: 0.1
+            zIndex: 2
+           
         }, {
             name: 'Energía (MWh)',
-            type: 'line',
+            type: 'area',
             yAxis: 1,
             data: dataEnergia,
             marker: {
                 enabled: true,
                 radius: 3
             },
-            color: '#FF0000'
+            color: '#FF0000',
+            threshold: null,         
+            zIndex: 1,
+            fillColor: 'rgba(220, 0, 0, 0.15)' 
         }]
     });
 }

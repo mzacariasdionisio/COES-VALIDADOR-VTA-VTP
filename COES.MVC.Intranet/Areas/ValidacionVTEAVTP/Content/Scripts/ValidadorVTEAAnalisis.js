@@ -289,17 +289,19 @@ function generarGraficoBarras(model, empresa) {
     
     // Asignamos un color específico a cada valor de Rol
     const coloresRol = {
-        0: '#FFF9CC', // amarillo
-        1: '#CC2E00', // rojo
-        2: '#33C46A'  // verde
+        "0": '#FFF9CC', // amarillo
+        "-1": '#CC2E00', // rojo
+        "1": '#33C46A'  // verde
     };
         
     const seriesData = tableData.map(item => {
         const timestamp = new Date(item.TIME).getTime(); // timestamp en ms
+        const color = coloresRol[item.ROL];
         return {
             x: timestamp,
             y: parseInt(item.ROL),
-            color: coloresRol[item.ROL]
+            color: color,
+            borderColor: color
         };
     });
 
@@ -357,15 +359,21 @@ function generarGraficoBarras(model, empresa) {
           
         },
         yAxis: {
-            min: 0,
-            max: 2,
+            min: -1,
+            max: 1.1,
             allowDecimals: false,
             title: { text: 'Rol' },
             tickInterval: 1,
-            opposite: false 
+            tickPositions: [-1, 0, 1],
+            opposite: false
         },
         tooltip: {
             enabled: false
+        },
+        plotOptions: {
+            column: {
+                borderWidth: 3               
+            }
         },
         series: [
             {

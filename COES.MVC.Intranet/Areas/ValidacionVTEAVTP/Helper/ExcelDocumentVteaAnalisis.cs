@@ -17,7 +17,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         public const string ExcelExtension = ".xlsx";
         public const string FontNameCalibri = "Calibri";
         public const string CabeceraMesValorizacion = "Mes de Valorización";
-        public const string CabeceraVersionValorVtea= "Versión de valorización VTEA";
+        public const string CabeceraVersionValorVtea= "Versión de valorización";
         public const string CabeceraCodigo = "Código";
         public const string CabeceraEmpresa = "Empresa";
         public const string CabeceraCliente = "Cliente";
@@ -130,7 +130,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         private static void CabeceraEnergiaDiaCmg(ExcelWorksheet ws, string periodo, string version, string dia)
         {
 
-            ws.Cells[5, 4].Value = string.Format("Análisis de Datos de Salida VTEA  - Energia y CMg - Dia {0}", dia);
+            ws.Cells[5, 4].Value = string.Format("Análisis de Datos de Salida VTEA  - Energía y CMg - Día {0}", dia);
             ws.Cells[5, 4].Style.Font.Bold = true;
             ws.Cells[5, 4, 5, 9].Merge = true;
             ws.Cells[5, 4, 5, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;

@@ -258,10 +258,21 @@ function verGraficoEmpresa(empresa) {
             if (result.StrMensajeError == '') {
                 setTimeout(function () {
                     $('#popupGrafico').bPopup({
-                        autoClose: false
+                        autoClose: false,
+                        onOpen: function () {
+                            // Generar el gráfico
+                            generarGraficoBarras(result, empresa);
+
+                            // Ejecutar reflow tras breve retardo
+                            setTimeout(function () {
+                                if (graficoBarrasRol != null) {
+                                    graficoBarrasRol.reflow();                                    
+                                }
+                            }, 100); 
+                        }
                     });
-                }, 200);
-                generarGraficoBarras(result, empresa);
+                }, 100);
+               
             }
             else {
                 alert(result.StrMensajeError);
@@ -360,11 +371,13 @@ function generarGraficoBarras(model, empresa) {
         },
         yAxis: {
             min: -1,
-            max: 1.1,
+            max: 2,
             allowDecimals: false,
-            title: { text: 'Rol' },
-            tickInterval: 1,
-            tickPositions: [-1, 0, 1],
+            title: { text: 'Rol' },          
+            tickPositions: [-1, 0, 1, 1.1],
+            minRange: 3,
+            endOnTick: true,
+            startOnTick: true,
             opposite: false
         },
         tooltip: {

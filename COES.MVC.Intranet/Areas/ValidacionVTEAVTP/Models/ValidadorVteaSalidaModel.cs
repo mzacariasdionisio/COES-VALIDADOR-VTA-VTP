@@ -19,12 +19,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Models
 
         public VteaDTO DatosVTEA { get; set; }
         
-        public string VistaBarrasBrg {  get; set; }
-        public string VistaBarrasNoBrg { get; set; }
+        public string VistaRetirosNegativos {  get; set; }
+        public string VistaSinDeclaracion { get; set; }
 
-        public string VistaBarrasSinAnalizar { get; set; }
+        public string VistaDeclaracionesNuevas { get; set; }
 
-        public string VistaBarrasDiferencia { get; set; }        
+        public string VistaFinContrato { get; set; }        
       
     }
 }

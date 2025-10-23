@@ -25,9 +25,7 @@ $(function () {
     });
     $('#btnDescargaEnergia').on('click', function () {
         descargarReporte('Energia');
-    });
-
-    //$('#popUpGrafico').bPopup().close();
+    });      
 
     consultar(1);
 });
@@ -117,8 +115,8 @@ function cargarVersiones() {
 
                 $('#tab-container').show();
                 $('#tab-container').easytabs('select', '#RolEmpresa');
-                $('#detalleRolEmpresa').html(evt.VistaBarrasBrg);
-                $('#detalleEnergia').html(evt.VistaBarrasNoBrg);               
+                $('#detalleRolEmpresa').html(evt.VistaRolEmpresa);
+                $('#detalleEnergia').html(evt.VistaEnergia);               
 
                 $('#tablaListadoRolEmpresa').dataTable({
                     "iDisplayLength": 20,
@@ -260,10 +258,9 @@ function verGraficoEmpresa(empresa) {
                     $('#popupGrafico').bPopup({
                         autoClose: false,
                         onOpen: function () {
-                            // Generar el gráfico
+                           
                             generarGraficoBarras(result, empresa);
-
-                            // Ejecutar reflow tras breve retardo
+                           
                             setTimeout(function () {
                                 if (graficoBarrasRol != null) {
                                     graficoBarrasRol.reflow();                                    
@@ -285,7 +282,7 @@ function verGraficoEmpresa(empresa) {
 }
 
 function generarGraficoBarras(model, empresa) {
-    // Obtener los datos de la tabla 
+   
     let tableData = model.DatosHisRol.VTEARolHist;
 
     if (tableData.length == 0) {
@@ -298,15 +295,15 @@ function generarGraficoBarras(model, empresa) {
         graficoBarrasRol.destroy();
     }
     
-    // Asignamos un color específico a cada valor de Rol
+  
     const coloresRol = {
-        "0": '#FFF9CC', // amarillo
-        "-1": '#CC2E00', // rojo
-        "1": '#33C46A'  // verde
+        "0": '#FFF9CC', 
+        "-1": '#CC2E00', 
+        "1": '#33C46A'  
     };
         
     const seriesData = tableData.map(item => {
-        const timestamp = new Date(item.TIME).getTime(); // timestamp en ms
+        const timestamp = new Date(item.TIME).getTime(); 
         const color = coloresRol[item.ROL];
         return {
             x: timestamp,
@@ -315,8 +312,7 @@ function generarGraficoBarras(model, empresa) {
             borderColor: color
         };
     });
-
-    // Obtener el timestamp más reciente
+   
     let maxTimestamp = Number.NEGATIVE_INFINITY;
 
     for (const item of tableData) {
@@ -325,8 +321,7 @@ function generarGraficoBarras(model, empresa) {
             maxTimestamp = time;
         }
     }
-
-    // Calcular 10 meses atrás
+   
     const maxDate = new Date(maxTimestamp);
     const minDate = new Date(maxDate);
     minDate.setMonth(minDate.getMonth() - 9);

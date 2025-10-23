@@ -76,19 +76,17 @@ function verGraficoEmpresa(codigo, empresa, cliente, barra, dia, periodo, versio
 }
 
 function generarGraficoBarras(model) {
-    // Obtener los datos de la tabla 
+   
     let datosEnergia = model.DetalleEmpresaEnergiaDia.tmp;
        
     if (graficoBarrasRol) {
         graficoBarrasRol.destroy();
-    }
-    debugger;   
-
-    // Crear datos para el gráfico
+    }   
+       
     var dataCMg = datosEnergia.map(d => [convertirHoraAHoraCompleta(d.hora), parseFloat(d.cmg)]);
     var dataEnergia = datosEnergia.map(d => [convertirHoraAHoraCompleta(d.hora), parseFloat(d.mwh)]);
 
-    // Crear el gráfico con navegador de tiempo
+   
     graficoBarrasRol = Highcharts.stockChart('AreaGrafico', {
         chart: {
             zoomType: 'x'
@@ -126,7 +124,7 @@ function generarGraficoBarras(model) {
                 text: 'Hora del Día'
             },
             labels: {
-                format: '{value:%H:%M}', // Mostrar solo hora:minuto
+                format: '{value:%H:%M}', 
                 rotation: -45,
                 formatter: function () {
                     const hora = Highcharts.dateFormat('%H:%M', this.value);
@@ -206,20 +204,19 @@ function generarGraficoBarras(model) {
 function convertirHoraAHoraCompleta(horaStr) {
 
     if (horaStr === "24:00") {
-        // Simula "24:00" como el inicio del día siguiente en UTC
-        return Date.UTC(2020, 0, 2, 0, 0, 0); // 2020-01-02T00:00:00Z
+        
+        return Date.UTC(2020, 0, 2, 0, 0, 0); 
     }
 
     const [horas, minutos] = horaStr.split(':').map(Number);
-    return Date.UTC(2020, 0, 1, horas, minutos, 0); // 2020-01-01THH:mm:00Z
+    return Date.UTC(2020, 0, 1, horas, minutos, 0); 
 }
 function descargarReporteEnergiaDia() {
   
-    let mensajeError = 'Debe seleccionar un dia';      
+    let mensajeError = 'Debe seleccionar un día.';      
 
-    if (diaSeleccionado == '0' || diaSeleccionado == 0) {
-        //mostrarMensaje('mensaje', 'error', mensajeError);
-        alert(mensajeError)
+    if (diaSeleccionado == '0' || diaSeleccionado == 0) {       
+        alert(mensajeError);
         return;
     }
 
@@ -250,8 +247,6 @@ function descargarReporteEnergiaDia() {
 function regresar() {
     if (window.history.length > 1) {
         window.history.back();
-    } else {
-        //window.location.href = '/Home/Index';
-    }
+    } 
 }
 

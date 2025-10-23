@@ -113,10 +113,10 @@ function cargarVersiones() {
 
                 $('#tab-container').show();
                 $('#tab-container').easytabs('select', '#RetirosNegativos');
-                $('#detalleRetirosNegativos').html(evt.VistaBarrasBrg);
-                $('#detalleSinDeclaracion').html(evt.VistaBarrasNoBrg);
-                $('#detalleDeclaracionesNuevas').html(evt.VistaBarrasSinAnalizar);
-                $('#detalleFinContrato').html(evt.VistaBarrasDiferencia);
+                $('#detalleRetirosNegativos').html(evt.VistaRetirosNegativos);
+                $('#detalleSinDeclaracion').html(evt.VistaSinDeclaracion);
+                $('#detalleDeclaracionesNuevas').html(evt.VistaDeclaracionesNuevas);
+                $('#detalleFinContrato').html(evt.VistaFinContrato);
 
                 configurarDataTable('#tablaListadoRetirosNegativos');
                 configurarDataTable('#tablaListadoSinDeclaracion');

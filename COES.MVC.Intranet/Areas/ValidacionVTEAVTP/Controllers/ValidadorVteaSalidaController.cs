@@ -208,15 +208,15 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVteaSalida/";
 
-                string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaRetirosNegativos.cshtml", model);
-                string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaSinDeclaracion.cshtml", model);
-                string htmlBarrasSinAnalizar = RenderViewToString($"{rutaBaseVista}ListaDeclaracionesNuevas.cshtml", model);
-                string htmlBarrasDiferencia = RenderViewToString($"{rutaBaseVista}ListaFinContrato.cshtml", model);
+                string htmlRetirosNegativos = RenderViewToString($"{rutaBaseVista}ListaRetirosNegativos.cshtml", model);
+                string htmlSinDeclaracion = RenderViewToString($"{rutaBaseVista}ListaSinDeclaracion.cshtml", model);
+                string htmlDeclaracionesNuevas = RenderViewToString($"{rutaBaseVista}ListaDeclaracionesNuevas.cshtml", model);
+                string htmlFinContrato = RenderViewToString($"{rutaBaseVista}ListaFinContrato.cshtml", model);
 
-                model.VistaBarrasBrg = htmlBarrasBrg;
-                model.VistaBarrasNoBrg = htmlBarrasNoBrg;
-                model.VistaBarrasSinAnalizar = htmlBarrasSinAnalizar;
-                model.VistaBarrasDiferencia = htmlBarrasDiferencia;
+                model.VistaRetirosNegativos = htmlRetirosNegativos;
+                model.VistaSinDeclaracion = htmlSinDeclaracion;
+                model.VistaDeclaracionesNuevas = htmlDeclaracionesNuevas;
+                model.VistaFinContrato = htmlFinContrato;
 
                 var fecha = DateTime.Now;
                 model.StrMensaje = esInicio > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación." :

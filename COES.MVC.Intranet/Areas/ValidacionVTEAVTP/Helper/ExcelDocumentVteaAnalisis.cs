@@ -59,7 +59,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         }
 
         private static void EstiloColumnasRolEmpresa(ExcelWorksheet ws) {
-            //ConfigurarColumnasBase(ws);
+            
             ws.Column(1).Width = 5;
             ws.Column(2).Width = 30;
             ws.Column(3).Width = 15;

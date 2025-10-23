@@ -174,9 +174,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             {
                 model.DatosValidadorVTEA = new VteaValidadorDTO();
                 model.DatosValidadorVTEA.InfoEmpresaResumen = new List<InfoEmpresaResumen>();
-                model.DatosValidadorVTEA.InfoDeclaracionResumen = new List<InfoDeclaracionResumen>();
-                //model.DatosValidadorVTEA.TableFC = new List<TableFC>();
-                //model.DatosValidadorVTEA.RetirosNegativos = new List<RetirosNegativos>();
+                model.DatosValidadorVTEA.InfoDeclaracionResumen = new List<InfoDeclaracionResumen>();             
 
                 if (esInicio == 0)
                 {
@@ -206,11 +204,11 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVteaAnalisis/";
 
-                string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaRolEmpresa.cshtml", model);
-                string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaEnergia.cshtml", model);              
+                string htmlRolEmpresa = RenderViewToString($"{rutaBaseVista}ListaRolEmpresa.cshtml", model);
+                string htmlEnergia = RenderViewToString($"{rutaBaseVista}ListaEnergia.cshtml", model);              
 
-                model.VistaBarrasBrg = htmlBarrasBrg;
-                model.VistaBarrasNoBrg = htmlBarrasNoBrg;               
+                model.VistaRolEmpresa = htmlRolEmpresa;
+                model.VistaEnergia = htmlEnergia;               
 
                 var fecha = DateTime.Now;
                 model.StrMensaje = esInicio > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación." :
@@ -332,7 +330,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             });
 
             return Content(json, "application/json");
-            //return Json(model, JsonRequestBehavior.AllowGet);
+           
         }
 
         public async Task<ActionResult> DetalleEmpresaEnergia(string codigo, string empresa, string cliente, string barra, 
@@ -430,7 +428,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             });
 
             return Content(json, "application/json");
-            //return Json(model, JsonRequestBehavior.AllowGet);
+            
         }
 
         public ActionResult GenerarReporteEnergiaDia(string periodo, string version, string dia)

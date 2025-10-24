@@ -34,7 +34,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
         private static readonly ILog log = log4net.LogManager.GetLogger(typeof(ValidadorVtpvteaController));
         private static string NameController = MethodBase.GetCurrentMethod().DeclaringType.Name;
-        public const string ErrorInterno ="Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+        public const string ErrorInterno = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
         public ValidadorVtpEntradaController()
         {
             log4net.Config.XmlConfigurator.Configure();
@@ -61,15 +61,11 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             model.VersionesVtp = new VtpVersionDTO();
 
             try
-            {               
+            {
 
                 TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
 
-                //Prueba de nuevos servicios 
-                VteaHistRolDTO vteaHistRolDTO = await validacionVteavtpAppServicio.FuncionVteaHistRol("CENTRALES SANTA ROSA S.A.C.", "2025.Mayo");
-                VteaDcUnitDTO vteaDcUnitDTO = await validacionVteavtpAppServicio.SmeVteaDcUnit("INDEPENDENCIA 10", "ELECTRO DUNAS", "CB00156CLP", "CELEPSA", "120", "1");
 
-                VteaDetailDTO vteaDetailDTO = await validacionVteavtpAppServicio.FuntionVteaDetail("INDEPENDENCIA 10", "ELECTRO DUNAS", "CB00156CLP", "CELEPSA","1", "2025.Enero", "Mensual");
                 if (periodo.Resultado == 0)
                 {
                     model.PeriodoValorizacion = periodo;
@@ -121,7 +117,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             return View(model);
         }
 
-        
+
         private string RenderViewToString(string viewName, object model)
         {
             ViewData.Model = model;
@@ -152,13 +148,13 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 model.DatosVTP.TableVtpSinAnalizar = new List<TablaVtpSinAnalizarResultDTO>();
                 model.EmpresasBarra = new List<string>();
 
-                if (esInicio == 0)               
+                if (esInicio == 0)
                 {
 
 
                     var datosEntradaVTP = await validacionVteavtpAppServicio.FuncionVtp(periodo, version);
 
-                    if(datosEntradaVTP.Resultado == 0)
+                    if (datosEntradaVTP.Resultado == 0)
                     {
                         model.DatosVTP = datosEntradaVTP;
 
@@ -172,39 +168,41 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                     }
                     else
                     {
-                        if(datosEntradaVTP.Resultado == -1)
+                        if (datosEntradaVTP.Resultado == -1)
                         {
                             model.StrMensajeError = ErrorInterno;
 
                             log.Error(model.StrMensajeError);
 
-                        }else if(datosEntradaVTP.Resultado == 1)
+                        }
+                        else if (datosEntradaVTP.Resultado == 1)
                         {
                             model.StrMensajeError = datosEntradaVTP.Mensaje;
-                        }                            
+                        }
                     }
-                }                                              
+                }
 
-               
+
                 string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVtpEntrada/";
 
                 string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaBarrasBrg.cshtml", model);
                 string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaBarrasNoBrg.cshtml", model);
                 string htmlBarrasSinAnalizar = RenderViewToString($"{rutaBaseVista}ListaBarrasSinAnalizar.cshtml", model);
                 string htmlBarrasDiferencia = RenderViewToString($"{rutaBaseVista}ListaBarrasDiferencia.cshtml", model);
-               
+
                 model.VistaBarrasBrg = htmlBarrasBrg;
                 model.VistaBarrasNoBrg = htmlBarrasNoBrg;
                 model.VistaBarrasSinAnalizar = htmlBarrasSinAnalizar;
                 model.VistaBarrasDiferencia = htmlBarrasDiferencia;
 
                 var fecha = DateTime.Now;
-                model.StrMensaje = esInicio > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación." : 
+                model.StrMensaje = esInicio > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación." :
                     string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("HH:mm:ss"));
 
                 Session[Helper.ConstantesValidacionVteavtp.D_Datos_Entrada_VTP] = model.DatosVTP;
-               
-                return Json(model, JsonRequestBehavior.AllowGet);
+                var jsonResult = Json(model, JsonRequestBehavior.AllowGet);
+                jsonResult.MaxJsonLength = int.MaxValue;
+                return jsonResult;
             }
             catch (Exception ex)
             {
@@ -225,11 +223,12 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             {
                 VtpVersionDTO versionesVtp = await validacionVteavtpAppServicio.ObtenerSmeVtpVersions(periodo, "");
 
-                if(versionesVtp.Resultado == 0)
+                if (versionesVtp.Resultado == 0)
                 {
                     model.VersionesVtp = versionesVtp;
 
-                } else if(versionesVtp.Resultado == -1)
+                }
+                else if (versionesVtp.Resultado == -1)
                 {
                     model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
 
@@ -258,15 +257,15 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         public ActionResult GenerarReporteSeccion(string periodo, string version, string empresa, string seccion)
         {
             base.ValidarSesionUsuario();
-            
-            
+
+
             string rutaLogo = Server.MapPath("~/Areas/ValidacionVTEAVTP/Content/Images/logocoes_black.png");
 
-            string nombreArchivo = "-1";          
+            string nombreArchivo = "-1";
 
             var datosVTP = new VtpDTO();
 
-            if(Session[Helper.ConstantesValidacionVteavtp.D_Datos_Entrada_VTP] != null)
+            if (Session[Helper.ConstantesValidacionVteavtp.D_Datos_Entrada_VTP] != null)
             {
                 var datosinicio = (VtpDTO)Session[Helper.ConstantesValidacionVteavtp.D_Datos_Entrada_VTP];
 
@@ -298,7 +297,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                         break;
 
-                    case "BarrasDiferencia":                       
+                    case "BarrasDiferencia":
 
                         nombreArchivo = Helper.ExcelDocument.GenerarReporteBarrasDiferencia(datosVTP, periodo, version, rutaLogo);
 

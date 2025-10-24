@@ -214,7 +214,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
             VtpVteaDTO vtpVteaDTO = new VtpVteaDTO();
             try
             {
-                string urlMetodo = $"{urlSmeFunction}/{HttpMethodVtpVtea}?perinombre={perinombre}&recpotnombre={recpotnombre}&recanombre={recanombre}";
+                string urlMetodo = $"{urlSmeFunction}/{HttpMethodVtpVtea}/?perinombre={perinombre}&recpotnombre={recpotnombre}&recanombre={recanombre}";
 
                 string json = await HttpServiceHelper.SendAsync(HttpMethod.Get,urlMetodo);
                 return JsonConvert.DeserializeObject<VtpVteaDTO>(json);

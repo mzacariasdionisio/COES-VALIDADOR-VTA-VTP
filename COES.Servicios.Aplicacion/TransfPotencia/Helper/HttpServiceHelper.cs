@@ -61,7 +61,7 @@ namespace COES.Servicios.Aplicacion.TransfPotencia.Helper
                 try
                 {
                     var response = await _httpClient.SendAsync(request, cts.Token);
-                    response.EnsureSuccessStatusCode();
+                    //response.EnsureSuccessStatusCode();
 
                     _log.InfoFormat("[Rest Api MSE] [HTTP {0}] StatusCode: {1} {2}", method, response.StatusCode, response.ReasonPhrase);
                     _log.InfoFormat("[Rest Api MSE] Response Body: {0}", response);

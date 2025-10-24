@@ -250,3 +250,11 @@ function regresar() {
     } 
 }
 
+function seleccionarDia(boton) {
+   
+    document.querySelectorAll('.dia-numero').forEach(span => span.classList.remove('activo'));
+   
+    const numero = boton.querySelector('.dia-numero');
+    if (numero) numero.classList.add('activo');
+}
+

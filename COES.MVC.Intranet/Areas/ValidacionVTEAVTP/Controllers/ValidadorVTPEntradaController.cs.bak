@@ -15,11 +15,16 @@ using COES.Framework.Base.Tools;
 using System.Threading.Tasks;
 using COES.Dominio.DTO.ValidacionVTEAVTP;
 using COES.MVC.Intranet.Helper;
+using WebGrease.Activities;
 using System.Configuration;
+using Microsoft.Office.Interop.Excel;
+using DevExpress.XtraRichEdit.Import.Html;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Numeric;
 
 namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 {
-    public class ValidadorVtpSalidaController : BaseController
+    public class ValidadorVtpEntradaController : BaseController
     {
         /// <summary>
         /// Instancia de clase para el acceso a datos
@@ -30,6 +35,10 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         private static readonly ILog log = log4net.LogManager.GetLogger(typeof(ValidadorVtpvteaController));
         private static string NameController = MethodBase.GetCurrentMethod().DeclaringType.Name;
         public const string ErrorInterno = "Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.";
+        public ValidadorVtpEntradaController()
+        {
+            log4net.Config.XmlConfigurator.Configure();
+        }
         protected override void OnException(ExceptionContext filterContext)
         {
             try
@@ -47,15 +56,15 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
         public async Task<ActionResult> Index()
         {
-            ValidadorVtpSalidaModel model = new ValidadorVtpSalidaModel();
-
+            ValidadorVtpEntradaModel model = new ValidadorVtpEntradaModel();
             model.PeriodoValorizacion = new TrnPeriodoDTO();
             model.VersionesVtp = new VtpVersionDTO();
 
             try
-            {                
+            {
 
                 TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
+
 
                 if (periodo.Resultado == 0)
                 {
@@ -108,6 +117,7 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             return View(model);
         }
 
+
         private string RenderViewToString(string viewName, object model)
         {
             ViewData.Model = model;
@@ -122,86 +132,95 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> CargarReporteConsolidadoHtml(string periodo, string version, int inicializar)
+        public async Task<ActionResult> CargarReporteConsolidadoHtml(string periodo, string version, int esInicio)
         {
-            var model = new ValidadorVtpSalidaModel();
+            var model = new ValidadorVtpEntradaModel();
             model.StrMensaje = "";
             model.StrMensajeError = "";
+            model.StrMensajeErrorApi = "";
 
             try
             {
-                model.VtpValidacion = new VtpValidacionDTO();
-                model.VtpValidacion.Valorizacion = new ValorizacionDTO();
-                model.VtpValidacion.Valorizacion.TableAnas = new List<TableAnaValDTO>();
-                model.VtpValidacion.Peaje = new PeajeDTO();
-                model.VtpValidacion.Peaje.TableAnas = new List<TableAnaPeajeDTO>();
+                model.DatosVTP = new VtpDTO();
+                model.DatosVTP.TableVtpBrg = new List<TableVtpBrgResultDTO>();
+                model.DatosVTP.TableVtpNoBrg = new List<TablaVtpNoBrgResultDTO>();
+                model.DatosVTP.TableAnas = new List<TablaAnaResultDTO>();
+                model.DatosVTP.TableVtpSinAnalizar = new List<TablaVtpSinAnalizarResultDTO>();
+                model.EmpresasBarra = new List<string>();
 
-                if (inicializar == 0)
-                {                                
-                    var datosSalidaVTP = await validacionVteavtpAppServicio.FuncionVtpValidar(periodo, version);                    
+                if (esInicio == 0)
+                {
 
-                    if (datosSalidaVTP.Resultado == 0)
+
+                    var datosEntradaVTP = await validacionVteavtpAppServicio.FuncionVtp(periodo, version);
+
+                    if (datosEntradaVTP.Resultado == 0)
                     {
-                        model.VtpValidacion = datosSalidaVTP;
+                        model.DatosVTP = datosEntradaVTP;
+
+                        var empresas = datosEntradaVTP.TableVtpBrg
+                                        .Select(p => p.Empresa)
+                                        .Concat(datosEntradaVTP.TableVtpNoBrg.Select(p => p.Empresa))
+                                        .Distinct()
+                                        .OrderBy(p => p).ToList();
+
+                        model.EmpresasBarra = empresas;
                     }
                     else
                     {
-                        if (datosSalidaVTP.Resultado == -1)
+                        if (datosEntradaVTP.Resultado == -1)
                         {
                             model.StrMensajeError = ErrorInterno;
 
                             log.Error(model.StrMensajeError);
 
                         }
-                        else if (datosSalidaVTP.Resultado == 1)
+                        else if (datosEntradaVTP.Resultado == 1)
                         {
-                            model.StrMensajeError = datosSalidaVTP.Mensaje;
+                            model.StrMensajeError = datosEntradaVTP.Mensaje;
                         }
                     }
-
                 }
 
-               
-                string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVtpSalida/";
 
-                string htmlValorizacion = RenderViewToString($"{rutaBaseVista}ListaValorizacion.cshtml", model);
-                string htmlCompensacion = RenderViewToString($"{rutaBaseVista}ListaCompensacion.cshtml", model);             
-                               
-                model.VistaValorizacion = htmlValorizacion;
-                model.VistaCompensacion = htmlCompensacion;
+                string rutaBaseVista = $"~/Areas/ValidacionVTEAVTP/Views/ValidadorVtpEntrada/";
+
+                string htmlBarrasBrg = RenderViewToString($"{rutaBaseVista}ListaBarrasBrg.cshtml", model);
+                string htmlBarrasNoBrg = RenderViewToString($"{rutaBaseVista}ListaBarrasNoBrg.cshtml", model);
+                string htmlBarrasSinAnalizar = RenderViewToString($"{rutaBaseVista}ListaBarrasSinAnalizar.cshtml", model);
+                string htmlBarrasDiferencia = RenderViewToString($"{rutaBaseVista}ListaBarrasDiferencia.cshtml", model);
+
+                model.VistaBarrasBrg = htmlBarrasBrg;
+                model.VistaBarrasNoBrg = htmlBarrasNoBrg;
+                model.VistaBarrasSinAnalizar = htmlBarrasSinAnalizar;
+                model.VistaBarrasDiferencia = htmlBarrasDiferencia;
 
                 var fecha = DateTime.Now;
-                model.StrMensaje = inicializar > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación" :
-                     string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("HH:mm:ss"));
+                model.StrMensaje = esInicio > 0 ? "NOTA: Dar clic en \"Procesar\" para realizar la evaluación." :
+                    string.Format("NOTA: Se realizó la evaluación el {0} a las {1}.", fecha.ToString("dd/MM/yyyy"), fecha.ToString("HH:mm:ss"));
 
-                Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTP] = model.VtpValidacion;
-               
-                var jsonRequest1 = Json(model, JsonRequestBehavior.AllowGet);
-                jsonRequest1.MaxJsonLength = int.MaxValue;
-                return jsonRequest1;
+                Session[Helper.ConstantesValidacionVteavtp.D_Datos_Entrada_VTP] = model.DatosVTP;
+                var jsonResult = Json(model, JsonRequestBehavior.AllowGet);
+                jsonResult.MaxJsonLength = int.MaxValue;
+                return jsonResult;
             }
-
-
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 log.Error(NameController, ex);
                 model.StrMensajeError = ErrorInterno;
             }
 
-
-            var jsonRequest = Json(model, JsonRequestBehavior.AllowGet);
-            return jsonRequest;
+            return Json(model, JsonRequestBehavior.AllowGet);
         }
 
         public async Task<ActionResult> ObtenerVersiones(string periodo)
         {
-            ValidadorVtpSalidaModel model = new ValidadorVtpSalidaModel();
+            ValidadorVtpEntradaModel model = new ValidadorVtpEntradaModel();
             model.VersionesVtp = new VtpVersionDTO();
             model.StrMensajeError = "";
 
             try
-            {                
-
+            {
                 VtpVersionDTO versionesVtp = await validacionVteavtpAppServicio.ObtenerSmeVtpVersions(periodo, "");
 
                 if (versionesVtp.Resultado == 0)
@@ -219,8 +238,10 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 else if (versionesVtp.Resultado == 1)
                 {
                     model.VersionesVtp.Versiones = new List<TableVersionVtpDTO>();
+
                     model.StrMensajeError = versionesVtp.Mensaje;
                 }
+
             }
             catch (Exception ex)
             {
@@ -228,36 +249,67 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
                 model.StrMensajeError = ErrorInterno;
             }
 
+
             return Json(model, JsonRequestBehavior.AllowGet);
         }
 
-
         [HttpPost]
-        public  ActionResult GenerarReporteSeccion(string periodo, string version)
+        public ActionResult GenerarReporteSeccion(string periodo, string version, string empresa, string seccion)
         {
             base.ValidarSesionUsuario();
+
 
             string rutaLogo = Server.MapPath("~/Areas/ValidacionVTEAVTP/Content/Images/logocoes_black.png");
 
             string nombreArchivo = "-1";
 
-            var datosVTP = new VtpValidacionDTO();
+            var datosVTP = new VtpDTO();
 
-            if (Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTP] != null)
+            if (Session[Helper.ConstantesValidacionVteavtp.D_Datos_Entrada_VTP] != null)
             {
-                datosVTP = (VtpValidacionDTO)Session[Helper.ConstantesValidacionVteavtp.D_Datos_Salida_VTP];
+                var datosinicio = (VtpDTO)Session[Helper.ConstantesValidacionVteavtp.D_Datos_Entrada_VTP];
+
+                datosVTP.TableVtpBrg = datosinicio.TableVtpBrg;
+                datosVTP.TableVtpNoBrg = datosinicio.TableVtpNoBrg;
+                datosVTP.TableVtpSinAnalizar = datosinicio.TableVtpSinAnalizar;
+                datosVTP.TableAnas = datosinicio.TableAnas;
             }
 
             try
             {
-                nombreArchivo = Helper.ExcelDocument.GenerarReporteSalidaVTP(datosVTP, periodo, version, rutaLogo);
+                switch (seccion)
+                {
+                    case "Barras":
+
+                        if (!string.IsNullOrEmpty(empresa))
+                        {
+                            datosVTP.TableVtpBrg = datosVTP.TableVtpBrg.Where(p => p.Empresa == empresa).ToList();
+                            datosVTP.TableVtpNoBrg = datosVTP.TableVtpNoBrg.Where(p => p.Empresa == empresa).ToList();
+                        }
+
+                        nombreArchivo = Helper.ExcelDocument.GenerarReporteBarras(datosVTP, periodo, version, empresa, rutaLogo);
+
+                        break;
+
+                    case "BarrasSinAnalizar":
+
+                        nombreArchivo = Helper.ExcelDocument.GenerarReporteBarrasSinAnalizar(datosVTP, periodo, version, rutaLogo);
+
+                        break;
+
+                    case "BarrasDiferencia":
+
+                        nombreArchivo = Helper.ExcelDocument.GenerarReporteBarrasDiferencia(datosVTP, periodo, version, rutaLogo);
+
+                        break;
+
+                }
             }
             catch (Exception ex)
             {
                 log.Error(NameController, ex);
                 nombreArchivo = "-1";
             }
-
 
             return Json(nombreArchivo);
         }
@@ -269,6 +321,5 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
             System.IO.File.Delete(fullPath);
             return File(bytes, Constantes.AppExcel, file);
         }
-
     }
 }

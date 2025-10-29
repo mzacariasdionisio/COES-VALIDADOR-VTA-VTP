@@ -65,7 +65,6 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 TrnPeriodoDTO periodo = await validacionVteavtpAppServicio.ObtenerSmeTrnPeriodo();
 
-
                 if (periodo.Resultado == 0)
                 {
                     model.PeriodoValorizacion = periodo;

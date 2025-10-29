@@ -242,43 +242,45 @@ function descargarReporte(seccion) {
 
 function verGraficoEmpresa(empresa) {
     let periodo = $("#cbPeriodo option:selected").text();
+
     $.ajax({
         type: 'POST',
         url: controlador + 'ObtenerRolHistorico',
-        data: {
-            empresa: empresa,
-            periodo: periodo
-        },
+        data: { empresa, periodo },
         dataType: 'json',
         global: false,
         success: function (result) {
-           
-            if (result.StrMensajeError == '') {
-                setTimeout(function () {
-                    $('#popupGrafico').bPopup({
-                        autoClose: false,
-                        onOpen: function () {
-                           
-                            generarGraficoBarras(result, empresa);
-                           
-                            setTimeout(function () {
-                                if (graficoBarrasRol != null) {
-                                    graficoBarrasRol.reflow();                                    
-                                }
-                            }, 100); 
-                        }
-                    });
-                }, 100);
-               
-            }
-            else {
-                alert(result.StrMensajeError);
-            }
+            manejarRespuesta(result, empresa);
         },
         error: function () {
             alert("Ha ocurrido un error interno no previsto en el sistema. Por favor comunique al Administrador del sistema.");
         }
     });
+}
+
+function manejarRespuesta(result, empresa) {
+    if (result.StrMensajeError !== '') {
+        alert(result.StrMensajeError);
+        return;
+    }
+
+    setTimeout(() => abrirPopupGrafico(result, empresa), 100);
+}
+
+function abrirPopupGrafico(result, empresa) {
+    $('#popupGrafico').bPopup({
+        autoClose: false,
+        onOpen: () => inicializarGrafico(result, empresa)
+    });
+}
+
+function inicializarGrafico(result, empresa) {
+    generarGraficoBarras(result, empresa);
+    setTimeout(reflowGrafico, 100);
+}
+
+function reflowGrafico() {
+    if (graficoBarrasRol) graficoBarrasRol.reflow();
 }
 
 function generarGraficoBarras(model, empresa) {

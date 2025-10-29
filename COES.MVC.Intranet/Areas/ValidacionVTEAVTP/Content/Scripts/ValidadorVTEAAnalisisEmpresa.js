@@ -83,8 +83,8 @@ function generarGraficoBarras(model) {
         graficoBarrasRol.destroy();
     }   
        
-    var dataCMg = datosEnergia.map(d => [convertirHoraAHoraCompleta(d.hora), parseFloat(d.cmg)]);
-    var dataEnergia = datosEnergia.map(d => [convertirHoraAHoraCompleta(d.hora), parseFloat(d.mwh)]);
+    let dataCMg = datosEnergia.map(d => [convertirHoraAHoraCompleta(d.hora), parseFloat(d.cmg)]);
+    let dataEnergia = datosEnergia.map(d => [convertirHoraAHoraCompleta(d.hora), parseFloat(d.mwh)]);
 
    
     graficoBarrasRol = Highcharts.stockChart('AreaGrafico', {

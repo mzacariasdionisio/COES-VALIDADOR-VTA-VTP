@@ -200,8 +200,9 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Controllers
 
                 Session[Helper.ConstantesValidacionVteavtp.D_Datos_VTEA_VTP] = model.VtpVteaDatos;
 
-               
-                return Json(model, JsonRequestBehavior.AllowGet);
+                var jsonRequest = Json(model, JsonRequestBehavior.AllowGet);
+                jsonRequest.MaxJsonLength = int.MaxValue;
+                return jsonRequest;
             }
             catch (System.Exception ex)
             {

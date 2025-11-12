@@ -145,7 +145,9 @@ function generarGraficoBarras(model) {
             labels: {
                 format: '{value:.2f}'
             },
-            opposite: false 
+            opposite: false,
+            tickInterval: 0.01
+          
         }, {
             title: {
                 text: 'Energía (MWh)'
@@ -154,6 +156,7 @@ function generarGraficoBarras(model) {
             labels: {
                 format: '{value:.2f}'
             }
+          
         }],
         tooltip: {
             shared: true,

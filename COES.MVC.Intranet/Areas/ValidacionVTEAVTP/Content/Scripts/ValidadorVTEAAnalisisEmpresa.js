@@ -125,7 +125,10 @@ function generarGraficoBarras(model) {
             },
             labels: {
                 format: '{value:%H:%M}', 
-                rotation: -45,
+                rotation: 0,
+                style: {
+                    fontSize: '10px'
+                },
                 formatter: function () {
                     const hora = Highcharts.dateFormat('%H:%M', this.value);
                     const esMedianocheSiguienteDia =
@@ -133,7 +136,7 @@ function generarGraficoBarras(model) {
                     return esMedianocheSiguienteDia ? '24:00' : hora;
                 }
             },
-            tickInterval: 1000 * 60 * 45          
+            tickInterval: 1000 * 60 * 60          
         },
         yAxis: [{
             title: {
@@ -150,8 +153,7 @@ function generarGraficoBarras(model) {
             opposite: true,
             labels: {
                 format: '{value:.2f}'
-            },
-            reversed: true
+            }
         }],
         tooltip: {
             shared: true,

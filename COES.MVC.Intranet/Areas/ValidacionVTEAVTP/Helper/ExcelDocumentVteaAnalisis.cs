@@ -39,10 +39,10 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
         private static void CabeceraRolEmpresa(ExcelWorksheet ws, string periodo, string version) {
 
-            ws.Cells[5, 4].Value = "Análisis de Valorizaciones de VTEA - Rol de Empresa";
-            ws.Cells[5, 4].Style.Font.Bold = true;
-            ws.Cells[5, 4, 5, 9].Merge = true;
-            ws.Cells[5, 4, 5, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            ws.Cells[5, 3].Value = "Análisis de Valorizaciones de VTEA - Rol de Empresa";
+            ws.Cells[5, 3].Style.Font.Bold = true;
+            ws.Cells[5, 3, 5, 6].Merge = true;
+            ws.Cells[5, 3, 5, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                       
 
             ws.Cells[7, 2].Value = CabeceraMesValorizacion;
@@ -79,10 +79,10 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         private static void CabeceraEnergiaCmg(ExcelWorksheet ws, string periodo, string version)
         {
 
-            ws.Cells[5, 4].Value = "Análisis de Datos de Salida VTEA  - Energía y CMg";
-            ws.Cells[5, 4].Style.Font.Bold = true;
-            ws.Cells[5, 4, 5, 9].Merge = true;
-            ws.Cells[5, 4, 5, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;                      
+            ws.Cells[5, 3].Value = "Análisis de Datos de Salida VTEA  - Energía y CMg";
+            ws.Cells[5, 3].Style.Font.Bold = true;
+            ws.Cells[5, 3, 5, 6].Merge = true;
+            ws.Cells[5, 3, 5, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;                      
 
             ws.Cells[7, 2].Value = CabeceraMesValorizacion;
             ws.Cells[7, 3].Value = periodo;
@@ -130,10 +130,10 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         private static void CabeceraEnergiaDiaCmg(ExcelWorksheet ws, string periodo, string version, string dia)
         {
 
-            ws.Cells[5, 4].Value = string.Format("Análisis de Datos de Salida VTEA  - Energía y CMg - Día {0}", dia);
-            ws.Cells[5, 4].Style.Font.Bold = true;
-            ws.Cells[5, 4, 5, 9].Merge = true;
-            ws.Cells[5, 4, 5, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            ws.Cells[5, 3].Value = string.Format("Análisis de Datos de Salida VTEA  - Energía y CMg - Día {0}", dia);
+            ws.Cells[5, 3].Style.Font.Bold = true;
+            ws.Cells[5, 3, 5, 7].Merge = true;
+            ws.Cells[5, 3, 5, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             ws.Cells[7, 2].Value = CabeceraMesValorizacion;
             ws.Cells[7, 3].Value = periodo;

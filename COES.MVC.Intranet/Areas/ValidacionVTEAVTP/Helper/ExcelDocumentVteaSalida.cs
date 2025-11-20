@@ -39,10 +39,10 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
 
         private static void CabeceraRetirosNegativos(ExcelWorksheet ws, string periodo, string version) {
 
-            ws.Cells[5, 4].Value = "Análisis de Datos de Salida VTEA - RETIROS NEGATIVOS";
-            ws.Cells[5, 4].Style.Font.Bold = true;
-            ws.Cells[5, 4, 5, 9].Merge = true;
-            ws.Cells[5, 4, 5, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            ws.Cells[5, 3].Value = "Análisis de Datos de Salida VTEA - RETIROS NEGATIVOS";
+            ws.Cells[5, 3].Style.Font.Bold = true;
+            ws.Cells[5, 3, 5, 7].Merge = true;
+            ws.Cells[5, 3, 5, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                       
 
             ws.Cells[7, 2].Value = CabeceraMesValorizacion;
@@ -73,10 +73,10 @@ namespace COES.MVC.Intranet.Areas.ValidacionVTEAVTP.Helper
         private static void CabeceraOtrasHojas(ExcelWorksheet ws, string periodo, string version, string titulo)
         {
 
-            ws.Cells[5, 4].Value = string.Format("Análisis de Datos de Salida VTEA  - {0}", titulo.ToUpper());
-            ws.Cells[5, 4].Style.Font.Bold = true;
-            ws.Cells[5, 4, 5, 9].Merge = true;
-            ws.Cells[5, 4, 5, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;                      
+            ws.Cells[5, 3].Value = string.Format("Análisis de Datos de Salida VTEA  - {0}", titulo.ToUpper());
+            ws.Cells[5, 3].Style.Font.Bold = true;
+            ws.Cells[5, 3, 5, 7].Merge = true;
+            ws.Cells[5, 3, 5, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
             ws.Cells[7, 2].Value = CabeceraMesValorizacion;
             ws.Cells[7, 3].Value = periodo;
